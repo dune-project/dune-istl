@@ -7,4 +7,5 @@ graphtest
 galerkintest
 hierarchytest
 amgtest
+pamgtest
 transfertest

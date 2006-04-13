@@ -7,7 +7,7 @@ if MPI
 endif
 
 # link against libcommon to utilize dune stdstreams
-AM_LDFLAGS = $(top_builddir)/common/libcommon.la
+AM_LDFLAGS = $(LIBDUNE)
 
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest bvectortest indexsettest $(SELECTPROG)
