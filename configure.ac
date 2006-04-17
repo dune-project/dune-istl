@@ -14,9 +14,8 @@ if test x$HAVE_DUNECOMMON != x1 ; then
 fi
 
 # preset variable to path such that #include <dune/...> works
-AC_SUBST([AM_CPPFLAGS], '$(DUNECOMMON_CPPFLAGS) -I$(top_srcdir)')
-
-AC_SUBST([LIBDUNE], '$(DUNECOMMONROOT)/common/libcommon.la')
+AC_SUBST([AM_CPPFLAGS], '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
+AC_SUBST([AM_LDFLAGS], '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
 
 DUNE_SUMMARY_ALL
 
