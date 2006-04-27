@@ -370,10 +370,6 @@ namespace Dune
       /** @brief Whether the hierarchy was built. */
       bool built_;
 
-      template<class T>
-      bool coarsenTargetReached(const T& crit,
-                                const typename ParallelMatrixHierarchy::Iterator& matrix,
-                                const ParallelInformation& info);
     };
 
     template<class T>
@@ -412,6 +408,23 @@ namespace Dune
       }
 
       /**
+       * @brief Set the minimum coarsening rate to be achieved in each coarsening.
+       *
+       * The default value is 1.2
+       */
+      void setMinCoarsenRate(double rate)
+      {
+        minCoarsenRate_ = rate;
+      }
+
+      /**
+       * @brief Get the minimum coarsening rate to be achieved.
+       */
+      double minCoarsenRate() const
+      {
+        return minCoarsenRate_;
+      }
+      /**
        * @brief Whether the data should be accumulated on fewer processes on coarser levels.
        */
       bool accumulate() const
@@ -419,8 +432,8 @@ namespace Dune
         return false;
       }
 
-      CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000)
-        : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget)
+      CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2)
+        : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate)
       {}
 
     private:
@@ -432,6 +445,10 @@ namespace Dune
        * @brief The maximum number of unknowns allowed on the coarsest level.
        */
       int coarsenTarget_;
+      /**
+       * @brief The minimum coarsening rate to be achieved.
+       */
+      double minCoarsenRate_;
     };
 
 
@@ -444,19 +461,6 @@ namespace Dune
       IsTrue<static_cast<int>(MatrixOperator::category) == static_cast<int>(SolverCategory::sequential) ||
           static_cast<int>(MatrixOperator::category) == static_cast<int>(SolverCategory::overlapping)>::yes();
       IsTrue<static_cast<int>(MatrixOperator::category) == static_cast<int>(ParallelInformation::category)>::yes();
-    }
-
-    template<class M, class IS, class A>
-    template<typename T>
-    inline bool
-    MatrixHierarchy<M,IS,A>::coarsenTargetReached(const T& crit,
-                                                  const typename ParallelMatrixHierarchy::Iterator& matrix,
-                                                  const ParallelInformation& info)
-    {
-      int nodes = matrix->getmat().N();
-      int totalNodes = info.communicator().sum(nodes);
-
-      return totalNodes < crit.coarsenTarget();
     }
 
     template<class M, class IS, class A>
@@ -475,16 +479,19 @@ namespace Dune
       int procs = infoLevel->communicator().size();
       int level = 0;
       int rank = 0;
+      int unknowns = mlevel->getmat().N();;
 
+      unknowns = infoLevel->communicator().sum(unknowns);
       infoLevel->buildGlobalLookup(mlevel->getmat().N());
 
       for(; level < criterion.maxLevel(); ++level, ++mlevel) {
 
         rank = infoLevel->communicator().rank();
-        dinfo<<infoLevel->communicator().rank()<<": Level "<<level<<" has "<<mlevel->getmat().N()<<" unknows!"<<std::endl;
+        dverb<<infoLevel->communicator().rank()<<": Level "<<level<<" has "<<mlevel->getmat().N()<<" unknows!"<<std::endl;
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+          dinfo<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
 
-
-        if(coarsenTargetReached(criterion, mlevel, *infoLevel))
+        if(unknowns < criterion.coarsenTarget())
           // No further coarsening needed
           break;
 
@@ -505,14 +512,32 @@ namespace Dune
 
         Timer watch;
         watch.reset();
-        int noAggregates = aggregatesMap->buildAggregates(mlevel->getmat(), *(Element<1>::get(graphs)), criterion);
+        int noAggregates, isoAggregates, oneAggregates;
+
+        tie(noAggregates, isoAggregates, oneAggregates) =
+          aggregatesMap->buildAggregates(mlevel->getmat(), *(Element<1>::get(graphs)), criterion);
+
+        noAggregates = infoLevel->communicator().sum(noAggregates);
+
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+          dinfo << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
+
+        if(unknowns/noAggregates<criterion.minCoarsenRate())
+          if(procs>1 && criterion.accumulate())
+            DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
+          else{
+            if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+              dinfo << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
+                    <<criterion.minCoarsenRate()<<std::endl;
+            delete aggregatesMap;
+            break;
+          }
+
+        unknowns =  noAggregates;
 
         if(noAggregates < criterion.coarsenTarget() && procs>1 && criterion.accumulate()) {
           DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
         }
-
-        dinfo << "Building "<<noAggregates<<" aggregates (took "<<watch.elapsed()<<" seconds."<<std::endl;
-
 
         parallelInformation_.addCoarser(infoLevel->communicator());
 
@@ -531,7 +556,10 @@ namespace Dune
 
         GraphCreator::free(graphs);
 
-        dinfo<<" Coarsening of index sets took "<<watch.elapsed()<<" seconds."<<std::endl;
+        infoLevel->communicator().barrier();
+
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+          dinfo<<"Coarsening of index sets took "<<watch.elapsed()<<" seconds."<<std::endl;
 
         watch.reset();
 
@@ -540,7 +568,10 @@ namespace Dune
                                                                               *fineInfo,
                                                                               infoLevel->globalLookup());
 
-        dinfo<<"Communicating global aggregate numbers took "<<watch.elapsed()<<" seconds."<<std::endl;
+        infoLevel->communicator().barrier();
+
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+          dinfo<<"Communicating global aggregate numbers took "<<watch.elapsed()<<" seconds."<<std::endl;
 
         watch.reset();
         std::vector<bool>& visited=excluded;
@@ -566,7 +597,10 @@ namespace Dune
         delete Element<0>::get(graphs);
         productBuilder.calculate(mlevel->getmat(), *aggregatesMap, *coarseMatrix, *infoLevel, OverlapFlags());
 
-        dinfo<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
+        infoLevel->communicator().barrier();
+
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+          dinfo<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
 
         MatrixArgs args(*coarseMatrix, *infoLevel);
 
@@ -579,8 +613,13 @@ namespace Dune
       AggregatesMap* aggregatesMap=new AggregatesMap(0);
       aggregatesMaps_.push_back(aggregatesMap);
 
-      if(level==criterion.maxLevel())
-        dinfo<<"Level "<<level<<" has "<<mlevel->getmat().N()<<" unknows!"<<std::endl;
+      if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL)
+        if(level==criterion.maxLevel()) {
+          int unknowns = mlevel->getmat().N();
+          unknowns = infoLevel->communicator().sum(unknowns);
+          if(rank==0)
+            dinfo<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
+        }
     }
 
     template<class M, class IS, class A>
@@ -612,7 +651,6 @@ namespace Dune
 
       AggregatesMapIterator amap = aggregatesMaps_.rbegin();
       InfoIterator info = parallelInformation_.coarsest();
-      int i=0;
       for(Iterator level=matrices_.coarsest(), finest=matrices_.finest(); level != finest;  --level, --info, ++amap) {
         (*amap)->free();
         delete *amap;
@@ -629,12 +667,12 @@ namespace Dune
       typedef typename ParallelMatrixHierarchy::ConstIterator Iterator;
       Iterator coarsest = matrices_.coarsest();
       int level=0;
-      Dune::dverb<<"Level "<<level<<" has "<<matrices_.finest()->getmat().N()<<" unknows!"<<std::endl;
+      Dune::dvverb<<"Level "<<level<<" has "<<matrices_.finest()->getmat().N()<<" unknows!"<<std::endl;
 
       for(Iterator matrix = matrices_.finest(); matrix != coarsest;) {
         ++matrix;
         ++level;
-        Dune::dverb<<"Level "<<level<<" has "<<matrix->getmat().N()<<" unknows!"<<std::endl;
+        Dune::dvverb<<"Level "<<level<<" has "<<matrix->getmat().N()<<" unknows!"<<std::endl;
         hierarchy.addCoarser(matrix->getmat().N());
       }
     }
