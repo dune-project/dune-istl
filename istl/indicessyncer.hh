@@ -560,17 +560,17 @@ namespace Dune
         ++knownRemote;
 
       if(knownRemote>0) {
-        Dune::dinfo<<rank_<<": publishing "<<knownRemote<<" for index "<<index->global()<< " for processes ";
+        Dune::dverb<<rank_<<": publishing "<<knownRemote<<" for index "<<index->global()<< " for processes ";
 
         // Update MessageInformation
         for(ValidIterator valid = collIter.begin(); valid != end; ++valid) {
           ++(infoSend_[valid.process()].publish);
           (infoSend_[valid.process()].pairs) += knownRemote;
-          Dune::dinfo<<valid.process()<<" ";
-          dverb<<"(publish="<<infoSend_[valid.process()].publish<<", pairs="<<infoSend_[valid.process()].pairs
-               <<") ";
+          Dune::dverb<<valid.process()<<" ";
+          Dune::dverb<<"(publish="<<infoSend_[valid.process()].publish<<", pairs="<<infoSend_[valid.process()].pairs
+                     <<") ";
         }
-        Dune::dinfo<<std::endl;
+        Dune::dverb<<std::endl;
       }
     }
 
@@ -609,8 +609,8 @@ namespace Dune
         MPI_Send(message, 1, datatype_, remote->first, 122, remoteIndices_.communicator());
       }
       /*
-         dinfo<<rank_<<": sent to "<<remote->first<<" (publish="<<message->publish<<", pairs="<<message->pairs<<")"<<std::endl;
-         dinfo<<rank_<<": received from "<<remote->first<<" (publish="<<recv.publish<<", pairs="<<recv.pairs<<")"<<std::endl;
+         dvverb<<rank_<<": sent to "<<remote->first<<" (publish="<<message->publish<<", pairs="<<message->pairs<<")"<<std::endl;
+         dvverb<<rank_<<": received from "<<remote->first<<" (publish="<<recv.publish<<", pairs="<<recv.pairs<<")"<<std::endl;
        */
       // calculate max message size
       maxSize.publish = std::max(maxSize.publish, message->publish);
@@ -716,12 +716,12 @@ namespace Dune
 
     indexSet_.beginResize();
 
-    Dune::dinfo<<rank_<<": No of neighbours=";
+    Dune::dverb<<rank_<<": Neighbours: ";
 
     for(i = 0; i<noOldNeighbours; ++i)
-      Dune::dinfo<<oldNeighbours[i]<<" ";
+      Dune::dverb<<oldNeighbours[i]<<" ";
 
-    Dune::dinfo<<std::endl;
+    Dune::dverb<<std::endl;
 
     for(i = 0; i<noOldNeighbours; ++i) {
       if(oldNeighbours[i] < rank_) {
@@ -837,7 +837,7 @@ namespace Dune
 
     resetIteratorsMap();
 
-    Dune::dinfo << rank_<<": Sending message of "<<bpos<<" bytes to "<<destination<<std::endl;
+    Dune::dverb << rank_<<": Sending message of "<<bpos<<" bytes to "<<destination<<std::endl;
 
     MPI_Send(buffer_, bpos, MPI_PACKED, destination, 111, remoteIndices_.communicator());
   }
