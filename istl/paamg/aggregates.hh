@@ -9,6 +9,7 @@
 #include "combinedfunctor.hh"
 
 #include <dune/common/timer.hh>
+#include <dune/common/tuples.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
@@ -381,7 +382,7 @@ namespace Dune
        * @return The number of aggregates built.
        */
       template<class M, class G, class C>
-      int buildAggregates(const M& matrix, G& graph, const C& criterion);
+      Tuple<int,int,int> buildAggregates(const M& matrix, G& graph, const C& criterion);
 
       /**
        * @brief Breadth first search within an aggregate
@@ -663,8 +664,8 @@ namespace Dune
        * @return The number of (not skipped) aggregates built.
        */
       template<class M, class C>
-      int build(const M& m, G& graph,
-                AggregatesMap<Vertex>& aggregates, const C& c);
+      Tuple<int,int,int> build(const M& m, G& graph,
+                               AggregatesMap<Vertex>& aggregates, const C& c);
     private:
       /**
        * @brief The allocator we use for our lists and the
@@ -1833,7 +1834,7 @@ namespace Dune
 
     template<typename V>
     template<typename M, typename G, typename C>
-    int AggregatesMap<V>::buildAggregates(const M& matrix, G& graph, const C& criterion)
+    Tuple<int,int,int> AggregatesMap<V>::buildAggregates(const M& matrix, G& graph, const C& criterion)
     {
       Aggregator<G> aggregator;
       return aggregator.build(matrix, graph, *this, criterion);
@@ -1841,7 +1842,7 @@ namespace Dune
 
     template<class G>
     template<class M, class C>
-    int Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c)
+    Tuple<int,int,int> Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c)
     {
       // Stack for fast vertex access
       Stack stack_(graph, *this, aggregates);
@@ -1858,7 +1859,7 @@ namespace Dune
 
       buildDependency(graph, m, c);
 
-      dinfo<<"Build dependency took "<< watch.elapsed()<<" seconds."<<std::endl;
+      dverb<<"Build dependency took "<< watch.elapsed()<<" seconds."<<std::endl;
       int noAggregates, conAggregates, isoAggregates, oneAggregates;
       noAggregates = conAggregates = isoAggregates = oneAggregates = 0;
 
@@ -1962,12 +1963,12 @@ namespace Dune
         unmarkFront();
       }
 
-      Dune::dinfo<<"connected aggregates: "<<conAggregates;
-      Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
-      Dune::dinfo<<" one node aggregates: "<<oneAggregates<<std::endl;
+      Dune::dverb<<"connected aggregates: "<<conAggregates;
+      Dune::dverb<<" isolated aggregates: "<<isoAggregates;
+      Dune::dverb<<" one node aggregates: "<<oneAggregates<<std::endl;
 
       delete aggregate_;
-      return conAggregates; //+isoAggregates;
+      return Tuple<int,int,int>(conAggregates,isoAggregates,oneAggregates);
     }
 
     template<class G>
@@ -1979,8 +1980,10 @@ namespace Dune
       int count=0;
       for(Iterator vertex=front_.begin(); vertex != end; ++vertex,++count)
         stack_.push(*vertex);
-      if(MINIMAL_DEBUG_LEVEL<=2 && count==0 && !isolated)
-        Dune::dverb<< " no vertices pushed for nonisolated aggregate!"<<std::endl;
+      /*
+         if(MINIMAL_DEBUG_LEVEL<=2 && count==0 && !isolated)
+         Dune::dverb<< " no vertices pushed for nonisolated aggregate!"<<std::endl;
+       */
     }
 
     template<class G>
