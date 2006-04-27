@@ -44,9 +44,12 @@ int main(int argc, char** argv)
   b=0;
   x=100;
 
-  if(N<6)
-    Dune::printmatrix(std::cout, mat, "A", "row");
+  setBoundary(x, b, N);
 
+  if(N<6) {
+    Dune::printmatrix(std::cout, mat, "A", "row");
+    Dune::printvector(std::cout, x, "x", "row");
+  }
 
   Dune::Timer watch;
 
@@ -55,12 +58,12 @@ int main(int argc, char** argv)
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
-  typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 
   SmootherArgs smootherArgs;
 
-  smootherArgs.iterations = 2;
+  smootherArgs.iterations = 1;
 
 
   Criterion criterion(15,coarsenTarget);
@@ -69,7 +72,7 @@ int main(int argc, char** argv)
   Dune::SeqScalarProduct<Vector> sp;
   typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
 
-  AMG amg(fop, criterion, smootherArgs, 1, 1);
+  AMG amg(fop, criterion, smootherArgs, 1, 2);
 
 
   double buildtime = watch.elapsed();

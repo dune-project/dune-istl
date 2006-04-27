@@ -115,12 +115,15 @@ int main(int argc, char** argv)
 
   Vector b1=b, x1=x;
 
-  if(N<6 && rank==0) {
-    Dune::printmatrix(std::cout, cmat, "A", "row");
-    Dune::printvector(std::cout, x, "x", "row");
-    Dune::printvector(std::cout, b, "b", "row");
-    Dune::printvector(std::cout, b1, "b1", "row");
-    Dune::printvector(std::cout, x1, "x1", "row");
+  if(N<=6) {
+    std::ostringstream name;
+    name<<rank<<": row";
+
+    Dune::printmatrix(std::cout, cmat, "A", name.str().c_str());
+    Dune::printvector(std::cout, x, "x", name.str().c_str());
+    //Dune::printvector(std::cout, b, "b", name.str().c_str());
+    //Dune::printvector(std::cout, b1, "b1", "row");
+    //Dune::printvector(std::cout, x1, "x1", "row");
   }
 
   Dune::Timer watch;
@@ -130,54 +133,69 @@ int main(int argc, char** argv)
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
+  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
   typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   typedef Dune::BlockPreconditioner<Vector,Vector,Communication,Smoother> ParSmoother;
   //typedef Dune::ParSSOR<BCRSMat,Vector,Vector,Communication> ParSmoother;
   typedef Dune::Amg::SmootherTraits<ParSmoother>::Arguments SmootherArgs;
   //typedef Dune::Amg::BlockPreconditionerConstructionArgs<Smoother,Communication> SmootherArgs;
 
+  Dune::OverlappingSchwarzScalarProduct<Vector,Communication> sp(comm);
+
+  Dune::InverseOperatorResult r, r1;
+
+  double buildtime;
+
   SmootherArgs smootherArgs;
 
-  smootherArgs.iterations = 2;
+  smootherArgs.iterations = 1;
 
 
   Criterion criterion(15,coarsenTarget);
   criterion.setMaxDistance(2);
+  //  criterion.setMaxLevel(1);
 
   typedef Dune::Amg::AMG<Operator,Vector,ParSmoother,Communication> AMG;
 
-  AMG amg(fop, criterion, smootherArgs, 1, 1, comm);
+  AMG amg(fop, criterion, smootherArgs, 1, 2, comm);
 
+  buildtime = watch.elapsed();
 
-  double buildtime = watch.elapsed();
+  if(rank==0)
+    std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
 
-  std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
-
-  Dune::OverlappingSchwarzScalarProduct<Vector,Communication> sp(comm);
-
-  Dune::CGSolver<Vector> amgCG(fop, sp, amg, 10e-8, 800, (rank==0) ? 2 : 0);
+  Dune::CGSolver<Vector> amgCG(fop, sp, amg, 10e-8, 300, (rank==0) ? 2 : 0);
   watch.reset();
-  Dune::InverseOperatorResult r, r1;
 
-  amgCG.apply(x,b,r);
+  //amgCG.apply(x,b,r);
   MPI_Barrier(MPI_COMM_WORLD);
-  Smoother ssm(fop.getmat(),1,.8);
-  ParSmoother sm(ssm,comm);
-  DoubleStepPreconditioner<ParSmoother> dsp(sm);
-  Dune::CGSolver<Vector> cg(fop, sp, sm, 10e-08, 800, (rank==0) ? 2 : 0);
 
   double solvetime = watch.elapsed();
 
-  std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
+  if(!r.converged && rank==0)
+    std::cerr<<" AMG Cg solver did not converge!"<<std::endl;
 
-  std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
-  std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
+  if(rank==0) {
+    std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
+
+    std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
+    std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
+  }
+
+  Smoother ssm(fop.getmat(),1,1);
+  ParSmoother sm(ssm,comm);
+  //DoubleStepPreconditioner<ParSmoother> dsp(sm);
+  Dune::LoopSolver<Vector> cg(fop, sp, sm, 10e-08, 30, (rank==0) ? 2 : 0);
 
   watch.reset();
 
   cg.apply(x1,b1,r1);
 
+  if(!r1.converged && rank==0)
+    std::cerr<<" Cg solver did not converge!"<<std::endl;
+
   //std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
+
 
   MPI_Finalize();
 }
