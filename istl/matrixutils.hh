@@ -17,37 +17,42 @@ namespace Dune
    * @brief Some handy generic functions for ISTL matrices.
    * @author Markus Blatt
    */
-  template<int i>
-  struct NonZeroCounter
+  namespace
   {
-    template<class M>
-    static typename M::size_type count(const M& matrix)
+
+    template<int i>
+    struct NonZeroCounter
     {
-      typedef typename M::ConstRowIterator RowIterator;
+      template<class M>
+      static typename M::size_type count(const M& matrix)
+      {
+        typedef typename M::ConstRowIterator RowIterator;
 
-      RowIterator endRow = matrix.end();
-      typename M::size_type nonZeros = 0;
+        RowIterator endRow = matrix.end();
+        typename M::size_type nonZeros = 0;
 
-      for(RowIterator row = matrix.begin(); row != endRow; ++row) {
-        typedef typename M::ConstColIterator Entry;
-        Entry endEntry = row->end();
-        for(Entry entry = row->begin(); entry != endEntry; ++entry) {
-          nonZeros += NonZeroCounter<i-1>::count(*entry);
+        for(RowIterator row = matrix.begin(); row != endRow; ++row) {
+          typedef typename M::ConstColIterator Entry;
+          Entry endEntry = row->end();
+          for(Entry entry = row->begin(); entry != endEntry; ++entry) {
+            nonZeros += NonZeroCounter<i-1>::count(*entry);
+          }
         }
+        return nonZeros;
       }
-      return nonZeros;
-    }
-  };
+    };
 
-  template<>
-  struct NonZeroCounter<1>
-  {
-    template<class M>
-    static typename M::size_type count(const M& matrix)
+    template<>
+    struct NonZeroCounter<1>
     {
-      return matrix.N()*matrix.M();
-    }
-  };
+      template<class M>
+      static typename M::size_type count(const M& matrix)
+      {
+        return matrix.N()*matrix.M();
+      }
+    };
+
+  }
 
   /**
    * @brief Get the number of nonzero fields in the matrix.
