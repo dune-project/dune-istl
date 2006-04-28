@@ -14,6 +14,7 @@
 #include "graphcreator.hh"
 #include <dune/common/stdstreams.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/tuples.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/indexset.hh>
 #include <dune/istl/remoteindices.hh>
