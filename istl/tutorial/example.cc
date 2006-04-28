@@ -10,20 +10,20 @@
 #include <stdio.h>                // There is nothing better than sprintf
 #include <sys/times.h>            // for timing measurements
 
-#include "istlexception.hh"
-#include "basearray.hh"
-#include "dune/common/fvector.hh"
-#include "dune/common/fmatrix.hh"
-#include "bvector.hh"
-#include "vbvector.hh"
-#include "bcrsmatrix.hh"
-#include "io.hh"
-#include "gsetc.hh"
-#include "ilu.hh"
-#include "operators.hh"
-#include "solvers.hh"
-#include "preconditioners.hh"
-#include "scalarproducts.hh"
+#include <dune/istl/istlexception.hh>
+#include <dune/istl/basearray.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/vbvector.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/io.hh>
+#include <dune/istl/gsetc.hh>
+#include <dune/istl/ilu.hh>
+#include <dune/istl/operators.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
+#include <dune/istl/scalarproducts.hh>
 
 // a simple stop watch
 class Timer
