@@ -32,6 +32,8 @@ namespace Dune
   class MPITraits
   {};
 
+#ifdef HAVE_MPI
+
   // A Macro for defining traits for the primitive data types
 #define ComposeMPITraits(p,m) \
   template<> \
@@ -40,8 +42,6 @@ namespace Dune
       return m; \
     } \
   };
-
-#ifdef HAVE_MPI
 
   ComposeMPITraits(char, MPI_CHAR);
   ComposeMPITraits(unsigned char,MPI_UNSIGNED_CHAR);
@@ -54,8 +54,6 @@ namespace Dune
   ComposeMPITraits(float,MPI_FLOAT);
   ComposeMPITraits(double,MPI_DOUBLE);
   ComposeMPITraits(long double,MPI_LONG_DOUBLE);
-
-#endif
 
 #undef ComposeMPITraits
 
@@ -128,6 +126,9 @@ namespace Dune
   MPI_Datatype MPITraits<bigunsignedint<k> >::datatype = MPI_DATATYPE_NULL;
   template<int k>
   MPI_Datatype MPITraits<bigunsignedint<k> >::vectortype = MPI_DATATYPE_NULL;
+
+#endif
+
   /** @} */
 }
 

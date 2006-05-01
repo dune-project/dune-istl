@@ -9,6 +9,8 @@
 #include <dune/istl/operators.hh>
 #include "pinfo.hh"
 
+#ifdef HAVE_MPI
+
 namespace Dune
 {
   namespace Amg
@@ -104,4 +106,5 @@ namespace Dune
   } // end namespace Amg
 
 } //end namespace Dune
+#endif
 #endif

@@ -9,7 +9,6 @@
 
 int main(int argc, char** argv)
 {
-  MPI_Init(&argc, &argv);
 
   const int BS=1;
   int N=300;
@@ -23,9 +22,6 @@ int main(int argc, char** argv)
 
   std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<std::endl;
 
-  int procs, rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &procs);
 
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
@@ -97,5 +93,4 @@ int main(int argc, char** argv)
 
      std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
    */
-  MPI_Finalize();
 }

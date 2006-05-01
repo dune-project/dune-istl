@@ -8,6 +8,11 @@
 #include <vector>
 #include "renumberer.hh"
 
+#ifdef HAVE_MPI
+#include <dune/istl/owneroverlapcopy.hh>
+#include "pinfo.hh"
+#endif
+
 namespace Dune
 {
   namespace Amg
@@ -26,6 +31,13 @@ namespace Dune
 
     template<typename T, typename E>
     class IndicesCoarsener
+    {};
+
+
+#ifdef HAVE_MPI
+
+    template<typename T, typename E>
+    class ParallelIndicesCoarsener
     {
     public:
       /**
@@ -174,6 +186,19 @@ namespace Dune
 
     };
 
+    template<typename G, typename L, typename E>
+    class IndicesCoarsener<OwnerOverlapCopyCommunication<G,L>,E>
+      : public ParallelIndicesCoarsener<OwnerOverlapCopyCommunication<G,L>,E>
+    {};
+
+    template<typename T,typename E>
+    class IndicesCoarsener<ParallelInformation<T>,E>
+      : public ParallelIndicesCoarsener<ParallelInformation<T>,E>
+    {};
+
+
+#endif
+
     /**
      * @brief Coarsen Indices in the sequential case.
      *
@@ -193,14 +218,15 @@ namespace Dune
               SequentialInformation& coarseInfo);
     };
 
+#ifdef HAVE_MPI
     template<typename T, typename E>
     template<typename Graph, typename VM>
     inline typename Graph::VertexDescriptor
-    IndicesCoarsener<T,E>::coarsen(ParallelInformation& fineInfo,
-                                   Graph& fineGraph,
-                                   VM& visitedMap,
-                                   AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-                                   ParallelInformation& coarseInfo)
+    ParallelIndicesCoarsener<T,E>::coarsen(ParallelInformation& fineInfo,
+                                           Graph& fineGraph,
+                                           VM& visitedMap,
+                                           AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
+                                           ParallelInformation& coarseInfo)
     {
       ParallelAggregateRenumberer<Graph,typename ParallelInformation::GlobalLookupIndexSet> renumberer(aggregates, fineInfo.globalLookup());
       buildCoarseIndexSet(fineInfo, fineGraph, visitedMap, aggregates,
@@ -213,12 +239,12 @@ namespace Dune
 
     template<typename T, typename E>
     template<typename Graph, typename VM, typename I>
-    void IndicesCoarsener<T,E>::buildCoarseIndexSet(const ParallelInformation& pinfo,
-                                                    Graph& fineGraph,
-                                                    VM& visitedMap,
-                                                    AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-                                                    ParallelIndexSet& coarseIndices,
-                                                    ParallelAggregateRenumberer<Graph,I>& renumberer)
+    void ParallelIndicesCoarsener<T,E>::buildCoarseIndexSet(const ParallelInformation& pinfo,
+                                                            Graph& fineGraph,
+                                                            VM& visitedMap,
+                                                            AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
+                                                            ParallelIndexSet& coarseIndices,
+                                                            ParallelAggregateRenumberer<Graph,I>& renumberer)
     {
       typedef typename Graph::VertexDescriptor Vertex;
       typedef typename Graph::ConstVertexIterator Iterator;
@@ -275,11 +301,11 @@ namespace Dune
 
     template<typename T, typename E>
     template<typename Graph, typename I>
-    void IndicesCoarsener<T,E>::buildCoarseRemoteIndices(const RemoteIndices& fineRemote,
-                                                         const AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-                                                         ParallelIndexSet& coarseIndices,
-                                                         RemoteIndices& coarseRemote,
-                                                         ParallelAggregateRenumberer<Graph,I>& renumberer)
+    void ParallelIndicesCoarsener<T,E>::buildCoarseRemoteIndices(const RemoteIndices& fineRemote,
+                                                                 const AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
+                                                                 ParallelIndexSet& coarseIndices,
+                                                                 RemoteIndices& coarseRemote,
+                                                                 ParallelAggregateRenumberer<Graph,I>& renumberer)
     {
       std::vector<char> attributes(static_cast<std::size_t>(renumberer));
 
@@ -341,6 +367,8 @@ namespace Dune
       syncer.sync(renumberer);
 
     }
+
+#endif
 
     template<typename E>
     template<typename Graph, typename VM>

@@ -17,12 +17,6 @@
 #include <dune/common/tuples.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/indexset.hh>
-#include <dune/istl/remoteindices.hh>
-#include <dune/istl/interface.hh>
-#include <dune/istl/communicator.hh>
-#include <dune/istl/remoteindices.hh>
-#include <dune/istl/interface.hh>
-#include <dune/istl/communicator.hh>
 #include <dune/istl/paamg/dependency.hh>
 #include <dune/istl/paamg/graph.hh>
 #include <dune/istl/paamg/indicescoarsener.hh>

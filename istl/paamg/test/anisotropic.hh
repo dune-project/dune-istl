@@ -4,11 +4,10 @@
 #ifndef ANISOTROPIC_HH
 #define  ANISOTROPIC_HH
 #include <dune/istl/indexset.hh>
-#include <dune/istl/communicator.hh>
-#include <dune/istl/interface.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/plocalindex.hh>
 
 typedef Dune::OwnerOverlapCopyAttributeSet GridAttributes;
 typedef GridAttributes::AttributeSet GridFlag;
@@ -169,10 +168,12 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<double,BS> >& lhs,
 template<int BS, class G, class L, int s>
 Dune::BCRSMatrix<Dune::FieldMatrix<double,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, int *nout, double eps)
 {
-  int procs, rank;
+  int procs=1, rank=0;
+
+#ifdef HAVE_MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
-
+#endif
 
   typedef Dune::FieldMatrix<double,BS,BS> Block;
   typedef Dune::BCRSMatrix<Block> BCRSMat;

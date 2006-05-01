@@ -4,7 +4,6 @@
 #ifndef DUNE_INDICESSYNCER_HH
 #define DUNE_INDICESSYNCER_HH
 
-#include "mpi.h"
 #include "indexset.hh"
 #include "remoteindices.hh"
 #include <dune/common/stdstreams.hh>
@@ -14,6 +13,7 @@
 #include <cmath>
 #include <limits>
 
+#ifdef HAVE_MPI
 namespace Dune
 {
   /** @addtogroup ISTL_Comm
@@ -1032,4 +1032,5 @@ namespace Dune
   }
 }
 
+#endif
 #endif

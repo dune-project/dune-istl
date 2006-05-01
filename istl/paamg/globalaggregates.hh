@@ -4,8 +4,7 @@
 #define GLOBALAGGREGATES_HH
 
 #include "aggregates.hh"
-#include <dune/istl/indexset.hh>
-#include <dune/istl/communicator.hh>
+
 namespace Dune
 {
   namespace Amg
@@ -116,6 +115,7 @@ namespace Dune
     struct AggregatesPublisher
     {};
 
+#ifdef HAVE_MPI
     template<typename T, typename O, typename T1>
     struct AggregatesPublisher<T,O,ParallelInformation<T1> >
     {
@@ -138,15 +138,20 @@ namespace Dune
 
     };
 
+#endif
+
   } // namespace Amg
 
+#ifdef HAVE_MPI
   // forward declaration
   template<class T1, class T2>
   class OwnerOverlapCopyCommunication;
+#endif
 
   namespace Amg
   {
 
+#ifdef HAVE_MPI
     template<typename T, typename O, typename T1, typename T2>
     struct AggregatesPublisher<T,O,OwnerOverlapCopyCommunication<T1,T2> >
     {
@@ -166,6 +171,7 @@ namespace Dune
       }
 
     };
+#endif
 
     template<typename T, typename O>
     struct AggregatesPublisher<T,O,SequentialInformation>
@@ -183,6 +189,7 @@ namespace Dune
   } // end Amg namespace
 
 
+#ifdef HAVE_MPI
   template<typename T, typename TI>
   struct CommPolicy<Amg::GlobalAggregatesMap<T,TI> >
   {
@@ -194,6 +201,7 @@ namespace Dune
       return 1;
     }
   };
+#endif
 
 } // end Dune namespace
 

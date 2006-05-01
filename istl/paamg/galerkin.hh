@@ -9,7 +9,6 @@
 #include <dune/common/poolallocator.hh>
 #include <dune/common/enumset.hh>
 #include <set>
-#include "mpi.h"
 
 namespace Dune
 {

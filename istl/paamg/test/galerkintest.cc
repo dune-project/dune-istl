@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <dune/common/enumset.hh>
+#include <dune/common/tuples.hh>
 #include <dune/istl/paamg/galerkin.hh>
 #include <dune/istl/paamg/dependency.hh>
 #include <dune/istl/paamg/globalaggregates.hh>
@@ -65,7 +66,9 @@ void testCoarsenIndices(int N)
   std::cout << "fine indices: "<<indices << std::endl;
   std::cout << "fine remote: "<<remoteIndices << std::endl;
 
-  int noAggregates = aggregatesMap.buildAggregates(mat, pg, Criterion());
+  int noAggregates, isoAggregates, oneAggregates;
+
+  Dune::tie(noAggregates, isoAggregates, oneAggregates) = aggregatesMap.buildAggregates(mat, pg, Criterion());
 
   Dune::Amg::printAggregates2d(aggregatesMap, n, N, std::cout);
 
