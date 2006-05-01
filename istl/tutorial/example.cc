@@ -506,13 +506,13 @@ void test_Interface ()
 int main (int argc , char ** argv)
 {
   try {
-    //  test_basearray();
-    //  test_BlockVector();
-    //  test_VariableBlockVector();
-    //  test_FieldMatrix();
-    //  test_BCRSMatrix();
-    //  test_IO();
-    //	test_Iter();
+    test_basearray();
+    test_BlockVector();
+    test_VariableBlockVector();
+    test_FieldMatrix();
+    test_BCRSMatrix();
+    test_IO();
+    test_Iter();
     test_Interface();
   }
   catch (Dune::ISTLError& error)

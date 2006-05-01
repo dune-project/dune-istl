@@ -28,8 +28,7 @@ echo
 
 # write output
 AC_CONFIG_FILES([Makefile
-    doc/istl/comm/Makefile
-    doc/istl/Makefile
+    doc/comm/Makefile
     doc/layout/Makefile
     doc/doxygen/Makefile
     doc/Makefile

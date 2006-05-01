@@ -3,3 +3,11 @@ Makefile
 Makefile.in
 semantic.cache
 *.html
+*.out
+*.pdf
+*.ps
+*.toc
+*.aux
+*.bbl
+*.blg
+*.log
