@@ -12,7 +12,7 @@ int main(int argc, char** argv)
   MPI_Init(&argc, &argv);
 
   const int BS=1;
-  int N=250;
+  int N=300;
   int coarsenTarget=1200;
 
   if(argc>1)
