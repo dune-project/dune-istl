@@ -11,8 +11,8 @@ dist_pkgdata_DATA = $(DOCS)
 CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.pdf *.ps
 
 # setting like in dune-web
-BASEDIR=..
-CURDIR=doc
+BASEDIR=../..
+CURDIR=doc/istl
 
 include $(top_srcdir)/am/latex
 include $(top_srcdir)/am/webstuff
