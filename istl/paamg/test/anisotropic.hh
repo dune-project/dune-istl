@@ -8,6 +8,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/plocalindex.hh>
+#include <dune/common/collectivecommunication.hh>
 
 typedef Dune::OwnerOverlapCopyAttributeSet GridAttributes;
 typedef GridAttributes::AttributeSet GridFlag;
@@ -21,8 +22,9 @@ template<class M>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end);
 
 
-template<int BS, class G, class L, int n>
-Dune::BCRSMatrix<Dune::FieldMatrix<double,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices, int *nout, double eps=1.0);
+template<int BS, class G, class L, class C, int n>
+Dune::BCRSMatrix<Dune::FieldMatrix<double,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices,
+                                                                      const Dune::CollectiveCommunication<C>& p, int *nout, double eps=1.0);
 
 
 template<class M, class G, class L, int s>
@@ -165,15 +167,11 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<double,BS> >& lhs,
       }
 }
 
-template<int BS, class G, class L, int s>
-Dune::BCRSMatrix<Dune::FieldMatrix<double,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, int *nout, double eps)
+template<int BS, class G, class L, class C, int s>
+Dune::BCRSMatrix<Dune::FieldMatrix<double,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices,
+                                                                      const Dune::CollectiveCommunication<C>& p, int *nout, double eps)
 {
-  int procs=1, rank=0;
-
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &procs);
-#endif
+  int procs=p.size(), rank=p.rank();
 
   typedef Dune::FieldMatrix<double,BS,BS> Block;
   typedef Dune::BCRSMatrix<Block> BCRSMat;

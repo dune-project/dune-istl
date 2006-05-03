@@ -6,7 +6,7 @@
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/indexset.hh>
-
+#include <dune/common/collectivecommunication.hh>
 int main(int argc, char** argv)
 {
 
@@ -31,9 +31,11 @@ int main(int argc, char** argv)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::CollectiveCommunication<void*> Comm;
   int n;
 
-  BCRSMat mat = setupAnisotropic2d<BS>(N, indices, &n, 1);
+  Comm c;
+  BCRSMat mat = setupAnisotropic2d<BS>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
 

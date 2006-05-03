@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 
   Communication comm(MPI_COMM_WORLD);
 
-  BCRSMat mat = setupAnisotropic2d<BS>(N, comm.indexSet(), &n, 1);
+  BCRSMat mat = setupAnisotropic2d<BS>(N, comm.indexSet(), comm.communicator(), &n, 1);
 
   const BCRSMat& cmat = mat;
 

@@ -8,7 +8,7 @@ fi
 
 # start test and abort on fail
 set -e
-mpirun -np 1 amgtest
+mpirun -np 1 pamgtest
 set +e
 
 # possibly stop LAM again

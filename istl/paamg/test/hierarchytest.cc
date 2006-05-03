@@ -6,6 +6,7 @@
 #include <dune/istl/paamg/hierarchy.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/common/mpicollectivecommunication.hh>
 #include "anisotropic.hh"
 int main(int argc, char** argv)
 {
@@ -29,7 +30,10 @@ int main(int argc, char** argv)
 
   typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
   RemoteIndices& remoteIndices = pinfo.remoteIndices();
-  BCRSMat mat = setupAnisotropic2d<BS>(N, indices, &n);
+
+  typedef Dune::CollectiveCommunication<MPI_Comm> Comm;
+  Comm cc(MPI_COMM_WORLD);
+  BCRSMat mat = setupAnisotropic2d<BS>(N, indices, cc, &n);
   Vector b(indices.size());
 
   remoteIndices.rebuild<false>();
