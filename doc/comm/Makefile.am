@@ -13,9 +13,10 @@ endif
 
 
 # setting like in dune-web
-CURDIR=doc/istl/comm
+RELDIR=istl/comm
+CURDIR=doc/$(RELDIR)
 BASEDIR=../../..
-commdir=$(datadir)/$(CURDIR)
+commdir=$(datadir)/doc/dune/$(RELDIR)
 
 noinst_PROGRAMS = $(MPIPROGRAMS)
 
