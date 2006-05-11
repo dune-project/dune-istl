@@ -352,7 +352,7 @@ namespace Dune
     {
       if(buildHierarchy_) {
         delete solver_;
-        delete coarseSmoother_;
+        ConstructionTraits<Smoother>::deconstruct(coarseSmoother_);
       }
 
       // Postprocess all smoothers

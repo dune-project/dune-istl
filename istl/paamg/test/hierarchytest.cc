@@ -6,8 +6,11 @@
 #include <dune/istl/paamg/hierarchy.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/schwarz.hh>
 #include <dune/common/mpicollectivecommunication.hh>
 #include "anisotropic.hh"
+
 int main(int argc, char** argv)
 {
   MPI_Init(&argc, &argv);
@@ -17,15 +20,18 @@ int main(int argc, char** argv)
   int procs, rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
-  typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
-  typedef Dune::Amg::ParallelInformation<ParallelIndexSet> ParallelInformation;
+
+  typedef int LocalId;
+  typedef int GlobalId;
+  typedef Dune::OwnerOverlapCopyCommunication<LocalId,GlobalId> Communication;
+  typedef Communication::ParallelIndexSet ParallelIndexSet;
   typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
 
   int n;
-  ParallelInformation pinfo(MPI_COMM_WORLD);
+  Communication pinfo(MPI_COMM_WORLD);
   ParallelIndexSet& indices = pinfo.indexSet();
 
   typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
@@ -43,8 +49,8 @@ int main(int argc, char** argv)
   Interface interface;
 
   typedef Dune::EnumItem<GridFlag,GridAttributes::overlap> OverlapFlags;
-  typedef Dune::Amg::ParallelMatrix<BCRSMat,ParallelIndexSet,Vector,Vector> Operator;
-  typedef Dune::Amg::MatrixHierarchy<Operator,ParallelInformation> Hierarchy;
+  typedef Dune::OverlappingSchwarzOperator<BCRSMat,Vector,Vector,Communication> Operator;
+  typedef Dune::Amg::MatrixHierarchy<Operator,Communication> Hierarchy;
   typedef Dune::Amg::Hierarchy<Vector> VHierarchy;
 
   interface.build(remoteIndices, Dune::NegateSet<OverlapFlags>(), OverlapFlags());

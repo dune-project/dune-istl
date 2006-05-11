@@ -244,6 +244,10 @@ namespace Dune {
     const communication_type& communication;
   };
 
+  namespace Amg
+  {
+    template<class T> class ConstructionTraits;
+  };
 
   /**
    * @brief Block parallel preconditioner.
@@ -255,6 +259,7 @@ namespace Dune {
    */
   template<class X, class Y, class C, class T=Preconditioner<X,Y> >
   class BlockPreconditioner : public Preconditioner<X,Y> {
+    friend class Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,T> >;
   public:
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;

@@ -53,6 +53,12 @@ namespace Dune
       {
         return new T();
       }
+
+      static inline void deconstruct(T* t)
+      {
+        delete t;
+      }
+
     };
 
     template<class T>
@@ -63,6 +69,11 @@ namespace Dune
       static inline BlockVector<T>* construct(Arguments& n)
       {
         return new BlockVector<T>(n);
+      }
+
+      static inline void deconstruct(BlockVector<T>* t)
+      {
+        delete t;
       }
     };
 
@@ -95,6 +106,11 @@ namespace Dune
       {
         return new OverlappingSchwarzOperator<M,X,Y,C>(*args.matrix_, *args.comm_);
       }
+
+      static inline void deconstruct(OverlappingSchwarzOperator<M,X,Y,C>* t)
+      {
+        delete t;
+      }
     };
 
 
@@ -118,31 +134,13 @@ namespace Dune
       {
         return new MatrixAdapter<M,X,Y>(*args.matrix_);
       }
+
+      static inline void deconstruct(MatrixAdapter<M,X,Y>* m)
+      {
+        delete m;
+      }
     };
-    /*
-       template<class M, class T, class X, class Y>
-       struct ParallelMatrixArgs
-       {
-       ParallelMatrixArgs(M& matrix, const ParallelInformation<T>& info)
-        : matrix_(&matrix), info_(&info)
-       {}
 
-       M* matrix_;
-       ParallelInformation<T>* info_;
-       };
-
-       template<class M, class T, class X, class Y>
-       class ConstructionTraits<ParallelMatrix<M,T,X,Y> >
-       {
-       public:
-       typedef const ParallelMatrixArgs<M,T,X,Y> Arguments;
-
-       static inline ParallelMatrix<M,T,X,Y>* construct(Arguments& args)
-       {
-        return new MatrixAdapter<M,T,X,Y>(*args.matrix_, *args.info_);
-       }
-       };
-     */
     template<>
     class ConstructionTraits<SequentialInformation>
     {
@@ -152,6 +150,11 @@ namespace Dune
       static inline SequentialInformation* construct(Arguments& args)
       {
         return new SequentialInformation(args);
+      }
+
+      static inline void deconstruct(SequentialInformation* si)
+      {
+        delete si;
       }
     };
 
@@ -167,6 +170,11 @@ namespace Dune
       {
         return new ParallelInformation<T>(args);
       }
+
+      static inline void deconstruct(ParallelInformation<T>* pi)
+      {
+        delete pi;
+      }
     };
 
 
@@ -179,6 +187,11 @@ namespace Dune
       static inline OwnerOverlapCopyCommunication<T1,T2>* construct(Arguments& args)
       {
         return new OwnerOverlapCopyCommunication<T1,T2>(args);
+      }
+
+      static inline void deconstruct(OwnerOverlapCopyCommunication<T1,T2>* com)
+      {
+        delete com;
       }
     };
 

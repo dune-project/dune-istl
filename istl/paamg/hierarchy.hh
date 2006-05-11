@@ -750,7 +750,7 @@ namespace Dune
         Element* current = coarsest_;
         coarsest_ = coarsest_->finer_;
         if(current != nonAllocated_) {
-          delete current->element_;
+          ConstructionTraits<T>::deconstruct(current->element_);
         }
         allocator_.deallocate(current, 1);
         //coarsest_->coarser_ = 0;
