@@ -238,7 +238,7 @@ namespace Dune
 
         solver_ = new CGSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
                                   *scalarProduct_,
-                                  *coarseSmoother_, 1E-20, 10000, 0);
+                                  *coarseSmoother_, 1E-2, 10000, 0);
       }
     }
 
