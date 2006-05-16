@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_AMG_PROPERTIES_HH
 #define DUNE_ISTL_AMG_PROPERTIES_HH
 
-#include "dune/common/propertymap.hh"
+#include <dune/common/propertymap.hh>
 
 namespace Dune
 {

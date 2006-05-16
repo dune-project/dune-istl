@@ -3,16 +3,16 @@
 #ifndef DUNE_SCHWARZ_HH
 #define DUNE_SCHWARZ_HH
 
-#include <iostream>               // for input/output to shell
-#include <fstream>                // for input/output to files
-#include <vector>                 // STL vector class
+#include <iostream>              // for input/output to shell
+#include <fstream>               // for input/output to files
+#include <vector>                // STL vector class
 #include <sstream>
 
-#include <math.h>                 // Yes, we do some math here
-#include <stdio.h>                // There is nothing better than sprintf
+#include <math.h>                // Yes, we do some math here
+#include <stdio.h>               // There is nothing better than sprintf
 #include <sys/times.h>           // for timing measurements
 
-#include "dune/common/timer.hh"
+#include <dune/common/timer.hh>
 
 #include "io.hh"
 #include "bvector.hh"

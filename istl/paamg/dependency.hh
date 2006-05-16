@@ -10,7 +10,7 @@
 
 #include "graph.hh"
 #include "properties.hh"
-#include "dune/common/propertymap.hh"
+#include <dune/common/propertymap.hh>
 
 
 namespace Dune

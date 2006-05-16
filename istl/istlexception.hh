@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 
-#include "dune/common/exceptions.hh"
+#include <dune/common/exceptions.hh>
 
 namespace Dune {
 
