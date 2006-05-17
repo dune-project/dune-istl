@@ -44,8 +44,8 @@ for OPT in "$@"; do
 	    if test -d "$OPT/share/aclocal"; then
 	      ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I $OPT/share/aclocal"
 	    fi
-	    if test -d "$OPT/share/am"; then
-	      am_dir="$OPT/share/am"
+	    if test -d "$OPT/share/dune-common/am"; then
+	      am_dir="$OPT/share/dune-common/am"
 	    fi
             ;;
     esac
