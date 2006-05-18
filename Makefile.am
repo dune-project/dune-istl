@@ -7,7 +7,7 @@ AUTOMAKE_OPTIONS = foreign 1.5
 SUBDIRS = istl doc
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = dune.pc
+pkgconfig_DATA = dune-istl.pc
 
 # use configured compiler for "make distcheck"
 # doxygen is difficult to convince to build in a special directory...
