@@ -1,11 +1,10 @@
 # $Id$
 
 # distribute these files:
-EXTRA_DIST = Doxyfile Doxydep \
-  doxy-footer.html doxy-header.html dune-doxy.css mainpage
 
 if BUILD_DOCS
-  WHAT = bestpractice.html doxygen-tag
+  DOXYGENTAG = doxygen-tag
+  WHAT = bestpractice.html
 endif
 
 all: $(WHAT)

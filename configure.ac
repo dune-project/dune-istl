@@ -37,5 +37,5 @@ AC_CONFIG_FILES([Makefile
     istl/tutorial/Makefile
     istl/test/Makefile
     istl/Makefile
-    dune.pc])
+    dune-istl.pc])
 AC_OUTPUT

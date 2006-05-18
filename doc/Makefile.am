@@ -10,7 +10,7 @@ endif
 # setting like in dune-web
 BASEDIR=../..
 CURDIR=doc/istl
-docdir=$(datadir)/doc/dune/istl
+docdir=$(datadir)/doc/dune-istl
 
 doc_DATA = $(DOCS)
 

@@ -16,7 +16,7 @@ endif
 RELDIR=istl/comm
 CURDIR=doc/$(RELDIR)
 BASEDIR=../../..
-commdir=$(datadir)/doc/dune/$(RELDIR)
+commdir=$(datadir)/doc/dune-istl/comm
 
 noinst_PROGRAMS = $(MPIPROGRAMS)
 
