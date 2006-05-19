@@ -404,9 +404,9 @@ namespace Dune {
     }
 
     /**
-     * @brief Project a vector to somewhat???
+     * @brief Set vector to zero at copy dofs
      *
-     * @param x The vector ton project.
+     * @param x The vector to project.
      */
     template<class T1>
     void project (T1& x) const
