@@ -9,6 +9,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <vector>
 
 #include "istlexception.hh"
 #include "allocator.hh"
