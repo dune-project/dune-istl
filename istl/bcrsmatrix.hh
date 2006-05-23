@@ -7,6 +7,8 @@
 #include <complex>
 #include <set>
 #include <iostream>
+#include <algorithm>
+#include <numeric>
 
 #include "istlexception.hh"
 #include "allocator.hh"
@@ -879,42 +881,28 @@ namespace Dune {
       if (ready)
         DUNE_THROW(ISTLError,"matrix already built up");
 
-      // get row
-      size_type* p = r[row].getindexptr();
-      size_type s = r[row].getsize();
+      if (col >= m)
+        DUNE_THROW(ISTLError,"column index exceeds matrix size");
 
-      // binary search for col
-      size_type l=0, r=s-1;
-      while (l<r)
-      {
-        size_type q = (l+r)/2;
-        if (col <= p[q]) r=q;
-        else l = q+1;
-      }
+      // get row range
+      size_type* const first = r[row].getindexptr();
+      size_type* const last = first + r[row].getsize();
+
+      // find correct insertion position for new column index
+      size_type* pos = std::lower_bound(first,last,col);
 
       // check if index is already in row
-      if (p[l]==col) return;
+      if (pos!=last && *pos == col) return;
 
-      // no, find first free entry by binary search
-      l=0; r=s-1;
-      while (l<r)
-      {
-        size_type q = (l+r)/2;
-        if (m <= p[q]) r=q;
-        else l = q+1;
-      }
-      if (p[l]!=m)
+      // find end of already inserted column indices
+      size_type* end = std::lower_bound(pos,last,m);
+      if (end==last)
         DUNE_THROW(ISTLError,"row is too small");
 
-      // now p[l] is the leftmost free entry
-      p[l] = col;
+      // insert new column index at correct position
+      std::copy_backward(pos,end,end+1);
+      *pos = col;
 
-      // use insertion sort to move index to correct position
-      for (size_type i=l-1; i>=0; i--)
-        if (p[i]>p[i+1])
-          std::swap(p[i],p[i+1]);
-        else
-          break;
     }
 
     //! indicate that all indices are defined, check consistency
@@ -1269,10 +1257,11 @@ namespace Dune {
       // find an entry in column j
       if (nnz>0)
       {
-        for (size_type k=0; k<nnz; k++)
+        for (size_type k=0; k<nnz; k++) {
           if (j[k]==c) {
             return a[k].coldim();
           }
+        }
       }
       else
       {
@@ -1303,10 +1292,17 @@ namespace Dune {
     //! dimension of the source vector space
     size_type coldim () const
     {
-      size_type mm=0;
-      for (size_type i=0; i<m; i++)
-        mm += coldim(i);
-      return mm;
+      // The following code has a complexity of nnz, and
+      // typically a very small constant.
+      //
+      std::vector<size_type> coldims(M(),-1);
+      for (ConstRowIterator row=begin(); row!=end(); ++row)
+        for (ConstColIterator col=row->begin(), ; col!=row->end(); ++col)
+          // only compute blocksizes we don't already have
+          if (coldims[col.index()]==-1)
+            coldims[col.index()] = col->coldim();
+      assert(std::find(coldims.begin(),coldims.end(),-1)==coldims.end());
+      return std::accumulate(coldims.begin(),coldims.end(),0);
     }
 
     //===== query
