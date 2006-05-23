@@ -1298,7 +1298,7 @@ namespace Dune {
       //
       std::vector<size_type> coldims(M(),-1);
       for (ConstRowIterator row=begin(); row!=end(); ++row)
-        for (ConstColIterator col=row->begin(), ; col!=row->end(); ++col)
+        for (ConstColIterator col=row->begin(); col!=row->end(); ++col)
           // only compute blocksizes we don't already have
           if (coldims[col.index()]==-1)
             coldims[col.index()] = col->coldim();
