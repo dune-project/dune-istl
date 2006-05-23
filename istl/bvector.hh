@@ -65,6 +65,8 @@ namespace Dune {
     //! make iterators available as types
     typedef typename base_array_unmanaged<B,A>::const_iterator ConstIterator;
 
+    //! for STL compatibility
+    typedef B value_type;
 
     //===== assignment from scalar
     //! Assignment from a scalar
