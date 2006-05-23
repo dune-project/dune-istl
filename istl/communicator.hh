@@ -104,7 +104,7 @@ namespace Dune
   {
     typedef BlockVector<FieldVector<K, n>, A> Type;
 
-    typedef typename Type::field_type IndexedType;
+    typedef typename Type::block_type IndexedType;
 
     typedef SizeOne IndexedTypeFlag;
 
