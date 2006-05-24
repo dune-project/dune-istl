@@ -324,7 +324,7 @@ namespace Dune {
     template<class L, class S, class P>
     GradientSolver (L& op, S& sp, P& prec,
                     double reduction, int maxit, int verbose) :
-      _op(op), _sp(sp), _prec(prec), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       IsTrue< static_cast<int>(L::category) == static_cast<int>(P::category) >::yes();
       IsTrue< static_cast<int>(L::category) == static_cast<int>(S::category) >::yes();
@@ -506,7 +506,7 @@ namespace Dune {
         if (_verbose>1)                       // print
           printf("%5d %12.4E %12.4g\n",i,defnew,defnew/def);
         def = defnew;                         // update norm
-        if (def<def0*_reduction || def<1E-30)              // convergence check
+        if (def<def0*_reduction || def<1E-30 || i==_maxit)              // convergence check
         {
           r.converged  = true;
           break;
