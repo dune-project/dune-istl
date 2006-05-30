@@ -3,25 +3,34 @@
 #ifndef DUNE_MATRIX_HH
 #define DUNE_MATRIX_HH
 
+/** \file
+    \brief A dynamic dense block matrix class
+ */
+
 #include <vector>
-#include "simplevector.hh"
+#include <dune/common/simplevector.hh>
 
 namespace Dune {
 
   /** \brief A generic dynamic matrix
-      \ingroup Common
+      \addtogroup ISTL
    */
-  template<class T>
+  template<class T, class A=ISTLAllocator>
   class Matrix
   {
-    class ISTLError : public Exception {};
   public:
+
+    /** \brief Export the type representing the underlying field */
+    typedef typename T::field_type field_type;
 
     /** \brief Export the type representing the components */
     typedef T block_type;
 
+    /** \brief Export the allocator */
+    typedef A allocator_type;
+
     /** \brief Type for indices and sizes */
-    typedef int size_type;
+    typedef typename A::size_type size_type;
 
     /** \brief Create empty matrix */
     Matrix() : data(0), rows_(0), cols_(0)
