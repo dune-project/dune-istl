@@ -51,13 +51,6 @@ namespace Dune {
       cols_ = cols;
     }
 
-    /** \brief Write a zero into all matrix entries
-     */
-    void clear() {
-      for (unsigned int i=0; i<data.size(); i++)
-        data[i] = 0;
-    }
-
     /** \brief Assignment from scalar */
     Matrix& operator= (const T& t)
     {
