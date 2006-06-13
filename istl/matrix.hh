@@ -8,6 +8,7 @@
  */
 
 #include <vector>
+#include <dune/istl/bvector.hh>
 
 namespace Dune {
 
@@ -28,60 +29,127 @@ namespace Dune {
     /** \brief Export the allocator */
     typedef A allocator_type;
 
+    /** \brief The type implementing a matrix row */
+    typedef BlockVector<T> row_type;
+
     /** \brief Type for indices and sizes */
     typedef typename A::size_type size_type;
 
+    /** \brief Iterator over the matrix rows */
+    typedef typename BlockVector<row_type>::iterator RowIterator;
+
+    /** \brief Iterator for the entries of each row */
+    typedef typename row_type::iterator ColIterator;
+
+    /** \brief Const iterator over the matrix rows */
+    typedef typename BlockVector<row_type>::const_iterator ConstRowIterator;
+
+    /** \brief Const iterator for the entries of each row */
+    typedef typename row_type::const_iterator ConstColIterator;
+
     /** \brief Create empty matrix */
-    Matrix() : data(0), rows_(0), cols_(0)
+    Matrix() : data_(0), cols_(0)
     {}
 
     /** \brief Create uninitialized matrix of size rows x cols
      */
-    Matrix(int rows, int cols) : data(rows*cols), rows_(rows), cols_(cols)
-    {}
+    Matrix(int rows, int cols) : data_(rows), cols_(cols)
+    {
+      for (int i=0; i<rows; i++)
+        data_[i].resize(cols);
+    }
 
     /** \brief Change the matrix size
      *
      * The way the data is handled is unpredictable.
      */
     void resize(int rows, int cols) {
-      data.resize(rows*cols);
-      rows_ = rows;
+      data_.resize(rows);
+      for (int i=0; i<rows; i++)
+        data_[i].resize(cols);
       cols_ = cols;
     }
 
-    /** \brief Assignment from scalar */
-    Matrix& operator= (const T& t)
+    /** \brief Get iterator to first row */
+    RowIterator begin()
     {
-      for (unsigned int i=0; i<data.size(); i++)
-        data[i] = t;
+      return data_.begin();
+    }
+
+    /** \brief Get iterator to one beyond last row */
+    RowIterator end()
+    {
+      return data_.end();
+    }
+
+    /** \brief Get iterator to last row */
+    RowIterator rbegin()
+    {
+      return data_.rbegin();
+    }
+
+    /** \brief Get iterator to one before first row */
+    RowIterator rend()
+    {
+      return data_.rend();
+    }
+
+    /** \brief Get const iterator to first row */
+    ConstRowIterator begin() const
+    {
+      return data_.begin();
+    }
+
+    /** \brief Get const iterator to one beyond last row */
+    ConstRowIterator end() const
+    {
+      return data_.end();
+    }
+
+    /** \brief Get const iterator to last row */
+    ConstRowIterator rbegin() const
+    {
+      return data_.begin();
+    }
+
+    /** \brief Get const iterator to one before first row */
+    ConstRowIterator rend() const
+    {
+      return data_.end();
+    }
+
+    /** \brief Assignment from scalar */
+    Matrix& operator= (const field_type& t)
+    {
+      for (unsigned int i=0; i<data_.size(); i++)
+        data_[i] = t;
     }
 
     /** \brief The index operator */
-    T* operator[](int row) {
+    row_type& operator[](int row) {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (row<0)
         DUNE_THROW(ISTLError, "Can't access negative rows!");
       if (row>=rows_)
         DUNE_THROW(ISTLError, "Row index out of range!");
 #endif
-      return &data[row*cols_];
+      return data_[row];
     }
 
     /** \brief The const index operator */
-    const T* operator[](int row) const {
+    const row_type& operator[](int row) const {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (row<0)
         DUNE_THROW(ISTLError, "Can't access negative rows!");
       if (row>=rows_)
         DUNE_THROW(ISTLError, "Row index out of range!");
 #endif
-      return &data[row*cols_];
+      return data_[row];
     }
 
     /** \brief Return the number of rows */
     size_type N() const {
-      return rows_;
+      return data_.size();
     }
 
     /** \brief Return the number of columns */
@@ -89,9 +157,57 @@ namespace Dune {
       return cols_;
     }
 
+    /** \brief The number of scalar rows */
+    size_type rowdim() const {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (M()==0)
+        DUNE_THROW(ISTLError, "Can't compute rowdim() when there are no columns!");
+#endif
+      size_type dim = 0;
+      for (int i=0; i<data_.size(); i++)
+        dim += data_[i][0].rowdim();
+
+      return dim;
+    }
+
+    /** \brief The number of scalar columns */
+    size_type coldim() const {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (N()==0)
+        DUNE_THROW(ISTLError, "Can't compute coldim() when there are no rows!");
+#endif
+      size_type dim = 0;
+      for (int i=0; i<data_[0].size(); i++)
+        dim += data_[0][i].coldim();
+
+      return dim;
+    }
+
+    /** \brief The number of scalar rows */
+    size_type rowdim(size_type r) const {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (r<0 || r>=N())
+        DUNE_THROW(ISTLError, "Rowdim for nonexisting row " << r << " requested!");
+      if (M()==0)
+        DUNE_THROW(ISTLError, "Can't compute rowdim() when there are no columns!");
+#endif
+      return data_[r][0].rowdim();
+    }
+
+    /** \brief The number of scalar columns */
+    size_type coldim(size_type c) const {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (c<0 || c>=M())
+        DUNE_THROW(ISTLError, "Coldim for nonexisting column " << c << " requested!");
+      if (N()==0)
+        DUNE_THROW(ISTLError, "Can't compute coldim() when there are no rows!");
+#endif
+      return data_[0][c].coldim();
+    }
+
     /** \brief Multiplication with a scalar */
     Matrix<T> operator*=(const T& scalar) {
-      for (int row=0; row<rows_; row++)
+      for (int row=0; row<data_.size(); row++)
         for (int col=0; col<cols_; col++)
           (*this)[row][col] *= scalar;
 
@@ -167,7 +283,7 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
 #endif
 
-      for (int i=0; i<rows_; i++) {
+      for (int i=0; i<data_.size(); i++) {
 
         for (int j=0; j<cols_; j++)
           (*this)[i][j].umv(x[j], y[i]);
@@ -176,27 +292,30 @@ namespace Dune {
 
     }
 
-  protected:
-    std::vector<T> data;
+    /** \brief \f$ y += \alpha A x \f$ */
+    template <class X, class Y>
+    void usmv(const field_type& alpha, const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+#endif
 
-    int rows_;
+      for (int i=0; i<data_.size(); i++) {
+
+        for (int j=0; j<cols_; j++)
+          (*this)[i][j].usmv(alpha, x[j], y[i]);
+
+      }
+
+    }
+
+  protected:
+
+    BlockVector<row_type> data_;
 
     int cols_;
   };
-
-  //! Send Matrix to an output stream
-  template<class T>
-  std::ostream& operator<< (std::ostream& s, const Matrix<T>& m)
-  {
-    for (int row=0; row<m.N(); row++) {
-      for (int col=0; col<m.M(); col++)
-        s << m[row][col] << "  ";
-
-      s << std::endl;
-    }
-
-    return s;
-  }
 
 } // end namespace Dune
 
