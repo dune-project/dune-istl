@@ -289,7 +289,7 @@ namespace Dune {
      *
      * @param x The first vector of the product.
      * @param y The second vector of the product.
-     * @param res Reference to store the result in.
+     * @param result Reference to store the result in.
      */
     template<class T1, class T2>
     void dot (const T1& x, const T1& y, T2& result) const

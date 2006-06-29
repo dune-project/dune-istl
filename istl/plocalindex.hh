@@ -26,8 +26,8 @@ namespace Dune
 
   /**
    * @brief Print the local index to a stream.
-   * @param ostream os The output stream to print to.
-   * @apram index The index to print.
+   * @param os The output stream to print to.
+   * @param index The index to print.
    */
   template<class T>
   std::ostream& operator<<(std::ostream& os, const ParallelLocalIndex<T>& index)

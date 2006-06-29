@@ -180,7 +180,7 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-    //! \briefe The type of the communication object.
+    //! \brief The type of the communication object.
     typedef C communication_type;
 
     // define the category
@@ -195,7 +195,7 @@ namespace Dune {
        \param A The matrix to operate on.
        \param n The number of iterations to perform.
        \param w The relaxation factor.
-       \param com The communication object for syncing overlap and copy
+       \param c The communication object for syncing overlap and copy
      * data points. (E.~g. OwnerOverlapCommunication )
      */
     ParSSOR (const matrix_type& A, int n, field_type w, const communication_type& c)
@@ -267,7 +267,7 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-    //! \briefe The type of the communication object.
+    //! \brief The type of the communication object.
     typedef C communication_type;
 
     // define the category

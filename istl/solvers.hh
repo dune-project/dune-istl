@@ -188,7 +188,7 @@ namespace Dune {
         the operator.
         \param maxit The maximum number of iteration steps allowed when applying
         the operator.
-        \pram verbose The verbosity level.
+        \param verbose The verbosity level.
 
         Verbose levels are:
         <ul>
