@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <algorithm>
 #include <vector>
+#include <cassert>
 #include <dune/common/typetraits.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/istl/istlexception.hh>
@@ -414,8 +415,8 @@ namespace Dune
        * @param target The target vertex of the edge we search for.
        * @return The edge we found.
        */
-      const EdgeDescriptor findEdge(const VertexDescriptor& source,
-                                    const VertexDescriptor& target) const;
+      EdgeDescriptor findEdge(const VertexDescriptor& source,
+                              const VertexDescriptor& target) const;
 
     private:
       /** @brief The matrix we are the graph for. */
@@ -1465,7 +1466,7 @@ namespace Dune
     }
 
     template<class M>
-    const typename MatrixGraph<M>::EdgeDescriptor
+    typename MatrixGraph<M>::EdgeDescriptor
     MatrixGraph<M>::findEdge(const VertexDescriptor& source,
                              const VertexDescriptor& target) const
     {
