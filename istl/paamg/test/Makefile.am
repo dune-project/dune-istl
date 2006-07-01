@@ -1,9 +1,13 @@
 # $Id$
 
+RUNNERS = run-galerkin run-hierarchy run-amg
+
+EXTRA_DIST = $(RUNNERS)
+
 if MPI
   MPITESTS =
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest
-  TESTRUNS = run-galerkin run-hierarchy run-amg
+  TESTRUNS = $(RUNNERS)
 endif
 
 NORMALTESTS = amgtest graphtest $(MPITESTS)

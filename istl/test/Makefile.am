@@ -1,9 +1,12 @@
 # $Id$
 
+RUNNERS = run-indices run-syncer run-vectorcommtest
+EXTRA_DIST = $(RUNNERS)
+
 if MPI
   INDEXPROG = indicestest syncertest vectorcommtest
   SELECTPROG = selectiontest
-  INDEXRUN = run-indices run-syncer run-vectorcommtest
+  INDEXRUN = $(RUNNERS)
 endif
 
 # which tests where program to build and run are equal

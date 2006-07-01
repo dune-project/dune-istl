@@ -2,6 +2,8 @@
 
 SUBDIRS = doxygen layout comm
 
+TEXSOURCES = istl.tex istl.bib
+EXTRA_DIST = $(TEXSOURCES)
 if BUILD_DOCS
   DOCS = istl.pdf istl.ps
 endif

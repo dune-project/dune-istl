@@ -1,5 +1,7 @@
 # $Id$
 
+SUBDIRS = figures
+
 # only build these programs if an MPI-implementation was found
 if MPI
   MPIPROGRAMS = indexset
@@ -26,7 +28,7 @@ indexset_LDADD = $(MPI_LDFLAGS)
 
 comm_DATA = $(DOCS) #$(indexset_SOURCES)
 
-
+EXTRA_DIST = communication.tex
 communication.dvi : communication.tex buildindexset.hh reverse.hh
 
 
