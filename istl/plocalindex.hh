@@ -135,7 +135,7 @@ namespace Dune
      * @brief Get the state.
      * @return The state.
      */
-    inline const LocalIndexState state() const;
+    inline LocalIndexState state() const;
 
     /**
      * @brief Set the state.
@@ -237,7 +237,7 @@ namespace Dune
   }
 
   template<class T>
-  inline const LocalIndexState ParallelLocalIndex<T>::state() const
+  inline LocalIndexState ParallelLocalIndex<T>::state() const
   {
     return LocalIndexState(state_);
   }
