@@ -7,7 +7,7 @@ AC_CONFIG_SRCDIR([istl/allocator.hh])
 AM_CONFIG_HEADER([config.h])
 
 # check all dune-module stuff
-DUNE_CHECK_ALL_M([dunecommon])
+DUNE_CHECK_ALL_M([dune-common])
 
 # preset variable to path such that #include <dune/...> works
 AC_SUBST([AM_CPPFLAGS], '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
