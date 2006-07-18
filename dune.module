@@ -1,2 +1,2 @@
-Module: dune_istl
-Depends: dune_common
+Module: dune-istl
+Depends: dune-common

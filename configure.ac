@@ -9,10 +9,6 @@ AM_CONFIG_HEADER([config.h])
 # check all dune-module stuff
 DUNE_CHECK_ALL_M([dunecommon])
 
-if test x$HAVE_DUNECOMMON != x1 ; then
-  AC_MSG_ERROR([Can't work without the dune-common module. Maybe you have to supply your dune-common directory as --with-dunecommon=dir])
-fi
-
 # preset variable to path such that #include <dune/...> works
 AC_SUBST([AM_CPPFLAGS], '$(DUNE_CPPFLAGS) -I$(top_srcdir)')
 AC_SUBST([AM_LDFLAGS], '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
