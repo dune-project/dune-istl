@@ -675,11 +675,11 @@ namespace Dune {
         if (std::abs(rho) <= EPSILON)
           DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - rho "
                      << rho << " <= EPSILON " << EPSILON
-                     << " after " << res.iterations << " iterations");
+                     << " after " << it << " iterations");
         if (std::abs(omega) <= EPSILON)
           DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - omega "
                      << omega << " <= EPSILON " << EPSILON
-                     << " after " << res.iterations << " iterations");
+                     << " after " << it << " iterations");
 
 
         if (it==0)
