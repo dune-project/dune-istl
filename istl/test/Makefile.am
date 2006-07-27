@@ -1,7 +1,5 @@
 # $Id$
 
-EXTRA_DIST = perhapsstartmpi perhapsstopmpi
-
 if MPI
   INDEXPROG = indicestest syncertest vectorcommtest
   SELECTPROG = selectiontest
@@ -12,7 +10,7 @@ endif
 NORMALTESTS = matrixutilstest bvectortest indexsettest $(SELECTPROG)
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) perhapsstartmpi $(INDEXRUN) perhapsstopmpi
+TESTS = $(NORMALTESTS) $(DUNE_COMMON_ROOT)/bin/perhapsstartmpi $(INDEXRUN) $(DUNE_COMMON_ROOT)/bin/perhapsstopmpi
 
 # programs just to build when "make check" is used
 check_PROGRAMS = $(NORMALTESTS) $(INDEXPROG)
