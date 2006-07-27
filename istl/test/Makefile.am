@@ -1,19 +1,18 @@
 # $Id$
 
-RUNNERS = run-indices run-syncer run-vectorcommtest
-EXTRA_DIST = $(RUNNERS)
+EXTRA_DIST = perhapsstartmpi perhapsstopmpi
 
 if MPI
   INDEXPROG = indicestest syncertest vectorcommtest
   SELECTPROG = selectiontest
-  INDEXRUN = $(RUNNERS)
+  INDEXRUN = $(INDEXPROG)
 endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest bvectortest indexsettest $(SELECTPROG)
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(INDEXRUN)
+TESTS = $(NORMALTESTS) perhapsstartmpi $(INDEXRUN) perhapsstopmpi
 
 # programs just to build when "make check" is used
 check_PROGRAMS = $(NORMALTESTS) $(INDEXPROG)
