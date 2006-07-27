@@ -1,19 +1,15 @@
 # $Id$
 
-RUNNERS = run-galerkin run-hierarchy run-amg
-
-EXTRA_DIST = $(RUNNERS)
-
 if MPI
   MPITESTS =
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest
-  TESTRUNS = $(RUNNERS)
 endif
 
 NORMALTESTS = amgtest graphtest $(MPITESTS)
 
 # which tests to run
-TESTS = $(NORMALTESTS) $(TESTRUNS)
+TESTS = $(NORMALTESTS) $(DUNE_COMMON_ROOT)/bin/perhapsstartmpi $(TESTPROGS) \
+	$(DUNE_COMMON_ROOT)/bin/perhapsstopmpi
 
 # programs just to build when "make check" is used
 check_PROGRAMS = $(TESTPROGS) $(NORMALTESTS)
