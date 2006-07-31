@@ -176,7 +176,6 @@ namespace Dune
 
     /**
      * @brief Creates a new DatatypeCommunicator.
-     * @param remote The remote index set to use.
      */
     DatatypeCommunicator();
 
@@ -452,7 +451,7 @@ namespace Dune
      * @warning The source and target data have to have the same layout as the ones given
      * to the build function in case of variable size values at the indices.
      * @param source The values will be copied from here to the send buffers.
-     * @param target The received values will be copied to here.
+     * @param dest The received values will be copied to here.
      */
     template<class GatherScatter, class Data>
     void forward(const Data& source, Data& dest);
@@ -482,7 +481,7 @@ namespace Dune
      * subindex of the block at index.
      * @warning The source and target data have to have the same layout as the ones given
      * to the build function in case of variable size values at the indices.
-     * @param target The values will be copied from here to the send buffers.
+     * @param dest The values will be copied from here to the send buffers.
      * @param source The received values will be copied to here.
      */
     template<class GatherScatter, class Data>

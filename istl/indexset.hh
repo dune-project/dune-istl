@@ -458,7 +458,7 @@ namespace Dune
   /**
    * @brief Print an index set.
    * @param os The outputstream to print to.
-   * @param pair The index set to print.
+   * @param indexSet The index set to print.
    */
   template<class TG, class TL, int N>
   std::ostream& operator<<(std::ostream& os, const ParallelIndexSet<TG,TL,N>& indexSet);
