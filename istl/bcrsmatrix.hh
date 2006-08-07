@@ -1302,8 +1302,17 @@ namespace Dune {
           // only compute blocksizes we don't already have
           if (coldims[col.index()]==-1)
             coldims[col.index()] = col->coldim();
-      assert(std::find(coldims.begin(),coldims.end(),-1)==coldims.end());
-      return std::accumulate(coldims.begin(),coldims.end(),0);
+
+      //assert(std::find(coldims.begin(),coldims.end(),-1)==coldims.end());
+      //return std::accumulate(coldims.begin(),coldims.end(),0);
+
+      size_type sum;
+      for (typename std::vector<size_type>::iterator it=coldims.begin(); it!=coldims.end(); ++it)
+        // skip rows for which no coldim could be determined
+        if ((*it)>=0)
+          sum += *it;
+
+      return sum;
     }
 
     //===== query
