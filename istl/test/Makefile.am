@@ -7,7 +7,7 @@ if MPI
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = matrixutilstest bvectortest indexsettest $(SELECTPROG)
+NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest $(SELECTPROG)
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(DUNE_COMMON_ROOT)/bin/perhapsstartmpi $(INDEXRUN) $(DUNE_COMMON_ROOT)/bin/perhapsstopmpi
@@ -22,6 +22,8 @@ bvectortest_SOURCES = bvectortest.cc
 
 matrixutilstest_SOURCES = matrixutilstest.cc laplacian.hh
 #matrixutilstest_DEPENDENCIES = $(LOCAL_LIBS)
+
+matrixtest_SOURCES = matrixtest.cc
 
 indicestest_SOURCES = indicestest.cc
 indicestest_CXXFLAGS = $(MPI_CPPFLAGS)
