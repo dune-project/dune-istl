@@ -61,7 +61,7 @@ namespace Dune {
        system. It may. e.g., scale the system, allocate memory or
        compute a (I)LU decomposition.
        Note: The ILU decomposition could also be computed in the constructor
-       or with a seperate method of the derived method if several
+       or with a separate method of the derived method if several
        linear systems with the same matrix are to be solved.
 
        \param x The left hand side of the equation.

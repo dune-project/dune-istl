@@ -1340,7 +1340,7 @@ namespace Dune {
     size_type n;       // number of rows
     size_type m;       // number of columns
     size_type nnz;     // number of nonzeros allocated in the a and j array below
-    // zero means that memory is allocated seperately for each row.
+    // zero means that memory is allocated separately for each row.
 
     // the rows are dynamically allocated
     row_type* r;     // [n] the individual rows having pointers into a,j arrays
