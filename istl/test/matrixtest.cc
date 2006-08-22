@@ -3,7 +3,7 @@
 /** \file
     \brief Unit tests for the different dynamic matrices provided by ISTL
  */
-
+#include "config.h"
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
