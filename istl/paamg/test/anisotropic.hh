@@ -163,7 +163,7 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<double,BS> >& lhs,
         else
           y = ((double) j)*h;
 
-        lhs[j*N+i]=rhs[j*N+i]=0;x*y;
+        lhs[j*N+i]=rhs[j*N+i]=x*y;
       }
 }
 
