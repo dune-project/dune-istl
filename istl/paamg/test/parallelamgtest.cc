@@ -65,24 +65,11 @@ void MPI_err_handler(MPI_Comm *comm, int *err_code, ...){
   throw MPIError(s, *err_code);
 }
 
-int main(int argc, char** argv)
+template<int BS>
+void testAmg(int N, int coarsenTarget)
 {
-  MPI_Init(&argc, &argv);
-  MPI_Errhandler handler;
-  MPI_Errhandler_create(MPI_err_handler, &handler);
-  MPI_Errhandler_set(MPI_COMM_WORLD, handler);
-
-  const int BS=1;
-  int N=250;
-  int coarsenTarget=1200;
-
-  if(argc>1)
-    N = atoi(argv[1]);
-
-  if(argc>2)
-    coarsenTarget = atoi(argv[2]);
-
-  std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<std::endl;
+  std::cout<<"==================================================="<<std::endl;
+  std::cout<<"BS="<<BS<<" N="<<N<<" coarsenTarget="<<coarsenTarget<<std::endl;
 
   int procs, rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -137,7 +124,7 @@ int main(int argc, char** argv)
   typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   typedef Dune::BlockPreconditioner<Vector,Vector,Communication,Smoother> ParSmoother;
   //typedef Dune::ParSSOR<BCRSMat,Vector,Vector,Communication> ParSmoother;
-  typedef Dune::Amg::SmootherTraits<ParSmoother>::Arguments SmootherArgs;
+  typedef typename Dune::Amg::SmootherTraits<ParSmoother>::Arguments SmootherArgs;
   //typedef Dune::Amg::BlockPreconditionerConstructionArgs<Smoother,Communication> SmootherArgs;
 
   Dune::OverlappingSchwarzScalarProduct<Vector,Communication> sp(comm);
@@ -167,7 +154,7 @@ int main(int argc, char** argv)
   Dune::CGSolver<Vector> amgCG(fop, sp, amg, 10e-8, 300, (rank==0) ? 2 : 0);
   watch.reset();
 
-  //amgCG.apply(x,b,r);
+  amgCG.apply(x,b,r);
   MPI_Barrier(MPI_COMM_WORLD);
 
   double solvetime = watch.elapsed();
@@ -181,21 +168,63 @@ int main(int argc, char** argv)
     std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
     std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
   }
+  /*
+     Smoother ssm(fop.getmat(),1,1);
+     ParSmoother sm(ssm,comm);
+     //DoubleStepPreconditioner<ParSmoother> dsp(sm);
+     Dune::LoopSolver<Vector> cg(fop, sp, sm, 10e-08, 30, (rank==0)?2:0);
 
-  Smoother ssm(fop.getmat(),1,1);
-  ParSmoother sm(ssm,comm);
-  //DoubleStepPreconditioner<ParSmoother> dsp(sm);
-  Dune::LoopSolver<Vector> cg(fop, sp, sm, 10e-08, 30, (rank==0) ? 2 : 0);
+     watch.reset();
 
-  watch.reset();
+     cg.apply(x1,b1,r1);
 
-  cg.apply(x1,b1,r1);
-
-  if(!r1.converged && rank==0)
-    std::cerr<<" Cg solver did not converge!"<<std::endl;
-
+     if(!r1.converged && rank==0)
+     std::cerr<<" Cg solver did not converge!"<<std::endl;
+   */
   //std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
+}
 
+template<int BSStart, int BSEnd, int BSStep=1>
+struct AMGTester
+{
+  static void test(int N, int coarsenTarget)
+  {
+    testAmg<BSStart>(N, coarsenTarget);
+    const int next = (BSStart+BSStep>BSEnd) ? BSEnd : BSStart+BSStep;
+    AMGTester<next,BSEnd,BSStep>::test(N, coarsenTarget);
+  }
+}
+;
+
+template<int BSStart,int BSStep>
+struct AMGTester<BSStart,BSStart,BSStep>
+{
+  static void test(int N, int coarsenTarget)
+  {
+    testAmg<BSStart>(N, coarsenTarget);
+  }
+};
+
+
+int main(int argc, char** argv)
+{
+  MPI_Init(&argc, &argv);
+  MPI_Errhandler handler;
+  MPI_Errhandler_create(MPI_err_handler, &handler);
+  MPI_Errhandler_set(MPI_COMM_WORLD, handler);
+
+  int N=1000;
+
+  int coarsenTarget=1200;
+
+  if(argc>1)
+    N = atoi(argv[1]);
+
+  if(argc>2)
+    coarsenTarget = atoi(argv[2]);
+
+  AMGTester<1,5>::test(N, coarsenTarget);
+  AMGTester<10,10>::test(N, coarsenTarget);
 
   MPI_Finalize();
 }
