@@ -223,8 +223,9 @@ int main(int argc, char** argv)
   if(argc>2)
     coarsenTarget = atoi(argv[2]);
 
-  AMGTester<1,5>::test(N, coarsenTarget);
-  AMGTester<10,10>::test(N, coarsenTarget);
+  AMGTester<1,1>::test(N, coarsenTarget);
+  //AMGTester<1,5>::test(N, coarsenTarget);
+  //  AMGTester<10,10>::test(N, coarsenTarget);
 
   MPI_Finalize();
 }
