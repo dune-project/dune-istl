@@ -3,6 +3,7 @@
 #ifndef DUNE_ALLOCATOR_HH
 #define DUNE_ALLOCATOR_HH
 
+#include <cstddef>
 #include <cstdlib>
 
 
