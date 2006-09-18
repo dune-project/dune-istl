@@ -824,8 +824,8 @@ namespace Dune {
       size_type total=0;
       for (size_type i=0; i<n; i++)
       {
-        if (r[i].getsize()<=0)
-          DUNE_THROW(ISTLError,"rowsize must be positive");
+        if (r[i].getsize()<0)
+          DUNE_THROW(ISTLError,"rowsize must be nonnegative");
         total += r[i].getsize();
       }
 
