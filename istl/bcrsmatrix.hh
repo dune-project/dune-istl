@@ -1303,10 +1303,7 @@ namespace Dune {
           if (coldims[col.index()]==-1)
             coldims[col.index()] = col->coldim();
 
-      //assert(std::find(coldims.begin(),coldims.end(),-1)==coldims.end());
-      //return std::accumulate(coldims.begin(),coldims.end(),0);
-
-      size_type sum;
+      size_type sum = 0;
       for (typename std::vector<size_type>::iterator it=coldims.begin(); it!=coldims.end(); ++it)
         // skip rows for which no coldim could be determined
         if ((*it)>=0)
