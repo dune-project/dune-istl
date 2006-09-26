@@ -64,6 +64,19 @@ namespace Dune {
   class BCRSMatrix
 #endif
   {
+  private:
+    enum BuildStage {
+      /** @brief Matrix id not built at all. */
+      notbuilt=0,
+      /** @brief The row sizes of the matrix are known.
+       *
+       * Only used in random mode.
+       */
+      rowSizesBuilt=1,
+      /** @brief The matrix structure is built fully.*/
+      built=2
+    };
+
   public:
 
     //===== type definitions and constants
@@ -135,7 +148,7 @@ namespace Dune {
     const row_type& operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (!ready) DUNE_THROW(ISTLError,"row not initialized yet");
+      if (built!=ready) DUNE_THROW(ISTLError,"row not initialized yet");
       if (i>=n) DUNE_THROW(ISTLError,"index out of range");
 #endif
       return r[i];
@@ -385,7 +398,7 @@ namespace Dune {
     {
       // the state
       build_mode = unknown;
-      ready = false;
+      ready = notbuilt;
 
       // store parameters
       n = 0;
@@ -405,7 +418,7 @@ namespace Dune {
     {
       // the state
       build_mode = bm;
-      ready = false;
+      ready = notbuilt;
 
       // store parameters
       n = _n;
@@ -440,7 +453,7 @@ namespace Dune {
     {
       // the state
       build_mode = bm;
-      ready = false;
+      ready = notbuilt;
 
       // store parameters
       n = _n;
@@ -524,7 +537,7 @@ namespace Dune {
 
       // finish off
       build_mode = row_wise;     // dummy
-      ready = true;
+      ready = built;
     }
 
     //! destructor
@@ -639,7 +652,7 @@ namespace Dune {
 
       // finish off
       build_mode = row_wise;     // dummy
-      ready = true;
+      ready =  built;
       return *this;
     }
 
@@ -726,7 +739,7 @@ namespace Dune {
         // check if this was last row
         if (i==Mat.n)
         {
-          Mat.ready = true;
+          Mat.ready = built;
         }
         // done
         return *this;
@@ -797,7 +810,7 @@ namespace Dune {
       if (build_mode!=random)
         DUNE_THROW(ISTLError,"requires random build mode");
       if (ready)
-        DUNE_THROW(ISTLError,"matrix already built up");
+        DUNE_THROW(ISTLError,"matrix row sizes already built up");
 
       r[i].setsize(s);
     }
@@ -808,7 +821,7 @@ namespace Dune {
       if (build_mode!=random)
         DUNE_THROW(ISTLError,"requires random build mode");
       if (ready)
-        DUNE_THROW(ISTLError,"matrix already built up");
+        DUNE_THROW(ISTLError,"matrix row sizes already built up");
 
       r[i].setsize(r[i].getsize()+1);
     }
@@ -819,7 +832,7 @@ namespace Dune {
       if (build_mode!=random)
         DUNE_THROW(ISTLError,"requires random build mode");
       if (ready)
-        DUNE_THROW(ISTLError,"matrix already built up");
+        DUNE_THROW(ISTLError,"matrix row sizes already built up");
 
       // compute total size, check positivity
       size_type total=0;
@@ -873,6 +886,7 @@ namespace Dune {
       // this indicates an unused entry
       for (size_type k=0; k<nnz; k++)
         j[k] = m;
+      ready = rowSizesBuilt;
     }
 
     //! add index (row,col) to the matrix
@@ -880,8 +894,10 @@ namespace Dune {
     {
       if (build_mode!=random)
         DUNE_THROW(ISTLError,"requires random build mode");
-      if (ready)
+      if (ready==built)
         DUNE_THROW(ISTLError,"matrix already built up");
+      if (ready==notbuilt)
+        DUNE_THROW(ISTLError,"matrix row sizes not built up yet");
 
       if (col >= m)
         DUNE_THROW(ISTLError,"column index exceeds matrix size");
@@ -912,8 +928,10 @@ namespace Dune {
     {
       if (build_mode!=random)
         DUNE_THROW(ISTLError,"requires random build mode");
-      if (ready)
+      if (ready==built)
         DUNE_THROW(ISTLError,"matrix already built up");
+      if (ready==notbuilt)
+        DUNE_THROW(ISTLError,"row sizes are not built up yet");
 
       // check if there are undefined indices
       RowIterator endi=end();
@@ -935,8 +953,8 @@ namespace Dune {
         }
       }
 
-      // if not, set matrix to ready
-      ready = true;
+      // if not, set matrix to built
+      ready = built;
     }
 
     //===== vector space arithmetic
@@ -1339,7 +1357,7 @@ namespace Dune {
   private:
     // state information
     BuildMode build_mode;     // row wise or whole matrix
-    bool ready;               // true if matrix is ready to use
+    BuildStage ready;               // indicate the stage the matrix building is in
 
     // size of the matrix
     size_type n;       // number of rows
