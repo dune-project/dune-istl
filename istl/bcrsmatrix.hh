@@ -14,6 +14,7 @@
 #include "istlexception.hh"
 #include "allocator.hh"
 #include "bvector.hh"
+#include <dune/common/stdstreams.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -919,12 +920,19 @@ namespace Dune {
       for (RowIterator i=begin(); i!=endi; ++i)
       {
         ColIterator endj = (*i).end();
-        for (ColIterator j=(*i).begin(); j!=endj; ++j)
-          if (j.index()<0 || j.index()>=m)
+        for (ColIterator j=(*i).begin(); j!=endj; ++j) {
+          if (j.index()<0)
           {
             std::cout << "j[" << j.offset() << "]=" << j.index() << std::endl;
             DUNE_THROW(ISTLError,"undefined index detected");
           }
+          if (j.index()>=m) {
+            dwarn << "WARNING: size of row "<< i.index()<<" is "<<j.offset()<<". But was specified as being "<< (*i).end().offset()
+                  <<". This means you are wasting valuable space and creating additional cache misses!"<<std::endl;
+            r[i.index()].setsize(j.offset());
+            break;
+          }
+        }
       }
 
       // if not, set matrix to ready
