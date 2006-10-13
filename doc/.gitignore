@@ -11,3 +11,4 @@ semantic.cache
 *.bbl
 *.blg
 *.log
+*.dvi

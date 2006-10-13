@@ -9,6 +9,7 @@
 \usepackage{color}
 \usepackage{hyperref}
 \usepackage[dvips]{epsfig}
+\usepackage{subfigure}
 \usepackage[dvips]{graphicx}
 \usepackage[a4paper,body={148mm,240mm,nohead}]{geometry}
 \usepackage[ansinew]{inputenc}
@@ -46,13 +47,13 @@
 \title{Iterative Solver Template Library\thanks{Part of the
     Distributed and Unified Numerics Environment (DUNE) which is
     available from the site
-    \texttt{http://www.dune.uni-hd.de/}}}
+    \texttt{http://www.dune-project.org/}}}
 
 \author{%
-Peter Bastian\\
-Interdisziplinäres Zentrum für Wissenschaftliches Rechnen,\\
-Universität Heidelberg, Im Neuenheimer Feld 368, D-69120 Heidelberg, \\
-email: \texttt{Peter.Bastian@iwr.uni-heidelberg.de}}
+Peter Bastian, Markus Blatt\\
+Institut f\"ur parallele und verteilte Systeme (IPVS),\\
+Universität Stuttgart, Universit\"atsstr. 38, D-70569 Stuttgart, \\
+email: \texttt{Peter.Bastian@ipvs.uni-stuttgart.de}, \texttt{Markus.Blatt@ipvs.uni-stuttgart.de}}
 
 \date{\today}
 
@@ -118,14 +119,21 @@ structure. Here are some examples:
 \begin{itemize}
 \item Certain discretizations for systems of PDEs or higher order
   methods result in matrices where individual entries are replaced by
-  small blocks, say of size $2\times 2$ or $4\times 4$. Straightforward
+  small blocks, say of size $2\times 2$ or $4\times 4$, see
+  Fig. \ref{fig:festructure}(a).  Dense blocks of different sizes
+  e.~g. arise in $hp$ Discontinuous Galerkin discretization methods,
+  see Fig. \ref{fig:festructure}(b). Straightforward
   iterative methods solve these small blocks exactly, see
   e.~g.~\cite{BH99}.
 \item Equation-wise ordering for systems results in matrices having an
   $n\times n$ block structure where $n$ corresponds to the number of
-  variables in the PDE and the blocks themselves are large. As an
+  variables in the PDE and the blocks themselves are large, see Fig.
+  \ref{fig:festructure}(d). As an
   example we mention the Stokes system. Iterative solvers such as the
   SIMPLE or Uzawa algorithm use this structure.
+\item Other discretizations, e.~g. those of reaction/diffusion
+  systems,  produce sparse matrices whose blocks are
+  sparse matrices of small dense blocks, see fig. \ref{fig:festructure}(c).
 \item Other structures that can be exploited are the level structure
   arising from hierarchic meshes, a p-hierarchic
   structure (e.~g.~decomposition in linear and quadratic part),
@@ -133,6 +141,13 @@ structure. Here are some examples:
   structure where unknowns are associated with nodes, edges, faces or
   elements of a mesh.
 \end{itemize}
+\begin{figure}[htb]
+  \centering
+%  \epsfig[width=\textwidth]{./blockstructure.eps}
+  \epsfig{file=./blockstructure.eps, scale=0.485}%, width=0.8\textwidth}
+  \caption{Block structure of matrices arising in the finite element method}
+  \label{fig:festructure}
+\end{figure}
 It is very important to note that this structure is typically known at
 compile-time and this knowledge should be exploited to produce
 efficient code. Moreover, block structuredness is recursive,
@@ -214,6 +229,7 @@ can be used to define vectors of variable size where each block in turn
 consists of two \lstinline!double! values.
 
 \paragraph{VariableBlockVector}
+\label{class:varblockvec}
 
 The \lstinline!template<class B> VariableBlockVector<B>! class
 can be used to construct a vector space having a two-level
@@ -342,16 +358,83 @@ structure can be generated simply with the copy constructor.
 
 \section{Matrices}
 
+For a matrix representing a linear map (or homomorphism) $A: V \mapsto
+W$ from vector space $V$ to vector space $W$ the recursive block
+structure of the matrix rows and columns immediatly follows
+ from the recursive block structure of the vectors representing
+the domain and range of the mapping, respectively. As a natural
+consequence we designed the following matrix classes:
+
 \subsection{Linear mappings}
 
 \subsection{Matrix classes}
 
+\paragraph{FieldMatrix.}
+the \lstinline!template<class K, int n> FieldMatrix<K,n,m>! class
+template is used to represent a linear map $M: V_1 \to V_2$ where
+$V_1=\K^n$ and $V_2=\K^m$ are vector spaces over the field given by
+template parameter \lstinline!K!. \lstinline!K! may be \lstinline!double!, \lstinline!float!,
+\lstinline!complex<double>! or any other numeric type.
+The dimensions of the two vector spaces  given by the template parameters
+\lstinline!n! and \lstinline!m! are assumed to be small. The matrix is
+stored as a dense matrix.
+Example: Use \lstinline!FieldMatrix<double,2,3>! to define a linear
+map from a vector space over doubles with dimension $2$ to one with
+dimension $3$.
+
+\paragraph{BCRSMatrix.}
+The \lstinline!template<class B> BCRSMatrix! class template represents
+a sparse matrix where the ``block type'' $B$ is given by the template
+parameter \lstinline!B!. \lstinline!B! may be any other class
+implementing the matrix interface.  The matrix class uses
+a compressed row storage scheme.
+
+\paragraph{VariableBCRSMatrix.}
+
+The \lstinline!template<class B> VariableBCRSMatrix<B>! class can be
+used to construct a linear map between two vector spaces having a two-level
+block structure $V=B^{n_1}\times B^{n_2}\times\ldots \times B^{n_m}$
+and $W=B^{m_1}\times B^{m_2}\times\ldots \times B^{m_k}$. Both are
+represented by the 
+\lstinline!template<class B> VariableBlockVector<B>! class,
+see~\ref{class:varblockvec}. This is not implemented yet.
+
 \subsection[Matrix containers]{Matrices are containers of containers}
+
+Matrices are containers over the matrix rows. The matrix rows are
+containers over the type  \lstinline!K! or
+\lstinline!B! in the sense of the Standard Template Library. Random
+access is provided via \lstinline!operator[](int i)! on the matrix to
+the matrix rows and on the matrix rows to the matrix columns (if
+present). Note that except for \lstinline!FieldMatrix!, which is a
+dense matrix,  
+\lstinline!operator[]! on the matrix row triggers a binary search for
+the column.
+
+For sequential access use 
+\lstinline!RowIterator! and \lstinline!ColIterator! for read/write
+access or  
+\lstinline!ConstRowIterator! and \lstinline!ConstColIterator! for
+readonly access to rows and columns, respectively. Here is a small example 
+that prints the sparsity pattern of a matrix of type \lstinline!M!:
+
+\begin{lstlisting}{}
+typedef typename M::ConstRowIterator RowI;
+typedef typename M::ConstColIterator ColI;
+for(RowI row = matrix.begin(); row != matrix.end(); ++row){
+  std::cout << "row "<<row.index()<<": "
+  for(ColI col = row->begin(); col != row->end(); ++col)
+    std::cout<<col.index()<<" ";
+  std::cout<<std::endl;
+}
+\end{lstlisting}
 
 \subsection{Precision control}
 
 \subsection{Operations}
 
+As with the vector interface a uniform naming convention enables
+generic algorithms. See the following table for for a complete list of names.
 \begin{figure}
 \begin{center}
 \begin{tabular}{|l|l|l|}
@@ -428,9 +511,37 @@ structure can be generated simply with the copy constructor.
 
 \subsection{Block recursion}
 
+The basic feature of the concept described by the matrix and vector
+classes, is their recursive block structure. Let $A$ be a
+matrix with blocklevel $l>1$ then each block $A_{ij}$ can be treated
+as (or actually is) a matrix itself. This recursiveness can be
+exploited in generic algorithm using the defined
+\lstinline!block_level! of the matrix and vector classes.
+
+Most preconditioner can be modified to honor this recursive
+structure for a specific number of block levels $k$. They then work as
+normal on the offdiagonal blocks, treating them as traditional matrix
+entries. For the diagonal values a special procedure applies:  If
+$k>1$ the diagonal is treated as a matrix itself and the preconditioner
+is applied recursively on the matrix representing the diagonal value
+$D=A_{ii}$ with blocklevel $k-1$. For the case that $k=1$ the diagonal
+is treated as a 
+matrix entry resulting in a linear solve or an identity operation
+depending on the algorithm. 
+
 \subsection{Triangular solves}
 
-\begin{figure}
+In the formulation of most iterative methods upper and lower
+triangular and diagonal solves play an important role. 
+ISTL provides block recursive versions of these generic 
+building blocks using template metaprogramming, see Table
+\ref{Tab:TriangularSolves} for a listing of these methods. In the table matrix
+$A$ is decomposed into $A=L+D+U$, where $L$ is a strictly lower block
+triangular, $D$ is a block diagonal and $U$ is a strictly upper block
+triangular matrix. An arbitrary block recursion level can be given by an
+additional parameter. If this parameter is omitted it defaults to $1$.
+
+\begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|l|}
 \hline
@@ -458,12 +569,17 @@ structure can be generated simply with the copy constructor.
   strictly lower block triangular, $D$ is block diagonal and $U$ is
   strictly upper block triangular. Standard is one level of block
   recursion, arbitrary level can be given by additional parameter.}
-\label{Fig:TriangularSolves}
-\end{figure}
+\label{Tab:TriangularSolves}
+\end{table}
 
 \subsection{Simple iterative solvers}
 
-\begin{figure}
+Using the same block recursive template metaprogramming technique,
+kernels for the defect formulations of simple iterative solvers are
+available in ISTL. The number of block recursion
+levels can again be given as an additional argument. See
+Table \ref{Tab:IterativeSolvers} for a list of these kernels.
+\begin{table}
 \begin{center}
 \begin{tabular}{|l|l|}
 \hline
@@ -489,12 +605,228 @@ A_{ii}^{-1}\left [
   strictly lower block triangular, $D$ is block diagonal and $U$ is
   strictly upper block triangular. Standard is one level of block
   recursion, arbitrary level can be given by additional parameter.}
-\label{Fig:IterativeSolvers}
-\end{figure}
+\label{Tab:IterativeSolvers}
+\end{table}
 
 \subsection{Sparse LU decomposition}
 
+\section{Solver Interface}
+\label{sec:solver-interface}
+
+The solvers in ISTL do not work on matrices directly. Instead we use
+an abstract Operator concept. Thus we can even model and solve linear
+maps that are not stored as matrices (e.~g. on the fly computed linear
+operators).
+
+\subsection{Operators}
+\label{sec:operators}
+
+
+{\lstset{breaklines=true}
+The base class
+\lstinline!template<class X, class Y> LinearOperator! represents
+linear maps. The 
+template parameter \lstinline!X! is the type of the domain and
+\lstinline!Y! is the type of the range of the operator.  A linear
+operator provides the methods \lstinline!apply(const X& x, Y& y)! and 
+apply \lstinline!applyscaledadd(const X& x, Y& y)! performing the
+operations $y = A(x)$ and $y = y + \alpha A(x)$, respectively.
+The subclass 
+\lstinline!template<class M, class X, class Y> AssembledLinearOperator!
+represents linear operators that have a matrix
+representation. Convertion from any matrix into a linear operator is
+done by the class 
+\lstinline!template<class M, class X, class Y> MatrixAdapter!.
+
+\subsection{Scalarproducts}
+\label{sec:scalarproducts}
+
+For convergence tests and the stopping criteria Krylow methods need to
+compute scalar products and norms on the underlying vector spaces. The
+base class \lstinline!template<class X> Scalarproduct! provides
+methods \lstinline!field_type dot(const X& x, const X&y)! and
+\lstinline!double norm(const X& x)! to calculate these. For
+sequential programs use 
+\lstinline!template<class X> SeqScalarProduct! which simply maps this
+to functions of the vector implementations.
+
+\subsection{Preconditioners}
+\label{sec:preconditioners}
+
+
+The \lstinline!template<class X, class Y> Preconditioner! provides the
+abstract base class for all precondioners in ISTL. The method
+\lstinline!void pre(X& x, Y& b)! has to be called before applying the
+preconditioner. Here \lstinline!x! is the left hand side and
+\lstinline!b! is the right hand side of the operator equation. The
+method may, e.~g. scale the system, allocate memory or compute an (I)LU
+decomposition. The method \lstinline!void apply(X& v, const Y&)!
+applies one step of the preconditioner to the system $A(\vec v)=\vec d$.
+Here \lstinline!b! should contain the current defect and
+\lstinline!v! should be $0$. Upon exit of the method \lstinline!v!
+contains the computed update to
+the current guess, i.~e. $\vec v = M^{-1} \vec
+d$ where $M$ is the approximate inverse of the operator $A$
+characterizing the preconditioner. The method \lstinline!void post(X& x)!
+should be called after all computations to give the precondtioner the
+chance to clean allocated resources. 
+
+See Table \ref{tab:precond} for a list of available
+preconditioner. 
+\begin{table}[htb]
+  \centering
+  \caption{Preconditioners}
+  \label{tab:precond}
+  \begin{tabular}{|l|l|c|c|}
+    \hline
+    \textbf{class} & \textbf{implements}&\textbf{s/p}& \textbf{recursive}\\\hline\hline
+    \lstinline!SeqJac! & Jacobi method& s & x\\
+    \lstinline!SeqSOR! & successive overrelaxation (SOR) & s& x\\
+    \lstinline!SeqSSOR! & symmetric SSOR & s&x\\
+    \lstinline!SeqILU! & incomplete LU decomposition (ILU)& s&\\
+    \lstinline!SeqILUN! & ILU decpmposition of order N &s&\\
+    \lstinline!Pamg::AMG! & algebraic multigrid method &s/p&\\
+    \lstinline!BlockPreconditioner!& Additive overlapping Schwarz&p&\\\hline
+  \end{tabular}
+\end{table}They have the template parameters \lstinline!M!
+representing the type of the matrix they work on, \lstinline!X!
+representing the type of the domain, \lstinline!Y! representing the
+type of the range of the linear system. The block recursive
+preconditioner are marked with ``x'' in the last column. For them the
+recursion depth is specified via an additional template parameter
+\lstinline!int l!. The column labeled ``s/p''
+specifies whether they support {\bf s}equential and/or {\bf p}arallel
+mode.
+
+\subsection{Solvers}
+\label{sec:solvers}
+
+All solvers are subclasses of the abstract base class
+\lstinline!template<class X, class Y> InverseOperator! representing
+the inverse of an operator from the domain of type \lstinline!X! to
+the range of type \lstinline!Y!. The actual solve of the system
+$A(\vec x)=\vec b$ is done in the method 
+\lstinline!void apply(X& x, Y& b, InverseOperatorResult& r)!. In the
+\lstinline!InverseOperatorResult! some statistics about the solution
+process, e.~g. iteration count, achieved defect reduction, etc., are
+stored.
+All solvers only use methods of instances of
+\lstinline!LinearOperator!, \lstinline!ScalarProduct! and
+\lstinline!Preconditioner!. These are provided in the constructor.
+
+See Table \ref{tab:solvers} for a list of available solvers. All
+solvers are template classes with a template parameter \lstinline!X!
+providing them with the vector implementation used.
+\begin{table}[htb]
+  \centering
+  \caption{ISTL Solvers}
+  \label{tab:solvers}
+  \begin{tabular}{|l|l|}
+\hline
+    \textbf{class}&\textbf{implements}\\\hline\hline
+    \lstinline!LoopSolver!& only apply precoditioner multiple time\\
+    \lstinline!GradientSolver!& preconditioned radient method\\
+    \lstinline!CGSolver!&preconditioned conjugate gradient method\\
+    \lstinline!BiCGStab!&preconditioned biconjugate gradient stabilized method\\\hline
+  \end{tabular}
+\end{table}
+\subsection{Parallel Solvers}
+\label{sec:parallelism}
+
+Instead of using parallel data structures (matrices and vectors) that
+(implicitly) know the data distribution and communication patterns
+like in PETSc \cite{petsc-web-page,petsc-user-ref} we decided to
+decouple the parallelization from the data structures used. Basically
+we provide an abstract consistency model on top of our linear
+algebra. This is hidden in the parallel implementations of the interfaces
+of \lstinline!LinearOperator!,
+\lstinline!Scalarproduct! and \lstinline!Preconditioner!, which assure
+consistency of the data (by communication) for the \lstinline!InverseOperator!
+implementation. Therefore the same Krylow method algorithms work in
+parallel and sequential mode. 
+
+Based on the idea proposed in \cite{dddalg} we implemented parallel overlapping
+Schwarz preconditioners with inexact (sequential) subdomain solvers and a
+parallel algebraic multigrid preconditioner
+together with appropriate implementations of
+\lstinline!LinearOperator! and
+\lstinline!Scalarproduct!. Nonoverlapping versions are currently being
+worked on.
+
+Note that using this approach it easy two switch form the currently
+implemented MPI version to new parallel programming paradigms that
+might be needed on new platforms.
+
+
 \section{Performance}
+We evaluated the performance of our implementation on a Petium 4 Mobile
+2.4 GHz with a measured memory bandwith of 1084 MB/s for the daypy
+operation ($x = y + \alpha z$) in Tables
+\ref{tab:istl_performance}. 
+\begin{table}[htb]
+  \centering
+  \caption{Performance Tests}
+  \label{tab:istl_performance}
+  \mbox{\small
+    \subtable[scalar product]{\label{tab:perf_sp}
+      \begin{tabular}{lrrrrr}
+          \hline
+          \hline
+          $N$ & 500 & 5000 & 50000 & 500000 & 5000000 \\
+          \hline
+          MFLOPS & 896 & 775 & 167 & 160 & 164 \\
+          \hline
+          \hline
+        \end{tabular}}
+    \subtable[daxpy operation $y = y + \alpha x$]{\label{tab:perf_daxpy}
+      \begin{tabular}{rrrrr}
+        \hline
+        \hline
+         500 & 5000 & 50000 & 500000 & 5000000 \\
+        \hline
+        936 & 910 & 108 & 103 & 107 \\
+        \hline
+        \hline
+      \end{tabular}}}
+  \mbox{\small
+    \subtable[Matrix-vector product, %\lstinline!BCRSMatrix!,
+    5-point stencil, $b$: block size]{\label{tab:perf_mvp}
+      \begin{tabular}{lrrrrr}
+        \hline
+        \hline
+        $N,b$ & 100,1 & 10000,1 & 1000000,1 & 1000000,2 & 1000000,3\\
+        \hline
+        MFLOPS & 388 & 140 & 136 & 230 & 260\\
+        \hline
+        \hline
+      \end{tabular}}
+    \subtable[Damped Gauß\ss{}-Seidel]{\label{tab:perf_gs}
+      \begin{tabular}{rrr}
+          \hline
+          \hline
+          & \mbox{C } & ISTL\\
+          \hline
+          time / it. [s] & 0.17 & 0.18\\
+          \hline
+          \hline
+        \end{tabular}}}
+\end{table}
+The code was comiled with the GNU C++ 
+compiler version 4.0 with -O3 optimization. In the tables $N$ is the
+number of 
+unknown blocks (equals the number of unknows for the scalar cases in
+Tables \ref{tab:perf_sp}, \ref{tab:perf_daxpy}, \ref{tab:perf_gs}).
+The performance for the scalarproduct,
+see Table \ref{tab:perf_sp},
+and the daxpy operation, see Table \ref{tab:perf_daxpy}  is nearly
+optimal and for large $N$ the limiting factor is clearly the memory
+bandwith. Table \ref{tab:perf_mvp} shows that we take advantage of
+cache reusage for matrices of dense blocks with block size $b>1$.
+In Table
+\ref{tab:perf_gs} we compared the generic implementation of
+the Gauss Seidel solver in ISTL with a specialized C
+implementation. The measured times per iteration show that there is
+now lack of computational efficiency due to the generic implementation. 
 
 % bibtex bibliography
 \bibliographystyle{plain}
