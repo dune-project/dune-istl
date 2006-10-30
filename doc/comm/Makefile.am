@@ -20,7 +20,11 @@ CURDIR=doc/$(RELDIR)
 BASEDIR=../../..
 commdir=$(datadir)/doc/dune-istl/comm
 
-noinst_PROGRAMS = $(MPIPROGRAMS)
+# list of tests to run (indicestest is special case)
+TESTS = $(MPIPROGRAMS)
+
+# programs just to build when "make check" is used
+check_PROGRAMS = $(MPIPROGRAMS)
 
 indexset_SOURCES = indexset.cc buildindexset.hh reverse.hh
 indexset_CXXFLAGS = $(MPI_CPPFLAGS)
