@@ -395,84 +395,23 @@ namespace Dune {
 
     //! an empty matrix
     BCRSMatrix ()
-    {
-      // the state
-      build_mode = unknown;
-      ready = notbuilt;
-
-      // store parameters
-      n = 0;
-      m = 0;
-      nnz = 0;
-
-      // allocate rows
-      r = 0;
-
-      // allocate a and j array
-      a = 0;
-      j = 0;
-    }
+      : build_mode(unknown), ready(notbuilt), n(0), m(0), nnz(0),
+        r(0), a(0), j(0)
+    {}
 
     //! matrix with known number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, size_type _nnz, BuildMode bm)
+      : build_mode(bm), ready(notbuilt)
     {
-      // the state
-      build_mode = bm;
-      ready = notbuilt;
-
-      // store parameters
-      n = _n;
-      m = _m;
-      nnz = _nnz;
-
-      // allocate rows
-      if (n>0)
-      {
-        r = A::template malloc<row_type>(n);
-      }
-      else
-      {
-        r = 0;
-      }
-
-      // allocate a and j array
-      if (nnz>0)
-      {
-        a = A::template malloc<B>(nnz);
-        j = A::template malloc<size_type>(nnz);
-      }
-      else
-      {
-        a = 0;
-        j = 0;
-      }
+      allocate(_n, _m, _nnz);
     }
 
     //! matrix with unknown number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
+      : build_mode(bm), ready(notbuilt)
     {
-      // the state
-      build_mode = bm;
-      ready = notbuilt;
 
-      // store parameters
-      n = _n;
-      m = _m;
-      nnz = 0;
-
-      // allocate rows
-      if (n>0)
-      {
-        r = A::template malloc<row_type>(n);
-      }
-      else
-      {
-        r = 0;
-      }
-
-      // allocate a and j array
-      a = 0;
-      j = 0;
+      allocate(_n, _m);
     }
 
     //! copy constructor
@@ -543,25 +482,43 @@ namespace Dune {
     //! destructor
     ~BCRSMatrix ()
     {
-      if (nnz>0)
-      {
-        // a,j have been allocated as one long vector
-        A::template free<size_type>(j);
-        A::template free<B>(a);
-      }
-      else
-      {
-        // check if memory for rows have been allocated individually
-        for (size_type i=0; i<n; i++)
-          if (r[i].getsize()>0)
-          {
-            A::template free<size_type>(r[i].getindexptr());
-            A::template free<B>(r[i].getptr());
-          }
-      }
+      deallocate();
+    }
 
-      // deallocate the rows
-      if (n>0) A::template free<row_type>(r);
+    /**
+     * @brief Sets the build mode of the matrix
+     * @param bm The build mode to use.
+     */
+    void setBuildMode(BuildMode bm)
+    {
+      if(ready==notbuilt)
+        build_mode = bm;
+      else
+        DUNE_THROW(InvalidStateException, "Matrix structure is already built (ready="<<ready<<").");
+    }
+
+    /**
+     *  @brief Set the size of the matrix.
+     *
+     * Sets the number of rows and columns of the matrix and allocates
+     * the memory needed for the storage of the matrix entries.
+     *
+     * @warning After calling this methods on an already allocated (and probably
+     * setup matrix) results in all the structure and data being deleted. I.~e.
+     * one has to setup the matrix again.
+     *
+     * @param row The number of rows the matrix should contain.
+     * @param columns the number of columns the matrix should contain.
+     * @param nnz The number of nonzero entries the matrix should hold (if omitted
+     * defaults to 0).
+     */
+    void setSize(size_type rows, size_type columns, size_type nnz_=0)
+    {
+      // deallocate already setup memory
+      deallocate();
+
+      // allocate matrix memory
+      allocate(rows, columns, nnz_);
     }
 
     //! assignment
@@ -776,6 +733,15 @@ namespace Dune {
           return true;
         else
           return false;
+      }
+      /**
+       * @brief Get the current row size.
+       * @return The number of indices already
+       * inserted for the current row.
+       */
+      typename std::set<size_type>::size_type size() const
+      {
+        return pattern.size();
       }
 
     private:
@@ -1371,6 +1337,77 @@ namespace Dune {
     // dynamically allocated memory
     B*   a;      // [nnz] non-zero entries of the matrix in row-wise ordering
     size_type* j;      // [nnz] column indices of entries
+
+    //! \brief deallocate memory of the matrix.
+    void deallocate()
+    {
+
+      if (nnz>0)
+      {
+        // a,j have been allocated as one long vector
+        A::template free<size_type>(j);
+        A::template free<B>(a);
+      }
+      else
+      {
+        // check if memory for rows have been allocated individually
+        for (size_type i=0; i<n; i++)
+          if (r[i].getsize()>0)
+          {
+            A::template free<size_type>(r[i].getindexptr());
+            A::template free<B>(r[i].getptr());
+          }
+      }
+
+      // deallocate the rows
+      if (n>0) A::template free<row_type>(r);
+
+      // Mark matrix as not built at all.
+      ready=notbuilt;
+
+    }
+
+    /**
+     *  @brief Allocate memory for the matrix structure
+     *
+     * Sets the number of rows and columns of the matrix and allocates
+     * the memory needed for the storage of the matrix entries.
+     *
+     * @warning After calling this methods on an already allocated (and probably
+     * setup matrix) results in all the structure and data being lost. Please
+     * call deallocate() before calling allocate in this case.
+     *
+     * @param row The number of rows the matrix should contain.
+     * @param columns the number of columns the matrix should contain.
+     * @param nnz The number of nonzero entries the matrix should hold (if omitted
+     * defaults to 0).
+     */
+    void allocate(size_type rows, size_type columns, size_type nnz_)
+    {
+      // Store size
+      n = rows;
+      m = columns;
+      nnz = nnz_;
+
+      // allocate rows
+      if (n>0) {
+        r = A::template malloc<row_type>(rows);
+      }else{
+        r = 0;
+      }
+
+      // allocate a and j array
+      if (nnz>0) {
+        a = A::template malloc<B>(nnz);
+        j = A::template malloc<size_type>(nnz);
+      }else{
+        a = 0;
+        j = 0;
+      }
+      // Mark the matrix as not built.
+      ready = notbuilt;
+    }
+
   };
 
 

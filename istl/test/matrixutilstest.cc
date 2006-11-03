@@ -38,4 +38,14 @@ int main(int argc, char** argv)
     Dune::derr<<"Counting nonzeros of block BCRSMatrix failed!"<<std::endl;
   }
 
+  Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> > bblaplace;
+  bblaplace.setSize(N*N,N*N, N*N*5);
+  bblaplace.setBuildMode(Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> >::row_wise);
+  setupLaplacian<N>(bblaplace);
+
+  if((N*N*5-4*2-(N-2)*4)*4*7!=countNonZeros(bblaplace)) {
+    ++ret;
+    Dune::derr<<"Counting nonzeros of block BCRSMatrix failed!"<<std::endl;
+  }
+
 }
