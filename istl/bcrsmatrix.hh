@@ -1382,7 +1382,7 @@ namespace Dune {
      * @param nnz The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
      */
-    void allocate(size_type rows, size_type columns, size_type nnz_)
+    void allocate(size_type rows, size_type columns, size_type nnz_=0)
     {
       // Store size
       n = rows;
