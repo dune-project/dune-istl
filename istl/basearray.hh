@@ -313,11 +313,12 @@ namespace Dune {
   protected:
     //! makes empty array
     base_array_unmanaged ()
-    {
-      n = 0;
-      p = 0;
-    }
-
+      : n(0), p(0)
+    {}
+    //! make an initialized array
+    base_array_unmanaged (size_type n_, B* p_)
+      : n(n_), p(p_)
+    {}
     size_type n;     // number of elements in array
     B *p;      // pointer to dynamically allocated built-in array
   };
@@ -367,17 +368,13 @@ namespace Dune {
 
     //! makes empty array
     base_array_window ()
-    {
-      this->n = 0;
-      this->p = 0;
-    }
+      : base_array_unmanaged<B,A>()
+    {   }
 
     //! make array from given pointer and size
     base_array_window (B* _p, size_type _n)
-    {
-      this->n = _n;
-      this->p = _p;
-    }
+      : base_array_unmanaged<B,A>(_n ,_p)
+    {}
 
     //===== window manipulation methods
 
@@ -461,15 +458,12 @@ namespace Dune {
 
     //! makes empty array
     base_array ()
-    {
-      this->n = 0;
-      this->p = 0;
-    }
+      : base_array_unmanaged<B,A>()
+    {}
 
     //! make array with _n components
     base_array (size_type _n)
     {
-      this->n = _n;
       if (this->n>0)
         this->p = A::template malloc<B>(this->n);
       else
@@ -483,7 +477,6 @@ namespace Dune {
     base_array (const base_array& a)
     {
       // allocate memory with same size as a
-      this->n = a.n;
       if (this->n>0)
         this->p = A::template malloc<B>(this->n);
       else
@@ -646,11 +639,8 @@ namespace Dune {
     public:
       //! constructor
       iterator ()
-      {
-        p = 0;
-        j = 0;
-        i = 0;
-      }
+        : p(0), j(0), i(0)
+      {}
 
       iterator (B* _p, size_type* _j, size_type _i) : p(_p), j(_j), i(_i)
       {       }
@@ -934,11 +924,8 @@ namespace Dune {
   protected:
     //! makes empty array
     compressed_base_array_unmanaged ()
-    {
-      n = 0;
-      p = 0;
-      j = 0;
-    }
+      : n(0), p(0), j(0)
+    {}
 
     size_type n;      // number of elements in array
     B *p;       // pointer to dynamically allocated built-in array
