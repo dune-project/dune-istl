@@ -20,29 +20,26 @@ namespace Dune {
 
     /** \brief Constructor setting the matrix size */
     MatrixIndexSet(int rows, int cols) : rows_(rows), cols_(cols) {
-      indices.resize(rows_);
+      indices_.resize(rows_);
     }
 
     /** \brief Reset the size of an index set */
     void resize(int rows, int cols) {
       rows_ = rows;
       cols_ = cols;
-      indices.resize(rows_);
+      indices_.resize(rows_);
     }
 
     /** \brief Add an index to the index set */
     void add(int i, int j) {
-
-      if (!containsSorted(indices[i], j))
-        insertSorted(indices[i], j);
-
+      indices_[i].insert(j);
     }
 
     /** \brief Return the number of entries */
     int size() const {
       int entries = 0;
       for (int i=0; i<rows_; i++)
-        entries += indices[i].size();
+        entries += indices_[i].size();
 
       return entries;
     }
@@ -52,7 +49,7 @@ namespace Dune {
 
 
     /** \brief Return the number of entries in a given row */
-    int rowsize(int row) const {return indices[row].size();}
+    int rowsize(int row) const {return indices_[row].size();}
 
     /** \brief Import all nonzero entries of a sparse matrix into the index set
      * \tparam MatrixType Needs to be BCRSMatrix<...>
@@ -82,58 +79,31 @@ namespace Dune {
         \tparam MatrixType Needs to be BCRSMatrix<...>
      */
     template <class MatrixType>
-    void exportIdx(MatrixType& m) const {
+    void exportIdx(MatrixType& matrix) const {
 
-      MatrixType matrix(rows_, cols_, MatrixType::random);
+      matrix.setSize(rows_, cols_);
+      matrix.setBuildMode(MatrixType::random);
 
-      for (int i=0; i<rows_; i++) {
-        matrix.setrowsize(i, indices[i].size());
-      }
+      for (int i=0; i<rows_; i++)
+        matrix.setrowsize(i, indices_[i].size());
 
       matrix.endrowsizes();
 
       for (int i=0; i<rows_; i++) {
-        for (unsigned int j=0; j<indices[i].size(); j++)
-          matrix.addindex(i, indices[i][j]);
+
+        typename std::set<unsigned int>::iterator it = indices_[i].begin();
+        for (; it!=indices_[i].end(); ++it)
+          matrix.addindex(i, *it);
 
       }
 
       matrix.endindices();
 
-      /** \todo This copying could be omitted if there was a resize method for BCRSMatrix */
-      m = matrix;
     }
 
   private:
 
-    /** \todo Doesn't use the fact that the array is sorted! */
-    bool containsSorted(const std::vector<int>& nb, int idx) {
-
-      for (unsigned int i=0; i<nb.size(); i++)
-        if (nb[i]==idx)
-          return true;
-
-      return false;
-    }
-
-    void insertSorted(std::vector<int>& nb, int idx) {
-
-      unsigned int i;
-      // Find correct slot for insertion
-      for (i=0; i<nb.size(); i++)
-        if (nb[i] >= idx)
-          break;
-
-      // Insert
-      nb.push_back(0);
-      for (unsigned int j=nb.size()-1; j>i; j--)
-        nb[j] = nb[j-1];
-
-      nb[i] = idx;
-
-    }
-
-    std::vector<std::vector<int> > indices;
+    std::vector<std::set<unsigned int> > indices_;
 
     int rows_, cols_;
 
