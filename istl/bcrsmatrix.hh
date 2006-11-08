@@ -15,6 +15,9 @@
 #include "allocator.hh"
 #include "bvector.hh"
 #include <dune/common/stdstreams.hh>
+#include <dune/common/iteratorfacades.hh>
+#include <dune/common/typetraits.hh>
+#include <dune/common/helpertemplates.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -157,82 +160,39 @@ namespace Dune {
 
     //===== iterator interface to rows of the matrix
 
-    // forward declaration
-    class ConstIterator;
-
     //! Iterator access to matrix rows
-    class Iterator
+    template<class T>
+    class RealRowIterator
+      : public RandomAccessIteratorFacade<RealRowIterator<T>, T>
     {
+
     public:
+      //! \brief The unqualified value type
+      typedef typename Dune::RemoveConst<T>::Type ValueType;
+
+      friend class RandomAccessIteratorFacade<RealRowIterator<const ValueType>, const ValueType>;
+      friend class RandomAccessIteratorFacade<RealRowIterator<ValueType>, ValueType>;
+      friend class RealRowIterator<const ValueType>;
+      friend class RealRowIterator<ValueType>;
+
       //! constructor
-      Iterator (row_type* _p, size_type _i)
-      {
-        p = _p;
-        i = _i;
-      }
+      RealRowIterator (row_type* _p, size_type _i)
+        : p(_p), i(_i)
+      {}
 
       //! empty constructor, use with care!
-      Iterator ()
-      {       }
+      RealRowIterator ()
+        : p(0), i(0)
+      {}
 
-      //! prefix increment
-      Iterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
+      RealRowIterator(const RealRowIterator<const ValueType>& it)
+        : p(it.p), i(it.i)
+      {}
 
-      //! prefix decrement
-      Iterator& operator--()
-      {
-        --i;
-        return *this;
-      }
+      RealRowIterator(const RealRowIterator<ValueType>& it)
+        : p(it.p), i(it.i)
+      {}
 
-      //! equality
-      bool operator== (const Iterator& it) const
-      {
-        //		return (p+i)==(it.p+it.i);
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const Iterator& it) const
-      {
-        //		return (p+i)!=(it.p+it.i);
-        return (i)!=(it.i);
-      }
-      //! equality
-      bool operator== (const ConstIterator& it) const
-      {
-        //		return (p+i)==(it.p+it.i);
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const ConstIterator& it) const
-      {
-        //		return (p+i)!=(it.p+it.i);
-        return (i)!=(it.i);
-      }
-
-      //! less than
-      bool operator< (const Iterator& it) const
-      {
-        return (i)<(it.i);
-      }
-
-      //! dereferencing
-      row_type& operator* () const
-      {
-        return p[i];
-      }
-
-      //! arrow
-      row_type* operator-> () const
-      {
-        return p+i;
-      }
 
       //! return index
       size_type index ()
@@ -240,12 +200,69 @@ namespace Dune {
         return i;
       }
 
-      friend class ConstIterator;
+      std::ptrdiff_t distanceTo(RealRowIterator<ValueType> other)
+      {
+        assert(other.p==p);
+        return (other.i-i);
+      }
+
+      std::ptrdiff_t distanceTo(const RealRowIterator<const ValueType> other)
+      {
+        assert(other.p==p);
+        return (other.i-i);
+      }
+
+      //! equality
+      bool equals (const RealRowIterator<ValueType>& other) const
+      {
+        assert(other.p==p);
+        return i==other.i;
+      }
+
+      //! equality
+      bool equals (const RealRowIterator<const ValueType>& other) const
+      {
+        assert(other.p==p);
+        return i==other.i;
+      }
+
+    protected:
+      //! prefix increment
+      void increment()
+      {
+        ++i;
+      }
+
+      //! prefix decrement
+      void decrement()
+      {
+        --i;
+      }
+
+      void advance(std::ptrdiff_t diff)
+      {
+        i+=diff;
+      }
+
+      T& elementAt(std::ptrdiff_t diff)
+      {
+        return p[i+diff];
+      }
+
+      //! dereferencing
+      row_type& dereference () const
+      {
+        return p[i];
+      }
 
     private:
       row_type* p;
       size_type i;
     };
+
+    //! The iterator over the (mutable matrix rows
+    typedef RealRowIterator<row_type> Iterator;
+
 
     //! Get iterator to first row
     Iterator begin ()
@@ -277,89 +294,9 @@ namespace Dune {
     /** \brief Iterator for the entries of each row */
     typedef typename row_type::Iterator ColIterator;
 
+    //! The const iterator over the matrix rows
+    typedef RealRowIterator<const row_type> ConstIterator;
 
-    //! Const iterator access to rows
-    class ConstIterator
-    {
-    public:
-      //! constructor
-      ConstIterator (const row_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
-
-      //! empty constructor, use with care!
-      ConstIterator ()
-      {
-        p = 0;
-        i = 0;
-      }
-
-      //! Copy constructor from mutable iterator.
-      ConstIterator(const Iterator& other)
-        : p(other.p), i(other.i)
-      {}
-
-      //! prefix increment
-      ConstIterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
-
-      //! prefix decrement
-      ConstIterator& operator--()
-      {
-        --i;
-        return *this;
-      }
-
-      //! equality
-      bool operator== (const ConstIterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const ConstIterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! equality
-      bool operator== (const Iterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const Iterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! dereferencing
-      const row_type& operator* () const
-      {
-        return p[i];
-      }
-
-      //! arrow
-      const row_type* operator-> () const
-      {
-        return p+i;
-      }
-
-      //! return index
-      size_type index () const
-      {
-        return i;
-      }
-
-      friend class Iterator;
-
-    private:
-      const row_type* p;
-      size_type i;
-    };
 
     //! Get const iterator to first row
     ConstIterator begin () const

@@ -9,6 +9,7 @@
 
 #include "istlexception.hh"
 #include "allocator.hh"
+#include <dune/common/iteratorfacades.hh>
 
 /** \file
    \brief Implements several basic array containers.
@@ -74,86 +75,82 @@ namespace Dune {
       return p[i];
     }
 
-    // forward declaration
-    class const_iterator;
-
-    //! iterator class for sequential access
-    class iterator
+    template<class T>
+    class RealIterator
+      :  public BidirectionalIteratorFacade<RealIterator<T>, T>
     {
     public:
+      //! \brief The unqualified value type
+      typedef typename Dune::RemoveConst<T>::Type ValueType;
+
+      friend class BidirectionalIteratorFacade<RealIterator<const ValueType>, const ValueType>;
+      friend class BidirectionalIteratorFacade<RealIterator<ValueType>, ValueType>;
+      friend class RealIterator<const ValueType>;
+      friend class RealIterator<ValueType>;
+
       //! constructor
-      iterator ()
-      {
-        p = 0;
-        i = 0;
-      }
+      RealIterator ()
+        : p(0), i(0)
+      {}
 
-      iterator (const B* _p, B* _i) : p(_p), i(_i)
-      {       }
+      RealIterator (const B* _p, B* _i) : p(_p), i(_i)
+      {   }
 
-      //! prefix increment
-      iterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
+      RealIterator(const RealIterator<const ValueType>& it)
+        : p(it.p), i(it.i)
+      {}
 
-      //! prefix decrement
-      iterator& operator--()
-      {
-        --i;
-        return *this;
-      }
+      RealIterator(const RealIterator<ValueType>& it)
+        : p(it.p), i(it.i)
+      {}
 
-      //! equality
-      bool operator== (const iterator& it) const
-      {
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const iterator& it) const
-      {
-        return (i)!=(it.i);
-      }
-
-      //! equality with a const iterator
-      bool operator== (const const_iterator& it) const
-      {
-        return (i)==(it.i);
-      }
-
-      //! inequality with a const iterator
-      bool operator!= (const const_iterator& it) const
-      {
-        return (i)!=(it.i);
-      }
-
-      //! dereferencing
-      B& operator* () const
-      {
-        return *i;
-      }
-
-      //! arrow
-      B* operator-> () const
-      {
-        return i;
-      }
-
-      //! return index corresponding to pointer
-      size_type index () const
+      //! return index
+      size_type index ()
       {
         return i-p;
       }
 
-      friend class const_iterator;
+      //! equality
+      bool equals (const RealIterator<ValueType>& other) const
+      {
+        assert(other.p==p);
+        return i==other.i;
+      }
+
+      //! equality
+      bool equals (const RealIterator<const ValueType>& other) const
+      {
+        assert(other.p==p);
+        return i==other.i;
+      }
+
+    protected:
+      //! prefix increment
+      void increment()
+      {
+        ++i;
+      }
+
+      //! prefix decrement
+      void decrement()
+      {
+        --i;
+      }
+
+      //! dereferencing
+      B& dereference () const
+      {
+        return *i;
+      }
 
     private:
       const B* p;
       B* i;
-
     };
+
+    //! iterator type for sequential access
+    typedef RealIterator<B> iterator;
+
 
     //! begin iterator
     iterator begin ()
@@ -188,85 +185,8 @@ namespace Dune {
         return iterator(p,p+n);
     }
 
-    //! const_iterator class for sequential access
-    class const_iterator
-    {
-    public:
-      //! constructor
-      const_iterator ()
-      {
-        p = 0;
-        i = 0;
-      }
-
-      const_iterator (const B* _p, const B* _i) : p(_p), i(_i)
-      {       }
-
-      const_iterator (const iterator& it) : p(it.p), i(it.i)
-      {       }
-
-      //! prefix increment
-      const_iterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
-
-      //! prefix decrement
-      const_iterator& operator--()
-      {
-        --i;
-        return *this;
-      }
-
-      //! equality
-      bool operator== (const const_iterator& it) const
-      {
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const const_iterator& it) const
-      {
-        return (i)!=(it.i);
-      }
-
-      //! equality
-      bool operator== (const iterator& it) const
-      {
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const iterator& it) const
-      {
-        return (i)!=(it.i);
-      }
-
-      //! dereferencing
-      const B& operator* () const
-      {
-        return *i;
-      }
-
-      //! arrow
-      const B* operator-> () const
-      {
-        return i;
-      }
-
-      //! return index corresponding to pointer
-      size_type index () const
-      {
-        return i-p;
-      }
-
-      friend class iterator;
-
-    private:
-      const B* p;
-      const B* i;
-    };
+    //! iterator class for sequential access
+    typedef RealIterator<const B> const_iterator;
 
     //! begin const_iterator
     const_iterator begin () const
@@ -416,7 +336,7 @@ namespace Dune {
 
   /**   This container extends base_array_unmanaged by memory management
         with the usual copy semantics providing the full range of
-        copy constructor, destructor and assignement operators.
+        copy constructor, destructor and assignment operators.
 
             You can make
 
@@ -630,74 +550,57 @@ namespace Dune {
       return p[l];
     }
 
-    // forward declaration
-    class const_iterator;
-
     //! iterator class for sequential access
-    class iterator
+    template<class T>
+    class RealIterator
+      : public BidirectionalIteratorFacade<RealIterator<T>, T>
     {
     public:
+      //! \brief The unqualified value type
+      typedef typename Dune::RemoveConst<T>::Type ValueType;
+
+      friend class BidirectionalIteratorFacade<RealIterator<const ValueType>, const ValueType>;
+      friend class BidirectionalIteratorFacade<RealIterator<ValueType>, ValueType>;
+      friend class RealIterator<const ValueType>;
+      friend class RealIterator<ValueType>;
+
       //! constructor
-      iterator ()
+      RealIterator ()
         : p(0), j(0), i(0)
       {}
 
-      iterator (B* _p, size_type* _j, size_type _i) : p(_p), j(_j), i(_i)
+      //! constructor
+      RealIterator (B* _p, size_type* _j, size_type _i)
+        : p(_p), j(_j), i(_i)
       {       }
 
-      //! prefix increment
-      iterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
+      //! Copy constructor from const iterator.
+      RealIterator(const RealIterator<const ValueType>& it)
+        : p(it.p), j(it.j), i(it.i)
+      {}
 
-      //! prefix decrement
-      iterator& operator--()
-      {
-        --i;
-        return *this;
-      }
+      /**
+       * @brief Copy constructor from mutable iterator
+       */
+      RealIterator(const RealIterator<ValueType>& it)
+        : p(it.p), j(it.j), i(it.i)
+      {}
+
 
       //! equality
-      bool operator== (const iterator& it) const
+      bool equals (const RealIterator<ValueType>& it) const
       {
-        //        return (p+i)==(it.p+it.i);
+        assert(p==it.p);
         return (i)==(it.i);
       }
 
-      //! inequality
-      bool operator!= (const iterator& it) const
-      {
-        //        return (p+i)!=(it.p+it.i);
-        return (i)!=(it.i);
-      }
-
       //! equality
-      bool operator== (const const_iterator& it) const
+      bool equals (const RealIterator<const ValueType>& it) const
       {
-        //		return (p+i)==(it.p+it.i);
+        assert(p==it.p);
         return (i)==(it.i);
       }
 
-      //! inequality
-      bool operator!= (const const_iterator& it) const
-      {
-        //        return (p+i)!=(it.p+it.i);
-        return (i)!=(it.i);
-      }
-
-      //! dereferencing
-      B& operator* () const
-      {
-        return p[i];
-      }
-
-      //! arrow
-      B* operator-> () const
-      {
-        return p+i;
-      }
 
       //! return index corresponding to pointer
       size_type index () const
@@ -723,13 +626,33 @@ namespace Dune {
         return i;
       }
 
-      friend class const_iterator;
+    protected:
+      //! prefix increment
+      void increment()
+      {
+        ++i;
+      }
+
+      //! prefix decrement
+      void decrement()
+      {
+        --i;
+      }
+
+      //! dereferencing
+      B& dereference () const
+      {
+        return p[i];
+      }
 
     private:
       B* p;
       size_type* j;
       size_type i;
     };
+
+    /** @brief The iterator type. */
+    typedef RealIterator<B> iterator;
 
     //! begin iterator
     iterator begin ()
@@ -773,104 +696,7 @@ namespace Dune {
     }
 
     //! const_iterator class for sequential access
-    class const_iterator
-    {
-    public:
-      //! constructor
-      const_iterator ()
-      {
-        p = 0;
-        j = 0;
-        i = 0;
-      }
-
-      //! \todo please doc me!
-      const_iterator (const B* _p, const size_type* _j, size_type _i) : p(_p), j(_j), i(_i)
-      {       }
-
-      //! Copy constructor from a non-const iterator
-      const_iterator (const iterator& it) : p(it.p), j(it.j), i(it.i)
-      {       }
-
-      //! prefix increment
-      const_iterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
-
-      //! prefix decrement
-      const_iterator& operator--()
-      {
-        --i;
-        return *this;
-      }
-
-      //! equality
-      bool operator== (const const_iterator& it) const
-      {
-        //        return (p+i)==(it.p+it.i);
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const const_iterator& it) const
-      {
-        //        return (p+i)!=(it.p+it.i);
-        return (i)!=(it.i);
-      }
-
-      //! equality
-      bool operator== (const iterator& it) const
-      {
-        //        return (p+i)==(it.p+it.i);
-        return (i)==(it.i);
-      }
-
-      //! inequality
-      bool operator!= (const iterator& it) const
-      {
-        //		return (p+i)!=(it.p+it.i);
-        return (i)!=(it.i);
-      }
-
-      //! dereferencing
-      const B& operator* () const
-      {
-        return p[i];
-      }
-
-      //! arrow
-      const B* operator-> () const
-      {
-        return p+i;
-      }
-
-      //! return index corresponding to pointer
-      size_type index () const
-      {
-        return j[i];
-      }
-
-      /**
-       * @brief offset from the fist entry.
-       *
-       * An iterator positioned at the beginning
-       * has to be increment this amount of times to
-       * the same position.
-       */
-      size_type offset () const
-      {
-        return i;
-      }
-
-      friend class iterator;
-
-    private:
-      const B* p;
-      const size_type* j;
-      size_type i;
-    };
+    typedef RealIterator<const B> const_iterator;
 
     //! begin const_iterator
     const_iterator begin () const
