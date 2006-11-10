@@ -160,7 +160,7 @@ namespace Dune {
 
     //===== iterator interface to rows of the matrix
 
-    //! Iterator access to matrix rows
+    //! %Iterator access to matrix rows
     template<class T>
     class RealRowIterator
       : public RandomAccessIteratorFacade<RealRowIterator<T>, T>
@@ -275,13 +275,13 @@ namespace Dune {
       return Iterator(r,n);
     }
 
-    //! Get Iterator to last row
+    //! Get iterator to last row
     Iterator rbegin ()
     {
       return Iterator(r,n-1);
     }
 
-    //! Get Iterator to one before first row
+    //! Get iterator to one before first row
     Iterator rend ()
     {
       return Iterator(r,-1);
@@ -443,18 +443,18 @@ namespace Dune {
      * setup matrix) results in all the structure and data being deleted. I.~e.
      * one has to setup the matrix again.
      *
-     * @param row The number of rows the matrix should contain.
+     * @param rows The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
      * @param nnz The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
      */
-    void setSize(size_type rows, size_type columns, size_type nnz_=0)
+    void setSize(size_type rows, size_type columns, size_type nnz=0)
     {
       // deallocate already setup memory
       deallocate();
 
       // allocate matrix memory
-      allocate(rows, columns, nnz_);
+      allocate(rows, columns, nnz);
     }
 
     //! assignment
@@ -558,7 +558,7 @@ namespace Dune {
 
     //===== row-wise creation interface
 
-    //! Iterator class for sequential creation of blocks
+    //! %Iterator class for sequential creation of blocks
     class CreateIterator
     {
     public:
