@@ -4,6 +4,7 @@
 #define DUNE_MATRIX_INDEX_SET_HH
 
 #include <vector>
+#include <set>
 
 namespace Dune {
 
