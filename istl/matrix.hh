@@ -14,6 +14,10 @@ namespace Dune {
 
   /** \brief A generic dynamic matrix
       \addtogroup ISTL
+
+      This matrix is currently implemented as a BlockVector of BlockVectors.
+      That makes the code fairly simple, as we get all iterators for free.
+      However, it is not the best way as far as efficiency is concerned.
    */
   template<class T, class A=ISTLAllocator>
   class Matrix
@@ -47,6 +51,11 @@ namespace Dune {
     /** \brief Const iterator for the entries of each row */
     typedef typename row_type::const_iterator ConstColIterator;
 
+    enum {
+      //! The number of nesting levels the matrix contains.
+      blocklevel = T::blocklevel+1
+    };
+
     /** \brief Create empty matrix */
     Matrix() : data_(0), cols_(0)
     {}
@@ -63,7 +72,7 @@ namespace Dune {
      *
      * The way the data is handled is unpredictable.
      */
-    void resize(int rows, int cols) {
+    void setSize(int rows, int cols) {
       data_.resize(rows);
       for (int i=0; i<rows; i++)
         data_[i].resize(cols);
@@ -207,10 +216,51 @@ namespace Dune {
     }
 
     /** \brief Multiplication with a scalar */
-    Matrix<T> operator*=(const T& scalar) {
+    Matrix<T>& operator*=(const field_type& scalar) {
       for (int row=0; row<data_.size(); row++)
         for (int col=0; col<cols_; col++)
           (*this)[row][col] *= scalar;
+
+      return (*this);
+    }
+
+    /** \brief Multiplication with a scalar */
+    Matrix<T>& operator/=(const field_type& scalar) {
+      for (int row=0; row<data_.size(); row++)
+        for (int col=0; col<cols_; col++)
+          (*this)[row][col] /= scalar;
+
+      return (*this);
+    }
+
+    /*! \brief Add the entries of another matrix to this one.
+     *
+     * \param b The matrix to add to this one. Its size has to
+     * be the same as the size of this matrix.
+     */
+    Matrix& operator+= (const Matrix& b) {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if(N()!=b.N() || M() != b.M())
+        DUNE_THROW(RangeError, "Matrix sizes do not match!");
+#endif
+      for (int row=0; row<data_.size(); row++)
+        (*this)[row] += b[row];
+
+      return (*this);
+    }
+
+    /*! \brief Subtract the entries of another matrix from this one.
+     *
+     * \param b The matrix to add to this one. Its size has to
+     * be the same as the size of this matrix.
+     */
+    Matrix& operator-= (const Matrix& b) {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if(N()!=b.N() || M() != b.M())
+        DUNE_THROW(RangeError, "Matrix sizes do not match!");
+#endif
+      for (int row=0; row<data_.size(); row++)
+        (*this)[row] -= b[row];
 
       return (*this);
     }
@@ -280,8 +330,8 @@ namespace Dune {
     void umv(const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
       for (int i=0; i<data_.size(); i++) {
@@ -293,13 +343,30 @@ namespace Dune {
 
     }
 
+    //! y -= A x
+    template<class X, class Y>
+    void mmv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).mmv(x[j.index()],y[i.index()]);
+      }
+    }
+
     /** \brief \f$ y += \alpha A x \f$ */
     template <class X, class Y>
     void usmv(const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
       for (int i=0; i<data_.size(); i++) {
@@ -309,6 +376,164 @@ namespace Dune {
 
       }
 
+    }
+
+    //! y += A^T x
+    template<class X, class Y>
+    void umtv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).umtv(x[i.index()],y[j.index()]);
+      }
+    }
+
+    //! y -= A^T x
+    template<class X, class Y>
+    void mmtv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).mmtv(x[i.index()],y[j.index()]);
+      }
+    }
+
+    //! y += alpha A^T x
+    template<class X, class Y>
+    void usmtv (const field_type& alpha, const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).usmtv(alpha,x[i.index()],y[j.index()]);
+      }
+    }
+
+    //! y += A^H x
+    template<class X, class Y>
+    void umhv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).umhv(x[i.index()],y[j.index()]);
+      }
+    }
+
+    //! y -= A^H x
+    template<class X, class Y>
+    void mmhv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).mmhv(x[i.index()],y[j.index()]);
+      }
+    }
+
+    //! y += alpha A^H x
+    template<class X, class Y>
+    void usmhv (const field_type& alpha, const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).usmhv(alpha,x[i.index()],y[j.index()]);
+      }
+    }
+
+    //===== norms
+
+    //! frobenius norm: sqrt(sum over squared values of entries)
+    double frobenius_norm () const
+    {
+      return std::sqrt(frobenius_norm2());
+    }
+
+    //! square of frobenius norm, need for block recursion
+    double frobenius_norm2 () const
+    {
+      double sum=0;
+      for (size_type i=0; i<N(); ++i)
+        for (size_type j=0; j<M(); ++j)
+          sum += data_[i][j].frobenius_norm2();
+      return sum;
+    }
+
+    //! infinity norm (row sum norm, how to generalize for blocks?)
+    double infinity_norm () const
+    {
+      double max=0;
+      for (size_type i=0; i<N(); ++i) {
+        double sum=0;
+        for (size_type j=0; j<M(); j++)
+          sum += data_[i][j].infinity_norm();
+        max = std::max(max,sum);
+      }
+      return max;
+    }
+
+    //! simplified infinity norm (uses Manhattan norm for complex values)
+    double infinity_norm_real () const
+    {
+      double max=0;
+      for (size_type i=0; i<N(); ++i) {
+        double sum=0;
+        for (size_type j=0; j<M(); j++)
+          sum += data_[i][j].infinity_norm_real();
+        max = std::max(max,sum);
+      }
+      return max;
+    }
+
+    //===== query
+
+    //! return true if (i,j) is in pattern
+    bool exists (size_type i, size_type j) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (i<0 || i>=n) DUNE_THROW(ISTLError,"row index out of range");
+      if (j<0 || i>=m) DUNE_THROW(ISTLError,"column index out of range");
+#endif
+      return true;
     }
 
   protected:
