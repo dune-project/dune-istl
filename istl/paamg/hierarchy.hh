@@ -6,6 +6,8 @@
 
 #include <list>
 #include <memory>
+#include <limits>
+#include <algorithm>
 #include "pmatrix.hh"
 #include "aggregates.hh"
 #include "graph.hh"
@@ -318,19 +320,34 @@ namespace Dune
       ~MatrixHierarchy();
 
       /**
-       * @brief The matrix hierarchy using aggregation.
+       * @brief Build the matrix hierarchy using aggregation.
        *
        * @brief criterion The criterion describing the aggregation process.
        */
       template<typename O, typename T>
       void build(const T& criterion);
 
+      /**
+       * @brief Recalculate the galerkin products.
+       *
+       * If the data of the fine matrix changes but not its sparsity pattern
+       * this will recalculate all coarser level without starting the expensive
+       * aggregation process all over again.
+       */
       template<class F>
       void recalculateGalerkin(const F& copyFlags);
 
+      /**
+       * @brief Coarsen the vector hierarchy according to the matrix hierarchy.
+       * @param hierachy The vector hierarchy to coarsen.
+       */
       template<class V, class TA>
       void coarsenVector(Hierarchy<BlockVector<V,TA> >& hierarchy) const;
 
+      /**
+       * @brief Coarsen the smoother hierarchy according to the matrix hierarchy.
+       * @param hierachy The smoother hierarchy to coarsen.
+       */
       template<class S, class TA>
       void coarsenSmoother(Hierarchy<S,TA>& smoothers,
                            const typename SmootherTraits<S>::Arguments& args) const;
@@ -347,10 +364,22 @@ namespace Dune
        */
       bool isBuilt() const;
 
+      /**
+       * @brief Get the matrix hierarchy.
+       * @return The matrix hierarchy.
+       */
       const ParallelMatrixHierarchy& matrices() const;
 
+      /**
+       * @brief Get the hierarchy of the parallel data distribution information.
+       * @return The hierarchy of the parallel data distribution information.
+       */
       const ParallelInformationHierarchy& parallelInformation() const;
 
+      /**
+       * @brief Get the hierarchy of the mappings of the nodes onto aggregates.
+       * @return The hierarchy of the mappings of the nodes onto aggregates.
+       */
       const AggregatesMapList& aggregatesMaps() const;
 
     private:
@@ -365,12 +394,71 @@ namespace Dune
       /** @brief Whether the hierarchy was built. */
       bool built_;
 
+      /**
+       * @brief functor to print matrix statistics.
+       */
+      template<class Matrix, bool print>
+      struct MatrixStats
+      {
+
+        /**
+         * @brief Print matrix statistics.
+         */
+        static void stats(const Matrix& matrix)
+        {}
+      };
+
+      template<class Matrix>
+      struct MatrixStats<Matrix,true>
+      {
+        struct calc
+        {
+          typedef typename Matrix::size_type size_type;
+          typedef typename Matrix::row_type matrix_row;
+
+          calc()
+          {
+            min=std::numeric_limits<size_type>::max();
+            max=0;
+            sum=0;
+          }
+
+          void operator()(const matrix_row& row)
+          {
+            std::min(min, row.size());
+            std::max(max, row.size());
+            sum += row.size();
+          }
+
+          size_type min;
+          size_type max;
+          size_type sum;
+        };
+        /**
+         * @brief Print matrix statistics.
+         */
+        static void stats(const Matrix& matrix)
+        {
+          calc c= for_each(matrix.begin(), matrix.end(), calc());
+          dinfo<<"Matrix rows: min="<<c.min<<" max="<<c.max
+               <<" average="<<c.sum/matrix.N()<<std::endl;
+        }
+      };
     };
 
+    /**
+     * @brief The criterion describing the stop criteria for the coarsening Process.
+     */
     template<class T>
     class CoarsenCriterion : public T
     {
     public:
+      /**
+       * @brief The criterion for tagging connections as strong and nodes as isolated.
+       * This might be e.~g. SymmetricDependency or UnSymmetricCriterion.
+       */
+      typedef T DependencyCriterion;
+
       /**
        * @brief Set the maximum number of levels allowed in the hierarchy.
        */
@@ -427,6 +515,14 @@ namespace Dune
         return false;
       }
 
+      /**
+       * @brief Constructor
+       * @param maxLevel The macimum number of levels allowed in the matric hierarchy (default: 100).
+       * @param coarsenTarget If the number of nodes in the matrix is below this threshold the
+       * coarsening will stop (default: 1000).
+       * @param minCoarsenRate. If the coarsening rate falls below this threshold the
+       * coarsening will stop (default: 1.2)
+       */
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2)
         : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate)
       {}
@@ -468,6 +564,8 @@ namespace Dune
 
       GalerkinProduct<ParallelInformation> productBuilder;
       MatIterator mlevel = matrices_.finest();
+      MatrixStats<typename M::matrix_type,MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL>::stats(mlevel->getmat());
+
       PInfoIterator infoLevel = parallelInformation_.finest();
 
 
@@ -551,10 +649,11 @@ namespace Dune
 
         GraphCreator::free(graphs);
 
-        infoLevel->communicator().barrier();
-
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
-          dinfo<<"Coarsening of index sets took "<<watch.elapsed()<<" seconds."<<std::endl;
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL) {
+          infoLevel->communicator().barrier();
+          if(rank==0)
+            dinfo<<"Coarsening of index sets took "<<watch.elapsed()<<" seconds."<<std::endl;
+        }
 
         watch.reset();
 
@@ -563,10 +662,12 @@ namespace Dune
                                                                               *fineInfo,
                                                                               infoLevel->globalLookup());
 
-        infoLevel->communicator().barrier();
 
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
-          dinfo<<"Communicating global aggregate numbers took "<<watch.elapsed()<<" seconds."<<std::endl;
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL) {
+          infoLevel->communicator().barrier();
+          if(rank==0)
+            dinfo<<"Communicating global aggregate numbers took "<<watch.elapsed()<<" seconds."<<std::endl;
+        }
 
         watch.reset();
         std::vector<bool>& visited=excluded;
@@ -592,10 +693,11 @@ namespace Dune
         delete Element<0>::get(graphs);
         productBuilder.calculate(mlevel->getmat(), *aggregatesMap, *coarseMatrix, *infoLevel, OverlapFlags());
 
-        infoLevel->communicator().barrier();
-
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
-          dinfo<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
+        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL) {
+          infoLevel->communicator().barrier();
+          if(rank==0)
+            dinfo<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
+        }
 
         MatrixArgs args(*coarseMatrix, *infoLevel);
 

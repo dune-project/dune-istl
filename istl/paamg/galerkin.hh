@@ -9,6 +9,8 @@
 #include <dune/common/poolallocator.hh>
 #include <dune/common/enumset.hh>
 #include <set>
+#include <limits>
+#include <algorithm>
 
 namespace Dune
 {
@@ -71,11 +73,21 @@ namespace Dune
 
       void operator++();
 
+      std::size_t minRowSize();
+
+      std::size_t maxRowSize();
+
+      std::size_t sumRowSize();
     private:
       /** @brief Create iterator for the current row. */
       typename M::CreateIterator row_;
       /** @brief The aggregates mapping. */
       const AggregatesMap<V>& aggregates_;
+      /** @brief The minim row size. */
+      std::size_t minRowSize_;
+      /** @brief The maximum row size. */
+      std::size_t maxRowSize_;
+      std::size_t sumRowSize_;
 #ifdef DUNE_ISTL_WITH_CHECKING
       bool diagonalInserted;
 #endif
@@ -496,16 +508,36 @@ namespace Dune
 
     template<class M, class V>
     SparsityBuilder<M,V>::SparsityBuilder(M& matrix, const AggregatesMap<V>& aggregates)
-      : row_(matrix.createbegin()), aggregates_(aggregates)
+      : row_(matrix.createbegin()), aggregates_(aggregates),
+        minRowSize_(std::numeric_limits<std::size_t>::max()),
+        maxRowSize_(0), sumRowSize_(0)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       diagonalInserted = false;
 #endif
     }
+    template<class M, class V>
+    std::size_t SparsityBuilder<M,V>::maxRowSize()
+    {
+      return maxRowSize_;
+    }
+    template<class M, class V>
+    std::size_t SparsityBuilder<M,V>::minRowSize()
+    {
+      return minRowSize_;
+    }
 
+    template<class M, class V>
+    std::size_t SparsityBuilder<M,V>::sumRowSize()
+    {
+      return sumRowSize_;
+    }
     template<class M, class V>
     void SparsityBuilder<M,V>::operator++()
     {
+      sumRowSize_ += row_.size();
+      minRowSize_=std::min(minRowSize_, row_.size());
+      maxRowSize_=std::max(maxRowSize_, row_.size());
       ++row_;
 #ifdef DUNE_ISTL_WITH_CHECKING
       assert(diagonalInserted);
@@ -560,6 +592,9 @@ namespace Dune
                                             overlapVertices+count,
                                             sparsityBuilder);
 
+      dinfo<<"Matrix min. row size="<<sparsityBuilder.minRowSize()<<" max row size="
+           <<sparsityBuilder.maxRowSize()<<" avg="<<sparsityBuilder.sumRowSize()/coarseMatrix->N()<<std::endl;
+
       delete[] overlapVertices;
       delete[] overlapStart_;
 
@@ -591,6 +626,8 @@ namespace Dune
 
       ConnectivityConstructor<G,SequentialInformation>::examine(fineGraph, visitedMap, pinfo,
                                                                 aggregates, sparsityBuilder);
+      dinfo<<"Matrix min. row size="<<sparsityBuilder.minRowSize()<<" max row size="
+           <<sparsityBuilder.maxRowSize()<<" avg="<<sparsityBuilder.sumRowSize()/coarseMatrix->N()<<std::endl;
       return coarseMatrix;
     }
 
