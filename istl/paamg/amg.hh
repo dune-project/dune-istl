@@ -75,10 +75,11 @@ namespace Dune
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
        *
-       * As coarse solver a prconditioned CG method with the smoother as preconditioner
+       * As coarse solver a preconditioned CG method with the smoother as preconditioner
        * will be used. The matrix hierarchy is built automatically.
        * @param fineOperator The operator on the fine level.
-       * @param criterion The coarsen criterion.
+       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
+       * or UnsymmetricCriterion.
        * @param smootherArgs The arguments for constructing the smoothers.
        * @param gamma 1 for V-cycle, 2 for W-cycle
        * @param smoothingSteps The number of smoothing steps for pre and postsmoothing.
@@ -91,10 +92,13 @@ namespace Dune
 
       ~AMG();
 
+      /** \copydoc Preconditioner::pre */
       void pre(Domain& x, Range& b);
 
+      /** \copydoc Preconditioner::apply */
       void apply(Domain& v, const Range& d);
 
+      /** \copydoc Preconditioner::post */
       void post(Domain& x);
 
     private:
@@ -189,7 +193,6 @@ namespace Dune
         delete scalarProduct_;
     }
 
-    /** \copydoc Preconditioner::pre */
     template<class M, class X, class S, class P, class A>
     void AMG<M,X,S,P,A>::pre(Domain& x, Range& b)
     {
