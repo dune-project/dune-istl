@@ -18,6 +18,7 @@
 #include <set>
 #include <algorithm>
 #include <limits>
+#include <ostream>
 
 namespace Dune
 {
@@ -147,28 +148,58 @@ namespace Dune
       int debugLevel_;
     };
 
+    template<class T>
+    std::ostream& operator<<(std::ostream& os, const AggregationCriterion<T>& criterion)
+    {
+      os<<"{ maxdistance="<<criterion.maxDistance()<<" minAggregateSize="
+      <<criterion.minAggregateSize()<< " maxAggregateSize="<<criterion.maxAggregateSize()
+      <<" connectivity="<<criterion.connectivity()<<" debugLevel="<<criterion.debugLevel()<<"}";
+      return os;
+    }
+
+    /**
+     * @brief Paramters needed to check whether a node depends on another.
+     */
     class DependencyParameters
     {
     public:
+      /** @brief Constructor */
       DependencyParameters()
         : alpha_(1.0/3.0), beta_(1.0E-5)
       {}
 
+      /**
+       * @brief Set threshold for marking nodes as isolated.
+       * The default value is 1.0E-5.
+       */
       void setBeta(double b)
       {
         beta_ = b;
       }
 
+      /**
+       * @brief Get the threshold for marking nodes as isolated.
+       * The default value is 1.0E-5.
+       * @return beta
+       */
       double beta() const
       {
         return beta_;
       }
 
+      /**
+       * @brief Set the scaling value for marking connections as strong.
+       * Default value is 1/3
+       */
       void setAlpha(double a)
       {
         alpha_ = a;
       }
 
+      /**
+       * @brief Get the scaling value for marking connections as strong.
+       * Default value is 1/3
+       */
       double alpha() const
       {
         return alpha_;
