@@ -3,6 +3,7 @@
 #ifndef DUNE_BASEARRAY_HH
 #define DUNE_BASEARRAY_HH
 
+#include "assert.h"
 #include <cmath>
 #include <complex>
 #include <cstddef>
