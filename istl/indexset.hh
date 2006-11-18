@@ -728,7 +728,7 @@ namespace Dune
       DUNE_THROW(InvalidIndexSetState, "Indices can only be added "
                  <<"while in RESIZE state!");
 #endif
-    newIndices_.push_back(IndexPair<TG,TL>(global));
+    newIndices_.push_back(IndexPair(global));
   }
 
   template<class TG, class TL, int N>
