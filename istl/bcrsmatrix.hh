@@ -352,67 +352,23 @@ namespace Dune {
 
     //! copy constructor
     BCRSMatrix (const BCRSMatrix& Mat)
+      : n(0), nnz(0)
     {
       // deep copy in global array
-
-      // copy sizes
-      n = Mat.n;
-      m = Mat.m;
-      nnz = Mat.nnz;
+      int _nnz = Mat.nnz;
 
       // in case of row-wise allocation
-      if (nnz<=0)
+      if (_nnz<=0)
       {
-        nnz = 0;
+        _nnz = 0;
         for (size_type i=0; i<n; i++)
-          nnz += Mat.r[i].getsize();
+          _nnz += Mat.r[i].getsize();
       }
 
-      // allocate rows
-      if (n>0)
-      {
-        r = A::template malloc<row_type>(n);
-      }
-      else
-      {
-        r = 0;
-      }
-
-      // allocate a and j array
-      if (nnz>0)
-      {
-        a = A::template malloc<B>(nnz);
-        j = A::template malloc<size_type>(nnz);
-      }
-      else
-      {
-        a = 0;
-        j = 0;
-      }
+      allocate(Mat.n, Mat.m, nnz);
 
       // build window structure
-      for (size_type i=0; i<n; i++)
-      {
-        // set row i
-        r[i].setsize(Mat.r[i].getsize());
-        if (i==0)
-        {
-          r[i].setptr(a);
-          r[i].setindexptr(j);
-        }
-        else
-        {
-          r[i].setptr( r[i-1].getptr()+r[i-1].getsize() );
-          r[i].setindexptr( r[i-1].getindexptr()+r[i-1].getsize() );
-        }
-      }
-
-      // copy data
-      for (size_type i=0; i<n; i++) r[i] = Mat.r[i];
-
-      // finish off
-      build_mode = row_wise;     // dummy
-      ready = built;
+      copyWindowStructure(Mat);
     }
 
     //! destructor
@@ -464,88 +420,18 @@ namespace Dune {
       if (&Mat==this) return *this;
 
       // make it simple: ALWAYS throw away memory for a and j
-      if (nnz>0)
-      {
-        // a,j have been allocated as one long vector
-        A::template free<size_type>(j);
-        A::template free<B>(a);
-      }
-      else
-      {
-        // check if memory for rows have been allocated individually
-        for (size_type i=0; i<n; i++)
-          if (r[i].getsize()>0)
-          {
-            A::template free<size_type>(r[i].getindexptr());
-            A::template free<B>(r[i].getptr());
-          }
-      }
+      deallocate(false);
 
       // reallocate the rows if required
       if (n!=Mat.n)
-      {
         // free rows
         A::template free<row_type>(r);
 
-        // allocate rows
-        n = Mat.n;
-        if (n>0)
-        {
-          r = A::template malloc<row_type>(n);
-        }
-        else
-        {
-          r = 0;
-        }
-      }
-
       // allocate a,j
-      m = Mat.m;
-      nnz = Mat.nnz;
-
-      // in case of row-wise allocation
-      if (nnz<=0)
-      {
-        nnz = 0;
-        for (size_type i=0; i<n; i++)
-          nnz += Mat.r[i].getsize();
-      }
-
-      // allocate a and j array
-      if (nnz>0)
-      {
-        a = A::template malloc<B>(nnz);
-        j = A::template malloc<size_type>(nnz);
-      }
-      else
-      {
-        a = 0;
-        j = 0;
-      }
+      allocate(Mat.n, Mat.m, Mat.nnz, n!=Mat.n);
 
       // build window structure
-      for (size_type i=0; i<n; i++)
-      {
-        // set row i
-        r[i].setsize(Mat.r[i].getsize());
-        if (i==0)
-        {
-          r[i].setptr(a);
-          r[i].setindexptr(j);
-        }
-        else
-        {
-          r[i].setptr( r[i-1].getptr()+r[i-1].getsize() );
-          r[i].setindexptr( r[i-1].getindexptr()+r[i-1].getsize() );
-        }
-      }
-
-      // copy data
-      for (size_type i=0; i<n; i++) r[i] = Mat.r[i];
-
-      // finish off
-      build_mode = row_wise;     // dummy
-      ready =  built;
+      copyWindowStructure(Mat);
       return *this;
     }
 
@@ -563,13 +449,11 @@ namespace Dune {
     {
     public:
       //! constructor
-      CreateIterator (BCRSMatrix& _Mat, size_type _i) : Mat(_Mat)
+      CreateIterator (BCRSMatrix& _Mat, size_type _i)
+        : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j, 0)
       {
         if (Mat.build_mode!=row_wise)
           DUNE_THROW(ISTLError,"creation only allowed for uninitialized matrix");
-
-        i = _i;
-        nnz = 0;
       }
 
       //! prefix increment
@@ -586,38 +470,33 @@ namespace Dune {
         // compute size of the row
         size_type s = pattern.size();
 
-        // update number of nonzeroes including this row
-        nnz += s;
+        if(s>0) {
+          // update number of nonzeroes including this row
+          nnz += s;
 
-        // alloc memory / set window
-        if (Mat.nnz>0)
-        {
-          // memory is allocated in one long array
-
-          // check if that memory is sufficient
-          if (nnz>Mat.nnz)
-            DUNE_THROW(ISTLError,"allocated nnz too small");
-
-          // set row i
-          if (i==0)
-            Mat.r[i].set(s,Mat.a,Mat.j);
-          else
-            Mat.r[i].set(s,Mat.r[i-1].getptr()+Mat.r[i-1].getsize(),
-                         Mat.r[i-1].getindexptr()+Mat.r[i-1].getsize());
-        }
-        else
-        {
-          // memory is allocated individually per row
-          // allocate and set row i
-          if (s>0)
+          // alloc memory / set window
+          if (Mat.nnz>0)
           {
+            // memory is allocated in one long array
+
+            // check if that memory is sufficient
+            if (nnz>Mat.nnz)
+              DUNE_THROW(ISTLError,"allocated nnz too small");
+
+            // set row i
+            Mat.r[i].set(s,current_row.getptr(),current_row.getindexptr());
+            current_row.setptr(current_row.getptr()+s);
+            current_row.setindexptr(current_row.getindexptr()+s);
+          }else{
+            // memory is allocated individually per row
+            // allocate and set row i
             B*   a = A::template malloc<B>(s);
             size_type* j = A::template malloc<size_type>(s);
             Mat.r[i].set(s,a,j);
           }
-          else
-            Mat.r[i].set(0,0,0);
-        }
+        }else
+          // setup empty row
+          Mat.r[i].set(0,0,0);
 
         // initialize the j array for row i from pattern
         size_type k=0;
@@ -633,6 +512,10 @@ namespace Dune {
         if (i==Mat.n)
         {
           Mat.ready = built;
+          if(Mat.nnz>0)
+            // Set nnz to the exact number of nonzero blocks inserted
+            // as some methods rely on it
+            Mat.nnz=nnz;
         }
         // done
         return *this;
@@ -685,8 +568,8 @@ namespace Dune {
       size_type i;               // current row to be defined
       size_type nnz;             // count total number of nonzeros
       std::set<size_type> pattern;     // used to compile entries in a row
+      row_type current_row;     // row poiting to the current row to setup
     };
-
 
     //! allow CreateIterator to access internal data
     friend class CreateIterator;
@@ -746,43 +629,10 @@ namespace Dune {
       }
 
       // allocate/check memory
-      if (nnz>0)
-      {
-        // there is already memory
-        if (total>nnz)
-          DUNE_THROW(ISTLError,"nnz too small");
-      }
-      else
-      {
-        // we allocate the memory here
-        nnz = total;
-        if (nnz>0)
-        {
-          a = A::template malloc<B>(nnz);
-          j = A::template malloc<size_type>(nnz);
-        }
-        else
-        {
-          a = 0;
-          j = 0;
-        }
-      }
+      allocate(n,m,total,false);
 
       // set the window pointers correctly
-      for (size_type i=0; i<n; i++)
-      {
-        // set row i
-        if (i==0)
-        {
-          r[i].setptr(a);
-          r[i].setindexptr(j);
-        }
-        else
-        {
-          r[i].setptr( r[i-1].getptr()+r[i-1].getsize() );
-          r[i].setindexptr( r[i-1].getindexptr()+r[i-1].getsize() );
-        }
-      }
+      setWindowPointers(begin());
 
       // initialize j array with m (an invalid column index)
       // this indicates an unused entry
@@ -1177,7 +1027,11 @@ namespace Dune {
     //! row dimension of block r
     size_type rowdim (size_type i) const
     {
-      return r[i].getptr()->rowdim();
+      const B* row = r[i].getptr();
+      if(row)
+        return row->rowdim();
+      else
+        return 0;
     }
 
     //! col dimension of block c
@@ -1274,8 +1128,45 @@ namespace Dune {
     B*   a;      // [nnz] non-zero entries of the matrix in row-wise ordering
     size_type* j;      // [nnz] column indices of entries
 
-    //! \brief deallocate memory of the matrix.
-    void deallocate()
+    void setWindowPointers(ConstRowIterator row)
+    {
+      row_type current_row(a,j,0); // Pointers to current row data
+      for (size_type i=0; i<n; i++, ++row) {
+        // set row i
+        size_type s = row->getsize();
+
+        if (s>0) {
+          // setup pointers and size
+          r[i].set(s,current_row.getptr(), current_row.getindexptr());
+          // update pointer for next row
+          current_row.setptr(current_row.getptr()+s);
+          current_row.setindexptr(current_row.getindexptr()+s);
+        } else{
+          // empty row
+          r[i].set(0,0,0);
+        }
+      }
+    }
+
+    //! \brief Copy the window structure from another matrix
+    void copyWindowStructure(const BCRSMatrix& Mat)
+    {
+      setWindowPointers(Mat.begin());
+
+      // copy data
+      for (size_type i=0; i<n; i++) r[i] = Mat.r[i];
+
+      // finish off
+      build_mode = row_wise; // dummy
+      ready = built;
+    }
+
+    /**
+     * @brief deallocate memory of the matrix.
+     * @param deallocateRows Whether we have to deallocate the row pointers, too.
+     * If false they will not be touched. (Defaults to true).
+     */
+    void deallocate(bool deallocateRows=true)
     {
 
       if (nnz>0)
@@ -1296,7 +1187,7 @@ namespace Dune {
       }
 
       // deallocate the rows
-      if (n>0) A::template free<row_type>(r);
+      if (n>0 && deallocateRows) A::template free<row_type>(r);
 
       // Mark matrix as not built at all.
       ready=notbuilt;
@@ -1317,8 +1208,10 @@ namespace Dune {
      * @param columns the number of columns the matrix should contain.
      * @param nnz The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
+     * @param allocateRow Whether we have to allocate the row pointers, too. (Defaults to
+     * true)
      */
-    void allocate(size_type rows, size_type columns, size_type nnz_=0)
+    void allocate(size_type rows, size_type columns, size_type nnz_=0, bool allocateRows=true)
     {
       // Store size
       n = rows;
@@ -1326,11 +1219,14 @@ namespace Dune {
       nnz = nnz_;
 
       // allocate rows
-      if (n>0) {
-        r = A::template malloc<row_type>(rows);
-      }else{
-        r = 0;
+      if(allocateRows) {
+        if (n>0) {
+          r = A::template malloc<row_type>(rows);
+        }else{
+          r = 0;
+        }
       }
+
 
       // allocate a and j array
       if (nnz>0) {
