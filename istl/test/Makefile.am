@@ -7,15 +7,18 @@ if MPI
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest $(SELECTPROG)
+NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
+	bcrsbuildtest $(SELECTPROG)
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(DUNE_COMMON_ROOT)/bin/perhapsstartmpi $(INDEXRUN) $(DUNE_COMMON_ROOT)/bin/perhapsstopmpi
+TESTS = $(NORMALTESTS) $(INDEXRUN)
 
 # programs just to build when "make check" is used
 check_PROGRAMS = $(NORMALTESTS) $(INDEXPROG)
 
 # define the programs
+
+bcrsbuildtest_SOURCES = bcrsbuild.cc
 
 bvectortest_SOURCES = bvectortest.cc
 #bvectortest_DEPENDENCIES = $(LOCAL_LIBS)
