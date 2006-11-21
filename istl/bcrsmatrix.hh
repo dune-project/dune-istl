@@ -1103,7 +1103,7 @@ namespace Dune {
       if (i<0 || i>=n) DUNE_THROW(ISTLError,"index out of range");
       if (j<0 || i>=m) DUNE_THROW(ISTLError,"index out of range");
 #endif
-      if (r[i].find(j)!=r[i].end())
+      if (r[i].size() && r[i].find(j)!=r[i].end())
         return true;
       else
         return false;
