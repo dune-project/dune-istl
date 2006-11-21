@@ -67,7 +67,7 @@ namespace Dune
     }
 
 
-    const uint32_t operator*() const
+    uint32_t operator*() const
     {
       return iter_->local().local();
     }
