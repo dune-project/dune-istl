@@ -8,8 +8,7 @@ endif
 NORMALTESTS = amgtest graphtest $(MPITESTS)
 
 # which tests to run
-TESTS = $(NORMALTESTS) $(DUNE_COMMON_ROOT)/bin/perhapsstartmpi $(TESTPROGS) \
-	$(DUNE_COMMON_ROOT)/bin/perhapsstopmpi
+TESTS = $(NORMALTESTS) $(TESTPROGS)
 
 # programs just to build when "make check" is used
 check_PROGRAMS = $(TESTPROGS) $(NORMALTESTS)
