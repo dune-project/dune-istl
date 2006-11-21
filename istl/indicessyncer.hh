@@ -953,16 +953,17 @@ namespace Dune
         if(process==rank_) {
           // Now we know the local attribute of the global index
           // Do we know that global index already?
-          index = std::lower_bound(index, iEnd, IndexPair(global));
+          IndexIterator pos = std::lower_bound(index, iEnd, IndexPair(global));
 
-          if(index == iEnd || index->global() != global) {
+          if(pos == iEnd || pos->global() != global) {
             // No, we do not. Add it!
             indexSet_.add(global,ParallelLocalIndex<Attribute>(numberer(global),
                                                                Attribute(attribute), true));
           }else{
             // Attributes have to match!
-            assert(attribute==index->local().attribute());
+            assert(attribute==pos->local().attribute());
           }
+          index=pos;
         }else{
           insertIntoRemoteIndexList(process, global, attribute);
         }
