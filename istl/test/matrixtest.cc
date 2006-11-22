@@ -265,6 +265,13 @@ int main()
 
   bcrsMatrix.endindices();
 
+  typedef BCRSMatrix<FieldMatrix<double,2,2> >::RowIterator RowIterator;
+  typedef BCRSMatrix<FieldMatrix<double,2,2> >::ColIterator ColIterator;
+
+  for(RowIterator row = bcrsMatrix.begin(); row != bcrsMatrix.end(); ++row)
+    for(ColIterator col = row->begin(); col != row->end(); ++col)
+      *col = 1.0 + (double) row.index() * (double) col.index();
+
   testMatrix(bcrsMatrix);
 
   // ////////////////////////////////////////////////////////////////////////
@@ -272,6 +279,7 @@ int main()
   // ////////////////////////////////////////////////////////////////////////
 
   BDMatrix<FieldMatrix<double,4,4> > bdMatrix(2);
+  bdMatrix = 4.0;
 
   testMatrix(bdMatrix);
 }
