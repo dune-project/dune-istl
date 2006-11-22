@@ -365,7 +365,7 @@ namespace Dune {
           _nnz += Mat.r[i].getsize();
       }
 
-      allocate(Mat.n, Mat.m, nnz);
+      allocate(Mat.n, Mat.m, _nnz);
 
       // build window structure
       copyWindowStructure(Mat);
