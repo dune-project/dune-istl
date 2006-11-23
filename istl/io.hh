@@ -7,6 +7,7 @@
 #include <complex>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <string>
 
 #include "istlexception.hh"
@@ -204,6 +205,57 @@ namespace Dune {
     s.setf(std::ios_base::fixed, std::ios_base::floatfield);
   }
 
+  /** \brief Helper method for the writeMatrixToMatlab routine.
+
+     This specialization for FieldMatrices ends the recursion
+   */
+  template <class FieldType, int rows, int cols>
+  void writeMatrixToMatlabHelper(const FieldMatrix<FieldType,rows,cols>& matrix,
+                                 int rowOffset, int colOffset,
+                                 std::ostream& s)
+  {
+    for (int i=0; i<rows; i++)
+      for (int j=0; j<cols; j++)
+        //+1 for Matlab numbering
+        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " " << matrix[i][j] << std::endl;
+
+  }
+
+  template <class MatrixType>
+  void writeMatrixToMatlabHelper(const MatrixType& matrix,
+                                 int externalRowOffset, int externalColOffset,
+                                 std::ostream& s)
+  {
+    // Precompute the accumulated sizes of the columns
+    std::vector<unsigned int> colOffset(matrix.M());
+    if (colOffset.size() > 0)
+      colOffset[0] = 0;
+
+    for (int i=0; i<matrix.M()-1; i++)
+      colOffset[i+1] = colOffset[i] + matrix.coldim(i);
+
+    int rowOffset = 0;
+
+    // Loop over all matrix rows
+    for (int rowIdx=0; rowIdx<matrix.N(); rowIdx++) {
+
+      const typename MatrixType::row_type& row = matrix[rowIdx];
+
+      typename MatrixType::row_type::ConstIterator cIt   = row.begin();
+      typename MatrixType::row_type::ConstIterator cEndIt = row.end();
+
+      // Loop over all columns in this row
+      for (; cIt!=cEndIt; ++cIt)
+        writeMatrixToMatlabHelper(*cIt,
+                                  externalRowOffset+rowOffset,
+                                  externalColOffset + colOffset[cIt.index()],
+                                  s);
+
+      rowOffset += matrix.rowdim(rowIdx);
+    }
+
+  }
+
   /** \brief Writes sparse matrix in a Matlab-readable format
    *
    * This routine writes the argument BCRSMatrix to a file with the name given by
@@ -215,44 +267,13 @@ namespace Dune {
        new_mat = spconvert(load('filename'));
      \endverbatim
    */
-  template <class K, int BlockRowSize, int BlockColSize>
-  void writeMatrixToMatlab(const BCRSMatrix<FieldMatrix<K,BlockRowSize,BlockColSize> >& matrix,
+  template <class MatrixType>
+  void writeMatrixToMatlab(const MatrixType& matrix,
                            const std::string& filename)
   {
-    FILE* fp = fopen(filename.c_str(), "w");
+    std::ofstream outStream(filename.c_str());
 
-    typedef typename BCRSMatrix<FieldMatrix<K,BlockRowSize,BlockColSize> >::row_type RowType;
-
-    // Loop over all matrix rows
-    for (int rowIdx=0; rowIdx<matrix.N(); rowIdx++) {
-
-      const RowType& row = matrix[rowIdx];
-
-      typedef typename RowType::ConstIterator ColumnIterator;
-
-      ColumnIterator cIt   = row.begin();
-      ColumnIterator cEndIt = row.end();
-
-      // Loop over all columns in this row
-      for (; cIt!=cEndIt; ++cIt) {
-
-        for (int i=0; i<BlockRowSize; i++) {
-
-          for (int j=0; j<BlockColSize; j++) {
-
-            //+1 for Matlab numbering
-            fprintf(fp, "%d %d %g\n", rowIdx*BlockRowSize + i + 1,
-                    cIt.index()*BlockColSize + j + 1, (*cIt)[i][j]);
-
-          }
-
-        }
-      }
-
-    }
-
-    fclose(fp);
-
+    writeMatrixToMatlabHelper(matrix, 0, 0, outStream);
   }
 
   /** @} end documentation */
