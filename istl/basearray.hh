@@ -383,6 +383,7 @@ namespace Dune {
 
     //! make array with _n components
     base_array (size_type _n)
+      : base_array_unmanaged<B,A>(_n, 0)
     {
       if (this->n>0)
         this->p = A::template malloc<B>(this->n);
@@ -397,6 +398,8 @@ namespace Dune {
     base_array (const base_array& a)
     {
       // allocate memory with same size as a
+      this->n = a.n;
+
       if (this->n>0)
         this->p = A::template malloc<B>(this->n);
       else
