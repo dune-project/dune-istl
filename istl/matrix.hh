@@ -530,8 +530,8 @@ namespace Dune {
     bool exists (size_type i, size_type j) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i<0 || i>=n) DUNE_THROW(ISTLError,"row index out of range");
-      if (j<0 || i>=m) DUNE_THROW(ISTLError,"column index out of range");
+      if (i<0 || i>=N()) DUNE_THROW(ISTLError,"row index out of range");
+      if (j<0 || i>=M()) DUNE_THROW(ISTLError,"column index out of range");
 #endif
       return true;
     }
