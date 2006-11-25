@@ -36,7 +36,7 @@ int testVector()
   for(int i=0; i < v.N(); ++i)
     v[i] = i;
 
-  for(int i=0; i < v.N(); ++i)
+  for(int i=0; i < v2.N(); ++i)
     v2[i] = i*10;
   w = v;
 
