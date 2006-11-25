@@ -423,7 +423,7 @@ namespace Dune {
       deallocate(false);
 
       // reallocate the rows if required
-      if (n!=Mat.n)
+      if (n>0 && n!=Mat.n)
         // free rows
         A::template free<row_type>(r);
 
