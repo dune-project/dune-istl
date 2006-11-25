@@ -84,8 +84,8 @@ namespace Dune
       typedef typename Matrix::ConstRowIterator Row;
       for(Row row = mat.begin(); row!=mat.end(); ++row) {
         if(row->find(row.index())==row->end())
-          DUNE_THROW(ISTLException, "Missing diagonal value in row "<<row.index()
-                                                                    <<" at block recursion level "<<l);
+          DUNE_THROW(ISTLError, "Missing diagonal value in row "<<row.index()
+                                                                <<" at block recursion level "<<l);
       }
     }
   };
