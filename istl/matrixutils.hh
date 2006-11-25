@@ -5,6 +5,7 @@
 
 #include <dune/common/typetraits.hh>
 #include <dune/common/helpertemplates.hh>
+#include "istlexception.hh"
 
 namespace Dune
 {
@@ -53,6 +54,41 @@ namespace Dune
     };
 
   }
+
+  /**
+   * @brief Check whether the a matrix has diagonal values
+   * on blocklevel recursion levels.
+   */
+  template<std::size_t blocklevel, std::size_t l=blocklevel>
+  struct CheckIfDiagonalPresent
+  {
+    /**
+     * @brief Check whether the a matrix has diagonal values
+     * on blocklevel recursion levels.
+     */
+    template<class Matrix>
+    static void check(const Matrix& mat)
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      CheckIfDiagonalPresent<blocklevel-1,l>::check(mat);
+#endif
+    }
+  };
+
+  template<std::size_t l>
+  struct CheckIfDiagonalPresent<0,l>
+  {
+    template<class Matrix>
+    static void check(const Matrix& mat)
+    {
+      typedef typename Matrix::ConstRowIterator Row;
+      for(Row row = mat.begin(); row!=mat.end(); ++row) {
+        if(row->find(row.index())==row->end())
+          DUNE_THROW(ISTLException, "Missing diagonal value in row "<<row.index()
+                                                                    <<" at block recursion level "<<l);
+      }
+    }
+  };
 
   /**
    * @brief Get the number of nonzero fields in the matrix.
