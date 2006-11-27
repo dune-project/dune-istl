@@ -427,9 +427,9 @@ namespace Dune {
         // free rows
         A::template free<row_type>(r);
 
-      if (Mat.nnz<=0)
+      nnz=Mat.nnz;
+      if (nnz<=0)
       {
-        nnz = 0;
         for (size_type i=0; i<Mat.n; i++)
           nnz += Mat.r[i].getsize();
       }
