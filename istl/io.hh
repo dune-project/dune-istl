@@ -205,6 +205,97 @@ namespace Dune {
     s.setf(std::ios_base::fixed, std::ios_base::floatfield);
   }
 
+  /**
+   * @brief Prints a BCRSMatrix with fixed sized blocks.
+   *
+   * Only the nonzero entries will be printed as matrix blocks
+   * together with their
+   * corresponding column index and all others will be omitted.
+   *
+   * This might be perferable over printmatrix in the case of big
+   * sparse matrices with nonscalar blocks.
+   *
+   * @param s The ostream to print to.
+   * @param mat The matrix to print.
+   * @param titel The title for the matrix.
+   * @param rowtext The text to prepend to each print out of a matrix row.
+   * @param with The number of nonzero blocks to print in one line.
+   * @param precision The precision to use when printing the numbers.
+   */
+  template<class B, int n, int m, class A>
+  void printSparseMatrix(std::ostream& s,
+                         const BCRSMatrix<FieldMatrix<B,n,m>,A>& mat,
+                         std::string title, std::string rowtext,
+                         int width=3, int precision=2)
+  {
+    // set the output format
+    s.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    int oldprec = s.precision();
+    s.precision(precision);
+    // print title
+    s << title
+      << " [n=" << mat.N()
+      << ",m=" << mat.M()
+      << ",rowdim=" << mat.rowdim()
+      << ",coldim=" << mat.coldim()
+      << "]" << std::endl;
+
+    typedef typename BCRSMatrix<FieldMatrix<B,n,m>,A>::ConstRowIterator Row;
+
+    for(Row row=mat.begin(); row != mat.end(); ++row) {
+      int skipcols=0;
+      bool reachedEnd=false;
+
+      while(!reachedEnd) {
+        for(int innerrow=0; innerrow<n; ++innerrow) {
+          int count=0;
+          typedef typename BCRSMatrix<FieldMatrix<B,n,m>,A>::ConstColIterator Col;
+          Col col=row->begin();
+          for(; col != row->end(); ++col,++count) {
+            if(count<skipcols)
+              continue;
+            if(count>=skipcols+width)
+              break;
+            if(innerrow==0) {
+              if(count==skipcols) {
+                s << rowtext;  // start a new row
+                s << " ";      // space in front of each entry
+                s.width(4);    // set width for counter
+                s << row.index()<<": ";        // number of first entry in a line
+              }
+              s.width(4);
+              s<<col.index()<<": |";
+            }else{
+              if(count==skipcols) {
+                for(int i=0; i < rowtext.length(); i++)
+                  s<<" ";
+                s<<"       ";
+              }
+              s<<"      |";
+            }
+            for(int innercol=0; innercol < m; ++innercol) {
+              s.width(9);
+              s<<(*col)[innerrow][innercol]<<" ";
+            }
+
+            s<<"|";
+          }
+          if(innerrow==n-1 && col==row->end())
+            reachedEnd=true;
+          else
+            s<<std::endl;
+        }
+        skipcols+=width;
+        s<<std::endl;
+      }
+      s<<std::endl;
+    }
+
+    // reset the output format
+    s.precision(oldprec);
+    s.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  }
+
   /** \brief Helper method for the writeMatrixToMatlab routine.
 
      This specialization for FieldMatrices ends the recursion
