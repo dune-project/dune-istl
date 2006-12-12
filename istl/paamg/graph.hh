@@ -423,6 +423,9 @@ namespace Dune
       Matrix& matrix_;
       /** @brief The edge descriptor of the first edge of each row. */
       EdgeDescriptor* start_;
+      /** Prevent copying. */
+      MatrixGraph(const MatrixGraph&);
+
     };
 
     /**
@@ -469,6 +472,11 @@ namespace Dune
 
         EdgeIndexMap(const EdgeDescriptor& firstEdge)
           : firstEdge_(firstEdge)
+        {}
+
+        /** @brief Protect copy construction. */
+        EdgeIndexMap(const EdgeIndexMap& emap)
+          : firstEdge_(emap.firstEdge_)
         {}
 
         std::size_t operator[](const EdgeDescriptor& edge) const
@@ -699,6 +707,9 @@ namespace Dune
       int* start_;
       /** @brief The edge behind the last out edge of each vertex. */
       int* end_;
+      /** prevent copying */
+      SubGraph(const SubGraph&)
+      {}
     };
 
 
@@ -1300,7 +1311,8 @@ namespace Dune
                       const EdgeMap& emap=EdgeMap());
 
     private:
-      PropertiesGraph(const PropertiesGraph&);
+      PropertiesGraph(const PropertiesGraph&)
+      {}
 
       /** @brief The graph the properties are attached to. */
       Graph& graph_;
@@ -1429,7 +1441,7 @@ namespace Dune
       : matrix_(matrix)
     {
       if(matrix_.N()!=matrix_.M())
-        DUNE_THROW(ISTLError, "Matrix has to have as columns as rows!");
+        DUNE_THROW(ISTLError, "Matrix has to have as many columns as rows!");
 
       start_ = new EdgeDescriptor[matrix_.N()+1];
 
@@ -1470,14 +1482,16 @@ namespace Dune
     MatrixGraph<M>::findEdge(const VertexDescriptor& source,
                              const VertexDescriptor& target) const
     {
-      int offset = matrix_[source].find(target).offset();
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if(!matrix_.exists(source,target))
+        DUNE_THROW(ISTLError, "matrix entry ("<<source<<","<<target<<") does not exist!");
       // diagonal is assumed to exist, so search for it
       // If not present this should throw an exception
       typename M::ConstColIterator found = matrix_[source].find(source);
       if(found == matrix_[source].end())
         DUNE_THROW(ISTLError, "Every matrix row is assumed to have a diagonal!");
 #endif
+      int offset = matrix_[source].find(target).offset();
       if(target>source)
         offset--;
 
@@ -1950,7 +1964,7 @@ namespace Dune
       : excluded_(excluded), noVertices_(0), endVertex_(0), maxVertex_(graph.maxVertex())
     {
       start_ = new int[graph.noVertices()];
-      end_ = new int[graph.noEdges()];
+      end_ = new int[graph.noVertices()];
       edges_ = new VertexDescriptor[graph.noEdges()];
 
       VertexDescriptor* edge=edges_;
