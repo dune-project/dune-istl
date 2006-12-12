@@ -441,7 +441,7 @@ namespace Dune
         {
           calc c= for_each(matrix.begin(), matrix.end(), calc());
           dinfo<<"Matrix row size: min="<<c.min<<" max="<<c.max
-               <<" average="<<static_cast<double>(c.sum)/static_cast (matrix.N())
+               <<" average="<<static_cast<double>(c.sum)/matrix.N()
                <<std::endl;
         }
       };
