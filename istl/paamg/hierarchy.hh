@@ -425,8 +425,8 @@ namespace Dune
 
           void operator()(const matrix_row& row)
           {
-            std::min(min, row.size());
-            std::max(max, row.size());
+            min=std::min(min, row.size());
+            max=std::max(max, row.size());
             sum += row.size();
           }
 
@@ -440,8 +440,9 @@ namespace Dune
         static void stats(const Matrix& matrix)
         {
           calc c= for_each(matrix.begin(), matrix.end(), calc());
-          dinfo<<"Matrix rows: min="<<c.min<<" max="<<c.max
-               <<" average="<<c.sum/matrix.N()<<std::endl;
+          dinfo<<"Matrix row size: min="<<c.min<<" max="<<c.max
+               <<" average="<<static_cast<double>(c.sum)/static_cast (matrix.N())
+               <<std::endl;
         }
       };
     };
@@ -584,7 +585,7 @@ namespace Dune
         if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
           dinfo<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
 
-        if(unknowns < criterion.coarsenTarget())
+        if(unknowns <= criterion.coarsenTarget())
           // No further coarsening needed
           break;
 
@@ -646,6 +647,7 @@ namespace Dune
                                    visitedMap,
                                    *aggregatesMap,
                                    *infoLevel);
+        dinfo<< rank<<": agglomeration achieved "<<aggregates<<" aggregates"<<std::endl;
 
         GraphCreator::free(graphs);
 
