@@ -26,19 +26,28 @@ namespace Dune
      * @author Markus Blatt
      * @brief The AMG preconditioner.
      */
+
+    /**
+     * @brief Parallel algebraic multigrid based on agglomeration.
+     */
     template<class M, class X, class S, class PI=SequentialInformation,
         class A=std::allocator<X> >
     class AMG : public Preconditioner<X,X>
     {
     public:
       /** @brief The matrix operator type. */
-      typedef M Matrix;
-      /** @brief The type of the parallel information */
+      typedef M Operator;
+      /**
+       * @brief The type of the parallel information.
+       * Either OwnerOverlapCommunication or another type
+       * discribing the parallel data distribution and
+       * prvoiding communication methods.
+       */
       typedef PI ParallelInformation;
-      /** @brief The matrix type. */
-      typedef MatrixHierarchy<M, ParallelInformation, A> MatrixHierarchy;
-
-      typedef typename MatrixHierarchy::ParallelInformationHierarchy ParallelInformationHierarchy;
+      /** @brief The operator hierarchy type. */
+      typedef MatrixHierarchy<M, ParallelInformation, A> OperatorHierarchy;
+      /** @brief The parallal data distribution hierarchy type. */
+      typedef typename OperatorHierarchy::ParallelInformationHierarchy ParallelInformationHierarchy;
 
       /** @brief The domain type. */
       typedef X Domain;
@@ -46,7 +55,11 @@ namespace Dune
       typedef X Range;
       /** @brief the type of the coarse solver. */
       typedef InverseOperator<X,X> CoarseSolver;
-      /** @brief The type of the smoother. */
+      /**
+       * @brief The type of the smoother.
+       *
+       * One of the preconditioners implementing the Preconditioner interface.
+       * Not that the smoother has to fit the ParallelInformation.*/
       typedef S Smoother;
 
       /** @brief The argument type for the construction of the smoother. */
@@ -57,8 +70,6 @@ namespace Dune
         category = S::category
       };
 
-      enum GridFlag { owner, overlap};
-
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrix The matrix we precondition for.
@@ -68,7 +79,7 @@ namespace Dune
        * for pre and post smoothing
        * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
        */
-      AMG(const MatrixHierarchy& matrices, CoarseSolver& coarseSolver,
+      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, std::size_t gamma,
           std::size_t smoothingSteps);
 
@@ -86,7 +97,7 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      AMG(const Matrix& fineOperator, const C& criterion,
+      AMG(const Operator& fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs, std::size_t gamma=1,
           std::size_t smoothingSteps=2, const ParallelInformation& pinfo=ParallelInformation());
 
@@ -104,9 +115,9 @@ namespace Dune
     private:
       /** @brief Multigrid cycle on a level. */
       void mgc(typename Hierarchy<Smoother,A>::Iterator& smoother,
-               typename MatrixHierarchy::ParallelMatrixHierarchy::ConstIterator& matrix,
+               typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator& matrix,
                typename ParallelInformationHierarchy::Iterator& pinfo,
-               typename MatrixHierarchy::AggregatesMapList::const_iterator& aggregates,
+               typename OperatorHierarchy::AggregatesMapList::const_iterator& aggregates,
                typename Hierarchy<Domain,A>::Iterator& lhs,
                typename Hierarchy<Domain,A>::Iterator& update,
                typename Hierarchy<Range,A>::Iterator& rhs);
@@ -114,7 +125,7 @@ namespace Dune
       //      void setupIndices(typename Matrix::ParallelIndexSet& indices, const Matrix& matrix);
 
       /**  @brief The matrix we solve. */
-      const MatrixHierarchy* matrices_;
+      const OperatorHierarchy* matrices_;
       /** @brief The arguments to construct the smoother */
       SmootherArgs smootherArgs_;
       /** @brief The hierarchy of the smoothers. */
@@ -139,13 +150,11 @@ namespace Dune
       std::size_t steps_;
       std::size_t level;
       bool buildHierarchy_;
-
-      typedef MatrixAdapter<typename Matrix::matrix_type,Domain,Range> MatrixAdapter;
       Smoother *coarseSmoother_;
     };
 
     template<class M, class X, class S, class P, class A>
-    AMG<M,X,S,P,A>::AMG(const MatrixHierarchy& matrices, CoarseSolver& coarseSolver,
+    AMG<M,X,S,P,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                         const SmootherArgs& smootherArgs,
                         std::size_t gamma, std::size_t smoothingSteps)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
@@ -162,7 +171,7 @@ namespace Dune
 
     template<class M, class X, class S, class P, class A>
     template<class C>
-    AMG<M,X,S,P,A>::AMG(const Matrix& matrix,
+    AMG<M,X,S,P,A>::AMG(const Operator& matrix,
                         const C& criterion,
                         const SmootherArgs& smootherArgs,
                         std::size_t gamma, std::size_t smoothingSteps,
@@ -173,7 +182,7 @@ namespace Dune
     {
       IsTrue<static_cast<int>(M::category)==static_cast<int>(S::category)>::yes();
       IsTrue<static_cast<int>(P::category)==static_cast<int>(S::category)>::yes();
-      MatrixHierarchy* matrices = new MatrixHierarchy(const_cast<Matrix&>(matrix), pinfo);
+      OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 
       matrices->template build<typename P::CopyFlags>(criterion);
 
@@ -250,9 +259,9 @@ namespace Dune
     void AMG<M,X,S,P,A>::apply(Domain& v, const Range& d)
     {
       typename Hierarchy<Smoother,A>::Iterator smoother = smoothers_.finest();
-      typename MatrixHierarchy::ParallelMatrixHierarchy::ConstIterator matrix = matrices_->matrices().finest();
+      typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix = matrices_->matrices().finest();
       typename ParallelInformationHierarchy::Iterator pinfo = matrices_->parallelInformation().finest();
-      typename MatrixHierarchy::AggregatesMapList::const_iterator aggregates = matrices_->aggregatesMaps().begin();
+      typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates = matrices_->aggregatesMaps().begin();
       typename Hierarchy<Domain,A>::Iterator lhs = lhs_->finest();
       typename Hierarchy<Domain,A>::Iterator update = update_->finest();
       typename Hierarchy<Range,A>::Iterator rhs = rhs_->finest();
@@ -267,9 +276,9 @@ namespace Dune
 
     template<class M, class X, class S, class P, class A>
     void AMG<M,X,S,P,A>::mgc(typename Hierarchy<Smoother,A>::Iterator& smoother,
-                             typename MatrixHierarchy::ParallelMatrixHierarchy::ConstIterator& matrix,
+                             typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator& matrix,
                              typename ParallelInformationHierarchy::Iterator& pinfo,
-                             typename MatrixHierarchy::AggregatesMapList::const_iterator& aggregates,
+                             typename OperatorHierarchy::AggregatesMapList::const_iterator& aggregates,
                              typename Hierarchy<Domain,A>::Iterator& lhs,
                              typename Hierarchy<Domain,A>::Iterator& update,
                              typename Hierarchy<Range,A>::Iterator& rhs){
@@ -282,20 +291,21 @@ namespace Dune
           DUNE_THROW(MathError, "Coarse solver did not converge");
       }else{
         // presmoothing
-        for(std::size_t i=0; i < steps_; ++i) {
-          *lhs=0;
+        *lhs=0;
+        for(std::size_t i=0; i < steps_; ++i)
           smoother->apply(*lhs, *rhs);
-          // Accumulate update
-          *update += *lhs;
-          // update defect
-          matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-        }
 
+        // Accumulate update
+        *update += *lhs;
+        // update defect
+        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
+
+#ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
         //restrict defect to coarse level right hand side.
         typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
         ++pinfo;
 
-        Transfer<typename MatrixHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
+        Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
         ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
 
         // prepare coarse system
@@ -329,7 +339,7 @@ namespace Dune
 
 
         *lhs=0;
-        Transfer<typename MatrixHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
+        Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
         ::prolongate(*(*aggregates), *update, *lhs, 1.6);
 
         --update;
@@ -337,15 +347,15 @@ namespace Dune
 
         *update += *lhs;
 
-        // postsmoothing
-        for(std::size_t i=0; i < steps_; ++i) {
-          // update defect
-          matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-          *lhs=0;
-          smoother->apply(*lhs, *rhs);
-          *update += *lhs;
-        }
+        // update defect
+        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
 
+#endif
+        // postsmoothing
+        *lhs=0;
+        for(std::size_t i=0; i < steps_; ++i)
+          smoother->apply(*lhs, *rhs);
+        *update += *lhs;
       }
     }
 
