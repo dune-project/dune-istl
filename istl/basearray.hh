@@ -691,7 +691,7 @@ namespace Dune {
         else l = q+1;
       }
 
-      if (i==j[l])
+      if (n && i==j[l])
         return iterator(p,j,l);
       else
         return iterator(p,j,n);
@@ -735,7 +735,7 @@ namespace Dune {
         else l = q+1;
       }
 
-      if (i==j[l])
+      if (n && i==j[l])
         return const_iterator(p,j,l);
       else
         return const_iterator(p,j,n);
