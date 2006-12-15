@@ -440,7 +440,7 @@ namespace Dune
         static void stats(const Matrix& matrix)
         {
           calc c= for_each(matrix.begin(), matrix.end(), calc());
-          dinfo<<"Matrix row size: min="<<c.min<<" max="<<c.max
+          dinfo<<"Matrix row: min="<<c.min<<" max="<<c.max
                <<" average="<<static_cast<double>(c.sum)/matrix.N()
                <<std::endl;
         }
@@ -616,13 +616,16 @@ namespace Dune
         if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
           dinfo << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
 
-        if(unknowns/noAggregates<criterion.minCoarsenRate())
+        if(!noAggregates || unknowns/noAggregates<criterion.minCoarsenRate())
           if(procs>1 && criterion.accumulate())
             DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
           else{
             if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
-              dinfo << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
-                    <<criterion.minCoarsenRate()<<std::endl;
+              if(noAggregates)
+                dinfo << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
+                      <<criterion.minCoarsenRate()<<std::endl;
+              else
+                dinfo << "Could not build any aggregates. Probably no connected nodes."<<std::endl;
             delete aggregatesMap;
             break;
           }
