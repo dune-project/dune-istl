@@ -592,9 +592,9 @@ namespace Dune
                                             overlapVertices+count,
                                             sparsityBuilder);
 
-      dinfo<<"Matrix row size: min="<<sparsityBuilder.minRowSize()<<" max="
+      dinfo<<"row size: min="<<sparsityBuilder.minRowSize()<<" max="
            <<sparsityBuilder.maxRowSize()<<" avg="
-           <<static_cast<double>(sparsityBuilder.sumRowSize())/static_cast<double>(coarseMatrix->N())
+           <<static_cast<double>(sparsityBuilder.sumRowSize())/coarseMatrix->N()
            <<std::endl;
 
       delete[] overlapVertices;
@@ -628,8 +628,9 @@ namespace Dune
 
       ConnectivityConstructor<G,SequentialInformation>::examine(fineGraph, visitedMap, pinfo,
                                                                 aggregates, sparsityBuilder);
-      dinfo<<"Matrix row size: min="<<sparsityBuilder.minRowSize()<<" max="
-           <<sparsityBuilder.maxRowSize()<<" average="<<sparsityBuilder.sumRowSize()/coarseMatrix->N()<<std::endl;
+      dinfo<<"Matrix row: min="<<sparsityBuilder.minRowSize()<<" max="
+           <<sparsityBuilder.maxRowSize()<<" average="
+           <<static_cast<double>(sparsityBuilder.sumRowSize())/coarseMatrix->N()<<std::endl;
       return coarseMatrix;
     }
 
