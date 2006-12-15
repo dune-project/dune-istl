@@ -310,6 +310,10 @@ namespace Dune
       typename Matrix::field_type diagonal_;
     };
 
+    /**
+     * @brief Norm that uses only the [0][0] entry of the block to determine couplings.
+     *
+     */
     class FirstDiagonal
     {
     public:
@@ -321,11 +325,41 @@ namespace Dune
       }
     };
 
+    /**
+     * @brief Functor using the row sum (infinity) norm to determine strong couplings.
+     *
+     * The is proposed by several people for elasticity problems.
+     */
+    struct RowSum
+    {
+      template<class M>
+      typename M::field_type operator()(const M& m) const
+      {
+        return m.infinity_norm();
+      }
+    };
 
+    /**
+     * @brief Criterion taking advantage of symmetric matrices.
+     *
+     * The two template parameters are:
+     * <dt>M</dt><dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
+     * <dt>Norm</dt><dd>The norm to use to determine the strong couplings between the nodes</dd>
+     */
     template<class M, class Norm>
     class SymmetricCriterion : public AggregationCriterion<SymmetricDependency<M,Norm> >
     {};
 
+
+    /**
+     * @brief Criterion suited for unsymmetric matrices.
+     *
+     * Nevertheless the sparsity pattern has to be symmetric.
+     *
+     * The two template parameters are:
+     * <dt>M</dt><dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
+     * <dt>Norm</dt><dd>The norm to use to determine the strong couplings between the nodes</dd>
+     */
     template<class M, class Norm>
     class UnSymmetricCriterion : public AggregationCriterion<Dependency<M,Norm> >
     {};
@@ -1994,9 +2028,9 @@ namespace Dune
         unmarkFront();
       }
 
-      Dune::dverb<<"connected aggregates: "<<conAggregates;
-      Dune::dverb<<" isolated aggregates: "<<isoAggregates;
-      Dune::dverb<<" one node aggregates: "<<oneAggregates<<std::endl;
+      Dune::dinfo<<"connected aggregates: "<<conAggregates;
+      Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
+      Dune::dinfo<<" one node aggregates: "<<oneAggregates<<std::endl;
 
       delete aggregate_;
       return Tuple<int,int,int>(conAggregates,isoAggregates,oneAggregates);
