@@ -97,16 +97,16 @@ namespace Dune
 
   template<class K, int n> class FieldVector;
 
-  template<class B, class A> class BlockVector;
+  template<class B, class A> class VariableBlockVector;
 
   template<class K, class A, int n>
-  struct CommPolicy<BlockVector<FieldVector<K, n>, A> >
+  struct CommPolicy<VariableBlockVector<FieldVector<K, n>, A> >
   {
-    typedef BlockVector<FieldVector<K, n>, A> Type;
+    typedef VariableBlockVector<FieldVector<K, n>, A> Type;
 
-    typedef typename Type::block_type IndexedType;
+    typedef typename Type::B IndexedType;
 
-    typedef SizeOne IndexedTypeFlag;
+    typedef VariableSize IndexedTypeFlag;
 
     static const void* getAddress(const Type& v, int i);
 
@@ -842,15 +842,15 @@ namespace Dune
   }
 
   template<class K, class A, int n>
-  inline const void* CommPolicy<BlockVector<FieldVector<K, n>, A> >::getAddress(const Type& v, int index)
+  inline const void* CommPolicy<VariableBlockVector<FieldVector<K, n>, A> >::getAddress(const Type& v, int index)
   {
-    return &(v[index]);
+    return &(v[index][0]);
   }
 
   template<class K, class A, int n>
-  inline int CommPolicy<BlockVector<FieldVector<K, n>, A> >::getSize(const Type& v, int index)
+  inline int CommPolicy<VariableBlockVector<FieldVector<K, n>, A> >::getSize(const Type& v, int index)
   {
-    return 1;
+    return v[index].getsize();
   }
 
 
