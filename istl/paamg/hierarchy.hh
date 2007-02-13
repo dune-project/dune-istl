@@ -131,10 +131,10 @@ namespace Dune
       class LevelIterator
         : public BidirectionalIteratorFacade<LevelIterator<C,T1>,T1,T1&>
       {
-        friend class LevelIterator<typename Dune::RemoveConst<C>::Type,
-            typename Dune::RemoveConst<T1>::Type >;
-        friend class LevelIterator<const typename Dune::RemoveConst<C>::Type,
-            const typename Dune::RemoveConst<T1>::Type >;
+        friend class LevelIterator<typename remove_const<C>::type,
+            typename remove_const<T1>::type >;
+        friend class LevelIterator<const typename remove_const<C>::type,
+            const typename remove_const<T1>::type >;
 
       public:
         /** @brief Constructor. */
@@ -147,22 +147,22 @@ namespace Dune
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<typename Dune::RemoveConst<C>::Type,
-                          typename Dune::RemoveConst<T1>::Type>& other)
+        LevelIterator(const LevelIterator<typename remove_const<C>::type,
+                          typename remove_const<T1>::type>& other)
           : element_(other.element_)
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<const typename Dune::RemoveConst<C>::Type,
-                          const typename Dune::RemoveConst<T1>::Type>& other)
+        LevelIterator(const LevelIterator<const typename remove_const<C>::type,
+                          const typename remove_const<T1>::type>& other)
           : element_(other.element_)
         {}
 
         /**
          * @brief Equality check.
          */
-        bool equals(const LevelIterator<typename Dune::RemoveConst<C>::Type,
-                        typename Dune::RemoveConst<T1>::Type>& other) const
+        bool equals(const LevelIterator<typename remove_const<C>::type,
+                        typename remove_const<T1>::type>& other) const
         {
           return element_ == other.element_;
         }
@@ -170,8 +170,8 @@ namespace Dune
         /**
          * @brief Equality check.
          */
-        bool equals(const LevelIterator<const typename Dune::RemoveConst<C>::Type,
-                        const typename Dune::RemoveConst<T1>::Type>& other) const
+        bool equals(const LevelIterator<const typename remove_const<C>::type,
+                        const typename remove_const<T1>::type>& other) const
         {
           return element_ == other.element_;
         }
