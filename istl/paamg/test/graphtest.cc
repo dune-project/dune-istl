@@ -351,18 +351,19 @@ void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 {
 #ifdef HAVE_TR1_TYPE_TRAITS
   using std::tr1::remove_const;
+  using std::tr1::is_same;
 #else
   using Dune::remove_const;
+  using Dune::is_same;
 #endif
   using Dune::SelectType;
-  using Dune::SameType;
 
   typedef typename remove_const<G>::type Mutable;
-  typedef typename SelectType<SameType<G,Mutable>::value,
+  typedef typename SelectType<is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::Type VertexIterator;
 
-  typedef typename SelectType<SameType<G,Mutable>::value,
+  typedef typename SelectType<is_same<G,Mutable>::value,
       typename G::EdgeIterator,
       typename G::ConstEdgeIterator>::Type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
@@ -381,18 +382,19 @@ void printPropertiesGraph(G& graph, std::ostream& os)
 {
 #ifdef HAVE_TR1_TYPE_TRAITS
   using std::tr1::remove_const;
+  using std::tr1::is_same;
 #else
   using Dune::remove_const;
+  using Dune::is_same;
 #endif
   using Dune::SelectType;
-  using Dune::SameType;
 
   typedef typename remove_const<G>::type Mutable;
-  typedef typename SelectType<SameType<G,Mutable>::value,
+  typedef typename SelectType<is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::Type VertexIterator;
 
-  typedef typename SelectType<SameType<G,Mutable>::value,
+  typedef typename SelectType<is_same<G,Mutable>::value,
       typename G::EdgeIterator,
       typename G::ConstEdgeIterator>::Type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
@@ -411,18 +413,19 @@ void printGraph(G& graph, std::ostream& os)
 {
 #ifdef HAVE_TR1_TYPE_TRAITS
   using std::tr1::remove_const;
+  using std::tr1::is_same;
 #else
   using Dune::remove_const;
+  using Dune::is_same;
 #endif
   using Dune::SelectType;
-  using Dune::SameType;
 
   typedef typename remove_const<G>::type Mutable;
-  typedef typename SelectType<SameType<G,Mutable>::value,
+  typedef typename SelectType<is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::Type VertexIterator;
 
-  typedef typename SelectType<SameType<G,Mutable>::value,
+  typedef typename SelectType<is_same<G,Mutable>::value,
       typename G::EdgeIterator,
       typename G::ConstEdgeIterator>::Type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
