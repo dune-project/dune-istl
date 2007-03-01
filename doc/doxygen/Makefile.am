@@ -32,7 +32,7 @@ endif
 
 
 #we need this in the distribution
-EXTRA_DIST = $(WHAT) html-dist $(DOXYGENHEADER)
+EXTRA_DIST = $(WHAT) html-dist $(DOXYGENHEADER) doxy-footer.html $(PAGES)
 
 doxygendir = $(datadir)/doc/dune-istl/doxygen
 doxygen_DATA = $(WHAT)
@@ -71,15 +71,16 @@ doxygen-tag: FORCE $(DOXYGENHEADER)
 html: doxygen-tag
 
 html-dist: $(DOXYGENHEADER)
-	rm -rf html; \
+	rm -rf html
 	set -e; \
 	if test -e Doxyfile; then \
 	  ( cat Doxyfile; $(DOXYFILESHORT_OVERWRITE) ) > Doxyfile.tmp; \
 	  echo Running doxygen. This may take a while... ; \
 	  $(DOXYGEN) Doxyfile.tmp > doxygen.log 2>&1 <&- ; \
 	  rm -f Doxyfile.tmp; \
-	fi; \
-	mv html html-dist
+	fi
+	rm -rf html-dist
+	if test -d html; then mv html html-dist; fi
 
 # how to install the doxygen documentation
 doxygen-install:

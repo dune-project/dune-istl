@@ -3,7 +3,8 @@
 SUBDIRS = doxygen layout comm
 
 TEXSOURCES = istl.tex istl.bib
-EXTRA_DIST = $(TEXSOURCES)
+EPSFILES = blockstructure.eps
+EXTRA_DIST = $(TEXSOURCES) $(EPSFILES)
 if BUILD_DOCS
   DOCS = istl.pdf istl.ps
 endif
