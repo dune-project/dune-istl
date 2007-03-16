@@ -14,7 +14,7 @@
 #include <utility>
 #include <iostream>
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 #include "mpitraits.hh"
 #include "mpi.h"
 
