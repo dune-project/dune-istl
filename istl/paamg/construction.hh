@@ -159,7 +159,7 @@ namespace Dune
     };
 
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
     template<typename T>
     class ConstructionTraits<ParallelInformation<T> >
     {

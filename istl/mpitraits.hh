@@ -4,7 +4,7 @@
 #ifndef DUNE_MPITRAITS_HH
 #define DUNE_MPITRAITS_HH
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 #include "mpi.h"
 #endif
 
@@ -32,7 +32,7 @@ namespace Dune
   class MPITraits
   {};
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 
   // A Macro for defining traits for the primitive data types
 #define ComposeMPITraits(p,m) \

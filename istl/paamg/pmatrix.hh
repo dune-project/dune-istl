@@ -9,7 +9,7 @@
 #include <dune/istl/operators.hh>
 #include "pinfo.hh"
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 
 namespace Dune
 {

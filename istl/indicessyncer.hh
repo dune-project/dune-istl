@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <functional>
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 namespace Dune
 {
   /** @addtogroup ISTL_Comm
