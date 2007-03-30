@@ -91,6 +91,7 @@ namespace Dune {
 
     // reset the output format
     s.flags(oldflags);
+    s.precision(oldprec);
   }
 
 
@@ -208,6 +209,7 @@ namespace Dune {
 
     // reset the output format
     s.flags(oldflags);
+    s.precision(oldprec);
   }
 
   /**
