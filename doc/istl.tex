@@ -164,13 +164,18 @@ is not nearly as broad in scope as the MTL.
 
 \section{Vectors}
 
+The interface of our vector classes is designed according to what they
+represent from a mathematical point of view. The vector classes are
+representations of vector spaces.
+
 \subsection{Vector spaces}
 
 In mathemetics vectors are elements of a vector space. A vector space
 $V(\K)$, defined over a field $\K$, is a set of elements with two
 operations: (i) vector space addition $+ : V\times V \to V$ and (ii) scalar
 multiplication $* : \K\times V \to V$. These operations obey certain formal
-rules, see your favourite textbook on linear algebra. In addition a
+rules, see your favourite textbook on linear algebra,
+e.~g. \cite{LaBook}. In addition a 
 vector space may be normed, i.~e.~there is a function (obeying certain
 rules) $\|.\| : V \to \R$ which measures distance in the vector
 space. Even more specialized vector spaces have a scalar product which
@@ -201,7 +206,7 @@ turn to the class design.
 
 ISTL provides the following classes to make up vector spaces:
 
-\paragraph{FieldVector}
+\paragraph{FieldVector.}
 
 The \lstinline!template<class K, int n> FieldVector<K,n>! class
 template is used to represent a vector space
@@ -214,7 +219,7 @@ implemented with template metaprograms to avoid tiny loops.
 Example: Use \lstinline!FieldVector<double,2>! to define vectors with
 a fixed dimension 2.
 
-\paragraph{BlockVector}
+\paragraph{BlockVector.}
 
 The \lstinline!template<class B> BlockVector<B>! class template builds
 a vector space $V=B^n$ where the ``block type'' $B$ is given by the
@@ -227,7 +232,7 @@ BlockVector<FieldVector<double,2> >
 can be used to define vectors of variable size where each block in turn
 consists of two \lstinline!double! values.
 
-\paragraph{VariableBlockVector}
+\paragraph{VariableBlockVector.}
 \label{class:varblockvec}
 
 The \lstinline!template<class B> VariableBlockVector<B>! class
@@ -283,14 +288,14 @@ following types are provided in the scope of any vector class:
 
 \subsection{Operations}
 
-A full list of all members of a vector class is given in Figure
-\ref{Fig:VectorMembers}. The norms are the same as defined for the
+A full list of all members of a vector class is given in Table
+\ref{Tab:VectorMembers}. The norms are the same as defined for the
 sparse BLAS standard \cite{BLASTForum}. The ``real'' variants avoid
 the evaluation of a square root for each component in case of complex
 vectors. The \lstinline!allocator_type! member type is explained below
 in the section on memory management.
 
-\begin{figure}
+\begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|l|l|}
 \hline
@@ -339,8 +344,8 @@ in the section on memory management.
 \end{center}
 
 \caption{Members of a class \lstinline!X! conforming to the vector interface.}
-\label{Fig:VectorMembers}
-\end{figure}
+\label{Tab:VectorMembers}
+\end{table}
 
 \subsection[Memory model]{Object memory model and memory management}
 
@@ -354,8 +359,11 @@ structure can be generated simply with the copy constructor.
 
 \subsection{Vector creation}
 
-
 \section{Matrices}
+
+\subsection{Linear mappings}
+
+\subsection{Matrix classes}
 
 For a matrix representing a linear map (or homomorphism) $A: V \mapsto
 W$ from vector space $V$ to vector space $W$ the recursive block
@@ -363,10 +371,6 @@ structure of the matrix rows and columns immediatly follows
  from the recursive block structure of the vectors representing
 the domain and range of the mapping, respectively. As a natural
 consequence we designed the following matrix classes:
-
-\subsection{Linear mappings}
-
-\subsection{Matrix classes}
 
 \paragraph{FieldMatrix.}
 the \lstinline!template<class K, int n> FieldMatrix<K,n,m>! class
@@ -433,8 +437,9 @@ for(RowI row = matrix.begin(); row != matrix.end(); ++row){
 \subsection{Operations}
 
 As with the vector interface a uniform naming convention enables
-generic algorithms. See the following table for for a complete list of names.
-\begin{figure}
+generic algorithms. See Table \ref{Tab:MatrixMembers} for a
+complete list of names.
+\begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|l|l|}
 \hline
@@ -499,8 +504,8 @@ generic algorithms. See the following table for for a complete list of names.
 
 \caption{Members of a class \lstinline!M! conforming to the matrix
   interface. \lstinline!X! and \lstinline!Y! are any vector classes.}
-\label{Fig:MatrixMembers}
-\end{figure}
+\label{Tab:MatrixMembers}
+\end{table}
 
 \subsection{Matrix creation}
 
@@ -578,7 +583,7 @@ kernels for the defect formulations of simple iterative solvers are
 available in ISTL. The number of block recursion
 levels can again be given as an additional argument. See
 Table \ref{Tab:IterativeSolvers} for a list of these kernels.
-\begin{table}
+\begin{table}[htb]
 \begin{center}
 \begin{tabular}{|l|l|}
 \hline
@@ -687,7 +692,8 @@ preconditioner.
     \lstinline!Pamg::AMG! & algebraic multigrid method &s/p&\\
     \lstinline!BlockPreconditioner!& Additive overlapping Schwarz&p&\\\hline
   \end{tabular}
-\end{table}They have the template parameters \lstinline!M!
+\end{table}
+They have the template parameters \lstinline!M!
 representing the type of the matrix they work on, \lstinline!X!
 representing the type of the domain, \lstinline!Y! representing the
 type of the range of the linear system. The block recursive
