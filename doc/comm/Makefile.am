@@ -32,11 +32,16 @@ indexset_LDADD = $(MPI_LDFLAGS)
 
 comm_DATA = $(DOCS) #$(indexset_SOURCES)
 
-EXTRA_DIST = communication.tex
+EXTRA_DIST = communication.pdf Makefile.dist.in Makefile.dist.am
+
 communication.dvi : communication.tex buildindexset.hh reverse.hh
 
 
 CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.pdf *.ps
+
+dist-hook:
+	cp $(srcdir)/Makefile.dist.am $(distdir)/Makefile.am
+	cp $(srcdir)/Makefile.dist.in  $(distdir)/Makefile.in
 
 include $(top_srcdir)/am/latex
 include $(top_srcdir)/am/webstuff

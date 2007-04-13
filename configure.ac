@@ -25,10 +25,12 @@ echo
 # write output
 AC_CONFIG_FILES([Makefile
     doc/comm/Makefile
+    doc/comm/Makefile.dist
     doc/comm/figures/Makefile
     doc/layout/Makefile
     doc/doxygen/Makefile
     doc/Makefile
+    doc/Makefile.dist
     istl/paamg/test/Makefile
     istl/paamg/Makefile
     istl/tutorial/Makefile
