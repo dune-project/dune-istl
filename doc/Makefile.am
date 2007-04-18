@@ -20,8 +20,8 @@ doc_DATA = $(DOCS)
 CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.pdf *.ps
 
 dist-hook:
-	cp $(srcdir)/Makefile.dist.am $(distdir)/Makefile.am
-	cp $(srcdir)/Makefile.dist.in $(distdir)/Makefile.in
+	sed $(srcdir)/Makefile.dist.am -e 's/Makefile\.dist/Makefile/g' > $(distdir)/Makefile.am
+	sed $(srcdir)/Makefile.dist.in -e 's/Makefile\.dist/Makefile/g' > $(distdir)/Makefile.in
 
 include $(top_srcdir)/am/latex
 include $(top_srcdir)/am/webstuff
