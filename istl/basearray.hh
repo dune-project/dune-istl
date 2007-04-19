@@ -97,10 +97,6 @@ namespace Dune {
       RealIterator (const B* _p, B* _i) : p(_p), i(_i)
       {   }
 
-      RealIterator(const RealIterator<const ValueType>& it)
-        : p(it.p), i(it.i)
-      {}
-
       RealIterator(const RealIterator<ValueType>& it)
         : p(it.p), i(it.i)
       {}
@@ -576,11 +572,6 @@ namespace Dune {
       RealIterator (B* _p, size_type* _j, size_type _i)
         : p(_p), j(_j), i(_i)
       {       }
-
-      //! Copy constructor from const iterator.
-      RealIterator(const RealIterator<const ValueType>& it)
-        : p(it.p), j(it.j), i(it.i)
-      {}
 
       /**
        * @brief Copy constructor from mutable iterator
