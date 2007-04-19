@@ -8,7 +8,7 @@ endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
-	bcrsbuildtest $(SELECTPROG)
+	bcrsbuildtest matrixiteratortest $(SELECTPROG)
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(INDEXRUN)
@@ -25,6 +25,8 @@ bvectortest_SOURCES = bvectortest.cc
 
 matrixutilstest_SOURCES = matrixutilstest.cc laplacian.hh
 #matrixutilstest_DEPENDENCIES = $(LOCAL_LIBS)
+
+matrixiteratortest_SOURCES = matrixiteratortest.cc
 
 matrixtest_SOURCES = matrixtest.cc
 
