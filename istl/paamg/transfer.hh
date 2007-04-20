@@ -51,7 +51,7 @@ namespace Dune
                             const SequentialInformation & comm);
     };
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 
     template<class V,class B, class T>
     class Transfer<V,BlockVector<B>,ParallelInformation<T> >
@@ -117,7 +117,7 @@ namespace Dune
       }
     }
 
-#ifdef HAVE_MPI
+#if HAVE_MPI
     template<class V, class B, class T>
     inline void Transfer<V,BlockVector<B>,ParallelInformation<T> >::prolongate(const AggregatesMap<Vertex>& aggregates,
                                                                                Vector& coarse, Vector& fine,

@@ -15,6 +15,11 @@ namespace Dune
 {
   namespace Amg
   {
+    /**
+     * @defgroup ISTL_PAAMG Parallel Algebraic Multigrid
+     * @ingroup ISTL_Prec
+     * @brief A Parallel Algebraic Multigrid based on Agglomeration.
+     */
 
     /**
      * @addtogroup ISTL_PAAMG
@@ -72,12 +77,13 @@ namespace Dune
 
       /**
        * @brief Construct a new amg with a specific coarse solver.
-       * @param matrix The matrix we precondition for.
-       * @param solverArgs The arguments needed for the construction of the
-       * direct solver to use at the coarsest level.
+       * @param matrices The already set up matix hierarchy.
+       * @param coarseSolver The set up solver to use on the coarse
+       * grid, must natch the soarse matrix in the matrix hierachy.
        * @param smootherArgs The  arguments needed for thesmoother to use
        * for pre and post smoothing
        * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
+       * @param smoothingSteps The number of smoothing steps for pre and postsmoothing.
        */
       AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, std::size_t gamma,

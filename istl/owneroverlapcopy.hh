@@ -36,7 +36,7 @@
 namespace Dune {
 
   /**
-     @addtogroup ISTL
+     @addtogroup ISTL_Comm
      @{
    */
 

@@ -18,8 +18,10 @@
 #include <dune/common/helpertemplates.hh>
 
 namespace Dune {
-
-  /** @addtogroup ISTL
+  /** @defgroup ISTL_Solvers Iterative Solvers
+      @ingroup ISTL
+   */
+  /** @addtogroup ISTL_Solvers
           @{
    */
 
@@ -791,7 +793,7 @@ namespace Dune {
     /*!
        \brief Apply inverse operator with given reduction factor.
 
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult)
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& r)
     {

@@ -100,7 +100,9 @@ namespace Dune
        * @brief Calculate the galerkin product.
        * @param fine The fine matrix.
        * @param aggregates The aggregate mapping.
-       * @param coarse The coarse Matric.
+       * @param coarse The coarse Matrix.
+       * @param pinfo Parallel information about the fine level.
+       * @param copy The attribute set identifying the copy nodes of the graph.
        */
       template<class M, class V, class I, class O>
       void calculate(const M& fine, const AggregatesMap<V>& aggregates, M& coarse,
@@ -123,13 +125,14 @@ namespace Dune
        * @param pinfo Parallel information about the fine level.
        * @param aggregates The mapping of the fine level unknowns  onto aggregates.
        * @param size The number of columns and rows of the coarse matrix.
+       * @param copy The attribute set identifying the copy nodes of the graph.
        */
       template<class M, class G, class V, class Set>
       M* build(const M& fine, G& fineGraph, V& visitedMap,
                const ParallelInformation& pinfo,
                const AggregatesMap<typename G::VertexDescriptor>& aggregates,
                const typename M::size_type& size,
-               const Set& overlap);
+               const Set& copy);
     private:
       std::size_t* overlapStart_;
 
@@ -169,13 +172,14 @@ namespace Dune
        * @param pinfo Parallel information about the fine level.
        * @param aggregates The mapping of the fine level unknowns  onto aggregates.
        * @param size The number of columns and rows of the coarse matrix.
+       * @param copy The attribute set identifying the copy nodes of the graph.
        */
       template<class M, class G, class V, class Set>
       M* build(const M& fine, G& fineGraph, V& visitedMap,
                const SequentialInformation& pinfo,
                const AggregatesMap<typename G::VertexDescriptor>& aggregates,
                const typename M::size_type& size,
-               const Set& overlap);
+               const Set& copy);
     };
 
     struct BaseConnectivityConstructor
@@ -229,6 +233,8 @@ namespace Dune
         /**
          * @brief Constructor
          * @param aggregates The mapping of the vertices onto the aggregates.
+         * @param graph The graph to work on.
+         * @param visitedMap The map for marking vertices as visited
          * @param connected The set to added the connected aggregates to.
          */
         ConnectedBuilder(const AggregatesMap<Vertex>& aggregates, Graph& graph,

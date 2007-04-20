@@ -103,8 +103,7 @@ namespace Dune
       Hierarchy(MemberType& first);
 
       /**
-       * @brief Construct a new hierarchy.
-       * @param first The first element in the hierarchy.
+       * @brief Construct a new empty hierarchy.
        */
       Hierarchy();
 
@@ -310,8 +309,7 @@ namespace Dune
       /**
        * @brief Constructor
        * @param fineMatrix The matrix to coarsen.
-       * @param indexSet The index set mapping the global indices to matrix rows.
-       * @param remoteIndices Information about the remote indices.
+       * @param pinfo The information about the parallel data decmposition at the first level.
        */
       MatrixHierarchy(const MatrixOperator& fineMatrix,
                       const ParallelInformation& pinfo=ParallelInformation());
@@ -339,14 +337,15 @@ namespace Dune
 
       /**
        * @brief Coarsen the vector hierarchy according to the matrix hierarchy.
-       * @param hierachy The vector hierarchy to coarsen.
+       * @param hierarchy The vector hierarchy to coarsen.
        */
       template<class V, class TA>
       void coarsenVector(Hierarchy<BlockVector<V,TA> >& hierarchy) const;
 
       /**
        * @brief Coarsen the smoother hierarchy according to the matrix hierarchy.
-       * @param hierachy The smoother hierarchy to coarsen.
+       * @param smoothers The smoother hierarchy to coarsen.
+       * @param args The arguments for the construction of the coarse level smoothers.
        */
       template<class S, class TA>
       void coarsenSmoother(Hierarchy<S,TA>& smoothers,
@@ -521,7 +520,7 @@ namespace Dune
        * @param maxLevel The macimum number of levels allowed in the matric hierarchy (default: 100).
        * @param coarsenTarget If the number of nodes in the matrix is below this threshold the
        * coarsening will stop (default: 1000).
-       * @param minCoarsenRate. If the coarsening rate falls below this threshold the
+       * @param minCoarsenRate If the coarsening rate falls below this threshold the
        * coarsening will stop (default: 1.2)
        */
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2)

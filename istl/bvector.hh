@@ -23,11 +23,6 @@
 
 namespace Dune {
 
-  /**
-              @addtogroup ISTL
-              @{
-   */
-
 
   /**
       \brief An unmanaged vector of blocks.
@@ -213,6 +208,10 @@ namespace Dune {
     {       }
   };
 
+  /**
+              @addtogroup ISTL_SPMV
+              @{
+   */
 
   /**
       \brief A vector of blocks with memory management.
@@ -635,6 +634,7 @@ namespace Dune {
     size_type capacity_;
   };
 
+  /** @} */
   //! Send BlockVector to an output stream
   template<class K, class A>
   std::ostream& operator<< (std::ostream& s, const BlockVector<K, A>& v)
@@ -1172,8 +1172,6 @@ namespace Dune {
     typedef B type;
   };
 #endif
-
-  /** @} end documentation */
 
 } // end namespace
 

@@ -46,14 +46,17 @@ namespace Dune
        * @brief Construct an object with the specified arguments.
        *
        * In the default implementation the copy constructor is called.
-       * @param object Pointer to the space allocated for the object.
-       * @param arguments The arguments for the construction.
+       * @param args The arguments for the construction.
        */
       static inline T* construct(Arguments&  args)
       {
         return new T();
       }
 
+      /**
+       * @brief Destroys an object.
+       * @param t Pointer to the object to destroy.
+       */
       static inline void deconstruct(T* t)
       {
         delete t;
