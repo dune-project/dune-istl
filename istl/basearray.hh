@@ -18,7 +18,9 @@
 
 namespace Dune {
 
-  /**  A simple array container for objects of type B implementing
+  /**  \brief A simple array container for objects of type B
+
+     Implement.
 
        -  iterator access
        -  const_iterator access
@@ -71,6 +73,7 @@ namespace Dune {
       return p[i];
     }
 
+    /** \brief Iterator implementation class  */
     template<class T>
     class RealIterator
       :  public BidirectionalIteratorFacade<RealIterator<T>, T>
@@ -236,7 +239,7 @@ namespace Dune {
 
 
 
-  /**  Extend base_array_unmanaged by functions to manipulate
+  /**  \brief Extend base_array_unmanaged by functions to manipulate
 
            This container has *NO* memory management at all,
            copy constuctor, assignment and destructor are all default.
@@ -325,7 +328,7 @@ namespace Dune {
 
 
 
-  /**   This container extends base_array_unmanaged by memory management
+  /**  \brief  This container extends base_array_unmanaged by memory management
         with the usual copy semantics providing the full range of
         copy constructor, destructor and assignment operators.
 
@@ -480,7 +483,8 @@ namespace Dune {
 
 
 
-  /**  A simple array container with non-consecutive index set.
+  /** \brief A simple array container with non-consecutive index set.
+
        Elements in the array are of type B. This class provides
 
        -  iterator access
