@@ -219,7 +219,7 @@ namespace Dune {
    * together with their
    * corresponding column index and all others will be omitted.
    *
-   * This might be perferable over printmatrix in the case of big
+   * This might be preferable over printmatrix in the case of big
    * sparse matrices with nonscalar blocks.
    *
    * @param s The ostream to print to.
