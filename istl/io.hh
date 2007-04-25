@@ -174,7 +174,9 @@ namespace Dune {
     }
   }
 
-  /** \brief Prints a generic block matrix */
+  /** \brief Prints a generic block matrix
+      \bug Empty rows and columns are omitted by this method.  (FlySpray #7)
+   */
   template<class M>
   void printmatrix (std::ostream& s, const M& A, std::string title, std::string rowtext,
                     int width=10, int precision=2)
