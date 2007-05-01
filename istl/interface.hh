@@ -19,6 +19,7 @@ namespace Dune
    * @author Markus Blatt
    */
 
+  /** @} */
   /**
    * @brief Base class of all classes representing a communication
    * interface.
@@ -197,6 +198,11 @@ namespace Dune
      */
     uint32_t* indices_;
   };
+
+  /** @addtogroup ISTL_Comm
+   *
+   * @{
+   */
 
   /**
    * @brief Communication interface between remote and local indices.

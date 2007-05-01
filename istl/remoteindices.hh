@@ -413,6 +413,8 @@ namespace Dune {
 
   };
 
+  /** @} */
+
   /**
    * @brief Modifier for adding and/or deleting remote indices from
    * the remote index list.
@@ -571,7 +573,6 @@ namespace Dune {
     bool first_;
     GlobalIndex last_;
   };
-
 
   /**
    * @brief A collective iterator for moving over the remote indices for
