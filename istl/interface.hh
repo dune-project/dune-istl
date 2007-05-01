@@ -68,9 +68,9 @@ namespace Dune
      * The types T1 and T2 are classes representing a set of
      * enumeration values of type InterfaceBuilder::Attribute. They have to provide
      * a (static) method
-     * <pre>
+     * \code
      * bool contains(Attribute flag) const;
-     * </pre>
+     * \endcode
      * for checking whether the set contains a specfic flag.
      * This functionality is for example provided the classes
      * EnumItem, EnumRange and Combine.
@@ -88,15 +88,15 @@ namespace Dune
      * @param destFlags The setof flags markig destination indices.
      * @param functor A functor for callbacks. It should provide the
      * following methods:
-     * <pre>
+     * \code
      * // Reserve memory for the interface to processor proc. The interface
      * // has to hold size entries
      * void reserve(int proc, int size);
-     * </pre><pre>
+     *
      * // Add an entry to the interface
      * // We will send/receive size entries at index local to process proc
      * void add(int proc, int local);
-     * </pre>
+     * \endcode
      */
     template<class T1, class T2, class Op, bool send>
     void buildInterface (const RemoteIndices& remoteIndices,
@@ -240,9 +240,9 @@ namespace Dune
      * The types T1 and T2 are classes representing a set of
      * enumeration values of type Interface::Attribute. They have to provide
      * a (static) method
-     * <pre>
+     * \code
      * bool contains(Attribute flag) const;
-     * </pre>
+     * \endcode
      * for checking whether the set contains a specfic flag.
      * This functionality is for example provided the classes
      * EnumItem, EnumRange and Combine.
