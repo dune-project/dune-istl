@@ -14,6 +14,64 @@ namespace Dune
    * @ingroup ISTL
    * @brief Provides classes for syncing distributed indexed
    * data structures.
+   *
+   * In a parallel representation a container \f$x\f$,
+   * e.g. a plain C-array, cannot be stored with all entries on each process
+   * because of limited memory and efficiency reasons. Therefore
+   * it is represented by individual
+   * pieces \f$x_p\f$, \f$p=0, \ldots, P-1\f$, where \f$x_p\f$ is the piece stored on
+   * process \f$p\f$ of the \f$P\f$ processes participating in the calculation.
+   * Although the global representation of the container is not
+   * available on any process, a process \f$p\f$ needs to know how the entries
+   * of it's local piece \f$x_p\f$ correspond to the entries of the global
+   * container \f$x\f$, which would be used in a sequential program. In this
+   * module we present classes describing the mapping of the local pieces
+   * to the global
+   * view and the communication interfaces.
+   *
+   * @section IndexSet Parallel Index Sets
+   *
+   * Form an abstract point of view a random access container \f$x: I
+   * \rightarrow K\f$ provides a
+   * mapping from an index set \f$I \subset \N_0\f$ onto a set of objects
+   * \f$K\f$. Note that we do not require \f$I\f$ to be consecutive. The piece
+   * \f$x_p\f$ of the container \f$x\f$ stored on process \f$p\f$ is a mapping \f$x_p:I_p
+   * \rightarrow K\f$, where \f$I_p \subset I\f$. Due to efficiency the entries
+   * of \f$x_p\f$ should be stored in consecutive memory.
+   *
+   * This means that for the local computation the data must be addressable
+   * by a consecutive index starting from \f$0\f$. When using adaptive
+   * discretisation methods there might be the need to reorder the indices
+   * after adding and/or deleting some of the discretisation
+   * points. Therefore this index does not have to be persistent. Further
+   **on  we will call this index <em>local index</em>.
+   *
+   * For the communication phases of our algorithms these locally stored
+   * entries must also be addressable by a global identifier to be able to
+   * store the received values tagged with the global identifiers at the
+   * correct local index in the consecutive local memory chunk. To ease the
+   * addition and removal of discretisation points this global identifier has
+   * to be persistent. Further on we will call this global identifier
+   * <em>global index</em>.
+   *
+   * Classes to build the mapping are ParallelIndexSet and ParallelLocalIndex.
+   * As these just provide a mapping from the global index to the local index,
+   * the wrapper class GlobalLookupIndexSet facilitates the reverse lookup.
+   *
+   * @section remote Remote Index Information
+   *
+   * To setup communication between the processes every process needs to
+   * know what indices are also known to other processes and what
+   * attributes are attached to them on the remote side. This information is
+   * calculated and encapsulated in class RemoteIndices.
+   *
+   * @section comm Communication
+   *
+   * Based on the information about the distributed index sets,  data
+   * independent interfaces between different sets of the index sets
+   * can be setup using the class Interface.  For the actual communication it
+   * data dependant communicators can be setup using BufferedCommunicator or
+   * DatatypeCommunicator.
    */
   /** @addtogroup ISTL_Comm
    *
@@ -55,7 +113,7 @@ namespace Dune
      * @brief The type the policy is for.
      *
      * It has to provide the mode
-     * <pre> Type::IndexedType operator[](int i);</pre>
+     * \code Type::IndexedType operator[](int i);\endcode
      * for
      * the access of the value at index i and a typedef IndexedType.
      * It is assumed
@@ -195,9 +253,9 @@ namespace Dune
      * enumeration values of type DatatypeCommunicator::Attribute.
      * They have to provide
      * a (static) method
-     * <pre>
+     * \code
      * bool contains(Attribute flag) const;
-     * </pre>
+     * \endcode
      * for checking whether the set contains a specfic flag.
      * This functionality is for example provided the classes
      * EnumItem, EnumRange and Combine.
@@ -428,24 +486,24 @@ namespace Dune
     /**
      * @brief Send from source to target.
      *
-     * The template parameter GatherScatter has to have a static method
-     * <pre>
+     * The template parameter GatherScatter (e.g. CopyGatherScatter) has to have a static method
+     * \code
      * // Gather the data at index index of data
      * static const typename CommPolicy<Data>::IndexedType>& gather(Data& data, int index);
      *
      * // Scatter the value at a index of data
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is SizeOne
      * and
      *
-     * <pre>
+     * \code
      * static const typename CommPolicy<Data>::IndexedType> gather(Data& data, int index, int subindex);
      *
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index, int subindex);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is VariableSize. Here subindex is the
      * subindex of the block at index.
      * @warning The source and target data have to have the same layout as the ones given
@@ -459,24 +517,24 @@ namespace Dune
     /**
      * @brief Communicate in the reverse direction, i.e. send from target to source.
      *
-     * The template parameter GatherScatter has to have a static method
-     * <pre>
+     * The template parameter GatherScatter (e.g. CopyGatherScatter) has to have a static method
+     * \code
      * // Gather the data at index index of data
      * static const typename CommPolicy<Data>::IndexedType>& gather(Data& data, int index);
      *
      * // Scatter the value at a index of data
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is SizeOne
      * and
      *
-     * <pre>
+     * \code
      * static onst typename CommPolicy<Data>::IndexedType> gather(Data& data, int index, int subindex);
      *
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index, int subindex);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is VariableSize. Here subindex is the
      * subindex of the block at index.
      * @warning The source and target data have to have the same layout as the ones given
@@ -491,23 +549,23 @@ namespace Dune
      * @brief Forward send where target and source are the same.
      *
      * The template parameter GatherScatter has to have a static method
-     * <pre>
+     * \code
      * // Gather the data at index index of data
      * static const typename CommPolicy<Data>::IndexedType>& gather(Data& data, int index);
      *
      * // Scatter the value at a index of data
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is SizeOne
      * and
      *
-     * <pre>
+     * \code
      * static onst typename CommPolicy<Data>::IndexedType> gather(Data& data, int index, int subindex);
      *
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index, int subindex);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is VariableSize. Here subindex is the
      * subindex of the block at index.
      * @param data Source and target of the communication.
@@ -519,23 +577,23 @@ namespace Dune
      * @brief Backward send where target and source are the same.
      *
      * The template parameter GatherScatter has to have a static method
-     * <pre>
+     * \code
      * // Gather the data at index index of data
      * static const typename CommPolicy<Data>::IndexedType>& gather(Data& data, int index);
      *
      * // Scatter the value at a index of data
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is SizeOne
      * and
      *
-     * <pre>
+     * \code
      * static onst typename CommPolicy<Data>::IndexedType> gather(Data& data, int index, int subindex);
      *
      * static void scatter(Data& data, typename CommPolicy<Data>::IndexedType> value,
      *                     int index, int subindex);
-     * </pre>
+     * \endcode
      * in the case where CommPolicy<Data>::IndexedTypeFlag is VariableSize. Here subindex is the
      * subindex of the block at index.
      * @param data Source and target of the communication.

@@ -15,19 +15,19 @@
 #include <dune/common/fmatrix.hh>
 #include "bcrsmatrix.hh"
 
-/** \file
-
-   \brief Some generic functions for pretty printing vectors and matrices
- */
 
 namespace Dune {
 
   /**
-              @addtogroup ISTL
+              @addtogroup ISTL_SPMV
               @{
    */
 
 
+  /** \file
+
+     \brief Some generic functions for pretty printing vectors and matrices
+   */
   //==== pretty printing of vectors
 
   // recursively print all the blocks
@@ -226,9 +226,9 @@ namespace Dune {
    *
    * @param s The ostream to print to.
    * @param mat The matrix to print.
-   * @param titel The title for the matrix.
+   * @param title The title for the matrix.
    * @param rowtext The text to prepend to each print out of a matrix row.
-   * @param with The number of nonzero blocks to print in one line.
+   * @param width The number of nonzero blocks to print in one line.
    * @param precision The precision to use when printing the numbers.
    */
   template<class B, int n, int m, class A>

@@ -18,7 +18,7 @@ class MatrixFunc
 public:
   void operator()(const Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >::row_type& row)
   {
-    std::cout << row[0]<<" ";
+    std::cout << *(row.begin())<<" ";
   }
 };
 
@@ -40,7 +40,7 @@ int main()
   bcrsMatrix.addindex(1, 1);
   bcrsMatrix.addindex(1, 0);
   bcrsMatrix.addindex(2, 2);
-  bcrsMatrix.addindex(1, 2);
+  bcrsMatrix.addindex(2, 1);
   bcrsMatrix.endindices();
 
   bcrsMatrix = 0;

@@ -11,18 +11,30 @@
 
 #include "solvercategory.hh"
 
-/** \file
-
-   \brief Define general, extensible interface for operators.
-        The available implementation wraps a matrix.
- */
 
 namespace Dune {
 
-  /** @addtogroup ISTL
+  /**
+   * @defgroup ISTL_Operators Operator concept
+   * @ingroup ISTL_Solvers
+   *
+   * The solvers in ISTL do not work on matrices directly. Instead we use
+   * an abstract operator concept. This allows for using matrix-free
+   * operators, i.e. operators that are not stored as matrices in any
+   * form. Thus our solver algorithms can easily be turned into matrix-free
+   * solvers just by plugging in matrix-free representations of linear
+   * operators and preconditioners.
+   */
+  /** @addtogroup ISTL_Operators
           @{
    */
 
+
+  /** \file
+
+     \brief Define general, extensible interface for operators.
+          The available implementation wraps a matrix.
+   */
 
   //=====================================================================
   // Abstract operator interface

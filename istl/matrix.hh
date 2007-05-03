@@ -12,8 +12,10 @@
 
 namespace Dune {
 
+  /** \addtogroup ISTL_SPMV
+     \{
+   */
   /** \brief A generic dynamic matrix
-      \addtogroup ISTL
 
       This matrix is currently implemented as a BlockVector of BlockVectors.
       That makes the code fairly simple, as we get all iterators for free.
@@ -130,7 +132,10 @@ namespace Dune {
     /** \brief Assignment from scalar */
     Matrix& operator= (const field_type& t)
     {
-      for (unsigned int i=0; i<data_.size(); i++)
+      typedef typename BlockVector<row_type,allocator_type>::size_type
+      size_type;
+
+      for (size_type i=0; i<data_.size(); i++)
         data_[i] = t;
       return *this;
     }
@@ -538,11 +543,11 @@ namespace Dune {
 
   protected:
 
-    BlockVector<row_type> data_;
+    BlockVector<row_type, allocator_type> data_;
 
     int cols_;
   };
-
+  /** \} */
 } // end namespace Dune
 
 #endif

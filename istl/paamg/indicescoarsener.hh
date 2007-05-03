@@ -77,8 +77,10 @@ namespace Dune
        *
        * @param fineInfo The parallel information at the fine level.
        * @param fineGraph The graph of the fine lecel,
-       * @param vistedMap Map for marking vertices as visited.
+       * @param visitedMap Map for marking vertices as visited.
        * @param aggregates The mapping of unknowns onto aggregates.
+       * @param coarseInfo The information about the parallel data decomposition
+       * on the coarse level.
        * @return The number of unknowns on the coarse level.
        */
       template<typename Graph, typename VM>

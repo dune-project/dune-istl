@@ -81,9 +81,10 @@ namespace Dune {
     /**
      * @brief The type of the attributes.
      * Normally this will be an enumeration like
-     * <pre>
+     * \code
      * enum Attributes{owner, border, overlap}
-     * </pre>
+     * \endcode
+     * e.g. OwnerOverlapCopyAttributes.
      */
     typedef T2 Attribute;
 
@@ -125,7 +126,6 @@ namespace Dune {
      * @brief Constructor.
      * Private as it should only be called from within Indexset.
      * @param attribute The attribute of the index on the remote processor.
-     * @param local The corresponding local index.
      */
     RemoteIndex(const T2& attribute);
 
@@ -166,7 +166,7 @@ namespace Dune {
   public:
 
     /**
-     * @brief Type of the index set we use.
+     * @brief Type of the index set we use, e.g. ParallelLocalIndexSet.
      */
     typedef T ParallelIndexSet;
 
@@ -212,7 +212,8 @@ namespace Dune {
      * @param comm The communicator to use.
      * @param source The indexset which represents the global to
      * local mapping at the source of the communication
-     * @param to The indexset to which the communication which represents the global to
+     * @param destination The indexset to which the communication
+     * which represents the global to
      * local mapping at the destination of the communication.
      * May be the same as the source indexset.
      */
@@ -229,7 +230,8 @@ namespace Dune {
      * @param comm The communicator to use.
      * @param source The indexset which represents the global to
      * local mapping at the source of the communication
-     * @param to The indexset to which the communication which represents the global to
+     * @param destination The indexset to which the communication
+     * which represents the global to
      * local mapping at the destination of the communication.
      * May be the same as the source indexset.
      */
@@ -411,6 +413,8 @@ namespace Dune {
 
   };
 
+  /** @} */
+
   /**
    * @brief Modifier for adding and/or deleting remote indices from
    * the remote index list.
@@ -569,7 +573,6 @@ namespace Dune {
     bool first_;
     GlobalIndex last_;
   };
-
 
   /**
    * @brief A collective iterator for moving over the remote indices for

@@ -183,8 +183,8 @@ void testMatrix(MatrixType& matrix)
   //   Test the various matrix-vector multiplications
   // ///////////////////////////////////////////////////////////
 
-  BlockVector<FieldVector<field_type, block_type::cols> > x(matrix.M());
-  BlockVector<FieldVector<field_type, block_type::rows> > y(matrix.N());
+  BlockVector<FieldVector<field_type, block_type::cols> > x(m);
+  BlockVector<FieldVector<field_type, block_type::rows> > y(n);
 
   matrix.umv(x,y);
 
@@ -210,11 +210,11 @@ void testMatrix(MatrixType& matrix)
 
   double frobenius_norm = matrix.frobenius_norm();
 
-  double frobenius_norm2 = matrix.frobenius_norm2();
+  frobenius_norm += matrix.frobenius_norm2();
 
-  double infinity_norm   = matrix.infinity_norm();
+  frobenius_norm += matrix.infinity_norm();
 
-  double infinity_norm_real = matrix.infinity_norm_real();
+  frobenius_norm += matrix.infinity_norm_real();
 
 }
 

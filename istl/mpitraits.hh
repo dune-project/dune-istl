@@ -24,9 +24,9 @@ namespace Dune
    *
    * Specializations exist for the default types.
    * Specializations should provide a static method
-   * <pre>
+   * \code
    * static MPI_Datatype getType();
-   * </pre>
+   * \endcode
    */
   template<typename T>
   class MPITraits

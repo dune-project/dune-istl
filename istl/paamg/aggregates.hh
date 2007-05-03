@@ -317,7 +317,10 @@ namespace Dune
     class FirstDiagonal
     {
     public:
-
+      /**
+       * @brief compute the norm of a matrix.
+       * @param m The matrix ro compute the norm of.
+       */
       template<class M>
       typename M::field_type operator()(const M& m) const
       {
@@ -332,6 +335,10 @@ namespace Dune
      */
     struct RowSum
     {
+      /**
+       * @brief compute the norm of a matrix.
+       * @param m The matrix ro compute the norm of.
+       */
       template<class M>
       typename M::field_type operator()(const M& m) const
       {
@@ -343,8 +350,8 @@ namespace Dune
      * @brief Criterion taking advantage of symmetric matrices.
      *
      * The two template parameters are:
-     * <dt>M</dt><dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
-     * <dt>Norm</dt><dd>The norm to use to determine the strong couplings between the nodes</dd>
+     * <dt>M</dt> <dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
+     * <dt>Norm</dt> <dd>The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.</dd>
      */
     template<class M, class Norm>
     class SymmetricCriterion : public AggregationCriterion<SymmetricDependency<M,Norm> >
@@ -357,8 +364,8 @@ namespace Dune
      * Nevertheless the sparsity pattern has to be symmetric.
      *
      * The two template parameters are:
-     * <dt>M</dt><dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
-     * <dt>Norm</dt><dd>The norm to use to determine the strong couplings between the nodes</dd>
+     * <dt>M</dt> <dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
+     * <dt>Norm</dt> <dd>The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.</dd>
      */
     template<class M, class Norm>
     class UnSymmetricCriterion : public AggregationCriterion<Dependency<M,Norm> >
@@ -452,19 +459,19 @@ namespace Dune
       /**
        * @brief Breadth first search within an aggregate
        *
-       * The template parameters: <br />
+       * The template parameters: <br>
        * <dl>
        * <dt>reset</dt><dd>If true the visited flags of the vertices
        *  will be reset after
        * the search</dd>
        * <dt>G</dt><dd>The type of the graph we perform the search on.</dd>
-       * <td>F</dt><dd>
+       * <td>F</dt><dd>The type of the visitor to operate on the vertices</dd>
        * </dl>
        * @param start The vertex where the search should start
        * from. This does not need to belong to the aggregate.
        * @param aggregate The aggregate id.
        * @param graph The matrix graph to perform the search on.
-       * @param visited A list to store the visited vertices in.
+       * @param visitedMap A map to mark the already visited vertices
        * @param aggregateVisitor A functor that is called with
        * each G::ConstEdgeIterator with an edge pointing to the
        * aggregate. Use DummyVisitor these are of no interest.
@@ -479,7 +486,7 @@ namespace Dune
       /**
        * @brief Breadth first search within an aggregate
        *
-       * The template parameters: <br />
+       * The template parameters: <br>
        * <dl><dt>L</dt><dd>A container type providing push_back(Vertex), and
        * pop_front() in case remove is true</dd>
        * <dt>remove</dt><dd> If true the entries in the visited list
@@ -497,6 +504,7 @@ namespace Dune
        * @param nonAggregateVisitor A functor that is called with
        * each G::ConstEdgeIterator with an edge pointing to another
        * aggregate. Use DummyVisitor these are of no interest.
+       * @param visitedMap A map to mark the already visited vertices
        */
       template<bool remove, bool reset, class G, class L, class F1, class F2, class VM>
       std::size_t breadthFirstSearch(const VertexDescriptor& start,
@@ -1024,8 +1032,6 @@ namespace Dune
       public:
         /**
          * @brief Constructor.
-         * @param aggregates The mapping of the vertices to
-         * aggregates.
          */
         DependencyCounter();
 

@@ -18,11 +18,6 @@
 
 namespace Dune {
 
-  /**
-              @addtogroup ISTL
-              @{
-   */
-
   /**  \brief A simple array container for objects of type B
 
      Implements:
@@ -754,10 +749,6 @@ namespace Dune {
     B *p;       // pointer to dynamically allocated built-in array
     size_type* j;     // the index set
   };
-
-
-
-  /** @} end documentation */
 
 } // end namespace
 
