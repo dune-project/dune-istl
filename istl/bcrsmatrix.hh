@@ -26,42 +26,92 @@
 namespace Dune {
 
   /**
-   * @defgroup ISTL_SPMV Sparse Matrix and Vector classes
-   * @ingroup ISTL
+      @defgroup ISTL_SPMV Sparse Matrix and Vector classes
+      @ingroup ISTL
    */
   /**
-              @addtogroup ISTL_SPMV
-              @{
+      @addtogroup ISTL_SPMV
+      @{
    */
 
 
-  /** \brief A sparse block matrix with compressed row storage
+  /**
+     \brief A sparse block matrix with compressed row storage
 
      Implements a block compressed row storage scheme. The block
-       type B can be any type implementing the matrix interface.
+     type B can be any type implementing the matrix interface.
 
-           Different ways to build up a compressed row
-           storage matrix are supported:
+     Different ways to build up a compressed row
+     storage matrix are supported:
 
-           1. Row-wise scheme
+     1. Row-wise scheme
+     2. Random scheme
 
-           Rows are built up in sequential order. Size of the row and
-       the column indices are defined. A row can be used as soon as it
-       is initialized. With respect to memory there are two variants of
-       this scheme: (a) number of non-zeroes known in advance (application
-       finite difference schemes), (b) number of non-zeroes not known
-       in advance (application: Sparse LU, ILU(n)).
+     Error checking: no error checking is provided normally.
+     Setting the compile time switch DUNE_ISTL_WITH_CHECKING
+     enables error checking.
 
-           2. Random scheme
+     Details:
 
-           For general finite element implementations the number of rows n
-       is known, the number of non-zeroes might also be known (e.g.
+     1. Row-wise scheme
+
+     Rows are built up in sequential order. Size of the row and
+     the column indices are defined. A row can be used as soon as it
+     is initialized. With respect to memory there are two variants of
+     this scheme: (a) number of non-zeroes known in advance (application
+     finite difference schemes), (b) number of non-zeroes not known
+     in advance (application: Sparse LU, ILU(n)).
+
+     2. Random scheme
+
+     For general finite element implementations the number of rows n
+     is known, the number of non-zeroes might also be known (e.g.
      \#edges + \#nodes for P1) but the size of a row and the indices of a row
-       can not be defined in sequential order.
+     can not be defined in sequential order.
 
-           Error checking: no error checking is provided normally.
-           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
-           enables error checking.
+     \code
+     #include<dune/common/fmatrix.hh>
+     #include<dune/istl/bcrsmatrix.hh>
+
+     ...
+
+     typedef FieldMatrix<double,2,2> M;
+     BCRSMatrix<M> B(4,4,BCRSMatrix<M>::random);
+
+     // initially set row size for each row
+     B.setrowsize(0,1);
+     B.setrowsize(3,4);
+     B.setrowsize(2,1);
+     B.setrowsize(1,1);
+     // increase row size for row 2
+     B.incrementrowsize(2)
+
+     // finalize row setup phase
+     B.endrowsizes();
+
+     // add column entries to rows
+     B.addindex(0,0);
+     B.addindex(3,1);
+     B.addindex(2,2);
+     B.addindex(1,1);
+     B.addindex(2,0);
+     B.addindex(3,2);
+     B.addindex(3,0);
+     B.addindex(3,3);
+
+     // finalize column setup phase
+     B.endindices();
+
+     // set entries using the random access operator
+     B[0][0] = 1;
+     B[1][1] = 2;
+     B[2][0] = 3;
+     B[2][2] = 4;
+     B[3][1] = 5;
+     B[3][2] = 6;
+     B[3][0] = 7;
+     B[3][3] = 8;
+     \endcode
    */
 #ifdef DUNE_EXPRESSIONTEMPLATES
   template<class B, class A>
@@ -348,7 +398,6 @@ namespace Dune {
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
       : build_mode(bm), ready(notbuilt)
     {
-
       allocate(_n, _m);
     }
 
@@ -650,7 +699,17 @@ namespace Dune {
       ready = rowSizesBuilt;
     }
 
-    //! add index (row,col) to the matrix
+    //! \brief add index (row,col) to the matrix
+    /*!
+       This method can only be used when building the BCRSMatrix
+       in random mode.
+
+       addindex adds a new column entry to the row. If this column
+       entry already exists, nothing is done.
+
+       Don't call addindex after the setup phase is finished
+       (after endindices is called).
+     */
     void addindex (size_type row, size_type col)
     {
       if (build_mode!=random)
