@@ -26,12 +26,42 @@
 namespace Dune {
 
   /**
-      @defgroup ISTL_SPMV Sparse Matrix and Vector classes
-      @ingroup ISTL
+   * @defgroup ISTL_SPMV Sparse Matrix and Vector classes
+   * @ingroup ISTL
+   * @brief Matrix and Vector classes that support a block recursive
+   * structure capable of representing the natural structure from Finite
+   * Element discretisations.
+   *
+   *
+   * The interface of our matrices is designed according to what they
+   * represent from a mathematical point of view. The vector classes are
+   * representations of vector spaces:
+   *
+   * - FieldVector represents a vector space \f$V=K^n\f$ where the field \f$K\f$
+   *   is represented by a numeric type (e.g. double, float, complex). \f$n\f$
+   *   is known at compile time.
+   * - BlockVector represents a vector space \f$V=W\times W \times W \times\cdots\times W\f$
+   *   where W is itself a vector space.
+   * - VariableBlockVector represents a vector space having a two-level
+   *   block structure of the form
+   *   \f$V=B^{n_1}\times B^{n_2}\times\ldots \times B^{n_m}\f$, i.e. it is constructed
+   *   from \f$m\f$ vector spaces, \f$i=1,\ldots,m\f$.
+   *
+   * The matrix classes represent linear maps \f$A: V \mapsto W\f$
+   * from vector space \f$V\f$ to vector space \f$W\f$ the recursive block
+   * structure of the matrix rows and columns immediately follows
+   * from the recursive block structure of the vectors representing
+   * the domain and range of the mapping, respectively:
+   * - FieldMatrix represents a linear map \f$M: V_1 \to V_2\f$ where
+   *   \f$V_1=K^n\f$ and \f$V_2=K^m\f$ are vector spaces over the same field represented by a numerix type.
+   * - BCRSMatrix represents a linear map \f$M: V_1 \to V_2\f$ where
+   *   \f$V_1=W\times W \times W \times\cdots\times W\f$ and \f$V_2=W\times W \times W \times\cdots\times W\f$
+   *   where W is itself a vector space.
+   * - VariableBCRSMatrix is not yet implemented.
    */
   /**
-      @addtogroup ISTL_SPMV
-      @{
+              @addtogroup ISTL_SPMV
+              @{
    */
 
 
@@ -123,7 +153,7 @@ namespace Dune {
   {
   private:
     enum BuildStage {
-      /** @brief Matrix id not built at all. */
+      /** @brief Matrix is not built at all. */
       notbuilt=0,
       /** @brief The row sizes of the matrix are known.
        *
@@ -510,8 +540,13 @@ namespace Dune {
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
         : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j, 0)
       {
-        if (Mat.build_mode!=row_wise)
+        if (i==0 && Mat.ready)
           DUNE_THROW(ISTLError,"creation only allowed for uninitialized matrix");
+        if(Mat.build_mode!=row_wise)
+          if(Mat.build_mode==unknown)
+            Mat.build_mode=row_wise;
+          else
+            DUNE_THROW(ISTLError,"creation only allowed if row wise allocation was requested in the constructor");
       }
 
       //! prefix increment
@@ -866,6 +901,24 @@ namespace Dune {
       return *this;
     }
     //===== linear maps
+
+    //! y = A x
+    template<class X, class Y>
+    void mv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        y[i.index()]=0;
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).umv(x[j.index()],y[i.index()]);
+      }
+    }
 
     //! y += A x
     template<class X, class Y>
