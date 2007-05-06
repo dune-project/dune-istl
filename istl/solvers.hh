@@ -506,7 +506,7 @@ namespace Dune {
         // convergence test
         double defnew=_sp.norm(b);          // comp defect norm
         if (_verbose>1)                       // print
-          printf("%5d %12.4E %12.4g\n",i,defnew,defnew/def);
+          printf("%5d %12.4E %12.4E\n",i,defnew,defnew/def);
         def = defnew;                         // update norm
         if (def<def0*_reduction || def<1E-30 || i==_maxit)              // convergence check
         {

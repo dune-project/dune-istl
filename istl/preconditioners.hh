@@ -19,8 +19,30 @@
 
 namespace Dune {
   /** @defgroup ISTL_Prec Preconditioners
-      @ingroup ISTL_Solvers
+   * @ingroup ISTL_Solvers
+   *
+   * All of our \ref ISTL_Solvers "Krylow solvers" are preconditioned versions.
+   * There are sequential precondiotioner (e,g. SeqJacobi, SeqSOR, SeqSSOR) as well as parallel preconditioners
+   * (e.g. Amg, BlockPreconditioner) available for plugging them into the solvers
+   * together with matching ScalarProducts.
+   *
+   * Some of the available perconditioners (e.g. SeqJacobi, SeqSOR, SeqSSOR))
+   * may be given an aditional int as a template parameter, the block recursion level.
+   * These preconditioners
+   * can be used on blockrecursive matrices with an arbitrary hierarchy depths
+   * (eg. BCRSMatrix<BCRSMatrix<FieldMatrix,n,m> > >. Given a block recursion level
+   * \f$k\f$ those preconditioners work as
+   * normal on the offdiagonal blocks, treating them as traditional matrix
+   * entries. For the diagonal values a special procedure applies:  If
+   * \f$k>1\f$ the diagonal is treated as a matrix itself and the preconditioner
+   * is applied recursively on the matrix representing the diagonal value
+   * \f$D=A_{ii}\f$ with block level \f$k-1\f$. For the case that \f$k=1\f$ the diagonal
+   * is treated as a
+   * matrix entry resulting in a linear solve or an identity operation
+   * depending on the algorithm.
    */
+
+  */
   /** @addtogroup ISTL_Prec
           @{
    */
