@@ -19,8 +19,13 @@
 namespace Dune {
 
   /**
-              @addtogroup ISTL
-              @{
+   * @defgroup ISTL_Kernel Block Recursive Iterative Kernels
+   * @ingroup ISTL_SPMV
+   *
+   * Generic iterative kernels for the solvers which work on the block recursive
+   * structure of the matrices and vectors.
+   * @addtogroup ISTL_Kernel
+   * @{
    */
 
   //============================================================
