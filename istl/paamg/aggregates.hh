@@ -350,8 +350,10 @@ namespace Dune
      * @brief Criterion taking advantage of symmetric matrices.
      *
      * The two template parameters are:
+     * <dl>
      * <dt>M</dt> <dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
      * <dt>Norm</dt> <dd>The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.</dd>
+     * </dl>
      */
     template<class M, class Norm>
     class SymmetricCriterion : public AggregationCriterion<SymmetricDependency<M,Norm> >
@@ -364,8 +366,10 @@ namespace Dune
      * Nevertheless the sparsity pattern has to be symmetric.
      *
      * The two template parameters are:
+     * <dl>
      * <dt>M</dt> <dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
      * <dt>Norm</dt> <dd>The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.</dd>
+     * </dl>
      */
     template<class M, class Norm>
     class UnSymmetricCriterion : public AggregationCriterion<Dependency<M,Norm> >
@@ -460,12 +464,11 @@ namespace Dune
        * @brief Breadth first search within an aggregate
        *
        * The template parameters: <br>
-       * <dl>
-       * <dt>reset</dt><dd>If true the visited flags of the vertices
+       * <dl><dt>reset</dt><dd>If true the visited flags of the vertices
        *  will be reset after
        * the search</dd>
        * <dt>G</dt><dd>The type of the graph we perform the search on.</dd>
-       * <td>F</dt><dd>The type of the visitor to operate on the vertices</dd>
+       * <dt>F</dt><dd>The type of the visitor to operate on the vertices</dd>
        * </dl>
        * @param start The vertex where the search should start
        * from. This does not need to belong to the aggregate.
