@@ -108,9 +108,9 @@ namespace Dune {
 
         \param x The left hand side to store the result in.
         \param b The right hand side
-        \param r Object to store the statistics about applying the operator.
+        \param res Object to store the statistics about applying the operator.
      */
-    virtual void apply (X& x, Y& b, InverseOperatorResult& r) = 0;
+    virtual void apply (X& x, Y& b, InverseOperatorResult& res) = 0;
 
     /*!
        \brief apply inverse operator, with given convergence criteria.
@@ -120,9 +120,9 @@ namespace Dune {
        \param x The left hand side to store the result in.
        \param b The right hand side
        \param reduction The minimum defect reduction to achieve.
-       \param r Object to store the statistics about applying the operator.
+       \param res Object to store the statistics about applying the operator.
      */
-    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& r) = 0;
+    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) = 0;
 
     //! \brief Destructor
     virtual ~InverseOperator () {}
@@ -210,10 +210,10 @@ namespace Dune {
 
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
-    virtual void apply (X& x, X& b, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       // clear solver statistics
-      r.clear();
+      res.clear();
 
       // start a timer
       Timer watch;
@@ -252,7 +252,7 @@ namespace Dune {
         def = defnew;                         // update norm
         if (def<def0*_reduction || def<1E-30)              // convergence check
         {
-          r.converged  = true;
+          res.converged  = true;
           break;
         }
       }
@@ -265,21 +265,21 @@ namespace Dune {
       _prec.post(x);
 
       // fill statistics
-      r.iterations = i;
-      r.reduction = def/def0;
-      r.conv_rate  = pow(r.reduction,1.0/i);
-      r.elapsed = watch.elapsed();
+      res.iterations = i;
+      res.reduction = def/def0;
+      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.elapsed = watch.elapsed();
 
       // final print
       if (_verbose>0)
-        printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",r.conv_rate,r.elapsed,r.elapsed/i,i);
+        printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",res.conv_rate,res.elapsed,res.elapsed/i,i);
     }
 
     //! \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       _reduction = reduction;
-      (*this).apply(x,b,r);
+      (*this).apply(x,b,res);
     }
 
   private:
@@ -335,11 +335,11 @@ namespace Dune {
     /*!
        \brief Apply inverse operator.
 
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      r.clear();                  // clear solver statistics
+      res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec.pre(x,b);             // prepare preconditioner
       _op.applyscaleadd(-1,x,b);  // overwrite b with defect
@@ -373,7 +373,7 @@ namespace Dune {
         def = defnew;                 // update norm
         if (def<def0*_reduction || def<1E-30)      // convergence check
         {
-          r.converged  = true;
+          res.converged  = true;
           break;
         }
       }
@@ -381,12 +381,12 @@ namespace Dune {
       if (_verbose==1)                // printing for non verbose
         printf("%5d %12.4E\n",i,def);
       _prec.post(x);                  // postprocess preconditioner
-      r.iterations = i;               // fill statistics
-      r.reduction = def/def0;
-      r.conv_rate  = pow(r.reduction,1.0/i);
-      r.elapsed = watch.elapsed();
+      res.iterations = i;               // fill statistics
+      res.reduction = def/def0;
+      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
-        printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",r.conv_rate,r.elapsed,r.elapsed/i,i);
+        printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",res.conv_rate,res.elapsed,res.elapsed/i,i);
     }
 
     /*!
@@ -394,10 +394,10 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       _reduction = reduction;
-      (*this).apply(x,b,r);
+      (*this).apply(x,b,res);
     }
 
   private:
@@ -453,9 +453,9 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      r.clear();                      // clear solver statistics
+      res.clear();                      // clear solver statistics
       Timer watch;                    // start a timer
       _prec.pre(x,b);                 // prepare preconditioner
       _op.applyscaleadd(-1,x,b);      // overwrite b with defect
@@ -466,13 +466,13 @@ namespace Dune {
       double def0 = _sp.norm(b);    // compute norm
       if (def0<1E-30)        // convergence check
       {
-        r.converged  = true;
-        r.iterations = 0;                         // fill statistics
-        r.reduction = 0;
-        r.conv_rate  = 0;
-        r.elapsed=0;
+        res.converged  = true;
+        res.iterations = 0;                         // fill statistics
+        res.reduction = 0;
+        res.conv_rate  = 0;
+        res.elapsed=0;
         if (_verbose>0)                           // final print
-          printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",r.conv_rate,r.elapsed,r.elapsed,0);
+          printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",res.conv_rate,res.elapsed,res.elapsed,0);
         return;
       }
 
@@ -506,11 +506,11 @@ namespace Dune {
         // convergence test
         double defnew=_sp.norm(b);          // comp defect norm
         if (_verbose>1)                       // print
-          printf("%5d %12.4E %12.4g\n",i,defnew,defnew/def);
+          printf("%5d %12.4E %12.4E\n",i,defnew,defnew/def);
         def = defnew;                         // update norm
         if (def<def0*_reduction || def<1E-30 || i==_maxit)              // convergence check
         {
-          r.converged  = true;
+          res.converged  = true;
           break;
         }
 
@@ -527,12 +527,12 @@ namespace Dune {
       if (_verbose==1)                    // printing for non verbose
         printf("%5d %12.4E\n",i,def);
       _prec.post(x);                      // postprocess preconditioner
-      r.iterations = i;                   // fill statistics
-      r.reduction = def/def0;
-      r.conv_rate  = pow(r.reduction,1.0/i);
-      r.elapsed = watch.elapsed();
+      res.iterations = i;                   // fill statistics
+      res.reduction = def/def0;
+      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.elapsed = watch.elapsed();
       if (_verbose>0)                     // final print
-        printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",r.conv_rate,r.elapsed,r.elapsed/i,i);
+        printf("=== rate=%g, T=%g, TIT=%g, IT=%d\n",res.conv_rate,res.elapsed,res.elapsed/i,i);
     }
 
     /*!
@@ -540,10 +540,10 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       _reduction = reduction;
-      (*this).apply(x,b,r);
+      (*this).apply(x,b,res);
     }
 
   private:
@@ -795,10 +795,10 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& r)
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       _reduction = reduction;
-      (*this).apply(x,b,r);
+      (*this).apply(x,b,res);
     }
 
   private:

@@ -136,8 +136,7 @@ namespace Dune {
     //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply (const X& x, Y& y) const
     {
-      y = 0;
-      _A_.umv(x,y);
+      _A_.mv(x,y);
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$

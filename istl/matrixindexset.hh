@@ -53,7 +53,8 @@ namespace Dune {
     int rowsize(int row) const {return indices_[row].size();}
 
     /** \brief Import all nonzero entries of a sparse matrix into the index set
-     * \tparam MatrixType Needs to be BCRSMatrix<...>
+        \param MatrixType Needs to be BCRSMatrix<...>
+        \param matrix reference to the MatrixType object
      */
     template <class MatrixType>
     void import(const MatrixType& m, int rowOffset=0, int colOffset=0) {
@@ -77,7 +78,8 @@ namespace Dune {
 
     /** \brief Initializes a BCRSMatrix with the indices contained
         in this MatrixIndexSet
-        \tparam MatrixType Needs to be BCRSMatrix<...>
+        \param MatrixType Needs to be BCRSMatrix<...>
+        \param matrix reference to the MatrixType object
      */
     template <class MatrixType>
     void exportIdx(MatrixType& matrix) const {

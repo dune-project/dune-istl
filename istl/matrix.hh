@@ -330,6 +330,23 @@ namespace Dune {
       return out;
     }
 
+    //! y = A x
+    template <class X, class Y>
+    void mv(const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
+#endif
+
+      for (int i=0; i<data_.size(); i++) {
+        y[i]=0;
+        for (int j=0; j<cols_; j++)
+          (*this)[i][j].umv(x[j], y[i]);
+
+      }
+
+    }
     //! y += A x
     template <class X, class Y>
     void umv(const X& x, Y& y) const

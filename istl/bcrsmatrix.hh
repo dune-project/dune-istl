@@ -28,6 +28,36 @@ namespace Dune {
   /**
    * @defgroup ISTL_SPMV Sparse Matrix and Vector classes
    * @ingroup ISTL
+   * @brief Matrix and Vector classes that support a block recursive
+   * structure capable of representing the natural structure from Finite
+   * Element discretisations.
+   *
+   *
+   * The interface of our matrices is designed according to what they
+   * represent from a mathematical point of view. The vector classes are
+   * representations of vector spaces:
+   *
+   * - FieldVector represents a vector space \f$V=K^n\f$ where the field \f$K\f$
+   *   is represented by a numeric type (e.g. double, float, complex). \f$n\f$
+   *   is known at compile time.
+   * - BlockVector represents a vector space \f$V=W\times W \times W \times\cdots\times W\f$
+   *   where W is itself a vector space.
+   * - VariableBlockVector represents a vector space having a two-level
+   *   block structure of the form
+   *   \f$V=B^{n_1}\times B^{n_2}\times\ldots \times B^{n_m}\f$, i.e. it is constructed
+   *   from \f$m\f$ vector spaces, \f$i=1,\ldots,m\f$.
+   *
+   * The matrix classes represent linear maps \f$A: V \mapsto W\f$
+   * from vector space \f$V\f$ to vector space \f$W\f$ the recursive block
+   * structure of the matrix rows and columns immediately follows
+   * from the recursive block structure of the vectors representing
+   * the domain and range of the mapping, respectively:
+   * - FieldMatrix represents a linear map \f$M: V_1 \to V_2\f$ where
+   *   \f$V_1=K^n\f$ and \f$V_2=K^m\f$ are vector spaces over the same field represented by a numerix type.
+   * - BCRSMatrix represents a linear map \f$M: V_1 \to V_2\f$ where
+   *   \f$V_1=W\times W \times W \times\cdots\times W\f$ and \f$V_2=W\times W \times W \times\cdots\times W\f$
+   *   where W is itself a vector space.
+   * - VariableBCRSMatrix is not yet implemented.
    */
   /**
               @addtogroup ISTL_SPMV
@@ -35,33 +65,83 @@ namespace Dune {
    */
 
 
-  /** \brief A sparse block matrix with compressed row storage
+  /**
+     \brief A sparse block matrix with compressed row storage
 
      Implements a block compressed row storage scheme. The block
-       type B can be any type implementing the matrix interface.
+     type B can be any type implementing the matrix interface.
 
-           Different ways to build up a compressed row
-           storage matrix are supported:
+     Different ways to build up a compressed row
+     storage matrix are supported:
 
-           1. Row-wise scheme
+     1. Row-wise scheme
+     2. Random scheme
 
-           Rows are built up in sequential order. Size of the row and
-       the column indices are defined. A row can be used as soon as it
-       is initialized. With respect to memory there are two variants of
-       this scheme: (a) number of non-zeroes known in advance (application
-       finite difference schemes), (b) number of non-zeroes not known
-       in advance (application: Sparse LU, ILU(n)).
+     Error checking: no error checking is provided normally.
+     Setting the compile time switch DUNE_ISTL_WITH_CHECKING
+     enables error checking.
 
-           2. Random scheme
+     Details:
 
-           For general finite element implementations the number of rows n
-       is known, the number of non-zeroes might also be known (e.g.
+     1. Row-wise scheme
+
+     Rows are built up in sequential order. Size of the row and
+     the column indices are defined. A row can be used as soon as it
+     is initialized. With respect to memory there are two variants of
+     this scheme: (a) number of non-zeroes known in advance (application
+     finite difference schemes), (b) number of non-zeroes not known
+     in advance (application: Sparse LU, ILU(n)).
+
+     2. Random scheme
+
+     For general finite element implementations the number of rows n
+     is known, the number of non-zeroes might also be known (e.g.
      \#edges + \#nodes for P1) but the size of a row and the indices of a row
-       can not be defined in sequential order.
+     can not be defined in sequential order.
 
-           Error checking: no error checking is provided normally.
-           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
-           enables error checking.
+     \code
+     #include<dune/common/fmatrix.hh>
+     #include<dune/istl/bcrsmatrix.hh>
+
+     ...
+
+     typedef FieldMatrix<double,2,2> M;
+     BCRSMatrix<M> B(4,4,BCRSMatrix<M>::random);
+
+     // initially set row size for each row
+     B.setrowsize(0,1);
+     B.setrowsize(3,4);
+     B.setrowsize(2,1);
+     B.setrowsize(1,1);
+     // increase row size for row 2
+     B.incrementrowsize(2)
+
+     // finalize row setup phase
+     B.endrowsizes();
+
+     // add column entries to rows
+     B.addindex(0,0);
+     B.addindex(3,1);
+     B.addindex(2,2);
+     B.addindex(1,1);
+     B.addindex(2,0);
+     B.addindex(3,2);
+     B.addindex(3,0);
+     B.addindex(3,3);
+
+     // finalize column setup phase
+     B.endindices();
+
+     // set entries using the random access operator
+     B[0][0] = 1;
+     B[1][1] = 2;
+     B[2][0] = 3;
+     B[2][2] = 4;
+     B[3][1] = 5;
+     B[3][2] = 6;
+     B[3][0] = 7;
+     B[3][3] = 8;
+     \endcode
    */
 #ifdef DUNE_EXPRESSIONTEMPLATES
   template<class B, class A>
@@ -73,7 +153,7 @@ namespace Dune {
   {
   private:
     enum BuildStage {
-      /** @brief Matrix id not built at all. */
+      /** @brief Matrix is not built at all. */
       notbuilt=0,
       /** @brief The row sizes of the matrix are known.
        *
@@ -348,7 +428,6 @@ namespace Dune {
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
       : build_mode(bm), ready(notbuilt)
     {
-
       allocate(_n, _m);
     }
 
@@ -461,8 +540,13 @@ namespace Dune {
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
         : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j, 0)
       {
-        if (Mat.build_mode!=row_wise)
+        if (i==0 && Mat.ready)
           DUNE_THROW(ISTLError,"creation only allowed for uninitialized matrix");
+        if(Mat.build_mode!=row_wise)
+          if(Mat.build_mode==unknown)
+            Mat.build_mode=row_wise;
+          else
+            DUNE_THROW(ISTLError,"creation only allowed if row wise allocation was requested in the constructor");
       }
 
       //! prefix increment
@@ -650,7 +734,17 @@ namespace Dune {
       ready = rowSizesBuilt;
     }
 
-    //! add index (row,col) to the matrix
+    //! \brief add index (row,col) to the matrix
+    /*!
+       This method can only be used when building the BCRSMatrix
+       in random mode.
+
+       addindex adds a new column entry to the row. If this column
+       entry already exists, nothing is done.
+
+       Don't call addindex after the setup phase is finished
+       (after endindices is called).
+     */
     void addindex (size_type row, size_type col)
     {
       if (build_mode!=random)
@@ -807,6 +901,24 @@ namespace Dune {
       return *this;
     }
     //===== linear maps
+
+    //! y = A x
+    template<class X, class Y>
+    void mv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+#endif
+      ConstRowIterator endi=end();
+      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      {
+        y[i.index()]=0;
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+          (*j).umv(x[j.index()],y[i.index()]);
+      }
+    }
 
     //! y += A x
     template<class X, class Y>

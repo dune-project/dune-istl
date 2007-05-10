@@ -114,7 +114,7 @@ namespace Dune
      * operator int() const;
      * LocalIndexState state() const;
      * void setState(LocalIndexState);
-     * \code
+     * \endcode
      */
     typedef TL LocalIndex;
 
@@ -233,7 +233,7 @@ namespace Dune
      * operator int() const;
      * LocalIndexState state() const;
      * void setState(LocalIndexState);
-     * \code
+     * \endcode
      */
     typedef TL LocalIndex;
 

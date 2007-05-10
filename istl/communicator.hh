@@ -33,7 +33,7 @@ namespace Dune
    *
    * Form an abstract point of view a random access container \f$x: I
    * \rightarrow K\f$ provides a
-   * mapping from an index set \f$I \subset \N_0\f$ onto a set of objects
+   * mapping from an index set \f$I \subset N_0\f$ onto a set of objects
    * \f$K\f$. Note that we do not require \f$I\f$ to be consecutive. The piece
    * \f$x_p\f$ of the container \f$x\f$ stored on process \f$p\f$ is a mapping \f$x_p:I_p
    * \rightarrow K\f$, where \f$I_p \subset I\f$. Due to efficiency the entries

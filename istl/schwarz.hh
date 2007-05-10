@@ -30,6 +30,26 @@
 namespace Dune {
 
   /**
+   * @defgroup ISTL_Parallel Parallel Solvers
+   * @ingroup ISTL_Solvers
+   * Instead of using parallel data structures (matrices and vectors) that
+   * (implicitly) know the data distribution and communication patterns,
+   * there is a clear separation of the parallel data composition together
+   *  with the communication APIs from the data structures. This allows for
+   * implementing overalapping and nonoverlapping domain decompositions as
+   * well as data parallel parallelisation aproaches.
+   *
+   * The \ref ISTL_Solvers "solvers" can easily be turned into parallel solvers
+   * initializing them with matching parallel subclasses of the the base classes
+   * ScalarProduct, Preconditioner and LinearOperator.
+   *
+   * The information of the data distribution is provided by OwnerOverlapCopyCommunication
+   * of \ref ISTL_Comm "communication API".
+   *
+   * Currently only data parallel versions are shipped with dune-istl. Domain
+   * decomposition can be found in module dune-dd.
+   */
+  /**
      @addtogroup ISTL_Operators
      @{
    */
