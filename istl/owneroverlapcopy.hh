@@ -306,7 +306,7 @@ namespace Dune {
       }
       result = 0;
       for (int i=0; i<x.size(); i++)
-        result += x[i].operator*(y[i])*mask[i];
+        result += x[i]*(y[i])*mask[i];
       result = cc.sum(result);
       return;
     }
