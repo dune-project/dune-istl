@@ -17,7 +17,12 @@ docdir=$(datadir)/doc/dune-istl
 
 doc_DATA = $(DOCS)
 
-CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.pdf *.ps
+CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.ps
+
+# files to clean only in svn tree but not in tarball
+SVNCLEANFILES =  *.pdf
+clean-local:
+	if test -e $(top_srcdir)/doc/doxygen/Doxydep; then rm -rf $(SVNCLEANFILES); fi
 
 dist-hook:
 	sed $(srcdir)/Makefile.dist.am -e 's/Makefile\.dist/Makefile/g' > $(distdir)/Makefile.am
