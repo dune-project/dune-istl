@@ -3,7 +3,7 @@
 #ifndef DUNE_GSETC_HH
 #define DUNE_GSETC_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <iostream>
 #include <iomanip>

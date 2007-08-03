@@ -3,7 +3,7 @@
 #ifndef DUNE_SOLVERS_HH
 #define DUNE_SOLVERS_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <iostream>
 #include <iomanip>

@@ -3,7 +3,7 @@
 #ifndef DUNE_VBVECTOR_HH
 #define DUNE_VBVECTOR_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <iostream>
 

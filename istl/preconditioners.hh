@@ -3,7 +3,7 @@
 #ifndef DUNE_PRECONDITIONERS_HH
 #define DUNE_PRECONDITIONERS_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <iostream>
 #include <iomanip>

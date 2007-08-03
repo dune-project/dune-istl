@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTLIO_HH
 #define DUNE_ISTLIO_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <ios>
 #include <iomanip>

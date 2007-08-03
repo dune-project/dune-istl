@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTLOPERATORS_HH
 #define DUNE_ISTLOPERATORS_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <iostream>
 #include <iomanip>

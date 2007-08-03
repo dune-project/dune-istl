@@ -3,7 +3,7 @@
 #ifndef DUNE_VBCRSMATRIX_HH
 #define DUNE_VBCRSMATRIX_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 
 #include "istlexection.hh"

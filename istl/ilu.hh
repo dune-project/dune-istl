@@ -3,7 +3,7 @@
 #ifndef DUNE_ILU_HH
 #define DUNE_ILU_HH
 
-#include <math.h>
+#include <cmath>
 #include <complex>
 #include <iostream>
 #include <iomanip>
