@@ -86,5 +86,6 @@ int main()
     builder.randomBuild(5,4);
   }catch(Dune::Exception e) {
     std::cerr << e<<std::endl;
+    return 1;
   }
 }
