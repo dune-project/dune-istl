@@ -22,16 +22,16 @@ int main(int argc, char** argv)
 
   typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > BMatrix;
 
-  BMatrix laplace(N*N,N*N, N*N*5, BMatrix::row_wise);
-  setupLaplacian<N>(laplace);
+  BMatrix laplace;
+  setupLaplacian(laplace, N);
 
   if(N*N*5-4*2-(N-2)*4!=countNonZeros(laplace)) {
     ++ret;
     Dune::derr<<"Counting nonzeros of BCRSMatrix failed!"<<std::endl;
   }
 
-  Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> > blaplace(N*N,N*N, N*N*5, Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> >::row_wise);
-  setupLaplacian<N>(blaplace);
+  Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> > blaplace;
+  setupLaplacian(blaplace,N);
 
   if((N*N*5-4*2-(N-2)*4)*4*7!=countNonZeros(blaplace)) {
     ++ret;
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
   Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> > bblaplace;
   bblaplace.setSize(N*N,N*N, N*N*5);
   bblaplace.setBuildMode(Dune::BCRSMatrix<Dune::FieldMatrix<double,4,7> >::row_wise);
-  setupLaplacian<N>(bblaplace);
+  setupLaplacian(bblaplace,N);
 
   if((N*N*5-4*2-(N-2)*4)*4*7!=countNonZeros(bblaplace)) {
     ++ret;

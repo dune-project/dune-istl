@@ -2,10 +2,15 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef LAPLACIAN_HH
 #define LAPLACIAN_HH
+#include <dune/istl/bcrsmatrix.hh>
 
-template<int N, class B>
-void setupSparsityPattern(Dune::BCRSMatrix<B>& A)
+template<class B>
+void setupSparsityPattern(Dune::BCRSMatrix<B>& A, int N)
 {
+  typedef typename Dune::BCRSMatrix<B> Matrix;
+  A.setSize(N*N, N*N, N*N*5);
+  A.setBuildMode(Matrix::row_wise);
+
   for (typename Dune::BCRSMatrix<B>::CreateIterator i = A.createbegin(); i != A.createend(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field
     int y = i.index()/N;  // y coordinate in the 2d field
@@ -29,10 +34,11 @@ void setupSparsityPattern(Dune::BCRSMatrix<B>& A)
   }
 }
 
-template<int N, class B>
-void setupLaplacian(Dune::BCRSMatrix<B>& A)
+
+template<class B>
+void setupLaplacian(Dune::BCRSMatrix<B>& A, int N)
 {
-  setupSparsityPattern<N>(A);
+  setupSparsityPattern(A,N);
 
   B diagonal = 0, bone=0, beps=0;
   for(typename B::RowIterator b = diagonal.begin(); b !=  diagonal.end(); ++b)
