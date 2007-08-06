@@ -9,6 +9,24 @@ namespace Dune
   namespace Amg
   {
 
+    template<std::size_t i>
+    struct ApplyHelper
+    {
+      template<class TT, class T>
+      static void apply(TT tuple, const T& t)
+      {
+        get<i-1>(tuple) (t);
+        ApplyHelper<i-1>::apply(tuple, t);
+      }
+    };
+    template<>
+    struct ApplyHelper<0>
+    {
+      template<class TT, class T>
+      static void apply(TT tuple, const T& t)
+      {}
+    };
+
     template<typename T1, typename T2 = Nil, typename T3 = Nil,
         typename T4 = Nil, typename T5 = Nil,typename T6 = Nil,
         typename T7 = Nil, typename T8 = Nil, typename T9 = Nil>
@@ -26,21 +44,7 @@ namespace Dune
       template<class T>
       void operator()(const T& t)
       {
-        apply(*this, t);
-      }
-
-    private:
-      template<class T, class TT1, class TT2>
-      inline void apply(Pair<TT1,TT2>& pair, const T& t)
-      {
-        pair.first() (t);
-        apply(pair.second(), t);
-      }
-
-      template<class T, class TT1>
-      inline void apply(Pair<TT1,Nil>& pair, const T& t)
-      {
-        pair.first() (t);
+        ApplyHelper<tuple_size<Tuple<T1,T2,T3,T4,T5,T6,T7,T8,T9> >::value>::apply(*this, t);
       }
     };
 
