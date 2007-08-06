@@ -67,6 +67,8 @@ namespace Dune
      */
     SuperLUMatrix(const Matrix& mat);
 
+    SuperLUMatrix();
+
     /** @brief Destructor */
     ~SuperLUMatrix();
 
@@ -76,13 +78,13 @@ namespace Dune
       return A;
     }
 
-    bool operator==(const BCRSMatrix<FieldMatrix<B,n,m>,TA>& mat);
+    bool operator==(const Matrix& mat) const;
 
     /**
      * @brief Get the number of rows.
      * @return  The number of rows.
      */
-    std::size_t N()
+    std::size_t N() const
     {
       return N_;
     }
@@ -91,13 +93,25 @@ namespace Dune
      * @brief Get the number of columns.
      * @return  The number of columns.
      */
-    std::size_t M()
+    std::size_t M() const
     {
       return M_;
     }
 
+    std::size_t Nnz() const
+    {
+      return Nnz_;
+    }
+
+    SuperLUMatrix& operator=(const Matrix& mat);
+
   private:
-    int N_, M_;
+    /** @brief Initialize data from given matrix. */
+    void setMatrix(const Matrix& mat);
+    /** @brief free allocated space. */
+    void free();
+
+    int N_, M_, Nnz_;
     B* values;
     int* rowindex;
     int* colstart;
@@ -131,7 +145,7 @@ namespace Dune
    */
 
   template<class B, class TA, int n, int m>
-  bool SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator==(const BCRSMatrix<FieldMatrix<B,n,m>,TA>& mat)
+  bool SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator==(const BCRSMatrix<FieldMatrix<B,n,m>,TA>& mat) const
   {
     const NCformat* S=static_cast<const NCformat *>(A.Store);
     for(int col=0; col < M(); ++col) {
@@ -151,10 +165,34 @@ namespace Dune
   }
 
   template<class B, class TA, int n, int m>
+  SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::SuperLUMatrix()
+    : N_(0), M_(0), Nnz_(0), values(0), rowindex(0), colstart(0)
+  {}
+
+  template<class B, class TA, int n, int m>
   SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
   ::SuperLUMatrix(const Matrix& mat)
-    : N_(n*mat.N()), M_(m*mat.M())
+    : N_(n*mat.N()), M_(m*mat.M()), Nnz_(n*m*mat.Nnz())
+  {}
+
+  template<class B, class TA, int n, int m>
+  SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >&
+  SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator=(const Matrix& mat)
   {
+    if(N_+M_+Nnz_!=0)
+      free();
+    setMatrix(mat);
+    return *this;
+  }
+
+  template<class B, class TA, int n, int m>
+  void SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
+  ::setMatrix(const Matrix& mat)
+  {
+    N_=n*mat.N();
+    M_=m*mat.M();
+    Nnz_=n*m*mat.Nnz();
+
     // initialize data
     values=new B[mat.Nnz()*n*m];
     rowindex=new int[mat.Nnz()*n*m];
@@ -208,12 +246,19 @@ namespace Dune
 
     dCreate_CompCol_Matrix(&A, mat.N(), mat.M(), mat.Nnz(),
                            values, rowindex, colstart, SLU_NC, static_cast<Dtype_t>(GetSuperLUType<B>::type), SLU_GE);
+#ifdef DUNE_ISTL_WITH_CHECKING
     assert(*this==mat);
-    dPrint_CompCol_Matrix("A", &A);
+#endif
   }
 
   template<class B, class TA, int n, int m>
   SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::~SuperLUMatrix()
+  {
+    free();
+  }
+
+  template<class B, class TA, int n, int m>
+  void SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::free()
   {
     delete[] values;
     delete[] rowindex;

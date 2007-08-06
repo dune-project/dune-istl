@@ -8,9 +8,11 @@
 #include "dsp_defs.h"
 #include "solvers.hh"
 #include "supermatrix.hh"
-#include <complex>
+#include <algorithm>
+#include <functional>
 #include "bcrsmatrix.hh"
 #include "bvector.hh"
+#include "istlexception.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/stdstreams.hh>
@@ -32,19 +34,48 @@ namespace Dune
     typedef SuperLUMatrix<Matrix> SuperLUMatrix;
     typedef BlockVector<FieldVector<T,m>,A> domain_type;
     typedef BlockVector<FieldVector<T,n>,A> range_type;
-    SuperLU(const Matrix& mat);
+    /**
+     * @brief Constructor.
+     * @param mat The matrix of the system to solve.
+     */
+    explicit SuperLU(const Matrix& mat);
+    /**
+     * @brief Empty default constructor.
+     *
+     * Use setMatrix to tell SuperLU for what matrix it solves.
+     */
+    SuperLU();
+
     ~SuperLU();
+
+    /**
+     *
+     */
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res);
+
+    /**
+     *
+     */
     void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
       apply(x,b,res);
+      res.converged=res.reduction<reduction;
     }
 
+
+    /** @brief Initialize data from given matrix. */
+    void setMatrix(const Matrix& mat);
+
   private:
+    /** @brief free allocated space. */
+    void free();
+
+    const Matrix* a;
     SuperLUMatrix mat;
     SuperMatrix L, U, B, X;
     int *perm_c, *perm_r, *etree;
-    double *R, *C;
+    T *R, *C;
+    T *bstore;
     superlu_options_t options;
     char equed;
     void *work;
@@ -57,6 +88,13 @@ namespace Dune
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::~SuperLU()
   {
+    if(a)
+      free();
+  }
+
+  template<typename T, typename A, int n, int m>
+  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::free()
+  {
     delete[] perm_c;
     delete[] perm_r;
     delete[] etree;
@@ -66,18 +104,38 @@ namespace Dune
       Destroy_SuperNode_Matrix(&L);
       Destroy_CompCol_Matrix(&U);
     }
+    lwork=0;
     if(!first) {
       SUPERLU_FREE(B.Store);
       SUPERLU_FREE(X.Store);
     }
+    a=0;
   }
 
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::SuperLU(const Matrix& mat_)
-    : mat(mat_), lwork(0), work(0), first(true)
+    : a(0), lwork(0), work(0), first(true)
   {
-    std::cout<<mat.N()<<"x"<<mat.M()<<std::endl;
+    setMatrix(mat_);
+
+  }
+  template<typename T, typename A, int n, int m>
+  SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::SuperLU()
+    : a(0)
+  {}
+
+  template<typename T, typename A, int n, int m>
+  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setMatrix(const Matrix& mat_)
+  {
+    if(a) {
+      free();
+    }
+    lwork=0;
+    work=0;
+    a=&mat_;
+    mat=mat_;
+    first = true;
     perm_c = new int[mat.M()];
     perm_r = new int[mat.N()];
     etree  = new int[mat.M()];
@@ -119,6 +177,7 @@ namespace Dune
         dinfo<<"Recip. condition number = %e\n"<< rcond<<std::endl;
       SCformat* Lstore = (SCformat *) L.Store;
       NCformat* Ustore = (NCformat *) U.Store;
+      dinfo<<"No of nonzeros in matrix ="<<mat.Nnz()<<std::endl;
       dinfo<<"No of nonzeros in factor L = "<< Lstore->nnz<<std::endl;
       dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
       dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
@@ -136,12 +195,14 @@ namespace Dune
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::apply(domain_type& x, range_type& b, InverseOperatorResult& res)
   {
+    if(!a)
+      DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
+
     if(first) {
-      dCreate_Dense_Matrix(&B, mat.N(), 1, reinterpret_cast<double*>(&b[0]), mat.N(), SLU_DN, SLU_D, SLU_GE);
-      dCreate_Dense_Matrix(&X, mat.N(), 1,  reinterpret_cast<double*>(&x[0]), mat.N(), SLU_DN, SLU_D, SLU_GE);
+      dCreate_Dense_Matrix(&B, mat.N(), 1,  reinterpret_cast<T*>(&b[0]), mat.N(), SLU_DN, SLU_D, SLU_GE);
+      dCreate_Dense_Matrix(&X, mat.N(), 1,  reinterpret_cast<T*>(&x[0]), mat.N(), SLU_DN, SLU_D, SLU_GE);
       first=false;
-    }
-    else{
+    }else{
       ((DNformat*) B.Store)->nzval=&b[0];
       ((DNformat*)X.Store)->nzval=&x[0];
     }
@@ -153,11 +214,30 @@ namespace Dune
     /* Initialize the statistics variables. */
     StatInit(&stat);
 
+    range_type d=b;
+    a->usmv(-1, x, d);
+
+    double def0=d.two_norm();
+
     dgssvx(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
            &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
            &memusage, &stat, &info);
 
     dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
+
+
+    res.iterations=1;
+
+    if(options.Equil==YES)
+      // undo scaling of right hand side
+      std::transform(reinterpret_cast<T*>(&b[0]),reinterpret_cast<T*>(&b[0])+mat.M(),
+                     &C[0], reinterpret_cast<T*>(&d[0]), std::divides<T>());
+    else
+      d=b;
+
+    a->usmv(-1, x, d);
+    res.reduction=d.two_norm()/def0;
+    res.conv_rate = res.reduction;
 
     if ( info == 0 || info == n+1 ) {
 

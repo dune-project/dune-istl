@@ -41,6 +41,12 @@ int main(int argc, char** argv)
 
   Dune::InverseOperatorResult res;
 
+  Dune::SuperLU<BCRSMat> solver1;
+
+  solver1.setMatrix(mat);
+
   solver.apply(x,b, res);
+
+  std::cout<<"Defect reduction is "<<res.reduction<<std::endl;
 
 }
