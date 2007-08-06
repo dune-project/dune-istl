@@ -6,9 +6,13 @@ if MPI
   INDEXRUN = $(INDEXPROG)
 endif
 
+if SUPERLU
+  LUTEST =  superlutest
+endif
+
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
-	bcrsbuildtest matrixiteratortest $(SELECTPROG)
+	bcrsbuildtest matrixiteratortest mv $(SELECTPROG) $(LUTEST)
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(INDEXRUN)
@@ -17,6 +21,13 @@ TESTS = $(NORMALTESTS) $(INDEXRUN)
 check_PROGRAMS = $(NORMALTESTS) $(INDEXPROG)
 
 # define the programs
+
+mv_SOURCES = mv.cc
+
+superlutest_SOURCES = superlutest.cc
+superlutest_LDADD= $(SUPERLU_LIBS)
+superlutest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+superlutest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
