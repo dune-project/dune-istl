@@ -1681,7 +1681,8 @@ namespace Dune
     {
       DependencyCounter unused, aggregated;
       typedef AggregateVisitor<DependencyCounter> Counter;
-      CombinedFunctor<Counter,Counter> visitors(Counter(aggregates, AggregatesMap<Vertex>::UNAGGREGATED, unused), Counter(aggregates, aggregate, aggregated));
+      typedef tuple<Counter,Counter> CounterTuple;
+      CombinedFunctor<CounterTuple> visitors(CounterTuple(Counter(aggregates, AggregatesMap<Vertex>::UNAGGREGATED, unused), Counter(aggregates, aggregate, aggregated)));
       return std::make_pair(unused.value(), aggregated.value());
     }
 
