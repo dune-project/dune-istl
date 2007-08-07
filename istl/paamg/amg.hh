@@ -11,6 +11,7 @@
 #include <dune/istl/paamg/hierarchy.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/scalarproducts.hh>
+#include <dune/istl/superlu.hh>
 namespace Dune
 {
   namespace Amg
@@ -254,9 +255,14 @@ namespace Dune
         coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
         scalarProduct_ = ScalarProductChooser::construct(*matrices_->parallelInformation().coarsest());
 
+#ifdef HAVE_SUPERLU
+        std::cout<<"Using superlu"<<std::endl;
+        solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat());
+#else
         solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
                                         *scalarProduct_,
                                         *coarseSmoother_, 1E-2, 10000, 0);
+#endif
       }
     }
 
