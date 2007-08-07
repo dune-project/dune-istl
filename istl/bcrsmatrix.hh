@@ -1145,12 +1145,6 @@ namespace Dune {
       return m;
     }
 
-    //! number of nonzeros
-    size_type Nnz() const
-    {
-      return nnz;
-    }
-
     /** \brief row dimension of block r
         \bug Does not count empty rows (FlySpray #7)
      */
