@@ -151,10 +151,15 @@ namespace Dune
     for(int col=0; col < M(); ++col) {
       for(int j=S->colptr[col]; j < S->colptr[col+1]; ++j) {
         int row=S->rowind[j];
-        if((mat[row/n][col/m])[row%n][row%m]!=reinterpret_cast<B*>(S->nzval)[j])
+        if((mat[row/n][col/m])[row%n][col%m]!=reinterpret_cast<B*>(S->nzval)[j]) {
+          std::cerr<<" bcrs["<<row/n<<"]["<<col/m<<"]["<<row%n<<"]["<<row%m
+                   <<"]="<<(mat[row/n][col/m])[row%n][col%m]<<" super["<<row<<"]["<<col<<"]="<<reinterpret_cast<B*>(S->nzval)[j];
+
           return false;
+        }
       }
     }
+
     return true;
   }
 
@@ -191,15 +196,20 @@ namespace Dune
   {
     N_=n*mat.N();
     M_=m*mat.M();
-    Nnz_=n*m*mat.Nnz();
+    // Calculate no of nonzeros
+    Nnz_=0;
+    typedef typename Matrix::ConstRowIterator Iter;
+
+    for(Iter row=mat.begin(); row!= mat.end(); ++row)
+      Nnz_+=row->getsize();
+    Nnz_*=n*m;
 
     // initialize data
-    values=new B[mat.Nnz()*n*m];
-    rowindex=new int[mat.Nnz()*n*m];
+    values=new B[Nnz_];
+    rowindex=new int[Nnz_];
     colstart=new int[mat.M()*m+1];
 
     // calculate pattern for the transposed matrix
-    typedef typename Matrix::ConstRowIterator Iter;
     typedef typename Matrix::row_type row_type;
 
     std::size_t* marker = new std::size_t[mat.M()*m];
@@ -211,17 +221,15 @@ namespace Dune
       typedef typename row_type::const_iterator CIter;
       for(CIter col=row->begin(); col != row->end(); ++col) {
         for(int i=0; i < m; ++i)
-          ++marker[col.index()*m+i];
+          marker[col.index()*m+i]+=n;
       }
     }
 
     // convert no rownnz to colstart
     colstart[0]=0;
     for(int i=0; i < m*mat.M(); ++i) {
-      for(int j=0; j<m; j++) {
-        colstart[i*m+j+1]=colstart[i*m+j]+marker[i*m+j];
-        marker[i*m+j]=colstart[i*m+j];
-      }
+      colstart[i+1]=colstart[i]+marker[i];
+      marker[i]=colstart[i];
     }
 
     // copy data
@@ -234,7 +242,10 @@ namespace Dune
             //std::cout<<"marker="<<marker[col.index()*m+j]<<std::endl;
             //std::cout<<"rowindex="<<rowindex[0]<<std::endl;
             //std::cout<<rowindex[marker[col.index()*m+j]]<<std::endl;
-
+            //std::cout<<row.index()<<std::endl;
+            //std::cout<<col.index()<<std::endl;
+            //std::cout<<col.index()*m+j<<std::endl;
+            //std::cout<<marker[col.index()*m+j]<<std::endl;
             rowindex[marker[col.index()*m+j]]=row.index()*n+i;
             values[marker[col.index()*m+j]]=(*col)[i][j];
             ++marker[col.index()*m+j];
@@ -244,9 +255,11 @@ namespace Dune
     }
     delete[] marker;
 
-    dCreate_CompCol_Matrix(&A, mat.N(), mat.M(), mat.Nnz(),
+    dCreate_CompCol_Matrix(&A, N_, M_, Nnz_,
                            values, rowindex, colstart, SLU_NC, static_cast<Dtype_t>(GetSuperLUType<B>::type), SLU_GE);
 #ifdef DUNE_ISTL_WITH_CHECKING
+    if(N_<30)
+      dPrint_CompCol_Matrix("A",&A);
     assert(*this==mat);
 #endif
   }
