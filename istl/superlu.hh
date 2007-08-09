@@ -238,6 +238,7 @@ namespace Dune
     a->usmv(-1, x, d);
     res.reduction=d.two_norm()/def0;
     res.conv_rate = res.reduction;
+    res.converged=(res.reduction<1e-10||d.two_norm()<1e-18);
 
     if ( info == 0 || info == n+1 ) {
 
