@@ -1196,8 +1196,8 @@ namespace Dune
     {
       maxValue_ = std::max(maxValue_,
                            (norm_(*col) * norm_(matrix_->operator[](col.index())[row_]))/
-                           //(norm_(matrix_->operator[](col.index())[col.index()]) * diagonal_));
-                           (diagonal_*diagonal_));
+                           (norm_(matrix_->operator[](col.index())[col.index()]) * diagonal_));
+      //(diagonal_*diagonal_));
     }
 
     template<class M, class N>
@@ -1205,8 +1205,8 @@ namespace Dune
     inline void SymmetricDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
     {
       if(norm_(matrix_->operator[](edge.target())[edge.source()]) * norm_(*col)/
-         //(norm_(matrix_->operator[](edge.target())[edge.target()]) * diagonal_) > alpha() * maxValue_){
-         (diagonal_ * diagonal_) > alpha() * maxValue_) {
+         (norm_(matrix_->operator[](edge.target())[edge.target()]) * diagonal_) > alpha() * maxValue_) {
+        //(diagonal_ * diagonal_) > alpha() * maxValue_){
         edge.properties().setDepends();
         edge.properties().setInfluences();
 
@@ -1525,6 +1525,7 @@ namespace Dune
 
         // Check whether the vertex is isolated.
         if(criterion.isIsolated()) {
+          std::cout<<"ISOLATED: "<<*vertex<<std::endl;
           vertex.properties().setIsolated();
         }else{
           // Examine all the edges beginning at this vertex.
