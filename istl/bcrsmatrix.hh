@@ -275,7 +275,7 @@ namespace Dune {
 
 
       //! return index
-      size_type index ()
+      size_type index () const
       {
         return i;
       }
@@ -627,7 +627,7 @@ namespace Dune {
       }
 
       //! dereferencing
-      size_type index ()
+      size_type index () const
       {
         return i;
       }
