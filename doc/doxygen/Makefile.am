@@ -4,6 +4,7 @@ if BUILD_DOCS
   DOXYGENTAG = doxygen-tag
   WHAT = bestpractice.html
   DOXYGEN_HTML = html
+  DOXYGEN_DIST = html-dist
 endif
 
 DISTCLEANFILES = doxygen.log doxygen-tag
@@ -21,6 +22,7 @@ DOXYGENINSTALL = *.html *.css *.png *.gif
 if WML
 # themeing doxygen
 DOXYGENHEADER = doxy-header.html
+DOXYGENHEADERBUILD = $(DOXYGENHEADER).build
 DOXYGENFOOTER = doxy-footer.html
 DOXYGENSTYLESHEET = dune-doxy.css
 DOYXFILE_OVERWRITE = echo "HTML_HEADER = $(DOXYGENHEADER)"; \
@@ -32,7 +34,7 @@ endif
 
 
 #we need this in the distribution
-EXTRA_DIST = $(WHAT) html-dist $(DOXYGENHEADER) doxy-footer.html $(PAGES)
+EXTRA_DIST = $(WHAT) $(DOXYGEN_DIST) $(DOXYGENHEADER) doxy-footer.html $(PAGES)
 
 doxygendir = $(datadir)/doc/dune-istl/doxygen
 doxygen_DATA = $(WHAT)
@@ -53,10 +55,11 @@ DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
 
 # as all doxygen files fill be installed in the html subdirectory
 # the BASEDIR has to be adjusted
-doxy-header.html:BASEDIR=../../..
+%.build: FORCE
+	$(MAKE) $* BASEDIR=../../..
 
 # check dependency ourself to be robust
-doxygen-tag: FORCE $(DOXYGENHEADER)
+doxygen-tag: FORCE $(DOXYGENHEADERBUILD)
 	set -e; \
 	if test -e Doxyfile; then \
 	  if test ! -e doxygen-tag || test x"`find $(top_srcdir) \( $(DEPENDON) \) -a -cnewer doxygen-tag -print`" != x ; then \
@@ -70,7 +73,7 @@ doxygen-tag: FORCE $(DOXYGENHEADER)
 
 html: doxygen-tag
 
-html-dist: $(DOXYGENHEADER)
+html-dist: $(DOXYGENHEADERBUILD)
 	rm -rf html
 	set -e; \
 	if test -e Doxyfile; then \
