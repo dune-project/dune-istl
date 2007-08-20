@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 
   watch.reset();
 
-  Dune::SuperLU<BCRSMat> solver(mat);
+  Dune::SuperLU<BCRSMat> solver(mat, true);
 
   Dune::InverseOperatorResult res;
 

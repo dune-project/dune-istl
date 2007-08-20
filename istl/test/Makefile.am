@@ -7,7 +7,7 @@ if MPI
 endif
 
 if SUPERLU
-  LUTEST =  superlutest
+  LUTEST =  superlutest overlappingschwarztest
 endif
 
 # which tests where program to build and run are equal
@@ -28,6 +28,11 @@ superlutest_SOURCES = superlutest.cc
 superlutest_LDADD= $(SUPERLU_LIBS)
 superlutest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
 superlutest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+
+overlappingschwarztest_SOURCES = overlappingschwarztest.cc
+overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
+overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 

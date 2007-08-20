@@ -24,21 +24,35 @@ namespace Dune
   class SuperLU
   {};
 
+  template<class M, class T, class TA>
+  class SeqOverlappingSchwarz;
 
+  /**
+   * @brief SuperLu Solver
+   *
+   * Uses the the well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU
+   * package</a> to solve the
+   * system.
+   */
   template<typename T, typename A, int n, int m>
   class SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A > >
     : public InverseOperator<BlockVector<FieldVector<T,m>,A>,BlockVector<FieldVector<T,n>,A> >
   {
   public:
+    /* @brief The matrix type. */
     typedef BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
+    /* @brief The corresponding SuperLU Matrix type.*/
     typedef SuperLUMatrix<Matrix> SuperLUMatrix;
+    /** @brief The type of the domain of the solver. */
     typedef BlockVector<FieldVector<T,m>,A> domain_type;
+    /** @brief The type of the range of the solver. */
     typedef BlockVector<FieldVector<T,n>,A> range_type;
     /**
      * @brief Constructor.
      * @param mat The matrix of the system to solve.
+     * @param verbose If true some statistics are printed.
      */
-    explicit SuperLU(const Matrix& mat);
+    explicit SuperLU(const Matrix& mat, bool verbose=false);
     /**
      * @brief Empty default constructor.
      *
@@ -49,12 +63,12 @@ namespace Dune
     ~SuperLU();
 
     /**
-     *
+     *  \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res);
 
     /**
-     *
+     *  \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
     void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
@@ -62,15 +76,24 @@ namespace Dune
       res.converged=res.reduction<reduction;
     }
 
+    /**
+     * @brief Apply SuperLu to C arrays.
+     */
+    void apply(T* x, T* b);
 
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& mat);
 
   private:
+    friend class std::mem_fun_ref_t<void,SuperLU>;
+    template<class M,class X, class T1>
+    friend class SeqOverlappingSchwarz;
+
     /** @brief free allocated space. */
     void free();
+    /** @brief computes the LU Decomposition */
+    void decompose();
 
-    const Matrix* a;
     SuperLUMatrix mat;
     SuperMatrix L, U, B, X;
     int *perm_c, *perm_r, *etree;
@@ -88,7 +111,7 @@ namespace Dune
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::~SuperLU()
   {
-    if(a)
+    if(mat.N()+mat.M()>0)
       free();
   }
 
@@ -109,32 +132,37 @@ namespace Dune
       SUPERLU_FREE(B.Store);
       SUPERLU_FREE(X.Store);
     }
-    a=0;
   }
 
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
-  ::SuperLU(const Matrix& mat_)
-    : a(0), lwork(0), work(0), first(true), verbose(false)
+  ::SuperLU(const Matrix& mat_, bool verbose_)
+    : lwork(0), work(0), first(true), verbose(verbose_)
   {
     setMatrix(mat_);
 
   }
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::SuperLU()
-    : a(0)
+    :  verbose(false), lwork(0), work(0)
   {}
 
   template<typename T, typename A, int n, int m>
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setMatrix(const Matrix& mat_)
   {
-    if(a) {
+    if(mat.N()+mat.M()>0) {
       free();
     }
     lwork=0;
     work=0;
-    a=&mat_;
+    //a=&mat_;
     mat=mat_;
+    decompose();
+  }
+  template<typename T, typename A, int n, int m>
+  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::decompose()
+  {
+
     first = true;
     perm_c = new int[mat.M()];
     perm_r = new int[mat.N()];
@@ -178,7 +206,6 @@ namespace Dune
           dinfo<<"Recip. condition number = %e\n"<< rcond<<std::endl;
         SCformat* Lstore = (SCformat *) L.Store;
         NCformat* Ustore = (NCformat *) U.Store;
-        dinfo<<"No of nonzeros in matrix ="<<mat.Nnz()<<std::endl;
         dinfo<<"No of nonzeros in factor L = "<< Lstore->nnz<<std::endl;
         dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
         dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
@@ -197,7 +224,7 @@ namespace Dune
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::apply(domain_type& x, range_type& b, InverseOperatorResult& res)
   {
-    if(!a)
+    if(mat.M()+mat.N()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
     if(first) {
@@ -215,11 +242,12 @@ namespace Dune
     SuperLUStat_t stat;
     /* Initialize the statistics variables. */
     StatInit(&stat);
+    /*
+       range_type d=b;
+       a->usmv(-1, x, d);
 
-    range_type d=b;
-    a->usmv(-1, x, d);
-
-    double def0=d.two_norm();
+       double def0=d.two_norm();
+     */
     options.IterRefine=DOUBLE;
 
     dgssvx(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
@@ -228,17 +256,19 @@ namespace Dune
 
     res.iterations=1;
 
-    if(options.Equil==YES)
-      // undo scaling of right hand side
-      std::transform(reinterpret_cast<T*>(&b[0]),reinterpret_cast<T*>(&b[0])+mat.M(),
-                     &C[0], reinterpret_cast<T*>(&d[0]), std::divides<T>());
-    else
-      d=b;
-
-    a->usmv(-1, x, d);
-    res.reduction=d.two_norm()/def0;
-    res.conv_rate = res.reduction;
-    res.converged=(res.reduction<1e-10||d.two_norm()<1e-18);
+    /*
+       if(options.Equil==YES)
+       // undo scaling of right hand side
+        std::transform(reinterpret_cast<T*>(&b[0]),reinterpret_cast<T*>(&b[0])+mat.M(),
+                       C, reinterpret_cast<T*>(&d[0]), std::divides<T>());
+       else
+       d=b;
+       a->usmv(-1, x, d);
+       res.reduction=d.two_norm()/def0;
+       res.conv_rate = res.reduction;
+       res.converged=(res.reduction<1e-10||d.two_norm()<1e-18);
+     */
+    res.converged=true;
 
     if(verbose) {
 
@@ -260,6 +290,43 @@ namespace Dune
     StatFree(&stat);
   }
 
+  template<typename T, typename A, int n, int m>
+  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  ::apply(T* x, T* b)
+  {
+    if(mat.N()+mat.M()==0)
+      DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
+
+    if(first) {
+      dCreate_Dense_Matrix(&B, mat.N(), 1,  b, mat.N(), SLU_DN, SLU_D, SLU_GE);
+      dCreate_Dense_Matrix(&X, mat.N(), 1,  x, mat.N(), SLU_DN, SLU_D, SLU_GE);
+      first=false;
+    }else{
+      ((DNformat*) B.Store)->nzval=b;
+      ((DNformat*)X.Store)->nzval=x;
+    }
+
+    double rpg, rcond, ferr, berr;
+    int info;
+    mem_usage_t memusage;
+    SuperLUStat_t stat;
+    /* Initialize the statistics variables. */
+    StatInit(&stat);
+
+    options.IterRefine=DOUBLE;
+
+    dgssvx(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
+           &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
+           &memusage, &stat, &info);
+
+    if(options.Equil==YES)
+      // undo scaling of right hand side
+      std::transform(b, b+mat.M(), C, b, std::divides<T>());
+
+    if(verbose)
+      if ( options.PrintStat ) StatPrint(&stat);
+    StatFree(&stat);
+  }
 };
 
 #endif
