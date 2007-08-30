@@ -80,9 +80,9 @@ namespace Dune {
 
        A solver solves a linear operator equation A(x)=b by applying
        one or several steps of the preconditioner. The method pre()
-       is called before before the first apply operation.
-       x and b are right hand side and solution vector of the linear
-       system. It may. e.g., scale the system, allocate memory or
+       is called before the first apply operation.
+       b and x are right hand side and solution vector of the linear
+       system respectively. It may. e.g., scale the system, allocate memory or
        compute a (I)LU decomposition.
        Note: The ILU decomposition could also be computed in the constructor
        or with a separate method of the derived method if several
