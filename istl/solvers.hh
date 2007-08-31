@@ -92,10 +92,10 @@ namespace Dune {
   template<class X, class Y>
   class InverseOperator {
   public:
-    //! \brief Type of the domain of the operator we are the inverse of.
+    //! \brief Type of the domain of the operator to be inverted.
     typedef X domain_type;
 
-    //! \brief Type of the range of the operator we are the inverse of.
+    //! \brief Type of the range of the operator to be inverted.
     typedef Y range_type;
 
     /** \brief The field type of the operator. */
@@ -144,11 +144,11 @@ namespace Dune {
   template<class X>
   class LoopSolver : public InverseOperator<X,X> {
   public:
-    //! \brief The domain type of the operator we are the inverse for.
+    //! \brief The domain type of the operator that we do the inverse for.
     typedef X domain_type;
-    //! \brief The range type of the operator we are the inverse for.
+    //! \brief The range type of the operator that we do the inverse for.
     typedef X range_type;
-    //! \brief The field type of the operator we are the inverse for.
+    //! \brief The field type of the operator that we do the inverse for.
     typedef typename X::field_type field_type;
 
     /*!
@@ -298,11 +298,11 @@ namespace Dune {
   template<class X>
   class GradientSolver : public InverseOperator<X,X> {
   public:
-    //! \brief The domain type of the operator we are the inverse for.
+    //! \brief The domain type of the operator that we do the inverse for.
     typedef X domain_type;
-    //! \brief The range type of the operator we are the inverse for.
+    //! \brief The range type of the operator  that we do the inverse for.
     typedef X range_type;
-    //! \brief The field type of the operator we are the inverse for.
+    //! \brief The field type of the operator  that we do the inverse for.
     typedef typename X::field_type field_type;
 
     /*!
@@ -416,11 +416,11 @@ namespace Dune {
   template<class X>
   class CGSolver : public InverseOperator<X,X> {
   public:
-    //! \brief The domain type of the operator we are the inverse for.
+    //! \brief The domain type of the operator to be inverted.
     typedef X domain_type;
-    //! \brief The range type of the operator we are the inverse for.
+    //! \brief The range type of the operator to be inverted.
     typedef X range_type;
-    //! \brief The field type of the operator we are the inverse for.
+    //! \brief The field type of the operator to be inverted.
     typedef typename X::field_type field_type;
 
     /*!
@@ -562,11 +562,11 @@ namespace Dune {
   template<class X>
   class BiCGSTABSolver : public InverseOperator<X,X> {
   public:
-    //! \brief The domain type of the operator we are the inverse for.
+    //! \brief The domain type of the operator to be inverted.
     typedef X domain_type;
-    //! \brief The range type of the operator we are the inverse for.
+    //! \brief The range type of the operator to be inverted.
     typedef X range_type;
-    //! \brief The field type of the operator we are the inverse for.
+    //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
 
     /*!
