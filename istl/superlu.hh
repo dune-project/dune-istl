@@ -147,14 +147,14 @@ namespace Dune
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::SuperLU(const Matrix& mat_, bool verbose_)
-    : lwork(0), work(0), first(true), verbose(verbose_)
+    : work(0), lwork(0), first(true), verbose(verbose_)
   {
     setMatrix(mat_);
 
   }
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::SuperLU()
-    :  verbose(false), lwork(0), work(0)
+    :    work(0), lwork(0),verbose(false)
   {}
 
   template<typename T, typename A, int n, int m>
@@ -338,7 +338,7 @@ namespace Dune
     StatFree(&stat);
   }
   /** @} */
-};
+}
 
 #endif
 #endif

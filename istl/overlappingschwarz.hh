@@ -217,7 +217,7 @@ namespace Dune
       }
     };
 
-  };
+  }
 
   /**
    * @brief Sequential additive overlapping Schwarz preconditioner
@@ -692,10 +692,10 @@ namespace Dune
     template<typename T, typename A, int n>
     void MultiplicativeAdder<BlockVector<FieldVector<T,n>,A> >::axpy()
     {}
-  };
+  }
 
   /** @} */
 #endif
-};
+}
 
 #endif

@@ -324,7 +324,6 @@ namespace Dune
   template<class F, class Matrix>
   void copyToSuperMatrix(F& initializer, const Matrix& mat)
   {
-    typename Matrix::size_type M = mat.M();
     typedef typename Matrix::const_iterator Iter;
 
     for(Iter row=mat.begin(); row!= mat.end(); ++row)
@@ -459,6 +458,6 @@ namespace Dune
     SUPERLU_FREE(A.Store);
   }
 
-};
+}
 #endif
 #endif
