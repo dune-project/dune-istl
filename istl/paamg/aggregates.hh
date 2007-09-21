@@ -477,7 +477,7 @@ namespace Dune
        * @param visitedMap A map to mark the already visited vertices
        * @param aggregateVisitor A functor that is called with
        * each G::ConstEdgeIterator with an edge pointing to the
-       * aggregate. Use DummyVisitor these are of no interest.
+       * aggregate. Use DummyVisitor if these are of no interest.
        */
       template<bool reset, class G, class F, class VM>
       std::size_t breadthFirstSearch(const VertexDescriptor& start,
@@ -1021,7 +1021,7 @@ namespace Dune
        * @param aggregates The mapping of the vertices onto the aggregates.
        * @return The value of the connectivity.
        */
-      int connectivity(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates) const;
+      double connectivity(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates) const;
 
       /**
        * @brief Counts the edges depending on the dependency.
@@ -1525,7 +1525,7 @@ namespace Dune
 
         // Check whether the vertex is isolated.
         if(criterion.isIsolated()) {
-          std::cout<<"ISOLATED: "<<*vertex<<std::endl;
+          //std::cout<<"ISOLATED: "<<*vertex<<std::endl;
           vertex.properties().setIsolated();
         }else{
           // Examine all the edges beginning at this vertex.
@@ -1648,11 +1648,11 @@ namespace Dune
     }
 
     template<class G>
-    inline int Aggregator<G>::connectivity(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates) const
+    inline double Aggregator<G>::connectivity(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates) const
     {
       ConnectivityCounter counter(connected_, aggregates);
-      visitNeighbours(*graph_, vertex, counter);
-      return counter.value();
+      double noNeighbours=visitNeighbours(*graph_, vertex, counter);
+      return (double)counter.value()/noNeighbours;
     }
 
     template<class G>
@@ -1799,7 +1799,8 @@ namespace Dune
     void Aggregator<G>::growAggregate(const Vertex& seed, const AggregatesMap<Vertex>& aggregates, const C& c)
     {
       while(aggregate_->size() < c.minAggregateSize()) {
-        int maxTwoCons=0, maxOneCons=0, maxNeighbours=-1, maxCon=-std::numeric_limits<int>::max();
+        int maxTwoCons=0, maxOneCons=0, maxNeighbours=-1;
+        double maxCon=-1;
 
         Vertex candidate = AggregatesMap<Vertex>::UNAGGREGATED;
 
@@ -1817,7 +1818,7 @@ namespace Dune
 
           /* The case of two way connections. */
           if( maxTwoCons == twoWayCons && twoWayCons > 0) {
-            int con = connectivity(*vertex, aggregates);
+            double con = connectivity(*vertex, aggregates);
 
             if(con == maxCon) {
               int neighbours = noFrontNeighbours(*vertex);
@@ -1867,7 +1868,7 @@ namespace Dune
             continue;
 
           if( maxOneCons == oneWayCons && oneWayCons > 0) {
-            int con = connectivity(*vertex, aggregates);
+            double con = connectivity(*vertex, aggregates);
 
             if(con == maxCon) {
               int neighbours = noFrontNeighbours(*vertex);
