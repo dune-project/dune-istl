@@ -20,17 +20,27 @@
 namespace Dune
 {
 
+  /**
+   * @addtogroup ISTL
+   *
+   * @{
+   */
+  /**
+   * @file
+   * @author Markus Blatt
+   * @brief Classes for using SuperLU with ISTL matrices.
+   */
   template<class Matrix>
   class SuperLU
   {};
 
-  template<class M, class T, class TA>
+  template<class M, class T, class TM, class TA>
   class SeqOverlappingSchwarz;
 
   /**
    * @brief SuperLu Solver
    *
-   * Uses the the well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU
+   * Uses the well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU
    * package</a> to solve the
    * system.
    */
@@ -86,7 +96,7 @@ namespace Dune
 
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
-    template<class M,class X, class T1>
+    template<class M,class X, class TM, class T1>
     friend class SeqOverlappingSchwarz;
 
     /** @brief free allocated space. */
@@ -327,6 +337,7 @@ namespace Dune
       if ( options.PrintStat ) StatPrint(&stat);
     StatFree(&stat);
   }
+  /** @} */
 };
 
 #endif
