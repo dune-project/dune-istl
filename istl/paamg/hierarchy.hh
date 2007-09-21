@@ -309,7 +309,7 @@ namespace Dune
       /**
        * @brief Constructor
        * @param fineMatrix The matrix to coarsen.
-       * @param pinfo The information about the parallel data decmposition at the first level.
+       * @param pinfo The information about the parallel data decomposition at the first level.
        */
       MatrixHierarchy(const MatrixOperator& fineMatrix,
                       const ParallelInformation& pinfo=ParallelInformation());
@@ -610,6 +610,45 @@ namespace Dune
         tie(noAggregates, isoAggregates, oneAggregates) =
           aggregatesMap->buildAggregates(mlevel->getmat(), *(Element<1>::get(graphs)), criterion);
 
+#ifdef TEST_AGGLO
+        {
+          // calculate size of local matrix in the distributed direction
+          int start, end, overlapStart, overlapEnd;
+          int n = UNKNOWNS/procs; // number of unknowns per process
+          int bigger = UNKNOWNS%procs; // number of process with n+1 unknows
+          int procs=infoLevel->communicator().rank();
+
+          // Compute owner region
+          if(rank<bigger) {
+            start = rank*(n+1);
+            end   = (rank+1)*(n+1);
+          }else{
+            start = bigger + rank * n;
+            end   = bigger + (rank + 1) * n;
+          }
+
+          // Compute overlap region
+          if(start>0)
+            overlapStart = start - 1;
+          else
+            overlapStart = start;
+
+          if(end<UNKNOWNS)
+            overlapEnd = end + 1;
+          else
+            overlapEnd = end;
+
+          int noKnown = overlapEnd-overlapStart;
+          int offset = start-overlapStart;
+          int starti = 1; //(start-overlapStart==0)?1:0;
+          int endi = (overlapEnd-end==0) ? end-start-1 : end-start;
+
+          for(int j=1; j< UNKNOWNS-1; ++j)
+            for(int i=starti; i < endi; ++i)
+              (*aggregatesMap)[j*(overlapEnd-overlapStart)+i+offset]=((j-1)/2)*(endi-starti)/2+((i-starti)/2);
+          noAggregates=((UNKNOWNS-2)/2)*(endi-starti)/2;
+        }
+#endif
         noAggregates = infoLevel->communicator().sum(noAggregates);
 
         if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
@@ -649,6 +688,7 @@ namespace Dune
                                    visitedMap,
                                    *aggregatesMap,
                                    *infoLevel);
+
         dinfo<< rank<<": agglomeration achieved "<<aggregates<<" aggregates"<<std::endl;
 
         GraphCreator::free(graphs);
@@ -786,13 +826,15 @@ namespace Dune
       assert(smoothers.levels()==0);
       typedef typename ParallelMatrixHierarchy::ConstIterator MatrixIterator;
       typedef typename ParallelInformationHierarchy::ConstIterator PinfoIterator;
+      typedef typename AggregatesMapList::const_iterator AggregatesIterator;
+
       typename ConstructionTraits<S>::Arguments cargs;
       cargs.setArgs(sargs);
       PinfoIterator pinfo = parallelInformation_.finest();
-
+      AggregatesIterator aggregates = aggregatesMaps_.begin();
       for(MatrixIterator matrix = matrices_.finest(), coarsest = matrices_.coarsest();
-          matrix != coarsest; ++matrix, ++pinfo) {
-        cargs.setMatrix(matrix->getmat());
+          matrix != coarsest; ++matrix, ++pinfo, ++aggregates) {
+        cargs.setMatrix(matrix->getmat(), **aggregates);
         cargs.setComm(*pinfo);
         smoothers.addCoarser(cargs);
       }

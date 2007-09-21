@@ -4,8 +4,11 @@
 #define DUNE_AMGSMOOTHER_HH
 
 #include <dune/istl/paamg/construction.hh>
+#include <dune/istl/paamg/aggregates.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/schwarz.hh>
+#include <dune/common/propertymap.hh>
 
 namespace Dune
 {
@@ -20,7 +23,8 @@ namespace Dune
 
     /** @file
      * @author Markus Blatt
-     * @brief Classes for the generic construction of the smoothers.
+     * @brief Classes for the generic construction and application
+     * of the smoothers.
      */
 
     /**
@@ -77,15 +81,25 @@ namespace Dune
     template<class T>
     class DefaultConstructionArgs
     {
-      typedef T Matrix;
+      typedef typename T::matrix_type Matrix;
 
-      typedef DefaultSmootherArgs<typename Matrix::field_type> SmootherArgs;
+      typedef typename SmootherTraits<T>::Arguments SmootherArgs;
+
+      typedef AggregatesMap<typename MatrixGraph<Matrix>::VertexDescriptor> AggregatesMap;
 
     public:
+      virtual ~DefaultConstructionArgs()
+      {}
+
       void setMatrix(const Matrix& matrix)
       {
         matrix_=&matrix;
       }
+      virtual void setMatrix(const Matrix& matrix, const AggregatesMap& amap)
+      {
+        setMatrix(matrix);
+      }
+
 
       const Matrix& getMatrix() const
       {
@@ -106,14 +120,15 @@ namespace Dune
         return *args_;
       }
 
-    private:
+    protected:
       const Matrix* matrix_;
+    private:
       const SmootherArgs* args_;
     };
 
     template<class T>
     struct ConstructionArgs
-      : public DefaultConstructionArgs<typename T::matrix_type>
+      : public DefaultConstructionArgs<T>
     {};
 
     template<class T, class C=SequentialInformation>
@@ -121,6 +136,9 @@ namespace Dune
       : public ConstructionArgs<T>
     {
     public:
+      virtual ~DefaultParallelConstructionArgs()
+      {}
+
       void setComm(const C& comm)
       {
         comm_ = &comm;
@@ -141,7 +159,7 @@ namespace Dune
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqSSOR<M,X,Y> >
     {
-      typedef DefaultConstructionArgs<M> Arguments;
+      typedef DefaultConstructionArgs<SeqSSOR<M,X,Y> > Arguments;
 
       static inline SeqSSOR<M,X,Y>* construct(Arguments& args)
       {
@@ -163,7 +181,7 @@ namespace Dune
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqSOR<M,X,Y> >
     {
-      typedef DefaultConstructionArgs<M> Arguments;
+      typedef DefaultConstructionArgs<SeqSOR<M,X,Y> > Arguments;
 
       static inline SeqSOR<M,X,Y>* construct(Arguments& args)
       {
@@ -183,7 +201,7 @@ namespace Dune
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqJac<M,X,Y> >
     {
-      typedef DefaultConstructionArgs<M> Arguments;
+      typedef DefaultConstructionArgs<SeqJac<M,X,Y> > Arguments;
 
       static inline SeqJac<M,X,Y>* construct(Arguments& args)
       {
@@ -205,7 +223,7 @@ namespace Dune
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqILU0<M,X,Y> >
     {
-      typedef DefaultConstructionArgs<M> Arguments;
+      typedef DefaultConstructionArgs<SeqILU0<M,X,Y> > Arguments;
 
       static inline SeqILU0<M,X,Y>* construct(Arguments& args)
       {
@@ -222,7 +240,7 @@ namespace Dune
 
     template<class M, class X, class Y>
     class ConstructionArgs<SeqILUn<M,X,Y> >
-      : public DefaultConstructionArgs<M>
+      : public DefaultConstructionArgs<SeqILUn<M,X,Y> >
     {
     public:
       ConstructionArgs(int n=1)
@@ -303,6 +321,263 @@ namespace Dune
       }
 
     };
+
+    template<class T>
+    struct SmootherApplier
+    {
+      typedef T Smoother;
+      typedef typename Smoother::range_type Range;
+      typedef typename Smoother::domain_type Domain;
+      typedef typename Smoother::matrix_type Matrix;
+
+      void apply(T& smoother, Domain& v, Range& d, Matrix& mat)
+      {
+        smoother.apply(v,d);
+      }
+
+      void updateDefect(Domain& x, Range& b, Range& d, Matrix& mat)
+      {}
+    };
+
+#ifdef HAVE_SUPERLU
+
+
+    //    template<class M, class X, class TM, class TA>
+    //    class SeqOverlappingSchwarz;
+
+    template<class T>
+    struct SeqOverlappingSchwarzSmootherArgs
+      : public DefaultSmootherArgs<T>
+    {
+      enum Overlap {vertex, aggregate, none};
+
+      Overlap overlap;
+      SeqOverlappingSchwarzSmootherArgs()
+        : overlap(none)
+      {}
+    };
+
+    template<class M, class X, class TM, class TA>
+    struct SmootherTraits<SeqOverlappingSchwarz<M,X,TM,TA> >
+    {
+      typedef  SeqOverlappingSchwarzSmootherArgs<typename M::field_type> Arguments;
+    };
+
+    template<class M, class X, class TM, class TA>
+    class ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> >
+      : public DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> >
+    {
+      typedef DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> > Father;
+
+    public:
+      typedef AggregatesMap<typename MatrixGraph<M>::VertexDescriptor> AggregatesMap;
+      typedef typename AggregatesMap::AggregateDescriptor AggregateDescriptor;
+      typedef typename AggregatesMap::VertexDescriptor VertexDescriptor;
+      typedef typename SeqOverlappingSchwarz<M,X,TM,TA>::subdomain_vector Vector;
+
+      virtual void setMatrix(const M& matrix, const AggregatesMap& amap)
+      {
+        Father::setMatrix(matrix);
+
+        std::vector<bool> visited(amap.noVertices(), false);
+        typedef IteratorPropertyMap<std::vector<bool>::iterator,IdentityMap> VisitedMapType;
+        VisitedMapType visitedMap(visited.begin());
+
+        MatrixGraph<const M> graph(matrix);
+
+        typedef SeqOverlappingSchwarzSmootherArgs<typename M::field_type> SmootherArgs;
+
+        switch(Father::getArgs().overlap) {
+        case SmootherArgs::vertex :
+        {
+          VertexAdder visitor(subdomains);
+          createSubdomains(matrix, graph, amap, visitor,  visitedMap);
+        }
+        break;
+        case SmootherArgs::aggregate :
+        {
+          AggregateAdder<VisitedMapType> visitor(subdomains, amap, graph, visitedMap);
+          createSubdomains(matrix, graph, amap, visitor, visitedMap);
+        }
+        break;
+        case SmootherArgs::none :
+          NoneAdder visitor;
+          createSubdomains(matrix, graph, amap, visitor, visitedMap);
+        }
+      }
+      void setMatrix(const M& matrix)
+      {
+        Father::setMatrix(matrix);
+      }
+
+      const Vector& getSubDomains()
+      {
+        return subdomains;
+      }
+
+    private:
+      struct VertexAdder
+      {
+        VertexAdder(Vector& subdomains_)
+          : subdomains(subdomains_), subdomain(-1)
+        {}
+        template<class T>
+        void operator()(const T& edge)
+        {
+          subdomains[subdomain].insert(edge.target());
+        }
+        int setAggregate(const AggregateDescriptor& aggregate_)
+        {
+          return ++subdomain;
+        }
+        int noSubdomains() const
+        {
+          return subdomain+1;
+        }
+      private:
+        Vector& subdomains;
+        int subdomain;
+      };
+      struct NoneAdder
+      {
+        template<class T>
+        void operator()(const T& edge)
+        {}
+        int setAggregate(const AggregateDescriptor& aggregate_)
+        {
+          return -1;
+        }
+        int noSubdomains() const
+        {
+          return -1;
+        }
+      };
+
+      template<class VM>
+      struct AggregateAdder
+      {
+        AggregateAdder(Vector& subdomains_, const AggregatesMap& aggregates_,
+                       const MatrixGraph<const M>& graph_, VM& visitedMap_)
+          : subdomains(subdomains_), subdomain(-1), aggregates(aggregates_),
+            adder(subdomains_), graph(graph_), visitedMap(visitedMap_)
+        {}
+        template<class T>
+        void operator()(const T& edge)
+        {
+          subdomains[subdomain].insert(edge.target());
+          // If we (the neighbouring vertex of the aggregate)
+          // are not isolated, add the aggregate we belong to
+          // to the same subdomain using the OneOverlapAdder
+          if(aggregates[edge.target()]!=AggregatesMap::ISOLATED) {
+            assert(aggregates[edge.target()]!=aggregate);
+            typename AggregatesMap::VertexList vlist;
+            aggregates.template breadthFirstSearch<true,false>(edge.target(), aggregate,
+                                                               graph, vlist, adder, adder,
+                                                               visitedMap);
+          }
+        }
+
+        int setAggregate(const AggregateDescriptor& aggregate_)
+        {
+          adder.setAggregate(aggregate_);
+          aggregate=aggregate_;
+          return ++subdomain;
+        }
+        int noSubdomains() const
+        {
+          return subdomain+1;
+        }
+
+      private:
+        AggregateDescriptor aggregate;
+        Vector& subdomains;
+        int subdomain;
+        const AggregatesMap& aggregates;
+        VertexAdder adder;
+        const MatrixGraph<const M>& graph;
+        VM& visitedMap;
+      };
+
+      template<class Visitor>
+      void createSubdomains(const M& matrix, const MatrixGraph<const M>& graph,
+                            const AggregatesMap& amap, Visitor& overlapVisitor,
+                            IteratorPropertyMap<std::vector<bool>::iterator,IdentityMap>& visitedMap )
+      {
+        // count  number ag aggregates. We asume that the
+        // aggregates are numbered consecutively from 0 exept
+        // for the isolated ones. All isolated vertices form
+        // one aggregate, here.
+        bool isolated=false;
+        AggregateDescriptor maxAggregate=0;
+
+        for(int i=0; i < amap.noVertices(); ++i)
+          if(amap[i]==AggregatesMap::ISOLATED)
+            isolated=true;
+          else
+            maxAggregate = std::max(maxAggregate, amap[i]);
+
+        if(isolated)
+          maxAggregate += 1;
+
+        subdomains.resize(maxAggregate+1);
+
+        // reset the subdomains
+        for(int i=0; i < subdomains.size(); ++i)
+          subdomains[i].clear();
+
+        // Create the subdomains from the aggregates mapping.
+        // For each aggregate we mark all entries and the
+        // neighbouring vertices as belonging to the same subdomain
+        VertexAdder aggregateVisitor(subdomains);
+
+        for(VertexDescriptor i=0; i < amap.noVertices(); ++i)
+          if(amap[i]!=AggregatesMap::ISOLATED && !get(visitedMap, i)) {
+            AggregateDescriptor aggregate = (amap[i]==AggregatesMap::ISOLATED) ? maxAggregate : amap[i];
+            overlapVisitor.setAggregate(aggregate);
+            int domain=aggregateVisitor.setAggregate(aggregate);
+            subdomains[domain].insert(i);
+            typename AggregatesMap::VertexList vlist;
+            amap.template breadthFirstSearch<false,false>(i, aggregate, graph, vlist, aggregateVisitor,
+                                                          overlapVisitor, visitedMap);
+          }
+        subdomains.resize(aggregateVisitor.noSubdomains());
+
+        std::size_t minsize=10000;
+        std::size_t maxsize=0;
+        int sum=0;
+        for(int i=0; i < subdomains.size(); ++i) {
+          sum+=subdomains[i].size();
+          minsize=std::min(minsize, subdomains[i].size());
+          maxsize=std::max(maxsize, subdomains[i].size());
+        }
+        std::cout<<"Subdomain size: min="<<minsize<<" max="<<maxsize<<" avg="<<(sum/subdomains.size())
+                 <<" no="<<subdomains.size()<<std::endl;
+
+
+
+      }
+      Vector subdomains;
+    };
+
+
+    template<class M, class X, class TM, class TA>
+    struct ConstructionTraits<SeqOverlappingSchwarz<M,X,TM,TA> >
+    {
+      typedef ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> > Arguments;
+
+      static inline SeqOverlappingSchwarz<M,X,TM,TA>* construct(Arguments& args)
+      {
+        return new SeqOverlappingSchwarz<M,X,TM,TA>(args.getMatrix(),
+                                                    args.getSubDomains(),
+                                                    args.getArgs().relaxationFactor);
+      }
+
+      static void deconstruct(SeqOverlappingSchwarz<M,X,TM,TA>* schwarz)
+      {
+        delete schwarz;
+      }
+    };
+#endif
   } // namespace Amg
 } // namespace Dune
 
