@@ -72,8 +72,6 @@ namespace Dune
 
     };
 
-    template<class T>
-    class ConstructionTraits;
 
     /**
      * @brief Construction Arguments for the default smoothers
@@ -153,21 +151,24 @@ namespace Dune
     };
 
 
+    template<class T>
+    class ConstructionTraits;
+
     /**
      * @brief Policy for the construction of the SeqSSOR smoother
      */
-    template<class M, class X, class Y>
-    struct ConstructionTraits<SeqSSOR<M,X,Y> >
+    template<class M, class X, class Y, int l>
+    struct ConstructionTraits<SeqSSOR<M,X,Y,l> >
     {
-      typedef DefaultConstructionArgs<SeqSSOR<M,X,Y> > Arguments;
+      typedef DefaultConstructionArgs<SeqSSOR<M,X,Y,l> > Arguments;
 
-      static inline SeqSSOR<M,X,Y>* construct(Arguments& args)
+      static inline SeqSSOR<M,X,Y,l>* construct(Arguments& args)
       {
-        return new SeqSSOR<M,X,Y>(args.getMatrix(), args.getArgs().iterations,
-                                  args.getArgs().relaxationFactor);
+        return new SeqSSOR<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
+                                    args.getArgs().relaxationFactor);
       }
 
-      static inline void deconstruct(SeqSSOR<M,X,Y>* ssor)
+      static inline void deconstruct(SeqSSOR<M,X,Y,l>* ssor)
       {
         delete ssor;
       }
@@ -178,18 +179,18 @@ namespace Dune
     /**
      * @brief Policy for the construction of the SeqSOR smoother
      */
-    template<class M, class X, class Y>
-    struct ConstructionTraits<SeqSOR<M,X,Y> >
+    template<class M, class X, class Y, int l>
+    struct ConstructionTraits<SeqSOR<M,X,Y,l> >
     {
-      typedef DefaultConstructionArgs<SeqSOR<M,X,Y> > Arguments;
+      typedef DefaultConstructionArgs<SeqSOR<M,X,Y,l> > Arguments;
 
-      static inline SeqSOR<M,X,Y>* construct(Arguments& args)
+      static inline SeqSOR<M,X,Y,l>* construct(Arguments& args)
       {
-        return new SeqSOR<M,X,Y>(args.getMatrix(), args.getArgs().iterations,
-                                 args.getArgs().relaxationFactor);
+        return new SeqSOR<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
+                                   args.getArgs().relaxationFactor);
       }
 
-      static inline void deconstruct(SeqSOR<M,X,Y>* sor)
+      static inline void deconstruct(SeqSOR<M,X,Y,l>* sor)
       {
         delete sor;
       }
@@ -198,18 +199,18 @@ namespace Dune
     /**
      * @brief Policy for the construction of the SeqJac smoother
      */
-    template<class M, class X, class Y>
-    struct ConstructionTraits<SeqJac<M,X,Y> >
+    template<class M, class X, class Y, int l>
+    struct ConstructionTraits<SeqJac<M,X,Y,l> >
     {
-      typedef DefaultConstructionArgs<SeqJac<M,X,Y> > Arguments;
+      typedef DefaultConstructionArgs<SeqJac<M,X,Y,l> > Arguments;
 
-      static inline SeqJac<M,X,Y>* construct(Arguments& args)
+      static inline SeqJac<M,X,Y,l>* construct(Arguments& args)
       {
-        return new SeqJac<M,X,Y>(args.getMatrix(), args.getArgs().iterations,
-                                 args.getArgs().relaxationFactor);
+        return new SeqJac<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
+                                   args.getArgs().relaxationFactor);
       }
 
-      static void deconstruct(SeqJac<M,X,Y>* jac)
+      static void deconstruct(SeqJac<M,X,Y,l>* jac)
       {
         delete jac;
       }
@@ -322,25 +323,87 @@ namespace Dune
 
     };
 
+    /**
+     * @brief Helper class for applying the smoothers.
+     *
+     * The goal of this class is to get a symmetric AMG method
+     * whenever possible.
+     *
+     * The specializations for SOR and SeqOverlappingSchwarz in
+     * MultiplicativeSchwarzMode will apply
+     * the smoother forward when pre and backward when post smoothing.
+     */
     template<class T>
     struct SmootherApplier
     {
       typedef T Smoother;
       typedef typename Smoother::range_type Range;
       typedef typename Smoother::domain_type Domain;
-      typedef typename Smoother::matrix_type Matrix;
 
-      void apply(T& smoother, Domain& v, Range& d, Matrix& mat)
+      /**
+       * @brief apply pre smoothing in forward direction
+       *
+       * @param smoother The smoother to use.
+       * @param d The current defect.
+       * @param v handle to store the update in.
+       */
+      static void preSmooth(Smoother& smoother, Domain& v, const Range& d)
       {
         smoother.apply(v,d);
       }
 
-      void updateDefect(Domain& x, Range& b, Range& d, Matrix& mat)
-      {}
+      /**
+       * @brief apply post smoothing in forward direction
+       *
+       * @param smoother The smoother to use.
+       * @param d The current defect.
+       * @param v handle to store the update in.
+       */
+      static void postSmooth(Smoother& smoother, Domain& v, const Range& d)
+      {
+        smoother.apply(v,d);
+      }
     };
 
+    template<class M, class X, class Y, int l>
+    struct SmootherApplier<SeqSOR<M,X,Y,l> >
+    {
+      typedef SeqSOR<M,X,Y,l> Smoother;
+      typedef typename Smoother::range_type Range;
+      typedef typename Smoother::domain_type Domain;
+
+      static void preSmooth(Smoother& smoother, Domain& v, Range& d)
+      {
+        smoother.template apply<true>(v,d);
+      }
+
+
+      static void postSmooth(Smoother& smoother, Domain& v, Range& d)
+      {
+        smoother.template apply<false>(v,d);
+      }
+    };
 #ifdef HAVE_SUPERLU
 
+    template<class M, class X, class TA>
+    struct SmootherApplier<SeqOverlappingSchwarz<M,X,MultiplicativeSchwarzMode,TA> >
+    {
+      typedef SeqOverlappingSchwarz<M,X,MultiplicativeSchwarzMode,TA> Smoother;
+      typedef typename Smoother::range_type Range;
+      typedef typename Smoother::domain_type Domain;
+
+      static void preSmooth(Smoother& smoother, Domain& v, const Range& d)
+      {
+        smoother.template apply<true>(v,d);
+      }
+
+
+      static void postSmooth(Smoother& smoother, Domain& v, const Range& d)
+      {
+        smoother.template apply<false>(v,d);
+
+      }
+    };
 
     //    template<class M, class X, class TM, class TA>
     //    class SeqOverlappingSchwarz;
