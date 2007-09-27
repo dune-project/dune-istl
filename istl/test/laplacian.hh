@@ -53,19 +53,54 @@ void setupLaplacian(Dune::BCRSMatrix<B>& A, int N)
     int x = i.index()%N; // x coordinate in the 2d field
     int y = i.index()/N;  // y coordinate in the 2d field
 
-    i->operator[](i.index())=diagonal;
+    /*    if(x==0 || x==N-1 || y==0||y==N-1){
 
-    if(y>0)
-      i->operator[](i.index()-N)=bone;
+       i->operator[](i.index())=1.0;
 
-    if(y<N-1)
-      i->operator[](i.index()+N)=bone;
+       if(y>0)
+       i->operator[](i.index()-N)=0;
 
-    if(x>0)
-      i->operator[](i.index()-1)=bone;
+       if(y<N-1)
+       i->operator[](i.index()+N)=0.0;
 
-    if(x < N-1)
-      i->operator[](i.index()+1)=bone;
+       if(x>0)
+       i->operator[](i.index()-1)=0.0;
+
+       if(x < N-1)
+       i->operator[](i.index()+1)=0.0;
+
+       }else*/
+    {
+
+      i->operator[](i.index())=diagonal;
+
+      if(y>0)
+        i->operator[](i.index()-N)=bone;
+
+      if(y<N-1)
+        i->operator[](i.index()+N)=bone;
+
+      if(x>0)
+        i->operator[](i.index()-1)=bone;
+
+      if(x < N-1)
+        i->operator[](i.index()+1)=bone;
+    }
+  }
+}
+template<int BS>
+void setBoundary(Dune::BlockVector<Dune::FieldVector<double,BS> >& lhs,
+                 Dune::BlockVector<Dune::FieldVector<double,BS> >& rhs,
+                 int N)
+{
+  for(int i=0; i < lhs.size(); ++i) {
+    int x = i/N;
+    int y = i%N;
+
+    if(x==0 || y ==0 || x==N-1 || y==N-1) {
+      double h = 1.0 / ((double) (N-1));
+      lhs[i]=rhs[i]=0; //((double)x)*((double)y)*h*h;
+    }
   }
 }
 #endif

@@ -24,7 +24,7 @@ namespace Dune
   /**
    * @file
    * @author Markus Blatt
-   * @brief Contains an additive overlapping Schwarz preconditioner
+   * @brief Contains one level overlapping Schwarz preconditioners
    */
 #ifdef HAVE_SUPERLU
 
@@ -104,6 +104,9 @@ namespace Dune
   struct MultiplicativeSchwarzMode
   {};
 
+  struct SymmetricMultiplicativeSchwarzMode
+  {};
+
   namespace
   {
     template<typename T>
@@ -157,6 +160,12 @@ namespace Dune
 
     template<class X>
     struct AdderSelector<MultiplicativeSchwarzMode,X>
+    {
+      typedef MultiplicativeAdder<X> Adder;
+    };
+
+    template<class X>
+    struct AdderSelector<SymmetricMultiplicativeSchwarzMode,X>
     {
       typedef MultiplicativeAdder<X> Adder;
     };
@@ -217,10 +226,34 @@ namespace Dune
       }
     };
 
+    template<class T>
+    struct Applier
+    {
+      typedef T smoother;
+      typedef typename smoother::range_type range_type;
+
+      static void apply(smoother& sm, range_type& v, const range_type& b)
+      {
+        sm.template apply<true>(v, b);
+      }
+    };
+
+    template<class M, class X, class TA>
+    struct Applier<SeqOverlappingSchwarz<M,X,SymmetricMultiplicativeSchwarzMode, TA> >
+    {
+      typedef SeqOverlappingSchwarz<M,X,SymmetricMultiplicativeSchwarzMode, TA> smoother;
+      typedef typename smoother::range_type range_type;
+
+      static void apply(smoother& sm, range_type& v, const range_type& b)
+      {
+        sm.template apply<true>(v, b);
+        sm.template apply<false>(v, b);
+      }
+    };
   }
 
   /**
-   * @brief Sequential additive overlapping Schwarz preconditioner
+   * @brief Sequential overlapping Schwarz preconditioner
    */
   template<class M, class X, class TM=AdditiveSchwarzMode, class TA=std::allocator<X> >
   class SeqOverlappingSchwarz
@@ -246,7 +279,7 @@ namespace Dune
      * @brief The mode (additive or multiplicative) of the Schwarz
      * method.
      *
-     * Either Schwarz::Additive or Schwarz::Multiplicative
+     * Either AdditiveSchwarzMode or MultiplicativeSchwarzMode
      */
     typedef TM Mode;
 
@@ -342,6 +375,7 @@ namespace Dune
       const BlockVector<FieldVector<T,n>,A>* x;
       int i;
     };
+
   };
 
 
@@ -481,6 +515,7 @@ namespace Dune
       for(DomainIterator d=iter->begin(); d != iter->end(); ++d)
         subDomains[*d].insert(row);
 
+#ifdef DUNE_ISTL_WITH_CHECKING
     int i=0;
     typedef typename std::vector<std::set<size_type> >::const_iterator iterator;
     for(iterator iter=subDomains.begin(); iter != subDomains.end(); ++iter) {
@@ -491,6 +526,7 @@ namespace Dune
       }
       std::cout<<std::endl;
     }
+#endif
     initialize(rowToDomain, mat);
   }
 
@@ -502,14 +538,14 @@ namespace Dune
   {
     typedef typename subdomain_vector::const_iterator DomainIterator;
 
-#ifndef NDEBUG
+#ifdef DUNE_ISTL_WITH_CHECKING
     int i=0;
 
     for(DomainIterator d=sd.begin(); d != sd.end(); ++d,++i) {
       //std::cout<<i<<": "<<d->size()<<std::endl;
       assert(d->size()>0);
       typedef typename DomainIterator::value_type::const_iterator entry_iterator;
-      std::cout<<"domain "<<i++<<":";
+      std::cout<<"domain "<<i<<":";
       for(entry_iterator entry = d->begin(); entry != d->end(); ++entry) {
         std::cout<<" "<<*entry;
       }
@@ -549,6 +585,7 @@ namespace Dune
         ++initializer, ++solver, ++domain) {
       solver->mat.N_=domain->size();
       solver->mat.M_=domain->size();
+      //solver->setVerbosity(true);
       *initializer=SuperMatrixInitializer<matrix_type>(solver->mat);
     }
 
@@ -578,8 +615,9 @@ namespace Dune
   template<class M, class X, class TM, class TA>
   void SeqOverlappingSchwarz<M,X,TM,TA>::apply(X& x, const X& b)
   {
-    this->template apply<true>(x, b);
+    Applier<SeqOverlappingSchwarz>::apply(*this, x, b);
   }
+
   template<class M, class X, class TM, class TA>
   template<bool forward>
   void SeqOverlappingSchwarz<M,X,TM,TA>::apply(X& x, const X& b)
@@ -600,7 +638,6 @@ namespace Dune
 
     X v(x); // temporary for the update
     v=0;
-    //x=1;
 
     typedef typename AdderSelector<TM,X>::Adder Adder;
     for(iterator solver=ApplyHelper<solver_vector,subdomain_vector,forward>::begin(solvers);
