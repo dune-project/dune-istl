@@ -251,9 +251,28 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      for (int i=0; i<_n; i++) {
-        bsorf(_A_,v,d,_w,BL<l>());
-      }
+      this->template apply<true>(v,d);
+    }
+
+    /*!
+       \brief Apply the preconditioner in a special direction.
+
+       The template parameter forward indications the direction
+       the smoother is applied. If true The application is
+       started at the lowest index in the vector v, if false at
+       the highest index of vector v.
+     */
+    template<bool forward>
+    void apply(X& v, const Y& d)
+    {
+      if(forward)
+        for (int i=0; i<_n; i++) {
+          bsorf(_A_,v,d,_w,BL<l>());
+        }
+      else
+        for (int i=0; i<_n; i++) {
+          bsorb(_A_,v,d,_w,BL<l>());
+        }
     }
 
     /*!
