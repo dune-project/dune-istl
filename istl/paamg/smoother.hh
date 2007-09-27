@@ -437,6 +437,7 @@ namespace Dune
       typedef typename AggregatesMap::AggregateDescriptor AggregateDescriptor;
       typedef typename AggregatesMap::VertexDescriptor VertexDescriptor;
       typedef typename SeqOverlappingSchwarz<M,X,TM,TA>::subdomain_vector Vector;
+      typedef typename Vector::value_type Subdomain;
 
       virtual void setMatrix(const M& matrix, const AggregatesMap& amap)
       {
@@ -453,7 +454,7 @@ namespace Dune
         switch(Father::getArgs().overlap) {
         case SmootherArgs::vertex :
         {
-          VertexAdder visitor(subdomains);
+          VertexAdder visitor(subdomains, amap);
           createSubdomains(matrix, graph, amap, visitor,  visitedMap);
         }
         break;
@@ -481,25 +482,29 @@ namespace Dune
     private:
       struct VertexAdder
       {
-        VertexAdder(Vector& subdomains_)
-          : subdomains(subdomains_), subdomain(-1)
+        VertexAdder(Vector& subdomains_, const AggregatesMap& aggregates_)
+          : subdomains(subdomains_), max(-1), subdomain(-1), aggregates(aggregates_)
         {}
         template<class T>
         void operator()(const T& edge)
         {
-          subdomains[subdomain].insert(edge.target());
+          if(aggregates[edge.target()]!=AggregatesMap::ISOLATED)
+            subdomains[subdomain].insert(edge.target());
         }
         int setAggregate(const AggregateDescriptor& aggregate_)
         {
-          return ++subdomain;
+          subdomain=aggregate_;
+          max = std::max(subdomain, aggregate_);
         }
         int noSubdomains() const
         {
-          return subdomain+1;
+          return max+1;
         }
       private:
         Vector& subdomains;
+        int max;
         int subdomain;
+        const AggregatesMap& aggregates;
       };
       struct NoneAdder
       {
@@ -522,7 +527,7 @@ namespace Dune
         AggregateAdder(Vector& subdomains_, const AggregatesMap& aggregates_,
                        const MatrixGraph<const M>& graph_, VM& visitedMap_)
           : subdomains(subdomains_), subdomain(-1), aggregates(aggregates_),
-            adder(subdomains_), graph(graph_), visitedMap(visitedMap_)
+            adder(subdomains_, aggregates_), graph(graph_), visitedMap(visitedMap_)
         {}
         template<class T>
         void operator()(const T& edge)
@@ -570,7 +575,7 @@ namespace Dune
         // aggregates are numbered consecutively from 0 exept
         // for the isolated ones. All isolated vertices form
         // one aggregate, here.
-        bool isolated=false;
+        int isolated=false;
         AggregateDescriptor maxAggregate=0;
 
         for(int i=0; i < amap.noVertices(); ++i)
@@ -578,9 +583,6 @@ namespace Dune
             isolated=true;
           else
             maxAggregate = std::max(maxAggregate, amap[i]);
-
-        if(isolated)
-          maxAggregate += 1;
 
         subdomains.resize(maxAggregate+1);
 
@@ -591,14 +593,20 @@ namespace Dune
         // Create the subdomains from the aggregates mapping.
         // For each aggregate we mark all entries and the
         // neighbouring vertices as belonging to the same subdomain
-        VertexAdder aggregateVisitor(subdomains);
+        VertexAdder aggregateVisitor(subdomains, amap);
 
         for(VertexDescriptor i=0; i < amap.noVertices(); ++i)
-          if(amap[i]!=AggregatesMap::ISOLATED && !get(visitedMap, i)) {
-            AggregateDescriptor aggregate = (amap[i]==AggregatesMap::ISOLATED) ? maxAggregate : amap[i];
+          if(!get(visitedMap, i)) {
+            AggregateDescriptor aggregate=amap[i];
+
+            if(amap[i]==AggregatesMap::ISOLATED) {
+              // isolated vertex gets its own aggregate
+              subdomains.push_back(Subdomain());
+              aggregate=subdomains.size()-1;
+            }
             overlapVisitor.setAggregate(aggregate);
-            int domain=aggregateVisitor.setAggregate(aggregate);
-            subdomains[domain].insert(i);
+            aggregateVisitor.setAggregate(aggregate);
+            subdomains[aggregate].insert(i);
             typename AggregatesMap::VertexList vlist;
             amap.template breadthFirstSearch<false,false>(i, aggregate, graph, vlist, aggregateVisitor,
                                                           overlapVisitor, visitedMap);
