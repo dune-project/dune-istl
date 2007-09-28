@@ -10,6 +10,6 @@ Name: @PACKAGE_NAME@
 Version: @VERSION@
 Description: Dune (Distributed and Unified Numerics Environment) istl module
 URL: http://dune-project.org/
-Requires: ${MODULES_DEPENDENCIES}
+Requires: ${DEPENDENCIES}
 Libs:
 Cflags: -I${includedir}
