@@ -7,20 +7,40 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/indexset.hh>
 #include <dune/common/collectivecommunication.hh>
+#include <cstdlib>
+#include <ctime>
+
+template<class M, class V>
+void randomize(const M& mat, V& b)
+{
+  V x=b;
+
+  srand((unsigned)std::clock());
+
+  typedef typename V::iterator iterator;
+  for(iterator i=x.begin(); i != x.end(); ++i)
+    *i=(rand() / (RAND_MAX + 1.0));
+
+  mat.mv(static_cast<const V&>(x), b);
+}
+
 int main(int argc, char** argv)
 {
 
   const int BS=1;
-  int N=300;
+  int N=2000/BS;
   int coarsenTarget=1200;
+  int ml=10;
 
   if(argc>1)
     N = atoi(argv[1]);
 
   if(argc>2)
     coarsenTarget = atoi(argv[2]);
+  if(argc>3)
+    ml = atoi(argv[3]);
 
-  std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<std::endl;
+  std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<" maxlevel="<<ml<<std::endl;
 
 
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
@@ -44,6 +64,9 @@ int main(int argc, char** argv)
 
   setBoundary(x, b, N);
 
+  x=0;
+  randomize(mat, b);
+
   if(N<6) {
     Dune::printmatrix(std::cout, mat, "A", "row");
     Dune::printvector(std::cout, x, "x", "row");
@@ -54,9 +77,14 @@ int main(int argc, char** argv)
   watch.reset();
   Operator fop(mat);
 
-  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
+  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
-  typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
+  //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::SymmetricMultiplicativeSchwarzMode> Smoother;
+  //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector> Smoother;
   typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 
   SmootherArgs smootherArgs;
@@ -65,19 +93,24 @@ int main(int argc, char** argv)
 
 
   Criterion criterion(15,coarsenTarget);
-  criterion.setMaxDistance(2);
+  criterion.setMaxDistance(4);
+  criterion.setMinAggregateSize(9);
+  criterion.setMaxAggregateSize(11);
+  criterion.setAlpha(.67);
+  criterion.setBeta(1.0e-4);
+  criterion.setMaxLevel(ml);
 
   Dune::SeqScalarProduct<Vector> sp;
   typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
 
-  AMG amg(fop, criterion, smootherArgs, 1, 2);
+  AMG amg(fop, criterion, smootherArgs, 1, 1, 1, false);
 
 
   double buildtime = watch.elapsed();
 
   std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
 
-  Dune::CGSolver<Vector> amgCG(fop,amg,10e-8,80,2);
+  Dune::CGSolver<Vector> amgCG(fop,amg,1e-6,80,2);
   watch.reset();
   Dune::InverseOperatorResult r;
   amgCG.apply(x,b,r);
