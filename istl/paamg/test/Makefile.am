@@ -30,11 +30,12 @@ hierarchytest_CXXFLAGS = $(MPI_CPPFLAGS)
 hierarchytest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
 
 amgtest_SOURCES = amgtest.cc
-amgtest_CXXFLAGS = $(MPI_CPPFLAGS)
-amgtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+amgtest_CXXFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+amgtest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+amgtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS) $(SUPERLU_LIBS)
 
 pamgtest_SOURCES = parallelamgtest.cc
-pamgtest_CXXFLAGS = $(MPI_CPPFLAGS)
-pamgtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+pamgtest_CXXFLAGS = $(MPI_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+pamgtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS) $(SUPERLU_LIBS)
 
 include $(top_srcdir)/am/global-rules
