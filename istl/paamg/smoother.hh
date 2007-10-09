@@ -495,6 +495,7 @@ namespace Dune
         {
           subdomain=aggregate_;
           max = std::max(subdomain, aggregate_);
+          return subdomain;
         }
         int noSubdomains() const
         {
