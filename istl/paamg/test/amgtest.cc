@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 {
 
   const int BS=1;
-  int N=2000/BS;
+  int N=500/BS;
   int coarsenTarget=1200;
   int ml=10;
 

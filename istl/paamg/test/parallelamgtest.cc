@@ -213,7 +213,7 @@ int main(int argc, char** argv)
   MPI_Errhandler_create(MPI_err_handler, &handler);
   MPI_Errhandler_set(MPI_COMM_WORLD, handler);
 
-  int N=1000;
+  int N=500;
 
   int coarsenTarget=1200;
 
