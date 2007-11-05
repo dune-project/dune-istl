@@ -9,7 +9,6 @@
 #include <complex>
 
 #include <cmath>                 // Yes, we do some math here
-#include <stdio.h>                // There is nothing better than sprintf
 #include <sys/times.h>            // for timing measurements
 
 #include <dune/istl/istlexception.hh>
