@@ -693,15 +693,25 @@ namespace Dune {
       r[i].setsize(s);
     }
 
-    //! increment size of row i by 1
-    void incrementrowsize (size_type i)
+    //! get current number of indices in row i
+    size_type getrowsize (size_type i) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (r==0) DUNE_THROW(ISTLError,"row not initialized yet");
+      if (i>=n) DUNE_THROW(ISTLError,"index out of range");
+#endif
+      return r[i].getsize();
+    }
+
+    //! increment size of row i by s (1 by default)
+    void incrementrowsize (size_type i, size_type s = 1)
     {
       if (build_mode!=random)
         DUNE_THROW(ISTLError,"requires random build mode");
       if (ready)
         DUNE_THROW(ISTLError,"matrix row sizes already built up");
 
-      r[i].setsize(r[i].getsize()+1);
+      r[i].setsize(r[i].getsize()+s);
     }
 
     //! indicate that size of all rows is defined
