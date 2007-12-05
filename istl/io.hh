@@ -304,6 +304,7 @@ namespace Dune {
 
     // reset the output format
     s.flags(oldflags);
+    s.precision(oldprec);
   }
 
   /** \brief Helper method for the writeMatrixToMatlab routine.
