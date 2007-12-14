@@ -570,6 +570,26 @@ namespace Dune
     initialize(rowToDomain, mat);
   }
 
+  /**
+     template helper struct to determine the size of a domain for the
+     SeqOverlappingSchwarz solver
+
+     only implemented for BCRSMatrix<FieldMatrix<T,n,m>
+   */
+  template<class M>
+  struct SeqOverlappingSchwarzDomainSize {};
+
+  template<typename T, typename A, int n, int m>
+  struct SeqOverlappingSchwarzDomainSize<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+  {
+    template<class Domain>
+    static int size(const Domain & d)
+    {
+      assert(n==m);
+      return m*d.size();
+    }
+  };
+
   template<class M, class X, class TM, class TA>
   void SeqOverlappingSchwarz<M,X,TM,TA>::initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat)
   {
@@ -585,8 +605,8 @@ namespace Dune
     SolverIterator solver=solvers.begin();
     for(InitializerIterator initializer=initializers.begin(); initializer!=initializers.end();
         ++initializer, ++solver, ++domain) {
-      solver->mat.N_=domain->size();
-      solver->mat.M_=domain->size();
+      solver->mat.N_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
+      solver->mat.M_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
       //solver->setVerbosity(true);
       *initializer=SuperMatrixInitializer<matrix_type>(solver->mat);
     }
@@ -670,7 +690,8 @@ namespace Dune
   template<typename T, typename A, int n>
   void SeqOverlappingSchwarz<M,X,TM,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const std::size_t& domainIndex)
   {
-    int starti=i;
+    int starti;
+    starti = i;
 
     for(int j=0; j<n; ++j, ++i)
       rhs[i]=(*b)[domainIndex][j];
