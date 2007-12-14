@@ -301,6 +301,8 @@ namespace Dune
     /** @brief The vector type containing the subdomain to row index mapping. */
     typedef std::vector<subdomain_type,allocator> subdomain_vector;
 
+    /** @brief The vector type containing the row index to subdomain mapping. */
+    typedef std::vector<SLList<size_type,TA>,TA> rowtodomain_vector;
 
     enum {
       //! \brief The category the precondtioner is part of.
@@ -322,7 +324,7 @@ namespace Dune
      * @param mat The matrix to precondition.
      * @param rowToDomain The mapping of the rows onto the domains.
      */
-    SeqOverlappingSchwarz(const matrix_type& mat, const std::vector<SLList<size_type,TA>,TA>& rowToDomain,
+    SeqOverlappingSchwarz(const matrix_type& mat, const rowtodomain_vector& rowToDomain,
                           field_type relaxationFactor=1);
 
     /*!
@@ -357,7 +359,7 @@ namespace Dune
 
     int maxlength;
 
-    void initialize(const std::vector<SLList<size_type,TA>,TA>& rowToDomain, const matrix_type& mat);
+    void initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat);
 
     template<typename T>
     struct Assigner
@@ -485,11 +487,11 @@ namespace Dune
   }
 
   template<class M, class X, class TM, class TA>
-  SeqOverlappingSchwarz<M,X,TM,TA>::SeqOverlappingSchwarz(const matrix_type& mat_, const std::vector<SLList<size_type,TA>,TA>& rowToDomain,
+  SeqOverlappingSchwarz<M,X,TM,TA>::SeqOverlappingSchwarz(const matrix_type& mat_, const rowtodomain_vector& rowToDomain,
                                                           field_type relaxationFactor)
     : mat(mat_), relax(relaxationFactor)
   {
-    typedef typename std::vector<SLList<size_type,TA>,TA>::const_iterator RowDomainIterator;
+    typedef typename rowtodomain_vector::const_iterator RowDomainIterator;
     typedef typename SLList<size_type,TA>::const_iterator DomainIterator;
 #ifdef DUNE_ISTL_WITH_CHECKING
     assert(rowToDomain.size()==mat.N());
@@ -555,7 +557,7 @@ namespace Dune
 #endif
 
     // Create a row to subdomain mapping
-    std::vector<SLList<size_type,TA>,TA> rowToDomain(mat.N());
+    rowtodomain_vector rowToDomain(mat.N());
 
     int domainId=0;
 
@@ -569,7 +571,7 @@ namespace Dune
   }
 
   template<class M, class X, class TM, class TA>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::initialize(const std::vector<SLList<size_type,TA>,TA>& rowToDomain, const matrix_type& mat)
+  void SeqOverlappingSchwarz<M,X,TM,TA>::initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat)
   {
     typedef typename std::vector<SuperMatrixInitializer<matrix_type> >::iterator InitializerIterator;
     typedef typename subdomain_vector::const_iterator DomainIterator;
@@ -591,7 +593,7 @@ namespace Dune
 
     // Set up the supermatrices according to the subdomains
     typedef OverlappingSchwarzInitializer<std::vector<SuperMatrixInitializer<matrix_type> >,
-        std::vector<SLList<size_type,TA>,TA> > Initializer;
+        rowtodomain_vector > Initializer;
 
     Initializer initializer(initializers, rowToDomain);
     copyToSuperMatrix(initializer, mat);
@@ -675,7 +677,7 @@ namespace Dune
 
     // loop over all Matrix row entries and calculate defect.
     typedef typename M::ConstColIterator col_iterator;
-    typedef typename  subdomain_type::const_iterator domain_iterator;
+    typedef typename subdomain_type::const_iterator domain_iterator;
 
     for(col_iterator col=(*mat)[domainIndex].begin(); col!=(*mat)[domainIndex].end(); ++col) {
       typename X::block_type tmp;
