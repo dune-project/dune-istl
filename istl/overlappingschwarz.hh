@@ -294,15 +294,23 @@ namespace Dune
     /** @brief The allocator to use. */
     typedef TA allocator;
 
-
     /** @brief The type for the subdomain to row index mapping. */
-    typedef std::set<size_type,std::less<size_type>,allocator> subdomain_type;
+    typedef std::set<size_type, std::less<size_type>, typename TA::template rebind< std::less<size_type> >::other> subdomain_type;
 
     /** @brief The vector type containing the subdomain to row index mapping. */
-    typedef std::vector<subdomain_type,allocator> subdomain_vector;
+    typedef std::vector<subdomain_type, typename TA::template rebind<subdomain_type>::other> subdomain_vector;
+
+    /** @brief The type for the row to subdomain mapping. */
+    typedef SLList<size_type, typename TA::template rebind<size_type>::other> subdomain_list;
 
     /** @brief The vector type containing the row index to subdomain mapping. */
-    typedef std::vector<SLList<size_type,TA>,TA> rowtodomain_vector;
+    typedef std::vector<subdomain_list, typename TA::template rebind<subdomain_list>::other > rowtodomain_vector;
+
+    /** @brief The type for the SuperLU solver in use. */
+    typedef SuperLU<matrix_type> slu;
+
+    /** @brief The vector type containing SuperLU solvers. */
+    typedef std::vector<slu, typename TA::template rebind<slu>::other> slu_vector;
 
     enum {
       //! \brief The category the precondtioner is part of.
@@ -353,7 +361,7 @@ namespace Dune
 
   private:
     const M& mat;
-    std::vector<SuperLU<matrix_type>,TA> solvers;
+    slu_vector solvers;
     subdomain_vector subDomains;
     field_type relax;
 
@@ -492,7 +500,7 @@ namespace Dune
     : mat(mat_), relax(relaxationFactor)
   {
     typedef typename rowtodomain_vector::const_iterator RowDomainIterator;
-    typedef typename SLList<size_type,TA>::const_iterator DomainIterator;
+    typedef typename subdomain_list::const_iterator DomainIterator;
 #ifdef DUNE_ISTL_WITH_CHECKING
     assert(rowToDomain.size()==mat.N());
     assert(rowToDomain.size()==mat.M());
@@ -519,9 +527,9 @@ namespace Dune
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     int i=0;
-    typedef typename std::vector<std::set<size_type> >::const_iterator iterator;
+    typedef typename subdomain_vector::const_iterator iterator;
     for(iterator iter=subDomains.begin(); iter != subDomains.end(); ++iter) {
-      typedef typename std::set<size_type>::const_iterator entry_iterator;
+      typedef typename subdomain_type::const_iterator entry_iterator;
       std::cout<<"domain "<<i++<<":";
       for(entry_iterator entry = iter->begin(); entry != iter->end(); ++entry) {
         std::cout<<" "<<*entry;
@@ -562,7 +570,7 @@ namespace Dune
     int domainId=0;
 
     for(DomainIterator domain=sd.begin(); domain != sd.end(); ++domain, ++domainId) {
-      typedef typename std::set<size_type>::const_iterator iterator;
+      typedef typename subdomain_type::const_iterator iterator;
       for(iterator row=domain->begin(); row != domain->end(); ++row)
         rowToDomain[*row].push_back(domainId);
     }
@@ -595,7 +603,7 @@ namespace Dune
   {
     typedef typename std::vector<SuperMatrixInitializer<matrix_type> >::iterator InitializerIterator;
     typedef typename subdomain_vector::const_iterator DomainIterator;
-    typedef typename std::vector<SuperLU<matrix_type>,TA>::iterator SolverIterator;
+    typedef typename slu_vector::iterator SolverIterator;
     // initialize the initializers
     DomainIterator domain=subDomains.begin();
 
@@ -624,7 +632,7 @@ namespace Dune
           dPrint_CompCol_Matrix("superlu", &static_cast<SuperMatrix&>(solver->mat)); */
 
     // Calculate the LU decompositions
-    std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&SuperLU<matrix_type>::decompose));
+    std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&slu::decompose));
     maxlength=0;
     for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
       assert(solver->mat.N()==solver->mat.M());
@@ -645,7 +653,7 @@ namespace Dune
   void SeqOverlappingSchwarz<M,X,TM,TA>::apply(X& x, const X& b)
   {
     typedef typename X::block_type block;
-    typedef std::vector<SuperLU<matrix_type>,TA> solver_vector;
+    typedef slu_vector solver_vector;
     typedef typename ApplyHelper<solver_vector,subdomain_vector,forward>::solver_iterator iterator;
     typedef typename ApplyHelper<solver_vector,subdomain_vector,forward>::domain_iterator
     domain_iterator;
