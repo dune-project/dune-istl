@@ -1,39 +1,37 @@
 # $Id$
 
 if MPI
-  INDEXPROG = indicestest syncertest vectorcommtest
-  SELECTPROG = selectiontest
-  INDEXRUN = $(INDEXPROG)
+  MPITESTS = indicestest syncertest vectorcommtest \
+	selectiontest
 endif
 
 if SUPERLU
-  LUTEST =  superlutest overlappingschwarztest
+  SUPERLUTESTS =  superlutest overlappingschwarztest
 endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
-	bcrsbuildtest matrixiteratortest mv $(SELECTPROG) $(LUTEST)
+	bcrsbuildtest matrixiteratortest
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(INDEXRUN)
+TESTS = $(NORMALTESTS) $(MPITESTS)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS) $(INDEXPROG)
+check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS)
 
 # define the programs
 
-mv_SOURCES = mv.cc
+if SUPERLU
+  superlutest_SOURCES = superlutest.cc
+  superlutest_LDADD= $(SUPERLU_LIBS)
+  superlutest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+  superlutest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 
-superlutest_SOURCES = superlutest.cc
-superlutest_LDADD= $(SUPERLU_LIBS)
-superlutest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
-superlutest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
-
-overlappingschwarztest_SOURCES = overlappingschwarztest.cc
-overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
-overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
-overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
-
+  overlappingschwarztest_SOURCES = overlappingschwarztest.cc
+  overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
+  overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+  overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+endif
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
 bvectortest_SOURCES = bvectortest.cc
@@ -46,27 +44,29 @@ matrixiteratortest_SOURCES = matrixiteratortest.cc
 
 matrixtest_SOURCES = matrixtest.cc
 
-indicestest_SOURCES = indicestest.cc
-indicestest_CXXFLAGS = $(MPI_CPPFLAGS)
-indicestest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+
+if MPI
+  indicestest_SOURCES = indicestest.cc
+  indicestest_CXXFLAGS = $(MPI_CPPFLAGS)
+  indicestest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
 #indicestest_DEPENDENCIES = $(LOCAL_LIBS)
 
-selectiontest_SOURCES = selectiontest.cc
-selectiontest_CXXFLAGS = $(MPI_CPPFLAGS)
-selectiontest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  selectiontest_SOURCES = selectiontest.cc
+  selectiontest_CXXFLAGS = $(MPI_CPPFLAGS)
+  selectiontest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
 #selectiontest_DEPENDENCIES = $(LOCAL_LIBS)
 
-indexsettest_SOURCES = indexsettest.cc
+  indexsettest_SOURCES = indexsettest.cc
 #indexsettest_DEPENDENCIES = $(LOCAL_LIBS)
 
-syncertest_SOURCES = syncertest.cc
-syncertest_CXXFLAGS = $(MPI_CPPFLAGS)
-syncertest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  syncertest_SOURCES = syncertest.cc
+  syncertest_CXXFLAGS = $(MPI_CPPFLAGS)
+  syncertest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
 #syncertest_DEPENDENCIES = $(LOCAL_LIBS)
 
-vectorcommtest_SOURCES = vectorcommtest.cc
-vectorcommtest_CXXFLAGS = $(MPI_CPPFLAGS)
-vectorcommtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  vectorcommtest_SOURCES = vectorcommtest.cc
+  vectorcommtest_CXXFLAGS = $(MPI_CPPFLAGS)
+  vectorcommtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
 #vectorcommtest_DEPENDENCIES = $(LOCAL_LIBS)
-
+endif
 include $(top_srcdir)/am/global-rules

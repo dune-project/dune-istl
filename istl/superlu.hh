@@ -4,8 +4,11 @@
 #define DUNE_SUPERLU_HH
 
 #ifdef HAVE_SUPERLU
-
+#ifdef SUPERLU_POST_2005_VERSION
+#include "slu_ddefs.h"
+#else
 #include "dsp_defs.h"
+#endif
 #include "solvers.hh"
 #include "supermatrix.hh"
 #include <algorithm>
@@ -94,6 +97,8 @@ namespace Dune
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& mat);
 
+    void setVerbosity(bool v);
+
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
     template<class M,class X, class TM, class T1>
@@ -156,6 +161,11 @@ namespace Dune
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::SuperLU()
     :    work(0), lwork(0),verbose(false)
   {}
+  template<typename T, typename A, int n, int m>
+  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setVerbosity(bool v)
+  {
+    verbose=v;
+  }
 
   template<typename T, typename A, int n, int m>
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setMatrix(const Matrix& mat_)
@@ -205,7 +215,7 @@ namespace Dune
            &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr,
            &berr, &memusage, &stat, &info);
 
-    if(verbose) {
+    if(verbose&&false) {
       dinfo<<"LU factorization: dgssvx() returns info "<< info<<std::endl;
 
       if ( info == 0 || info == n+1 ) {
@@ -227,6 +237,32 @@ namespace Dune
       if ( options.PrintStat ) StatPrint(&stat);
     }
     StatFree(&stat);
+    /*
+       NCformat* Ustore = (NCformat *) U.Store;
+       int k=0;
+       dPrint_CompCol_Matrix("U", &U);
+       for(int i=0; i < U.ncol; ++i, ++k){
+       std::cout<<i<<": ";
+       for(int c=Ustore->colptr[i]; c < Ustore->colptr[i+1]; ++c)
+        //if(Ustore->rowind[c]==i)
+        std::cout<<Ustore->rowind[c]<<"->"<<((double*)Ustore->nzval)[c]<<" ";
+       if(k==0){
+        //
+        k=-1;
+       }std::cout<<std::endl;
+       }
+       dPrint_SuperNode_Matrix("L", &L);
+       /*
+       for(int i=0; i < U.ncol; ++i, ++k){
+       std::cout<<i<<": ";
+       for(int c=Ustore->colptr[i]; c < Ustore->colptr[i+1]; ++c)
+        //if(Ustore->rowind[c]==i)
+        std::cout<<Ustore->rowind[c]<<"->"<<((double*)Ustore->nzval)[c]<<" ";
+       if(k==0){
+        //
+        k=-1;
+       }std::cout<<std::endl;
+       } */
     options.Fact = FACTORED;
   }
 
@@ -333,8 +369,22 @@ namespace Dune
       // undo scaling of right hand side
       std::transform(b, b+mat.M(), C, b, std::divides<T>());
 
-    if(verbose)
-      if ( options.PrintStat ) StatPrint(&stat);
+    if(ferr>1.0e-8) { // && verbose){
+      //dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
+
+      if ( info == 0 || info == n+1 ) {
+
+        if ( options.IterRefine ) {
+          dinfo<<"Iterative Refinement: steps="
+               <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
+        }else
+          dinfo<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {
+        dinfo<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
+      }
+      //if ( options.PrintStat ) StatPrint(&stat);
+    }
+
     StatFree(&stat);
   }
   /** @} */
