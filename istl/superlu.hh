@@ -252,7 +252,6 @@ namespace Dune
        }std::cout<<std::endl;
        }
        dPrint_SuperNode_Matrix("L", &L);
-       /*
        for(int i=0; i < U.ncol; ++i, ++k){
        std::cout<<i<<": ";
        for(int c=Ustore->colptr[i]; c < Ustore->colptr[i+1]; ++c)
