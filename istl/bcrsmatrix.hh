@@ -1155,6 +1155,12 @@ namespace Dune {
       return m;
     }
 
+    //! number of blocks that are stored (the number of blocks that possibly are nonzero)
+    size_type nonzeroes () const
+    {
+      return nnz;
+    }
+
     /** \brief row dimension of block r
         \bug Does not count empty rows (FlySpray #7)
      */
