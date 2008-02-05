@@ -1,2 +1,3 @@
 Module: dune-istl
+Version: 1.1svn
 Depends: dune-common
