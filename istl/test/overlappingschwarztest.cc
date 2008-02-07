@@ -70,33 +70,37 @@ int main(int argc, char** argv)
 
       // check left domain
       int domain = (i-overlap)/domainSize;
-      if(domain>=0 && domain<domainsPerDim)
+      int neighbourDomain=ydomain*domainsPerDim+domain;
+      if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
-        domains[ydomain*domainsPerDim+domain].insert(id);
-        rowToDomain[id].push_back(ydomain*domainsPerDim+domain);
+        domains[neighbourDomain].insert(id);
+        rowToDomain[id].push_back(neighbourDomain);
       }
 
       //check right domain
       domain = (i+overlap)/domainSize;
-      if(domain>=0 && domain<domainsPerDim)
+      neighbourDomain=ydomain*domainsPerDim+domain;
+      if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
-        domains[ydomain*domainsPerDim+domain].insert(id);
-        rowToDomain[id].push_back(ydomain*domainsPerDim+domain);
+        domains[neighbourDomain].insert(id);
+        rowToDomain[id].push_back(neighbourDomain);
       }
 
       // check lower domain
       domain = (j-overlap)/domainSize;
-      if(domain>=0 && domain<domainsPerDim)
+      neighbourDomain=domain*domainsPerDim+xdomain;
+      if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
-        domains[domain*domainsPerDim+xdomain].insert(id);
-        rowToDomain[id].push_back(domain*domainsPerDim+xdomain);
+        domains[neighbourDomain].insert(id);
+        rowToDomain[id].push_back(neighbourDomain);
       }
 
-      //check right domain
+      //check upper domain
       domain = (j+overlap)/domainSize;
-      if(domain>=0 && domain<domainsPerDim)
+      neighbourDomain=domain*domainsPerDim+xdomain;
+      if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
-        domains[domain*domainsPerDim+xdomain].insert(id);
+        domains[neighbourDomain].insert(id);
         rowToDomain[id].push_back(domain*domainsPerDim+xdomain);
       }
     }
@@ -148,6 +152,19 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //  setBoundary(x,b,N);
+  if(N<10) {
+    typedef rowtodomain_vector::const_iterator rt_iter;
+    int row=0;
+    std::cout<<" row to domain"<<std::endl;
+    for(rt_iter i= rowToDomain.begin(); i!= rowToDomain.end(); ++i, ++row) {
+      std::cout<<"row="<<row<<": ";
+      typedef rowtodomain_vector::value_type::const_iterator diter;
+      for(diter d=i->begin(); d!=i->end(); ++d)
+        std::cout<<*d<<" ";
+      std::cout<<std::endl;
+    }
+  }
+
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector> prec2(mat, rowToDomain, 1);
   Dune::LoopSolver<BVector> solver2(fop, prec2, 1e-2,100,2);
   solver2.apply(x,b, res);
