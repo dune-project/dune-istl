@@ -9,15 +9,19 @@ if SUPERLU
   SUPERLUTESTS =  superlutest overlappingschwarztest
 endif
 
+if PARDISO
+  PARDISOTEST = test_pardiso
+endif
+
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
 	bcrsbuildtest matrixiteratortest
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(MPITESTS)
+TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS)
+check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST)
 
 # define the programs
 
@@ -32,6 +36,12 @@ if SUPERLU
   overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
   overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 endif
+
+if PARDISO
+  test_pardiso_SOURCES = test_pardiso.cc
+  test_pardiso_LDADD = $(PARDISO_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS)
+endif
+
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
 bvectortest_SOURCES = bvectortest.cc
