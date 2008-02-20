@@ -188,6 +188,9 @@ namespace Dune {
       F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
                          &n_, &ddum, ia_, ja_, &idum, &nrhs_,
                          iparm_, &msglvl_, &ddum, &ddum, &error_);
+      delete[] a_;
+      delete[] ia_;
+      delete[] ja_;
 #endif
     }
 
