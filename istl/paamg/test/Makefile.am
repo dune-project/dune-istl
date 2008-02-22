@@ -18,24 +18,26 @@ check_PROGRAMS = $(TESTPROGS) $(NORMALTESTS)
 graphtest_SOURCES = graphtest.cc
 
 transfertest_SOURCES = transfertest.cc
-transfertest_CXXFLAGS = $(MPI_CPPFLAGS)
-transfertest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+transfertest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS)
+transfertest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
 
 galerkintest_SOURCES = galerkintest.cc anisotropic.hh
-galerkintest_CXXFLAGS = $(MPI_CPPFLAGS)
-galerkintest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+galerkintest_CXXFLAGS = $(AM_CPPFLAGS)  $(MPI_CPPFLAGS)
+galerkintest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
 
 hierarchytest_SOURCES = hierarchytest.cc anisotropic.hh
-hierarchytest_CXXFLAGS = $(MPI_CPPFLAGS)
-hierarchytest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+hierarchytest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS)
+hierarchytest_LDADD =  $(AM_LIBS) $(MPI_LIBS)
+hierarchytest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
 
 amgtest_SOURCES = amgtest.cc
-amgtest_CXXFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 amgtest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
-amgtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS) $(SUPERLU_LIBS)
+amgtest_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+amgtest_LDADD = $(SUPERLU_LIBS)
 
 pamgtest_SOURCES = parallelamgtest.cc
-pamgtest_CXXFLAGS = $(MPI_CPPFLAGS) $(SUPERLU_CPPFLAGS)
-pamgtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS) $(SUPERLU_LIBS)
+pamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+pamgtest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
+pamgtest_LDADD = $(MPI_LIBS) $(SUPERLU_LIBS)
 
 include $(top_srcdir)/am/global-rules

@@ -28,6 +28,7 @@ int main(int argc, char** argv)
 {
 
   const int BS=1;
+
   int N=500/BS;
   int coarsenTarget=1200;
   int ml=10;
@@ -37,6 +38,7 @@ int main(int argc, char** argv)
 
   if(argc>2)
     coarsenTarget = atoi(argv[2]);
+
   if(argc>3)
     ml = atoi(argv[3]);
 
@@ -91,6 +93,11 @@ int main(int argc, char** argv)
 
   smootherArgs.iterations = 1;
 
+  //smootherArgs.overlap=SmootherArgs::vertex;
+  //smootherArgs.overlap=SmootherArgs::none;
+  //smootherArgs.overlap=SmootherArgs::aggregate;
+
+  smootherArgs.relaxationFactor = 1;
 
   Criterion criterion(15,coarsenTarget);
   criterion.setMaxDistance(4);
