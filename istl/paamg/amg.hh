@@ -373,17 +373,19 @@ namespace Dune
 
         *lhs=0;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongate(*(*aggregates), *update, *lhs, 1.6);
+        ::prolongate(*(*aggregates), *update, *lhs, 1.6, *pinfo);
 
         --update;
         --rhs;
 
         *update += *lhs;
 
+
+#endif
+
         // update defect
         matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
 
-#endif
         // postsmoothing
         *lhs=0;
         for(std::size_t i=0; i < postSteps_; ++i)
@@ -437,7 +439,7 @@ namespace Dune
 
       for(typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--; coarseLhs != lhs_->finest(); coarseLhs = lhs--, --aggregates, --pinfo) {
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongate(*(*aggregates), *coarseLhs, *lhs, 1);
+        ::prolongate(*(*aggregates), *coarseLhs, *lhs, 1, *pinfo);
       }
     }
 
