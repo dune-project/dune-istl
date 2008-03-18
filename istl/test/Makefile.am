@@ -15,7 +15,7 @@ endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
-	bcrsbuildtest matrixiteratortest
+	bcrsbuildtest matrixiteratortest mv
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST)
@@ -53,6 +53,8 @@ matrixutilstest_SOURCES = matrixutilstest.cc laplacian.hh
 matrixiteratortest_SOURCES = matrixiteratortest.cc
 
 matrixtest_SOURCES = matrixtest.cc
+
+mv_SOURCES = mv.cc
 
 
 if MPI
