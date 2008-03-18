@@ -1,7 +1,7 @@
 # $Id$
 
 if MPI
-  MPITESTS = indicestest syncertest vectorcommtest \
+  MPITESTS = indicestest indexsettest syncertest vectorcommtest \
 	selectiontest
 endif
 
@@ -14,7 +14,7 @@ if PARDISO
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = matrixutilstest matrixtest bvectortest indexsettest \
+NORMALTESTS = matrixutilstest matrixtest bvectortest \
 	bcrsbuildtest matrixiteratortest mv
 
 # list of tests to run (indicestest is special case)
@@ -69,6 +69,7 @@ if MPI
 #selectiontest_DEPENDENCIES = $(LOCAL_LIBS)
 
   indexsettest_SOURCES = indexsettest.cc
+
 #indexsettest_DEPENDENCIES = $(LOCAL_LIBS)
 
   syncertest_SOURCES = syncertest.cc
