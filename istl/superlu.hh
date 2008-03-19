@@ -4,6 +4,12 @@
 #define DUNE_SUPERLU_HH
 
 #ifdef HAVE_SUPERLU
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef FALSE
+#undef FALSE
+#undef
 #ifdef SUPERLU_POST_2005_VERSION
 #include "slu_ddefs.h"
 #else
