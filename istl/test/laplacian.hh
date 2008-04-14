@@ -38,9 +38,12 @@ void setupSparsityPattern(Dune::BCRSMatrix<B>& A, int N)
 template<class B>
 void setupLaplacian(Dune::BCRSMatrix<B>& A, int N)
 {
+  typedef typename Dune::BCRSMatrix<B>::field_type FieldType;
+
   setupSparsityPattern(A,N);
 
-  B diagonal = 0, bone=0, beps=0;
+  B diagonal = static_cast<FieldType>(0), bone=static_cast<FieldType>(0),
+    beps=static_cast<FieldType>(0);
   for(typename B::RowIterator b = diagonal.begin(); b !=  diagonal.end(); ++b)
     b->operator[](b.index())=4;
 

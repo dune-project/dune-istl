@@ -307,6 +307,25 @@ namespace Dune {
     s.precision(oldprec);
   }
 
+  namespace
+  {
+    template<typename T>
+    struct MatlabPODWriter
+    {
+      static std::ostream& write(const T& t,  std::ostream& s)
+      {
+        s<<t;
+      }
+    };
+    template<typename T>
+    struct MatlabPODWriter<std::complex<T> >
+    {
+      static std::ostream& write(const std::complex<T>& t,  std::ostream& s)
+      {
+        s<<t.real()<<" "<<t.imag();
+      }
+    };
+  }
   /** \brief Helper method for the writeMatrixToMatlab routine.
 
      This specialization for FieldMatrices ends the recursion
@@ -317,10 +336,11 @@ namespace Dune {
                                  std::ostream& s)
   {
     for (int i=0; i<rows; i++)
-      for (int j=0; j<cols; j++)
+      for (int j=0; j<cols; j++) {
         //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " " << matrix[i][j] << std::endl;
-
+        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
+        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
+      }
   }
 
   template <class MatrixType>
