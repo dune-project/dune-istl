@@ -573,6 +573,15 @@ namespace Dune {
         return Iterator(block,nblocks);
     }
 
+    //! random access returning iterator (end if not contained)
+    ConstIterator find (int i) const
+    {
+      if (i>=0 && i<nblocks)
+        return ConstIterator(block,i);
+      else
+        return ConstIterator(block,nblocks);
+    }
+
     //! ConstIterator class for sequential access
     class ConstIterator
     {
