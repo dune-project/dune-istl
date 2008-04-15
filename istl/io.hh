@@ -109,6 +109,120 @@ namespace Dune {
     }
   }
 
+  template<typename B, typename A>
+  class BCRSMatrix;
+
+  template<typename K, int n, int m>
+  class FieldMatrix;
+
+  template<typename M>
+  struct MatrixDimension
+  {};
+
+
+  template<typename B, typename TA>
+  struct MatrixDimension<BCRSMatrix<B,TA> >
+  {
+    typedef BCRSMatrix<B,TA> Matrix;
+    typedef typename Matrix::block_type block_type;
+    typedef typename Matrix::size_type size_type;
+
+    static size_type rowdim (const Matrix& A, size_type i)
+    {
+      const B* row = A.r[i].getptr();
+      if(row)
+        return MatrixDimension<block_type>::rowdim(*row);
+      else
+        return 0;
+    }
+
+    static size_type coldim (const Matrix& A, size_type c)
+    {
+      // find an entry in column j
+      if (A.nnz>0)
+      {
+        for (size_type k=0; k<A.nnz; k++) {
+          if (A.j[k]==c) {
+            return MatrixDimension<block_type>::coldim(A.a[k]);
+          }
+        }
+      }
+      else
+      {
+        for (size_type i=0; i<A.N(); i++)
+        {
+          size_type* j = A.r[i].getindexptr();
+          B*   a = A.r[i].getptr();
+          for (size_type k=0; k<A.r[i].getsize(); k++)
+            if (j[k]==c) {
+              return MatrixDimension<block_type>::coldim(a[k]);
+            }
+        }
+      }
+
+      // not found
+      return 0;
+    }
+
+    static size_type rowdim (const Matrix& A){
+      size_type nn=0;
+      for (size_type i=0; i<A.N(); i++)
+        nn += rowdim(A,i);
+      return nn;
+    }
+
+    static size_type coldim (const Matrix& A){
+      typedef typename Matrix::ConstRowIterator ConstRowIterator;
+      typedef typename Matrix::ConstColIterator ConstColIterator;
+
+      // The following code has a complexity of nnz, and
+      // typically a very small constant.
+      //
+      std::vector<size_type> coldims(A.M(),-1);
+
+      for (ConstRowIterator row=A.begin(); row!=A.end(); ++row)
+        for (ConstColIterator col=row->begin(); col!=row->end(); ++col)
+          // only compute blocksizes we don't already have
+          if (coldims[col.index()]==-1)
+            coldims[col.index()] = MatrixDimension<block_type>::coldim(*col);
+
+      size_type sum = 0;
+      for (typename std::vector<size_type>::iterator it=coldims.begin(); it!=coldims.end(); ++it)
+        // skip rows for which no coldim could be determined
+        if ((*it)>=0)
+          sum += *it;
+
+      return sum;
+    }
+  };
+
+  template<typename K, int n, int m>
+  struct MatrixDimension<FieldMatrix<K,n,m> >
+  {
+    typedef FieldMatrix<K,n,m> Matrix;
+    typedef typename Matrix::size_type size_type;
+
+    static size_type rowdim(const Matrix& A, size_type r)
+    {
+      return 1;
+    }
+
+    static size_type coldim(const Matrix& A, size_type r)
+    {
+      return 1;
+    }
+
+    static size_type rowdim(const Matrix& A)
+    {
+      return n;
+    }
+
+    static size_type coldim(const Matrix& A)
+    {
+      return m;
+    }
+  };
+
   //! print one row of a matrix
   template<class M>
   void print_row (std::ostream& s, const M& A, typename M::size_type I,
@@ -118,7 +232,7 @@ namespace Dune {
     typename M::size_type i0=I;
     for (typename M::size_type i=0; i<A.N(); i++)
     {
-      if (therow>=i0 && therow<i0+A.rowdim(i))
+      if (therow>=i0 && therow<i0+MatrixDimension<M>::rowdim(A,i))
       {
         // the row is in this block row !
         typename M::size_type j0=J;
@@ -131,14 +245,14 @@ namespace Dune {
           if (it!=A[i].end())
             print_row(s,*it,i0,j0,therow,width,precision);
           else
-            fill_row(s,A.coldim(j),width,precision);
+            fill_row(s,MatrixDimension<M>::coldim(A,j),width,precision);
 
           // advance columns
-          j0 += A.coldim(j);
+          j0 += MatrixDimension<M>::coldim(A,j);
         }
       }
       // advance rows
-      i0 += A.rowdim(i);
+      i0 += MatrixDimension<M>::rowdim(A,i);
     }
   }
 
@@ -194,12 +308,12 @@ namespace Dune {
     s << title
       << " [n=" << A.N()
       << ",m=" << A.M()
-      << ",rowdim=" << A.rowdim()
-      << ",coldim=" << A.coldim()
+      << ",rowdim=" << MatrixDimension<M>::rowdim(A)
+      << ",coldim=" << MatrixDimension<M>::coldim(A)
       << "]" << std::endl;
 
     // print all rows
-    for (typename M::size_type i=0; i<A.rowdim(); i++)
+    for (typename M::size_type i=0; i<MatrixDimension<M>::rowdim(A); i++)
     {
       s << rowtext;            // start a new row
       s << " ";                // space in front of each entry
@@ -237,6 +351,7 @@ namespace Dune {
                          std::string title, std::string rowtext,
                          int width=3, int precision=2)
   {
+    typedef BCRSMatrix<FieldMatrix<B,n,m>,A> Matrix;
     // remember old flags
     std::ios_base::fmtflags oldflags = s.flags();
     // set the output format
@@ -247,11 +362,11 @@ namespace Dune {
     s << title
       << " [n=" << mat.N()
       << ",m=" << mat.M()
-      << ",rowdim=" << mat.rowdim()
-      << ",coldim=" << mat.coldim()
+      << ",rowdim=" << MatrixDimension<Matrix>::rowdim(mat)
+      << ",coldim=" << MatrixDimension<Matrix>::coldim(mat)
       << "]" << std::endl;
 
-    typedef typename BCRSMatrix<FieldMatrix<B,n,m>,A>::ConstRowIterator Row;
+    typedef typename Matrix::ConstRowIterator Row;
 
     for(Row row=mat.begin(); row != mat.end(); ++row) {
       int skipcols=0;
@@ -260,7 +375,7 @@ namespace Dune {
       while(!reachedEnd) {
         for(int innerrow=0; innerrow<n; ++innerrow) {
           int count=0;
-          typedef typename BCRSMatrix<FieldMatrix<B,n,m>,A>::ConstColIterator Col;
+          typedef typename Matrix::ConstColIterator Col;
           Col col=row->begin();
           for(; col != row->end(); ++col,++count) {
             if(count<skipcols)
@@ -356,7 +471,7 @@ namespace Dune {
       colOffset[0] = 0;
 
     for (int i=0; i<matrix.M()-1; i++)
-      colOffset[i+1] = colOffset[i] + matrix.coldim(i);
+      colOffset[i+1] = colOffset[i] + MatrixDimension<MatrixType>::coldim(matrix,i);
 
     int rowOffset = 0;
 
@@ -375,7 +490,7 @@ namespace Dune {
                                   externalColOffset + colOffset[cIt.index()],
                                   s);
 
-      rowOffset += matrix.rowdim(rowIdx);
+      rowOffset += MatrixDimension<MatrixType>::rowdim(matrix, rowIdx);
     }
 
   }

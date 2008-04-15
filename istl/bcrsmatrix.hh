@@ -64,6 +64,8 @@ namespace Dune {
               @{
    */
 
+  template<typename M>
+  class MatrixDimension;
 
   /**
      \brief A sparse block matrix with compressed row storage
@@ -151,6 +153,8 @@ namespace Dune {
   class BCRSMatrix
 #endif
   {
+    friend class MatrixDimension<BCRSMatrix>;
+
   private:
     enum BuildStage {
       /** @brief Matrix is not built at all. */
@@ -1161,79 +1165,6 @@ namespace Dune {
       return nnz;
     }
 
-    /** \brief row dimension of block r
-        \bug Does not count empty rows (FlySpray #7)
-     */
-    size_type rowdim (size_type i) const
-    {
-      const B* row = r[i].getptr();
-      if(row)
-        return row->rowdim();
-      else
-        return 0;
-    }
-
-    /** \brief Column dimension of block c
-        \bug Does not count empty columns (FlySpray #7)
-     */
-    size_type coldim (size_type c) const
-    {
-      // find an entry in column j
-      if (nnz>0)
-      {
-        for (size_type k=0; k<nnz; k++) {
-          if (j[k]==c) {
-            return a[k].coldim();
-          }
-        }
-      }
-      else
-      {
-        for (size_type i=0; i<n; i++)
-        {
-          size_type* j = r[i].getindexptr();
-          B*   a = r[i].getptr();
-          for (size_type k=0; k<r[i].getsize(); k++)
-            if (j[k]==c) {
-              return a[k].coldim();
-            }
-        }
-      }
-
-      // not found
-      return 0;
-    }
-
-    //! dimension of the destination vector space
-    size_type rowdim () const
-    {
-      size_type nn=0;
-      for (size_type i=0; i<n; i++)
-        nn += rowdim(i);
-      return nn;
-    }
-
-    //! dimension of the source vector space
-    size_type coldim () const
-    {
-      // The following code has a complexity of nnz, and
-      // typically a very small constant.
-      //
-      std::vector<size_type> coldims(M(),-1);
-      for (ConstRowIterator row=begin(); row!=end(); ++row)
-        for (ConstColIterator col=row->begin(); col!=row->end(); ++col)
-          // only compute blocksizes we don't already have
-          if (coldims[col.index()]==-1)
-            coldims[col.index()] = col->coldim();
-
-      size_type sum = 0;
-      for (typename std::vector<size_type>::iterator it=coldims.begin(); it!=coldims.end(); ++it)
-        // skip rows for which no coldim could be determined
-        if ((*it)>=0)
-          sum += *it;
-
-      return sum;
-    }
 
     //===== query
 
