@@ -18,3 +18,5 @@ bcrsbuildtest
 superlutest
 mv
 iotest
+scaledidmatrixtest
+
