@@ -440,8 +440,9 @@ namespace Dune
     copyToSuperMatrix(initializer,mat);
 
 #ifdef DUNE_ISTL_WITH_CHECKING
+    char name[] = {'A',0};
     if(N_<0)
-      dPrint_CompCol_Matrix("A",&A);
+      dPrint_CompCol_Matrix(name,&A);
     assert(*this==mat);
 #endif
   }
