@@ -29,6 +29,7 @@ AC_CONFIG_FILES([Makefile
     doc/comm/figures/Makefile
     doc/layout/Makefile
     doc/doxygen/Makefile
+    doc/doxygen/Doxyfile
     doc/Makefile
     doc/Makefile.dist
     istl/paamg/test/Makefile
