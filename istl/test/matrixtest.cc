@@ -148,13 +148,6 @@ void testMatrix(MatrixType& matrix)
   size_type n = matrix.N();
   size_type m = matrix.M();
 
-  size_type rowdim = matrix.rowdim();
-  size_type coldim = matrix.coldim();
-
-  // the last two, but for specific rows/columns
-  rowdim = matrix.rowdim(0);
-  coldim = matrix.coldim(0);
-
   // ///////////////////////////////////////////////////////
   //   Test assignment operators and the copy constructor
   // ///////////////////////////////////////////////////////
