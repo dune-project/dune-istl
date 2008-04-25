@@ -582,6 +582,71 @@ namespace Dune {
 
 
 
+  /*!
+     \brief Richardson preconditioner.
+
+        Multiply simply by a constant.
+   */
+  template<class X, class Y>
+  class Richardson : public Preconditioner<X,Y> {
+  public:
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+
+    // define the category
+    enum {
+      //! \brief The category the preconditioner is part of.
+      category=SolverCategory::sequential
+    };
+
+    /*! \brief Constructor.
+
+       Constructor gets all parameters to operate the prec.
+       \param A The matrix to operate on.
+       \param n The number of iterations to perform.
+       \param w The relaxation factor.
+     */
+    Richardson (field_type w=1.0)
+    {
+      _w = w;
+    }
+
+    /*!
+       \brief Prepare the preconditioner.
+
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre (X& x, Y& b) {}
+
+    /*!
+       \brief Apply the precondioner.
+
+       \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply (X& v, const Y& d)
+    {
+      v = d;
+      v *= _w;
+    }
+
+    /*!
+       \brief Clean up.
+
+       \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (X& x) {}
+
+  private:
+    //! \brief The relaxation factor to use.
+    field_type _w;
+  };
+
+
+
   /** @} end documentation */
 
 } // end namespace
