@@ -483,8 +483,10 @@ namespace Dune {
     CGSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      IsTrue< static_cast<int>(L::category) == static_cast<int>(P::category) >::yes();
-      IsTrue< static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential) >::yes();
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
+                          "L and P must have the same category!");
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                          "L must be sequential!");
     }
     /*!
        \brief Set up conjugate gradient solver.
