@@ -171,7 +171,7 @@ namespace Dune {
      \brief Preconditioned loop solver.
 
      Implements a preconditioned loop.
-     Unsing this class every Preconditioner can be turned
+     Using this class every Preconditioner can be turned
      into a solver. The solver will apply one preconditioner
      step in each iteration loop.
    */
@@ -890,6 +890,253 @@ namespace Dune {
     int _verbose;
   };
 
+  /*! \brief Minimal Residual Method (MINRES)
+
+     Symmetrically Preconditioned MINRES as in A. Greenbaum, 'Iterative Methods for Solving Linear Systems', pp. 121
+     Iterative solver for symmetric indefinite operators.
+     Note that in order to ensure the (symmetrically) preconditioned system to remain symmetric, the preconditioner has to be spd.
+   */
+  template<class X>
+  class MINRESSolver : public InverseOperator<X,X> {
+  public:
+    //! \brief The domain type of the operator to be inverted.
+    typedef X domain_type;
+    //! \brief The range type of the operator to be inverted.
+    typedef X range_type;
+    //! \brief The field type of the operator to be inverted.
+    typedef typename X::field_type field_type;
+
+    /*!
+            \brief Set up MINRES solver.
+
+            \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+     */
+    template<class L, class P>
+    MINRESSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
+      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
+                          "L and P must have the same category!");
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                          "L must be sequential!");
+    }
+    /*!
+            \brief Set up MINRES solver.
+
+            \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+     */
+    template<class L, class S, class P>
+    MINRESSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
+      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
+                          "L and P must have the same category!");
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
+                          "L and S must have the same category!");
+    }
+
+    /*!
+            \brief Apply inverse operator.
+
+            \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    {
+      res.clear();                                      // clear solver statistics
+      Timer watch;                                      // start a timer
+      _prec.pre(x,b);                                   // prepare preconditioner
+      _op.applyscaleadd(-1,x,b);                // overwrite b with defect/residual
+
+      double def0 = _sp.norm(b);                // compute residual norm
+
+      if (def0<1E-30)              // convergence check
+      {
+        res.converged  = true;
+        res.iterations = 0;                               // fill statistics
+        res.reduction = 0;
+        res.conv_rate  = 0;
+        res.elapsed=0;
+        if (_verbose>0)                                 // final print
+          std::cout << "=== rate=" << res.conv_rate << ", T=" << res.elapsed << ", TIT=" << res.elapsed << ", IT=0" << std::endl;
+        return;
+      }
+
+      if (_verbose>0)                       // printing
+      {
+        std::cout << "=== MINRESSolver" << std::endl;
+        if (_verbose>1) {
+          this->printHeader(std::cout);
+          this->printOutput(std::cout,0,def0);
+        }
+      }
+
+      // some local variables
+      double def=def0;                                                  // the defect/residual norm
+      field_type alpha,                                                 // recurrence coefficients as computed in the Lanczos alg making up the matrix T
+                 beta,                                                          //
+                 c[2]={0.0, 0.0},                                       // diagonal entry of Givens rotation
+                 s[2]={0.0, 0.0};                                       // off-diagonal entries of Givens rotation
+
+      field_type T[3]={0.0, 0.0, 0.0};                  // recurrence coefficients (column k of Matrix T)
+
+      X z(b.size()),                    // some temporary vectors
+      dummy(b.size());
+
+      field_type xi[2]={1.0, 0.0};
+
+      // initialize
+      z = 0.0;                                          // clear correction
+
+      _prec.apply(z,b);                         // apply preconditioner z=M^-1*b
+
+      beta = sqrt(fabs(_sp.dot(z,b)));
+      double beta0 = beta;
+
+      X p[3];                   // the search directions
+      X q[3];                   // Orthonormal basis vectors (in unpreconditioned case)
+
+      q[0].resize(b.size());
+      q[1].resize(b.size());
+      q[2].resize(b.size());
+      q[0] = 0.0;
+      q[1] = b;
+      q[1] /= beta;
+      q[2] = 0.0;
+
+      p[0].resize(b.size());
+      p[1].resize(b.size());
+      p[2].resize(b.size());
+      p[0] = 0.0;
+      p[1] = 0.0;
+      p[2] = 0.0;
+
+
+      z /= beta;                        // this is w_current
+
+      // the loop
+      int i=1;
+      for ( ; i<=_maxit; i++)
+      {
+        dummy = z;                 // remember z_old for the computation of the search direction p in the next iteration
+
+        int i1 = i%3,
+            i0 = (i1+2)%3,
+            i2 = (i1+1)%3;
+
+        // Symmetrically Preconditioned Lanczos (Greenbaum p.121)
+        _op.apply(z,q[i2]);                             // q[i2] = Az
+        q[i2].axpy(-beta, q[i0]);
+        alpha = _sp.dot(q[i2],z);
+        q[i2].axpy(-alpha, q[i1]);
+
+        z=0.0;
+        _prec.apply(z,q[i2]);
+
+        beta = sqrt(fabs(_sp.dot(q[i2],z)));
+
+        q[i2] /= beta;
+        z /= beta;
+
+        // QR Factorization of recurrence coefficient matrix
+        // apply previous Givens rotations to last column of T
+        T[1] = T[2];
+        if (i>2)
+        {
+          T[0] = s[i%2]*T[1];
+          T[1] = c[i%2]*T[1];
+        }
+        if (i>1)
+        {
+          T[2] = c[(i+1)%2]*alpha - s[(i+1)%2]*T[1];
+          T[1] = c[(i+1)%2]*T[1] + s[(i+1)%2]*alpha;
+        }
+        else
+          T[2] = alpha;
+
+        // recompute c, s -> current Givens rotation \TODO use BLAS-routine drotg instead for greater robustness
+        //                      cblas_drotg (a, b, c, s);
+        c[i%2] = 1.0/sqrt(T[2]*T[2] + beta*beta);
+        s[i%2] = beta*c[i%2];
+        c[i%2] *= T[2];
+
+        // apply current Givens rotation to T eliminating the last entry...
+        T[2] = c[i%2]*T[2] + s[i%2]*beta;
+
+        // ...and to xi, the right hand side of the least squares problem min_y||beta*xi-T*y||
+        xi[i%2] = -s[i%2]*xi[(i+1)%2];
+        xi[(i+1)%2] *= c[i%2];
+
+        // compute correction direction
+        p[i2] = dummy;
+        p[i2].axpy(-T[1],p[i1]);
+        p[i2].axpy(-T[0],p[i0]);
+        p[i2] /= T[2];
+
+        // apply correction/update solution
+        x.axpy(beta0*xi[(i+1)%2], p[i2]);
+
+        // remember beta_old
+        T[2] = beta;
+
+        // update residual - not necessary if in the preconditioned case we are content with the residual norm of the
+        // preconditioned system as convergence test
+        //                      _op.apply(p[i2],dummy);
+        //                      b.axpy(-beta0*xi[(i+1)%2],dummy);
+
+        //                      convergence test
+        //                      double defnew=_sp.norm(b);	// residual norm of original system
+        double defnew = fabs(beta0*xi[i%2]);                    // the last entry the QR-transformed least squares RHS is the new residual norm
+
+        if (_verbose>1)                             // print
+          this->printOutput(std::cout,i,defnew,def);
+
+        def = defnew;                               // update norm
+        if (def<def0*_reduction || def<1E-30 || i==_maxit)                    // convergence check
+        {
+          res.converged  = true;
+          break;
+        }
+      }
+
+      if (_verbose==1)                          // printing for non verbose
+        this->printOutput(std::cout,i,def);
+
+      _prec.post(x);                            // postprocess preconditioner
+      res.iterations = i;                         // fill statistics
+      res.reduction = def/def0;
+      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.elapsed = watch.elapsed();
+
+      if (_verbose>0)                           // final print
+      {
+        std::cout << "=== rate=" << res.conv_rate
+                  << ", T=" << res.elapsed
+                  << ", TIT=" << res.elapsed/i
+                  << ", IT=" << i << std::endl;
+      }
+
+    }
+
+    /*!
+            \brief Apply inverse operator with given reduction factor.
+
+            \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    {
+      _reduction = reduction;
+      (*this).apply(x,b,res);
+    }
+
+  private:
+    SeqScalarProduct<X> ssp;
+    LinearOperator<X,X>& _op;
+    Preconditioner<X,X>& _prec;
+    ScalarProduct<X>& _sp;
+    double _reduction;
+    int _maxit;
+    int _verbose;
+  };
 
   /** @} end documentation */
 
