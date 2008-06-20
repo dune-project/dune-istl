@@ -17,7 +17,7 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
-#include <dune/common/helpertemplates.hh>
+#include <dune/common/static_assert.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class

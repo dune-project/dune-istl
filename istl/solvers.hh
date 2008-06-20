@@ -14,7 +14,7 @@
 #include "preconditioners.hh"
 #include "scalarproducts.hh"
 #include <dune/common/timer.hh>
-#include <dune/common/helpertemplates.hh>
+#include <dune/common/static_assert.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers

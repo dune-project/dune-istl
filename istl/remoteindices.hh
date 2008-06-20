@@ -9,7 +9,7 @@
 #include "plocalindex.hh"
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
-#include <dune/common/helpertemplates.hh>
+#include <dune/common/static_assert.hh>
 #include <map>
 #include <utility>
 #include <iostream>
@@ -901,7 +901,6 @@ namespace Dune {
 
     char** buffer = new char*[2];
     int bufferSize;
-    int position=0;
     int intSize;
     int charSize;
 
@@ -928,6 +927,7 @@ namespace Dune {
       // pointers to the current input and output buffers
       char* p_out = buffer[1-(proc%2)];
       char* p_in = buffer[proc%2];
+      int position=0;
 
       if(proc==0 && (procs>0 || sendTwo)) {
         if(!sendTwo) {
@@ -1273,8 +1273,6 @@ namespace Dune {
   template<typename T, bool mode>
   inline void RemoteIndexListModifier<T,mode>::repairLocalIndexPointers() throw(InvalidIndexSetState)
   {
-    IsTrue<mode>::yes();
-
     if(MODIFYINDEXSET) {
       // repair pointers to local index set.
 #ifdef DUNE_ISTL_WITH_CHECKING
@@ -1308,7 +1306,9 @@ namespace Dune {
   template<typename T, bool mode>
   inline void RemoteIndexListModifier<T,mode>::insert(const RemoteIndex& index) throw(InvalidPosition)
   {
-    IsTrue<mode>::no();
+    dune_static_assert(!mode,"Not allowed if the mode indicates that new indices"
+                       << "might be added to the underlying index set. Use "
+                       << "insert(const RemoteIndex&, const GlobalIndex&) instead");
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     if(!first_ && index.localIndexPair().global()<last_)
@@ -1329,7 +1329,9 @@ namespace Dune {
   template<typename T, bool mode>
   inline void RemoteIndexListModifier<T,mode>::insert(const RemoteIndex& index, const GlobalIndex& global) throw(InvalidPosition)
   {
-    typename IsTrue<mode>::yes();
+    dune_static_assert(mode,"Not allowed if the mode indicates that no new indices"
+                       << "might be added to the underlying index set. Use "
+                       << "insert(const RemoteIndex&) instead");
 #ifdef DUNE_ISTL_WITH_CHECKING
     if(!first_ && global<last_)
       DUNE_THROW(InvalidPosition, "Modification of remote indices have to occur with ascending global index.");
