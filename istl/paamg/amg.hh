@@ -201,8 +201,10 @@ namespace Dune
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
         additive(additive_)
     {
-      IsTrue<static_cast<int>(M::category)==static_cast<int>(S::category)>::yes();
-      IsTrue<static_cast<int>(P::category)==static_cast<int>(S::category)>::yes();
+      dune_static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
+                         "Matrix and Solver must match in terms of category!");
+      dune_static_assert(static_cast<int>(P::category)==static_cast<int>(S::category),
+                         "Matrix and Solver must match in terms of category!");
       OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 
       matrices->template build<typename P::CopyFlags>(criterion);
