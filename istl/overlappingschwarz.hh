@@ -376,7 +376,7 @@ namespace Dune
     template<typename T, typename A, int n>
     struct Assigner<BlockVector<FieldVector<T,n>,A> >
     {
-      Assigner(const M& mat, T* x, const BlockVector<FieldVector<T,n>,A>& b, const BlockVector<FieldVector<T,n>,A>& x);
+      Assigner(const M& mat, T* rhs, const BlockVector<FieldVector<T,n>,A>& b, const BlockVector<FieldVector<T,n>,A>& x);
       void operator()(const std::size_t& domain);
     private:
       const M* mat;
