@@ -59,13 +59,13 @@ namespace Dune
   {
   public:
     /* @brief The matrix type. */
-    typedef BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
+    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
     /* @brief The corresponding SuperLU Matrix type.*/
-    typedef SuperLUMatrix<Matrix> SuperLUMatrix;
+    typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
     /** @brief The type of the domain of the solver. */
-    typedef BlockVector<FieldVector<T,m>,A> domain_type;
+    typedef Dune::BlockVector<FieldVector<T,m>,A> domain_type;
     /** @brief The type of the range of the solver. */
-    typedef BlockVector<FieldVector<T,n>,A> range_type;
+    typedef Dune::BlockVector<FieldVector<T,n>,A> range_type;
     /**
      * @brief Constructor.
      * @param mat The matrix of the system to solve.

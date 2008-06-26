@@ -240,7 +240,7 @@ namespace Dune
     /**
      * @brief The type of the pair stored.
      */
-    typedef IndexPair<GlobalIndex,LocalIndex> IndexPair;
+    typedef Dune::IndexPair<GlobalIndex,LocalIndex> IndexPair;
 
     enum {
       /**
@@ -496,7 +496,7 @@ namespace Dune
      */
     typedef typename ParallelIndexSet::const_iterator const_iterator;
 
-    typedef IndexPair<typename I::GlobalIndex, typename I::LocalIndex> IndexPair;
+    typedef Dune::IndexPair<typename I::GlobalIndex, typename I::LocalIndex> IndexPair;
 
     /**
      * @brief Constructor.

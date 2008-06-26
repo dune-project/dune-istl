@@ -186,8 +186,8 @@ namespace Dune
     template<class I, class S>
     friend class OverlappingSchwarzInitializer;
   public:
-    typedef BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    typedef SuperLUMatrix<Matrix> SuperLUMatrix;
+    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
+    typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
     typedef typename Matrix::const_iterator Iter;
     typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;

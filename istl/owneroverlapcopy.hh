@@ -173,13 +173,13 @@ namespace Dune {
     typedef typename std::set<IndexTripel>::const_iterator localindex_iterator;
     typedef typename std::set<RemoteIndexTripel>::const_iterator remoteindex_iterator;
     typedef typename OwnerOverlapCopyAttributeSet::AttributeSet AttributeSet;
-    typedef ParallelLocalIndex<AttributeSet> LI;
-    typedef ParallelIndexSet<GlobalIdType,LI,512> PIS;
-    typedef RemoteIndices<PIS> RI;
-    typedef RemoteIndexListModifier<PIS,false> RILM;
+    typedef Dune::ParallelLocalIndex<AttributeSet> LI;
+    typedef Dune::ParallelIndexSet<GlobalIdType,LI,512> PIS;
+    typedef Dune::RemoteIndices<PIS> RI;
+    typedef Dune::RemoteIndexListModifier<PIS,false> RILM;
     typedef typename RI::RemoteIndex RX;
-    typedef BufferedCommunicator<PIS> BC;
-    typedef Interface<PIS> IF;
+    typedef Dune::BufferedCommunicator<PIS> BC;
+    typedef Dune::Interface<PIS> IF;
 
 
     /** \brief gather/scatter callback for communcation */
@@ -336,17 +336,17 @@ namespace Dune {
       return sqrt(cc.sum(result));
     }
 
-    typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopyFlags;
+    typedef Dune::EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopyFlags;
 
     /** @brief The type of the parallel index set. */
-    typedef ParallelIndexSet<GlobalIdType,LI,512> ParallelIndexSet;
+    typedef Dune::ParallelIndexSet<GlobalIdType,LI,512> ParallelIndexSet;
 
     /** @brief The type of the remote indices. */
-    typedef RemoteIndices<PIS> RemoteIndices;
+    typedef Dune::RemoteIndices<PIS> RemoteIndices;
 
     /**
      * @brief The type of the reverse lookup of indices. */
-    typedef GlobalLookupIndexSet<ParallelIndexSet> GlobalLookupIndexSet;
+    typedef Dune::GlobalLookupIndexSet<ParallelIndexSet> GlobalLookupIndexSet;
 
     /**
      * @brief Get the underlying parallel index set.

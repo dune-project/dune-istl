@@ -215,7 +215,7 @@ namespace Dune
     /**
      * @brief Type of the underlying remote indices class.
      */
-    typedef RemoteIndices<ParallelIndexSet> RemoteIndices;
+    typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
 
     /**
      * @brief The type of the global index.
@@ -446,7 +446,7 @@ namespace Dune
     /**
      * @brief The type of the interface.
      */
-    typedef Interface<T> Interface;
+    typedef Dune::Interface<T> Interface;
 
     /**
      * @brief The type of the global index.
