@@ -82,7 +82,7 @@ namespace Dune
 
       typedef typename SmootherTraits<T>::Arguments SmootherArgs;
 
-      typedef AggregatesMap<typename MatrixGraph<Matrix>::VertexDescriptor> AggregatesMap;
+      typedef Dune::Amg::AggregatesMap<typename MatrixGraph<Matrix>::VertexDescriptor> AggregatesMap;
 
     public:
       virtual ~DefaultConstructionArgs()

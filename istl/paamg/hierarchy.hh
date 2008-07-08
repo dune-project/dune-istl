@@ -292,7 +292,7 @@ namespace Dune
       typedef A Allocator;
 
       /** @brief The type of the aggregates map we use. */
-      typedef AggregatesMap<typename MatrixGraph<Matrix>::VertexDescriptor> AggregatesMap;
+      typedef Dune::Amg::AggregatesMap<typename MatrixGraph<Matrix>::VertexDescriptor> AggregatesMap;
 
       /** @brief The type of the parallel matrix hierarchy. */
       typedef Hierarchy<MatrixOperator,Allocator> ParallelMatrixHierarchy;

@@ -152,7 +152,7 @@ namespace Dune
       /** @brief The total update for the outer solver. */
       Hierarchy<Domain,A>* update_;
       /** @brief The type of the chooser of the scalar product. */
-      typedef ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
+      typedef Dune::ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
       /** @brief The type of the scalar product for the coarse solver. */
       typedef typename ScalarProductChooser::ScalarProduct ScalarProduct;
       /** @brief Scalar product on the coarse level. */
