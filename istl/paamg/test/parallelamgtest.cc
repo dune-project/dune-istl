@@ -151,43 +151,43 @@ void testAmg(int N, int coarsenTarget)
   //  criterion.setMaxLevel(1);
 
   typedef Dune::Amg::AMG<Operator,Vector,ParSmoother,Communication> AMG;
-  /*
-     AMG amg(fop, criterion, smootherArgs, 1, 2, comm);
 
-     buildtime = watch.elapsed();
+  AMG amg(fop, criterion, smootherArgs, 1, 2, 2, false, comm);
 
-     if(rank==0)
-     std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
+  buildtime = watch.elapsed();
 
-     Dune::CGSolver<Vector> amgCG(fop, sp, amg, 10e-8, 300, (rank==0)?2:0);
-     watch.reset();
+  if(rank==0)
+    std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
 
-     amgCG.apply(x,b,r);
-     MPI_Barrier(MPI_COMM_WORLD);
-
-     double solvetime = watch.elapsed();
-
-     if(!r.converged && rank==0)
-     std::cerr<<" AMG Cg solver did not converge!"<<std::endl;
-
-     if(rank==0){
-     std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
-
-     std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
-     std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
-     }
-   */
-  Smoother ssm(fop.getmat(),1);
-  ParSmoother sm(ssm,comm);
-  DoubleStepPreconditioner<Smoother,Communication> dsp(ssm,comm);
-  Dune::CGSolver<Vector> cg(fop, sp, sm, 10e-08, 10, (rank==0) ? 2 : 0);
-
+  Dune::CGSolver<Vector> amgCG(fop, sp, amg, 10e-8, 300, (rank==0) ? 2 : 0);
   watch.reset();
 
-  cg.apply(x1,b1,r1);
+  amgCG.apply(x,b,r);
+  MPI_Barrier(MPI_COMM_WORLD);
 
-  if(!r1.converged && rank==0)
-    std::cerr<<" Cg solver did not converge!"<<std::endl;
+  double solvetime = watch.elapsed();
+
+  if(!r.converged && rank==0)
+    std::cerr<<" AMG Cg solver did not converge!"<<std::endl;
+
+  if(rank==0) {
+    std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
+
+    std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
+    std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
+  }
+
+  //  Smoother ssm(fop.getmat(),1);
+  //  ParSmoother sm(ssm,comm);
+  //  DoubleStepPreconditioner<Smoother,Communication> dsp(ssm,comm);
+  //  Dune::CGSolver<Vector> cg(fop, sp, sm, 10e-08, 10, (rank==0)?2:0);
+  //
+  //  watch.reset();
+  //
+  //  cg.apply(x1,b1,r1);
+  //
+  //  if(!r1.converged && rank==0)
+  //    std::cerr<<" Cg solver did not converge!"<<std::endl;
 
   //std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
 }
@@ -234,7 +234,7 @@ int main(int argc, char** argv)
 #ifdef TEST_AGGLO
   N=UNKNOWNS;
 #endif
-  AMGTester<1,6>::test(N, coarsenTarget);
+  AMGTester<1,1>::test(N, coarsenTarget);
   //AMGTester<1,5>::test(N, coarsenTarget);
   //  AMGTester<10,10>::test(N, coarsenTarget);
 
