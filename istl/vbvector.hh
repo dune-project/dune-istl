@@ -82,7 +82,7 @@ namespace Dune {
     /** make vector with given number of blocks, but size of each block is not yet known,
             object cannot be used yet
      */
-    VariableBlockVector (int _nblocks) : block_vector_unmanaged<B,A>()
+    explicit VariableBlockVector (int _nblocks) : block_vector_unmanaged<B,A>()
     {
       // we can allocate the windows now
       nblocks = _nblocks;
