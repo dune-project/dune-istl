@@ -99,6 +99,15 @@ int testVector()
 
 int main()
 {
+  typedef std::complex<double> value_type;
+  //typedef double value_type;
+  typedef Dune::FieldVector<value_type,1> VectorBlock;
+  typedef Dune::BlockVector<VectorBlock> Vector;
+  Vector v;
+  v=0;
+  Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
+  v1=0;
+
   int ret = testVector<1>();
   return ret + testVector<3>();
 }
