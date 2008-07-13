@@ -295,10 +295,10 @@ namespace Dune
       typedef Dune::Amg::AggregatesMap<typename MatrixGraph<Matrix>::VertexDescriptor> AggregatesMap;
 
       /** @brief The type of the parallel matrix hierarchy. */
-      typedef Hierarchy<MatrixOperator,Allocator> ParallelMatrixHierarchy;
+      typedef Dune::Amg::Hierarchy<MatrixOperator,Allocator> ParallelMatrixHierarchy;
 
       /** @brief The type of the parallel informarion hierarchy. */
-      typedef Hierarchy<ParallelInformation,Allocator> ParallelInformationHierarchy;
+      typedef Dune::Amg::Hierarchy<ParallelInformation,Allocator> ParallelInformationHierarchy;
 
       /** @brief Allocator for pointers. */
       typedef typename Allocator::template rebind<AggregatesMap*>::other AAllocator;

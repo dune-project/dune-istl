@@ -438,7 +438,7 @@ namespace Dune
       typedef DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> > Father;
 
     public:
-      typedef AggregatesMap<typename MatrixGraph<M>::VertexDescriptor> AggregatesMap;
+      typedef Dune::Amg::AggregatesMap<typename MatrixGraph<M>::VertexDescriptor> AggregatesMap;
       typedef typename AggregatesMap::AggregateDescriptor AggregateDescriptor;
       typedef typename AggregatesMap::VertexDescriptor VertexDescriptor;
       typedef typename SeqOverlappingSchwarz<M,X,TM,TA>::subdomain_vector Vector;

@@ -70,7 +70,7 @@ namespace Dune
       /**
        * @brief The type of the remote indices.
        */
-      typedef RemoteIndices<ParallelIndexSet> RemoteIndices;
+      typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
 
       /**
        * @brief Build the coarse index set after the aggregatio.

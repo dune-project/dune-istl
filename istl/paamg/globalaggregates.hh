@@ -121,7 +121,7 @@ namespace Dune
     {
       typedef T Vertex;
       typedef O OverlapFlags;
-      typedef ParallelInformation<T1> ParallelInformation;
+      typedef Dune::Amg::ParallelInformation<T1> ParallelInformation;
       typedef typename ParallelInformation::ParallelIndexSet IndexSet;
 
       static void publish(AggregatesMap<Vertex>& aggregates,
