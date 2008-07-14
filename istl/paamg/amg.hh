@@ -12,6 +12,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/superlu.hh>
+#include <dune/common/typetraits.hh>
 namespace Dune
 {
   namespace Amg
@@ -276,13 +277,14 @@ namespace Dune
         scalarProduct_ = ScalarProductChooser::construct(*matrices_->parallelInformation().coarsest());
 
 #ifdef HAVE_SUPERLU
-        std::cout<<"Using superlu"<<std::endl;
-        solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat());
-#else
+        if(is_same<ParallelInformation,SequentialInformation>::value) {
+          std::cout<<"Using superlu"<<std::endl;
+          solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat());
+        }else
+#endif
         solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
                                         *scalarProduct_,
                                         *coarseSmoother_, 1E-2, 10000, 0);
-#endif
       }
     }
 
