@@ -185,10 +185,10 @@ Dune::BCRSMatrix<Dune::FieldMatrix<double,BS,BS> > setupAnisotropic2d(int N, Dun
   // Compute owner region
   if(rank<bigger) {
     start = rank*(n+1);
-    end   = (rank+1)*(n+1);
+    end   = start+(n+1);
   }else{
-    start = bigger*(n+1) + rank * n;
-    end   = bigger*(n+1) + (rank + 1) * n;
+    start = bigger*(n+1) + (rank-bigger) * n;
+    end   = start+n;
   }
 
   // Compute overlap region
