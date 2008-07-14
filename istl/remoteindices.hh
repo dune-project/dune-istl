@@ -901,6 +901,7 @@ namespace Dune {
 
     char** buffer = new char*[2];
     int bufferSize;
+    int position=0;
     int intSize;
     int charSize;
 
@@ -927,7 +928,6 @@ namespace Dune {
       // pointers to the current input and output buffers
       char* p_out = buffer[1-(proc%2)];
       char* p_in = buffer[proc%2];
-      int position=0;
 
       if(proc==0 && (procs>0 || sendTwo)) {
         if(!sendTwo) {
@@ -945,8 +945,6 @@ namespace Dune {
                  comm_);
         MPI_Pack(&destPublish, 1, MPI_INT, p_out, bufferSize, &position,
                  comm_);
-        //std::cout<<rank<<": ignore="<<ignorePublic<<" sendTwo="<<(sendTwo?true:false)<<" sending: sourcePublish="<<sourcePublish
-        //		 <<", destPublish="<<destPublish<<std::endl;
 
         // Now pack the source indices and setup the destination pairs
         packEntries<ignorePublic>(sourcePairs, *source_, p_out, type,
@@ -955,10 +953,6 @@ namespace Dune {
         if(sendTwo)
           packEntries<ignorePublic>(destPairs, *target_, p_out, type,
                                     bufferSize, &position, destPublish);
-
-        //std::cout<<rank<<": Publishing "<<sourcePublish<<" source and "
-        // <<destPublish<<" destination indices!"<<std::endl<<std::flush;
-
       }
 
       MPI_Status status;
@@ -994,13 +988,6 @@ namespace Dune {
 
       // The process these indices are from
       int remoteProc = (rank+procs-proc)%procs;
-
-      //std::cout<<rank<<": received "<<twoIndexSets<<", "<<((twoIndexSets)?1:0)
-      //       <<", noSource="<<noRemoteSource<<", noDest="<<noRemoteDest
-      //       <<" from process "<<remoteProc<<std::endl<<std::flush;
-
-      //typedef SLList<RemoteIndex<GlobalIndex,Attribute> >
-      //	RemoteIndexList;
 
       // Indices for which we receive
       RemoteIndexList* receive= new RemoteIndexList();
