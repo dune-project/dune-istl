@@ -657,6 +657,7 @@ namespace Dune
           dinfo << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
 
         if(!noAggregates || unknowns/noAggregates<criterion.minCoarsenRate())
+        {
           if(procs>1 && criterion.accumulate())
             DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
           else{
@@ -671,7 +672,7 @@ namespace Dune
             delete aggregatesMap;
             break;
           }
-
+        }
         unknowns =  noAggregates;
 
         if(noAggregates < criterion.coarsenTarget() && procs>1 && criterion.accumulate()) {
