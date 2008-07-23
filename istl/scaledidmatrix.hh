@@ -309,6 +309,9 @@ namespace Dune {
 
     //===== conversion operator
 
+    /** \brief Cast to a scalar */
+    operator K () const {return p_;}
+
     /** \brief Sends the matrix to an output stream */
     friend std::ostream& operator<< (std::ostream& s, const ScaledIdentityMatrix<K,n>& a)
     {
