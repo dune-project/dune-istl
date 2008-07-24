@@ -674,6 +674,10 @@ namespace Dune
     {
       typedef typename T::ParallelIndexSet::const_iterator ConstIterator;
       ConstIterator end = pinfo.indexSet().end();
+      typedef typename M::block_type Block;
+      Block identity=0;
+      for(typename Block::RowIterator b=identity.begin(); b !=  identity.end(); ++b)
+        b->operator[](b.index())=1.0;
 
       for(ConstIterator index = pinfo.indexSet().begin();
           index != end; ++index) {
@@ -689,7 +693,7 @@ namespace Dune
           cend = row.end();
 
           assert(col != cend); // There should be a diagonal entry
-          *col = 1;
+          *col = identity;
 
           for(++col; col != cend; ++col)
             *col = 0;
