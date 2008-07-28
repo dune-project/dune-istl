@@ -310,7 +310,20 @@ namespace Dune {
     //===== conversion operator
 
     /** \brief Cast to a scalar */
-    operator K () const {return p_;}
+    //        operator K () const {return p_;}
+
+    /** \brief Cast to FieldMatrix
+     * Might be inefficient, but operator= has to be a member of FieldMatrix
+     * */
+    operator FieldMatrix<K,n,n>() const
+    {
+      FieldMatrix<K, n, n> fm = 0.0;
+      for(int i=0; i<n; ++i)
+        fm[i][i] = p_;
+      return fm;
+    }
+
+
 
     /** \brief Sends the matrix to an output stream */
     friend std::ostream& operator<< (std::ostream& s, const ScaledIdentityMatrix<K,n>& a)
@@ -322,6 +335,18 @@ namespace Dune {
       }
       return s;
     }
+
+    /** \brief Return FieldVector as row replacement
+     * This might be inefficient.
+     * */
+    const FieldVector<K,n> operator[](size_type i) const
+    {
+      FieldVector<K, n> fv;
+      fv = 0.0;
+      fv[i] = p_;
+      return fv;
+    }
+
 
   private:
     // the data, very simply a single number
