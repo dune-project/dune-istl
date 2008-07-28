@@ -127,7 +127,7 @@ int main(int argc, char** argv)
   std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
 
   std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
-  std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
+  std::cout<<"AMG building together with solving took "<<buildtime+solvetime<<std::endl;
 
   /*
      watch.reset();
