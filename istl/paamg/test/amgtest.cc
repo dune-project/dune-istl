@@ -24,23 +24,10 @@ void randomize(const M& mat, V& b)
   mat.mv(static_cast<const V&>(x), b);
 }
 
-int main(int argc, char** argv)
+
+template <int BS>
+void testAMG(int N, int coarsenTarget, int ml)
 {
-
-  const int BS=1;
-
-  int N=500/BS;
-  int coarsenTarget=1200;
-  int ml=10;
-
-  if(argc>1)
-    N = atoi(argv[1]);
-
-  if(argc>2)
-    coarsenTarget = atoi(argv[2]);
-
-  if(argc>3)
-    ml = atoi(argv[3]);
 
   std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<" maxlevel="<<ml<<std::endl;
 
@@ -87,7 +74,7 @@ int main(int argc, char** argv)
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::SymmetricMultiplicativeSchwarzMode> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector> Smoother;
-  typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+  typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 
   SmootherArgs smootherArgs;
 
@@ -135,4 +122,26 @@ int main(int argc, char** argv)
 
      std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
    */
+}
+
+
+int main(int argc, char** argv)
+{
+
+  int N=500;
+  int coarsenTarget=1200;
+  int ml=10;
+
+  if(argc>1)
+    N = atoi(argv[1]);
+
+  if(argc>2)
+    coarsenTarget = atoi(argv[2]);
+
+  if(argc>3)
+    ml = atoi(argv[3]);
+
+  testAMG<1>(N, coarsenTarget, ml);
+  testAMG<2>(N, coarsenTarget, ml);
+
 }
