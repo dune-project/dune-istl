@@ -347,6 +347,19 @@ namespace Dune {
       return fv;
     }
 
+    /** \brief Get const reference to the scalar diagonal value
+     */
+    const K& scalar() const
+    {
+      return p_;
+    }
+
+    /** \brief Get reference to the scalar diagonal value
+     */
+    K& scalar()
+    {
+      return p_;
+    }
 
   private:
     // the data, very simply a single number
