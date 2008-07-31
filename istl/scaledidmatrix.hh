@@ -267,7 +267,7 @@ namespace Dune {
     template<class V>
     void solve (V& x, const V& b) const {
       for (int i=0; i<n; i++)
-        x = b/p_;
+        x[i] = b[i]/p_;
     }
 
     /** \brief Compute inverse
