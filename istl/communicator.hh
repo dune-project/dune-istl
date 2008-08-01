@@ -969,12 +969,18 @@ namespace Dune
 
       for(iterator process = messageTypes.begin(); process != end; ++process) {
         MPI_Datatype *type = &(process->second.first);
-        MPI_Type_free(type);
+        int finalized=0;
+#if MPI_2
+        MPI_Finalized(&finalized);
+#endif
+        if(*type!=MPI_DATATYPE_NULL && !finalized)
+          MPI_Type_free(type);
         type = &(process->second.second);
-        MPI_Type_free(type);
+        if(*type!=MPI_DATATYPE_NULL && !finalized)
+          MPI_Type_free(type);
       }
       messageTypes.clear();
-
+      created_=false;
     }
 
   }
@@ -1113,9 +1119,10 @@ namespace Dune
 
     MPI_Allreduce(&success, &globalSuccess, 1, MPI_INT, MPI_MIN, this->remoteIndices_->communicator());
 
+    delete[] status;
+
     if(!globalSuccess)
       DUNE_THROW(CommunicationError, "A communication error occurred!");
-
 
   }
 
