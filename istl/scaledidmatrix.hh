@@ -14,6 +14,7 @@
 #include <complex>
 #include <iostream>
 #include <dune/common/exceptions.hh>
+#include <dune/common/fmatrix.hh>
 
 namespace Dune {
 
