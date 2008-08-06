@@ -185,9 +185,9 @@ namespace Dune
   {
     typedef typename CommPolicy<T>::IndexedType IndexedType;
 
-    const IndexedType& gather(const T& vec, int i);
+    static const IndexedType& gather(const T& vec, int i);
 
-    void scatter(T& vec, const IndexedType& v, int i);
+    static void scatter(T& vec, const IndexedType& v, int i);
 
   };
 

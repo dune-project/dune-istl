@@ -76,7 +76,7 @@ namespace Dune
      * @param isPublic True if the index might also be
      * known to other processes.
      */
-    ParallelLocalIndex(size_t localIndex, const Attribute& attribute, bool isPublic);
+    ParallelLocalIndex(size_t localIndex, const Attribute& attribute, bool isPublic=true);
     /**
      * @brief Parameterless constructor.
      *
