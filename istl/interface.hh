@@ -31,6 +31,8 @@ namespace Dune
   class InterfaceBuilder
   {
   public:
+    class RemotexIndicesStateError : public Exception
+    {};
 
     /**
      * @brief Type of the index set.
@@ -342,6 +344,9 @@ namespace Dune
   template<class T1, class T2, class Op, bool send>
   void InterfaceBuilder<T>::buildInterface(const RemoteIndices& remoteIndices, const T1& sourceFlags, const T2& destFlags, Op& interfaceInformation) const
   {
+
+    if(!remoteIndices.isSynced())
+      DUNE_THROW(RemotexIndicesStateError,"RemoteIndices is not in sync with the index set. Call RemoteIndices::rebuild first!");
     // Allocate the memory for the data type construction.
     typedef typename RemoteIndices::RemoteIndexMap::const_iterator const_iterator;
     typedef typename RemoteIndices::ParallelIndexSet::const_iterator LocalIterator;

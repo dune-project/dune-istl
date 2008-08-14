@@ -185,9 +185,9 @@ namespace Dune
   {
     typedef typename CommPolicy<T>::IndexedType IndexedType;
 
-    static const IndexedType& gather(const T& vec, int i);
+    static const IndexedType& gather(const T& vec, std::size_t i);
 
-    static void scatter(T& vec, const IndexedType& v, int i);
+    static void scatter(T& vec, const IndexedType& v, std::size_t i);
 
   };
 
@@ -913,14 +913,14 @@ namespace Dune
 
 
   template<class T>
-  inline const typename CopyGatherScatter<T>::IndexedType& CopyGatherScatter<T>::gather(const T & vec, int i)
+  inline const typename CopyGatherScatter<T>::IndexedType& CopyGatherScatter<T>::gather(const T & vec, std::size_t i)
   {
     return vec[i];
 
   }
 
   template<class T>
-  inline void CopyGatherScatter<T>::scatter(T& vec, const IndexedType& v, int i)
+  inline void CopyGatherScatter<T>::scatter(T& vec, const IndexedType& v, std::size_t i)
   {
     vec[i]=v;
 
