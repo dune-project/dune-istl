@@ -239,7 +239,7 @@ namespace Dune {
       typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner> OwnerSet;
       typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
       typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
-      OwnerOverlapSet sourceFlags;
+      OwnerSet sourceFlags;
       AllSet destFlags;
       OwnerToAllInterface.build(ri,sourceFlags,destFlags);
       OwnerToAllInterfaceBuilt = true;
