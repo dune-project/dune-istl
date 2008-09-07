@@ -702,7 +702,7 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      res.clear();                  // clear solver statistics
+      res.clear();              // clear solver statistics
       Timer watch;              // start a timer
       _op.applyscaleadd(-1,x,r); // overwrite b with defect
       _prec.pre(x,r);           // prepare preconditioner
@@ -747,7 +747,7 @@ namespace Dune {
 
       it = 0;
 
-      while ( true )
+      for (it = 0; it < _maxit; it++)
       {
         //
         // preprocess, set vecsizes etc.
@@ -803,7 +803,6 @@ namespace Dune {
         // test stop criteria
         //
 
-        it++;
         norm = _sp.norm(r);
 
         if (_verbose>1) // print
@@ -816,9 +815,6 @@ namespace Dune {
           res.converged = 1;
           break;
         }
-
-        if (it >= _maxit)
-          break;
 
         norm_old = norm;
 
@@ -845,8 +841,6 @@ namespace Dune {
         // test stop criteria
         //
 
-        it++;
-
         norm = _sp.norm(r);
 
         if (_verbose > 1)           // print
@@ -860,11 +854,8 @@ namespace Dune {
           break;
         }
 
-        if (it >= _maxit)
-          break;
-
         norm_old = norm;
-      } // while
+      } // end for
 
       if (_verbose==1)              // printing for non verbose
         this->printOutput(std::cout,it,norm);
@@ -1148,6 +1139,319 @@ namespace Dune {
     double _reduction;
     int _maxit;
     int _verbose;
+  };
+
+  /**
+     \brief implements the Generalized Minimal Residual (GMRes) method
+
+     GMRes solves the unsymmetric linear system Ax = b using the
+     Generalized Minimal Residual method as described the SIAM Templates
+     book (http://www.netlib.org/templates/templates.pdf).
+
+     \todo F durch rebind erzeugen und nur den field_type für F übergeben
+
+   */
+
+  template<class X, class Y=X, class F = Y>
+  class RestartedGMResSolver : public InverseOperator<X,Y>
+  {
+  public:
+    //! \brief The domain type of the operator to be inverted.
+    typedef X domain_type;
+    //! \brief The range type of the operator to be inverted.
+    typedef Y range_type;
+    //! \brief The field type of the operator to be inverted
+    typedef typename X::field_type field_type;
+    //! \brief The field type of the basis vectors
+    typedef F basis_type;
+
+    /*!
+       \brief Set up solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \param restart number of GMRes cycles before restart
+     */
+    template<class L, class P>
+    RestartedGMResSolver (L& A, P& M, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
+      _A_(A), _M(M),
+      ssp(), _sp(ssp), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose),
+      _recalc_defect(recalc_defect)
+    {
+      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(SolverCategory::sequential),
+                         "P must be sequential!");
+      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                         "L must be sequential!");
+    }
+
+    /*!
+       \brief Set up solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \param restart number of GMRes cycles before restart
+     */
+    template<class L, class S, class P>
+    RestartedGMResSolver (L& A, S& sp, P& M, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
+      _A_(A), _M(M),
+      _sp(sp), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose),
+      _recalc_defect(recalc_defect)
+    {
+      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(SolverCategory::sequential),
+                         "P must be sequential!");
+      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                         "L must be sequential!");
+    }
+
+    //! \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    {
+      apply(x,b,_reduction,res);
+    };
+
+    /*!
+       \brief Apply inverse operator.
+
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
+    {
+      int m = _restart;
+      field_type norm;
+      field_type norm_old = 0.0;
+      field_type norm_0;
+      field_type beta;
+      int i, j = 1, k;
+      std::vector<field_type> s(m+1), cs(m), sn(m);
+      // helper vector
+      X w(b.size());
+      std::vector< std::vector<field_type> > H(m+1,s);
+      std::vector<F> v(m+1,b);
+
+      // start timer
+      Timer watch;                // start a timer
+
+      // clear solver statistics
+      res.clear();
+
+      _M.pre(x,b);
+
+      if (_recalc_defect)
+      {
+        // norm_0 = norm(M^-1 b)
+        w = 0.0; _M.apply(w,b); // w = M^-1 b
+        norm_0 = _sp.norm(w);
+        // r = _M.solve(b - A * x);
+        w = b;
+        _A_.applyscaleadd(-1,x, /* => */ w); // w = b - Ax;
+        v[0] = 0.0; _M.apply(v[0],w); // r = M^-1 w
+        beta = _sp.norm(v[0]);
+      }
+      else
+      {
+        // norm_0 = norm(M^-1 b)
+        w = 0.0; _M.apply(w,b); // w = M^-1 b
+        norm_0 = _sp.norm(w);
+        // r = _M.solve(b - A * x);
+        _A_.applyscaleadd(-1,x, /* => */ b); // b = b - Ax;
+        v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
+        beta = _sp.norm(v[0]);
+      }
+
+      // avoid division by zero
+      if (norm_0 == 0.0)
+        norm_0 = 1.0;
+
+      norm = norm_old = _sp.norm(v[0]);
+
+      // print header
+      if (_verbose > 0)
+      {
+        std::cout << "=== RestartedGMResSolver" << std::endl;
+        if (_verbose > 1)
+        {
+          this->printHeader(std::cout);
+          this->printOutput(std::cout,0,norm);
+        }
+      }
+
+      // check convergence
+      if (norm <= _reduction * norm_0) {
+        _M.post(x);                  // postprocess preconditioner
+        res.converged  = true;
+        if (_verbose > 0)                 // final print
+          print_result(res);
+        return;
+      }
+
+      while (j <= _maxit && res.converged != true) {
+        v[0] *= (1.0 / beta);
+        for (i=1; i<=m; i++) s[i] = 0.0;
+        s[0] = beta;
+
+        for (i = 0; i < m && j <= _maxit && res.converged != true; i++, j++) {
+          w = 0.0;
+          v[i+1] = 0.0; // use v[i+1] as temporary vector
+          _A_.apply(v[i], /* => */ v[i+1]);
+          _M.apply(w, v[i+1]);
+          for (k = 0; k <= i; k++) {
+            H[k][i] = _sp.dot(w, v[k]);
+            // w -= H[k][i] * v[k];
+            w.axpy(-H[k][i], v[k]);
+          }
+          H[i+1][i] = _sp.norm(w);
+          if (H[i+1][i] == 0.0)
+            DUNE_THROW(ISTLError,"breakdown in GMRes - |w| "
+                       << w << " == 0.0 after " << j << " iterations");
+          // v[i+1] = w * (1.0 / H[i+1][i]);
+          v[i+1] = w; v[i+1] *= (1.0 / H[i+1][i]);
+
+          for (k = 0; k < i; k++)
+            applyPlaneRotation(H[k][i], H[k+1][i], cs[k], sn[k]);
+
+          generatePlaneRotation(H[i][i], H[i+1][i], cs[i], sn[i]);
+          applyPlaneRotation(H[i][i], H[i+1][i], cs[i], sn[i]);
+          applyPlaneRotation(s[i], s[i+1], cs[i], sn[i]);
+
+          norm = std::abs(s[i+1]);
+
+          if (_verbose > 1)             // print
+          {
+            this->printOutput(std::cout,j,norm,norm_old);
+          }
+
+          norm_old = norm;
+
+          if (norm < _reduction * norm_0) {
+            res.converged = true;
+          }
+        }
+
+        if (_recalc_defect)
+        {
+          // update x
+          update(x, i - 1, H, s, v);
+
+          // update residuum
+          // r = M^-1 (b - A * x);
+          w = b; _A_.applyscaleadd(-1,x, /* => */ w);
+          _M.apply(v[0], w);
+          beta = _sp.norm(v[0]);
+          norm = beta;
+        }
+        else
+        {
+          // calc update vector
+          w = 0;
+          update(w, i - 1, H, s, v);
+
+          // update x
+          x += w;
+
+          // r = M^-1 (b - A * x);
+          // update defect
+          _A_.applyscaleadd(-1,w, /* => */ b);
+          // r = M^-1 (b - A * x);
+          v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
+          beta = _sp.norm(v[0]);
+          norm = beta;
+
+          res.converged = false;
+        }
+
+        if (_verbose > 1)             // print
+        {
+          this->printOutput(std::cout,j,norm,norm_old);
+        }
+
+        norm_old = norm;
+
+        if (norm < _reduction * norm_0) {
+          // fill statistics
+          res.converged = true;
+        }
+
+        if (res.converged != true && _verbose > 0)
+          std::cout << "=== GMRes::restart\n";
+      }
+
+      _M.post(x);                  // postprocess preconditioner
+
+      res.iterations = j;
+      res.reduction = norm / norm_0;
+      res.conv_rate  = pow(res.reduction,1.0/j);
+      res.elapsed = watch.elapsed();
+
+      if (_verbose>0)
+        print_result(res);
+    }
+  private:
+
+    void
+    print_result (const InverseOperatorResult & res) const
+    {
+      int j = res.iterations>0 ? res.iterations : 1;
+      std::cout << "=== rate=" << res.conv_rate
+                << ", T=" << res.elapsed
+                << ", TIT=" << res.elapsed/j
+                << ", IT=" << res.iterations
+                << std::endl;
+    }
+
+    static void
+    update(X &x, int k,
+           std::vector< std::vector<field_type> > & h,
+           std::vector<field_type> & s, std::vector<F> v)
+    {
+      std::vector<field_type> y(s);
+
+      // Backsolve:
+      for (int i = k; i >= 0; i--) {
+        y[i] /= h[i][i];
+        for (int j = i - 1; j >= 0; j--)
+          y[j] -= h[j][i] * y[i];
+      }
+
+      for (int j = 0; j <= k; j++)
+        // x += v[j] * y[j];
+        x.axpy(y[j],v[j]);
+    }
+
+    void
+    generatePlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
+    {
+      if (dy == 0.0) {
+        cs = 1.0;
+        sn = 0.0;
+      } else if (std::abs(dy) > std::abs(dx)) {
+        field_type temp = dx / dy;
+        sn = 1.0 / std::sqrt( 1.0 + temp*temp );
+        cs = temp * sn;
+      } else {
+        field_type temp = dy / dx;
+        cs = 1.0 / std::sqrt( 1.0 + temp*temp );
+        sn = temp * cs;
+      }
+    }
+
+
+    void
+    applyPlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
+    {
+      field_type temp  =  cs * dx + sn * dy;
+      dy = -sn * dx + cs * dy;
+      dx = temp;
+    }
+
+    LinearOperator<X,X>& _A_;
+    Preconditioner<X,X>& _M;
+    SeqScalarProduct<X> ssp;
+    ScalarProduct<X>& _sp;
+    int _restart;
+    double _reduction;
+    int _maxit;
+    int _verbose;
+    bool _recalc_defect;
   };
 
   /** @} end documentation */
