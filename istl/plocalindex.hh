@@ -7,6 +7,7 @@
 
 #include "localindex.hh"
 #include "mpitraits.hh"
+#include <iostream>
 
 namespace Dune
 {

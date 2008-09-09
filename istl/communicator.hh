@@ -8,6 +8,11 @@
 #include "interface.hh"
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>
+
+#if HAVE_MPI
+// MPI header
+#include <mpi.h>
+
 namespace Dune
 {
   /** @defgroup ISTL_Comm ISTL Communication
@@ -1498,5 +1503,7 @@ namespace Dune
 
   /** @} */
 }
+
+#endif
 
 #endif

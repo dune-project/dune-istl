@@ -40,7 +40,7 @@ namespace Dune
     /**
      * @brief The type of the underlying index set.
      */
-    typedef ParallelIndexSet<TG,TL,N> ParallelIndexSet;
+    typedef Dune::ParallelIndexSet<TG,TL,N> ParallelIndexSet;
 
     //typedef typename ParallelIndexSet::const_iterator ParallelIndexSetIterator;
 
@@ -121,7 +121,7 @@ namespace Dune
     /**
      * @brief The type of the underlying index set.
      */
-    typedef ParallelIndexSet<GlobalIndex,LocalIndex,N> ParallelIndexSet;
+    typedef Dune::ParallelIndexSet<GlobalIndex,LocalIndex,N> ParallelIndexSet;
 
     /**
      * @brief The type of the iterator of the selected indices.
@@ -204,7 +204,7 @@ namespace Dune
     /**
      * @brief The type of the underlying index set.
      */
-    typedef ParallelIndexSet<GlobalIndex,LocalIndex,N> ParallelIndexSet;
+    typedef Dune::ParallelIndexSet<GlobalIndex,LocalIndex,N> ParallelIndexSet;
 
     /**
      * @brief The type of the iterator of the selected indices.
