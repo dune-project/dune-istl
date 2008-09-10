@@ -5,6 +5,7 @@
 #define DUNE_AMG_PINFO_HH
 
 #include <dune/common/collectivecommunication.hh>
+#include <dune/common/enumset.hh>
 
 #if HAVE_MPI
 

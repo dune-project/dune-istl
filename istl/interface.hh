@@ -4,8 +4,11 @@
 #ifndef DUNE_INTERFACE_HH
 #define DUNE_INTERFACE_HH
 
+#if HAVE_MPI
+
 #include "remoteindices.hh"
 #include <dune/common/enumset.hh>
+
 namespace Dune
 {
   /** @addtogroup ISTL_Comm
@@ -498,5 +501,7 @@ namespace Dune
   }
   /** @} */
 }
+
+#endif // HAVE_MPI
 
 #endif

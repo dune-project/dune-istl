@@ -3,6 +3,7 @@
 #ifndef DUNE_AMGTRANSFER_HH
 #define DUNE_AMGTRANSFER_HH
 
+#include <dune/istl/bvector.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/aggregates.hh>

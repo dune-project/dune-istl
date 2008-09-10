@@ -10,8 +10,9 @@
 
 #if HAVE_MPI
 #include <dune/istl/owneroverlapcopy.hh>
-#include "pinfo.hh"
 #endif
+
+#include "pinfo.hh"
 
 namespace Dune
 {

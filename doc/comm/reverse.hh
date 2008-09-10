@@ -4,8 +4,7 @@
 #ifndef REVERSE_HH
 #define REVERSE_HH
 
-#include <dune/istl/plocalindex.hh>
-#include <dune/istl/indexset.hh>
+#include "buildindexset.hh"
 
 /**
  * @brief Reverse the local indices of an index set.

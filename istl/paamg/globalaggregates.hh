@@ -4,6 +4,8 @@
 #define GLOBALAGGREGATES_HH
 
 #include "aggregates.hh"
+#include "pinfo.hh"
+#include <dune/istl/indexset.hh>
 
 namespace Dune
 {
