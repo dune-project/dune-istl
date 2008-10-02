@@ -1308,8 +1308,8 @@ namespace Dune {
   inline void RemoteIndexListModifier<T,mode>::insert(const RemoteIndex& index) throw(InvalidPosition)
   {
     dune_static_assert(!mode,"Not allowed if the mode indicates that new indices"
-                       << "might be added to the underlying index set. Use "
-                       << "insert(const RemoteIndex&, const GlobalIndex&) instead");
+                       "might be added to the underlying index set. Use "
+                       "insert(const RemoteIndex&, const GlobalIndex&) instead");
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     if(!first_ && index.localIndexPair().global()<last_)
@@ -1331,8 +1331,8 @@ namespace Dune {
   inline void RemoteIndexListModifier<T,mode>::insert(const RemoteIndex& index, const GlobalIndex& global) throw(InvalidPosition)
   {
     dune_static_assert(mode,"Not allowed if the mode indicates that no new indices"
-                       << "might be added to the underlying index set. Use "
-                       << "insert(const RemoteIndex&) instead");
+                       "might be added to the underlying index set. Use "
+                       "insert(const RemoteIndex&) instead");
 #ifdef DUNE_ISTL_WITH_CHECKING
     if(!first_ && global<last_)
       DUNE_THROW(InvalidPosition, "Modification of remote indices have to occur with ascending global index.");
