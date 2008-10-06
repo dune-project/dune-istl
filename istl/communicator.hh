@@ -449,9 +449,15 @@ namespace Dune
   {
   public:
     /**
+     * @brief The type of the parallel index set.
+     * @see ParallelIndexSet
+     */
+    typedef T PIndexSet;
+
+    /**
      * @brief The type of the interface.
      */
-    typedef Dune::Interface<T> Interface;
+    typedef Dune::Interface<PIndexSet> Interface;
 
     /**
      * @brief The type of the global index.

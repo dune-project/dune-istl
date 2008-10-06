@@ -502,9 +502,16 @@ namespace Dune
      * @brief Constructor.
      * @param indexset The index set we want to be able to lookup the corresponding
      * global index of a local index.
-     * @param size The number of indices present.
+     * @param size The number of indices present, i.e. one more than the maximum local index.
      */
     GlobalLookupIndexSet(const ParallelIndexSet& indexset, std::size_t size);
+
+    /**
+     * @brief Constructor.
+     * @param indexset The index set we want to be able to lookup the corresponding
+     * global index of a local index.
+     */
+    GlobalLookupIndexSet(const ParallelIndexSet& indexset);
 
     /**
      * @brief Destructor.
@@ -952,11 +959,26 @@ namespace Dune
   {
     assert(size>=indexset.size());
     const_iterator end_ = indexSet_.end();
-    size_t i=0;
-    for(const_iterator pair = indexSet_.begin(); pair!=end_; ++pair, ++i) {
+
+    for(const_iterator pair = indexSet_.begin(); pair!=end_; ++pair) {
       assert(pair->local()<size_);
       indices_[pair->local()] = &(*pair);
     }
+  }
+
+  template<class I>
+  GlobalLookupIndexSet<I>::GlobalLookupIndexSet(const I& indexset)
+    : indexSet_(indexset)
+  {
+    const_iterator end_ = indexSet_.end();
+    size_t size=0;
+    for(const_iterator pair = indexSet_.begin(); pair!=end_; ++pair)
+      size_=std::max(size_,pair->local());
+
+    indices_.setSize(++size_);
+
+    for(const_iterator pair = indexSet_.begin(); pair!=end_; ++pair)
+      indices_[pair->local()] = &(*pair);
   }
 
   template<class I>
