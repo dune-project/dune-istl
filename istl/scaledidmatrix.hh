@@ -316,13 +316,13 @@ namespace Dune {
     /** \brief Cast to FieldMatrix
      * Might be inefficient, but operator= has to be a member of FieldMatrix
      * */
-    operator FieldMatrix<K,n,n>() const
-    {
-      FieldMatrix<K, n, n> fm = 0.0;
-      for(int i=0; i<n; ++i)
-        fm[i][i] = p_;
-      return fm;
-    }
+    /*   operator FieldMatrix<K,n,n>() const
+       {
+       FieldMatrix<K, n, n> fm = 0.0;
+       for(int i=0; i<n; ++i)
+          fm[i][i] = p_;
+       return fm;
+       }*/
 
 
 
@@ -367,6 +367,14 @@ namespace Dune {
     K p_;
 
   };
+
+  template<class K, int n>
+  void istl_assign_to_fmatrix(FieldMatrix<K,n,n>& fm, const ScaledIdentityMatrix<K,n>& s)
+  {
+    fm = K();
+    for(int i=0; i<n; ++i)
+      fm[i][i] = s.scalar();
+  }
 
 } // end namespace
 
