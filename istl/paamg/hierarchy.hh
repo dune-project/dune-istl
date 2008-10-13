@@ -447,7 +447,7 @@ namespace Dune
     };
 
     /**
-     * @brief The criterion describing the stop criteria for the coarsening Process.
+     * @brief The criterion describing the stop criteria for the coarsening process.
      */
     template<class T>
     class CoarsenCriterion : public T
@@ -455,7 +455,7 @@ namespace Dune
     public:
       /**
        * @brief The criterion for tagging connections as strong and nodes as isolated.
-       * This might be e.~g. SymmetricDependency or UnSymmetricCriterion.
+       * This might be e.g. SymmetricDependency or UnSymmetricCriterion.
        */
       typedef T DependencyCriterion;
 
