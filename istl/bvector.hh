@@ -284,6 +284,17 @@ namespace Dune {
       }
     }
 
+    /** \brief Make vector with _n components but preallocating capacity components
+
+       If _n > capacity then space for _n entries is allocated.
+       \note This constructor is somewhat dangerous.  People may be tempted to
+       write something like
+       \code
+       BlockVector<FieldVector<double,1> > my_vector(100,0);
+       \endcode
+       expecting to obtain a vector of 100 doubles initialized with zero.
+       However, the code calls this constructor which tacitly does something else!
+     */
     BlockVector (size_type _n, size_type capacity)
     {
       this->n = _n;
