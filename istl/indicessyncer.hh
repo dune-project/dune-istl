@@ -98,27 +98,31 @@ namespace Dune
     /** @brief The remote indices. */
     RemoteIndices& remoteIndices_;
 
-    /** @brief The send and receive buffers. */
-    char* buffer_;
+    /** @brief The send buffers for the neighbour processes. */
+    char** sendBuffers_;
 
-    /** @brief The size of the buffer in bytes. */
-    int bufferSize_;
+    /** @brief The receive buffer. */
+    char* receiveBuffer_;
+
+    /** @brief The size of the send buffers. */
+    std::size_t* sendBufferSizes_;
+
+    /** @brief The size of the receive buffer in bytes. */
+    int receiveBufferSize_; // int because of MPI
 
     /**
-     * @brief Information about the messages to send.
+     * @brief Information about the messages to send to a neighbouring process.
      */
     struct MessageInformation
     {
       MessageInformation()
-      {
-        publish=0;
-        pairs=0;
-      }
-      /** @brief The number of indices we publish for each process. */
+        : publish(), pairs()
+      {}
+      /** @brief The number of indices we publish for the other process. */
       int publish;
       /**
        * @brief The number of pairs (attribute and process number)
-       * we publish to each neighbour process.
+       * we publish to the neighbour process.
        */
       int pairs;
     };
@@ -134,7 +138,7 @@ namespace Dune
        * std::numeric_limits<size_t>::max()
        * @param global The global index (ignored).
        */
-      size_t operator()(const GlobalIndex& global)
+      std::size_t operator()(const GlobalIndex& global)
       {
         return std::numeric_limits<size_t>::max();
       }
@@ -338,16 +342,18 @@ namespace Dune
     /**
      * @brief Pack and send the message for another process.
      * @param destination The rank of the process we send to.
+     * @param buffer The allocated buffer to use.
+     * @param bufferSize The size of the buffer.
+     * @param req The MPI_Request to setup the nonblocking send.
      */
-    void packAndSend(int destination);
+    void packAndSend(int destination, char* buffer, std::size_t bufferSize, MPI_Request& req);
 
     /**
      * @brief Recv and unpack the message from another process and add the indices.
-     * @param source The rank of the process we receive from.
      * @param numberer Functor providing local indices for added global indices.
      */
     template<typename T1>
-    void recvAndUnpack(int source, T1& numberer);
+    void recvAndUnpack(T1& numberer);
 
     /**
      * @brief Register the MPI datatype for the MessageInformation.
@@ -584,19 +590,20 @@ namespace Dune
 
     const MessageIterator end = infoSend_.end();
 
-    registerMessageDatatype();
+    // registerMessageDatatype();
 
-    MessageInformation maxSize, dummy;
+    // Now determine the buffersizes needed for each neighbour using MPI_Pack_size
+    MessageInformation dummy;
 
     MessageIterator messageIter= infoSend_.begin();
 
     typedef typename RemoteIndices::RemoteIndexMap::const_iterator RemoteIterator;
     const RemoteIterator rend = remoteIndices_.end();
+    int neighbour=0;
 
-    for(RemoteIterator remote = remoteIndices_.begin(); remote != rend; ++remote) {
+    for(RemoteIterator remote = remoteIndices_.begin(); remote != rend; ++remote, ++neighbour) {
       MessageInformation* message;
       MessageInformation recv;
-      MPI_Status status;
 
       if(messageIter != end && messageIter->first==remote->first) {
         // We want to send message information to that process
@@ -606,57 +613,35 @@ namespace Dune
         // We do not want to send information but the other process might.
         message = &dummy;
 
-      if(remote->first < rank_) {
-        MPI_Send(message, 1, datatype_, remote->first, 122, remoteIndices_.communicator());
-        MPI_Recv(&recv, 1, datatype_, remote->first, 122, remoteIndices_.communicator(), &status);
-      }else{
-        MPI_Recv(&recv, 1, datatype_, remote->first, 122, remoteIndices_.communicator(), &status);
-        MPI_Send(message, 1, datatype_, remote->first, 122, remoteIndices_.communicator());
+      sendBufferSizes_[neighbour]=0;
+      int tsize;
+      // The number of indices published
+      MPI_Pack_size(1, MPI_INT,remoteIndices_.communicator(), &tsize);
+      sendBufferSizes_[neighbour] += tsize;
+
+      for(int i=0; i < message->publish; ++i) {
+        // The global index
+        MPI_Pack_size(1, MPITraits<GlobalIndex>::getType(), remoteIndices_.communicator(), &tsize);
+        sendBufferSizes_[neighbour] += tsize;
+        // The attribute in the local index
+        MPI_Pack_size(1, MPI_CHAR, remoteIndices_.communicator(), &tsize);
+        sendBufferSizes_[neighbour] += tsize;
+        // The number of corresponding remote indices
+        MPI_Pack_size(1, MPI_INT, remoteIndices_.communicator(), &tsize);
+        sendBufferSizes_[neighbour] += tsize;
       }
-      /*
-         dvverb<<rank_<<": sent to "<<remote->first<<" (publish="<<message->publish<<", pairs="<<message->pairs<<")"<<std::endl;
-         dvverb<<rank_<<": received from "<<remote->first<<" (publish="<<recv.publish<<", pairs="<<recv.pairs<<")"<<std::endl;
-       */
-      // calculate max message size
-      maxSize.publish = std::max(maxSize.publish, message->publish);
-      maxSize.pairs = std::max(maxSize.pairs, message->pairs);
-      maxSize.publish = std::max(maxSize.publish, recv.publish);
-      maxSize.pairs = std::max(maxSize.pairs, recv.pairs);
+      for(int i=0; i < message->pairs; ++i) {
+        // The process of the remote index
+        MPI_Pack_size(1, MPI_INT, remoteIndices_.communicator(), &tsize);
+        sendBufferSizes_[neighbour] += tsize;
+        // The attribute of the remote index
+        MPI_Pack_size(1, MPI_CHAR, remoteIndices_.communicator(), &tsize);
+        sendBufferSizes_[neighbour] += tsize;
+      }
+
+      Dune::dverb<<rank_<<": Buffer (neighbour="<<remote->first<<") size is "<< sendBufferSizes_[neighbour]<<" for publish="<<message->publish<<" pairs="<<message->pairs<<std::endl;
     }
 
-    MPI_Type_free(&datatype_);
-
-
-    bufferSize_=0;
-    int tsize;
-    // The number of indices published
-    MPI_Pack_size(1, MPI_INT,remoteIndices_.communicator(), &tsize);
-    bufferSize_ += tsize;
-
-    for(int i=0; i < maxSize.publish; ++i) {
-      // The global index
-      MPI_Pack_size(1, MPITraits<GlobalIndex>::getType(), remoteIndices_.communicator(), &tsize);
-      bufferSize_ += tsize;
-      // The attribute in the local index
-      MPI_Pack_size(1, MPI_CHAR, remoteIndices_.communicator(), &tsize);
-      bufferSize_ += tsize;
-      // The number of corresponding remote indices
-      MPI_Pack_size(1, MPI_INT, remoteIndices_.communicator(), &tsize);
-      bufferSize_ += tsize;
-    }
-    for(int i=0; i < maxSize.pairs; ++i) {
-      // The process of the remote index
-      MPI_Pack_size(1, MPI_INT, remoteIndices_.communicator(), &tsize);
-      bufferSize_ += tsize;
-      // The attribute of the remote index
-      MPI_Pack_size(1, MPI_CHAR, remoteIndices_.communicator(), &tsize);
-      bufferSize_ += tsize;
-    }
-
-    // Allocate the buffer
-    buffer_ = new char[bufferSize_];
-
-    Dune::dverb<<rank_<<": Buffer size is "<< bufferSize_<<" for publish="<<maxSize.publish<<" pairs="<<maxSize.pairs<<std::endl;
   }
 
   template<typename T>
@@ -683,9 +668,10 @@ namespace Dune
 
     // Number of neighbours might change during the syncing.
     // save the old neighbours
-    int noOldNeighbours = remoteIndices_.neighbours();
+    std::size_t noOldNeighbours = remoteIndices_.neighbours();
     int* oldNeighbours = new int[noOldNeighbours];
-    int i=0;
+    sendBufferSizes_ = new std::size_t[noOldNeighbours];
+    std::size_t i=0;
 
     for(RemoteIterator remote = remoteIndices_.begin(); remote != end; ++remote, ++i) {
       typedef typename RemoteIndices::RemoteIndexList::const_iterator
@@ -719,6 +705,17 @@ namespace Dune
 
     calculateMessageSizes();
 
+    // Allocate the buffers
+    receiveBufferSize_=1;
+    sendBuffers_ = new char*[noOldNeighbours];
+
+    for(std::size_t i=0; i<noOldNeighbours; ++i) {
+      sendBuffers_[i] = new char[sendBufferSizes_[i]];
+      receiveBufferSize_ = std::max(receiveBufferSize_, static_cast<int>(sendBufferSizes_[i]));
+    }
+
+    receiveBuffer_=new char[receiveBufferSize_];
+
     indexSet_.beginResize();
 
     Dune::dverb<<rank_<<": Neighbours: ";
@@ -728,17 +725,40 @@ namespace Dune
 
     Dune::dverb<<std::endl;
 
-    for(i = 0; i<noOldNeighbours; ++i) {
-      if(oldNeighbours[i] < rank_) {
-        packAndSend(oldNeighbours[i]);
-        recvAndUnpack(oldNeighbours[i], numberer);
-      }else{
-        recvAndUnpack(oldNeighbours[i], numberer);
-        packAndSend(oldNeighbours[i]);
-      }
+    MPI_Request* requests = new MPI_Request[noOldNeighbours];
+    MPI_Status* statuses = new MPI_Status[noOldNeighbours];
+
+    // Pack Message data and start the sends
+    for(i = 0; i<noOldNeighbours; ++i)
+      packAndSend(oldNeighbours[i], sendBuffers_[i], sendBufferSizes_[i], requests[i]);
+
+    // Probe for incoming messages, receive and unpack them
+    for(i = 0; i<noOldNeighbours; ++i)
+      recvAndUnpack(numberer);
+    //       }else{
+    //  recvAndUnpack(oldNeighbours[i], numberer);
+    //  packAndSend(oldNeighbours[i]);
+    //       }
+    //     }
+
+    delete[] receiveBuffer_;
+
+    // Wait for the completion of the sends
+    // Wait for completion of sends
+    if(MPI_SUCCESS!=MPI_Waitall(noOldNeighbours, requests, statuses)) {
+      std::cerr<<": MPI_Error occurred while sending message"<<std::endl;
+      for(i=0; i< noOldNeighbours; i++)
+        if(MPI_SUCCESS!=statuses[i].MPI_ERROR)
+          std::cerr<<"Destination "<<statuses[i].MPI_SOURCE<<" error code: "<<statuses[i].MPI_ERROR<<std::endl;
     }
 
-    delete[] buffer_;
+    delete[] statuses;
+    delete[] requests;
+
+    for(std::size_t i=0; i<noOldNeighbours; ++i)
+      delete[] sendBuffers_[i];
+
+    delete[] sendBuffers_;
 
     // No need for the iterator tuples any more
     iteratorsMap_.clear();
@@ -756,9 +776,8 @@ namespace Dune
     remoteIndices_.sourceSeqNo_ = remoteIndices_.destSeqNo_ = indexSet_.seqNo();
   }
 
-
   template<typename T>
-  void IndicesSyncer<T>::packAndSend(int destination)
+  void IndicesSyncer<T>::packAndSend(int destination, char* buffer, std::size_t bufferSize, MPI_Request& request)
   {
     typedef typename ParallelIndexSet::const_iterator IndexIterator;
     typedef typename RemoteIndexList::const_iterator RemoteIndexIterator;
@@ -773,7 +792,7 @@ namespace Dune
     assert(checkReset());
 
     // Pack the number of indices we publish
-    MPI_Pack(&(infoSend_[destination].publish), 1, MPI_INT, buffer_, bufferSize_, &bpos,
+    MPI_Pack(&(infoSend_[destination].publish), 1, MPI_INT, buffer, bufferSize, &bpos,
              remoteIndices_.communicator());
 
     for(IndexIterator index = indexSet_.begin(); index != iEnd; ++index) {
@@ -810,15 +829,15 @@ namespace Dune
       assert(pairs <= infoSend_[destination].pairs);
 
       // Pack the global index, the attribute and the number
-      MPI_Pack(const_cast<GlobalIndex*>(&(index->global())), 1, MPITraits<GlobalIndex>::getType(), buffer_, bufferSize_, &bpos,
+      MPI_Pack(const_cast<GlobalIndex*>(&(index->global())), 1, MPITraits<GlobalIndex>::getType(), buffer, bufferSize, &bpos,
                remoteIndices_.communicator());
 
       char attr = index->local().attribute();
-      MPI_Pack(&attr, 1, MPI_CHAR, buffer_, bufferSize_, &bpos,
+      MPI_Pack(&attr, 1, MPI_CHAR, buffer, bufferSize, &bpos,
                remoteIndices_.communicator());
 
       // Pack the number of remote indices we send.
-      MPI_Pack(&indices, 1, MPI_INT, buffer_, bufferSize_, &bpos,
+      MPI_Pack(&indices, 1, MPI_INT, buffer, bufferSize, &bpos,
                remoteIndices_.communicator());
 
       // Pack the information about the remote indices
@@ -826,11 +845,11 @@ namespace Dune
         if(iterators->second.isNotAtEnd() && iterators->second.isOld()
            && iterators->second.globalIndex() == index->global()) {
           int process = iterators->first;
-          MPI_Pack(&process, 1, MPI_INT, buffer_, bufferSize_, &bpos,
+          MPI_Pack(&process, 1, MPI_INT, buffer, bufferSize, &bpos,
                    remoteIndices_.communicator());
           char attr = iterators->second.remoteIndex().attribute();
 
-          MPI_Pack(&attr, 1, MPI_CHAR, buffer_, bufferSize_, &bpos,
+          MPI_Pack(&attr, 1, MPI_CHAR, buffer, bufferSize, &bpos,
                    remoteIndices_.communicator());
         }
       ++published;
@@ -844,7 +863,7 @@ namespace Dune
 
     Dune::dverb << rank_<<": Sending message of "<<bpos<<" bytes to "<<destination<<std::endl;
 
-    MPI_Send(buffer_, bpos, MPI_PACKED, destination, 111, remoteIndices_.communicator());
+    MPI_Issend(buffer, bpos, MPI_PACKED, destination, 345, remoteIndices_.communicator(),&request);
   }
 
   template<typename T>
@@ -885,7 +904,7 @@ namespace Dune
 
   template<typename T>
   template<typename T1>
-  void IndicesSyncer<T>::recvAndUnpack(int source, T1& numberer)
+  void IndicesSyncer<T>::recvAndUnpack(T1& numberer)
   {
     typedef typename ParallelIndexSet::const_iterator IndexIterator;
     typedef typename RemoteIndexList::iterator RemoteIndexIterator;
@@ -898,27 +917,27 @@ namespace Dune
 
     assert(checkReset());
 
-    Dune::dvverb<<rank_<<": Waiting for message from "<< source<<std::endl;
-
-    // Receive the data
     MPI_Status status;
 
-    // We have to determine the message size before the receive
-    MPI_Probe(source, 111, remoteIndices_.communicator(), &status);
+    // We have to determine the message size and source before the receive
+    MPI_Probe(MPI_ANY_SOURCE, 345, remoteIndices_.communicator(), &status);
 
+    int source=status.MPI_SOURCE;
     int count;
     MPI_Get_count(&status, MPI_PACKED, &count);
 
-    if(count>bufferSize_) {
-      delete[] buffer_;
-      buffer_ = new char[count];
-      bufferSize_ = count;
+    Dune::dvverb<<rank_<<": Receiving message from "<< source<<" with "<<count<<" bytes"<<std::endl;
+
+    if(count>receiveBufferSize_) {
+      receiveBufferSize_=count;
+      delete[] receiveBuffer_;
+      receiveBuffer_ = new char[receiveBufferSize_];
     }
 
-    MPI_Recv(buffer_, count, MPI_PACKED, source, 111, remoteIndices_.communicator(), &status);
+    MPI_Recv(receiveBuffer_, count, MPI_PACKED, source, 345, remoteIndices_.communicator(), &status);
 
     // How many global entries were published?
-    MPI_Unpack(buffer_,  count, &bpos, &publish, 1, MPI_INT, remoteIndices_.communicator());
+    MPI_Unpack(receiveBuffer_,  count, &bpos, &publish, 1, MPI_INT, remoteIndices_.communicator());
 
     // Now unpack the remote indices and add them.
     while(publish>0) {
@@ -928,11 +947,11 @@ namespace Dune
       char sourceAttribute; // Attribute on the source process
       int pairs;
 
-      MPI_Unpack(buffer_,  count, &bpos, &global, 1, MPITraits<GlobalIndex>::getType(),
+      MPI_Unpack(receiveBuffer_,  count, &bpos, &global, 1, MPITraits<GlobalIndex>::getType(),
                  remoteIndices_.communicator());
-      MPI_Unpack(buffer_,  count, &bpos, &sourceAttribute, 1, MPI_CHAR,
+      MPI_Unpack(receiveBuffer_,  count, &bpos, &sourceAttribute, 1, MPI_CHAR,
                  remoteIndices_.communicator());
-      MPI_Unpack(buffer_,  count, &bpos, &pairs, 1, MPI_INT,
+      MPI_Unpack(receiveBuffer_,  count, &bpos, &pairs, 1, MPI_INT,
                  remoteIndices_.communicator());
 
       // Insert the entry on the remote process to our
@@ -944,10 +963,10 @@ namespace Dune
         // Unpack the process id that knows the index
         int process;
         char attribute;
-        MPI_Unpack(buffer_,  count, &bpos, &process, 1, MPI_INT,
+        MPI_Unpack(receiveBuffer_,  count, &bpos, &process, 1, MPI_INT,
                    remoteIndices_.communicator());
         // Unpack the attribute
-        MPI_Unpack(buffer_,  count, &bpos, &attribute, 1, MPI_CHAR,
+        MPI_Unpack(receiveBuffer_,  count, &bpos, &attribute, 1, MPI_CHAR,
                    remoteIndices_.communicator());
 
         if(process==rank_) {

@@ -119,21 +119,25 @@ bool areEqual(T& indices,
   typedef typename RemoteIndices::RemoteIndexList::iterator RemoteIterator;
 
   IndexIterator iEnd = indices.end();
+  bool ret=true;
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Test the index sets
-  if(indices.size() != oIndices.size())
-    return false;
-
+  if(indices.size() != oIndices.size()) {
+    std::cerr<< rank<<": Size of index set is unequal!"<<std::endl;
+    ret= false;
+  }
   for(IndexIterator index = indices.begin(), oIndex = oIndices.begin();
       index != iEnd; ++index, ++oIndex) {
     if( index->global() != oIndex->global()) {
-      std::cerr<<"Entry for "<<index->global() <<" is missing!"<<std::endl;
-      return false;
+      std::cerr<<rank<<": Entry for "<<index->global() <<" is missing!"<<std::endl;
+      ret = false;
     }
-    if(index->local().attribute() !=oIndex->local().attribute()) {
-      std::cerr<<"Entry for "<<index->global() <<" has wrong attribute: "<<
+    else if(index->local().attribute() !=oIndex->local().attribute()) {
+      std::cerr<<rank<<": Entry for "<<index->global() <<" has wrong attribute: "<<
       index->local().attribute()<< "!= "<<oIndex->local().attribute()<<std::endl;
-      return false;
+      ret = false;
     }
   }
 
@@ -145,9 +149,11 @@ bool areEqual(T& indices,
   for(RemoteMapIterator remote = remoteIndices.begin(),
       oRemote = oRemoteIndices.begin();
       remote != rmEnd; ++remote, ++oRemote) {
-    if(oRemote->second.first->size() != remote->second.first->size())
-      std::cerr <<" Size of remote index list for process "<<remote->first
+    if(oRemote->second.first->size() != remote->second.first->size()) {
+      std::cerr <<rank<<": Size of remote index list for process "<<remote->first
                 <<" does not match!"<<std::endl;
+      ret=false;
+    }
 
     RemoteIterator rEnd = oRemote->second.first->end();
     for(RemoteIterator rIndex= remote->second.first->begin(),
@@ -156,21 +162,21 @@ bool areEqual(T& indices,
 
       if(rIndex->localIndexPair().global() != oRIndex->localIndexPair().global()) {
 
-        std::cerr<<"Remote Entry for "<< rIndex->localIndexPair().global()
+        std::cerr<<rank<<": Remote Entry for "<< rIndex->localIndexPair().global()
                  <<" is missing for process "<<remote->first<<std::endl;
-        return false;
+        ret = false;
       }
 
       if(rIndex->attribute() != oRIndex->attribute()) {
-        std::cerr<<"Attribute for entry "<<rIndex->localIndexPair().global()
+        std::cerr<<rank<<": Attribute for entry "<<rIndex->localIndexPair().global()
                  <<" for process "<< remote->first<<" is wrong: "
                  <<rIndex->attribute()<<" != "<<oRIndex->attribute()<<std::endl;
-        return false;
+        ret = false;
       }
     }
   }
 
-  return true;
+  return ret;
 }
 
 template<typename T>
@@ -206,7 +212,7 @@ void addFakeRemoteIndices(T& indices,
   std::cout<<"Added "<<added<<" fake remote indices!"<<std::endl;
 }
 
-int testIndicesSyncer()
+bool testIndicesSyncer()
 {
   //using namespace Dune;
 
@@ -221,6 +227,7 @@ int testIndicesSyncer()
 
   // The local grid
   int nx = Nx/procs;
+  int first=Nx%procs;
   // distributed indexset
   //  typedef ParallelLocalIndex<GridFlags> LocalIndexType;
 
@@ -228,8 +235,27 @@ int testIndicesSyncer()
   ParallelIndexSet indexSet, changedIndexSet;
 
   // Set up the indexsets.
-  int start = std::max(rank*nx-1,0);
-  int end = std::min((rank + 1) * nx+1, Nx);
+  int start,end, ostart, oend;
+  if(rank<first) {
+    start = rank*nx+rank;
+    end = rank +rank * nx+nx+1;
+  }else{
+    start = first+rank*nx;
+    end = first +rank*nx +nx;
+  }
+
+  if(rank>0 &&start<Nx)
+    ostart=start-1;
+  else
+    ostart=start;
+
+  if(rank<procs-1 &&end<Nx)
+    oend=end+1;
+  else
+    oend=end;
+
+  std::cout<<rank<<": ostart="<<ostart<<" start="<<start<<" end="<<end<<" oend="<<oend<<std::endl;
+  //return true;
 
   indexSet.beginResize();
   changedIndexSet.beginResize();
@@ -237,10 +263,10 @@ int testIndicesSyncer()
   int localIndex=0;
 
   for(int j=0; j<Ny; j++)
-    for(int i=start; i<end; i++) {
-      bool isPublic = (i<=start+1)||(i>=end-2);
+    for(int i=ostart; i<oend; i++) {
+      bool isPublic = (i<start+1)||(i>=end-1);
       GridFlags flag = owner;
-      if((i==start && (i!=0))||(i==end-1 && (i!=Nx-1))) {
+      if((i==ostart && (i!=0))||(i==end && (i!=Nx-1))) {
         flag = overlap;
       }
 
@@ -258,7 +284,7 @@ int testIndicesSyncer()
   changedRemoteIndices.rebuild<false>();
 
 
-  std::cout<<"Unchanged: "<<indexSet<<std::endl<<remoteIndices<<std::endl;
+  std::cout<<rank<<": Unchanged: "<<indexSet<<std::endl<<remoteIndices<<std::endl;
   assert(areEqual(indexSet, remoteIndices,changedIndexSet, changedRemoteIndices));
 
   std::cout<<"Deleting entries!"<<std::endl;
@@ -267,7 +293,7 @@ int testIndicesSyncer()
   //addFakeRemoteIndices(indexSet, changedIndexSet, remoteIndices, changedRemoteIndices);
 
   deleteOverlapEntries(changedIndexSet, changedRemoteIndices);
-  std::cout<<"Changed:   "<<changedIndexSet<<std::endl<<changedRemoteIndices<<std::endl;
+  std::cout<<rank<<": Changed:   "<<changedIndexSet<<std::endl<<changedRemoteIndices<<std::endl;
 
   Dune::IndicesSyncer<ParallelIndexSet> syncer(changedIndexSet, changedRemoteIndices);
   //  return 0;
@@ -276,11 +302,14 @@ int testIndicesSyncer()
 
   syncer.sync();
 
-  std::cout<<"Synced:   "<<changedIndexSet<<std::endl<<changedRemoteIndices<<std::endl;
+  std::cout<<rank<<": Synced:   "<<changedIndexSet<<std::endl<<changedRemoteIndices<<std::endl;
   if( areEqual(indexSet, remoteIndices,changedIndexSet, changedRemoteIndices))
-    return 0;
-  else
-    return 1;
+    return true;
+  else{
+    std::cerr<<"Output not equal!"<<std::endl;
+    return false;
+  }
+
 
 }
 
@@ -313,7 +342,13 @@ int main(int argc, char** argv){
   MPI_Errhandler handler;
   MPI_Errhandler_create(MPI_err_handler, &handler);
   MPI_Errhandler_set(MPI_COMM_WORLD, handler);
-  int ret = testIndicesSyncer();
+  int procs, rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &procs);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  bool ret=testIndicesSyncer();
+  MPI_Barrier(MPI_COMM_WORLD);
+  std::cout<<rank<<": ENd="<<ret<<std::endl;
+  if(!ret)
+    MPI_Abort(MPI_COMM_WORLD, 1);
   MPI_Finalize();
-  exit(ret);
 }
