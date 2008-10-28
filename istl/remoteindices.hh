@@ -189,16 +189,16 @@ namespace Dune {
     /**
      * @brief Type of the remote indices we manage.
      */
-    typedef RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
+    typedef Dune :: RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
 
 
     /**
      * @brief The type of the allocator for the remote index list.
      */
-    typedef PoolAllocator<RemoteIndex,1> Allocator;
+    typedef Dune :: PoolAllocator<RemoteIndex,1> Allocator;
 
     /** @brief The type of the remote index list. */
-    typedef SLList<RemoteIndex,Allocator>
+    typedef Dune :: SLList<RemoteIndex,Allocator>
     RemoteIndexList;
 
     /** @brief The type of the map from rank to remote index list. */
@@ -472,15 +472,15 @@ namespace Dune {
     /**
      * @brief Type of the remote indices we manage.
      */
-    typedef RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
+    typedef Dune :: RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
 
     /**
      * @brief The type of the allocator for the remote index list.
      */
-    typedef PoolAllocator<RemoteIndex,1> Allocator;
+    typedef Dune :: PoolAllocator<RemoteIndex,1> Allocator;
 
     /** @brief The type of the remote index list. */
-    typedef SLList<RemoteIndex,Allocator>
+    typedef Dune :: SLList<RemoteIndex,Allocator>
     RemoteIndexList;
 
     /**
@@ -603,13 +603,13 @@ namespace Dune {
     typedef typename LocalIndex::Attribute Attribute;
 
     /** @brief The remote index type */
-    typedef RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
+    typedef Dune :: RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
 
     /** @brief The allocator of the remote indices. */
-    typedef PoolAllocator<RemoteIndex,1> Allocator;
+    typedef Dune :: PoolAllocator<RemoteIndex,1> Allocator;
 
     /** @brief The type of the remote index list. */
-    typedef SLList<RemoteIndex,Allocator> RemoteIndexList;
+    typedef Dune :: SLList<RemoteIndex,Allocator> RemoteIndexList;
 
     /** @brief The of map for storing the iterators. */
     typedef std::map<int,std::pair<typename RemoteIndexList::const_iterator,

@@ -54,7 +54,7 @@ namespace Dune
     /**
      * @brief Type of the remote indices.
      */
-    typedef RemoteIndices<ParallelIndexSet> RemoteIndices;
+    typedef Dune :: RemoteIndices<ParallelIndexSet> RemoteIndices;
 
     /**
      * @brief Constructor.
@@ -206,7 +206,7 @@ namespace Dune
     typedef typename RemoteIndexList::ModifyIterator RemoteIndexModifier;
 
     /** @brief The type of the remote inde. */
-    typedef RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
+    typedef Dune :: RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
 
     /** @brief The iterator of the remote index list. */
     typedef typename RemoteIndexList::iterator RemoteIndexIterator;
