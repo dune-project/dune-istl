@@ -543,10 +543,12 @@ namespace Dune {
         if (i==0 && Mat.ready)
           DUNE_THROW(ISTLError,"creation only allowed for uninitialized matrix");
         if(Mat.build_mode!=row_wise)
+        {
           if(Mat.build_mode==unknown)
             Mat.build_mode=row_wise;
           else
             DUNE_THROW(ISTLError,"creation only allowed if row wise allocation was requested in the constructor");
+        }
       }
 
       //! prefix increment
