@@ -71,7 +71,7 @@ if MPI
 
   syncertest_SOURCES = syncertest.cc
   syncertest_CXXFLAGS = $(MPI_CPPFLAGS)
-  syncertest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  syncertest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) $(MPI_LIBS)
 #syncertest_DEPENDENCIES = $(LOCAL_LIBS)
 
   vectorcommtest_SOURCES = vectorcommtest.cc
