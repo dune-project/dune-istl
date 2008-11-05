@@ -194,12 +194,12 @@ namespace Dune {
     {
       typedef typename CommPolicy<T>::IndexedType V;
 
-      static V gather(const T& a, int i)
+      static V gather(const T& a, typename T::size_type i)
       {
         return a[i];
       }
 
-      static void scatter(T& a, V v, int i)
+      static void scatter(T& a, V v, typename T::size_type i)
       {
         a[i] = v;
       }
@@ -209,12 +209,12 @@ namespace Dune {
     {
       typedef typename CommPolicy<T>::IndexedType V;
 
-      static V gather(const T& a, int i)
+      static V gather(const T& a, typename T::size_type i)
       {
         return a[i];
       }
 
-      static void scatter(T& a, V v, int i)
+      static void scatter(T& a, V v, typename T::size_type i)
       {
         a[i] += v;
       }
@@ -311,7 +311,7 @@ namespace Dune {
             mask[i->local().local()] = 0;
       }
       result = 0;
-      for (int i=0; i<x.size(); i++)
+      for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i]*(y[i])*mask[i];
       result = cc.sum(result);
       return;
@@ -337,7 +337,7 @@ namespace Dune {
             mask[i->local().local()] = 0;
       }
       double result = 0;
-      for (int i=0; i<x.size(); i++)
+      for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i].two_norm2()*mask[i];
       return sqrt(cc.sum(result));
     }
