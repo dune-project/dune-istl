@@ -18,6 +18,7 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
+#include <dune/common/poolallocator.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -440,7 +441,7 @@ namespace Dune {
       : n(Mat.n), nnz(0)
     {
       // deep copy in global array
-      int _nnz = Mat.nnz;
+      size_type _nnz = Mat.nnz;
 
       // in case of row-wise allocation
       if (_nnz<=0)
@@ -657,7 +658,7 @@ namespace Dune {
        * @return The number of indices already
        * inserted for the current row.
        */
-      typename std::set<size_type>::size_type size() const
+      size_type size() const
       {
         return pattern.size();
       }
@@ -666,7 +667,7 @@ namespace Dune {
       BCRSMatrix& Mat;     // the matrix we are defining
       size_type i;               // current row to be defined
       size_type nnz;             // count total number of nonzeros
-      std::set<size_type> pattern;     // used to compile entries in a row
+      std::set<size_type,std::less<size_type>,PoolAllocator<size_type,10> > pattern;     // used to compile entries in a row
       row_type current_row;     // row poiting to the current row to setup
     };
 

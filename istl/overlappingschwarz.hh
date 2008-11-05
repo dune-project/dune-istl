@@ -42,6 +42,7 @@ namespace Dune
     typedef typename Matrix::row_type::const_iterator CIter;
 
     typedef S IndexSet;
+    typedef typename IndexSet::size_type size_type;
 
     OverlappingSchwarzInitializer(InitializerList& il,
                                   const IndexSet& indices);
@@ -62,8 +63,8 @@ namespace Dune
     class IndexMap
     {
     public:
-      typedef std::size_t size_type;
-      typedef std::map<size_type,std::size_t> Map;
+      typedef typename S::size_type size_type;
+      typedef std::map<size_type,size_type> Map;
       typedef typename Map::iterator iterator;
       typedef typename Map::const_iterator const_iterator;
 
@@ -80,8 +81,8 @@ namespace Dune
       const_iterator end() const;
 
     private:
-      std::map<size_type,std::size_t> map_;
-      std::size_t row;
+      std::map<size_type,size_type> map_;
+      size_type row;
     };
 
 
@@ -116,8 +117,9 @@ namespace Dune
     template<typename T, typename A, int n>
     struct AdditiveAdder<BlockVector<FieldVector<T,n>,A> >
     {
+      typedef typename A::size_type size_type;
       AdditiveAdder(BlockVector<FieldVector<T,n>,A>& v, BlockVector<FieldVector<T,n>,A>& x, const T* t, const T& relax_);
-      void operator()(const std::size_t& domain);
+      void operator()(const size_type& domain);
       void axpy();
 
     private:
@@ -135,8 +137,9 @@ namespace Dune
     template<typename T, typename A, int n>
     struct MultiplicativeAdder<BlockVector<FieldVector<T,n>,A> >
     {
+      typedef typename A::size_type size_type;
       MultiplicativeAdder(BlockVector<FieldVector<T,n>,A>& v, BlockVector<FieldVector<T,n>,A>& x, const T* t, const T& relax_);
-      void operator()(const std::size_t& domain);
+      void operator()(const size_type& domain);
       void axpy();
 
     private:
@@ -365,7 +368,7 @@ namespace Dune
     subdomain_vector subDomains;
     field_type relax;
 
-    int maxlength;
+    typename M::size_type maxlength;
 
     void initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat);
 
@@ -377,7 +380,7 @@ namespace Dune
     struct Assigner<BlockVector<FieldVector<T,n>,A> >
     {
       Assigner(const M& mat, T* rhs, const BlockVector<FieldVector<T,n>,A>& b, const BlockVector<FieldVector<T,n>,A>& x);
-      void operator()(const std::size_t& domain);
+      void operator()(const size_type& domain);
     private:
       const M* mat;
       T* rhs;
@@ -420,7 +423,7 @@ namespace Dune
   {
     typedef typename IndexSet::value_type::const_iterator iterator;
     for(iterator domain=(*indices)[row.index()].begin(); domain != (*indices)[row.index()].end(); ++domain) {
-      typename std::map<std::size_t,std::size_t>::const_iterator v = indexMaps[*domain].find(col.index());
+      typename std::map<size_type,size_type>::const_iterator v = indexMaps[*domain].find(col.index());
       if(v!= indexMaps[*domain].end()) {
         (*initializers)[*domain].countEntries(indexMaps[*domain].find(col.index())->second);
       }
@@ -439,7 +442,7 @@ namespace Dune
   {
     typedef typename IndexSet::value_type::const_iterator iterator;
     for(iterator domain=(*indices)[row.index()].begin(); domain!= (*indices)[row.index()].end(); ++domain) {
-      typename std::map<std::size_t,std::size_t>::const_iterator v = indexMaps[*domain].find(col.index());
+      typename std::map<size_type,size_type>::const_iterator v = indexMaps[*domain].find(col.index());
       if(v!= indexMaps[*domain].end()) {
         (*initializers)[*domain].copyValue(col, indexMaps[*domain].find(row.index())->second,
                                            indexMaps[*domain].find(col.index())->second);
@@ -510,7 +513,7 @@ namespace Dune
 
 #endif
     // calculate the number of domains
-    int domains=0;
+    size_type domains=0;
     for(RowDomainIterator iter=rowToDomain.begin(); iter != rowToDomain.end(); ++iter)
       for(DomainIterator d=iter->begin(); d != iter->end(); ++d)
         domains=std::max(domains, *d);
@@ -520,13 +523,13 @@ namespace Dune
     subDomains.resize(domains);
 
     // initialize subdomains to row mapping from row to subdomain mapping
-    int row=0;
+    size_type row=0;
     for(RowDomainIterator iter=rowToDomain.begin(); iter != rowToDomain.end(); ++iter, ++row)
       for(DomainIterator d=iter->begin(); d != iter->end(); ++d)
         subDomains[*d].insert(row);
 
 #ifdef DUNE_ISTL_WITH_CHECKING
-    int i=0;
+    size_type i=0;
     typedef typename subdomain_vector::const_iterator iterator;
     for(iterator iter=subDomains.begin(); iter != subDomains.end(); ++iter) {
       typedef typename subdomain_type::const_iterator entry_iterator;
@@ -549,7 +552,7 @@ namespace Dune
     typedef typename subdomain_vector::const_iterator DomainIterator;
 
 #ifdef DUNE_ISTL_WITH_CHECKING
-    int i=0;
+    size_type i=0;
 
     for(DomainIterator d=sd.begin(); d != sd.end(); ++d,++i) {
       //std::cout<<i<<": "<<d->size()<<std::endl;
@@ -567,7 +570,7 @@ namespace Dune
     // Create a row to subdomain mapping
     rowtodomain_vector rowToDomain(mat.N());
 
-    int domainId=0;
+    size_type domainId=0;
 
     for(DomainIterator domain=sd.begin(); domain != sd.end(); ++domain, ++domainId) {
       typedef typename subdomain_type::const_iterator iterator;
@@ -660,7 +663,7 @@ namespace Dune
 
     field_type *lhs=new field_type[maxlength];
     field_type *rhs=new field_type[maxlength];
-    for(int i=0; i<maxlength; ++i)
+    for(size_type i=0; i<maxlength; ++i)
       lhs[i]=0;
 
 
@@ -696,12 +699,12 @@ namespace Dune
 
   template<class M, class X, class TM, class TA>
   template<typename T, typename A, int n>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const std::size_t& domainIndex)
+  void SeqOverlappingSchwarz<M,X,TM,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
   {
-    int starti;
+    size_type starti;
     starti = i;
 
-    for(int j=0; j<n; ++j, ++i)
+    for(size_type j=0; j<n; ++j, ++i)
       rhs[i]=(*b)[domainIndex][j];
 
     // loop over all Matrix row entries and calculate defect.
@@ -712,7 +715,7 @@ namespace Dune
       typename X::block_type tmp;
       (*col).mv((*x)[col.index()], tmp);
       i-=n;
-      for(int j=0; j<n; ++j, ++i)
+      for(size_type j=0; j<n; ++j, ++i)
         rhs[i]-=tmp[j];
     }
     assert(starti+n==i);
@@ -727,9 +730,9 @@ namespace Dune
     {}
 
     template<typename T, typename A, int n>
-    void AdditiveAdder<BlockVector<FieldVector<T,n>,A> >::operator()(const std::size_t& domainIndex)
+    void AdditiveAdder<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
     {
-      for(int j=0; j<n; ++j, ++i)
+      for(size_type j=0; j<n; ++j, ++i)
         (*v)[domainIndex][j]+=t[i];
     }
 
@@ -750,9 +753,9 @@ namespace Dune
 
 
     template<typename T, typename A, int n>
-    void MultiplicativeAdder<BlockVector<FieldVector<T,n>,A> >::operator()(const std::size_t& domainIndex)
+    void MultiplicativeAdder<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
     {
-      for(int j=0; j<n; ++j, ++i)
+      for(size_type j=0; j<n; ++j, ++i)
         (*x)[domainIndex][j]+=relax*t[i];
     }
 

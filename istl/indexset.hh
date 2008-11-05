@@ -973,9 +973,9 @@ namespace Dune
     const_iterator end_ = indexSet_.end();
     size_t size=0;
     for(const_iterator pair = indexSet_.begin(); pair!=end_; ++pair)
-      size_=std::max(size_,pair->local());
+      size_=std::max(size_,static_cast<std::size_t>(pair->local()));
 
-    indices_.setSize(++size_);
+    indices_.resize(++size_);
 
     for(const_iterator pair = indexSet_.begin(); pair!=end_; ++pair)
       indices_[pair->local()] = &(*pair);

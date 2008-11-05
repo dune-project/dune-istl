@@ -178,12 +178,12 @@ namespace Dune {
       // The following code has a complexity of nnz, and
       // typically a very small constant.
       //
-      std::vector<size_type> coldims(A.M(),-1);
+      std::vector<size_type> coldims(A.M(),std::numeric_limits<size_type>::max());
 
       for (ConstRowIterator row=A.begin(); row!=A.end(); ++row)
         for (ConstColIterator col=row->begin(); col!=row->end(); ++col)
           // only compute blocksizes we don't already have
-          if (coldims[col.index()]==-1)
+          if (coldims[col.index()]==std::numeric_limits<size_type>::max())
             coldims[col.index()] = MatrixDimension<block_type>::coldim(*col);
 
       size_type sum = 0;
@@ -466,17 +466,17 @@ namespace Dune {
                                  std::ostream& s)
   {
     // Precompute the accumulated sizes of the columns
-    std::vector<unsigned int> colOffset(matrix.M());
+    std::vector<typename MatrixType::size_type> colOffset(matrix.M());
     if (colOffset.size() > 0)
       colOffset[0] = 0;
 
-    for (int i=0; i<matrix.M()-1; i++)
+    for (typename MatrixType::size_type i=0; i<matrix.M()-1; i++)
       colOffset[i+1] = colOffset[i] + MatrixDimension<MatrixType>::coldim(matrix,i);
 
-    int rowOffset = 0;
+    typename MatrixType::size_type rowOffset = 0;
 
     // Loop over all matrix rows
-    for (int rowIdx=0; rowIdx<matrix.N(); rowIdx++) {
+    for (typename MatrixType::size_type rowIdx=0; rowIdx<matrix.N(); rowIdx++) {
 
       const typename MatrixType::row_type& row = matrix[rowIdx];
 
