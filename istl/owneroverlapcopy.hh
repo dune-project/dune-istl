@@ -88,14 +88,14 @@ namespace Dune {
      * The triple consists of the global index and the local
      * index and an attribute
      */
-    typedef Tuple<GlobalIdType,LocalIdType,int> IndexTripel;
+    typedef tuple<GlobalIdType,LocalIdType,int> IndexTripel;
     /**
      * @brief A triple describing a remote index.
      *
      * The triple consists of a process number and the global index and
      * the attribute of the index at the remote process.
      */
-    typedef Tuple<int,GlobalIdType,int> RemoteIndexTripel;
+    typedef tuple<int,GlobalIdType,int> RemoteIndexTripel;
 
     /**
      * @brief Add a new index triple to the set of local indices.
@@ -104,9 +104,9 @@ namespace Dune {
      */
     void addLocalIndex (const IndexTripel& x)
     {
-      if (Element<2>::get(x)!=OwnerOverlapCopyAttributeSet::owner &&
-          Element<2>::get(x)!=OwnerOverlapCopyAttributeSet::overlap &&
-          Element<2>::get(x)!=OwnerOverlapCopyAttributeSet::copy)
+      if (get<2>(x)!=OwnerOverlapCopyAttributeSet::owner &&
+          get<2>(x)!=OwnerOverlapCopyAttributeSet::overlap &&
+          get<2>(x)!=OwnerOverlapCopyAttributeSet::copy)
         DUNE_THROW(ISTLError,"OwnerOverlapCopyCommunication: global index not in index set");
       localindices.insert(x);
     }
@@ -118,9 +118,9 @@ namespace Dune {
      */
     void addRemoteIndex (const RemoteIndexTripel& x)
     {
-      if (Element<2>::get(x)!=OwnerOverlapCopyAttributeSet::owner &&
-          Element<2>::get(x)!=OwnerOverlapCopyAttributeSet::overlap &&
-          Element<2>::get(x)!=OwnerOverlapCopyAttributeSet::copy)
+      if (get<2>(x)!=OwnerOverlapCopyAttributeSet::owner &&
+          get<2>(x)!=OwnerOverlapCopyAttributeSet::overlap &&
+          get<2>(x)!=OwnerOverlapCopyAttributeSet::copy)
         DUNE_THROW(ISTLError,"OwnerOverlapCopyCommunication: global index not in index set");
       remoteindices.insert(x);
     }
@@ -194,12 +194,12 @@ namespace Dune {
     {
       typedef typename CommPolicy<T>::IndexedType V;
 
-      static V gather(const T& a, typename T::size_type i)
+      static V gather(const T& a, std::size_t i)
       {
         return a[i];
       }
 
-      static void scatter(T& a, V v, typename T::size_type i)
+      static void scatter(T& a, V v, std::size_t i)
       {
         a[i] = v;
       }
@@ -209,12 +209,12 @@ namespace Dune {
     {
       typedef typename CommPolicy<T>::IndexedType V;
 
-      static V gather(const T& a, typename T::size_type i)
+      static V gather(const T& a, std::size_t i)
       {
         return a[i];
       }
 
-      static void scatter(T& a, V v, typename T::size_type i)
+      static void scatter(T& a, V v, std::size_t i)
       {
         a[i] += v;
       }
@@ -447,13 +447,13 @@ namespace Dune {
       pis.beginResize();
       for (localindex_iterator i=indexinfo.localIndices().begin(); i!=indexinfo.localIndices().end(); ++i)
       {
-        if (Element<2>::get(*i)==OwnerOverlapCopyAttributeSet::owner)
-          pis.add(Element<0>::get(*i),LI(Element<1>::get(*i),OwnerOverlapCopyAttributeSet::owner,true));
-        if (Element<2>::get(*i)==OwnerOverlapCopyAttributeSet::overlap)
-          pis.add(Element<0>::get(*i),LI(Element<1>::get(*i),OwnerOverlapCopyAttributeSet::overlap,true));
-        if (Element<2>::get(*i)==OwnerOverlapCopyAttributeSet::copy)
-          pis.add(Element<0>::get(*i),LI(Element<1>::get(*i),OwnerOverlapCopyAttributeSet::copy,true));
-        //                std::cout << cc.rank() << ": adding index " << Element<0>::get(*i) << " " << Element<1>::get(*i) << " " << Element<2>::get(*i) << std::endl;
+        if (get<2>(*i)==OwnerOverlapCopyAttributeSet::owner)
+          pis.add(get<0>(*i),LI(get<1>(*i),OwnerOverlapCopyAttributeSet::owner,true));
+        if (get<2>(*i)==OwnerOverlapCopyAttributeSet::overlap)
+          pis.add(get<0>(*i),LI(get<1>(*i),OwnerOverlapCopyAttributeSet::overlap,true));
+        if (get<2>(*i)==OwnerOverlapCopyAttributeSet::copy)
+          pis.add(get<0>(*i),LI(get<1>(*i),OwnerOverlapCopyAttributeSet::copy,true));
+        //                std::cout << cc.rank() << ": adding index " << get<0>(*i) << " " << get<1>(*i) << " " << get<2>(*i) << std::endl;
       }
       pis.endResize();
 
@@ -463,32 +463,32 @@ namespace Dune {
       if (indexinfo.remoteIndices().size()>0)
       {
         remoteindex_iterator i=indexinfo.remoteIndices().begin();
-        int p = Element<0>::get(*i);
+        int p = get<0>(*i);
         RILM modifier = ri.template getModifier<false,true>(p);
         typename PIS::const_iterator pi=pis.begin();
         for ( ; i!=indexinfo.remoteIndices().end(); ++i)
         {
           // handle processor change
-          if (p!=Element<0>::get(*i))
+          if (p!=get<0>(*i))
           {
-            p = Element<0>::get(*i);
+            p = get<0>(*i);
             modifier = ri.template getModifier<false,true>(p);
             pi=pis.begin();
           }
 
           // position to correct entry in parallel index set
-          while (pi->global()!=Element<1>::get(*i) && pi!=pis.end())
+          while (pi->global()!=get<1>(*i) && pi!=pis.end())
             ++pi;
           if (pi==pis.end())
             DUNE_THROW(ISTLError,"OwnerOverlapCopyCommunication: global index not in index set");
 
           // insert entry
-          //                      std::cout << cc.rank() << ": adding remote index " << Element<0>::get(*i) << " " << Element<1>::get(*i) << " " << Element<2>::get(*i) << std::endl;
-          if (Element<2>::get(*i)==OwnerOverlapCopyAttributeSet::owner)
+          //                      std::cout << cc.rank() << ": adding remote index " << get<0>(*i) << " " << get<1>(*i) << " " << get<2>(*i) << std::endl;
+          if (get<2>(*i)==OwnerOverlapCopyAttributeSet::owner)
             modifier.insert(RX(OwnerOverlapCopyAttributeSet::owner,&(*pi)));
-          if (Element<2>::get(*i)==OwnerOverlapCopyAttributeSet::overlap)
+          if (get<2>(*i)==OwnerOverlapCopyAttributeSet::overlap)
             modifier.insert(RX(OwnerOverlapCopyAttributeSet::overlap,&(*pi)));
-          if (Element<2>::get(*i)==OwnerOverlapCopyAttributeSet::copy)
+          if (get<2>(*i)==OwnerOverlapCopyAttributeSet::copy)
             modifier.insert(RX(OwnerOverlapCopyAttributeSet::copy,&(*pi)));
         }
       }else{

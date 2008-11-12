@@ -219,7 +219,7 @@ namespace Dune
     typedef typename RemoteIndexList::const_iterator ConstRemoteIndexIterator;
 
     /** @brief Type of the tuple of iterators needed for the adding of indices. */
-    typedef Dune::Tuple<RemoteIndexModifier,GlobalIndexModifier,BoolListModifier,
+    typedef Dune::tuple<RemoteIndexModifier,GlobalIndexModifier,BoolListModifier,
         const ConstRemoteIndexIterator> IteratorTuple;
 
     /**
@@ -469,9 +469,9 @@ namespace Dune
   template<typename T>
   inline typename IndicesSyncer<T>::Iterators& IndicesSyncer<T>::Iterators::operator++()
   {
-    ++(Element<0>::get(iterators_));
-    ++(Element<1>::get(iterators_));
-    ++(Element<2>::get(iterators_));
+    ++(get<0>(iterators_));
+    ++(get<1>(iterators_));
+    ++(get<2>(iterators_));
     return *this;
   }
 
@@ -479,28 +479,28 @@ namespace Dune
   inline void IndicesSyncer<T>::Iterators::insert(const RemoteIndex & index,
                                                   const GlobalIndex & global)
   {
-    Element<0>::get(iterators_).insert(index);
-    Element<1>::get(iterators_).insert(global);
-    Element<2>::get(iterators_).insert(false);
+    get<0>(iterators_).insert(index);
+    get<1>(iterators_).insert(global);
+    get<2>(iterators_).insert(false);
   }
 
   template<typename T>
   inline typename IndicesSyncer<T>::RemoteIndex&
   IndicesSyncer<T>::Iterators::remoteIndex() const
   {
-    return *(Element<0>::get(iterators_));
+    return *(get<0>(iterators_));
   }
 
   template<typename T>
   inline typename IndicesSyncer<T>::GlobalIndex&  IndicesSyncer<T>::Iterators::globalIndex() const
   {
-    return *(Element<1>::get(iterators_));
+    return *(get<1>(iterators_));
   }
 
   template<typename T>
   inline bool IndicesSyncer<T>::Iterators::isOld() const
   {
-    return *(Element<2>::get(iterators_));
+    return *(get<2>(iterators_));
   }
 
   template<typename T>
@@ -508,21 +508,21 @@ namespace Dune
                                                  GlobalIndexList& globalIndices,
                                                  BoolList& booleans)
   {
-    Element<0>::get(iterators_) = remoteIndices.beginModify();
-    Element<1>::get(iterators_) = globalIndices.beginModify();
-    Element<2>::get(iterators_) = booleans.beginModify();
+    get<0>(iterators_) = remoteIndices.beginModify();
+    get<1>(iterators_) = globalIndices.beginModify();
+    get<2>(iterators_) = booleans.beginModify();
   }
 
   template<typename T>
   inline bool IndicesSyncer<T>::Iterators::isNotAtEnd() const
   {
-    return Element<0>::get(iterators_)!=Element<3>::get(iterators_);
+    return get<0>(iterators_)!=get<3>(iterators_);
   }
 
   template<typename T>
   inline bool IndicesSyncer<T>::Iterators::isAtEnd() const
   {
-    return Element<0>::get(iterators_)==Element<3>::get(iterators_);
+    return get<0>(iterators_)==get<3>(iterators_);
   }
 
   template<typename T>
@@ -1020,11 +1020,11 @@ namespace Dune
   bool IndicesSyncer<T>::checkReset(const Iterators& iterators, RemoteIndexList& rList, GlobalIndexList& gList,
                                     BoolList& bList){
 
-    if(Element<0>::get(iterators.iterators_)!=rList.begin())
+    if(get<0>(iterators.iterators_)!=rList.begin())
       return false;
-    if(Element<1>::get(iterators.iterators_)!=gList.begin())
+    if(get<1>(iterators.iterators_)!=gList.begin())
       return false;
-    if(Element<2>::get(iterators.iterators_)!=bList.begin())
+    if(get<2>(iterators.iterators_)!=bList.begin())
       return false;
     return true;
   }
