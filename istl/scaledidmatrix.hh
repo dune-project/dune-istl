@@ -15,6 +15,7 @@
 #include <iostream>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/istl/diagonalmatrix.hh>
 
 namespace Dune {
 
@@ -43,6 +44,12 @@ namespace Dune {
       blocklevel = 1
     };
 
+    //! Each row is implemented by a field vector
+    typedef DiagonalRowVector<K,n> row_type;
+    typedef row_type reference;
+    typedef DiagonalRowVectorConst<K,n> const_row_type;
+    typedef const_row_type const_reference;
+
     //! export size
     enum {
       //! The number of rows.
@@ -67,6 +74,80 @@ namespace Dune {
     {
       p_ = k;
       return *this;
+    }
+
+    // check if matrix is identical to other matrix (not only identical values)
+    bool identical(const ScaledIdentityMatrix<K,n>& other) const
+    {
+      return (this==&other);
+    }
+
+    //===== iterator interface to rows of the matrix
+    //! Iterator class for sequential access
+    typedef ReferenceStorageIterator<ScaledIdentityMatrix<K,n>,reference,reference,ScaledIdentityMatrix<K,n>&> Iterator;
+    //! typedef for stl compliant access
+    typedef Iterator iterator;
+    //! rename the iterators for easier access
+    typedef Iterator RowIterator;
+    //! rename the iterators for easier access
+    typedef typename row_type::Iterator ColIterator;
+
+    //! begin iterator
+    Iterator begin ()
+    {
+      return Iterator(*this,0);
+    }
+
+    //! end iterator
+    Iterator end ()
+    {
+      return Iterator(*this,n);
+    }
+
+    //! begin iterator
+    Iterator rbegin ()
+    {
+      return Iterator(*this,n-1);
+    }
+
+    //! end iterator
+    Iterator rend ()
+    {
+      return Iterator(*this,-1);
+    }
+
+
+    //! Iterator class for sequential access
+    typedef ReferenceStorageIterator<const ScaledIdentityMatrix<K,n>,const_reference,const_reference,const ScaledIdentityMatrix<K,n>&> ConstIterator;
+    //! typedef for stl compliant access
+    typedef ConstIterator const_iterator;
+    //! rename the iterators for easier access
+    typedef ConstIterator ConstRowIterator;
+    //! rename the iterators for easier access
+    typedef typename const_row_type::ConstIterator ConstColIterator;
+
+    //! begin iterator
+    ConstIterator begin () const
+    {
+      return ConstIterator(*this,0);
+    }
+
+    //! end iterator
+    ConstIterator end () const
+    {
+      return ConstIterator(*this,n);
+    }
+
+    //! begin iterator
+    ConstIterator rbegin () const
+    {
+      return ConstIterator(*this,n-1);
+    }
+
+    //! end iterator
+    ConstIterator rend () const
+    {
+      return ConstIterator(*this,-1);
     }
 
     //===== vector space arithmetic
@@ -337,15 +418,28 @@ namespace Dune {
       return s;
     }
 
-    /** \brief Return FieldVector as row replacement
-     * This might be inefficient.
-     * */
-    const FieldVector<K,n> operator[](size_type i) const
+    //! Return reference object as row replacement
+    reference operator[](size_type i)
     {
-      FieldVector<K, n> fv;
-      fv = 0.0;
-      fv[i] = p_;
-      return fv;
+      return reference(const_cast<K*>(&p_), i);
+    }
+
+    //! Return const_reference object as row replacement
+    const_reference operator[](size_type i) const
+    {
+      return const_reference(const_cast<K*>(&p_), i);
+    }
+
+    //! Get const reference to diagonal entry
+    const K& diagonal(size_type i) const
+    {
+      return p_;
+    }
+
+    //! Get reference to diagonal entry
+    K& diagonal(size_type i)
+    {
+      return p_;
     }
 
     /** \brief Get const reference to the scalar diagonal value
