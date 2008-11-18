@@ -1,3 +1,42 @@
 /**
-  @defgroup ISTL
-*/
+  @defgroup ISTL Iterative Solvers Template Library (ISTL)
+    
+   @brief Iterative Solvers supporting block recursive matrix and
+   vector classes at compile time.
+
+   The Iterative Solver Template Library applies generic programming 
+   in C++ to the 
+   domain of iterative solvers of linear systems stemming
+   from finite element discretizations. Those discretizations exhibit a
+   lot of structure, e.g:
+
+   <ol>
+   <li>Certain discretizations for systems of PDEs or higher order
+  methods result in matrices where individual entries are replaced by
+  small blocks, say of size \f$2\times 2\f$ or \f$4\times 4\f$. 
+  Dense blocks of different sizes
+  e.g. arise in \f$hp\f$ Discontinuous Galerkin discretization methods.
+  It is straightforward and
+  efficient to treat these small dense blocks as fully coupled and
+  solve them with direct methods within the iterative method.</li>
+  <li>Equation-wise ordering for systems results in matrices having an
+  \f$n\times n\f$ block structure where \f$n\f$ corresponds to the number of
+  variables in the PDE and the blocks themselves are large and sparse. As an
+  example we mention the Stokes system. </li>
+  <li>Other discretisation, e.~g. those of reaction/diffusion
+  systems,  produce sparse matrices whose blocks are
+  sparse matrices of small dense blocks,</li>
+  </ol>
+
+   Our matrix
+   and vector interface supports a block recursive structure. Each
+   sparse matrix entry can itself be either a sparse or a small 
+   dense matrix.
+   
+   The solvers use this recursive block structure via template meta 
+   programming at compile time.
+
+   ISTL consists of the \ref ISTL_SPMV "matrix and vector API" and 
+   the \ref ISTL_Solvers "solvers" which use the \ref ISTL_Prec preconditioners.
+ */
+
