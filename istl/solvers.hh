@@ -860,7 +860,7 @@ namespace Dune {
         this->printOutput(std::cout,it,norm);
 
       _prec.post(x);                // postprocess preconditioner
-      res.iterations = std::ceil(it);            // fill statistics
+      res.iterations = static_cast<int>(std::ceil(it));            // fill statistics
       res.reduction = norm/norm_0;
       res.conv_rate  = pow(res.reduction,1.0/it);
       res.elapsed = watch.elapsed();
