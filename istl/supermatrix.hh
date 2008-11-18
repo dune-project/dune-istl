@@ -356,7 +356,7 @@ namespace Dune
   bool SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator==(const BCRSMatrix<FieldMatrix<B,n,m>,TA>& mat) const
   {
     const NCformat* S=static_cast<const NCformat *>(A.Store);
-    for(int col=0; col < M(); ++col) {
+    for(size_type col=0; col < M(); ++col) {
       for(int j=S->colptr[col]; j < S->colptr[col+1]; ++j) {
         int row=S->rowind[j];
         if((mat[row/n][col/m])[row%n][col%m]!=reinterpret_cast<B*>(S->nzval)[j]) {
