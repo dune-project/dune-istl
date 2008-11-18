@@ -151,6 +151,16 @@ namespace Dune {
 
   /**
    * @brief The indices present on remote processes.
+   *
+   * To set up communication between the set of processes active in
+   * the communication every process needs to know which
+   * indices are also known to other processes and which attributes
+   * are attached to them on the remote side.
+   *
+   * This information is managed by this class. The information can either
+   * be computed automatically calling rebuild (which requires information
+   * to be sent in a ring) or set up by hand using the
+   * RemoteIndexListModifiers returned by function getModifier(int).
    */
   template<class T>
   class RemoteIndices
@@ -223,7 +233,7 @@ namespace Dune {
     RemoteIndices();
 
     /**
-     * @brief Set the the index sets and communicator we work with.
+     * @brief Set the index sets and communicator we work with.
      *
      * @warning All remote indices already setup will be deleted!
      *
