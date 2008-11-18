@@ -127,7 +127,7 @@ namespace Dune
       BlockVector<FieldVector<T,n>,A>* v;
       BlockVector<FieldVector<T,n>,A>* x;
       T relax;
-      int i;
+      size_type i;
     };
 
     template<typename T>
@@ -147,7 +147,7 @@ namespace Dune
       BlockVector<FieldVector<T,n>,A>* v;
       BlockVector<FieldVector<T,n>,A>* x;
       T relax;
-      int i;
+      size_type i;
     };
 
 
@@ -386,7 +386,7 @@ namespace Dune
       T* rhs;
       const BlockVector<FieldVector<T,n>,A>* b;
       const BlockVector<FieldVector<T,n>,A>* x;
-      int i;
+      size_type i;
     };
 
   };
@@ -718,7 +718,7 @@ namespace Dune
       for(size_type j=0; j<n; ++j, ++i)
         rhs[i]-=tmp[j];
     }
-    assert(starti+n==i);
+    assert(starti+static_cast<size_type>(n)==i);
   }
   namespace
   {
