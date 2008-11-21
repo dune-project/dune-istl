@@ -95,6 +95,35 @@ namespace Dune {
      finite difference schemes), (b) number of non-zeroes not known
      in advance (application: Sparse LU, ILU(n)).
 
+     \code
+     #include<dune/common/fmatrix.hh>
+     #include<dune/istl/bcrsmatrix.hh>
+
+     ...
+
+     typedef FieldMatrix<double,2,2> M;
+     // third parameter is an optional upper bound for the number
+     // of nonzeros. If given the matrix will use one array for all values
+     // as opossed to one for each row.
+     BCRSMatrix<M> B(4,4,12,BCRSMatrix<M>::row_wise);
+
+     typedef BCRSMatrix<M>::CreateIterator Iter;
+
+     for(Iter row=B.createbegin(); row!=B.createend(); ++row){
+       // Add nonzeros for left neighbour, diagonal and right neighbour
+       if(row.index()>0)
+         row.insert(row.index()-1);
+       row.insert(row.index());
+       if(row.index()<B.N()-1)
+         row.insert(row.index()+1);
+     }
+
+     // Now the sparsity pattern is fully set up and we can add values
+
+     B[0][0]=2;
+     ...
+     \endcode
+
      2. Random scheme
 
      For general finite element implementations the number of rows n
