@@ -41,7 +41,7 @@ namespace Dune
     static inline MPI_Datatype getType(){ \
       return m; \
     } \
-  };
+  }
 
   ComposeMPITraits(char, MPI_CHAR);
   ComposeMPITraits(unsigned char,MPI_UNSIGNED_CHAR);
