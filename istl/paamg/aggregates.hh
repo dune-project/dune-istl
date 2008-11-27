@@ -413,7 +413,7 @@ namespace Dune
        * @brief The allocator we use for our lists and the
        * set.
        */
-      typedef PoolAllocator<VertexDescriptor,100*sizeof(int)> Allocator;
+      typedef PoolAllocator<VertexDescriptor,100> Allocator;
 
       /**
        * @brief The type of a single linked list of vertex
@@ -458,7 +458,7 @@ namespace Dune
        * @return The number of aggregates built.
        */
       template<class M, class G, class C>
-      Tuple<int,int,int> buildAggregates(const M& matrix, G& graph, const C& criterion);
+      tuple<int,int,int> buildAggregates(const M& matrix, G& graph, const C& criterion);
 
       /**
        * @brief Breadth first search within an aggregate
@@ -482,7 +482,7 @@ namespace Dune
       template<bool reset, class G, class F, class VM>
       std::size_t breadthFirstSearch(const VertexDescriptor& start,
                                      const AggregateDescriptor& aggregate,
-                                     G& graph,
+                                     const G& graph,
                                      F& aggregateVisitor,
                                      VM& visitedMap) const;
 
@@ -512,7 +512,7 @@ namespace Dune
       template<bool remove, bool reset, class G, class L, class F1, class F2, class VM>
       std::size_t breadthFirstSearch(const VertexDescriptor& start,
                                      const AggregateDescriptor& aggregate,
-                                     G& graph, L& visited, F1& aggregateVisitor,
+                                     const G& graph, L& visited, F1& aggregateVisitor,
                                      F2& nonAggregateVisitor,
                                      VM& visitedMap) const;
 
@@ -577,7 +577,7 @@ namespace Dune
      * @brief A class for temporarily storing the vertices of an
      * aggregate in.
      */
-    template<class G>
+    template<class G, class S>
     class Aggregate
     {
 
@@ -596,7 +596,7 @@ namespace Dune
        * @brief The allocator we use for our lists and the
        * set.
        */
-      typedef PoolAllocator<Vertex,100*sizeof(int)> Allocator;
+      typedef PoolAllocator<Vertex,100> Allocator;
 
       /**
        * @brief The type of a single linked list of vertex
@@ -609,7 +609,7 @@ namespace Dune
        * @brief The type of a single linked list of vertex
        * descriptors.
        */
-      typedef std::set<Vertex> VertexSet;
+      typedef S VertexSet;
 
       /** @brief Const iterator over a vertex list. */
       typedef typename VertexList::const_iterator const_iterator;
@@ -740,14 +740,14 @@ namespace Dune
        * @return The number of (not skipped) aggregates built.
        */
       template<class M, class C>
-      Tuple<int,int,int> build(const M& m, G& graph,
+      tuple<int,int,int> build(const M& m, G& graph,
                                AggregatesMap<Vertex>& aggregates, const C& c);
     private:
       /**
        * @brief The allocator we use for our lists and the
        * set.
        */
-      typedef PoolAllocator<Vertex,100*sizeof(int)> Allocator;
+      typedef PoolAllocator<Vertex,1> Allocator;
 
       /**
        * @brief The single linked list we use.
@@ -757,7 +757,7 @@ namespace Dune
       /**
        * @brief The set of vertices we use.
        */
-      typedef std::set<Vertex> VertexSet;
+      typedef std::set<Vertex,std::less<Vertex>,Allocator> VertexSet;
 
       /**
        * @brief The type of mapping of aggregate members to spheres.
@@ -772,7 +772,7 @@ namespace Dune
       /**
        * @brief The vertices of the current aggregate-
        */
-      Aggregate<MatrixGraph>* aggregate_;
+      Aggregate<MatrixGraph,VertexSet>* aggregate_;
 
       /**
        * @brief The vertices of the current aggregate front.
@@ -1206,7 +1206,6 @@ namespace Dune
     {
       if(norm_(matrix_->operator[](edge.target())[edge.source()]) * norm_(*col)/
          (norm_(matrix_->operator[](edge.target())[edge.target()]) * diagonal_) > alpha() * maxValue_) {
-        //(diagonal_ * diagonal_) > alpha() * maxValue_){
         edge.properties().setDepends();
         edge.properties().setInfluences();
 
@@ -1260,15 +1259,15 @@ namespace Dune
       return maxValue_  < beta() * diagonal_;
     }
 
-    template<class G>
-    Aggregate<G>::Aggregate(const MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
-                            VertexSet& connected)
+    template<class G,class S>
+    Aggregate<G,S>::Aggregate(const MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
+                              VertexSet& connected)
       : vertices_(), id_(-1), graph_(graph), aggregates_(aggregates),
         connected_(connected)
     {}
 
-    template<class G>
-    void Aggregate<G>::reconstruct(const Vertex& vertex)
+    template<class G,class S>
+    void Aggregate<G,S>::reconstruct(const Vertex& vertex)
     {
       vertices_.push_back(vertex);
       typedef typename VertexList::const_iterator iterator;
@@ -1282,8 +1281,8 @@ namespace Dune
 
     }
 
-    template<class G>
-    inline void Aggregate<G>::seed(const Vertex& vertex)
+    template<class G,class S>
+    inline void Aggregate<G,S>::seed(const Vertex& vertex)
     {
       dvverb<<"Connected cleared"<<std::endl;
       connected_.clear();
@@ -1295,8 +1294,8 @@ namespace Dune
     }
 
 
-    template<class G>
-    inline void Aggregate<G>::add(const Vertex& vertex)
+    template<class G,class S>
+    inline void Aggregate<G,S>::add(const Vertex& vertex)
     {
       vertices_.push_back(vertex);
       aggregates_[vertex]=id_;
@@ -1310,35 +1309,35 @@ namespace Dune
       }
       dvverb <<std::endl;
     }
-    template<class G>
-    inline void Aggregate<G>::clear()
+    template<class G,class S>
+    inline void Aggregate<G,S>::clear()
     {
       vertices_.clear();
       connected_.clear();
       id_=-1;
     }
 
-    template<class G>
-    inline typename Aggregate<G>::VertexList::size_type
-    Aggregate<G>::size()
+    template<class G,class S>
+    inline typename Aggregate<G,S>::VertexList::size_type
+    Aggregate<G,S>::size()
     {
       return vertices_.size();
     }
 
-    template<class G>
-    inline int Aggregate<G>::id()
+    template<class G,class S>
+    inline int Aggregate<G,S>::id()
     {
       return id_;
     }
 
-    template<class G>
-    inline typename Aggregate<G>::const_iterator Aggregate<G>::begin() const
+    template<class G,class S>
+    inline typename Aggregate<G,S>::const_iterator Aggregate<G,S>::begin() const
     {
       return vertices_.begin();
     }
 
-    template<class G>
-    inline typename Aggregate<G>::const_iterator Aggregate<G>::end() const
+    template<class G,class S>
+    inline typename Aggregate<G,S>::const_iterator Aggregate<G,S>::end() const
     {
       return vertices_.end();
     }
@@ -1410,10 +1409,11 @@ namespace Dune
     template<bool reset, class G, class F,class VM>
     inline std::size_t AggregatesMap<V>::breadthFirstSearch(const V& start,
                                                             const AggregateDescriptor& aggregate,
-                                                            G& graph, F& aggregateVisitor,
+                                                            const G& graph, F& aggregateVisitor,
                                                             VM& visitedMap) const
     {
       VertexList vlist;
+
       DummyEdgeVisitor dummy;
       return breadthFirstSearch<true,reset>(start, aggregate, graph, vlist, aggregateVisitor, dummy, visitedMap);
     }
@@ -1422,7 +1422,7 @@ namespace Dune
     template<bool remove, bool reset, class G, class L, class F1, class F2, class VM>
     std::size_t AggregatesMap<V>::breadthFirstSearch(const V& start,
                                                      const AggregateDescriptor& aggregate,
-                                                     G& graph,
+                                                     const G& graph,
                                                      L& visited,
                                                      F1& aggregateVisitor,
                                                      F2& nonAggregateVisitor,
@@ -1505,7 +1505,7 @@ namespace Dune
       for(VertexIterator vertex = graph.begin(); vertex != graph.end(); ++vertex) {
         typedef typename Matrix::row_type Row;
 
-        Row row = matrix[*vertex];
+        const Row& row = matrix[*vertex];
 
         // Tell the criterion what row we will examine now
         // This might for example be used for calculating the
@@ -1521,7 +1521,7 @@ namespace Dune
             criterion.examine(col);
 
         // reset the vertex properties
-        vertex.properties().reset();
+        //vertex.properties().reset();
 
         // Check whether the vertex is isolated.
         if(criterion.isIsolated()) {
@@ -1729,7 +1729,7 @@ namespace Dune
     {
       assert(front_.size()==0);
       FrontMarker frontBuilder(front_, *graph_);
-      typedef typename Aggregate<G>::const_iterator Iterator;
+      typedef typename Aggregate<G,VertexSet>::const_iterator Iterator;
 
       for(Iterator vertex=aggregate_->begin(); vertex != aggregate_->end(); ++vertex)
         visitAggregateNeighbours(*vertex, AggregatesMap<Vertex>::UNAGGREGATED, aggregates, frontBuilder);
@@ -1911,7 +1911,7 @@ namespace Dune
 
     template<typename V>
     template<typename M, typename G, typename C>
-    Tuple<int,int,int> AggregatesMap<V>::buildAggregates(const M& matrix, G& graph, const C& criterion)
+    tuple<int,int,int> AggregatesMap<V>::buildAggregates(const M& matrix, G& graph, const C& criterion)
     {
       Aggregator<G> aggregator;
       return aggregator.build(matrix, graph, *this, criterion);
@@ -1919,14 +1919,14 @@ namespace Dune
 
     template<class G>
     template<class M, class C>
-    Tuple<int,int,int> Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c)
+    tuple<int,int,int> Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c)
     {
       // Stack for fast vertex access
       Stack stack_(graph, *this, aggregates);
 
       graph_ = &graph;
 
-      aggregate_ = new Aggregate<G>(graph, aggregates, connected_);
+      aggregate_ = new Aggregate<G,VertexSet>(graph, aggregates, connected_);
 
       // Allocate the mapping to aggregate.
       size_ = graph.maxVertex();
@@ -2045,7 +2045,7 @@ namespace Dune
       Dune::dinfo<<" one node aggregates: "<<oneAggregates<<std::endl;
 
       delete aggregate_;
-      return Tuple<int,int,int>(conAggregates,isoAggregates,oneAggregates);
+      return make_tuple(conAggregates,isoAggregates,oneAggregates);
     }
 
     template<class G>
