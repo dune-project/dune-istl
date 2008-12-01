@@ -630,7 +630,7 @@ namespace Dune {
         // initialize the j array for row i from pattern
         size_type k=0;
         size_type *j =  Mat.r[i].getindexptr();
-        for (typename std::set<size_type>::const_iterator it=pattern.begin(); it!=pattern.end(); ++it)
+        for (typename PatternType::const_iterator it=pattern.begin(); it!=pattern.end(); ++it)
           j[k++] = *it;
 
         // now go to next row
@@ -696,7 +696,8 @@ namespace Dune {
       BCRSMatrix& Mat;     // the matrix we are defining
       size_type i;               // current row to be defined
       size_type nnz;             // count total number of nonzeros
-      std::set<size_type,std::less<size_type>,PoolAllocator<size_type,10> > pattern;     // used to compile entries in a row
+      typedef std::set<size_type,std::less<size_type>,PoolAllocator<size_type,10> > PatternType;
+      PatternType pattern;     // used to compile entries in a row
       row_type current_row;     // row poiting to the current row to setup
     };
 
