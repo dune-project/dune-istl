@@ -15,8 +15,7 @@ namespace Dune {
    */
 
   //! derive error class from the base class in common
-  class ISTLError : public Exception {};
-
+  class ISTLError : public Dune::MathError {};
 
   /** @} end documentation */
 
