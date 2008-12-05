@@ -24,6 +24,12 @@ namespace Dune {
           @{
    */
 
+  class MatrixBlockError : public virtual Dune::FMatrixError {
+  public:
+    int r, c;
+  };
+
+
   //! compute ILU decomposition of A. A is overwritten by its decomposition
   template<class M>
   void bilu0_decomposition (M& A)
@@ -74,7 +80,14 @@ namespace Dune {
       // invert pivot and store it in A
       if (ij.index()!=i.index())
         DUNE_THROW(ISTLError,"diagonal entry missing");
-      (*ij).invert();           // compute inverse of diagonal block
+      try {
+        (*ij).invert();   // compute inverse of diagonal block
+      }
+      catch (Dune::FMatrixError & e) {
+        DUNE_THROW(MatrixBlockError, "ILU failed to invert matrix block A["
+                   << i.index() << "][" << ij.index() << "]" << e.what();
+                   th__ex.r=i.index(); th__ex.c=ij.index(););
+      }
     }
   }
 
