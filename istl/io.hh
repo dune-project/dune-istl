@@ -197,6 +197,32 @@ namespace Dune {
     }
   };
 
+
+  template<typename B, int n, int m, typename TA>
+  struct MatrixDimension<BCRSMatrix<FieldMatrix<B,n,m> ,TA> >
+  {
+    typedef BCRSMatrix<FieldMatrix<B,n,m> ,TA> Matrix;
+    typedef typename Matrix::size_type size_type;
+
+    static size_type rowdim (const Matrix& A, size_type i)
+    {
+      return n;
+    }
+
+    static size_type coldim (const Matrix& A, size_type c)
+    {
+      return m;
+    }
+
+    static size_type rowdim (const Matrix& A){
+      return A.N()*n;
+    }
+
+    static size_type coldim (const Matrix& A){
+      return A.M()*m;
+    }
+  };
+
   template<typename K, int n, int m>
   struct MatrixDimension<FieldMatrix<K,n,m> >
   {
