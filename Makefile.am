@@ -7,7 +7,7 @@ EXTRA_DIST=dune.module
 # need automake >= 1.5
 AUTOMAKE_OPTIONS = foreign 1.5
 
-SUBDIRS = istl doc
+SUBDIRS = istl doc m4
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dune-istl.pc
