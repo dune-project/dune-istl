@@ -1496,12 +1496,13 @@ namespace Dune
         std::cerr<<rank<<": MPI_Error occurred while sending message to "<<processMap[finished]<<std::endl;
         success=0;
       }
-    int globalSuccess;
-    MPI_Allreduce(&success, &globalSuccess, 1, MPI_INT, MPI_MIN, interface_->communicator());
+    /*
+       int globalSuccess;
+       MPI_Allreduce(&success, &globalSuccess, 1, MPI_INT, MPI_MIN, interface_->communicator());
 
-    if(!globalSuccess)
-      DUNE_THROW(CommunicationError, "A communication error occurred!");
-
+       if(!globalSuccess)
+       DUNE_THROW(CommunicationError, "A communication error occurred!");
+     */
     delete[] processMap;
     delete[] sendRequests;
     delete[] recvRequests;
