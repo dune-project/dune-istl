@@ -327,7 +327,6 @@ void testIndicesBuffered(MPI_Comm comm)
   RemoteIndices accuIndices(distIndexSet, globalIndexSet, comm);
 
   accuIndices.rebuild<true>();
-  //    std::cout << accuIndices<<std::endl<<std::flush;
 
   RemoteIndices overlapIndices(distIndexSet, distIndexSet, comm);
   overlapIndices.rebuild<false>();
@@ -514,11 +513,22 @@ void testRedistributeIndicesBuffered(MPI_Comm comm)
 
   Array array, redistributedArray;
 
+  std::vector<int> neighbours;
+
   // Set up the indexsets.
   {
 
     int start = std::max(rank*nx-1,0);
     int end = std::min((rank + 1) * nx+1, Nx);
+
+    int nb=0;
+    if(start>0) ++nb;
+    if(end<Nx) ++nb;
+    neighbours.resize(nb);
+    nb=0;
+
+    if(start>0) neighbours[nb++]=rank-1;
+    if(end<Nx) neighbours[nb++]=rank+1;
 
     sendIndexSet.beginResize();
 
@@ -575,9 +585,21 @@ void testRedistributeIndicesBuffered(MPI_Comm comm)
   RemoteIndices redistributeIndices(sendIndexSet,
                                     receiveIndexSet, comm);
   RemoteIndices overlapIndices(receiveIndexSet, receiveIndexSet, comm);
-
+  RemoteIndices sendIndices(sendIndexSet,
+                            sendIndexSet, comm, neighbours);
+  RemoteIndices sendIndices1(sendIndexSet,
+                             sendIndexSet, comm);
   overlapIndices.rebuild<false>();
   redistributeIndices.rebuild<true>();
+  sendIndices.rebuild<true>();
+  sendIndices1.rebuild<true>();
+
+  if(rank==0)
+    std::cout<<sendIndices<<std::endl<<sendIndices1<<std::endl;
+
+  assert(sendIndices==sendIndices1);
+
+  std::cout<<redistributeIndices<<std::endl;
 
   Interface<ParallelIndexSet> redistributeInterface, overlapInterface;
   EnumItem<GridFlags,owner> fowner;
@@ -667,13 +689,15 @@ int main(int argc, char **argv)
   while(size>1 && wait) ;
 #endif
 
-  testIndices(comm);
-  testIndicesBuffered(comm);
+  //  testIndices(comm);
+  //testIndicesBuffered(comm);
 
   if(rank==0)
-    std::cout<<std::endl<<"Redistributing!"<<std::endl<<std::endl;
+    std::cout<<std::endl<<"Redistributing bla!"<<std::endl<<std::endl;
+  MPI_Barrier(comm);
 
-  testRedistributeIndices(comm);
+
+  //  testRedistributeIndices(comm);
   testRedistributeIndicesBuffered(comm);
   MPI_Comm_free(&comm);
   MPI_Finalize();
