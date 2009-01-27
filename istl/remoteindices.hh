@@ -129,6 +129,9 @@ namespace Dune {
      */
     RemoteIndex(const T2& attribute);
 
+    bool operator==(const RemoteIndex& ri) const;
+
+    bool operator!=(const RemoteIndex& ri) const;
   private:
     /** @brief The corresponding local index for this process. */
     const PairType* localIndex_;
@@ -226,9 +229,12 @@ namespace Dune {
      * which represents the global to
      * local mapping at the destination of the communication.
      * May be the same as the source indexset.
+     * @param neighbours Optional: The neighbours the process shares indices with.
+     * If this parameter is omitted a ring communication with all indices will take
+     * place to calculate this information which is O(P).
      */
     inline RemoteIndices(const ParallelIndexSet& source, const ParallelIndexSet& destination,
-                         const MPI_Comm& comm);
+                         const MPI_Comm& comm, const std::vector<int>& neighbours=std::vector<int>());
 
     RemoteIndices();
 
@@ -244,9 +250,12 @@ namespace Dune {
      * which represents the global to
      * local mapping at the destination of the communication.
      * May be the same as the source indexset.
+     * @param neighbours Optional: The neighbours the process shares indices with.
+     * If this parameter is omitted a ring communication with all indices will take
+     * place to calculate this information which is O(P).
      */
     void setIndexSets(const ParallelIndexSet& source, const ParallelIndexSet& destination,
-                      const MPI_Comm& comm);
+                      const MPI_Comm& comm, const std::vector<int>& neighbours=std::vector<int>());
     /**
      * @brief Destructor.
      */
@@ -263,6 +272,8 @@ namespace Dune {
      */
     template<bool ignorePublic>
     void rebuild();
+
+    bool operator==(const RemoteIndices& ri);
 
     /**
      * @brief Checks whether the remote indices are synced with
@@ -328,6 +339,10 @@ namespace Dune {
 
     /** @brief The communicator to use.*/
     MPI_Comm comm_;
+
+    /** @brief The neighbours we share indices with.
+     * If not empty this will speedup rebuild. */
+    std::vector<int> neighbourIds;
 
     /** @brief The communicator tag to use. */
     const static int commTag_=333;
@@ -421,6 +436,9 @@ namespace Dune {
                               int localDestEntries, char* p_in,
                               MPI_Datatype type, int* position, int bufferSize);
 
+    void unpackCreateRemote(char* p_in, PairType** sourcePairs, PairType** DestPairs,
+                            int remoteProc,  int sourcePublish, int destPublish,
+                            int bufferSize, bool sendTwo);
   };
 
   /** @} */
@@ -783,6 +801,17 @@ namespace Dune {
   RemoteIndex<T1,T2>::RemoteIndex()
     : localIndex_(0), attribute_()
   {}
+  template<typename T1, typename T2>
+  inline bool RemoteIndex<T1,T2>::operator==(const RemoteIndex& ri) const
+  {
+    return localIndex_==ri.localIndex_ && attribute_==ri.attribute;
+  }
+
+  template<typename T1, typename T2>
+  inline bool RemoteIndex<T1,T2>::operator!=(const RemoteIndex& ri) const
+  {
+    return localIndex_!=ri.localIndex_ || attribute_!=ri.attribute_;
+  }
 
   template<typename T1, typename T2>
   inline const T2 RemoteIndex<T1,T2>::attribute() const
@@ -799,8 +828,9 @@ namespace Dune {
   template<typename T>
   inline RemoteIndices<T>::RemoteIndices(const ParallelIndexSet& source,
                                          const ParallelIndexSet& destination,
-                                         const MPI_Comm& comm)
-    : source_(&source), target_(&destination), comm_(comm),
+                                         const MPI_Comm& comm,
+                                         const std::vector<int>& neighbours)
+    : source_(&source), target_(&destination), comm_(comm), neighbourIds(neighbours),
       sourceSeqNo_(-1), destSeqNo_(-1), publicIgnored(false), firstBuild(true)
   {}
 
@@ -813,13 +843,15 @@ namespace Dune {
   template<class T>
   void RemoteIndices<T>::setIndexSets(const ParallelIndexSet& source,
                                       const ParallelIndexSet& destination,
-                                      const MPI_Comm& comm)
+                                      const MPI_Comm& comm,
+                                      const std::vector<int>& neighbours)
   {
     free();
     source_ = &source;
     target_ = &destination;
     comm_ = comm;
     firstBuild = true;
+    neighbourIds=neighbours;
   }
 
   template<typename T>
@@ -873,10 +905,76 @@ namespace Dune {
 
 
   template<typename T>
+  inline void RemoteIndices<T>::unpackCreateRemote(char* p_in, PairType** sourcePairs,
+                                                   PairType** destPairs, int remoteProc,
+                                                   int sourcePublish, int destPublish,
+                                                   int bufferSize, bool sendTwo)
+  {
+
+    // unpack the number of indices we received
+    int noRemoteSource=-1, noRemoteDest=-1;
+    char twoIndexSets=0;
+    int position=0;
+    // Did we receive two index sets?
+    MPI_Unpack(p_in, bufferSize, &position, &twoIndexSets, 1, MPI_CHAR, comm_);
+    // The number of source indices received
+    MPI_Unpack(p_in, bufferSize, &position, &noRemoteSource, 1, MPI_INT, comm_);
+    // The number of destination indices received
+    MPI_Unpack(p_in, bufferSize, &position, &noRemoteDest, 1, MPI_INT, comm_);
+
+
+    // Indices for which we receive
+    RemoteIndexList* receive= new RemoteIndexList();
+    // Indices for which we send
+    RemoteIndexList* send=0;
+
+    MPI_Datatype type= MPITraits<PairType>::getType();
+
+    if(!twoIndexSets) {
+      if(sendTwo) {
+        send = new RemoteIndexList();
+        // Create both remote index sets simultaneously
+        unpackIndices(*send, *receive, noRemoteSource, sourcePairs, sourcePublish,
+                      destPairs, destPublish, p_in, type, &position, bufferSize);
+      }else{
+        // we only need one list
+        unpackIndices(*receive, noRemoteSource, sourcePairs, sourcePublish,
+                      p_in, type, &position, bufferSize);
+        send=receive;
+      }
+    }else{
+      // Two index sets received
+      if(sendTwo) {
+        unpackIndices(*receive, noRemoteSource, destPairs, destPublish,
+                      p_in, type, &position, bufferSize);
+      }else{
+        unpackIndices(*receive, noRemoteSource, sourcePairs, sourcePublish,
+                      p_in, type, &position, bufferSize);
+      }
+
+      send = new RemoteIndexList();
+      unpackIndices(*send, noRemoteDest, sourcePairs, sourcePublish,
+                    p_in, type, &position, bufferSize);
+    }
+
+    if(receive->empty() && send->empty()) {
+      if(send==receive) {
+        delete send;
+      }else{
+        delete send;
+        delete receive;
+      }
+    }else{
+      remoteIndices_.insert(std::make_pair(remoteProc,
+                                           std::make_pair(send,receive)));
+    }
+  }
+
+
+  template<typename T>
   template<bool ignorePublic>
   inline void RemoteIndices<T>::buildRemote()
   {
-
     // Processor configuration
     int rank, procs;
     MPI_Comm_rank(comm_, &rank);
@@ -888,6 +986,10 @@ namespace Dune {
 
     // Do we need to send two index sets?
     char sendTwo = (source_ != target_);
+
+    if(procs==0 && !sendTwo)
+      // Nothing to communicate
+      return;
 
     sourcePublish = (ignorePublic) ? source_->size() : noPublic(*source_);
 
@@ -937,116 +1039,113 @@ namespace Dune {
     buffer[0] = new char[bufferSize];
     buffer[1] = new char[bufferSize];
 
-    // send mesages in ring
-    for(int proc=0; proc<procs; proc++) {
-      // pointers to the current input and output buffers
-      char* p_out = buffer[1-(proc%2)];
-      char* p_in = buffer[proc%2];
 
-      if(proc==0 && (procs>0 || sendTwo)) {
-        if(!sendTwo) {
-          // Write two the output buffer that will be used for processor 1
-          p_out=buffer[0];
-          assert(p_in==p_out);
-        }
+    // pack entries into buffer[0], p_out below!
+    MPI_Pack(&sendTwo, 1, MPI_CHAR, buffer[0], bufferSize, &position,
+             comm_);
+
+    // The number of indices we send for each index set
+    MPI_Pack(&sourcePublish, 1, MPI_INT, buffer[0], bufferSize, &position,
+             comm_);
+    MPI_Pack(&destPublish, 1, MPI_INT, buffer[0], bufferSize, &position,
+             comm_);
+
+    // Now pack the source indices and setup the destination pairs
+    packEntries<ignorePublic>(sourcePairs, *source_, buffer[0], type,
+                              bufferSize, &position, sourcePublish);
+    // If necessary send the dest indices and setup the source pairs
+    if(sendTwo)
+      packEntries<ignorePublic>(destPairs, *target_, buffer[0], type,
+                                bufferSize, &position, destPublish);
 
 
-        MPI_Pack(&sendTwo, 1, MPI_CHAR, p_out, bufferSize, &position,
-                 comm_);
+    // Update remote indices for ourself
+    if(sendTwo)
+      unpackCreateRemote(buffer[0], sourcePairs, destPairs, rank, sourcePublish,
+                         destPublish, bufferSize, sendTwo);
 
-        // The number of indices we send for each index set
-        MPI_Pack(&sourcePublish, 1, MPI_INT, p_out, bufferSize, &position,
-                 comm_);
-        MPI_Pack(&destPublish, 1, MPI_INT, p_out, bufferSize, &position,
-                 comm_);
+    if(neighbourIds.size()==0)
+    {
+      // send mesages in ring
+      for(int proc=1; proc<procs; proc++) {
+        // pointers to the current input and output buffers
+        char* p_out = buffer[1-(proc%2)];
+        char* p_in = buffer[proc%2];
 
-        // Now pack the source indices and setup the destination pairs
-        packEntries<ignorePublic>(sourcePairs, *source_, p_out, type,
-                                  bufferSize, &position, sourcePublish);
-        // If necessary send the dest indices and setup the source pairs
-        if(sendTwo)
-          packEntries<ignorePublic>(destPairs, *target_, p_out, type,
-                                    bufferSize, &position, destPublish);
-      }
-
-      MPI_Status status;
-      if(proc==0) {
-        if(sendTwo)
-          // Makes only sense if send and destination index sets are not the same.
-          MPI_Sendrecv(p_out, position, MPI_PACKED, rank, commTag_, p_in, bufferSize, MPI_PACKED, rank, commTag_,
-                       comm_, &status);
-        else
-          continue;
-      }else if(rank%2==0) {
-        MPI_Ssend(p_out, position, MPI_PACKED, (rank+1)%procs,
-                  commTag_, comm_);
-        MPI_Recv(p_in, bufferSize, MPI_PACKED, (rank+procs-1)%procs,
-                 commTag_, comm_, &status);
-      }else{
-        MPI_Recv(p_in, bufferSize, MPI_PACKED, (rank+procs-1)%procs,
-                 commTag_, comm_, &status);
-        MPI_Ssend(p_out, position, MPI_PACKED, (rank+1)%procs,
-                  commTag_, comm_);
-      }
-
-      // unpack the number of indices we received
-      int noRemoteSource=-1, noRemoteDest=-1;
-      char twoIndexSets=0;
-      position=0;
-      // Did we receive two index sets?
-      MPI_Unpack(p_in, bufferSize, &position, &twoIndexSets, 1, MPI_CHAR, comm_);
-      // The number of source indices received
-      MPI_Unpack(p_in, bufferSize, &position, &noRemoteSource, 1, MPI_INT, comm_);
-      // The number of destination indices received
-      MPI_Unpack(p_in, bufferSize, &position, &noRemoteDest, 1, MPI_INT, comm_);
-
-      // The process these indices are from
-      int remoteProc = (rank+procs-proc)%procs;
-
-      // Indices for which we receive
-      RemoteIndexList* receive= new RemoteIndexList();
-      // Indices for which we send
-      RemoteIndexList* send=0;
-
-      if(!twoIndexSets) {
-        if(sendTwo) {
-          send = new RemoteIndexList();
-          // Create both remote index sets simultaneously
-          unpackIndices(*send, *receive, noRemoteSource, sourcePairs, sourcePublish,
-                        destPairs, destPublish, p_in, type, &position, bufferSize);
+        MPI_Status status;
+        if(proc==0) {
+          if(sendTwo)
+            // Makes only sense if send and destination index sets are not the same.
+            MPI_Sendrecv(p_out, position, MPI_PACKED, rank, commTag_, p_in, bufferSize, MPI_PACKED, rank, commTag_,
+                         comm_, &status);
+          else
+            continue;
+        }else if(rank%2==0) {
+          MPI_Ssend(p_out, position, MPI_PACKED, (rank+1)%procs,
+                    commTag_, comm_);
+          MPI_Recv(p_in, bufferSize, MPI_PACKED, (rank+procs-1)%procs,
+                   commTag_, comm_, &status);
         }else{
-          // we only need one list
-          unpackIndices(*receive, noRemoteSource, sourcePairs, sourcePublish,
-                        p_in, type, &position, bufferSize);
-          send=receive;
-        }
-      }else{
-        // Two index sets received
-        if(sendTwo) {
-          unpackIndices(*receive, noRemoteSource, destPairs, destPublish,
-                        p_in, type, &position, bufferSize);
-        }else{
-          unpackIndices(*receive, noRemoteSource, sourcePairs, sourcePublish,
-                        p_in, type, &position, bufferSize);
+          MPI_Recv(p_in, bufferSize, MPI_PACKED, (rank+procs-1)%procs,
+                   commTag_, comm_, &status);
+          MPI_Ssend(p_out, position, MPI_PACKED, (rank+1)%procs,
+                    commTag_, comm_);
         }
 
-        send = new RemoteIndexList();
-        unpackIndices(*send, noRemoteDest, sourcePairs, sourcePublish,
-                      p_in, type, &position, bufferSize);
+
+        // The process these indices are from
+        int remoteProc = (rank+procs-proc)%procs;
+
+        unpackCreateRemote(p_in, sourcePairs, destPairs, remoteProc, sourcePublish,
+                           destPublish, bufferSize, sendTwo);
+
       }
 
-      if(receive->empty() && send->empty()) {
-        if(send==receive) {
-          delete send;
-        }else{
-          delete send;
-          delete receive;
-        }
-      }else{
-        remoteIndices_.insert(std::make_pair(remoteProc,
-                                             std::make_pair(send,receive)));
-      }
     }
+    else
+    {
+      MPI_Request* requests=new MPI_Request[neighbourIds.size()];
+      MPI_Request* req=requests;
+
+      // setup sends
+      for(std::vector<int>::iterator neighbour=neighbourIds.begin();
+          neighbour!= neighbourIds.end(); ++neighbour) {
+        // Only send the information to the neighbouring processors
+        MPI_Issend(buffer[0], position , MPI_PACKED, *neighbour, commTag_, comm_, req++);
+      }
+
+      //Test for received messages
+
+      typedef typename std::vector<int>::size_type size_type;
+      for(size_type received=0; received <neighbourIds.size(); ++received)
+      {
+        MPI_Status status;
+        // probe for next message
+        MPI_Probe(MPI_ANY_SOURCE, commTag_, comm_, &status);
+        int remoteProc=status.MPI_SOURCE;
+        int size;
+        MPI_Get_count(&status, MPI_PACKED, &size);
+        // receive message
+        MPI_Recv(buffer[1], size, MPI_PACKED, remoteProc,
+                 commTag_, comm_, &status);
+
+        unpackCreateRemote(buffer[1], sourcePairs, destPairs, remoteProc, sourcePublish,
+                           destPublish, bufferSize, sendTwo);
+      }
+      // wait for completion of pending requests
+      MPI_Status* statuses = new MPI_Status[neighbourIds.size()];
+
+      if(MPI_ERR_IN_STATUS==MPI_Waitall(neighbourIds.size(), requests, statuses)) {
+        for(size_type i=0; i < neighbourIds.size(); ++i)
+          if(statuses[i].MPI_ERROR!=MPI_SUCCESS) {
+            std::cerr<<rank<<": MPI_Error occurred while receiving message."<<std::endl;
+            MPI_Abort(comm_, 999);
+          }
+      }
+      delete[] requests;
+      delete[] statuses;
+    }
+
     MPI_Barrier(comm_);
 
     // delete allocated memory
@@ -1259,6 +1358,29 @@ namespace Dune {
   RemoteIndices<T>::end() const
   {
     return remoteIndices_.end();
+  }
+
+
+  template<typename T>
+  bool RemoteIndices<T>::operator==(const RemoteIndices& ri)
+  {
+    if(neighbours()!=ri.neighbours())
+      return false;
+
+    typedef RemoteIndexList RList;
+    typedef typename std::map<int,std::pair<RList*,RList*> >::const_iterator const_iterator;
+
+    const const_iterator rend = remoteIndices_.end();
+
+    for(const_iterator rindex = remoteIndices_.begin(), rindex1=ri.remoteIndices_.begin(); rindex!=rend; ++rindex, ++rindex1) {
+      if(rindex->first != rindex1->first)
+        return false;
+      if(*(rindex->second.first) != *(rindex1->second.first))
+        return false;
+      if(*(rindex->second.second) != *(rindex1->second.second))
+        return false;
+    }
+    return true;
   }
 
   template<class T, bool mode>
