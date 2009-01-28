@@ -302,7 +302,7 @@ namespace Dune
     }
 
     EdgeProperties::EdgeProperties()
-      : flags_(0)
+      : flags_()
     {}
 
     inline std::bitset<EdgeProperties::SIZE>::reference
@@ -318,13 +318,14 @@ namespace Dune
 
     inline void EdgeProperties::reset()
     {
-      flags_=0;
+      flags_.reset();
     }
 
     inline void EdgeProperties::setInfluences()
     {
       // Set the INFLUENCE bit
-      flags_ |= (1<<INFLUENCE);
+      //flags_ |= (1<<INFLUENCE);
+      flags_.set(INFLUENCE);
     }
 
     inline bool EdgeProperties::influences() const
@@ -336,13 +337,15 @@ namespace Dune
     inline void EdgeProperties::setDepends()
     {
       // Set the first bit.
-      flags_ |= (1<<DEPEND);
+      //flags_ |= (1<<DEPEND);
+      flags_.set(DEPEND);
     }
 
     inline void EdgeProperties::resetDepends()
     {
       // reset the first bit.
-      flags_ &= ~(1<<DEPEND);
+      //flags_ &= ~(1<<DEPEND);
+      flags_.reset(DEPEND);
     }
 
     inline bool EdgeProperties::depends() const
@@ -382,7 +385,7 @@ namespace Dune
     }
 
     inline VertexProperties::VertexProperties()
-      : flags_(0)
+      : flags_()
     {}
 
 
@@ -459,7 +462,7 @@ namespace Dune
      */
     inline void VertexProperties::reset()
     {
-      flags_=0;
+      flags_.reset();
     }
 
     /** @} */
