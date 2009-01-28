@@ -256,6 +256,12 @@ namespace Dune {
      */
     void setIndexSets(const ParallelIndexSet& source, const ParallelIndexSet& destination,
                       const MPI_Comm& comm, const std::vector<int>& neighbours=std::vector<int>());
+
+    void setNeighbours(const std::vector<int>& neighbours)
+    {
+      neighbourIds=neighbours;
+    }
+
     /**
      * @brief Destructor.
      */
@@ -943,14 +949,14 @@ namespace Dune {
         send=receive;
       }
     }else{
+
+      int oldPos=position;
       // Two index sets received
-      if(sendTwo) {
-        unpackIndices(*receive, noRemoteSource, destPairs, destPublish,
-                      p_in, type, &position, bufferSize);
-      }else{
-        unpackIndices(*receive, noRemoteSource, sourcePairs, sourcePublish,
-                      p_in, type, &position, bufferSize);
-      }
+      unpackIndices(*receive, noRemoteSource, destPairs, destPublish,
+                    p_in, type, &position, bufferSize);
+      if(!sendTwo)
+        //unpack source entries again as destination entries
+        position=oldPos;
 
       send = new RemoteIndexList();
       unpackIndices(*send, noRemoteDest, sourcePairs, sourcePublish,
@@ -1073,22 +1079,15 @@ namespace Dune {
         char* p_in = buffer[proc%2];
 
         MPI_Status status;
-        if(proc==0) {
-          if(sendTwo)
-            // Makes only sense if send and destination index sets are not the same.
-            MPI_Sendrecv(p_out, position, MPI_PACKED, rank, commTag_, p_in, bufferSize, MPI_PACKED, rank, commTag_,
-                         comm_, &status);
-          else
-            continue;
-        }else if(rank%2==0) {
-          MPI_Ssend(p_out, position, MPI_PACKED, (rank+1)%procs,
+        if(rank%2==0) {
+          MPI_Ssend(p_out, bufferSize, MPI_PACKED, (rank+1)%procs,
                     commTag_, comm_);
           MPI_Recv(p_in, bufferSize, MPI_PACKED, (rank+procs-1)%procs,
                    commTag_, comm_, &status);
         }else{
           MPI_Recv(p_in, bufferSize, MPI_PACKED, (rank+procs-1)%procs,
                    commTag_, comm_, &status);
-          MPI_Ssend(p_out, position, MPI_PACKED, (rank+1)%procs,
+          MPI_Ssend(p_out, bufferSize, MPI_PACKED, (rank+1)%procs,
                     commTag_, comm_);
         }
 
@@ -1191,7 +1190,11 @@ namespace Dune {
           // No more received indices
           break;
         }
-      }else if (local[localIndex]->global()<index.global()) {
+        continue;
+      }
+
+      if (local[localIndex]->global()<index.global()) {
+        // compare with next entry in our list
         ++localIndex;
       }else{
         // We do not know the index, unpack next
