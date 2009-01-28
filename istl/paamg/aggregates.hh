@@ -547,6 +547,29 @@ namespace Dune
        */
       const AggregateDescriptor& operator[](const VertexDescriptor& v) const;
 
+      typedef const AggregateDescriptor* const_iterator;
+
+      const_iterator begin() const
+      {
+        return aggregates_;
+      }
+
+      const_iterator end() const
+      {
+        return aggregates_+noVertices();
+      }
+
+      typedef AggregateDescriptor* iterator;
+
+      iterator begin()
+      {
+        return aggregates_;
+      }
+
+      iterator end()
+      {
+        return aggregates_+noVertices();
+      }
     private:
       /** @brief Prevent copying. */
       AggregatesMap(const AggregatesMap<V>& map)
