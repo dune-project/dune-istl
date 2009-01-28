@@ -521,14 +521,10 @@ void testRedistributeIndicesBuffered(MPI_Comm comm)
     int start = std::max(rank*nx-1,0);
     int end = std::min((rank + 1) * nx+1, Nx);
 
-    int nb=0;
-    if(start>0) ++nb;
-    if(end<Nx) ++nb;
-    neighbours.resize(nb);
-    nb=0;
+    neighbours.reserve(2);
 
-    if(start>0) neighbours[nb++]=rank-1;
-    if(end<Nx) neighbours[nb++]=rank+1;
+    if(rank>0) neighbours.push_back(rank-1);
+    if(rank<procs-1) neighbours.push_back(rank+1);
 
     sendIndexSet.beginResize();
 
