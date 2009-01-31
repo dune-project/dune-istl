@@ -1256,21 +1256,21 @@ namespace Dune
     {
       maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
       row_ = index;
-      diagonal_ = matrix_->operator[](row_)[row_];
+      diagonal_ = norm_(matrix_->operator[](row_)[row_]);
     }
 
     template<class M, class N>
     inline void Dependency<M,N>::examine(const ColIter& col)
     {
       maxValue_ = std::max(maxValue_,
-                           -*col);
+                           -norm_(*col));
     }
 
     template<class M, class N>
     template<class G>
     inline void Dependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
     {
-      if(-*col >= maxValue_ * alpha()) {
+      if(-norm_(*col) >= maxValue_ * alpha()) {
         edge.properties().setDepends();
         edge.properties().setInfluences();
       }
