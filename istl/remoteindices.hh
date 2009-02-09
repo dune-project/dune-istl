@@ -40,7 +40,7 @@ namespace Dune {
   };
 
 
-  template<typename T>
+  template<typename T, typename A>
   class RemoteIndices;
 
   template<typename T1, typename T2>
@@ -66,7 +66,7 @@ namespace Dune {
     friend class IndicesSyncer;
 
     template<typename T, typename A>
-    friend void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >&, RemoteIndices<T>&,
+    friend void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >&, RemoteIndices<T,A>&,
                                          const T&);
 
     template<typename T, typename A, bool mode>
@@ -140,8 +140,8 @@ namespace Dune {
     char attribute_;
   };
 
-  template<class T>
-  std::ostream& operator<<(std::ostream& os, const RemoteIndices<T>& indices);
+  template<class T, class A>
+  std::ostream& operator<<(std::ostream& os, const RemoteIndices<T,A>& indices);
 
   template<typename T>
   class InterfaceBuilder;
@@ -168,14 +168,15 @@ namespace Dune {
    * @tparam T The type of the underlying index set.
    * @tparam A The type of the allocator to use.
    */
-  template<class T, class A=std::allocator<RemoteIndex<GlobalIndex,Attribute> > >
+  template<class T, class A=std::allocator<RemoteIndex<typename T::GlobalIndex,
+              typename T::LocalIndex::Attribute> > >
   class RemoteIndices
   {
     friend class InterfaceBuilder<T>;
     friend class IndicesSyncer<T>;
-    template<typename T1, typename A>
-    friend void repairLocalIndexPointers(std::map<int,SLList<typename T1::GlobalIndex,A> >&,
-                                         RemoteIndices<T1>&,
+    template<typename T1,typename A1>
+    friend void repairLocalIndexPointers(std::map<int,SLList<typename T1::GlobalIndex,A1> >&,
+                                         RemoteIndices<T1,A1>&,
                                          const T1&);
     friend std::ostream& operator<<<>(std::ostream&, const RemoteIndices<T>&);
 
@@ -211,7 +212,7 @@ namespace Dune {
     /**
      * @brief The type of the allocator for the remote index list.
      */
-    typedef A::template rebind<RemoteIndex>::other Allocator;
+    typedef typename A::template rebind<RemoteIndex>::other Allocator;
 
     /** @brief The type of the remote index list. */
     typedef Dune::SLList<RemoteIndex,Allocator>
@@ -471,7 +472,7 @@ namespace Dune {
   class RemoteIndexListModifier
   {
 
-    template<typename T1, typename A>
+    template<typename T1, typename A1>
     friend class RemoteIndices;
 
   public:
@@ -647,7 +648,7 @@ namespace Dune {
     typedef Dune::RemoteIndex<GlobalIndex,Attribute> RemoteIndex;
 
     /** @brief The allocator of the remote indices. */
-    typedef Dune::PoolAllocator<RemoteIndex,1> Allocator;
+    typedef typename A::template rebind<RemoteIndex>::other Allocator;
 
     /** @brief The type of the remote index list. */
     typedef Dune::SLList<RemoteIndex,Allocator> RemoteIndexList;
@@ -1278,7 +1279,7 @@ namespace Dune {
     firstBuild=true;
   }
 
-  template<typename T,, typename A>
+  template<typename T, typename A>
   inline int RemoteIndices<T,A>::neighbours() const
   {
     return remoteIndices_.size();
@@ -1349,9 +1350,9 @@ namespace Dune {
 
   template<typename T, typename A>
   inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
-              PoolAllocator<typename RemoteIndices<T,A>::RemoteIndex,1> >*,
+              typename RemoteIndices<T,A>::Allocator >*,
           SLList<typename RemoteIndices<T,A>::RemoteIndex,
-              PoolAllocator<typename RemoteIndices<T,A>::RemoteIndex,1> >*> >::const_iterator
+              typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
   RemoteIndices<T,A>::begin() const
   {
     return remoteIndices_.begin();
@@ -1359,9 +1360,9 @@ namespace Dune {
 
   template<typename T, typename A>
   inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
-              PoolAllocator<typename RemoteIndices<T,A>::RemoteIndex,1> >*,
+              typename RemoteIndices<T,A>::Allocator >*,
           SLList<typename RemoteIndices<T,A>::RemoteIndex,
-              PoolAllocator<typename RemoteIndices<T,A>::RemoteIndex,1> >*> >::const_iterator
+              typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
   RemoteIndices<T,A>::end() const
   {
     return remoteIndices_.end();
@@ -1391,8 +1392,8 @@ namespace Dune {
   }
 
   template<class T, class A, bool mode>
-  RemoteIndexListModifierT,A,mode>::RemoteIndexListModifier(const ParallelIndexSet & indexSet,
-                                                            RemoteIndexList& rList)
+  RemoteIndexListModifier<T,A,mode>::RemoteIndexListModifier(const ParallelIndexSet& indexSet,
+                                                             RemoteIndexList& rList)
     : rList_(&rList), indexSet_(&indexSet), glist_(new GlobalList()), iter_(rList.beginModify()), end_(rList.end()), first_(true)
   {
     if(MODIFYINDEXSET) {
@@ -1404,14 +1405,14 @@ namespace Dune {
   }
 
   template<typename T, typename A, bool mode>
-  RemoteIndexListModifierT,A,mode>::RemoteIndexListModifier(const RemoteIndexListModifierT,A,mode>& other)
+  RemoteIndexListModifier<T,A,mode>::RemoteIndexListModifier(const RemoteIndexListModifier<T,A,mode>& other)
     : rList_(other.rList_), indexSet_(other.indexSet_),
       glist_(other.glist_), iter_(other.iter_), giter_(other.giter_), end_(other.end_),
       first_(other.first_), last_(other.last_)
   {}
 
   template<typename T, typename A, bool mode>
-  inline void RemoteIndexListModifierT,A,mode>::repairLocalIndexPointers() throw(InvalidIndexSetState)
+  inline void RemoteIndexListModifier<T,A,mode>::repairLocalIndexPointers() throw(InvalidIndexSetState)
   {
     if(MODIFYINDEXSET) {
       // repair pointers to local index set.
@@ -1444,7 +1445,7 @@ namespace Dune {
   }
 
   template<typename T, typename A, bool mode>
-  inline void RemoteIndexListModifierT,A,mode>::insert(const RemoteIndex & index) throw(InvalidPosition)
+  inline void RemoteIndexListModifier<T,A,mode>::insert(const RemoteIndex& index) throw(InvalidPosition)
   {
     dune_static_assert(!mode,"Not allowed if the mode indicates that new indices"
                        "might be added to the underlying index set. Use "
@@ -1467,7 +1468,7 @@ namespace Dune {
   }
 
   template<typename T, typename A, bool mode>
-  inline void RemoteIndexListModifierT,A,mode>::insert(const RemoteIndex & index, const GlobalIndex & global) throw(InvalidPosition)
+  inline void RemoteIndexListModifier<T,A,mode>::insert(const RemoteIndex& index, const GlobalIndex& global) throw(InvalidPosition)
   {
     dune_static_assert(mode,"Not allowed if the mode indicates that no new indices"
                        "might be added to the underlying index set. Use "
@@ -1492,7 +1493,7 @@ namespace Dune {
   }
 
   template<typename T, typename A, bool mode>
-  bool RemoteIndexListModifierT,A,mode>::remove(const GlobalIndex & global) throw(InvalidPosition)
+  bool RemoteIndexListModifier<T,A,mode>::remove(const GlobalIndex& global) throw(InvalidPosition)
   {
 #ifdef DUNE_ISTL_WITH_CHECKING
     if(!first_ && global<last_)

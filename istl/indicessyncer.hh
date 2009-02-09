@@ -398,7 +398,7 @@ namespace Dune
    */
   template<typename T, typename A>
   inline void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >& globalMap,
-                                       RemoteIndices<T>& remoteIndices,
+                                       RemoteIndices<T,A>& remoteIndices,
                                        const T& indexSet)
   {
     typedef typename RemoteIndices<T>::RemoteIndexMap::iterator RemoteIterator;
@@ -552,7 +552,7 @@ namespace Dune
   void IndicesSyncer<T>::calculateMessageSizes()
   {
     typedef typename ParallelIndexSet::const_iterator IndexIterator;
-    typedef CollectiveIterator<T> CollectiveIterator;
+    typedef CollectiveIterator<T,typename RemoteIndices::Allocator> CollectiveIterator;
 
     IndexIterator iEnd = indexSet_.end();
     CollectiveIterator collIter = remoteIndices_.template iterator<true>();

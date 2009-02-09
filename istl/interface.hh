@@ -393,7 +393,8 @@ namespace Dune
 
     // compare the local and remote indices and set up the types
 
-    CollectiveIterator<T> remote = remoteIndices.template iterator<send>();
+    typedef CollectiveIterator<T,typename RemoteIndices::Allocator> CIter;
+    CIter remote = remoteIndices.template iterator<send>();
     LocalIterator localIndex = send ? remoteIndices.source_->begin() : remoteIndices.target_->begin();
     const LocalIterator localEnd = send ?  remoteIndices.source_->end() : remoteIndices.target_->end();
 
@@ -404,7 +405,7 @@ namespace Dune
         // search for matching remote indices
         remote.advance(localIndex->global());
         // Iterate over the list that are positioned at global
-        typedef typename CollectiveIterator<T>::iterator ValidIterator;
+        typedef typename CIter::iterator ValidIterator;
         const ValidIterator end = remote.end();
         ValidIterator validEntry = remote.begin();
 

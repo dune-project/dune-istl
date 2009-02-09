@@ -346,7 +346,7 @@ namespace Dune
         }
 
         // Build remote index list
-        typedef RemoteIndexListModifier<ParallelIndexSet,false> Modifier;
+        typedef RemoteIndexListModifier<ParallelIndexSet,typename RemoteIndices::Allocator,false> Modifier;
         typedef typename RemoteIndices::RemoteIndex RemoteIndex;
         typedef typename ParallelIndexSet::const_iterator IndexIterator;
 
