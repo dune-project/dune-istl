@@ -105,13 +105,16 @@ namespace Dune
 
     void setVerbosity(bool v);
 
+    /**
+     * @brief free allocated space.
+     * @warn later calling apply will result in an error.
+     */
+    void free();
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
     template<class M,class X, class TM, class T1>
     friend class SeqOverlappingSchwarz;
 
-    /** @brief free allocated space. */
-    void free();
     /** @brief computes the LU Decomposition */
     void decompose();
 
@@ -153,6 +156,7 @@ namespace Dune
       SUPERLU_FREE(B.Store);
       SUPERLU_FREE(X.Store);
     }
+    mat.free();
   }
 
   template<typename T, typename A, int n, int m>
