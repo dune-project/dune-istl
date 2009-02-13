@@ -150,7 +150,14 @@ namespace Dune
       size_type i;
     };
 
-
+    /**
+     * @brief template meta program for choosing  how to add the correction.
+     *
+     * There specialization for the additive and the multiplicative mode.
+     *
+     * \tparam The Schwarz mode (either AdditiveSchwarzMode or MuliplicativeSchwarzMode)
+     * \tparam X The vector field type
+     */
     template<typename T, class X>
     struct AdderSelector
     {};
@@ -173,8 +180,19 @@ namespace Dune
       typedef MultiplicativeAdder<X> Adder;
     };
 
+    /**
+     * @brief Helper template meta program for application of overlapping schwarz.
+     *
+     * The is needed because when using the multiplicative schwarz version one
+     * might still want to make multigrid symmetric, i.e. forward sweep when pre-
+     * and backward sweep when post-smoothing.
+     *
+     * @tparam T1 type of the vector with the subdomain solvers.
+     * @tparam T2 type of the vector with the subdomain vector fields.
+     * @tparam forward If true apply in a forward sweep.
+     */
     template<typename T1, typename T2, bool forward>
-    struct ApplyHelper
+    struct IteratorDirectionSelector
     {
       typedef T1 solver_vector;
       typedef typename solver_vector::iterator solver_iterator;
@@ -202,7 +220,7 @@ namespace Dune
     };
 
     template<typename T1, typename T2>
-    struct ApplyHelper<T1,T2,false>
+    struct IteratorDirectionSelector<T1,T2,false>
     {
       typedef T1 solver_vector;
       typedef typename solver_vector::reverse_iterator solver_iterator;
@@ -229,6 +247,14 @@ namespace Dune
       }
     };
 
+    /**
+     * @brief Helper template meta program for application of overlapping schwarz.
+     *
+     * The is needed because when using the multiplicative schwarz version one
+     * might still want to make multigrid symmetric, i.e. forward sweep when pre-
+     * and backward sweep when post-smoothing.
+     * @tparam T The smoother to apply.
+     */
     template<class T>
     struct Applier
     {
@@ -657,8 +683,8 @@ namespace Dune
   {
     typedef typename X::block_type block;
     typedef slu_vector solver_vector;
-    typedef typename ApplyHelper<solver_vector,subdomain_vector,forward>::solver_iterator iterator;
-    typedef typename ApplyHelper<solver_vector,subdomain_vector,forward>::domain_iterator
+    typedef typename IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::solver_iterator iterator;
+    typedef typename IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::domain_iterator
     domain_iterator;
 
     field_type *lhs=new field_type[maxlength];
@@ -667,14 +693,14 @@ namespace Dune
       lhs[i]=0;
 
 
-    domain_iterator domain=ApplyHelper<solver_vector,subdomain_vector,forward>::begin(subDomains);
+    domain_iterator domain=IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::begin(subDomains);
 
     X v(x); // temporary for the update
     v=0;
 
     typedef typename AdderSelector<TM,X>::Adder Adder;
-    for(iterator solver=ApplyHelper<solver_vector,subdomain_vector,forward>::begin(solvers);
-        solver != ApplyHelper<solver_vector,subdomain_vector,forward>::end(solvers); ++solver, ++domain) {
+    for(iterator solver=IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::begin(solvers);
+        solver != IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::end(solvers); ++solver, ++domain) {
       //Copy rhs to C-array for SuperLU
       std::for_each(domain->begin(), domain->end(), Assigner<X>(mat, rhs, b, x));
 
