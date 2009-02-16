@@ -1110,18 +1110,22 @@ namespace Dune {
       MPI_Request* requests=new MPI_Request[neighbourIds.size()];
       MPI_Request* req=requests;
 
+      typedef typename std::vector<int>::size_type size_type;
+      size_type noNeighbours=neighbourIds.size();
+
       // setup sends
       for(std::vector<int>::iterator neighbour=neighbourIds.begin();
           neighbour!= neighbourIds.end(); ++neighbour) {
         if(*neighbour!=rank)
           // Only send the information to the neighbouring processors
           MPI_Issend(buffer[0], position , MPI_PACKED, *neighbour, commTag_, comm_, req++);
+        else
+          --noNeighbours;
       }
 
       //Test for received messages
 
-      typedef typename std::vector<int>::size_type size_type;
-      for(size_type received=0; received <neighbourIds.size(); ++received)
+      for(size_type received=0; received <noNeighbours; ++received)
       {
         MPI_Status status;
         // probe for next message
