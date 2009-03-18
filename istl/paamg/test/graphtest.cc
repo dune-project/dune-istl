@@ -349,13 +349,8 @@ void setupAnisotropic(Dune::BCRSMatrix<B>& A, double eps)
 template<class N, class G>
 void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 {
-#ifdef HAVE_TR1_TYPE_TRAITS
-  using std::tr1::remove_const;
-  using std::tr1::is_same;
-#else
   using Dune::remove_const;
   using Dune::is_same;
-#endif
   using Dune::SelectType;
 
   typedef typename remove_const<G>::type Mutable;
@@ -380,13 +375,8 @@ void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 template<class G>
 void printPropertiesGraph(G& graph, std::ostream& os)
 {
-#ifdef HAVE_TR1_TYPE_TRAITS
-  using std::tr1::remove_const;
-  using std::tr1::is_same;
-#else
   using Dune::remove_const;
   using Dune::is_same;
-#endif
   using Dune::SelectType;
 
   typedef typename remove_const<G>::type Mutable;
@@ -411,13 +401,8 @@ void printPropertiesGraph(G& graph, std::ostream& os)
 template<class G>
 void printGraph(G& graph, std::ostream& os)
 {
-#ifdef HAVE_TR1_TYPE_TRAITS
-  using std::tr1::remove_const;
-  using std::tr1::is_same;
-#else
   using Dune::remove_const;
   using Dune::is_same;
-#endif
   using Dune::SelectType;
 
   typedef typename remove_const<G>::type Mutable;
