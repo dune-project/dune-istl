@@ -396,9 +396,9 @@ namespace Dune
    * @param remoteIndices The known remote indices.
    * @param indexSet The set of local indices of the current process.
    */
-  template<typename T, typename A>
+  template<typename T, typename A, typename A1>
   inline void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >& globalMap,
-                                       RemoteIndices<T,A>& remoteIndices,
+                                       RemoteIndices<T,A1>& remoteIndices,
                                        const T& indexSet)
   {
     typedef typename RemoteIndices<T>::RemoteIndexMap::iterator RemoteIterator;
