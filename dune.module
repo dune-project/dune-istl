@@ -1,4 +1,4 @@
 Module: dune-istl
-Version: 1.2beta2
+Version: 1.2
 Maintainer: dune@dune-project.org
 Depends: dune-common (>=1.2)
