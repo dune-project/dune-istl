@@ -28,11 +28,20 @@ dune-istl depends on the following software packages
 
 The following software is recommend but optional:
 
-- MPI (either OpenMPI, lam, or mpich suffice)
+- MPI (either lam or mpich suffice)
 
 For a full explanation of the DUNE installation process please read
 the installation notes [0]. The following introduction is meant for
 the impatient.
+
+
+Known Bugs
+----------
+
+Due to a bug in all currently available OpenMPI versions, ISTL will
+crash when used with OpenMPI. For details see flyspray issue 497 http://www.dune-project.org/flyspray/index.php?do=details&task_id=497&project=1
+
+Please use either lam or mpich if you want to use the parallel version of ISTL.
 
 License
 -------
