@@ -65,8 +65,8 @@ namespace Dune {
     template<typename T>
     friend class IndicesSyncer;
 
-    template<typename T, typename A>
-    friend void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >&, RemoteIndices<T,A>&,
+    template<typename T, typename A, typename A1>
+    friend void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >&, RemoteIndices<T,A1>&,
                                          const T&);
 
     template<typename T, typename A, bool mode>
@@ -174,9 +174,9 @@ namespace Dune {
   {
     friend class InterfaceBuilder<T>;
     friend class IndicesSyncer<T>;
-    template<typename T1,typename A1>
+    template<typename T1,typename A1,typename A2>
     friend void repairLocalIndexPointers(std::map<int,SLList<typename T1::GlobalIndex,A1> >&,
-                                         RemoteIndices<T1,A1>&,
+                                         RemoteIndices<T1,A2>&,
                                          const T1&);
     friend std::ostream& operator<<<>(std::ostream&, const RemoteIndices<T>&);
 
