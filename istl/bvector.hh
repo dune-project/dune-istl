@@ -10,10 +10,6 @@
 #include "allocator.hh"
 #include "basearray.hh"
 
-#ifdef DUNE_EXPRESSIONTEMPLATES
-#include <dune/common/exprtmpl.hh>
-#endif
-
 /*! \file
 
    \brief  This file implements a vector space as a tensor product of
@@ -74,7 +70,6 @@ namespace Dune {
     }
 
     //===== vector space arithmetic
-#ifndef DUNE_EXPRESSIONTEMPLATES
     //! vector space addition
     block_vector_unmanaged& operator+= (const block_vector_unmanaged& y)
     {
@@ -108,7 +103,7 @@ namespace Dune {
       for (size_type i=0; i<this->n; ++i) (*this)[i] /= k;
       return *this;
     }
-#endif
+
     //! vector space axpy operation
     block_vector_unmanaged& axpy (const field_type& a, const block_vector_unmanaged& y)
     {
@@ -135,7 +130,7 @@ namespace Dune {
 
 
     //===== norms
-#ifndef DUNE_EXPRESSIONTEMPLATES
+
     //! one norm (sum over absolute values of entries)
     double one_norm () const
     {
@@ -183,7 +178,6 @@ namespace Dune {
       for (size_type i=0; i<this->n; ++i) max = std::max(max,(*this)[i].infinity_norm_real());
       return max;
     }
-#endif
 
     //===== sizes
 
@@ -223,14 +217,8 @@ namespace Dune {
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
    */
-#ifdef DUNE_EXPRESSIONTEMPLATES
-  template<class B, class A>
-  class BlockVector : public block_vector_unmanaged<B,A> ,
-                      public Dune::ExprTmpl::Vector< Dune::BlockVector<B,A> >
-#else
   template<class B, class A=ISTLAllocator>
   class BlockVector : public block_vector_unmanaged<B,A>
-#endif
   {
   public:
 
@@ -401,154 +389,6 @@ namespace Dune {
 
 
 
-#ifdef DUNE_EXPRESSIONTEMPLATES
-    //! random access to blocks
-    B& operator[] (size_type i)
-    {
-      return block_vector_unmanaged<B,A>::operator[](i);
-    }
-
-    //! same for read only access
-    const B& operator[] (size_type i) const
-    {
-      return block_vector_unmanaged<B,A>::operator[](i);
-    }
-
-    //! dimension of the vector space
-    size_type N () const
-    {
-      return block_vector_unmanaged<B,A>::N();
-    }
-
-    BlockVector (const BlockVector& a) {
-#ifdef DUNE_VVERBOSE
-      Dune::dvverb << INDENT << "BlockVector Copy Constructor BlockVector\n";
-#endif
-      capacity_ = a.capacity_;
-      if (capacity_>0)
-        this->p = A::template malloc<B>(capacity_);
-      else
-      {
-        this->p = 0;
-        capacity_ = 0;
-      }
-      this->n = a.N();
-      // copy data
-      assignFrom(a);
-    }
-    template <class V>
-    BlockVector (Dune::ExprTmpl::Expression<V> op) {
-#ifdef DUNE_VVERBOSE
-      Dune::dvverb << INDENT << "BlockVector Copy Constructor Expression\n";
-#endif
-      capacity_ = op.N();
-      if (capacity_>0)
-        this->p = A::template malloc<B>(capacity_);
-      else
-      {
-        this->p = 0;
-        capacity_ = 0;
-      }
-      this->n = op.N();
-      assignFrom(op);
-    }
-    template <class V>
-    BlockVector (const Dune::ExprTmpl::Vector<V> & op) {
-#ifdef DUNE_VVERBOSE
-      Dune::dvverb << INDENT << "BlockVector Copy Constructor Vector\n";
-#endif
-      capacity_ = op.N();
-      if (capacity_>0)
-        this->p = A::template malloc<B>(capacity_);
-      else
-      {
-        this->p = 0;
-        capacity_ = 0;
-      }
-      this->n = op.N();
-      assignFrom(op);
-    }
-    BlockVector& operator = (const BlockVector& a) {
-      if (&a!=this)     // check if this and a are different objects
-      {
-#ifdef DUNE_VVERBOSE
-        Dune::dvverb << INDENT
-                     << "BlockVector Assignment Operator BlockVector\n";
-#endif
-        // adjust size of vector
-        if (capacity_!=a.capacity_)           // check if size is different
-        {
-#ifdef DUNE_VVERBOSE
-          Dune::dvverb << INDENT
-                       << "BlockVector Resize to size(BlockVector)\n";
-#endif
-          if (capacity_>0) A::template free<B>(this->p);                 // delete old memory
-          capacity_ = a.capacity_;
-          if (capacity_>0)
-            this->p = A::template malloc<B>(capacity_);
-          else
-          {
-            this->p = 0;
-            capacity_ = 0;
-          }
-        }
-        this->n = a.N();
-        // copy data
-        assignFrom(a);
-      }
-      return assignFrom(a);
-    }
-    template <class E>
-    BlockVector&  operator = (Dune::ExprTmpl::Expression<E> op) {
-#ifdef DUNE_VVERBOSE
-      Dune::dvverb << INDENT << "BlockVector Assignment Operator Expression\n";
-#endif
-      // adjust size of vector
-      if (capacity_ < op.N()) // check if size is different
-      {
-#ifdef DUNE_VVERBOSE
-        Dune::dvverb << INDENT << "BlockVector Resize to size(Expression)\n";
-#endif
-        if (capacity_>0) A::template free<B>(this->p); // delete old memory
-        capacity_ = op.N();
-        if (capacity_>0)
-          this->p = A::template malloc<B>(capacity_);
-        else
-        {
-          this->p = 0;
-          capacity_ = 0;
-        }
-      }
-      this->n = op.N();
-      return assignFrom(op);
-    }
-    template <class V>
-    BlockVector& operator = (const Dune::ExprTmpl::Vector<V> & op) {
-#ifdef DUNE_VVERBOSE
-      Dune::dvverb << INDENT << "BlockVector Assignment Operator Vector\n";
-#endif
-      // adjust size of vector
-      if (capacity_ < op.N()) // check if size is different
-      {
-#ifdef DUNE_VVERBOSE
-        Dune::dvverb << INDENT << "BlockVector Resize to size(Vector)\n";
-#endif
-        if (capacity_>0) A::template free<B>(this->p); // delete old memory
-        capacity_ = op.N();
-        if (capacity_>0)
-          this->p = A::template malloc<B>(capacity_);
-        else
-        {
-          this->p = 0;
-          capacity_ = 0;
-        }
-      }
-      this->n = op.N();
-      return assignFrom(op);
-    }
-#endif
-
-#ifndef DUNE_EXPRESSIONTEMPLATES
     //! copy constructor
     BlockVector (const BlockVector& a) :
       block_vector_unmanaged<B,A>(a)
@@ -591,7 +431,6 @@ namespace Dune {
       // and copy elements
       for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
     }
-#endif
 
     //! free dynamic memory
     ~BlockVector ()
@@ -600,7 +439,6 @@ namespace Dune {
     }
 
     //! assignment
-#ifndef DUNE_EXPRESSIONTEMPLATES
     BlockVector& operator= (const BlockVector& a)
     {
       if (&a!=this)     // check if this and a are different objects
@@ -632,7 +470,6 @@ namespace Dune {
       // forward to regular assignement operator
       return this->operator=(static_cast<const BlockVector&>(a));
     }
-#endif
 
     //! assign from scalar
     BlockVector& operator= (const field_type& k)
@@ -1170,19 +1007,6 @@ namespace Dune {
       return this->n;
     }
   };
-
-#ifdef DUNE_EXPRESSIONTEMPLATES
-  template <class B, class A>
-  struct FieldType< BlockVector<B,A> >
-  {
-    typedef typename FieldType<B>::type type;
-  };
-  template <class B, class A>
-  struct BlockType< BlockVector<B,A> >
-  {
-    typedef B type;
-  };
-#endif
 
 } // end namespace
 
