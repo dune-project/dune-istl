@@ -45,7 +45,7 @@ namespace Dune
 
       static void free(GraphTuple& graphs)
       {
-        delete Element<1>::get(graphs);
+        delete get<1>(graphs);
       }
 
     };
@@ -86,8 +86,8 @@ namespace Dune
 
       static void free(GraphTuple& graphs)
       {
-        delete Element<2>::get(graphs);
-        delete Element<1>::get(graphs);
+        delete get<2>(graphs);
+        delete get<1>(graphs);
       }
     };
 
