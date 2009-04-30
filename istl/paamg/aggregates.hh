@@ -50,13 +50,52 @@ namespace Dune
 
       /**
        * @brief Constructor.
+       *
+       * The paramters will be initialized with default values suitable
+       * for 2D isotropic problems.
+       *
+       * If that does not fit your needs either use setDefaultValuesIsotropic
+       * setDefaultValuesAnisotropic or setup the values by hand
        */
       AggregationCriterion()
         : maxDistance_(2), minAggregateSize_(4), maxAggregateSize_(6),
           connectivity_(15), debugLevel_(3)
       {}
 
+      /**
+       * @brief Sets reasonable default values for an isotropic problem.
+       *
+       * Reasonable means that we should end up with cube aggregates of
+       * diameter 2.
+       *
+       * @param dim The dimension of the problem.
+       * @param diameter The preferred diameter for the aggregation.
+       */
+      void setDefaultValuesIsotropic(std::size_t dim, std::size_t diameter=2)
+      {
+        maxDistance_=dim;
+        std::size_t csize=1;
+        for(; dim>0; dim--)
+          csize*=diameter;
+        minAggregateSize_=csize;
+        maxAggregateSize_=csize*1.5;
+      }
 
+      /**
+       * @brief Sets reasonable default values for an aisotropic problem.
+       *
+       * Reasonable means that we should end up with cube aggregates with
+       * sides of diameter 2 and sides in one dimension that are longer
+       * (e.g. for 3D: 2x2x3).
+       *
+       * @param dim The dimension of the problem.
+       * @param diameter The preferred diameter for the aggregation.
+       */
+      void setDefaultValuesAnisotropic(std::size_t dim,std::size_t diameter=2)
+      {
+        setDefaultValuesIsotropic(dim, diameter);
+        maxDistance_+=1;
+      }
       /**
        * @brief Get the maximal distance allowed between to nodes in a aggregate.
        *
@@ -153,7 +192,7 @@ namespace Dune
     {
       os<<"{ maxdistance="<<criterion.maxDistance()<<" minAggregateSize="
       <<criterion.minAggregateSize()<< " maxAggregateSize="<<criterion.maxAggregateSize()
-      <<" connectivity="<<criterion.connectivity()<<" debugLevel="<<criterion.debugLevel()<<"}";
+      <<" connectivity="<<criterion.maxConnectivity()<<" debugLevel="<<criterion.debugLevel()<<"}";
       return os;
     }
 
