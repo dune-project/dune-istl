@@ -566,7 +566,7 @@ namespace Dune
 
       GalerkinProduct<ParallelInformation> productBuilder;
       MatIterator mlevel = matrices_.finest();
-      MatrixStats<typename M::matrix_type,MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL>::stats(mlevel->getmat());
+      MatrixStats<typename M::matrix_type,MINIMAL_DEBUG_LEVEL<=INFO_DEBUG_LEVEL>::stats(mlevel->getmat());
 
       PInfoIterator infoLevel = parallelInformation_.finest();
 
@@ -582,9 +582,8 @@ namespace Dune
       for(; level < criterion.maxLevel(); ++level, ++mlevel) {
 
         rank = infoLevel->communicator().rank();
-        dverb<<infoLevel->communicator().rank()<<": Level "<<level<<" has "<<mlevel->getmat().N()<<" unknows!"<<std::endl;
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
-          dinfo<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
+        if(rank==0 && criterion.debugLevel()>1)
+          std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
 
         if(unknowns <= criterion.coarsenTarget())
           // No further coarsening needed
@@ -601,7 +600,7 @@ namespace Dune
 
         GraphTuple graphs = GraphCreator::create(*mlevel, excluded, *infoLevel, OverlapFlags());
 
-        AggregatesMap* aggregatesMap=new AggregatesMap(Element<1>::get(graphs)->maxVertex());
+        AggregatesMap* aggregatesMap=new AggregatesMap(get<1>(graphs)->maxVertex());
 
         aggregatesMaps_.push_back(aggregatesMap);
 
@@ -610,7 +609,7 @@ namespace Dune
         int noAggregates, isoAggregates, oneAggregates;
 
         tie(noAggregates, isoAggregates, oneAggregates) =
-          aggregatesMap->buildAggregates(mlevel->getmat(), *(Element<1>::get(graphs)), criterion);
+          aggregatesMap->buildAggregates(mlevel->getmat(), *(get<1>(graphs)), criterion);
 
 #ifdef TEST_AGGLO
         {
@@ -653,21 +652,21 @@ namespace Dune
 #endif
         noAggregates = infoLevel->communicator().sum(noAggregates);
 
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
-          dinfo << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
+        if(criterion.debugLevel()>2 && rank==0)
+          std::cout << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
 
         if(!noAggregates || unknowns/noAggregates<criterion.minCoarsenRate())
         {
           if(procs>1 && criterion.accumulate())
             DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
           else{
-            if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL && rank==0)
+            if(rank==0)
             {
               if(noAggregates)
-                dinfo << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
-                      <<criterion.minCoarsenRate()<<std::endl;
+                std::cerr << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
+                          <<criterion.minCoarsenRate()<<std::endl;
               else
-                dinfo << "Could not build any aggregates. Probably no connected nodes."<<std::endl;
+                std::cerr<< "Could not build any aggregates. Probably no connected nodes."<<std::endl;
             }
             aggregatesMap->free();
             delete aggregatesMap;
@@ -686,24 +685,21 @@ namespace Dune
         PInfoIterator fineInfo = infoLevel++;
 
         typename PropertyMapTypeSelector<VertexVisitedTag,PropertiesGraph>::Type visitedMap =
-          get(VertexVisitedTag(), *(Element<1>::get(graphs)));
+          get(VertexVisitedTag(), *(get<1>(graphs)));
 
         watch.reset();
         int aggregates = IndicesCoarsener<ParallelInformation,OverlapFlags>
                          ::coarsen(*fineInfo,
-                                   *(Element<1>::get(graphs)),
+                                   *(get<1>(graphs)),
                                    visitedMap,
                                    *aggregatesMap,
                                    *infoLevel);
 
-        dinfo<< rank<<": agglomeration achieved "<<aggregates<<" aggregates"<<std::endl;
-
         GraphCreator::free(graphs);
 
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL) {
-          infoLevel->communicator().barrier();
+        if(criterion.debugLevel()>2) {
           if(rank==0)
-            dinfo<<"Coarsening of index sets took "<<watch.elapsed()<<" seconds."<<std::endl;
+            std::cout<<"Coarsening of index sets took "<<watch.elapsed()<<" seconds."<<std::endl;
         }
 
         watch.reset();
@@ -714,10 +710,9 @@ namespace Dune
                                                                               infoLevel->globalLookup());
 
 
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL) {
-          infoLevel->communicator().barrier();
+        if(criterion.debugLevel()>2) {
           if(rank==0)
-            dinfo<<"Communicating global aggregate numbers took "<<watch.elapsed()<<" seconds."<<std::endl;
+            std::cout<<"Communicating global aggregate numbers took "<<watch.elapsed()<<" seconds."<<std::endl;
         }
 
         watch.reset();
@@ -733,7 +728,7 @@ namespace Dune
 
         typename MatrixOperator::matrix_type* coarseMatrix;
 
-        coarseMatrix = productBuilder.build(mlevel->getmat(), *(Element<0>::get(graphs)), visitedMap2,
+        coarseMatrix = productBuilder.build(mlevel->getmat(), *(get<0>(graphs)), visitedMap2,
                                             *fineInfo,
                                             *aggregatesMap,
                                             aggregates,
@@ -741,13 +736,12 @@ namespace Dune
 
         fineInfo->freeGlobalLookup();
 
-        delete Element<0>::get(graphs);
+        delete get<0>(graphs);
         productBuilder.calculate(mlevel->getmat(), *aggregatesMap, *coarseMatrix, *infoLevel, OverlapFlags());
 
-        if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL) {
-          infoLevel->communicator().barrier();
+        if(criterion.debugLevel()>2) {
           if(rank==0)
-            dinfo<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
+            std::cout<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
         }
 
         MatrixArgs args(*coarseMatrix, *infoLevel);
@@ -761,13 +755,14 @@ namespace Dune
       AggregatesMap* aggregatesMap=new AggregatesMap(0);
       aggregatesMaps_.push_back(aggregatesMap);
 
-      if(MINIMAL_DEBUG_LEVEL>=INFO_DEBUG_LEVEL)
+      if(criterion.debugLevel()>0) {
         if(level==criterion.maxLevel()) {
           int unknowns = mlevel->getmat().N();
           unknowns = infoLevel->communicator().sum(unknowns);
-          if(rank==0)
-            dinfo<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
+          if(rank==0 && criterion.debugLevel()>1)
+            std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
         }
+      }
     }
 
     template<class M, class IS, class A>
