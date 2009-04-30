@@ -126,14 +126,12 @@ void testAmg(int N, int coarsenTarget)
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
-  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
-  typedef Dune::SeqILU0<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::SeqILU0<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqILUn<BCRSMat,Vector,Vector> Smoother;
   typedef Dune::BlockPreconditioner<Vector,Vector,Communication,Smoother> ParSmoother;
-  //typedef Dune::ParSSOR<BCRSMat,Vector,Vector,Communication> ParSmoother;
   typedef typename Dune::Amg::SmootherTraits<ParSmoother>::Arguments SmootherArgs;
-  //typedef Dune::Amg::BlockPreconditionerConstructionArgs<Smoother,Communication> SmootherArgs;
 
   Dune::OverlappingSchwarzScalarProduct<Vector,Communication> sp(comm);
 
@@ -147,8 +145,8 @@ void testAmg(int N, int coarsenTarget)
 
 
   Criterion criterion(15,coarsenTarget);
-  criterion.setMaxDistance(2);
-  //  criterion.setMaxLevel(1);
+  criterion.setDefaultValuesIsotropic(2);
+
 
   typedef Dune::Amg::AMG<Operator,Vector,ParSmoother,Communication> AMG;
 
@@ -177,19 +175,6 @@ void testAmg(int N, int coarsenTarget)
     std::cout<<"AMG building together with slving took "<<buildtime+solvetime<<std::endl;
   }
 
-  //  Smoother ssm(fop.getmat(),1);
-  //  ParSmoother sm(ssm,comm);
-  //  DoubleStepPreconditioner<Smoother,Communication> dsp(ssm,comm);
-  //  Dune::CGSolver<Vector> cg(fop, sp, sm, 10e-08, 10, (rank==0)?2:0);
-  //
-  //  watch.reset();
-  //
-  //  cg.apply(x1,b1,r1);
-  //
-  //  if(!r1.converged && rank==0)
-  //    std::cerr<<" Cg solver did not converge!"<<std::endl;
-
-  //std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
 }
 
 template<int BSStart, int BSEnd, int BSStep=1>

@@ -68,8 +68,8 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
-  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
-  typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::SymmetricMultiplicativeSchwarzMode> Smoother;
@@ -103,6 +103,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
 
   Dune::CGSolver<Vector> amgCG(fop,amg,1e-6,80,2);
+  //Dune::LoopSolver<Vector> amgCG(fop, amg, 1e-4, 10000, 2);
   watch.reset();
   Dune::InverseOperatorResult r;
   amgCG.apply(x,b,r);
