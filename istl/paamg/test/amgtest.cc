@@ -87,9 +87,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   smootherArgs.relaxationFactor = 1;
 
   Criterion criterion(15,coarsenTarget);
-  criterion.setMaxDistance(4);
-  criterion.setMinAggregateSize(9);
-  criterion.setMaxAggregateSize(11);
+  criterion.setDefaultValuesIsotropic(2);
   criterion.setAlpha(.67);
   criterion.setBeta(1.0e-4);
   criterion.setMaxLevel(ml);
