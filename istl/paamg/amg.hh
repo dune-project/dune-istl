@@ -13,6 +13,7 @@
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/superlu.hh>
 #include <dune/common/typetraits.hh>
+
 namespace Dune
 {
   namespace Amg
@@ -185,11 +186,9 @@ namespace Dune
         additive(additive_)
     {
       assert(matrices_->isBuilt());
-      //printMatrix(matrices_->finest());
 
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(smoothers_, smootherArgs_);
-
     }
 
     template<class M, class X, class S, class P, class A>
@@ -210,6 +209,7 @@ namespace Dune
                          "Matrix and Solver must match in terms of category!");
       dune_static_assert(static_cast<int>(P::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
+      Timer watch;
       OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 
       matrices->template build<typename P::CopyFlags>(criterion);
@@ -218,6 +218,8 @@ namespace Dune
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(smoothers_, smootherArgs_);
 
+      if(criterion.debugLevel()>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
+        std::cout<<"Building fierarchy of "<<matrices_->levels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
     }
 
     template<class M, class X, class S, class P, class A>
@@ -328,6 +330,7 @@ namespace Dune
         InverseOperatorResult res;
         pinfo->copyOwnerToAll(*rhs, *rhs);
         solver_->apply(*update, *rhs, res);
+
         if(!res.converged)
           DUNE_THROW(MathError, "Coarse solver did not converge");
       }else{
@@ -364,7 +367,8 @@ namespace Dune
         *update=0;
 
         // next level
-        mgc(smoother, matrix, pinfo, aggregates, lhs, update, rhs);
+        for(std::size_t i=0; i<gamma_; i++)
+          mgc(smoother, matrix, pinfo, aggregates, lhs, update, rhs);
 
         if(matrix != matrices_->matrices().coarsest()) {
           --smoother;

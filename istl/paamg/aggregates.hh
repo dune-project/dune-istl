@@ -59,7 +59,7 @@ namespace Dune
        */
       AggregationCriterion()
         : maxDistance_(2), minAggregateSize_(4), maxAggregateSize_(6),
-          connectivity_(15), debugLevel_(3)
+          connectivity_(15), debugLevel_(2)
       {}
 
       /**
