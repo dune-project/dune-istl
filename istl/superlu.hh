@@ -67,7 +67,11 @@ namespace Dune
     /** @brief The type of the range of the solver. */
     typedef Dune::BlockVector<FieldVector<T,n>,A> range_type;
     /**
-     * @brief Constructor.
+     * @brief Constructs the SuperLU solver.
+     *
+     * During the construction the matrix will be decomposed.
+     * That means that in each apply call forward and backward
+     * substitutions take place (and no decomposition).
      * @param mat The matrix of the system to solve.
      * @param verbose If true some statistics are printed.
      */
