@@ -413,7 +413,7 @@ namespace Dune
       overlapStart_ = new std::size_t[graph.maxVertex()];
 
 #ifndef NDEBUG
-      for(int i=0; i < graph.maxVertex(); ++i)
+      for(typename G::VertexDescriptor i=typename G::VertexDescriptor(); i < graph.maxVertex(); ++i)
         overlapStart_[i]=-1;
 #endif
 

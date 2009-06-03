@@ -381,6 +381,11 @@ namespace Dune
        */
       const AggregatesMapList& aggregatesMaps() const;
 
+      typename MatrixOperator::field_type getProlongationDampingFactor() const
+      {
+        return prolongDamp_;
+      }
+
     private:
       typedef typename ConstructionTraits<MatrixOperator>::Arguments MatrixArgs;
       /** @brief The list of aggregates maps. */
@@ -392,6 +397,8 @@ namespace Dune
 
       /** @brief Whether the hierarchy was built. */
       bool built_;
+
+      typename MatrixOperator::field_type prolongDamp_;
 
       /**
        * @brief functor to print matrix statistics.
@@ -507,6 +514,7 @@ namespace Dune
       {
         return minCoarsenRate_;
       }
+
       /**
        * @brief Whether the data should be accumulated on fewer processes on coarser levels.
        */
@@ -516,15 +524,37 @@ namespace Dune
       }
 
       /**
+       * @brief Set the damping factor for the prolongation.
+       *
+       * @param d The new damping factor.
+       */
+      void setProlongationDampingFactor(double d)
+      {
+        dampingFactor_ = d;
+      }
+
+      /**
+       * @brief Get the damping factor for the prolongation.
+       *
+       * @return d The damping factor.
+       */
+      double getProlongationDampingFactor() const
+      {
+        return dampingFactor_;
+      }
+      /**
        * @brief Constructor
        * @param maxLevel The macimum number of levels allowed in the matric hierarchy (default: 100).
        * @param coarsenTarget If the number of nodes in the matrix is below this threshold the
        * coarsening will stop (default: 1000).
        * @param minCoarsenRate If the coarsening rate falls below this threshold the
        * coarsening will stop (default: 1.2)
+       * @param prolongDamp The damping factor to apply to the prolongated update (default: 1.6)
        */
-      CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2)
-        : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate)
+      CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
+                       double prolongDamp=1.6)
+        : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate),
+          dampingFactor_(prolongDamp)
       {}
 
     private:
@@ -540,6 +570,10 @@ namespace Dune
        * @brief The minimum coarsening rate to be achieved.
        */
       double minCoarsenRate_;
+      /**
+       * @brief The damping factor to apply to the prologated correction.
+       */
+      double dampingFactor_;
     };
 
 
@@ -560,6 +594,8 @@ namespace Dune
     template<typename O, typename T>
     void MatrixHierarchy<M,IS,A>::build(const T& criterion)
     {
+
+      prolongDamp_ = criterion.getProlongationDampingFactor();
       typedef O OverlapFlags;
       typedef typename ParallelMatrixHierarchy::Iterator MatIterator;
       typedef typename ParallelInformationHierarchy::Iterator PInfoIterator;

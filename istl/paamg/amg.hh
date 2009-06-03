@@ -385,7 +385,8 @@ namespace Dune
 
         *lhs=0;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongate(*(*aggregates), *update, *lhs, 1.6, *pinfo);
+        ::prolongate(*(*aggregates), *update, *lhs,
+                     matrices_->getProlongationDampingFactor(), *pinfo);
 
         --update;
         --rhs;
