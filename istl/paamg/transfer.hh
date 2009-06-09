@@ -136,6 +136,9 @@ namespace Dune
                                                                               ParallelInformation<T>& comm)
     {
       Transfer<V,BlockVector<B>,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
+      // We need this here to avoid it in the smoothers on the coarse level.
+      // There (in the preconditioner d is const.
+      comm.project(coarse);
     }
 
     template<class V, class B, class T1, class T2>
@@ -153,8 +156,9 @@ namespace Dune
                                                                                             OwnerOverlapCopyCommunication<T1,T2>& comm)
     {
       Transfer<V,BlockVector<B>,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
-      comm.copyOwnerToAll(coarse,coarse);
-      //comm.project(coarse);
+      // We need this here to avoid it in the smoothers on the coarse level.
+      // There (in the preconditioner d is const.
+      comm.project(coarse);
     }
 #endif
     /** @} */
