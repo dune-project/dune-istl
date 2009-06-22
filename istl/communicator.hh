@@ -481,7 +481,7 @@ namespace Dune
      * @param interface The interface that defines what indices are to be communicated.
      */
     template<class Data>
-    typename EnableIf<is_same<SizeOne,typename CommPolicy<Data>::IndexedTypeFlag>::value, void>::Type
+    typename enable_if<is_same<SizeOne,typename CommPolicy<Data>::IndexedTypeFlag>::value, void>::type
     build(const Interface& interface);
 
     /**
@@ -1152,7 +1152,7 @@ namespace Dune
 
   template<typename T>
   template<class Data>
-  typename EnableIf<is_same<SizeOne, typename CommPolicy<Data>::IndexedTypeFlag>::value, void>::Type
+  typename enable_if<is_same<SizeOne, typename CommPolicy<Data>::IndexedTypeFlag>::value, void>::type
   BufferedCommunicator<T>::build(const Interface& interface)
   {
     typedef typename Interface::InformationMap::const_iterator const_iterator;
