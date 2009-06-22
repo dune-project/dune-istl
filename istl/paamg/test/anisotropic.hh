@@ -79,7 +79,7 @@ template<class M>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end, double eps)
 {
   typedef typename M::block_type Block;
-  Block dval = 0, bone=0, bmone=0, beps=0;
+  Block dval(0), bone(0), bmone(0), beps(0);
 
   for(typename Block::RowIterator b = dval.begin(); b !=  dval.end(); ++b)
     b->operator[](b.index())=2.0+2.0*eps;
