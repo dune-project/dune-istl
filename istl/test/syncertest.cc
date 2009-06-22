@@ -21,7 +21,7 @@ void deleteOverlapEntries(T& indices,
   typedef typename RemoteIndices::RemoteIndexList::const_iterator RemoteIterator;
   typedef Dune::SLList<GlobalIndex, typename RemoteIndices::RemoteIndexList::Allocator> GlobalList;
   typedef typename GlobalList::ModifyIterator GlobalModifier;
-  typedef Dune::Tuple<RemoteModifier,GlobalModifier,const RemoteIterator,const typename GlobalList::const_iterator,
+  typedef Dune::tuple<RemoteModifier,GlobalModifier,const RemoteIterator,const typename GlobalList::const_iterator,
       const GlobalList*, const typename RemoteIndices::RemoteIndexList*> IteratorTuple;
   typedef std::map<int,IteratorTuple> IteratorMap;
   typedef typename RemoteIndices::const_iterator RemoteMapIterator;
