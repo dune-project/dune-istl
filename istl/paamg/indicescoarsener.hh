@@ -107,7 +107,7 @@ namespace Dune
       public:
         ParallelAggregateRenumberer(AggregatesMap<Vertex>& aggregates, const I& lookup)
           :  AggregateRenumberer<G>(aggregates),  isPublic_(false), lookup_(lookup),
-            globalIndex_(std::numeric_limits<Vertex>::max())
+            globalIndex_(std::numeric_limits<GlobalIndex>::max())
         {}
 
 
