@@ -577,7 +577,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (def<def0*_reduction || def<1E-30 || i==_maxit)    // convergence check
+        if (def<def0*_reduction || def<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
