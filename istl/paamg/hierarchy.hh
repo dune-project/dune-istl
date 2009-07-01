@@ -25,6 +25,7 @@
 #include <dune/istl/paamg/globalaggregates.hh>
 #include <dune/istl/paamg/construction.hh>
 #include <dune/istl/paamg/smoother.hh>
+#include <dune/istl/paamg/transfer.hh>
 
 namespace Dune
 {
@@ -124,7 +125,7 @@ namespace Dune
        * @brief Iterator over the levels in the hierarchy.
        *
        * operator++() moves to the next coarser level in the hierarchy.
-       * while operator--() moved to the next finer level in the hierarchy.
+       * while operator--() moves to the next finer level in the hierarchy.
        */
       template<class C, class T1>
       class LevelIterator
@@ -385,6 +386,18 @@ namespace Dune
       {
         return prolongDamp_;
       }
+
+      /**
+       * @brief Get the mapping of fine level unknowns to coarse level
+       * aggregates.
+       *
+       * For each fine level unknown i the correcponding data[i] is the
+       * aggregate it belongs to on the coarsest level.
+       *
+       * @param[out] data The mapping of fine level unknowns to coarse level
+       * aggregates.
+       */
+      void getCoarsestAggregatesOnFinest(std::vector<std::size_t>& data);
 
     private:
       typedef typename ConstructionTraits<MatrixOperator>::Arguments MatrixArgs;
@@ -816,6 +829,65 @@ namespace Dune
     }
 
     template<class M, class IS, class A>
+    void MatrixHierarchy<M,IS,A>::getCoarsestAggregatesOnFinest(std::vector<std::size_t>& data)
+    {
+      int levels=aggregatesMaps().size();
+      int maxlevels=parallelInformation_.finest()->communicator().max(levels);
+      std::size_t size=(*(aggregatesMaps().begin()))->noVertices();
+      // We need an auxiliary vector for the consecutive prolongation.
+      std::vector<std::size_t> tmp;
+      std::vector<std::size_t> *coarse, *fine;
+      // make sure the allocated space suffices.
+      tmp.reserve(size);
+      data.reserve(size);
+
+      // Correctly assign coarse and fine for the first prolongation such that
+      // we end up in data in the end.
+      if(levels%2==0) {
+        coarse=&tmp;
+        fine=&data;
+      }else{
+        coarse=&data;
+        fine=&tmp;
+      }
+
+      // Number the unknowns on the coarsest level consecutively for each process.
+      if(levels==maxlevels) {
+        const AggregatesMap& map = *(*(++aggregatesMaps().rbegin()));
+        std::size_t m=0;
+
+        for(typename AggregatesMap::const_iterator iter = map.begin(); iter != map.end(); ++iter)
+          m=std::max(*iter,m);
+
+        coarse->resize(m+1);
+        std::size_t i=0;
+
+        for(typename std::vector<std::size_t>::iterator iter=coarse->begin(); iter != coarse->end();
+            ++iter, ++i)
+          *iter=i;
+      }
+
+      typename ParallelInformationHierarchy::Iterator pinfo = parallelInformation().coarsest();
+      --pinfo;
+      int l=levels;
+
+      // Now consecutively project the numbers to the finest level.
+      for(typename AggregatesMapList::const_reverse_iterator aggregates=++aggregatesMaps().rbegin();
+          aggregates != aggregatesMaps().rend(); ++aggregates,--levels) {
+
+        fine->resize((*aggregates)->noVertices());
+        fine->assign(fine->size(), 0);
+        Transfer<typename AggregatesMap::AggregateDescriptor, std::vector<std::size_t>, ParallelInformation>
+        ::prolongate(*(*aggregates), *coarse, *fine, static_cast<std::size_t>(1), *pinfo);
+        --pinfo;
+        std::swap(coarse, fine);
+      }
+
+      // Assertion to check that we really projected to data on the last step.
+      assert(coarse==&data);
+    }
+
+    template<class M, class IS, class A>
     const typename MatrixHierarchy<M,IS,A>::AggregatesMapList&
     MatrixHierarchy<M,IS,A>::aggregatesMaps() const
     {
@@ -958,14 +1030,13 @@ namespace Dune
         coarsest_->element_ = ConstructionTraits<MemberType>::construct(args);
         finest_ = coarsest_;
         coarsest_->finer_ = 0;
-        coarsest_->redistributed_ = 0;
       }else{
         coarsest_->coarser_ = allocator_.allocate(1,0);
         coarsest_->coarser_->finer_ = coarsest_;
         coarsest_ = coarsest_->coarser_;
         coarsest_->element_ = ConstructionTraits<MemberType>::construct(args);
-        finest_->redistributed_ = 0;
       }
+      coarsest_->redistributed_ = 0;
       coarsest_->coarser_=0;
       ++levels_;
     }

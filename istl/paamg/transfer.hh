@@ -32,21 +32,23 @@ namespace Dune
       typedef V1 Vertex;
       typedef V2 Vector;
 
+      template<typename T1>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
-                             typename Vector::field_type damp);
+                             T1 damp);
 
       static void restrict (const AggregatesMap<Vertex>& aggregates, Vector& coarse, const Vector & fine,
                             T& comm);
     };
 
-    template<class V,class B>
-    class Transfer<V,BlockVector<B>, SequentialInformation>
+    template<class V,class V1>
+    class Transfer<V,V1, SequentialInformation>
     {
     public:
       typedef V Vertex;
-      typedef BlockVector<B> Vector;
+      typedef V1 Vector;
+      template<typename T1>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
-                             typename Vector::field_type damp,
+                             T1 damp,
                              const SequentialInformation& comm=SequentialInformation());
 
 
@@ -56,27 +58,29 @@ namespace Dune
 
 #if HAVE_MPI
 
-    template<class V,class B, class T>
-    class Transfer<V,BlockVector<B>,ParallelInformation<T> >
+    template<class V,class V1, class T>
+    class Transfer<V,V1,ParallelInformation<T> >
     {
     public:
       typedef V Vertex;
-      typedef BlockVector<B> Vector;
+      typedef V1 Vector;
+      template<typename T1>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
-                             typename Vector::field_type damp);
+                             T1 damp);
 
       static void restrict (const AggregatesMap<Vertex>& aggregates, Vector& coarse, const Vector & fine,
                             ParallelInformation<T>& comm);
     };
 
-    template<class V,class B, class T1, class T2>
-    class Transfer<V,BlockVector<B>,OwnerOverlapCopyCommunication<T1,T2> >
+    template<class V,class V1, class T1, class T2>
+    class Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >
     {
     public:
       typedef V Vertex;
-      typedef BlockVector<B> Vector;
+      typedef V1 Vector;
+      template<typename T3>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
-                             typename Vector::field_type damp, OwnerOverlapCopyCommunication<T1,T2>& comm);
+                             T3 damp, OwnerOverlapCopyCommunication<T1,T2>& comm);
 
       static void restrict (const AggregatesMap<Vertex>& aggregates, Vector& coarse, const Vector & fine,
                             OwnerOverlapCopyCommunication<T1,T2>& comm);
@@ -84,78 +88,87 @@ namespace Dune
 
 #endif
 
-    template<class V, class B>
-    inline void Transfer<V,BlockVector<B>,SequentialInformation>::prolongate(const AggregatesMap<Vertex>& aggregates,
-                                                                             Vector& coarse, Vector& fine,
-                                                                             typename Vector::field_type damp,
-                                                                             const SequentialInformation& comm)
+    template<class V, class V1>
+    template<typename T>
+    inline void Transfer<V,V1,SequentialInformation>::prolongate(const AggregatesMap<Vertex>& aggregates,
+                                                                 Vector& coarse, Vector& fine,
+                                                                 T damp,
+                                                                 const SequentialInformation& comm)
     {
       typedef typename Vector::iterator Iterator;
 
-      Iterator end = fine.end();
+      Iterator end = coarse.end();
+      Iterator begin= coarse.begin();
+      for(; begin!=end; ++begin)
+        *begin*=damp;
+      end=fine.end();
+      begin=fine.begin();
 
-      coarse *= damp;
-
-      for(Iterator block=fine.begin(); block != end; ++block) {
-        const Vertex& vertex = aggregates[block.index()];
+      for(Iterator block=begin; block != end; ++block) {
+        std::ptrdiff_t index=block-begin;
+        const Vertex& vertex = aggregates[index];
         if(vertex != AggregatesMap<Vertex>::ISOLATED)
-          *block += coarse[aggregates[block.index()]];
+          *block += coarse[aggregates[index]];
       }
     }
 
-    template<class V, class B>
-    inline void Transfer<V,BlockVector<B>,SequentialInformation>::restrict (const AggregatesMap<Vertex>& aggregates,
-                                                                            Vector& coarse,
-                                                                            const Vector & fine,
-                                                                            const SequentialInformation & comm)
+    template<class V, class V1>
+    inline void Transfer<V,V1,SequentialInformation>::restrict (const AggregatesMap<Vertex>& aggregates,
+                                                                Vector& coarse,
+                                                                const Vector & fine,
+                                                                const SequentialInformation & comm)
     {
       // Set coarse vector to zero
       coarse=0;
 
       typedef typename Vector::const_iterator Iterator;
       Iterator end = fine.end();
-      for(Iterator block=fine.begin(); block != end; ++block) {
-        const Vertex& vertex = aggregates[block.index()];
+      Iterator begin=fine.begin();
+
+      for(Iterator block=begin; block != end; ++block) {
+        const Vertex& vertex = aggregates[block-begin];
         if(vertex != AggregatesMap<Vertex>::ISOLATED)
           coarse[vertex] += *block;
       }
     }
 
 #if HAVE_MPI
-    template<class V, class B, class T>
-    inline void Transfer<V,BlockVector<B>,ParallelInformation<T> >::prolongate(const AggregatesMap<Vertex>& aggregates,
-                                                                               Vector& coarse, Vector& fine,
-                                                                               typename Vector::field_type damp)
+    template<class V, class V1, class T>
+    template<typename T1>
+    inline void Transfer<V,V1,ParallelInformation<T> >::prolongate(const AggregatesMap<Vertex>& aggregates,
+                                                                   Vector& coarse, Vector& fine,
+                                                                   T1 damp)
     {
-      Transfer<V,BlockVector<B>,SequentialInformation>::prolongate(aggregates, coarse, fine, damp);
+      Transfer<V,V1,SequentialInformation>::prolongate(aggregates, coarse, fine, damp);
     }
 
-    template<class V, class B, class T>
-    inline void Transfer<V,BlockVector<B>,ParallelInformation<T> >::restrict (const AggregatesMap<Vertex>& aggregates,
-                                                                              Vector& coarse, const Vector & fine,
-                                                                              ParallelInformation<T>& comm)
+    template<class V, class V1, class T>
+    inline void Transfer<V,V1,ParallelInformation<T> >::restrict (const AggregatesMap<Vertex>& aggregates,
+                                                                  Vector& coarse, const Vector & fine,
+                                                                  ParallelInformation<T>& comm)
     {
-      Transfer<V,BlockVector<B>,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
+      Transfer<V,V1,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
       // We need this here to avoid it in the smoothers on the coarse level.
       // There (in the preconditioner d is const.
       comm.project(coarse);
     }
 
-    template<class V, class B, class T1, class T2>
-    inline void Transfer<V,BlockVector<B>,OwnerOverlapCopyCommunication<T1,T2> >::prolongate(const AggregatesMap<Vertex>& aggregates,
-                                                                                             Vector& coarse, Vector& fine,
-                                                                                             typename Vector::field_type damp,
-                                                                                             OwnerOverlapCopyCommunication<T1,T2>& comm)
+    template<class V, class V1, class T1, class T2>
+    template<typename T3>
+    inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::prolongate(const AggregatesMap<Vertex>& aggregates,
+                                                                                 Vector& coarse, Vector& fine,
+                                                                                 T3 damp,
+                                                                                 OwnerOverlapCopyCommunication<T1,T2>& comm)
     {
-      Transfer<V,BlockVector<B>,SequentialInformation>::prolongate(aggregates, coarse, fine, damp);
+      Transfer<V,V1,SequentialInformation>::prolongate(aggregates, coarse, fine, damp);
     }
 
-    template<class V, class B, class T1, class T2>
-    inline void Transfer<V,BlockVector<B>,OwnerOverlapCopyCommunication<T1,T2> >::restrict (const AggregatesMap<Vertex>& aggregates,
-                                                                                            Vector& coarse, const Vector & fine,
-                                                                                            OwnerOverlapCopyCommunication<T1,T2>& comm)
+    template<class V, class V1, class T1, class T2>
+    inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::restrict (const AggregatesMap<Vertex>& aggregates,
+                                                                                Vector& coarse, const Vector & fine,
+                                                                                OwnerOverlapCopyCommunication<T1,T2>& comm)
     {
-      Transfer<V,BlockVector<B>,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
+      Transfer<V,V1,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
       // We need this here to avoid it in the smoothers on the coarse level.
       // There (in the preconditioner d is const.
       comm.project(coarse);
