@@ -359,13 +359,13 @@ void test_Iter ()
   t.start();
 
   // build little blocks
-  MB D=0;
+  MB D(0.0);
   for (int i=0; i<BlockSize; i++)
     for (int j=0; j<BlockSize; j++)
       if (i==j) D[i][j] = 4+(BlockSize-1);else D[i][j] = -1;
   //   printmatrix(std::cout,D,"diagonal block","row",10,2);
 
-  MB E=0;
+  MB E(0.0);
   for (int i=0; i<BlockSize; i++)
     E[i][i] = -1;
   //   printmatrix(std::cout,E,"offdiagonal block","row",10,2);

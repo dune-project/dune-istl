@@ -76,14 +76,14 @@ namespace Dune {
     /** \brief Iterator implementation class  */
     template<class T>
     class RealIterator
-      :  public BidirectionalIteratorFacade<RealIterator<T>, T>
+      :  public RandomAccessIteratorFacade<RealIterator<T>, T>
     {
     public:
       //! \brief The unqualified value type
       typedef typename remove_const<T>::type ValueType;
 
-      friend class BidirectionalIteratorFacade<RealIterator<const ValueType>, const ValueType>;
-      friend class BidirectionalIteratorFacade<RealIterator<ValueType>, ValueType>;
+      friend class RandomAccessIteratorFacade<RealIterator<const ValueType>, const ValueType>;
+      friend class RandomAccessIteratorFacade<RealIterator<ValueType>, ValueType>;
       friend class RealIterator<const ValueType>;
       friend class RealIterator<ValueType>;
 
@@ -119,6 +119,11 @@ namespace Dune {
         return i==other.i;
       }
 
+      std::ptrdiff_t distanceTo(const RealIterator& o) const
+      {
+        return o.i-i;
+      }
+
     private:
       //! prefix increment
       void increment()
@@ -136,6 +141,11 @@ namespace Dune {
       B& dereference () const
       {
         return *i;
+      }
+
+      void advance(std::ptrdiff_t d)
+      {
+        i+=d;
       }
 
       const B* p;
