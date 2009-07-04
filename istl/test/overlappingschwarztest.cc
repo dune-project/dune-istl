@@ -137,7 +137,14 @@ int main(int argc, char** argv)
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-2,100,2);
   solver0.apply(x,b, res);
 
+  std::cout<<"Additive Schwarz not on the fly (domains vector)"<<std::endl;
 
+  b=0;
+  x=100;
+  //  setBoundary(x,b,N);
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,false> prec0o(mat, domains, 1);
+  Dune::LoopSolver<BVector> solver0o(fop, prec0o, 1e-2,100,2);
+  solver0o.apply(x,b, res);
   std::cout << "Multiplicative Schwarz (domains vector)"<<std::endl;
 
   b=0;
