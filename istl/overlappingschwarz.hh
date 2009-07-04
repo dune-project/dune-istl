@@ -324,7 +324,9 @@ namespace Dune
     typedef TA allocator;
 
     /** @brief The type for the subdomain to row index mapping. */
-    typedef std::set<size_type, std::less<size_type>, typename TA::template rebind< std::less<size_type> >::other> subdomain_type;
+    typedef std::set<size_type, std::less<size_type>,
+        typename TA::template rebind<size_type>::other>
+    subdomain_type;
 
     /** @brief The vector type containing the subdomain to row index mapping. */
     typedef std::vector<subdomain_type, typename TA::template rebind<subdomain_type>::other> subdomain_vector;
