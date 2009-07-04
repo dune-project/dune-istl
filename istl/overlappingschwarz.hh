@@ -17,7 +17,7 @@ namespace Dune
 {
 
   /**
-   * @addtogroup ISTL
+   * @addtogroup ISTL_Prec
    *
    * @{
    */
@@ -105,6 +105,10 @@ namespace Dune
   struct MultiplicativeSchwarzMode
   {};
 
+  /**
+   * @brief Tag that tells the Schwarz method to be multiplicative
+   * and symmetric.
+   */
   struct SymmetricMultiplicativeSchwarzMode
   {};
 
@@ -153,9 +157,10 @@ namespace Dune
     /**
      * @brief template meta program for choosing  how to add the correction.
      *
-     * There specialization for the additive and the multiplicative mode.
+     * There are specialization for the additive, the multiplicative, and the symmetric multiplicative mode.
      *
-     * \tparam The Schwarz mode (either AdditiveSchwarzMode or MuliplicativeSchwarzMode)
+     * \tparam The Schwarz mode (either AdditiveSchwarzMode or MuliplicativeSchwarzMode or
+     * SymmetricMultiplicativeSchwarzMode)
      * \tparam X The vector field type
      */
     template<typename T, class X>
@@ -267,10 +272,10 @@ namespace Dune
       }
     };
 
-    template<class M, class X, class TA>
-    struct Applier<SeqOverlappingSchwarz<M,X,SymmetricMultiplicativeSchwarzMode, TA> >
+    template<class M, class X, bool onTheFly, class TA>
+    struct Applier<SeqOverlappingSchwarz<M,X,SymmetricMultiplicativeSchwarzMode,onTheFly,TA> >
     {
-      typedef SeqOverlappingSchwarz<M,X,SymmetricMultiplicativeSchwarzMode, TA> smoother;
+      typedef SeqOverlappingSchwarz<M,X,SymmetricMultiplicativeSchwarzMode,onTheFly,TA> smoother;
       typedef typename smoother::range_type range_type;
 
       static void apply(smoother& sm, range_type& v, const range_type& b)
@@ -283,8 +288,17 @@ namespace Dune
 
   /**
    * @brief Sequential overlapping Schwarz preconditioner
+   *
+   * @tparam M The matrix type.
+   * @tparam X The range and domain type.
+   * @tparam TM The Schwarz mode. Currently supported modes are AdditiveSchwarzMode,
+   * MultiplicativeSchwarzMode, and SymmetricMultiplicativeSchwarzMode. (Default values is AdditiveSchwarzMode)
+   * @tparam onTheFly If true the decomposition of the exact local solvers is computed on the fly for each subdomain and
+   * iteration step. If false all decompositions are computed in pre and only forward and backward substitution takes place
+   * in the iteration steps.
+   * @tparam TA The type of the allocator to use.
    */
-  template<class M, class X, class TM=AdditiveSchwarzMode, class TA=std::allocator<X> >
+  template<class M, class X, class TM=AdditiveSchwarzMode, bool onTheFly=true, class TA=std::allocator<X> >
   class SeqOverlappingSchwarz
     : public Preconditioner<X,X>
   {
@@ -525,9 +539,9 @@ namespace Dune
     return map_.end();
   }
 
-  template<class M, class X, class TM, class TA>
-  SeqOverlappingSchwarz<M,X,TM,TA>::SeqOverlappingSchwarz(const matrix_type& mat_, const rowtodomain_vector& rowToDomain,
-                                                          field_type relaxationFactor)
+  template<class M, class X, class TM, bool onTheFly, class TA>
+  SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::SeqOverlappingSchwarz(const matrix_type& mat_, const rowtodomain_vector& rowToDomain,
+                                                                   field_type relaxationFactor)
     : mat(mat_), relax(relaxationFactor)
   {
     typedef typename rowtodomain_vector::const_iterator RowDomainIterator;
@@ -571,10 +585,10 @@ namespace Dune
     initialize(rowToDomain, mat);
   }
 
-  template<class M, class X, class TM, class TA>
-  SeqOverlappingSchwarz<M,X,TM,TA>::SeqOverlappingSchwarz(const matrix_type& mat_,
-                                                          const subdomain_vector& sd,
-                                                          field_type relaxationFactor)
+  template<class M, class X, class TM, bool onTheFly, class TA>
+  SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::SeqOverlappingSchwarz(const matrix_type& mat_,
+                                                                   const subdomain_vector& sd,
+                                                                   field_type relaxationFactor)
     :  mat(mat_), solvers(sd.size()), subDomains(sd), relax(relaxationFactor)
   {
     typedef typename subdomain_vector::const_iterator DomainIterator;
@@ -629,59 +643,66 @@ namespace Dune
     }
   };
 
-  template<class M, class X, class TM, class TA>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat)
+  template<class M, class X, class TM, bool onTheFly, class TA>
+  void SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat)
   {
     typedef typename std::vector<SuperMatrixInitializer<matrix_type> >::iterator InitializerIterator;
     typedef typename subdomain_vector::const_iterator DomainIterator;
     typedef typename slu_vector::iterator SolverIterator;
-    // initialize the initializers
-    DomainIterator domain=subDomains.begin();
 
-    // Create the initializers list.
-    std::vector<SuperMatrixInitializer<matrix_type> > initializers(subDomains.size());
+    if(onTheFly) {
+      maxlength=0;
+      for(DomainIterator domain=subDomains.begin(); domain!=subDomains.end(); ++domain)
+        maxlength=std::max(maxlength, domain->size());
+      maxlength*=mat[0].begin()->N();
+    }else{
+      // initialize the initializers
+      DomainIterator domain=subDomains.begin();
 
-    SolverIterator solver=solvers.begin();
-    for(InitializerIterator initializer=initializers.begin(); initializer!=initializers.end();
-        ++initializer, ++solver, ++domain) {
-      solver->mat.N_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
-      solver->mat.M_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
-      //solver->setVerbosity(true);
-      *initializer=SuperMatrixInitializer<matrix_type>(solver->mat);
+      // Create the initializers list.
+      std::vector<SuperMatrixInitializer<matrix_type> > initializers(subDomains.size());
+
+      SolverIterator solver=solvers.begin();
+      for(InitializerIterator initializer=initializers.begin(); initializer!=initializers.end();
+          ++initializer, ++solver, ++domain) {
+        solver->mat.N_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
+        solver->mat.M_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
+        //solver->setVerbosity(true);
+        *initializer=SuperMatrixInitializer<matrix_type>(solver->mat);
+      }
+
+      // Set up the supermatrices according to the subdomains
+      typedef OverlappingSchwarzInitializer<std::vector<SuperMatrixInitializer<matrix_type> >,
+          rowtodomain_vector > Initializer;
+
+      Initializer initializer(initializers, rowToDomain);
+      copyToSuperMatrix(initializer, mat);
+      if(solvers.size()==1)
+        assert(solvers[0].mat==mat);
+
+      /*    for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver)
+            dPrint_CompCol_Matrix("superlu", &static_cast<SuperMatrix&>(solver->mat)); */
+
+      // Calculate the LU decompositions
+      std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&slu::decompose));
+      maxlength=0;
+      for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
+        assert(solver->mat.N()==solver->mat.M());
+        maxlength=std::max(maxlength, solver->mat.N());
+        //writeCompColMatrixToMatlab(static_cast<SuperLUMatrix<M>&>(solver->mat), std::cout);
+      }
     }
-
-    // Set up the supermatrices according to the subdomains
-    typedef OverlappingSchwarzInitializer<std::vector<SuperMatrixInitializer<matrix_type> >,
-        rowtodomain_vector > Initializer;
-
-    Initializer initializer(initializers, rowToDomain);
-    copyToSuperMatrix(initializer, mat);
-    if(solvers.size()==1)
-      assert(solvers[0].mat==mat);
-
-    /*    for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver)
-          dPrint_CompCol_Matrix("superlu", &static_cast<SuperMatrix&>(solver->mat)); */
-
-    // Calculate the LU decompositions
-    std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&slu::decompose));
-    maxlength=0;
-    for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
-      assert(solver->mat.N()==solver->mat.M());
-      maxlength=std::max(maxlength, solver->mat.N());
-      //writeCompColMatrixToMatlab(static_cast<SuperLUMatrix<M>&>(solver->mat), std::cout);
-    }
-
   }
 
-  template<class M, class X, class TM, class TA>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::apply(X& x, const X& b)
+  template<class M, class X, class TM, bool onTheFly, class TA>
+  void SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::apply(X& x, const X& b)
   {
     Applier<SeqOverlappingSchwarz>::apply(*this, x, b);
   }
 
-  template<class M, class X, class TM, class TA>
+  template<class M, class X, class TM, bool onTheFly, class TA>
   template<bool forward>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::apply(X& x, const X& b)
+  void SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::apply(X& x, const X& b)
   {
     typedef typename X::block_type block;
     typedef slu_vector solver_vector;
@@ -696,19 +717,29 @@ namespace Dune
 
 
     domain_iterator domain=IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::begin(subDomains);
-
+    iterator solver = IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::begin(solvers);
     X v(x); // temporary for the update
     v=0;
 
     typedef typename AdderSelector<TM,X>::Adder Adder;
-    for(iterator solver=IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::begin(solvers);
-        solver != IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::end(solvers); ++solver, ++domain) {
+    for(; domain != IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::end(subDomains); ++domain) {
       //Copy rhs to C-array for SuperLU
       std::for_each(domain->begin(), domain->end(), Assigner<X>(mat, rhs, b, x));
+      if(onTheFly) {
+        // Create the subdomain solver
+        slu sdsolver;
+        sdsolver.setSubMatrix(mat, *domain);
+        // Apply
+        sdsolver.apply(lhs,rhs);
+      }else
+      {
+        solver->apply(lhs, rhs);
+        ++solver;
 
-      solver->apply(lhs, rhs);
+      }
       //Add relaxed correction to from SuperLU to v
       std::for_each(domain->begin(), domain->end(), Adder(v, x, lhs, relax));
+
     }
 
     Adder adder(v, x, lhs, relax);
@@ -718,20 +749,23 @@ namespace Dune
 
   }
 
-  template<class M, class X, class TM, class TA>
+  template<class M, class X, class TM, bool onTheFly, class TA>
   template<typename T, typename A, int n>
-  SeqOverlappingSchwarz<M,X,TM,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::Assigner(const M& mat_, T* rhs_, const BlockVector<FieldVector<T,n>,A>& b_,
-                                                                                         const BlockVector<FieldVector<T,n>,A>& x_)
+  SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::Assigner(const M& mat_, T* rhs_, const BlockVector<FieldVector<T,n>,A>& b_,
+                                                                                                  const BlockVector<FieldVector<T,n>,A>& x_)
     : mat(&mat_), rhs(rhs_), b(&b_), x(&x_), i(0)
   {}
 
-  template<class M, class X, class TM, class TA>
+  template<class M, class X, class TM, bool onTheFly, class TA>
   template<typename T, typename A, int n>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
+  void SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
   {
-    size_type starti;
-    starti = i;
+    // The current index.
+    size_type starti = i;
 
+    //assign right hand side of current domainindex block
+    // rhs is an array of doubles!
+    // rhs[starti] = b[domainindex]
     for(size_type j=0; j<n; ++j, ++i)
       rhs[i]=(*b)[domainIndex][j];
 
@@ -739,10 +773,13 @@ namespace Dune
     typedef typename M::ConstColIterator col_iterator;
     typedef typename subdomain_type::const_iterator domain_iterator;
 
+    // calculate defect for current row index block
     for(col_iterator col=(*mat)[domainIndex].begin(); col!=(*mat)[domainIndex].end(); ++col) {
       typename X::block_type tmp;
+      // T = A(domainIndex,k)*x(k)
       (*col).mv((*x)[col.index()], tmp);
       i-=n;
+      //rhs[starti] -= tmp
       for(size_type j=0; j<n; ++j, ++i)
         rhs[i]-=tmp[j];
     }

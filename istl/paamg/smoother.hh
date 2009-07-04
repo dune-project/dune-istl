@@ -385,17 +385,17 @@ namespace Dune
   } // end namespace Amg
 
   // forward declarations
-  template<class M, class X, class MO, class A>
+  template<class M, class X, class MO, bool b, class A>
   class SeqOverlappingSchwarz;
 
   class MultiplicativeSchwarzMode;
 
   namespace Amg
   {
-    template<class M, class X, class TA>
-    struct SmootherApplier<SeqOverlappingSchwarz<M,X,MultiplicativeSchwarzMode,TA> >
+    template<class M, class X, bool b, class TA>
+    struct SmootherApplier<SeqOverlappingSchwarz<M,X,MultiplicativeSchwarzMode,b,TA> >
     {
-      typedef SeqOverlappingSchwarz<M,X,MultiplicativeSchwarzMode,TA> Smoother;
+      typedef SeqOverlappingSchwarz<M,X,MultiplicativeSchwarzMode,b,TA> Smoother;
       typedef typename Smoother::range_type Range;
       typedef typename Smoother::domain_type Domain;
 
@@ -427,23 +427,23 @@ namespace Dune
       {}
     };
 
-    template<class M, class X, class TM, class TA>
-    struct SmootherTraits<SeqOverlappingSchwarz<M,X,TM,TA> >
+    template<class M, class X, class TM, bool b, class TA>
+    struct SmootherTraits<SeqOverlappingSchwarz<M,X,TM,b,TA> >
     {
       typedef  SeqOverlappingSchwarzSmootherArgs<typename M::field_type> Arguments;
     };
 
-    template<class M, class X, class TM, class TA>
-    class ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> >
-      : public DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> >
+    template<class M, class X, class TM, bool b, class TA>
+    class ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,b,TA> >
+      : public DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,b,TA> >
     {
-      typedef DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> > Father;
+      typedef DefaultConstructionArgs<SeqOverlappingSchwarz<M,X,TM,b,TA> > Father;
 
     public:
       typedef typename MatrixGraph<M>::VertexDescriptor VertexDescriptor;
       typedef Dune::Amg::AggregatesMap<VertexDescriptor> AggregatesMap;
       typedef typename AggregatesMap::AggregateDescriptor AggregateDescriptor;
-      typedef typename SeqOverlappingSchwarz<M,X,TM,TA>::subdomain_vector Vector;
+      typedef typename SeqOverlappingSchwarz<M,X,TM,b,TA>::subdomain_vector Vector;
       typedef typename Vector::value_type Subdomain;
 
       virtual void setMatrix(const M& matrix, const AggregatesMap& amap)
@@ -676,19 +676,19 @@ namespace Dune
     };
 
 
-    template<class M, class X, class TM, class TA>
-    struct ConstructionTraits<SeqOverlappingSchwarz<M,X,TM,TA> >
+    template<class M, class X, class TM, bool b, class TA>
+    struct ConstructionTraits<SeqOverlappingSchwarz<M,X,TM,b,TA> >
     {
-      typedef ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TA> > Arguments;
+      typedef ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,b,TA> > Arguments;
 
-      static inline SeqOverlappingSchwarz<M,X,TM,TA>* construct(Arguments& args)
+      static inline SeqOverlappingSchwarz<M,X,TM,b,TA>* construct(Arguments& args)
       {
-        return new SeqOverlappingSchwarz<M,X,TM,TA>(args.getMatrix(),
-                                                    args.getSubDomains(),
-                                                    args.getArgs().relaxationFactor);
+        return new SeqOverlappingSchwarz<M,X,TM,b,TA>(args.getMatrix(),
+                                                      args.getSubDomains(),
+                                                      args.getArgs().relaxationFactor);
       }
 
-      static void deconstruct(SeqOverlappingSchwarz<M,X,TM,TA>* schwarz)
+      static void deconstruct(SeqOverlappingSchwarz<M,X,TM,b,TA>* schwarz)
       {
         delete schwarz;
       }

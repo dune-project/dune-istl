@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 {
 
   const int BS=1;
-  int N=100;
+  std::size_t N=100;
 
   if(argc>1)
     N = atoi(argv[1]);
@@ -43,10 +43,15 @@ int main(int argc, char** argv)
 
   Dune::SuperLU<BCRSMat> solver1;
 
-  solver1.setMatrix(mat);
+  std::set<std::size_t> mrs;
+  for(std::size_t s=0; s < N/2; ++s)
+    mrs.insert(s);
 
+  solver1.setSubMatrix(mat,mrs);
+  solver.setVerbosity(true);
   solver.apply(x,b, res);
 
   std::cout<<"Defect reduction is "<<res.reduction<<std::endl;
+  solver1.apply(x,b, res);
 
 }

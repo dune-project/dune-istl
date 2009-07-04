@@ -43,7 +43,7 @@ namespace Dune
   class SuperLU
   {};
 
-  template<class M, class T, class TM, class TA>
+  template<class M, class T, class TM, bool b, class TA>
   class SeqOverlappingSchwarz;
 
   /**
@@ -107,6 +107,9 @@ namespace Dune
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& mat);
 
+    template<class S>
+    void setSubMatrix(const Matrix& mat, const S& rowIndexSet);
+
     void setVerbosity(bool v);
 
     /**
@@ -116,7 +119,7 @@ namespace Dune
     void free();
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
-    template<class M,class X, class TM, class T1>
+    template<class M,class X, class TM, bool b, class T1>
     friend class SeqOverlappingSchwarz;
 
     /** @brief computes the LU Decomposition */
@@ -193,6 +196,22 @@ namespace Dune
     mat=mat_;
     decompose();
   }
+
+  template<typename T, typename A, int n, int m>
+  template<class S>
+  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setSubMatrix(const Matrix& mat_,
+                                                                const S& mrs)
+  {
+    if(mat.N()+mat.M()>0) {
+      free();
+    }
+    lwork=0;
+    work=0;
+    //a=&mat_;
+    mat.setMatrix(mat_,mrs);
+    decompose();
+  }
+
   template<typename T, typename A, int n, int m>
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::decompose()
   {
@@ -229,7 +248,7 @@ namespace Dune
            &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr,
            &berr, &memusage, &stat, &info);
 
-    if(verbose&&false) {
+    if(verbose) {
       dinfo<<"LU factorization: dgssvx() returns info "<< info<<std::endl;
 
       if ( info == 0 || info == n+1 ) {
@@ -336,12 +355,12 @@ namespace Dune
       if ( info == 0 || info == n+1 ) {
 
         if ( options.IterRefine ) {
-          dinfo<<"Iterative Refinement: steps="
-               <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
+          std::cout<<"Iterative Refinement: steps="
+                   <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
         }else
-          dinfo<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
+          std::cout<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
       } else if ( info > 0 && lwork == -1 ) {
-        dinfo<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
+        std::cout<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
       }
 
       if ( options.PrintStat ) StatPrint(&stat);
@@ -382,8 +401,8 @@ namespace Dune
       // undo scaling of right hand side
       std::transform(b, b+mat.M(), C, b, std::divides<T>());
 
-    if(ferr>1.0e-8) { // && verbose){
-      //dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
+    if(verbose) {
+      dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
 
       if ( info == 0 || info == n+1 ) {
 
@@ -395,7 +414,7 @@ namespace Dune
       } else if ( info > 0 && lwork == -1 ) {
         dinfo<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
       }
-      //if ( options.PrintStat ) StatPrint(&stat);
+      if ( options.PrintStat ) StatPrint(&stat);
     }
 
     StatFree(&stat);
