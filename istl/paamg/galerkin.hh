@@ -598,7 +598,7 @@ namespace Dune
                                             overlapVertices+count,
                                             sparsityBuilder);
 
-      dinfo<<"row size: min="<<sparsityBuilder.minRowSize()<<" max="
+      dinfo<<pinfo.communicator().rank()<<": Matrix ("<<coarseMatrix->N()<<"x"<<coarseMatrix->M()<<" row: min="<<sparsityBuilder.minRowSize()<<" max="
            <<sparsityBuilder.maxRowSize()<<" avg="
            <<static_cast<double>(sparsityBuilder.sumRowSize())/coarseMatrix->N()
            <<std::endl;
