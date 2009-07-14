@@ -45,10 +45,11 @@ void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int ove
       if((i<start && i > 0) || (i>= end && i < N-1))
         flag=GridAttributes::copy;
 
-      if(i<start+1 || i>= end-1)
+      if(i<start+1 || i>= end-1) {
         isPublic = true;
+        indices.add(global, LocalIndex(iter.index(), flag, isPublic));
+      }
 
-      indices.add(global, LocalIndex(iter.index(), flag, isPublic));
 
       iter.insert(iter.index());
 
