@@ -1154,7 +1154,6 @@ namespace Dune {
       delete[] statuses;
     }
 
-    MPI_Barrier(comm_);
 
     // delete allocated memory
     if(destPairs!=sourcePairs)
