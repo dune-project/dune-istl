@@ -129,6 +129,13 @@ namespace Dune
       /** \copydoc Preconditioner::post */
       void post(Domain& x);
 
+      /**
+       * @brief Get the aggregate number of each unknown on the coarsest level.
+       * @param cont The random access container to store the numbers in.
+       */
+      template<class A1>
+      void getCoarsestAggregateNumbers(std::vector<std::size_t,A1>& cont);
+
     private:
       /** @brief Multigrid cycle on a level. */
       void mgc(typename Hierarchy<Smoother,A>::Iterator& smoother,
@@ -488,6 +495,14 @@ namespace Dune
       delete &(*rhs_->finest());
       delete rhs_;
     }
+
+    template<class M, class X, class S, class P, class A>
+    template<class A1>
+    void AMG<M,X,S,P,A>::getCoarsestAggregateNumbers(std::vector<std::size_t,A1>& cont)
+    {
+      matrices_->getCoarsestAggregatesOnFinest(cont);
+    }
+
   } // end namespace Amg
 } // end namespace Dune
 
