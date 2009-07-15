@@ -864,11 +864,16 @@ namespace Dune
         coarse->resize(m+1);
         std::size_t i=0;
         srand((unsigned)std::clock());
+        std::set<size_t> used;
         for(typename std::vector<std::size_t>::iterator iter=coarse->begin(); iter != coarse->end();
             ++iter, ++i)
         {
-          std::size_t val=(rand());
-          *iter=val;
+          std::pair<std::set<std::size_t>::iterator,bool> ibpair
+            = used.insert((((double)rand())/(RAND_MAX+1.0))*coarse->size());
+
+          while(!ibpair.second)
+            ibpair = used.insert((((double)rand())/(RAND_MAX+1.0))*coarse->size());
+          *iter=*(ibpair.first);
         }
       }
 
