@@ -1260,7 +1260,7 @@ namespace Dune
   {
     int entries=0;
 
-    for(int i=0; i <  info.size(); i++)
+    for(size_t i=0; i < info.size(); i++)
       entries += CommPolicy<Data>::getSize(data,info[i]);
 
     return entries;
@@ -1282,11 +1282,10 @@ namespace Dune
         interfacePair != end; ++interfacePair) {
       int size = forward ? interfacePair->second.first.size() :
                  interfacePair->second.second.size();
-      int proc = interfacePair->first();
 
       for(int i=0; i < size; i++) {
-        int local = forward ? interfacePair->second->first[i] :
-                    interfacePair->second->second[i];
+        int local = forward ? interfacePair->second.first[i] :
+                    interfacePair->second.second[i];
         for(int j=0; j < CommPolicy<Data>::getSize(data, local); j++, index++) {
 
 #ifdef DUNE_ISTL_WITH_CHECKING
@@ -1342,7 +1341,7 @@ namespace Dune
     const Information& info = FORWARD ? infoPair->second.second :
                               infoPair->second.first;
 
-    for(int i=0, index=0; i < info.size(); i++) {
+    for(size_t i=0, index=0; i < info.size(); i++) {
       for(int j=0; j < CommPolicy<Data>::getSize(data, info[i]); j++)
         GatherScatter::scatter(data, buffer[index++], info[i], j);
     }
