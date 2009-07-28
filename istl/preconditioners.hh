@@ -447,7 +447,7 @@ namespace Dune {
   class SeqILU0 : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
-    typedef M matrix_type;
+    typedef typename Dune::remove_const<M>::type matrix_type;
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
@@ -503,7 +503,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     field_type _w;
     //! \brief The ILU0 decomposition of the matrix.
-    M ILU;
+    matrix_type ILU;
   };
 
 
@@ -517,7 +517,7 @@ namespace Dune {
   class SeqILUn : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
-    typedef M matrix_type;
+    typedef typename Dune::remove_const<M>::type matrix_type;
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
@@ -573,7 +573,7 @@ namespace Dune {
 
   private:
     //! \brief ILU(n) decomposition of the matrix we operate on.
-    M ILU;
+    matrix_type ILU;
     //! \brief The number of steps to perform in apply.
     int _n;
     //! \brief The relaxation factor to use.
