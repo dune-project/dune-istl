@@ -192,7 +192,7 @@ namespace Dune
     typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;
 
-    SuperMatrixInitializer(SuperLUMatrix& m);
+    SuperMatrixInitializer(SuperLUMatrix& lum);
 
     SuperMatrixInitializer();
 
