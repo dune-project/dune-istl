@@ -73,7 +73,7 @@ namespace Dune
        */
       void setDefaultValuesIsotropic(std::size_t dim, std::size_t diameter=2)
       {
-        maxDistance_=dim;
+        maxDistance_=0;
         std::size_t csize=1;
         for(; dim>0; dim--) {
 
@@ -1767,6 +1767,7 @@ namespace Dune
       typedef AggregateVisitor<DependencyCounter> Counter;
       typedef tuple<Counter,Counter> CounterTuple;
       CombinedFunctor<CounterTuple> visitors(CounterTuple(Counter(aggregates, AggregatesMap<Vertex>::UNAGGREGATED, unused), Counter(aggregates, aggregate, aggregated)));
+      visitNeighbours(*graph_, vertex, visitors);
       return std::make_pair(unused.value(), aggregated.value());
     }
 
@@ -1824,7 +1825,6 @@ namespace Dune
     {
       // Todo
       Dune::dvverb<<" Admissible not yet implemented!"<<std::endl;
-
       return true;
     }
 
