@@ -136,6 +136,8 @@ namespace Dune
       template<class A1>
       void getCoarsestAggregateNumbers(std::vector<std::size_t,A1>& cont);
 
+      std::size_t levels();
+
     private:
       /** @brief Multigrid cycle on a level. */
       void mgc(typename Hierarchy<Smoother,A>::Iterator& smoother,
@@ -295,6 +297,11 @@ namespace Dune
                                         *scalarProduct_,
                                         *coarseSmoother_, 1E-2, 10000, 0);
       }
+    }
+    template<class M, class X, class S, class P, class A>
+    std::size_t AMG<M,X,S,P,A>::levels()
+    {
+      return matrices_->levels();
     }
 
     /** \copydoc Preconditioner::apply */
