@@ -4,7 +4,6 @@
 #define DUNE_AMG_GRAPHCREATOR_HH
 
 #include "graph.hh"
-#include "pmatrix.hh"
 #include "dependency.hh"
 #include <dune/istl/operators.hh>
 #include <dune/istl/bcrsmatrix.hh>
