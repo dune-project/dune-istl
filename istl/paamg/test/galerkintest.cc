@@ -15,6 +15,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/paamg/indicescoarsener.hh>
 #include <dune/istl/paamg/galerkin.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 #include <dune/common/propertymap.hh>
 #include "anisotropic.hh"
 //#include<dune/istl/paamg/aggregates.hh>
@@ -27,9 +28,10 @@ void testCoarsenIndices(int N)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
 
-  typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
-  typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
-  typedef Dune::Amg::ParallelInformation<ParallelIndexSet> ParallelInformation;
+
+  typedef Dune::OwnerOverlapCopyCommunication<int> ParallelInformation;
+  typedef typename ParallelInformation::ParallelIndexSet ParallelIndexSet;
+  typedef typename ParallelInformation::RemoteIndices RemoteIndices;
   typedef Dune::FieldMatrix<double,BS,BS> Block;
   typedef Dune::BCRSMatrix<Block> BCRSMat;
   int n;
@@ -43,7 +45,7 @@ void testCoarsenIndices(int N)
 
   BCRSMat mat = setupAnisotropic2d<BS>(N, indices, cc, &n);
 
-  pinfo.rebuildRemoteIndices<false>();
+  pinfo.remoteIndices().rebuild<false>();
 
   typedef Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
   typedef Dune::Amg::SubGraph<Dune::Amg::MatrixGraph<BCRSMat>,std::vector<bool> > SubGraph;
@@ -128,15 +130,15 @@ void testCoarsenIndices(int N)
 
   assert(mat.N()==mg.maxVertex());
 
-  bool* visitedIterator = new bool[N*N];
+  bool* visitedIterator = new bool[mat.N()];
 
-  for(Vertex i=0; i < mg.maxVertex(); ++i)
+  for(Vertex i=0; i < mat.N(); ++i)
     visitedIterator[i]=false;
 
   VisitedMap2 visitedMap2(visitedIterator, Dune::IdentityMap());
 
   BCRSMat* coarseMat = productBuilder.build(mat, mg, visitedMap2, pinfo,
-                                            aggregatesMap, coarseIndices.size(),
+                                            aggregatesMap, noCoarseVertices,
                                             Dune::EnumItem<GridFlag,GridAttributes::copy>());
 
   delete[] visitedIterator;

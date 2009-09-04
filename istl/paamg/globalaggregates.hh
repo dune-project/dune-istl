@@ -118,27 +118,6 @@ namespace Dune
     {};
 
 #if HAVE_MPI
-    template<typename T, typename O, typename T1>
-    struct AggregatesPublisher<T,O,ParallelInformation<T1> >
-    {
-      typedef T Vertex;
-      typedef O OverlapFlags;
-      typedef Dune::Amg::ParallelInformation<T1> ParallelInformation;
-      typedef typename ParallelInformation::ParallelIndexSet IndexSet;
-
-      static void publish(AggregatesMap<Vertex>& aggregates,
-                          ParallelInformation& pinfo,
-                          const GlobalLookupIndexSet<IndexSet>& globalLookup)
-      {
-        typedef Dune::Amg::GlobalAggregatesMap<Vertex,IndexSet> GlobalMap;
-        GlobalMap gmap(aggregates, globalLookup);
-        pinfo.template buildInterface<OverlapFlags>();
-        pinfo.template buildCommunicator<GlobalMap>(gmap, gmap);
-        pinfo.template communicateForward<AggregatesGatherScatter<Vertex,IndexSet> >(gmap, gmap);
-        pinfo.freeCommunicator();
-      }
-
-    };
 
 #endif
 

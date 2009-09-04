@@ -58,20 +58,6 @@ namespace Dune
 
 #if HAVE_MPI
 
-    template<class V,class V1, class T>
-    class Transfer<V,V1,ParallelInformation<T> >
-    {
-    public:
-      typedef V Vertex;
-      typedef V1 Vector;
-      template<typename T1>
-      static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
-                             T1 damp);
-
-      static void restrict (const AggregatesMap<Vertex>& aggregates, Vector& coarse, const Vector & fine,
-                            ParallelInformation<T>& comm);
-    };
-
     template<class V,class V1, class T1, class T2>
     class Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >
     {
@@ -133,26 +119,6 @@ namespace Dune
     }
 
 #if HAVE_MPI
-    template<class V, class V1, class T>
-    template<typename T1>
-    inline void Transfer<V,V1,ParallelInformation<T> >::prolongate(const AggregatesMap<Vertex>& aggregates,
-                                                                   Vector& coarse, Vector& fine,
-                                                                   T1 damp)
-    {
-      Transfer<V,V1,SequentialInformation>::prolongate(aggregates, coarse, fine, damp);
-    }
-
-    template<class V, class V1, class T>
-    inline void Transfer<V,V1,ParallelInformation<T> >::restrict (const AggregatesMap<Vertex>& aggregates,
-                                                                  Vector& coarse, const Vector & fine,
-                                                                  ParallelInformation<T>& comm)
-    {
-      Transfer<V,V1,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
-      // We need this here to avoid it in the smoothers on the coarse level.
-      // There (in the preconditioner d is const.
-      comm.project(coarse);
-    }
-
     template<class V, class V1, class T1, class T2>
     template<typename T3>
     inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::prolongate(const AggregatesMap<Vertex>& aggregates,

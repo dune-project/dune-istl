@@ -189,14 +189,12 @@ namespace Dune
 
     };
 
+    /**
+     * @brief Coarsen Indices in the parallel case.
+     */
     template<typename G, typename L, typename E>
     class IndicesCoarsener<OwnerOverlapCopyCommunication<G,L>,E>
       : public ParallelIndicesCoarsener<OwnerOverlapCopyCommunication<G,L>,E>
-    {};
-
-    template<typename T,typename E>
-    class IndicesCoarsener<ParallelInformation<T>,E>
-      : public ParallelIndicesCoarsener<ParallelInformation<T>,E>
     {};
 
 
