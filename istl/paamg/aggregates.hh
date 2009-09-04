@@ -1172,7 +1172,7 @@ namespace Dune
       /**
        * @brief Count connections to neighbours.
        *
-       * Counts number of connections of a vertex to vertices
+       * Counts the number of strong connections of a vertex to vertices
        * that are not yet aggregated
        * and the ones that belong to specific aggregate.
        *
