@@ -185,6 +185,9 @@ namespace Dune {
     typedef typename RI::RemoteIndex RX;
     typedef Dune::BufferedCommunicator<PIS> BC;
     typedef Dune::Interface<PIS> IF;
+    typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner> OwnerSet;
+    typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
+    typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
   protected:
 
 
@@ -236,9 +239,6 @@ namespace Dune {
     {
       if (OwnerToAllInterfaceBuilt)
         OwnerToAllInterface.free();
-      typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner> OwnerSet;
-      typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
-      typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
       OwnerSet sourceFlags;
       AllSet destFlags;
       OwnerToAllInterface.build(ri,sourceFlags,destFlags);
@@ -389,6 +389,11 @@ namespace Dune {
     RemoteIndices& remoteIndices()
     {
       return ri;
+    }
+    void buildGlobalLookup()
+    {
+      assert(!globalLookup_);
+      globalLookup_ = new GlobalLookupIndexSet(pis);
     }
 
     void buildGlobalLookup(std::size_t size)
