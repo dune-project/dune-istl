@@ -389,6 +389,43 @@ namespace Dune
   };
 
   /**
+   * @brief Stores the corresponding global indices of the remote index information.
+   *
+   * Whenever a ParallelIndexSet is resized all RemoteIndices that use it will be invalided
+   * as the pointers to the index set are invalid after calling ParallelIndexSet::Resize()
+   * One can rebuild them by storing the global indices in a map with this function and later
+   * repairing the pointers by calling repairLocalIndexPointers.
+   *
+   * @warning The RemoteIndices class has to be build with the same index set for both the
+   * sending and receiving side
+   * @param globalMap Map to store the corresponding global indices in.
+   * @param remoteIndices The remote index information we need to store the corresponding global
+   * indices of.
+   * @param indexSet The index set that is for both the sending and receiving side of the remote
+   * index information.
+   */
+  template<typename T, typename A, typename A1>
+  void storeGlobalIndicesOfRemoteIndices(std::map<int,SLList<typename T::GlobalIndex,A> >& globalMap,
+                                         const RemoteIndices<T,A1>& remoteIndices,
+                                         const T& indexSet)
+  {
+    typedef typename RemoteIndices<T,A1>::const_iterator RemoteIterator;
+
+    for(RemoteIterator remote = remoteIndices.begin(), end =remoteIndices.end(); remote != end; ++remote) {
+      typedef typename RemoteIndices<T,A1>::RemoteIndexList RemoteIndexList;
+      typedef typename RemoteIndexList::const_iterator RemoteIndexIterator;
+      typedef SLList<typename T::GlobalIndex,A> GlobalIndexList;
+      GlobalIndexList& global = globalMap[remote->first];
+      RemoteIndexList& rList = *(remote->second.first);
+
+      for(RemoteIndexIterator index = rList.begin(), riEnd = rList.end();
+          index != riEnd; ++index) {
+        global.push_back(index->localIndexPair().global());
+      }
+    }
+  }
+
+  /**
    * @brief Repair the pointers to the local indices in the remote indices.
    *
    * @param globalMap The map of the process number to the list of global indices
@@ -439,7 +476,8 @@ namespace Dune
         ++gIndex;
       }
     }
-
+    remoteIndices.sourceSeqNo_ = remoteIndices.source_->seqNo();
+    remoteIndices.destSeqNo_ = remoteIndices.target_->seqNo();
   }
 
   template<typename T>
