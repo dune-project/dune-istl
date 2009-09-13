@@ -503,6 +503,27 @@ namespace Dune
   /** @} */
 }
 
+namespace std
+{
+  template<class T>
+  ostream& operator<<(ostream& os, const Dune::Interface<T>& interface)
+  {
+    typedef typename Dune::Interface<T>::InformationMap InfoMap;
+    typedef typename InfoMap::const_iterator Iter;
+    for(Iter i=interface.interfaces().begin(), end = interface.interfaces().end();
+        i!=end; ++i)
+    {
+      os<<i->first<<": [ source=[";
+      for(std::size_t j=0; j < i->second.first.size(); ++j)
+        os<<i->second.first[j]<<" ";
+      os<<"] , target=[";
+      for(std::size_t j=0; j < i->second.second.size(); ++j)
+        os<<i->second.second[j]<<" ";
+      os<<"]\n";
+    }
+    return os;
+  }
+} // end namespace std
 #endif // HAVE_MPI
 
 #endif
