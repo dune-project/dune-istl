@@ -516,10 +516,10 @@ namespace std
       os<<i->first<<": [ source=[";
       for(std::size_t j=0; j < i->second.first.size(); ++j)
         os<<i->second.first[j]<<" ";
-      os<<"] , target=[";
+      os<<"] size="<<i->second.first.size()<<", target=[";
       for(std::size_t j=0; j < i->second.second.size(); ++j)
         os<<i->second.second[j]<<" ";
-      os<<"]\n";
+      os<<"] size="<<i->second.second.size()<<"\n";
     }
     return os;
   }
