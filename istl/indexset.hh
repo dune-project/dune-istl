@@ -374,11 +374,11 @@ namespace Dune
      * N log(N).
      * @param global The globally unique id of the pair.
      * @return The pair of indices for the id.
-     * @exception NoSuchEntry Thrown if the global id is not known.
+     * @warning If the global index is not in the set a wrong or even a
+     * null reference might be returned. To be save use the throwing alternative at.
      */
     inline IndexPair&
     operator[](const GlobalIndex& global);
-
 
     /**
      * @brief Find the index pair with a specific global id.
@@ -387,10 +387,35 @@ namespace Dune
      * N log(N).
      * @param global The globally unique id of the pair.
      * @return The pair of indices for the id.
-     * @exception NoSuchEntry Thrown if the global id is not known.
+     * @exception RangeError Thrown if the global id is not known.
+     */
+    inline IndexPair&
+    at(const GlobalIndex& global);
+
+    /**
+     * @brief Find the index pair with a specific global id.
+     *
+     * This starts a binary search for the entry and therefor has complexity
+     * N log(N).
+     * @param global The globally unique id of the pair.
+     * @return The pair of indices for the id.
+     * @warning If the global index is not in the set a wrong or even a
+     * null reference might be returned. To be save use the throwing alternative at.
      */
     inline const IndexPair&
     operator[](const GlobalIndex& global) const;
+
+    /**
+     * @brief Find the index pair with a specific global id.
+     *
+     * This starts a binary search for the entry and therefor has complexity
+     * N log(N).
+     * @param global The globally unique id of the pair.
+     * @return The pair of indices for the id.
+     * @exception RangeError Thrown if the global id is not known.
+     */
+    inline const IndexPair&
+    at(const GlobalIndex& global) const;
 
     /**
      * @brief Get an iterator over the indices positioned at the first index.
@@ -526,7 +551,7 @@ namespace Dune
      * N log(N). This method is forwarded to the underlying index set.
      * @param global The globally unique id of the pair.
      * @return The pair of indices for the id.
-     * @exception NoSuchEntry Thrown if the global id is not known.
+     * @exception RangeError Thrown if the global id is not known.
      */
     inline const IndexPair&
     operator[](const GlobalIndex& global) const;
@@ -842,6 +867,31 @@ namespace Dune
 
   template<class TG, class TL, int N>
   inline const IndexPair<TG,TL>&
+  ParallelIndexSet<TG,TL,N>::at(const TG& global) const
+  {
+    // perform a binary search
+    int low=0, high=localIndices_.size()-1, probe=-1;
+
+    while(low<high)
+    {
+      probe = (high + low) / 2;
+      if(global <= localIndices_[probe].global())
+        high = probe;
+      else
+        low = probe+1;
+    }
+
+    if(probe==-1)
+      DUNE_THROW(RangeError, "No entries!");
+
+    if( localIndices_[low].global() != global)
+      DUNE_THROW(RangeError, "Could not find entry of "<<global);
+    else
+      return localIndices_[low];
+  }
+
+  template<class TG, class TL, int N>
+  inline const IndexPair<TG,TL>&
   ParallelIndexSet<TG,TL,N>::operator[](const TG& global) const
   {
     // perform a binary search
@@ -856,17 +906,31 @@ namespace Dune
         low = probe+1;
     }
 
-#ifdef DUNE_ISTL_WITH_CHECKING
+    return localIndices_[low];
+  }
+  template<class TG, class TL, int N>
+  inline IndexPair<TG,TL>& ParallelIndexSet<TG,TL,N>::at(const TG& global)
+  {
+    // perform a binary search
+    int low=0, high=localIndices_.size()-1, probe=-1;
+
+    while(low<high)
+    {
+      probe = (high + low) / 2;
+      if(localIndices_[probe].global() >= global)
+        high = probe;
+      else
+        low = probe+1;
+    }
+
     if(probe==-1)
       DUNE_THROW(RangeError, "No entries!");
 
     if( localIndices_[low].global() != global)
       DUNE_THROW(RangeError, "Could not find entry of "<<global);
     else
-#endif
-    return localIndices_[low];
+      return localIndices_[low];
   }
-
 
   template<class TG, class TL, int N>
   inline IndexPair<TG,TL>& ParallelIndexSet<TG,TL,N>::operator[](const TG& global)
@@ -883,17 +947,8 @@ namespace Dune
         low = probe+1;
     }
 
-#ifdef DUNE_ISTL_WITH_CHECKING
-    if(probe==-1)
-      DUNE_THROW(RangeError, "No entries!");
-
-    if( localIndices_[low].global() != global)
-      DUNE_THROW(RangeError, "Could not find entry of "<<global);
-    else
-#endif
     return localIndices_[low];
   }
-
   template<class TG, class TL, int N>
   inline typename ParallelIndexSet<TG,TL,N>::iterator
   ParallelIndexSet<TG,TL,N>::begin()
