@@ -152,6 +152,11 @@ namespace Dune {
   template<class T>
   class IndicesSyncer;
 
+  // forward declaration needed for friend declaration.
+  template<typename T1, typename T2>
+  class OwnerOverlapCopyCommunication;
+
+
   /**
    * @brief The indices present on remote processes.
    *
@@ -178,6 +183,9 @@ namespace Dune {
     friend void repairLocalIndexPointers(std::map<int,SLList<typename T1::GlobalIndex,A1> >&,
                                          RemoteIndices<T1,A2>&,
                                          const T1&);
+
+    template<class G, class T1, class T2>
+    friend void fillIndexSetHoles(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm);
     friend std::ostream& operator<<<>(std::ostream&, const RemoteIndices<T>&);
 
   public:
@@ -307,6 +315,11 @@ namespace Dune {
      *
      * @warning Use with care. If the remote index list is inconsistent
      * after the modification the communication might result in a dead lock!
+     *
+     * @tparam mode If true the index set corresponding to the remote indices might get modified.
+     * Therefore the internal pointers to the indices need to be repaired.
+     * @tparam send If true the remote index information at the sending side will
+     * be modified, if false the receiving side.
      */
     template<bool mode, bool send>
     inline RemoteIndexListModifier<T,A,mode> getModifier(int process);

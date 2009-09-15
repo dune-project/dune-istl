@@ -120,13 +120,51 @@ namespace Dune
       return datatype;
     }
   };
+}
+namespace std
+{
+  template<typename T1,typename T2> class pair;
+}
 
-
+namespace Dune
+{
   template<int k>
   MPI_Datatype MPITraits<bigunsignedint<k> >::datatype = MPI_DATATYPE_NULL;
   template<int k>
   MPI_Datatype MPITraits<bigunsignedint<k> >::vectortype = MPI_DATATYPE_NULL;
 
+  template<typename T1, typename T2>
+  class MPITraits<std::pair<T1,T2 > >
+  {
+  public:
+    inline static MPI_Datatype getType();
+  private:
+    static MPI_Datatype type;
+  };
+  template<typename T1, typename T2>
+  MPI_Datatype MPITraits<std::pair<T1,T2> >::getType()
+  {
+    if(type==MPI_DATATYPE_NULL) {
+      int length[4];
+      MPI_Aint disp[4];
+      MPI_Datatype types[4] = {MPI_LB, MPITraits<T1>::getType(),
+                               MPITraits<T2>::getType(), MPI_UB};
+      std::pair<T1,T2> rep[2];
+      length[0]=length[1]=length[2]=length[3]=1;
+      MPI_Address(rep, disp); // lower bound of the datatype
+      MPI_Address(&(rep[0].first), disp+1);
+      MPI_Address(&(rep[0].second), disp+2);
+      MPI_Address(rep+1, disp+3); // upper bound of the datatype
+      for(int i=3; i >= 0; --i)
+        disp[i] -= disp[0];
+      MPI_Type_struct(4, length, disp, types, &type);
+      MPI_Type_commit(&type);
+    }
+    return type;
+  }
+
+  template<typename T1, typename T2>
+  MPI_Datatype MPITraits<std::pair<T1,T2> >::type=MPI_DATATYPE_NULL;
 #endif
 
   /** @} */

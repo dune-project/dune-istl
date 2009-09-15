@@ -5,6 +5,10 @@ if MPI
 	selectiontest
 endif
 
+if PARMETIS
+  PARMETISTESTS= matrixredisttest
+endif
+
 if SUPERLU
   SUPERLUTESTS =  superlutest overlappingschwarztest
 endif
@@ -18,10 +22,10 @@ NORMALTESTS = matrixutilstest matrixtest bvectortest \
 	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST)
+TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST)
+check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
 
 # define the programs
 
@@ -76,5 +80,11 @@ if MPI
   vectorcommtest_SOURCES = vectorcommtest.cc
   vectorcommtest_CXXFLAGS = $(MPI_CPPFLAGS)
   vectorcommtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+endif
+
+if PARMETIS
+  matrixredisttest_SOURCES = matrixredisttest.cc
+  matrixredisttest_CXXFLAGS = ${PARMETIS_CPPFLAGS} $(MPI_CPPFLAGS)
+  matrixredisttest_LDFLAGS  = $(AM_LDFLAGS) ${PARMETIS_LDFLAGS} ${PARMETIS_LIBS} ${MPI_LDFLAGS} ${MPI_LIBS}
 endif
 include $(top_srcdir)/am/global-rules
