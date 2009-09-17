@@ -460,7 +460,11 @@ namespace Dune {
       allocate(_n, _m);
     }
 
-    //! copy constructor
+    /**
+     * @bief copy constructor
+     *
+     * Does a deep copy as expected.
+     */
     BCRSMatrix (const BCRSMatrix& Mat)
       : n(Mat.n), nnz(0)
     {
@@ -523,7 +527,12 @@ namespace Dune {
       allocate(rows, columns, nnz);
     }
 
-    //! assignment
+    /**
+     * @brief assignment
+     *
+     * Frees and reallocates space.
+     * Both sparsity pattern and values are set from Mat.
+     */
     BCRSMatrix& operator= (const BCRSMatrix& Mat)
     {
       // return immediately when self-assignment
