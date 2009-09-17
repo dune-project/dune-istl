@@ -410,10 +410,10 @@ namespace Dune
 
       std::sort(overlapVertices, overlapVertices+overlapCount, OVLess<Vertex>());
 
-      overlapStart_ = new std::size_t[graph.maxVertex()];
+      overlapStart_ = new std::size_t[graph.maxVertex()+1];
 
 #ifndef NDEBUG
-      for(typename G::VertexDescriptor i=typename G::VertexDescriptor(); i < graph.maxVertex(); ++i)
+      for(typename G::VertexDescriptor i=typename G::VertexDescriptor(); i <= graph.maxVertex(); ++i)
         overlapStart_[i]=-1;
 #endif
 
