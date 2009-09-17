@@ -11,6 +11,75 @@
  */
 namespace Dune
 {
+  template<typename  T>
+  struct RedistributeInformation
+  {
+    bool isSetup() const
+    {
+      return false;
+    }
+    template<class D>
+    void redistribute(const D& from, D& to) const
+    {}
+
+    template<class D>
+    void redistributeBackward(D& from, const D& to) const
+    {}
+  };
+
+#if HAVE_MPI
+  template<typename  T, typename T1>
+  class RedistributeInformation<OwnerOverlapCopyCommunication<T,T1> >
+  {
+  public:
+    typedef OwnerOverlapCopyCommunication<T,T1> Comm;
+
+    RedistributeInformation()
+      : remoteIndices()
+    {}
+    void setRemoteIndices(typename Comm::RemoteIndices*& ri_)
+    {
+      remoteIndices=ri_;
+      typename OwnerOverlapCopyCommunication<int>::OwnerSet flags;
+      interface.build(*remoteIndices, flags,flags);
+    }
+    template<class GatherScatter, class D>
+    void redistribute(const D& from, D& to) const
+    {
+      BufferedCommunicator<typename Comm::ParallelIndexSet> communicator;
+      communicator.template build<D>(from,to, interface);
+      communicator.template forward<GatherScatter>(from, to);
+      communicator.free();
+    }
+    template<class GatherScatter, class D>
+    void redistributeBackward(D& from, const D& to) const
+    {
+
+      BufferedCommunicator<typename Comm::ParallelIndexSet> communicator;
+      communicator.template build<D>(from,to, interface);
+      communicator.template backward<GatherScatter>(from, to);
+      communicator.free();
+    }
+
+    template<class D>
+    void redistribute(const D& from, D& to) const
+    {
+      redistribute<CopyGatherScatter<D> >(from,to);
+    }
+    template<class D>
+    void redistributeBackward(D& from, const D& to) const
+    {
+      redistributeBackward<CopyGatherScatter<D> >(from,to);
+    }
+    bool isSetup() const
+    {
+      return remoteIndices;
+    }
+
+  private:
+    typename Comm::RemoteIndices *remoteIndices;
+    Interface<typename Comm::ParallelIndexSet> interface;
+  };
 
   /**
    * @brief Utility class to communicate and set the row sizes
@@ -218,7 +287,7 @@ namespace Dune
     /** @brief Each row varies in size. */
     typedef VariableSize IndexedTypeFlag;
 
-    static int getSize(const Type& t, std::size_t i)
+    static std::size_t getSize(const Type& t, std::size_t i)
     {
       if(!t.rowsize)
         return t.matrix[i].size();
@@ -325,7 +394,7 @@ namespace Dune
   /**
    * @brief Redistribute a matrix according to given domain decompositions.
    *
-   * All the paramters for this function can be obtained by calling
+   * All the parameters for this function can be obtained by calling
    * graphRepartition with the graph of the original matrix.
    *
    * @param origMatrix The matrix on the original partitioning.
@@ -337,38 +406,32 @@ namespace Dune
    * @tparam C The type of the parallel information, see OwnerOverlapCopyCommunication.
    */
   template<typename M, typename C>
-  void redistributeMatrix(M& origMatrix, M& newMatrix, C& origComm, C& newComm, typename C::RemoteIndices& ri)
+  void redistributeMatrix(M& origMatrix, M& newMatrix, C& origComm, C& newComm,
+                          RedistributeInformation<C>& ri)
   {
     std::vector<typename M::size_type> rowsize(newComm.indexSet().size(), 0);
 
     typedef typename C::ParallelIndexSet IndexSet;
     CommMatrixRowSize<M> commRowSize(origMatrix, rowsize);
-    typename C::OwnerSet flags;
-    Dune::Interface<IndexSet> interface;
-    interface.build(ri, flags,flags);
-    Dune::BufferedCommunicator<IndexSet> communicator;
-    communicator.template build<CommMatrixRowSize<M> >(interface);
-    communicator.template forward<MatrixRowSizeGatherScatter<M,IndexSet> >(commRowSize,commRowSize);
-    communicator.free();
+    ri.template redistribute<MatrixRowSizeGatherScatter<M,IndexSet> >(commRowSize,commRowSize);
 
 
     CommMatrixSparsityPattern<M,IndexSet> origsp(origMatrix, origComm.globalLookup(), newComm.indexSet());
     CommMatrixSparsityPattern<M,IndexSet> newsp(origMatrix, origComm.globalLookup(), newComm.indexSet(), rowsize);
 
-    communicator.template build<CommMatrixSparsityPattern<M,IndexSet> >(origsp, newsp, interface);
-    communicator.template forward<MatrixSparsityPatternGatherScatter<M,IndexSet> >(origsp,newsp);
-    communicator.free();
+    ri.template redistribute<MatrixSparsityPatternGatherScatter<M,IndexSet> >(origsp,newsp);
 
     newsp.storeSparsityPattern(newMatrix);
 
     CommMatrixRow<M,IndexSet> origrow(origMatrix, origComm.globalLookup(), newComm.indexSet());
     CommMatrixRow<M,IndexSet> newrow(newMatrix, origComm.globalLookup(), newComm.indexSet(),rowsize);
 
-    communicator.template build<CommMatrixRow<M,IndexSet> >(origrow, newrow, interface);
-    communicator.template forward<MatrixRowGatherScatter<M,IndexSet> >(origrow,newrow);
-    communicator.free();
+    ri.template redistribute<MatrixRowGatherScatter<M,IndexSet> >(origrow,newrow);
     newrow.setOverlapRowsToDirichlet();
+    if(newMatrix.N()>0&&newMatrix.N()<20)
+      printmatrix(std::cout, newMatrix, "redist", "row");
 
   }
+#endif
 }
 #endif

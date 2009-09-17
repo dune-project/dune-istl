@@ -4,6 +4,7 @@
 #define DUNE_AMGTRANSFER_HH
 
 #include <dune/istl/bvector.hh>
+#include <dune/istl/matrixredistribute.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/aggregates.hh>
@@ -32,7 +33,11 @@ namespace Dune
       typedef V1 Vertex;
       typedef V2 Vector;
 
-      template<typename T1>
+      template<typename T1, typename R>
+      static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
+                             Vector& fineRedist,T1 damp, R& redistributor=R());
+
+      template<typename T1, typename R>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
                              T1 damp);
 
@@ -46,6 +51,12 @@ namespace Dune
     public:
       typedef V Vertex;
       typedef V1 Vector;
+      typedef RedistributeInformation<SequentialInformation> Redist;
+      template<typename T1>
+      static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
+                             Vector& fineRedist, T1 damp,
+                             const SequentialInformation& comm=SequentialInformation(),
+                             const Redist& redist=Redist());
       template<typename T1>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
                              T1 damp,
@@ -64,6 +75,11 @@ namespace Dune
     public:
       typedef V Vertex;
       typedef V1 Vector;
+      typedef RedistributeInformation<OwnerOverlapCopyCommunication<T1,T2> > Redist;
+      template<typename T3>
+      static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
+                             Vector& fineRedist, T3 damp, OwnerOverlapCopyCommunication<T1,T2>& comm,
+                             const Redist& redist);
       template<typename T3>
       static void prolongate(const AggregatesMap<Vertex>& aggregates, Vector& coarse, Vector& fine,
                              T3 damp, OwnerOverlapCopyCommunication<T1,T2>& comm);
@@ -76,10 +92,22 @@ namespace Dune
 
     template<class V, class V1>
     template<typename T>
-    inline void Transfer<V,V1,SequentialInformation>::prolongate(const AggregatesMap<Vertex>& aggregates,
-                                                                 Vector& coarse, Vector& fine,
-                                                                 T damp,
-                                                                 const SequentialInformation& comm)
+    inline void
+    Transfer<V,V1,SequentialInformation>::prolongate(const AggregatesMap<Vertex>& aggregates,
+                                                     Vector& coarse, Vector& fine, Vector& fineRedist,
+                                                     T damp,
+                                                     const SequentialInformation& comm,
+                                                     const Redist& redist)
+    {
+      prolongate(aggregates, coarse, fine, damp);
+    }
+    template<class V, class V1>
+    template<typename T>
+    inline void
+    Transfer<V,V1,SequentialInformation>::prolongate(const AggregatesMap<Vertex>& aggregates,
+                                                     Vector& coarse, Vector& fine,
+                                                     T damp,
+                                                     const SequentialInformation& comm)
     {
       typedef typename Vector::iterator Iterator;
 
@@ -99,10 +127,11 @@ namespace Dune
     }
 
     template<class V, class V1>
-    inline void Transfer<V,V1,SequentialInformation>::restrict (const AggregatesMap<Vertex>& aggregates,
-                                                                Vector& coarse,
-                                                                const Vector & fine,
-                                                                const SequentialInformation & comm)
+    inline void
+    Transfer<V,V1,SequentialInformation>::restrict (const AggregatesMap<Vertex>& aggregates,
+                                                    Vector& coarse,
+                                                    const Vector & fine,
+                                                    const SequentialInformation & comm)
     {
       // Set coarse vector to zero
       coarse=0;
@@ -123,12 +152,29 @@ namespace Dune
     template<typename T3>
     inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::prolongate(const AggregatesMap<Vertex>& aggregates,
                                                                                  Vector& coarse, Vector& fine,
+                                                                                 Vector& fineRedist, T3 damp,
+                                                                                 OwnerOverlapCopyCommunication<T1,T2>& comm,
+                                                                                 const Redist& redist)
+    {
+      if(fineRedist.size()>0)
+        // we operated on the coarse level
+        Transfer<V,V1,SequentialInformation>::prolongate(aggregates, coarse, fineRedist, damp);
+
+      // TODO This could be accomplished with one communication, too!
+      redist.redistributeBackward(fine, fineRedist);
+      assert(comm.indexSet().size()==fine.size());
+      comm.copyOwnerToAll(fine,fine);
+    }
+
+    template<class V, class V1, class T1, class T2>
+    template<typename T3>
+    inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::prolongate(const AggregatesMap<Vertex>& aggregates,
+                                                                                 Vector& coarse, Vector& fine,
                                                                                  T3 damp,
                                                                                  OwnerOverlapCopyCommunication<T1,T2>& comm)
     {
       Transfer<V,V1,SequentialInformation>::prolongate(aggregates, coarse, fine, damp);
     }
-
     template<class V, class V1, class T1, class T2>
     inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::restrict (const AggregatesMap<Vertex>& aggregates,
                                                                                 Vector& coarse, const Vector & fine,
@@ -137,6 +183,7 @@ namespace Dune
       Transfer<V,V1,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
       // We need this here to avoid it in the smoothers on the coarse level.
       // There (in the preconditioner d is const.
+      assert(comm.indexSet().size()==coarse.size());
       comm.project(coarse);
     }
 #endif

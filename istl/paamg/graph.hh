@@ -1471,7 +1471,7 @@ namespace Dune
     template<class M>
     inline typename MatrixGraph<M>::VertexDescriptor MatrixGraph<M>::maxVertex() const
     {
-      return matrix_.N();
+      return matrix_.N()-1;
     }
 
     template<class M>
@@ -2136,7 +2136,7 @@ namespace Dune
 
     template<class G, class V, class VM>
     VertexPropertiesGraph<G,V,VM>::VertexPropertiesGraph(Graph& graph, const VM vmap)
-      : graph_(graph), vmap_(vmap), vertexProperties_(vmap_[graph_.maxVertex()], V())
+      : graph_(graph), vmap_(vmap), vertexProperties_(vmap_[graph_.maxVertex()+1], V())
     {}
 
     template<class G, class V, class E, class VM, class EM>
@@ -2327,7 +2327,7 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     PropertiesGraph<G,V,E,VM,EM>::PropertiesGraph(Graph& graph, const VM& vmap, const EM& emap)
-      : graph_(graph), vmap_(vmap), vertexProperties_(vmap_[graph_.maxVertex()], V()),
+      : graph_(graph), vmap_(vmap), vertexProperties_(vmap_[graph_.maxVertex()+1], V()),
         emap_(emap), edgeProperties_(graph_.noEdges(), E())
     {}
 

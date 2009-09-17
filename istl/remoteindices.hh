@@ -353,6 +353,12 @@ namespace Dune {
      */
     inline int neighbours() const;
 
+    /** @brief Get the index set at the source. */
+    inline const ParallelIndexSet& sourceIndexSet() const;
+
+    /** @brief Get the index set at destination. */
+    inline const ParallelIndexSet& destinationIndexSet() const;
+
   private:
     /** @brief Index set used at the source of the communication. */
     const ParallelIndexSet* source_;
@@ -876,6 +882,22 @@ namespace Dune {
     firstBuild = true;
     neighbourIds=neighbours;
   }
+
+  template<typename T, typename A>
+  const typename RemoteIndices<T,A>::ParallelIndexSet&
+  RemoteIndices<T,A>::sourceIndexSet() const
+  {
+    return *source_;
+  }
+
+
+  template<typename T, typename A>
+  const typename RemoteIndices<T,A>::ParallelIndexSet&
+  RemoteIndices<T,A>::destinationIndexSet() const
+  {
+    return *target_;
+  }
+
 
   template<typename T, typename A>
   RemoteIndices<T,A>::~RemoteIndices()

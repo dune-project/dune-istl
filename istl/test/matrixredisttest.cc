@@ -68,11 +68,14 @@ void testRepart(int N, int coarsenTarget)
 
   std::cout<<comm.communicator().rank()<<comm.indexSet()<<std::endl;
 
-  bool repartitioned=Dune::graphRepartition(graph, comm, coarsenTarget,
-                                            coarseComm, datari);
+  Dune::graphRepartition(graph, comm, coarsenTarget,
+                         coarseComm, datari);
   std::cout<<coarseComm->communicator().rank()<<coarseComm->indexSet()<<std::endl;
   BCRSMat newMat;
-  redistributeMatrix(mat, newMat, comm, *coarseComm, *datari);
+
+  Dune::RedistributeInformation<Communication> ri;
+  ri.setRemoteIndices(datari);
+  redistributeMatrix(mat, newMat, comm, *coarseComm, ri);
 
   if(coarseComm->communicator().rank()==0)
     Dune::printmatrix(std::cout, newMat, "redist", "row");

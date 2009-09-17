@@ -46,7 +46,7 @@ void testMatrix(MatrixType& matrix)
   typename MatrixType::RowIterator rowIt    = matrix.begin();
   typename MatrixType::RowIterator rowEndIt = matrix.end();
 
-  int numRows = 0, numEntries = 0;
+  typename MatrixType::size_type numRows = 0, numEntries = 0;
 
   for (; rowIt!=rowEndIt; ++rowIt) {
 

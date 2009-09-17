@@ -153,7 +153,7 @@ namespace Dune {
 
     // define the category
     enum {
-      //! \brief The category the precondtioner is part of.
+      //! \brief The category the preconditioner is part of.
       category=SolverCategory::sequential
     };
 
@@ -178,7 +178,7 @@ namespace Dune {
     virtual void pre (X& x, Y& b) {}
 
     /*!
-       \brief Apply the precondtioner
+       \brief Apply the preconditioner
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */

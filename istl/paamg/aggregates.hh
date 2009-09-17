@@ -75,13 +75,13 @@ namespace Dune
       {
         maxDistance_=0;
         std::size_t csize=1;
-        for(; dim>0; dim--) {
 
+        for(; dim>0; dim--) {
           csize*=diameter;
           maxDistance_+=diameter-1;
         }
         minAggregateSize_=csize;
-        maxAggregateSize_=csize*1.5;
+        maxAggregateSize_=static_cast<std::size_t>(csize*1.5);
       }
 
       /**
@@ -353,10 +353,11 @@ namespace Dune
     };
 
     /**
-     * @brief Norm that uses only the [0][0] entry of the block to determine couplings.
+     * @brief Norm that uses only the [N][N] entry of the block to determine couplings.
      *
      */
-    class FirstDiagonal
+    template<int N>
+    class Diagonal
     {
     public:
       enum { /* @brief We preserve the sign.*/
@@ -370,9 +371,16 @@ namespace Dune
       template<class M>
       typename M::field_type operator()(const M& m) const
       {
-        return m[0][0];
+        return m[N][N];
       }
     };
+
+    /**
+     * @brief Norm that uses only the [0][0] entry of the block to determine couplings.
+     *
+     */
+    class FirstDiagonal : public Diagonal<0>
+    {};
 
     /**
      * @brief Functor using the row sum (infinity) norm to determine strong couplings.
@@ -2010,9 +2018,6 @@ namespace Dune
       graph_ = &graph;
 
       aggregate_ = new Aggregate<G,VertexSet>(graph, aggregates, connected_);
-
-      // Allocate the mapping to aggregate.
-      size_ = graph.maxVertex();
 
       Timer watch;
       watch.reset();

@@ -1286,7 +1286,7 @@ namespace Dune
       for(int i=0; i < size; i++) {
         int local = forward ? interfacePair->second.first[i] :
                     interfacePair->second.second[i];
-        for(int j=0; j < CommPolicy<Data>::getSize(data, local); j++, index++) {
+        for(std::size_t j=0; j < CommPolicy<Data>::getSize(data, local); j++, index++) {
 
 #ifdef DUNE_ISTL_WITH_CHECKING
           assert(bufferSize>=(index+1)*sizeof(typename CommPolicy<Data>::IndexedType));
@@ -1342,7 +1342,7 @@ namespace Dune
                               infoPair->second.first;
 
     for(size_t i=0, index=0; i < info.size(); i++) {
-      for(int j=0; j < CommPolicy<Data>::getSize(data, info[i]); j++)
+      for(size_t j=0; j < CommPolicy<Data>::getSize(data, info[i]); j++)
         GatherScatter::scatter(data, buffer[index++], info[i], j);
     }
   }

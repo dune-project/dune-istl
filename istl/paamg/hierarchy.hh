@@ -18,6 +18,7 @@
 #include <dune/common/tuples.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/indexset.hh>
+#include <dune/istl/matrixredistribute.hh>
 #include <dune/istl/paamg/dependency.hh>
 #include <dune/istl/paamg/graph.hh>
 #include <dune/istl/paamg/indicescoarsener.hh>
@@ -113,6 +114,7 @@ namespace Dune
        */
       void addCoarser(Arguments& args);
 
+      void addRedistributedOnCoarsest(T* t);
 
       /**
        * @brief Add an element on a finer level.
@@ -211,6 +213,10 @@ namespace Dune
           assert(element_->redistributed_);
           return *element_->redistributed_;
         }
+        void addRedistributed(T1* t)
+        {
+          element_->redistributed_ = t;
+        }
 
       private:
         Element* element_;
@@ -251,7 +257,7 @@ namespace Dune
        * @brief Get the number of levels in the hierarchy.
        * @return The number of levels.
        */
-      int levels() const;
+      std::size_t levels() const;
 
       /** @brief Destructor. */
       ~Hierarchy();
@@ -306,6 +312,12 @@ namespace Dune
       /** @brief The type of the aggregates maps list. */
       typedef std::list<AggregatesMap*,AAllocator> AggregatesMapList;
 
+      /** @brief The type of the redistribute information. */
+      typedef RedistributeInformation<ParallelInformation> RedistributeInfoType;
+
+      /** @brief The type of the list of redistribute information. */
+      typedef std::list<RedistributeInfoType,AAllocator> RedistributeInfoList;
+
       /**
        * @brief Constructor
        * @param fineMatrix The matrix to coarsen.
@@ -355,7 +367,13 @@ namespace Dune
        * @brief Get the number of levels in the hierarchy.
        * @return The number of levels.
        */
-      int levels() const;
+      std::size_t levels() const;
+
+      /**
+       * @brief Get the max number of levels in the hierarchy of processors.
+       * @return The maximum number of levels.
+       */
+      std::size_t maxlevels() const;
 
       /**
        * @brief Whether the hierarchy wis built.
@@ -381,6 +399,14 @@ namespace Dune
        */
       const AggregatesMapList& aggregatesMaps() const;
 
+      /**
+       * @brief Get the hierachy of the information about redistributions,
+       * @return The hierarchy of the information about redistributions of the
+       * data to fewer processes.
+       */
+      const RedistributeInfoList& redistributeInformation() const;
+
+
       typename MatrixOperator::field_type getProlongationDampingFactor() const
       {
         return prolongDamp_;
@@ -402,6 +428,8 @@ namespace Dune
       typedef typename ConstructionTraits<MatrixOperator>::Arguments MatrixArgs;
       /** @brief The list of aggregates maps. */
       AggregatesMapList aggregatesMaps_;
+      /** @brief The list of redistributes. */
+      RedistributeInfoList redistributes_;
       /** @brief The hierarchy of parallel matrices. */
       ParallelMatrixHierarchy matrices_;
       /** @brief The hierarchy of the parallel information. */
@@ -409,6 +437,9 @@ namespace Dune
 
       /** @brief Whether the hierarchy was built. */
       bool built_;
+
+      /** @brief The maximum number of level across all processors.*/
+      int maxlevels_;
 
       typename MatrixOperator::field_type prolongDamp_;
 
@@ -532,7 +563,14 @@ namespace Dune
        */
       bool accumulate() const
       {
-        return false;
+        return accumulate_;
+      }
+      /**
+       * @brief Set whether he data should be accumulated on fewer processes on coarser levels.
+       */
+      void setAccumulate(bool accu)
+      {
+        accumulate_=accu;
       }
 
       /**
@@ -562,11 +600,12 @@ namespace Dune
        * @param minCoarsenRate If the coarsening rate falls below this threshold the
        * coarsening will stop (default: 1.2)
        * @param prolongDamp The damping factor to apply to the prolongated update (default: 1.6)
+       * @param accumulate Whether to accumulate the data onto fewer processors on coarser levels.
        */
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
-                       double prolongDamp=1.6)
+                       double prolongDamp=1.6, bool accumulate=true)
         : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate),
-          dampingFactor_(prolongDamp)
+          dampingFactor_(prolongDamp), accumulate_( accumulate)
       {}
 
     private:
@@ -586,8 +625,46 @@ namespace Dune
        * @brief The damping factor to apply to the prologated correction.
        */
       double dampingFactor_;
+      /**
+       * @brief Whether the data should be agglomerated to fewer processor on
+       * coarser levels.
+       */
+      bool accumulate_;
     };
 
+
+
+    template<typename M, typename C>
+    bool repartitionAndDistributeMatrix(const M& origMatrix, M& newMatrix, C& origComm, C*& newComm,
+                                        RedistributeInformation<C>& ri,
+                                        int nparts)
+    {
+      MatrixGraph<const M> graph(origMatrix);
+
+#if HAVE_PARMETIS
+      typename C::RemoteIndices* datari;
+      bool existentOnRedist=Dune::graphRepartition(graph, origComm, nparts,
+                                                   newComm, datari);
+      ri.setRemoteIndices(datari);
+      redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
+#else
+    #warning Parmetis is not installed or used. Did you use the parmetis flags? It is stronly recommend to use parallel AMG with parmetis.
+      bool existentOnRedist=false;
+      DUNE_THROW(NotImplemented, "Parmetis is not installed or used, but needed here. Did you use the parmetis flags?");
+#endif
+      return existentOnRedist;
+
+    }
+
+    template<typename M>
+    bool repartitionAndDistributeMatrix(M& origMatrix, M& newMatrix,
+                                        SequentialInformation& origComm,
+                                        SequentialInformation& newComm,
+                                        RedistributeInformation<SequentialInformation>& ri)
+    {
+      return true;
+
+    }
 
     template<class M, class IS, class A>
     MatrixHierarchy<M,IS,A>::MatrixHierarchy(const MatrixOperator& fineOperator,
@@ -626,13 +703,57 @@ namespace Dune
 
       unknowns = infoLevel->communicator().sum(unknowns);
       infoLevel->buildGlobalLookup(mlevel->getmat().N());
+      redistributes_.push_back(RedistributeInfoType());
 
       for(; level < criterion.maxLevel(); ++level, ++mlevel) {
-
+        assert(matrices_.levels()==redistributes_.size());
         rank = infoLevel->communicator().rank();
         if(rank==0 && criterion.debugLevel()>1)
-          std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
+          std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()
+                   <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
 
+        MatrixOperator* matrix=&(*mlevel);
+        ParallelInformation* info =&(*infoLevel);
+
+#ifdef HAVE_PARMETIS
+
+        if(criterion.accumulate() && infoLevel->communicator().size()>1 &&
+           unknowns/infoLevel->communicator().size() <= criterion.coarsenTarget())
+        {
+          // accumulate to fewer processors
+          Matrix* redistMat= new Matrix();
+          ParallelInformation* redistComm=0;
+          std::size_t nodomains = unknowns/(criterion.minAggregateSize()
+                                            *criterion.coarsenTarget());
+          if(nodomains<=criterion.minAggregateSize()/2)
+            nodomains=1;
+
+          bool existentOnNextLevel =
+            repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
+                                           redistComm, redistributes_.back(), nodomains);
+          int unknowns = redistMat->N();
+          unknowns = infoLevel->communicator().sum(unknowns);
+          if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
+            std::cout<<"Level "<<level<<" (redistributed) has "<<unknowns<<" unknowns, "<<unknowns/redistComm->communicator().size()
+                     <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
+          MatrixArgs args(*redistMat, *redistComm);
+          mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
+          infoLevel.addRedistributed(redistComm);
+          infoLevel->freeGlobalLookup();
+
+          if(!existentOnNextLevel)
+            // We do not hold any data on the redistributed partitioning
+            break;
+
+          // Work on the redistributed Matrix from now on
+          matrix = &(mlevel.getRedistributed());
+          info = &(infoLevel.getRedistributed());
+          info->buildGlobalLookup(matrix->getmat().N());
+        }
+#endif
+
+        rank = info->communicator().rank();
+        procs = info->communicator().size();
         if(unknowns <= criterion.coarsenTarget())
           // No further coarsening needed
           break;
@@ -644,11 +765,11 @@ namespace Dune
 
         typedef typename PropertiesGraph::VertexDescriptor Vertex;
 
-        std::vector<bool> excluded(mlevel->getmat().N(), false);
+        std::vector<bool> excluded(matrix->getmat().N(), false);
 
-        GraphTuple graphs = GraphCreator::create(*mlevel, excluded, *infoLevel, OverlapFlags());
+        GraphTuple graphs = GraphCreator::create(*matrix, excluded, *info, OverlapFlags());
 
-        AggregatesMap* aggregatesMap=new AggregatesMap(get<1>(graphs)->maxVertex());
+        AggregatesMap* aggregatesMap=new AggregatesMap(get<1>(graphs)->maxVertex()+1);
 
         aggregatesMaps_.push_back(aggregatesMap);
 
@@ -657,7 +778,7 @@ namespace Dune
         int noAggregates, isoAggregates, oneAggregates;
 
         tie(noAggregates, isoAggregates, oneAggregates) =
-          aggregatesMap->buildAggregates(mlevel->getmat(), *(get<1>(graphs)), criterion);
+          aggregatesMap->buildAggregates(matrix->getmat(), *(get<1>(graphs)), criterion);
 
 #ifdef TEST_AGGLO
         {
@@ -665,7 +786,7 @@ namespace Dune
           int start, end, overlapStart, overlapEnd;
           int n = UNKNOWNS/procs; // number of unknowns per process
           int bigger = UNKNOWNS%procs; // number of process with n+1 unknows
-          int procs=infoLevel->communicator().rank();
+          int procs=info->communicator().rank();
 
           // Compute owner region
           if(rank<bigger) {
@@ -687,57 +808,54 @@ namespace Dune
           else
             overlapEnd = end;
 
-          int noKnown = overlapEnd-overlapStart;
-          int offset = start-overlapStart;
-          int starti = 1; //(start-overlapStart==0)?1:0;
-          int endi = (overlapEnd-end==0) ? end-start-1 : end-start;
-
-          for(int j=1; j< UNKNOWNS-1; ++j)
-            for(int i=starti; i < endi; ++i)
-              (*aggregatesMap)[j*(overlapEnd-overlapStart)+i+offset]=((j-1)/2)*(endi-starti)/2+((i-starti)/2);
-          noAggregates=((UNKNOWNS-2)/2)*(endi-starti)/2;
+          assert((UNKNOWNS)*(overlapEnd-overlapStart)==aggregatesMap->noVertices());
+          for(int j=0; j< UNKNOWNS; ++j)
+            for(int i=0; i < UNKNOWNS; ++i)
+            {
+              if(i>=overlapStart && i<overlapEnd)
+              {
+                int no = (j/2)*((UNKNOWNS)/2)+i/2;
+                (*aggregatesMap)[j*(overlapEnd-overlapStart)+i-overlapStart]=no;
+              }
+            }
         }
 #endif
-        noAggregates = infoLevel->communicator().sum(noAggregates);
+        noAggregates = info->communicator().sum(noAggregates);
+
+#ifdef TEST_AGGLO
+        noAggregates=((UNKNOWNS)/2)*((UNKNOWNS)/2);
+#endif
 
         if(criterion.debugLevel()>2 && rank==0)
           std::cout << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
 
         if(!noAggregates || unknowns/noAggregates<criterion.minCoarsenRate())
         {
-          if(procs>1 && criterion.accumulate())
-            DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
-          else{
-            if(rank==0)
-            {
-              if(noAggregates)
-                std::cerr << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
-                          <<criterion.minCoarsenRate()<<std::endl;
-              else
-                std::cerr<< "Could not build any aggregates. Probably no connected nodes."<<std::endl;
-            }
-            aggregatesMap->free();
-            delete aggregatesMap;
-            aggregatesMaps_.pop_back();
-            break;
+          if(rank==0)
+          {
+            if(noAggregates)
+              std::cerr << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
+                        <<criterion.minCoarsenRate()<<std::endl;
+            else
+              std::cerr<< "Could not build any aggregates. Probably no connected nodes."<<std::endl;
           }
+          aggregatesMap->free();
+          delete aggregatesMap;
+          aggregatesMaps_.pop_back();
+          break;
         }
         unknowns =  noAggregates;
 
-        if(noAggregates < criterion.coarsenTarget() && procs>1 && criterion.accumulate()) {
-          DUNE_THROW(NotImplemented, "Accumulation to fewer processes not yet implemented!");
-        }
+        parallelInformation_.addCoarser(info->communicator());
 
-        parallelInformation_.addCoarser(infoLevel->communicator());
-
-        PInfoIterator fineInfo = infoLevel++;
+        ++infoLevel; // parallel information on coarse level
 
         typename PropertyMapTypeSelector<VertexVisitedTag,PropertiesGraph>::Type visitedMap =
           get(VertexVisitedTag(), *(get<1>(graphs)));
 
         watch.reset();
         int aggregates = IndicesCoarsener<ParallelInformation,OverlapFlags>
-                         ::coarsen(*fineInfo,
+                         ::coarsen(*info,
                                    *(get<1>(graphs)),
                                    visitedMap,
                                    *aggregatesMap,
@@ -754,7 +872,7 @@ namespace Dune
 
         infoLevel->buildGlobalLookup(aggregates);
         AggregatesPublisher<Vertex,OverlapFlags,ParallelInformation>::publish(*aggregatesMap,
-                                                                              *fineInfo,
+                                                                              *info,
                                                                               infoLevel->globalLookup());
 
 
@@ -776,16 +894,16 @@ namespace Dune
 
         typename MatrixOperator::matrix_type* coarseMatrix;
 
-        coarseMatrix = productBuilder.build(mlevel->getmat(), *(get<0>(graphs)), visitedMap2,
-                                            *fineInfo,
+        coarseMatrix = productBuilder.build(matrix->getmat(), *(get<0>(graphs)), visitedMap2,
+                                            *info,
                                             *aggregatesMap,
                                             aggregates,
                                             OverlapFlags());
 
-        fineInfo->freeGlobalLookup();
+        info->freeGlobalLookup();
 
         delete get<0>(graphs);
-        productBuilder.calculate(mlevel->getmat(), *aggregatesMap, *coarseMatrix, *infoLevel, OverlapFlags());
+        productBuilder.calculate(matrix->getmat(), *aggregatesMap, *coarseMatrix, *infoLevel, OverlapFlags());
 
         if(criterion.debugLevel()>2) {
           if(rank==0)
@@ -795,7 +913,9 @@ namespace Dune
         MatrixArgs args(*coarseMatrix, *infoLevel);
 
         matrices_.addCoarser(args);
+        redistributes_.push_back(RedistributeInfoType());
       }
+
 
       infoLevel->freeGlobalLookup();
 
@@ -808,9 +928,35 @@ namespace Dune
           int unknowns = mlevel->getmat().N();
           unknowns = infoLevel->communicator().sum(unknowns);
           if(rank==0 && criterion.debugLevel()>1)
-            std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()<<" unknowns per proc"<<std::endl;
+            std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()
+                     <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
         }
       }
+
+      if(criterion.accumulate() && !redistributes_.back().isSetup() &&
+         infoLevel->communicator().size()>1) {
+
+        // accumulate to fewer processors
+        Matrix* redistMat= new Matrix();
+        ParallelInformation* redistComm=0;
+        int nodomains = 1;
+
+        repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
+                                       redistComm, redistributes_.back(), nodomains);
+        MatrixArgs args(*redistMat, *redistComm);
+        int unknowns = redistMat->N();
+        unknowns = infoLevel->communicator().sum(unknowns);
+        if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
+          std::cout<<"Level "<<level<<" redistributed has "<<unknowns<<" unknowns, "<<unknowns/redistComm->communicator().size()
+                   <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
+        mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
+        infoLevel.addRedistributed(redistComm);
+        infoLevel->freeGlobalLookup();
+      }
+
+      int levels = matrices_.levels();
+      maxlevels_ = parallelInformation_.finest()->communicator().max(levels);
+      assert(matrices_.levels()==redistributes_.size());
     }
 
     template<class M, class IS, class A>
@@ -878,7 +1024,6 @@ namespace Dune
 
       typename ParallelInformationHierarchy::Iterator pinfo = parallelInformation().coarsest();
       --pinfo;
-      int l=levels;
 
       // Now consecutively project the numbers to the finest level.
       for(typename AggregatesMapList::const_reverse_iterator aggregates=++aggregatesMaps().rbegin();
@@ -903,6 +1048,13 @@ namespace Dune
       return aggregatesMaps_;
     }
     template<class M, class IS, class A>
+    const typename MatrixHierarchy<M,IS,A>::RedistributeInfoList&
+    MatrixHierarchy<M,IS,A>::redistributeInformation() const
+    {
+      return redistributes_;
+    }
+
+    template<class M, class IS, class A>
     MatrixHierarchy<M,IS,A>::~MatrixHierarchy()
     {
       typedef typename AggregatesMapList::reverse_iterator AggregatesMapIterator;
@@ -925,16 +1077,25 @@ namespace Dune
     {
       assert(hierarchy.levels()==1);
       typedef typename ParallelMatrixHierarchy::ConstIterator Iterator;
-      Iterator coarsest = matrices_.coarsest();
-      int level=0;
-      Dune::dvverb<<"Level "<<level<<" has "<<matrices_.finest()->getmat().N()<<" unknows!"<<std::endl;
+      typedef typename RedistributeInfoList::const_iterator RIter;
+      RIter redist = redistributes_.begin();
 
-      for(Iterator matrix = matrices_.finest(); matrix != coarsest;) {
-        ++matrix;
-        ++level;
-        Dune::dvverb<<"Level "<<level<<" has "<<matrix->getmat().N()<<" unknows!"<<std::endl;
+      Iterator matrix = matrices_.finest(), coarsest = matrices_.coarsest();
+      int level=0;
+      if(redist->isSetup())
+        hierarchy.addRedistributedOnCoarsest(new BlockVector<V,TA>(matrix.getRedistributed().getmat().N()));
+      Dune::dvverb<<"Level "<<level<<" has "<<matrices_.finest()->getmat().N()<<" unknowns!"<<std::endl;
+
+      while(matrix != coarsest) {
+        ++matrix; ++level; ++redist;
+        Dune::dvverb<<"Level "<<level<<" has "<<matrix->getmat().N()<<" unknowns!"<<std::endl;
+
         hierarchy.addCoarser(matrix->getmat().N());
+        if(redist->isSetup())
+          hierarchy.addRedistributedOnCoarsest(new BlockVector<V,TA>(matrix.getRedistributed().getmat().N()));
+
       }
+
     }
 
     template<class M, class IS, class A>
@@ -951,11 +1112,19 @@ namespace Dune
       cargs.setArgs(sargs);
       PinfoIterator pinfo = parallelInformation_.finest();
       AggregatesIterator aggregates = aggregatesMaps_.begin();
+      int level=0;
       for(MatrixIterator matrix = matrices_.finest(), coarsest = matrices_.coarsest();
-          matrix != coarsest; ++matrix, ++pinfo, ++aggregates) {
+          matrix != coarsest; ++matrix, ++pinfo, ++aggregates, ++level) {
         cargs.setMatrix(matrix->getmat(), **aggregates);
         cargs.setComm(*pinfo);
         smoothers.addCoarser(cargs);
+      }
+      if(maxlevels()>levels()) {
+        // This is not the globally coarsest level and therefore smoothing is needed
+        cargs.setMatrix(matrices_.coarsest()->getmat(), **aggregates);
+        cargs.setComm(*pinfo);
+        smoothers.addCoarser(cargs);
+        ++level;
       }
     }
 
@@ -981,9 +1150,15 @@ namespace Dune
     }
 
     template<class M, class IS, class A>
-    int MatrixHierarchy<M,IS,A>::levels() const
+    std::size_t MatrixHierarchy<M,IS,A>::levels() const
     {
       return matrices_.levels();
+    }
+
+    template<class M, class IS, class A>
+    std::size_t MatrixHierarchy<M,IS,A>::maxlevels() const
+    {
+      return maxlevels_;
     }
 
     template<class M, class IS, class A>
@@ -1025,9 +1200,15 @@ namespace Dune
     }
 
     template<class T, class A>
-    int Hierarchy<T,A>::levels() const
+    std::size_t Hierarchy<T,A>::levels() const
     {
       return levels_;
+    }
+
+    template<class T, class A>
+    void Hierarchy<T,A>::addRedistributedOnCoarsest(T* t)
+    {
+      coarsest_->redistributed_ = t;
     }
 
     template<class T, class A>
@@ -1049,6 +1230,7 @@ namespace Dune
       coarsest_->coarser_=0;
       ++levels_;
     }
+
 
     template<class T, class A>
     void Hierarchy<T,A>::addFiner(Arguments& args)
