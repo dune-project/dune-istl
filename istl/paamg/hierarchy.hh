@@ -654,7 +654,7 @@ namespace Dune
       typename C::RemoteIndices* datari;
       bool existentOnRedist=Dune::graphRepartition(graph, origComm, nparts,
                                                    newComm, datari);
-      ri.setRemoteIndices(datari);
+      ri.setRemoteIndices(SmartPointer<typename C::RemoteIndices >(datari));
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
 #else
     #warning Parmetis is not installed or used. Did you use the parmetis flags? It is stronly recommend to use parallel AMG with parmetis.
@@ -1076,6 +1076,8 @@ namespace Dune
         (*amap)->free();
         delete *amap;
         delete &level->getmat();
+        if(level.isRedistributed())
+          delete &(level.getRedistributed().getmat());
       }
       delete *amap;
     }
@@ -1201,6 +1203,8 @@ namespace Dune
         Element* current = coarsest_;
         coarsest_ = coarsest_->finer_;
         if(current != nonAllocated_) {
+          if(current->redistributed_)
+            ConstructionTraits<T>::deconstruct(current->redistributed_);
           ConstructionTraits<T>::deconstruct(current->element_);
         }
         allocator_.deallocate(current, 1);

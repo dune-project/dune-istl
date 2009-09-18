@@ -797,6 +797,7 @@ namespace Dune
       delete[] sendBuffers_[i];
 
     delete[] sendBuffers_;
+    delete[] sendBufferSizes_;
 
     // No need for the iterator tuples any more
     iteratorsMap_.clear();
