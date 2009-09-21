@@ -43,6 +43,14 @@ namespace Dune
       setup_=true;
       typename OwnerOverlapCopyCommunication<int>::OwnerSet flags;
       interface.build(*remoteIndices, flags,flags);
+      int rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#ifdef DEBUG_REPART
+      if(rank==0) {
+        std::cout<<"remote info "<<*remoteIndices<<std::endl;
+        std::cout<<"redist interface"<<interface<<std::endl;
+      }
+#endif
     }
     template<class GatherScatter, class D>
     void redistribute(const D& from, D& to) const
@@ -163,20 +171,44 @@ namespace Dune
      */
     void storeSparsityPattern(M& m)
     {
+      // insert diagonal to overlap rows
+      typedef typename Dune::GlobalLookupIndexSet<I>::const_iterator IIter;
+      typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
       std::size_t nnz=0;
-      typedef typename std::vector<std::set<size_type> >::const_iterator Iter;
-      for(Iter i=sparsity.begin(), end=sparsity.end(); i!=end; ++i)
-        nnz+=i->size();
+
+      for(IIter i= aggidxset.begin(), end=aggidxset.end(); i!=end; ++i) {
+        if(!OwnerSet::contains(i->local().attribute()))
+          sparsity[i->local()].insert(i->local());
+        nnz+=sparsity[i->local()].size();
+      }
+      assert( aggidxset.size()==sparsity.size());
+
       if(nnz>0) {
         m.setSize(aggidxset.size(), aggidxset.size(), nnz);
         m.setBuildMode(M::row_wise);
         typename M::CreateIterator citer=m.createbegin();
+#ifdef DEBUG_REPART
+        std::size_t idx=0;
+        bool correct=true;
+#endif
+        typedef typename std::vector<std::set<size_type> >::const_iterator Iter;
         for(Iter i=sparsity.begin(), end=sparsity.end(); i!=end; ++i, ++citer)
         {
           typedef typename std::set<size_type>::const_iterator SIter;
           for(SIter si=i->begin(), send=i->end(); si!=send; ++si)
             citer.insert(*si);
+#ifdef DEBUG_REPART
+          if(i->find(idx)==i->end()) {
+            std::cout<<"row "<<idx<<" is missing a diagonal entry!"<<std::endl;
+            correct=false;
+          }
+          ++idx;
+#endif
         }
+#ifdef DEBUG_REPART
+        if(!correct)
+          throw "bla";
+#endif
       }
     }
 
@@ -259,7 +291,7 @@ namespace Dune
             if(c.index()==i->local()) {
               typedef typename M::block_type::RowIterator RIter;
               for(RIter r=c->begin(), rend=c->end();
-                  c != cend; ++c)
+                  r != rend; ++r)
                 (*r)[r.index()]=1;
             }
           }
@@ -331,6 +363,7 @@ namespace Dune
         col=cont.matrix[i].begin();
       else
         ++col;
+      assert(col!=cont.matrix[i].end());
       const typename I::IndexPair* index=cont.idxset.pair(col.index());
       assert(index);
       return index->global();
@@ -338,9 +371,15 @@ namespace Dune
     static void scatter(Container& cont, const GlobalIndex& gi, std::size_t i, std::size_t j)
     {
       try{
-        std::size_t col = cont.aggidxset.at(gi).local();
+        const typename I::IndexPair& ip=cont.aggidxset.at(gi);
+        assert(ip.global()==gi);
+        std::size_t col = ip.local();
         cont.sparsity[i].insert(col);
-        cont.sparsity[col].insert(i);
+
+        typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
+        if(!OwnerSet::contains(ip.local().attribute()))
+          // preserve symmetry for overlap
+          cont.sparsity[col].insert(i);
       }
       catch(Dune::RangeError er) {
         // Entry not present in the new index set. Ignore!

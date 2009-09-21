@@ -53,8 +53,8 @@ namespace Dune
     typedef typename G::ConstVertexIterator VertexIterator;
 
 
-    T1 sum=0, needed = graph.noVertices()-indexSet.size();
-    std::vector<T1> neededall(oocomm.communicator().size(), 0);
+    std::size_t sum=0, needed = graph.noVertices()-indexSet.size();
+    std::vector<std::size_t> neededall(oocomm.communicator().size(), 0);
 
     MPI_Allgather(&needed, 1, Generic_MPI_Datatype<std::size_t>::get() , &(neededall[0]), 1, Generic_MPI_Datatype<std::size_t>::get(), oocomm.communicator());
     for(int i=0; i<oocomm.communicator().size(); ++i)
@@ -65,7 +65,7 @@ namespace Dune
       return;
 
     //Compute Maximum Global Index
-    T1 maxgi=T1();
+    T1 maxgi=0;
     typedef typename IndexSet::const_iterator Iterator;
     Iterator end;
     end = indexSet.end();
@@ -145,13 +145,13 @@ namespace Dune
       int size;
       int pos=0;
       // unpack owner vertices
-      MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPI_INT, comm);
+      MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       int start=ownerVec.size();
       ownerVec.resize(ownerVec.size()+size);
       MPI_Unpack(recvBuf, bufferSize, &pos, &(ownerVec[start]), size, MPITraits<GI>::getType(), comm);
 
       // unpack overlap vertices
-      MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPI_INT, comm);
+      MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       typename std::set<GI>::const_iterator ipos = overlapVec.begin();
       for(; size>0; --size) {
         GI gi;
@@ -325,7 +325,7 @@ namespace Dune
       }
       int toDune(int i)
       {
-        return parmetisToDune[i-base_];
+        return parmetisToDune[i]-base_;
       }
       int numOfOwnVtx()
       {
@@ -943,9 +943,23 @@ namespace Dune
     // according to the repartition
     //
     datari->template rebuild<true>();
-    if(color != MPI_UNDEFINED)
+    if(color != MPI_UNDEFINED) {
       outcomm->remoteIndices().template rebuild<true>();
 
+#ifdef DEBUG_REPART
+      if(outcomm->communicator().size()==0) {
+        // Check that all indices are owner
+        bool correct=true;
+        for(Iterator index = outcomm->indexSet().begin(); index != outcomm->indexSet().end(); ++index)
+          if(!OwnerSet::contains(index->local().attribute())) {
+            std::cout<<*index<<" is overlap!!"<<std::endl;
+            correct=false;
+          }
+        if(!correct)
+          throw "hich";
+      }
+#endif
+    }
 
     // release the memory
     delete[] sendTo;

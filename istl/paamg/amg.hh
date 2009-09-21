@@ -194,7 +194,7 @@ namespace Dune
       : matrices_(&matrices), smootherArgs_(smootherArgs),
         smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
-        additive(additive_)
+        additive(additive_), coarseSmoother_()
     {
       assert(matrices_->isBuilt());
 

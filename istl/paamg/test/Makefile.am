@@ -38,6 +38,6 @@ amgtest_LDADD = $(SUPERLU_LIBS)
 pamgtest_SOURCES = parallelamgtest.cc
 pamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS) $(SUPERLU_CPPFLAGS) $(PARMETIS_CPPFLAGS)
 pamgtest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) $(PARMETIS_LDFLAGS)
-pamgtest_LDADD = $(MPI_LIBS) $(SUPERLU_LIBS) $(PARMETIS_LIBS)
+pamgtest_LDADD = $(MPI_LIBS)  $(PARMETIS_LIBS) $(SUPERLU_LIBS)
 
 include $(top_srcdir)/am/global-rules

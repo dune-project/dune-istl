@@ -3,6 +3,8 @@
 #ifndef DUNE_MATRIX_UTILS_HH
 #define DUNE_MATRIX_UTILS_HH
 
+#include <set>
+
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
 #include "istlexception.hh"
@@ -112,5 +114,71 @@ namespace Dune
    */
 
   /** @} */
+  namespace
+  {
+    struct CompPair {
+      template<class G,class M>
+      bool operator()(const std::pair<G,M>& p1, const std::pair<G,M>& p2)
+      {
+        return p1.first<p2.first;
+      }
+    };
+
+  }
+  template<class M, class C>
+  void printGlobalSparseMatrix(const M& mat, C& ooc, std::ostream& os)
+  {
+    typedef typename C::ParallelIndexSet::const_iterator IIter;
+    typedef typename C::OwnerSet OwnerSet;
+    typedef typename C::ParallelIndexSet::GlobalIndex GlobalIndex;
+
+    GlobalIndex gmax=0;
+
+    for(IIter idx=ooc.indexSet().begin(), eidx=ooc.indexSet().end();
+        idx!=eidx; ++idx)
+      gmax=std::max(gmax,idx->global());
+
+    gmax=ooc.communicator().max(gmax);
+    ooc.buildGlobalLookup();
+
+    for(IIter idx=ooc.indexSet().begin(), eidx=ooc.indexSet().end();
+        idx!=eidx; ++idx) {
+      if(OwnerSet::contains(idx->local().attribute()))
+      {
+        typedef typename  M::block_type Block;
+
+        std::set<std::pair<GlobalIndex,Block>,CompPair> entries;
+
+        // sort rows
+        typedef typename M::ConstColIterator CIter;
+        for(CIter c=mat[idx->local()].begin(), cend=mat[idx->local()].end();
+            c!=cend; ++c) {
+          const typename C::ParallelIndexSet::IndexPair* pair
+            =ooc.globalLookup().pair(c.index());
+          assert(pair);
+          entries.insert(std::make_pair(pair->global(), *c));
+        }
+
+        //wait until its the rows turn.
+        GlobalIndex rowidx = idx->global();
+        GlobalIndex cur=std::numeric_limits<GlobalIndex>::max();
+        while(cur!=rowidx)
+          cur=ooc.communicator().min(rowidx);
+
+        // print rows
+        typedef typename std::set<std::pair<GlobalIndex,Block> >::const_iterator SIter;
+        for(SIter s=entries.begin(), send=entries.end(); s!=send; ++s)
+          os<<idx->global()<<" "<<s->first<<" "<<s->second<<std::endl;
+
+
+      }
+    }
+
+    ooc.freeGlobalLookup();
+    // Wait until everybody is finished
+    GlobalIndex cur=std::numeric_limits<GlobalIndex>::max();
+    while(cur!=ooc.communicator().min(cur)) ;
+  }
+
 }
 #endif

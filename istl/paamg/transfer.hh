@@ -162,7 +162,6 @@ namespace Dune
 
       // TODO This could be accomplished with one communication, too!
       redist.redistributeBackward(fine, fineRedist);
-      assert(comm.indexSet().size()==fine.size());
       comm.copyOwnerToAll(fine,fine);
     }
 
@@ -183,7 +182,6 @@ namespace Dune
       Transfer<V,V1,SequentialInformation>::restrict (aggregates, coarse, fine, SequentialInformation());
       // We need this here to avoid it in the smoothers on the coarse level.
       // There (in the preconditioner d is const.
-      assert(comm.indexSet().size()==coarse.size());
       comm.project(coarse);
     }
 #endif
