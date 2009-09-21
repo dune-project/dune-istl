@@ -426,18 +426,24 @@ namespace Dune
      * computed.
      *
      * @param g the local graph
+     * @param part Where the vertices become owner
      * @param vtx the given vertex
+     * @param parmetisVtxMapping mapping between Dune and ParMETIS vertices
      * @param indexSet the indexSet
      * @param neighbor the output set to store the neighbor indices in.
      */
     template<class OwnerSet, class Graph, class IS, class GI>
-    void getNeighbor(const Graph& g, typename Graph::VertexDescriptor vtx, const IS& indexSet, std::set<GI>& neighbor) {
+    void getNeighbor(const Graph& g, int* part,
+                     typename Graph::VertexDescriptor vtx, const IS& indexSet,
+                     ParmetisDuneIndexMap& parmetisVtxMapping, int toPe,
+                     std::set<GI>& neighbor) {
       typedef typename Graph::ConstEdgeIterator Iter;
       for(Iter edge=g.beginEdges(vtx), end=g.endEdges(vtx); edge!=end; ++edge)
       {
         const typename IS::IndexPair* pindex = indexSet.pair(edge.target());
         assert(pindex);
-        if(!OwnerSet::contains(pindex->local().attribute()))
+        if(part[parmetisVtxMapping.toLocalParmetis(pindex->local())]!=toPe)
+          // is sent to another process and therefore becomes overlap
           neighbor.insert(pindex->global());
       }
     }
@@ -472,7 +478,8 @@ namespace Dune
         {
           if(part[parmetisVtxMapping.toLocalParmetis(index->local())]==toPe)
           {
-            getNeighbor<OwnerSet>(graph , index->local(), indexSet, overlapSet);
+            getNeighbor<OwnerSet>(graph, part, index->local(), indexSet,
+                                  parmetisVtxMapping, toPe, overlapSet);
             ownerVec.push_back(index->global());
           }
         }
