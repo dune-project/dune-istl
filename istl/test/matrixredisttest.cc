@@ -8,6 +8,7 @@
 #include <iostream>
 #include <dune/istl/paamg/test/anisotropic.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/matrixutils.hh>
 #include <dune/istl/paamg/graph.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/exceptions.hh>
@@ -49,6 +50,7 @@ void testRepart(int N, int coarsenTarget)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef int LocalId;
+  //typedef int GlobalId;
   typedef Dune::bigunsignedint<56> GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<GlobalId> Communication;
   int n;
@@ -60,6 +62,11 @@ void testRepart(int N, int coarsenTarget)
   BCRSMat mat = setupAnisotropic2d<BS>(N, comm.indexSet(), comm.communicator(), &n, 1);
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
 
+  if(comm.communicator().rank()==0)
+    std::cout<<"Original matrix"<<std::endl;
+  comm.communicator().barrier();
+  printGlobalSparseMatrix(mat, comm, std::cout);
+
   MatrixGraph graph(mat);
   Communication* coarseComm;
   typename Communication::RemoteIndices* datari;
@@ -70,16 +77,21 @@ void testRepart(int N, int coarsenTarget)
 
   Dune::graphRepartition(graph, comm, coarsenTarget,
                          coarseComm, datari);
-  std::cout<<coarseComm->communicator().rank()<<coarseComm->indexSet()<<std::endl;
+  //  std::cout<<coarseComm->communicator().rank()<<coarseComm->indexSet()<<std::endl;
   BCRSMat newMat;
 
   Dune::RedistributeInformation<Communication> ri;
-  ri.setRemoteIndices(datari);
+  ri.setRemoteIndices(Dune::SmartPointer< typename Communication::RemoteIndices>(datari));
   redistributeMatrix(mat, newMat, comm, *coarseComm, ri);
 
-  if(coarseComm->communicator().rank()==0)
-    Dune::printmatrix(std::cout, newMat, "redist", "row");
-  delete datari;
+  if(comm.communicator().rank()==0)
+    std::cout<<"Redistributed matrix"<<std::endl;
+  comm.communicator().barrier();
+  if(coarseComm->communicator().size()>0)
+    printGlobalSparseMatrix(newMat, *coarseComm, std::cout);
+  comm.communicator().barrier();
+  //if(coarseComm->communicator().rank()==0)
+  //Dune::printmatrix(std::cout, newMat, "redist", "row");
   delete coarseComm;
 
 }
@@ -91,7 +103,7 @@ int main(int argc, char** argv)
   MPI_Errhandler_create(MPI_err_handler, &handler);
   MPI_Errhandler_set(MPI_COMM_WORLD, handler);
 
-  int N=2;
+  int N=3;
 
   int coarsenTarget=1;
 
