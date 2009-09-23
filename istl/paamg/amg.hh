@@ -424,14 +424,16 @@ namespace Dune
           DUNE_THROW(MathError, "Coarse solver did not converge");
       }else{
         // presmoothing
-        *lhs=0;
-        for(std::size_t i=0; i < preSteps_; ++i)
+        for(std::size_t i=0; i < preSteps_; ++i) {
+          *lhs=0;
           SmootherApplier<S>::preSmooth(*smoother, *lhs, *rhs);
+          // Accumulate update
+          *update += *lhs;
 
-        // Accumulate update
-        *update += *lhs;
-        // update defect
-        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
+          // update defect
+          matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
+          pinfo->project(*rhs);
+        }
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
 
@@ -515,17 +517,16 @@ namespace Dune
 
 #endif
 
-        // update defect
-        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-
         // postsmoothing
-        *lhs=0;
-        pinfo->project(*rhs);
-
-        for(std::size_t i=0; i < postSteps_; ++i)
-          SmootherApplier<S>::postSmooth(*smoother, *lhs, *rhs);
-
-        *update += *lhs;
+        for(std::size_t i=0; i < preSteps_; ++i) {
+          // update defect
+          matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
+          *lhs=0;
+          pinfo->project(*rhs);
+          SmootherApplier<S>::preSmooth(*smoother, *lhs, *rhs);
+          // Accumulate update
+          *update += *lhs;
+        }
       }
     }
 

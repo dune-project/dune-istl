@@ -4,7 +4,7 @@
 #define DUNE_MATRIX_UTILS_HH
 
 #include <set>
-
+#include <limits>
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
 #include "istlexception.hh"
@@ -166,7 +166,7 @@ namespace Dune
           cur=ooc.communicator().min(rowidx);
 
         // print rows
-        typedef typename std::set<std::pair<GlobalIndex,Block> >::const_iterator SIter;
+        typedef typename std::set<std::pair<GlobalIndex,Block> >::iterator SIter;
         for(SIter s=entries.begin(), send=entries.end(); s!=send; ++s)
           os<<idx->global()<<" "<<s->first<<" "<<s->second<<std::endl;
 

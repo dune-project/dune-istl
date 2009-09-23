@@ -335,7 +335,7 @@ namespace Dune
       {
         return &vtxDist_[0];
       }
-
+      int globalOwnerVertices;
     private:
       int base_;
       std::vector<int> duneToParmetis;
@@ -373,6 +373,7 @@ namespace Dune
         }
         vtxDist_[i+1] = vtxDist_[i] + globalNumOfVtx[i];
       }
+      globalOwnerVertices=vtxDist_[npes];
       base_=base;
 
       // The type of the const vertex iterator.
@@ -433,7 +434,7 @@ namespace Dune
      * @param neighbor the output set to store the neighbor indices in.
      */
     template<class OwnerSet, class Graph, class IS, class GI>
-    void getNeighbor(const Graph& g, int* part,
+    void getNeighbor(const Graph& g, std::vector<int> part,
                      typename Graph::VertexDescriptor vtx, const IS& indexSet,
                      ParmetisDuneIndexMap& parmetisVtxMapping, int toPe,
                      std::set<GI>& neighbor) {
@@ -442,7 +443,7 @@ namespace Dune
       {
         const typename IS::IndexPair* pindex = indexSet.pair(edge.target());
         assert(pindex);
-        if(part[parmetisVtxMapping.toLocalParmetis(pindex->local())]!=toPe)
+        if(part[pindex->local()]!=toPe)
           // is sent to another process and therefore becomes overlap
           neighbor.insert(pindex->global());
       }
@@ -467,7 +468,7 @@ namespace Dune
      * @param overlapSet The output vector containing all overlap vertices.
      */
     template<class OwnerSet, class G, class IS, class GI>
-    void getOwnerOverlapVec(const G& graph, int *part, IS& indexSet, ParmetisDuneIndexMap& parmetisVtxMapping,
+    void getOwnerOverlapVec(const G& graph, std::vector<int> part, IS& indexSet, ParmetisDuneIndexMap& parmetisVtxMapping,
                             int myPe, int toPe, std::vector<GI>& ownerVec, std::set<GI>& overlapSet) {
 
       //typedef typename IndexSet::const_iterator Iterator;
@@ -476,7 +477,7 @@ namespace Dune
         // Only Process owner vertices, the others are not in the parmetis graph.
         if(OwnerSet::contains(index->local().attribute()))
         {
-          if(part[parmetisVtxMapping.toLocalParmetis(index->local())]==toPe)
+          if(part[index->local()]==toPe)
           {
             getNeighbor<OwnerSet>(graph, part, index->local(), indexSet,
                                   parmetisVtxMapping, toPe, overlapSet);
@@ -600,7 +601,7 @@ namespace Dune
     assert(nparts<=npes);
 
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet::GlobalIndex GI;
-    typedef std::vector<GI> IntVector;
+    typedef std::vector<GI> GlobalVector;
     int myDomain;
 
     //
@@ -725,7 +726,7 @@ namespace Dune
     //domain number to real process number
     // domainMapping is the one of parmetis, that is without
     // the overlap/copy vertices
-    IntVector setPartition(oocomm.indexSet().size(), -1);
+    std::vector<int> setPartition(oocomm.indexSet().size(), -1);
 
     typedef typename  OOComm::ParallelIndexSet::const_iterator Iterator;
     i=0; // parmetis index
@@ -733,6 +734,8 @@ namespace Dune
       if(OwnerSet::contains(index->local().attribute())) {
         setPartition[index->local()]=domainMapping[part[i++]];
       }
+
+    oocomm.copyOwnerToAll(setPartition, setPartition);
 
 #ifdef PERF_REPART
     // stop the time for step 3)
@@ -832,12 +835,12 @@ namespace Dune
 
 
     typedef typename OOComm::ParallelIndexSet::GlobalIndex GI;
-    IntVector myOwnerVec;
+    GlobalVector myOwnerVec;
     std::set<GI> myOverlapSet;
-    IntVector sendOwnerVec;
+    GlobalVector sendOwnerVec;
     std::set<GI> sendOverlapSet;
 
-    getOwnerOverlapVec<OwnerSet>(graph, newPartition, oocomm.globalLookup(), indexMap,
+    getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
                                  mype, mype, myOwnerVec, myOverlapSet);
 
     for(i=0; i < npes; ++i) {
@@ -852,7 +855,7 @@ namespace Dune
             sendOverlapSet.clear();
             // get all owner and overlap vertices for process j and save these
             // in the vectors sendOwnerVec and sendOverlapSet
-            getOwnerOverlapVec<OwnerSet>(graph, newPartition, oocomm.globalLookup(), indexMap,
+            getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
                                          mype, j, sendOwnerVec, sendOverlapSet);
             // +2, we need 2 integer more for the length of each part
             // (owner/overlap) of the array
@@ -928,7 +931,7 @@ namespace Dune
     outputIndexSet.beginResize();
     // 1) add the owner vertices
     typedef typename OOComm::ParallelIndexSet::LocalIndex LocalIndex;
-    typedef typename IntVector::const_iterator VIter;
+    typedef typename GlobalVector::const_iterator VIter;
     i=0;
     for(VIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
       outputIndexSet.add(*g,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
@@ -945,6 +948,33 @@ namespace Dune
     myOverlapSet.clear();
     outputIndexSet.endResize();
     outputIndexSet.renumberLocal();
+
+#ifdef DUNE_ISTL_WITH_CHECKING
+    int numOfOwnVtx =0;
+    Iterator end = outputIndexSet.end();
+    for(Iterator index = outputIndexSet.begin(); index != end; ++index) {
+      if (OwnerSet::contains(index->local().attribute())) {
+        numOfOwnVtx++;
+      }
+    }
+    numOfOwnVtx = oocomm.communicator().sum(numOfOwnVtx);
+    if(numOfOwnVtx!=indexMap.globalOwnerVertices)
+    {
+      std::cerr<<numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones!"<<std::endl;
+      DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
+                                       <<" during repartitioning.");
+    }
+    Iterator index=outputIndexSet.begin();
+    if(index!=end) {
+      ++index;
+      for(Iterator old = outputIndexSet.begin(); index != end; old=index++) {
+        if(old->global()>index->global())
+          DUNE_THROW(ISTLError, "Index set's globalindex not sorted correctly");
+        if(old->local()>index->local())
+          DUNE_THROW(ISTLError, "Index set's local index not sorted correctly");
+      }
+    }
+#endif
 
     // build the remoteIndices for the transfer of vertices
     // according to the repartition

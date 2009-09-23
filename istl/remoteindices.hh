@@ -1068,10 +1068,10 @@ namespace Dune {
     typedef IndexPair<GlobalIndex,LocalIndex> PairType;
 
     PairType** destPairs;
-    PairType** sourcePairs = new PairType*[sourcePublish];
+    PairType** sourcePairs = new PairType*[sourcePublish>0 ? sourcePublish : 1];
 
     if(sendTwo)
-      destPairs = new PairType*[destPublish];
+      destPairs = new PairType*[destPublish>0 ? destPublish : 1];
     else
       destPairs=sourcePairs;
 
@@ -1095,6 +1095,8 @@ namespace Dune {
     // the size of the source and the dest indexset,
     // then the source and destination indices
     bufferSize += 2 * intSize + charSize;
+
+    if(bufferSize<=0) bufferSize=1;
 
     buffer[0] = new char[bufferSize];
     buffer[1] = new char[bufferSize];
@@ -1228,7 +1230,7 @@ namespace Dune {
     if(remoteEntries==0)
       return;
 
-    PairType index;
+    PairType index(-1);
     MPI_Unpack(p_in, bufferSize, position, &index, 1,
                type, comm_);
 
