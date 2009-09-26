@@ -2309,8 +2309,7 @@ namespace Dune
       }
 
       Dune::dinfo<<"connected aggregates: "<<conAggregates;
-      //Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
-      std::cout<<" isolated aggregates: "<<isoAggregates<<std::endl;
+      Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
       Dune::dinfo<<" one node aggregates: "<<oneAggregates<<std::endl;
 
       delete aggregate_;
