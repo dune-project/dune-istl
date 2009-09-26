@@ -118,6 +118,11 @@ namespace Dune
        */
       void setMaxDistance(std::size_t distance) { maxDistance_ = distance;}
 
+      bool skipIsolated() const
+      {
+        return false;
+      }
+
       /**
        * @brief Get the minimum number of nodes a aggregate has to consist of.
        * @return The minimum number of nodes.
@@ -653,6 +658,13 @@ namespace Dune
       std::size_t noVertices_;
     };
 
+    /**
+     * @brief Build the dependency of the matrix graph.
+     */
+    template<class G, class C>
+    void buildDependency(G& graph,
+                         const typename C::Matrix& matrix,
+                         C criterion);
 
     /**
      * @brief A class for temporarily storing the vertices of an
@@ -737,6 +749,10 @@ namespace Dune
        * @brief Get the size of the aggregate.
        */
       typename VertexList::size_type size();
+      /**
+       * @brief Get tne number of connections to other aggregates.
+       */
+      typename VertexList::size_type connectSize();
 
       /**
        * @brief Get the id identifying the aggregate.
@@ -908,14 +924,6 @@ namespace Dune
       };
 
       friend class Stack;
-
-      /**
-       * @brief Build the dependency of the matrix graph.
-       */
-      template<class C>
-      void buildDependency(MatrixGraph& graph,
-                           const typename C::Matrix& matrix,
-                           C criterion);
 
       /**
        * @brief Visits all neighbours of vertex belonging to a
@@ -1103,6 +1111,15 @@ namespace Dune
        * @return The value of the connectivity.
        */
       double connectivity(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates) const;
+      /**
+       * @brief Test whether the vertex is connected to the aggregate.
+       * @param vertex The vertex descriptor.
+       * @param aggregate The aggregate descriptor.
+       * @param aggregates The mapping of the vertices onto the aggregates.
+       * @return True if there is a connection to the aggregate.
+       */
+      bool connected(const Vertex& vertex, const AggregateDescriptor& aggregate,
+                     const AggregatesMap<Vertex>& aggregates) const;
 
       /**
        * @brief Counts the edges depending on the dependency.
@@ -1248,6 +1265,17 @@ namespace Dune
       Vertex mergeNeighbour(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates) const;
 
       /**
+       * @brief Find a nonisolated connected aggregate.
+       *
+       * @param vertex The vertex whose neighbouring aggregate we search.
+       * @param aggregates The mapping of the vertices onto aggregates.
+       * @return A vertex of neighbouring aggregate the vertex is allowed to
+       * be added to.
+       */
+      const AggregateDescriptor& nonisoNeighbourAggregate(const Vertex& vertex,
+                                                          const AggregatesMap<Vertex>& aggregates) const;
+
+      /**
        * @brief Grows the aggregate from a seed.
        *
        * @param seed The first vertex of the aggregate.
@@ -1256,6 +1284,8 @@ namespace Dune
        */
       template<class C>
       void growAggregate(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates, const C& c);
+      template<class C>
+      void growIsolatedAggregate(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates, const C& c);
     };
 
     template<class M, class N>
@@ -1413,6 +1443,13 @@ namespace Dune
     Aggregate<G,S>::size()
     {
       return vertices_.size();
+    }
+
+    template<class G,class S>
+    inline typename Aggregate<G,S>::VertexList::size_type
+    Aggregate<G,S>::connectSize()
+    {
+      return connected_.size();
     }
 
     template<class G,class S>
@@ -1578,18 +1615,17 @@ namespace Dune
       size_=-1;
     }
 
-    template<class G>
-    template<class C>
-    void Aggregator<G>::buildDependency(MatrixGraph& graph,
-                                        const typename C::Matrix& matrix,
-                                        C criterion)
+    template<class G, class C>
+    void buildDependency(G& graph,
+                         const typename C::Matrix& matrix,
+                         C criterion)
     {
       // The Criterion we use for building the dependency.
       typedef C Criterion;
 
       //      assert(graph.isBuilt());
       typedef typename C::Matrix Matrix;
-      typedef typename MatrixGraph::VertexIterator VertexIterator;
+      typedef typename G::VertexIterator VertexIterator;
 
       criterion.init(&matrix);
 
@@ -1620,7 +1656,7 @@ namespace Dune
           vertex.properties().setIsolated();
         }else{
           // Examine all the edges beginning at this vertex.
-          typedef typename MatrixGraph::EdgeIterator EdgeIterator;
+          typedef typename G::EdgeIterator EdgeIterator;
           typedef typename Matrix::ConstColIterator ColIterator;
           EdgeIterator end = vertex.end();
           ColIterator col = matrix[*vertex].begin();
@@ -1834,6 +1870,75 @@ namespace Dune
       // Todo
       Dune::dvverb<<" Admissible not yet implemented!"<<std::endl;
       return true;
+      //Situation 1: front node depends on two nodes. Then these
+      // have to be strongly connected to each other
+
+      // Iterate over all all neighbours of front node
+      typedef typename MatrixGraph::ConstEdgeIterator Iterator;
+      Iterator vend = graph_->endEdges(vertex);
+      for(Iterator edge = graph_->beginEdges(vertex); edge != vend; ++edge) {
+        // if(edge.properties().depends() && !edge.properties().influences()
+        if(edge.properties().isStrong()
+           && aggregates[edge.target()]==aggregate)
+        {
+          // Search for another link to the aggregate
+          Iterator edge1 = edge;
+          for(++edge1; edge1 != vend; ++edge1) {
+            //if(edge1.properties().depends() && !edge1.properties().influences()
+            if(edge1.properties().isStrong()
+               && aggregates[edge.target()]==aggregate)
+            {
+              //Search for an edge connecting the two vertices that is
+              //strong
+              bool found=false;
+              Iterator v2end = graph_->endEdges(edge.target());
+              for(Iterator edge2 = graph_->beginEdges(edge.target()); edge2 != v2end; ++edge2) {
+                if(edge2.target()==edge1.target() &&
+                   edge2.properties().isStrong()) {
+                  found =true;
+                  break;
+                }
+              }
+              if(found)
+                return true;
+            }
+          }
+        }
+      }
+
+      // Situation 2: cluster node depends on front node and other cluster node
+      /// Iterate over all all neighbours of front node
+      vend = graph_->endEdges(vertex);
+      for(Iterator edge = graph_->beginEdges(vertex); edge != vend; ++edge) {
+        //if(!edge.properties().depends() && edge.properties().influences()
+        if(edge.properties().isStrong()
+           && aggregates[edge.target()]==aggregate)
+        {
+          // Search for a link from target that stays within the aggregate
+          Iterator v1end = graph_->endEdges(edge.target());
+
+          for(Iterator edge1=graph_->beginEdges(edge.target()); edge1 != v1end; ++edge1) {
+            //if(edge1.properties().depends() && !edge1.properties().influences()
+            if(edge1.properties().isStrong()
+               && aggregates[edge1.target()]==aggregate)
+            {
+              bool found=false;
+              // Check if front node is also connected to this one
+              Iterator v2end = graph_->endEdges(vertex);
+              for(Iterator edge2 = graph_->beginEdges(vertex); edge2 != v2end; ++edge2) {
+                if(edge2.target()==edge1.target()) {
+                  if(edge2.properties().isStrong())
+                    found=true;
+                  break;
+                }
+              }
+              if(found)
+                return true;
+            }
+          }
+        }
+      }
+      return false;
     }
 
     template<class G>
@@ -1845,6 +1950,21 @@ namespace Dune
         graph_->getVertexProperties(*vertex).resetFront();
 
       front_.clear();
+    }
+
+    template<class G>
+    inline const typename  Aggregator<G>::AggregateDescriptor&
+    Aggregator<G>::nonisoNeighbourAggregate(const Vertex & vertex,
+                                            const AggregatesMap<Vertex>& aggregates) const
+    {
+      typedef typename MatrixGraph::ConstEdgeIterator Iterator;
+      Iterator end=graph_->beginEdges(vertex);
+      for(Iterator edge=graph_->beginEdges(vertex); edge!=end; ++edge)
+      {
+        if(aggregates[edge.target()]!=AggregatesMap<Vertex>::UNAGGREGATED && graph_->getVertexProperties(edge.target()).isolated())
+          return aggregates[edge.target()];
+      }
+      return AggregatesMap<Vertex>::UNAGGREGATED;
     }
 
     template<class G>
@@ -1883,6 +2003,69 @@ namespace Dune
       FrontNeighbourCounter counter(*graph_);
       visitNeighbours(*graph_, vertex, counter);
       return counter.value();
+    }
+    template<class G>
+    inline bool Aggregator<G>::connected(const Vertex& vertex,
+                                         const AggregateDescriptor& aggregate,
+                                         const AggregatesMap<Vertex>& aggregates) const
+    {
+      typedef typename G::ConstEdgeIterator iterator;
+      const iterator end = graph_->endEdges(vertex);
+      for(iterator edge = graph_->beginEdges(vertex); edge != end; ++edge)
+        if(aggregates[edge.target()]==aggregate)
+          return true;
+      return false;
+    }
+
+    template<class G>
+    template<class C>
+    void Aggregator<G>::growIsolatedAggregate(const Vertex& seed, const AggregatesMap<Vertex>& aggregates, const C& c)
+    {
+      AggregateDescriptor connectedAggregate = nonisoNeighbourAggregate(seed, aggregates);
+
+      while(aggregate_->size()< c.minAggregateSize() && aggregate_->connectSize() < c.maxConnectivity()) {
+        double maxCon=-1;
+        std::size_t maxFrontNeighbours=0;
+
+        Vertex candidate=AggregatesMap<Vertex>::UNAGGREGATED;
+        unmarkFront();
+        markFront(aggregates);
+        typedef typename VertexList::const_iterator Iterator;
+
+        for(Iterator vertex = front_.begin(); vertex != front_.end(); ++vertex) {
+          if(distance(*vertex, aggregates)>c.maxDistance())
+            continue; // distance of proposes aggregate too big
+
+          if(connectedAggregate != AggregatesMap<Vertex>::UNAGGREGATED) {
+            // there is already a neighbour cluster
+            // front node must be connected to same neighbour cluster
+
+            if(nonisoNeighbourAggregate(seed, aggregates) &&
+               !connected(*vertex, connectedAggregate, aggregates))
+              continue;
+          }
+
+          double con = connectivity(*vertex, aggregates);
+
+          if(con == maxCon) {
+            std::size_t frontNeighbours = noFrontNeighbours(*vertex);
+
+            if(frontNeighbours >= maxFrontNeighbours) {
+              maxFrontNeighbours = frontNeighbours;
+              candidate = *vertex;
+            }else if(con > maxCon) {
+              maxCon = con;
+              maxFrontNeighbours = noFrontNeighbours(*vertex);
+              candidate = *vertex;
+            }
+          }
+        }
+
+        if(candidate==AggregatesMap<Vertex>::UNAGGREGATED)
+          break;
+
+        aggregate_->add(candidate);
+      }
     }
 
     template<class G>
@@ -2043,11 +2226,14 @@ namespace Dune
 
 
         if(graph.getVertexProperties(seed).isolated()) {
-          // isolated vertices are not aggregated but skipped on the coarser levels.
-          aggregates[seed]=AggregatesMap<Vertex>::ISOLATED;
-          ++isoAggregates;
-          // skip rest as no agglomeration is done.
-          continue;
+          if(c.skipIsolated()) {
+            // isolated vertices are not aggregated but skipped on the coarser levels.
+            aggregates[seed]=AggregatesMap<Vertex>::ISOLATED;
+            ++isoAggregates;
+            // skip rest as no agglomeration is done.
+            continue;
+          }else
+            growIsolatedAggregate(seed, aggregates, c);
         }else
           growAggregate(seed, aggregates, c);
 
@@ -2123,7 +2309,8 @@ namespace Dune
       }
 
       Dune::dinfo<<"connected aggregates: "<<conAggregates;
-      Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
+      //Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
+      std::cout<<" isolated aggregates: "<<isoAggregates<<std::endl;
       Dune::dinfo<<" one node aggregates: "<<oneAggregates<<std::endl;
 
       delete aggregate_;

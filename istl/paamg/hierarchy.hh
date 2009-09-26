@@ -639,23 +639,32 @@ namespace Dune
       bool accumulate_;
     };
 
-    template<typename M>
+    template<typename M, typename C1>
     bool repartitionAndDistributeMatrix(const M& origMatrix, M& newMatrix,
                                         SequentialInformation& origSequentialInformationomm,
                                         SequentialInformation*& newComm,
                                         RedistributeInformation<SequentialInformation>& ri,
-                                        int nparts)
+                                        int nparts, C1& criterion)
     {
       DUNE_THROW(NotImplemented, "Redistribution does not make sense in sequential code!");
     }
 
 
-    template<typename M, typename C>
+    template<typename M, typename C, typename C1>
     bool repartitionAndDistributeMatrix(const M& origMatrix, M& newMatrix, C& origComm, C*& newComm,
                                         RedistributeInformation<C>& ri,
-                                        int nparts)
+                                        int nparts, C1& criterion)
     {
-      MatrixGraph<const M> graph(origMatrix);
+      typedef Dune::Amg::MatrixGraph<const M> MatrixGraph;
+      typedef Dune::Amg::PropertiesGraph<MatrixGraph,
+          VertexProperties,
+          EdgeProperties,
+          IdentityMap,
+          IdentityMap> PropertiesGraph;
+      MatrixGraph graph(origMatrix);
+      PropertiesGraph pgraph(graph);
+      buildDependency(pgraph, origMatrix, criterion);
+
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
         std::cout<<"Original matrix"<<std::endl;
@@ -664,7 +673,7 @@ namespace Dune
 #endif
 #if HAVE_PARMETIS
       typename C::RemoteIndices* datari;
-      bool existentOnRedist=Dune::graphRepartition(graph, origComm, nparts,
+      bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
                                                    newComm, datari);
       ri.setRemoteIndices(SmartPointer<typename C::RemoteIndices >(datari));
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
@@ -764,7 +773,8 @@ namespace Dune
 
           bool existentOnNextLevel =
             repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
-                                           redistComm, redistributes_.back(), nodomains);
+                                           redistComm, redistributes_.back(), nodomains,
+                                           criterion);
           int unknowns = redistMat->N();
           unknowns = infoLevel->communicator().sum(unknowns);
           if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
@@ -981,7 +991,7 @@ namespace Dune
         int nodomains = 1;
 
         repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
-                                       redistComm, redistributes_.back(), nodomains);
+                                       redistComm, redistributes_.back(), nodomains,criterion);
         MatrixArgs args(*redistMat, *redistComm);
         int unknowns = redistMat->N();
         unknowns = infoLevel->communicator().sum(unknowns);
