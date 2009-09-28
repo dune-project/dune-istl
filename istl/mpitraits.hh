@@ -103,7 +103,7 @@ namespace Dune
 
     static inline MPI_Datatype getType()
     {
-      if(datatype==0) {
+      if(datatype==MPI_DATATYPE_NULL) {
         MPI_Type_contiguous(bigunsignedint<k>::n, MPITraits<unsigned short>::getType(),
                             &vectortype);
         //MPI_Type_commit(&vectortype);
