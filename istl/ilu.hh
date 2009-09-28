@@ -163,8 +163,8 @@ namespace Dune {
     typedef typename M::CreateIterator createiterator;
     typedef typename M::block_type block;
     typedef typename M::field_type K;
-    typedef typename std::map<int,int> map;
-    typedef typename std::map<int,int>::iterator mapiterator;
+    typedef std::map<size_t, int> map;
+    typedef typename map::iterator mapiterator;
 
     // symbolic factorization phase, store generation number in first matrix element
     crowiterator endi=A.end();
