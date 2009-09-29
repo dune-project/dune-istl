@@ -183,8 +183,8 @@ namespace Dune {
     typedef Dune::RemoteIndices<PIS> RI;
     typedef Dune::RemoteIndexListModifier<PIS,typename RI::Allocator,false> RILM;
     typedef typename RI::RemoteIndex RX;
-    typedef Dune::BufferedCommunicator<PIS> BC;
-    typedef Dune::Interface<PIS> IF;
+    typedef Dune::BufferedCommunicator BC;
+    typedef Dune::Interface IF;
     typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner> OwnerSet;
     typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
     typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;

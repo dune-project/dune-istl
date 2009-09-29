@@ -672,10 +672,9 @@ namespace Dune
       printGlobalSparseMatrix(origMatrix, origComm, std::cout);
 #endif
 #if HAVE_PARMETIS
-      typename C::RemoteIndices* datari;
       bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
-                                                   newComm, datari);
-      ri.setRemoteIndices(SmartPointer<typename C::RemoteIndices >(datari));
+                                                   newComm, ri.getInterface());
+      ri.setSetup();
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
 #else
     #warning Parmetis is not installed or used. Did you use the parmetis flags? It is stronly recommend to use parallel AMG with parmetis.
@@ -742,7 +741,7 @@ namespace Dune
       int procs = infoLevel->communicator().size();
       int level = 0;
       int rank = 0;
-      int unknowns = mlevel->getmat().N();;
+      int unknowns = mlevel->getmat().N();
 
       unknowns = infoLevel->communicator().sum(unknowns);
       infoLevel->buildGlobalLookup(mlevel->getmat().N());

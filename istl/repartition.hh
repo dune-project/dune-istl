@@ -13,6 +13,7 @@
 #include <dune/istl/remoteindices.hh>
 #include <dune/istl/indicessyncer.hh>
 #include <dune/istl/communicator.hh>
+#include <dune/istl/paamg/graph.hh>
 #include <dune/common/enumset.hh>
 #include <map>
 #include <utility>
@@ -107,6 +108,177 @@ namespace Dune
 #endif
   }
 
+  namespace
+  {
+
+    class ParmetisDuneIndexMap
+    {
+    public:
+      template<class Graph, class OOComm>
+      ParmetisDuneIndexMap(const Graph& graph, const OOComm& com);
+      int toParmetis(int i) const
+      {
+        return duneToParmetis[i];
+      }
+      int toLocalParmetis(int i) const
+      {
+        return duneToParmetis[i]-base_;
+      }
+      int operator[](int i) const
+      {
+        return duneToParmetis[i];
+      }
+      int toDune(int i) const
+      {
+        return parmetisToDune[i];
+      }
+      int numOfOwnVtx() const
+      {
+        return parmetisToDune.size();
+      }
+      int* vtxDist()
+      {
+        return &vtxDist_[0];
+      }
+      int globalOwnerVertices;
+    private:
+      int base_;
+      std::vector<int> duneToParmetis;
+      std::vector<int> parmetisToDune;
+      // range of vertices for processor i: vtxdist[i] to vtxdist[i+1] (parmetis global)
+      std::vector<int> vtxDist_;
+    };
+
+    template<class G, class OOComm>
+    ParmetisDuneIndexMap::ParmetisDuneIndexMap(const G& graph, const OOComm& oocomm)
+      : duneToParmetis(graph.noVertices(), -1), vtxDist_(oocomm.communicator().size()+1)
+    {
+      int npes=oocomm.communicator().size(), mype=oocomm.communicator().rank();
+
+      typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
+      typedef typename OOComm::OwnerSet OwnerSet;
+
+      int numOfOwnVtx=0;
+      Iterator end = oocomm.indexSet().end();
+      for(Iterator index = oocomm.indexSet().begin(); index != end; ++index) {
+        if (OwnerSet::contains(index->local().attribute())) {
+          numOfOwnVtx++;
+        }
+      }
+      parmetisToDune.resize(numOfOwnVtx);
+      std::vector<int> globalNumOfVtx(npes);
+      // make this number available to all processes
+      MPI_Allgather(&numOfOwnVtx, 1, MPI_INT, &(globalNumOfVtx[0]), 1, MPI_INT, oocomm.communicator());
+
+      int base=0;
+      vtxDist_[0] = 0;
+      for(int i=0; i<npes; i++) {
+        if (i<mype) {
+          base += globalNumOfVtx[i];
+        }
+        vtxDist_[i+1] = vtxDist_[i] + globalNumOfVtx[i];
+      }
+      globalOwnerVertices=vtxDist_[npes];
+      base_=base;
+
+      // The type of the const vertex iterator.
+      typedef typename G::ConstVertexIterator VertexIterator;
+#ifdef DEBUG_REPART
+      std::cout << oocomm.communicator().rank()<<" vtxDist: ";
+      for(int i=0; i<= npes; ++i)
+        std::cout << vtxDist_[i]<<" ";
+      std::cout<<std::endl;
+#endif
+
+      // Traverse the graph and assign a new consecutive number/index
+      // starting by "base" to all owner vertices.
+      // The new index is used as the ParMETIS global index and is
+      // stored in the vector "duneToParmetis"
+      VertexIterator vend = graph.end();
+      for(VertexIterator vertex = graph.begin(); vertex != vend; ++vertex) {
+        const typename OOComm::ParallelIndexSet::IndexPair* index=oocomm.globalLookup().pair(*vertex);
+        assert(index);
+        if (OwnerSet::contains(index->local().attribute())) {
+          // assign and count the index
+          parmetisToDune[base-base_]=index->local();
+          duneToParmetis[index->local()] = base++;
+        }
+      }
+
+      // At this point, every process knows the ParMETIS global index
+      // of it's owner vertices. The next step is to get the
+      // ParMETIS global index of the overlap vertices from the
+      // associated processes. To do this, the Dune::Interface class
+      // is used.
+#ifdef DEBUG_REPART
+      std::cout <<oocomm.communicator().rank()<<": before ";
+      for(std::size_t i=0; i<duneToParmetis.size(); ++i)
+        std::cout<<duneToParmetis[i]<<" ";
+      std::cout<<std::endl;
+#endif
+      oocomm.copyOwnerToAll(duneToParmetis,duneToParmetis);
+#ifdef DEBUG_REPART
+      std::cout <<oocomm.communicator().rank()<<": after ";
+      for(std::size_t i=0; i<duneToParmetis.size(); ++i)
+        std::cout<<duneToParmetis[i]<<" ";
+      std::cout<<std::endl;
+#endif
+    }
+  }
+
+  struct RedistributeInterface
+    : public Interface
+  {
+    void setCommunicator(MPI_Comm comm)
+    {
+      communicator_=comm;
+    }
+    template<class Flags,class IS>
+    void buildSendInterface(const std::vector<int>& toPart, const ParmetisDuneIndexMap& pdmap,
+                            const IS& idxset)
+    {
+      typedef std::vector<int>::const_iterator Iter;
+      std::map<int,int> sizes;
+
+      for(Iter i=toPart.begin(), iend = toPart.end(); i!=iend; ++i) {
+        ++sizes[*i];
+      }
+
+      // Allocate the necessary space
+      typedef std::map<int,int>::const_iterator MIter;
+      for(MIter i=sizes.begin(), end=sizes.end(); i!=end; ++i)
+        interfaces()[i->first].first.reserve(i->second);
+
+      //Insert the interface information
+      typedef typename IS::const_iterator IIter;
+      for(IIter i=idxset.begin(), end=idxset.end(); i!=end; ++i)
+        if(Flags::contains(i->local().attribute()))
+          interfaces()[toPart[pdmap.toLocalParmetis(i->local())]].first.add(i->local());
+    }
+
+    void reserveSpaceForReceiveInterface(int proc, int size)
+    {
+      interfaces()[proc].second.reserve(size);
+    }
+    void addReceiveIndex(int proc, std::size_t idx)
+    {
+      interfaces()[proc].second.add(idx);
+    }
+    template<typename TG>
+    void buildReceiveInterface(std::vector<TG>& indices, std::size_t start, int proc)
+    {
+      if(start>=indices.size())
+        return;
+      InterfaceInformation& inf= interfaces()[proc].second;
+      inf.reserve(indices.size()-start);
+      typedef typename std::vector<TG>::const_iterator VIter;
+      for(VIter idx=indices.begin()+start; idx!= indices.end(); ++idx) {
+        inf.add(idx-indices.begin());
+      }
+    }
+
+  };
+
 #if HAVE_PARMETIS
   namespace
   {
@@ -141,7 +313,8 @@ namespace Dune
      * @param comm The communicator used in the receive.
      */
     template<class GI>
-    void saveRecvBuf(char *recvBuf, int bufferSize, std::vector<GI>& ownerVec, std::set<GI>& overlapVec, MPI_Comm comm) {
+    void saveRecvBuf(char *recvBuf, int bufferSize, std::vector<GI>& ownerVec,
+                     std::set<GI>& overlapVec, MPI_Comm comm) {
       int size;
       int pos=0;
       // unpack owner vertices
@@ -149,7 +322,6 @@ namespace Dune
       int start=ownerVec.size();
       ownerVec.resize(ownerVec.size()+size);
       MPI_Unpack(recvBuf, bufferSize, &pos, &(ownerVec[start]), size, MPITraits<GI>::getType(), comm);
-
       // unpack overlap vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       typename std::set<GI>::const_iterator ipos = overlapVec.begin();
@@ -306,119 +478,6 @@ namespace Dune
       }
     }
 
-    class ParmetisDuneIndexMap
-    {
-    public:
-      template<class Graph, class OOComm>
-      ParmetisDuneIndexMap(const Graph& graph, const OOComm& com);
-      int toParmetis(int i)
-      {
-        return duneToParmetis[i];
-      }
-      int toLocalParmetis(int i)
-      {
-        return duneToParmetis[i]-base_;
-      }
-      int operator[](int i)
-      {
-        return duneToParmetis[i];
-      }
-      int toDune(int i)
-      {
-        return parmetisToDune[i]-base_;
-      }
-      int numOfOwnVtx()
-      {
-        return parmetisToDune.size();
-      }
-      int* vtxDist()
-      {
-        return &vtxDist_[0];
-      }
-      int globalOwnerVertices;
-    private:
-      int base_;
-      std::vector<int> duneToParmetis;
-      std::vector<int> parmetisToDune;
-      // range of vertices for processor i: vtxdist[i] to vtxdist[i+1] (parmetis global)
-      std::vector<int> vtxDist_;
-    };
-
-    template<class G, class OOComm>
-    ParmetisDuneIndexMap::ParmetisDuneIndexMap(const G& graph, const OOComm& oocomm)
-      : duneToParmetis(graph.noVertices(), -1), vtxDist_(oocomm.communicator().size()+1)
-    {
-      int npes=oocomm.communicator().size(), mype=oocomm.communicator().rank();
-
-      typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
-      typedef typename OOComm::OwnerSet OwnerSet;
-
-      int numOfOwnVtx=0;
-      Iterator end = oocomm.indexSet().end();
-      for(Iterator index = oocomm.indexSet().begin(); index != end; ++index) {
-        if (OwnerSet::contains(index->local().attribute())) {
-          numOfOwnVtx++;
-        }
-      }
-      parmetisToDune.resize(numOfOwnVtx);
-      std::vector<int> globalNumOfVtx(npes);
-      // make this number available to all processes
-      MPI_Allgather(&numOfOwnVtx, 1, MPI_INT, &(globalNumOfVtx[0]), 1, MPI_INT, oocomm.communicator());
-
-      int base=0;
-      vtxDist_[0] = 0;
-      for(int i=0; i<npes; i++) {
-        if (i<mype) {
-          base += globalNumOfVtx[i];
-        }
-        vtxDist_[i+1] = vtxDist_[i] + globalNumOfVtx[i];
-      }
-      globalOwnerVertices=vtxDist_[npes];
-      base_=base;
-
-      // The type of the const vertex iterator.
-      typedef typename G::ConstVertexIterator VertexIterator;
-#ifdef DEBUG_REPART
-      std::cout << oocomm.communicator().rank()<<" vtxDist: ";
-      for(int i=0; i<= npes; ++i)
-        std::cout << vtxDist_[i]<<" ";
-      std::cout<<std::endl;
-#endif
-
-      // Traverse the graph and assign a new consecutive number/index
-      // starting by "base" to all owner vertices.
-      // The new index is used as the ParMETIS global index and is
-      // stored in the vector "duneToParmetis"
-      VertexIterator vend = graph.end();
-      for(VertexIterator vertex = graph.begin(); vertex != vend; ++vertex) {
-        const typename OOComm::ParallelIndexSet::IndexPair* index=oocomm.globalLookup().pair(*vertex);
-        assert(index);
-        if (OwnerSet::contains(index->local().attribute())) {
-          // assign and count the index
-          parmetisToDune[base-base_]=index->local();
-          duneToParmetis[index->local()] = base++;
-        }
-      }
-
-      // At this point, every process knows the ParMETIS global index
-      // of it's owner vertices. The next step is to get the
-      // ParMETIS global index of the overlap vertices from the
-      // associated processes. To do this, the Dune::Interface class
-      // is used.
-#ifdef DEBUG_REPART
-      std::cout <<oocomm.communicator().rank()<<": before ";
-      for(std::size_t i=0; i<duneToParmetis.size(); ++i)
-        std::cout<<duneToParmetis[i]<<" ";
-      std::cout<<std::endl;
-#endif
-      oocomm.copyOwnerToAll(duneToParmetis,duneToParmetis);
-#ifdef DEBUG_REPART
-      std::cout <<oocomm.communicator().rank()<<": after ";
-      for(std::size_t i=0; i<duneToParmetis.size(); ++i)
-        std::cout<<duneToParmetis[i]<<" ";
-      std::cout<<std::endl;
-#endif
-    }
 
     /**
      * @brief get the non-owner neighbors of a given vertex
@@ -503,6 +562,74 @@ namespace Dune
       return F::contains(pindex->local().attribute());
     }
 
+
+    class BaseEdgeFunctor
+    {
+    public:
+      BaseEdgeFunctor(int* adj,const ParmetisDuneIndexMap& data)
+        : i_(), adj_(adj), data_(data)
+      {}
+
+      template<class T>
+      void operator()(const T& edge)
+      {
+        // Get the egde weight
+        // const Weight& weight=edge.weight();
+        adj_[i_] = data_.toParmetis(edge.target());
+        i_++;
+      }
+      std::size_t index()
+      {
+        return i_;
+      }
+
+    private:
+      std::size_t i_;
+      int* adj_;
+      const ParmetisDuneIndexMap& data_;
+    };
+
+    template<typename G>
+    struct EdgeFunctor
+      : public BaseEdgeFunctor
+    {
+      EdgeFunctor(int* adj, const ParmetisDuneIndexMap& data, std::size_t s)
+        : BaseEdgeFunctor(adj, data)
+      {}
+
+      int* getWeights()
+      {
+        return 0;
+      }
+    };
+
+    template<class G, class V, class E, class VM, class EM>
+    class EdgeFunctor<Dune::Amg::PropertiesGraph<G,V,E,VM,EM> >
+      :  public BaseEdgeFunctor
+    {
+    public:
+      EdgeFunctor(int* adj, const ParmetisDuneIndexMap& data, std::size_t s)
+        : BaseEdgeFunctor(adj, data)
+      {
+        weight_=new int[s];
+      }
+
+      template<class T>
+      void operator()(const T& edge)
+      {
+        weight_[index()]=edge.properties().depends() ? 1 : 0;
+        BaseEdgeFunctor::operator()(edge);
+      }
+      int* getWeights()
+      {
+        return weight_;
+      }
+    private:
+      int* weight_;
+    };
+
+
+
     /**
      * @brief Create the "adjncy" and "xadj" arrays for using ParMETIS
      *
@@ -513,14 +640,14 @@ namespace Dune
      *
      * @param graph the local graph.
      * @param indexSet the local indexSet.
-     * @param data the mapping of local index to ParMETIS global index.
      * @param &xadj the ParMETIS xadj array
-     * @param &adjncy the ParMETIS adjncy array
+     * @param ew Funcot to setup adjacency info.
      */
-    template<class F, class G, class IS>
-    void getAdjArrays(G& graph, IS& indexSet, ParmetisDuneIndexMap& data, int *xadj, int *adjncy)
+    template<class F, class G, class IS, class EW>
+    void getAdjArrays(G& graph, IS& indexSet, int *xadj,
+                      EW& ew)
     {
-      int i=0, j=0;
+      int j=0;
 
       // The type of the const vertex iterator.
       typedef typename G::ConstVertexIterator VertexIterator;
@@ -535,27 +662,14 @@ namespace Dune
           // The type of const edge iterator.
           typedef typename G::ConstEdgeIterator EdgeIterator;
           EdgeIterator eend = vertex.end();
-          xadj[j] = i;
+          xadj[j] = ew.index();
           j++;
           for(EdgeIterator edge = vertex.begin(); edge != eend; ++edge) {
-            if(*vertex!=edge.source()) {
-              // This should never happen as vertex is an iterator positioned
-              // at the source of all edge that one gets with VertexIterator::begin()
-              throw "Something weired happened!";
-            }
-            // The type of the edge weights
-            typedef typename EdgeIterator::Weight Weight;
-            //TODO weights are not considered in this version
-            // Get the egde weight
-            // const Weight& weight=edge.weight();
-            adjncy[i] = data.toParmetis(edge.target());
-            i++;
+            ew(edge);
           }
         }
       }
-      xadj[j] = i;
-      j++;
-
+      xadj[j] = ew.index();
     }
   }
 
@@ -576,7 +690,7 @@ namespace Dune
   template<class G, class T1, class T2>
   bool graphRepartition(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
                         Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
-                        typename Dune::OwnerOverlapCopyCommunication<T1,T2>::RemoteIndices*& datari)
+                        RedistributeInterface& redistInf)
   {
     MPI_Comm comm=oocomm.communicator();
     oocomm.buildGlobalLookup(graph.noVertices());
@@ -632,15 +746,15 @@ namespace Dune
     int numOfVtx = oocomm.indexSet().size();
     int *xadj = new  int[indexMap.numOfOwnVtx()+1];
     int *adjncy = new int[graph.noEdges()];
-    getAdjArrays<OwnerSet>(graph, oocomm.globalLookup(), indexMap,
-                           xadj, adjncy);
+    EdgeFunctor<G> ef(adjncy, indexMap, graph.noEdges());
+    getAdjArrays<OwnerSet>(graph, oocomm.globalLookup(), xadj, ef);
 
     //
     // 2) Call ParMETIS
     //
     //
     idxtype *part = new idxtype[indexMap.numOfOwnVtx()];
-    int numflag=0, wgtflag=0, options[10], edgecut=0, ncon=1;
+    int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
     float *tpwgts = NULL;
     float ubvec[1];
     options[0] = 1; // 0=default, 1=options are defined in [1]+[2]
@@ -650,7 +764,7 @@ namespace Dune
     options[1] = 0; // show info: 0=no message
 #endif
     options[2] = 1; // random number seed, default is 15
-    wgtflag = 0;
+    wgtflag = 0; //ef.getWeights()?1:0;
     numflag = 0;
     edgecut = 0;
     ncon=1;
@@ -675,12 +789,13 @@ namespace Dune
     // ParMETIS_V3_PartKway
     //=======================================================
     ParMETIS_V3_PartKway(indexMap.vtxDist(), xadj, adjncy,
-                         NULL, NULL, &wgtflag,
+                         NULL, true ? NULL : ef.getWeights(), &wgtflag,
                          &numflag, &ncon, &nparts, tpwgts, ubvec, options, &edgecut, part, &const_cast<MPI_Comm&>(comm));
 
 
     delete[] xadj;
     delete[] adjncy;
+    delete[] ef.getWeights();
 
 #ifdef DEBUG_REPART
     if (mype == 0) {
@@ -718,9 +833,11 @@ namespace Dune
     std::cout<<std::endl;
 #endif
     // translate the domain number to real process number
-    int *newPartition = new int[indexMap.numOfOwnVtx()];
+    std::vector<int> newPartition(indexMap.numOfOwnVtx());
     for(j=0; j<indexMap.numOfOwnVtx(); j++)
       newPartition[j] = domainMapping[part[j]];
+    // Build the send interface
+    redistInf.buildSendInterface<OwnerSet>(newPartition, indexMap, oocomm.indexSet());
 
     // Make a domain mapping for the indexset and translate
     //domain number to real process number
@@ -843,6 +960,8 @@ namespace Dune
     getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
                                  mype, mype, myOwnerVec, myOverlapSet);
 
+    redistInf.buildReceiveInterface(myOwnerVec, 0, mype);
+
     for(i=0; i < npes; ++i) {
       // the rank of the process defines the sending order,
       // so it starts naturally by 0
@@ -892,19 +1011,19 @@ namespace Dune
           std::cout<<mype<<" receiving "<<recvFrom[i]<<" from "<<i<<" buffersize="<<buffersize<<std::endl;
 #endif
           MPI_Recv(recvBuf, buffersize, MPI_PACKED, i, 0, oocomm.communicator(), &status);
+          int oldsize=myOwnerVec.size();
           saveRecvBuf(recvBuf, buffersize, myOwnerVec, myOverlapSet, oocomm.communicator());
+          redistInf.buildReceiveInterface(myOwnerVec, oldsize, i);
           delete[] recvBuf;
         }
       }
     }
-    delete[] newPartition;
 
+    redistInf.setCommunicator(oocomm.communicator());
 
-    // After all the vertices are received, the vectors must
-    // be "merged" together to create the final vectors.
-    // Because some vertices that are sent as overlap could now
-    // already included as owner vertiecs in the new partition
-    mergeVec(myOwnerVec, myOverlapSet);
+    // Trick to free memory
+    newPartition.clear();
+    newPartition.swap(newPartition);
 
     //
     // 4.2) Create the IndexSet etc.
@@ -925,7 +1044,6 @@ namespace Dune
     MPI_Comm_split(oocomm.communicator(), color, 0, &outputComm);
     outcomm = new OOComm(outputComm);
 
-    datari = new  typename OOComm::RemoteIndices(oocomm.indexSet(),outcomm->indexSet(), oocomm.communicator());
     typename OOComm::ParallelIndexSet& outputIndexSet = outcomm->indexSet();
 
     outputIndexSet.beginResize();
@@ -936,6 +1054,14 @@ namespace Dune
     for(VIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
       outputIndexSet.add(*g,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
     }
+
+    // After all the vertices are received, the vectors must
+    // be "merged" together to create the final vectors.
+    // Because some vertices that are sent as overlap could now
+    // already included as owner vertiecs in the new partition
+    mergeVec(myOwnerVec, myOverlapSet);
+
+
     // Trick to free memory
     myOwnerVec.clear();
     myOwnerVec.swap(myOwnerVec);
@@ -947,7 +1073,6 @@ namespace Dune
     }
     myOverlapSet.clear();
     outputIndexSet.endResize();
-    outputIndexSet.renumberLocal();
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     int numOfOwnVtx =0;
@@ -976,10 +1101,6 @@ namespace Dune
     }
 #endif
 
-    // build the remoteIndices for the transfer of vertices
-    // according to the repartition
-    //
-    datari->template rebuild<true>();
     if(color != MPI_UNDEFINED) {
       outcomm->remoteIndices().template rebuild<true>();
 
@@ -1003,7 +1124,6 @@ namespace Dune
     delete[] recvFrom;
     delete[] part;
 
-    MPI_Barrier(comm);
 
 #ifdef PERF_REPART
     // stop the time for step 4) and print the results
@@ -1021,6 +1141,7 @@ namespace Dune
     return color!=MPI_UNDEFINED;
 
   }
+
 #endif // HAVE_PARMETIS
 #endif // HAVE_MPI
 } // end of namespace Dune

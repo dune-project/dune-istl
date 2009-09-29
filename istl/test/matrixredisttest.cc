@@ -35,7 +35,7 @@ void MPI_err_handler(MPI_Comm *comm, int *err_code, ...){
 }
 
 template<int BS>
-void testRepart(int N, int coarsenTarget)
+int testRepart(int N, int coarsenTarget)
 {
 
   std::cout<<"==================================================="<<std::endl;
@@ -69,20 +69,21 @@ void testRepart(int N, int coarsenTarget)
 
   MatrixGraph graph(mat);
   Communication* coarseComm;
-  typename Communication::RemoteIndices* datari;
 
   comm.remoteIndices().template rebuild<false>();
 
   std::cout<<comm.communicator().rank()<<comm.indexSet()<<std::endl;
 
+  Dune::RedistributeInformation<Communication> ri;
   Dune::graphRepartition(graph, comm, coarsenTarget,
-                         coarseComm, datari);
-  //  std::cout<<coarseComm->communicator().rank()<<coarseComm->indexSet()<<std::endl;
+                         coarseComm, ri.getInterface());
+
+  std::cout<<coarseComm->communicator().rank()<<coarseComm->indexSet()<<std::endl;
   BCRSMat newMat;
 
-  Dune::RedistributeInformation<Communication> ri;
-  ri.setRemoteIndices(Dune::SmartPointer< typename Communication::RemoteIndices>(datari));
   redistributeMatrix(mat, newMat, comm, *coarseComm, ri);
+
+  std::cout<<comm.communicator().rank()<<": redist interface "<<ri.getInterface()<<std::endl;
 
   if(comm.communicator().rank()==0)
     std::cout<<"Redistributed matrix"<<std::endl;
@@ -90,10 +91,32 @@ void testRepart(int N, int coarsenTarget)
   if(coarseComm->communicator().size()>0)
     printGlobalSparseMatrix(newMat, *coarseComm, std::cout);
   comm.communicator().barrier();
+
+  // Check for symmetry
+  int ret=0;
+  typedef typename BCRSMat::ConstRowIterator RIter;
+  for(RIter row=newMat.begin(), rend=newMat.end(); row != rend; ++row) {
+    typedef typename BCRSMat::ConstColIterator CIter;
+    for(CIter col=row->begin(), cend=row->end(); col!=cend; ++col)
+    {
+      if(col.index()<=row.index())
+        try{
+          newMat[col.index()][row.index()];
+        }catch(Dune::ISTLError e) {
+          std::cerr<<coarseComm->communicator().rank()<<": entry ("
+                   <<col.index()<<","<<row.index()<<") missing!"<<std::endl;
+          ret=1;
+
+        }
+      else
+        break;
+    }
+  }
+
   //if(coarseComm->communicator().rank()==0)
   //Dune::printmatrix(std::cout, newMat, "redist", "row");
   delete coarseComm;
-
+  return ret;
 }
 
 int main(int argc, char** argv)

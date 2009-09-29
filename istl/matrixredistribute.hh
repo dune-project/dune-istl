@@ -4,6 +4,8 @@
 #define DUNE_MATRIXREDIST_HH
 #include "repartition.hh"
 #include <dune/common/exceptions.hh>
+#include <dune/istl/indexset.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 /**
  * @file
  * @brief Functionality for redistributing a sparse matrix.
@@ -35,28 +37,52 @@ namespace Dune
     typedef OwnerOverlapCopyCommunication<T,T1> Comm;
 
     RedistributeInformation()
-      : remoteIndices(), setup_(false)
+      : interface(), setup_(false)
     {}
-    void setRemoteIndices(const SmartPointer<typename Comm::RemoteIndices>& ri_)
+
+    RedistributeInterface& getInterface()
     {
-      remoteIndices=ri_;
-      setup_=true;
+      return interface;
+    }
+    template<typename IS>
+    void checkInterface(const IS& source,
+                        const IS& target, MPI_Comm comm)
+    {
+      RemoteIndices<IS> *ri=new RemoteIndices<IS>(source, target, comm);
+      ri->template rebuild<true>();
+      Interface inf;
       typename OwnerOverlapCopyCommunication<int>::OwnerSet flags;
-      interface.build(*remoteIndices, flags, flags);
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      std::cout <<rank<<" manual "<<interface<<std::endl;
+      //interface.free();
+      inf.build(*ri, flags, flags);
+      std::cout <<rank<<" automatic "<<interface<<std::endl;
+
+
+      if(inf!=interface) {
+
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #ifdef DEBUG_REPART
-      if(rank==0) {
-        std::cout<<"remote info "<<*remoteIndices<<std::endl;
-        std::cout<<"redist interface"<<interface<<std::endl;
-      }
+        if(rank==0)
+          std::cout<<"Interfaces do not match!"<<std::endl;
+        std::cout<<rank<<": redist interface new :"<<inf<<std::endl;
+        std::cout<<rank<<": redist interface :"<<interface<<std::endl;
+
 #endif
+        throw "autsch!";
+      }
+    }
+    void setSetup()
+    {
+      setup_=true;
     }
 
     template<class GatherScatter, class D>
     void redistribute(const D& from, D& to) const
     {
-      BufferedCommunicator<typename Comm::ParallelIndexSet> communicator;
+      BufferedCommunicator communicator;
       communicator.template build<D>(from,to, interface);
       communicator.template forward<GatherScatter>(from, to);
       communicator.free();
@@ -65,7 +91,7 @@ namespace Dune
     void redistributeBackward(D& from, const D& to) const
     {
 
-      BufferedCommunicator<typename Comm::ParallelIndexSet> communicator;
+      BufferedCommunicator communicator;
       communicator.template build<D>(from,to, interface);
       communicator.template backward<GatherScatter>(from, to);
       communicator.free();
@@ -87,8 +113,7 @@ namespace Dune
     }
 
   private:
-    SmartPointer<typename Comm::RemoteIndices> remoteIndices;
-    Interface<typename Comm::ParallelIndexSet> interface;
+    RedistributeInterface interface;
     bool setup_;
   };
 
