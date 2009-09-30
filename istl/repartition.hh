@@ -265,15 +265,12 @@ namespace Dune
       interfaces()[proc].second.add(idx);
     }
     template<typename TG>
-    void buildReceiveInterface(std::vector<TG>& indices, std::size_t start, int proc)
+    void buildReceiveInterface(std::vector<std::pair<TG,int> >& indices)
     {
-      if(start>=indices.size())
-        return;
-      InterfaceInformation& inf= interfaces()[proc].second;
-      inf.reserve(indices.size()-start);
-      typedef typename std::vector<TG>::const_iterator VIter;
-      for(VIter idx=indices.begin()+start; idx!= indices.end(); ++idx) {
-        inf.add(idx-indices.begin());
+      typedef typename std::vector<std::pair<TG,int> >::const_iterator VIter;
+      std::size_t i=0;
+      for(VIter idx=indices.begin(); idx!= indices.end(); ++idx) {
+        interfaces()[idx->second].second.add(i++);
       }
     }
 
@@ -313,15 +310,20 @@ namespace Dune
      * @param comm The communicator used in the receive.
      */
     template<class GI>
-    void saveRecvBuf(char *recvBuf, int bufferSize, std::vector<GI>& ownerVec,
-                     std::set<GI>& overlapVec, MPI_Comm comm) {
+    void saveRecvBuf(char *recvBuf, int bufferSize, std::vector<std::pair<GI,int> >& ownerVec,
+                     std::set<GI>& overlapVec, RedistributeInterface& inf, int from, MPI_Comm comm) {
       int size;
       int pos=0;
       // unpack owner vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
+      inf.reserveSpaceForReceiveInterface(from, size);
       int start=ownerVec.size();
-      ownerVec.resize(ownerVec.size()+size);
-      MPI_Unpack(recvBuf, bufferSize, &pos, &(ownerVec[start]), size, MPITraits<GI>::getType(), comm);
+      ownerVec.reserve(ownerVec.size()+size);
+      for(; size>0; --size) {
+        GI gi;
+        MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
+        ownerVec.push_back(std::make_pair(gi,from));
+      }
       // unpack overlap vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       typename std::set<GI>::const_iterator ipos = overlapVec.begin();
@@ -431,6 +433,14 @@ namespace Dune
 
     }
 
+    struct SortFirst
+    {
+      template<class T>
+      bool operator()(const T& t1, const T& t2) const
+      {
+        return t1<t2;
+      }
+    };
 
 
     /**
@@ -439,15 +449,14 @@ namespace Dune
      * This function merges and adds the vertices of a owner/overlap
      * vector to a result owner/overlap vector
      *
-     * @param &ownerVec a global index vector contains the owner vertices to merge/add
+     * @param &ownerVec a global index vector contains the owner vertices to merge/add, sorted according
+     * to the global index.
      * @param &overlapSet a global index set contains the overlap vertices to merge/add
      */
     template<class GI>
-    void mergeVec(std::vector<GI>& ownerVec, std::set<GI>& overlapSet) {
+    void mergeVec(std::vector<std::pair<GI, int> >& ownerVec, std::set<GI>& overlapSet) {
 
-      // Sort the owners
-      std::sort(ownerVec.begin(), ownerVec.end());
-      typedef typename std::vector<GI>::const_iterator VIter;
+      typedef typename std::vector<std::pair<GI,int> >::const_iterator VIter;
 #ifdef DEBUG_REPART
       // Safty check for duplicates.
       if(ownerVec.size()>0)
@@ -455,7 +464,7 @@ namespace Dune
         VIter old=ownerVec.begin();
         for(VIter i=old+1, end=ownerVec.end(); i != end; old=i++)
         {
-          if(*i==*old)
+          if(i->first==old->first)
             throw "Huch!";
         }
       }
@@ -466,8 +475,8 @@ namespace Dune
       VIter v=ownerVec.begin(), vend=ownerVec.end();
       for(SIter s=overlapSet.begin(), send=overlapSet.end(); s!=send;)
       {
-        while(v!=vend && *v<*s) ++v;
-        if(v!=vend && *v==*s) {
+        while(v!=vend && v->first<*s) ++v;
+        if(v!=vend && v->first==*s) {
           // Move to the next element before erasing
           // thus s stays valid!
           SIter tmp=s;
@@ -508,6 +517,26 @@ namespace Dune
       }
     }
 
+    template<class T, class I>
+    void my_push_back(std::vector<T>& ownerVec, const I& index, int proc)
+    {
+      ownerVec.push_back(index);
+    }
+
+    template<class T, class I>
+    void my_push_back(std::vector<std::pair<T,int> >& ownerVec, const I& index, int proc)
+    {
+      ownerVec.push_back(std::make_pair(index,proc));
+    }
+    template<class T>
+    void reserve(std::vector<T>&, RedistributeInterface&, int)
+    {}
+    template<class T>
+    void reserve(std::vector<std::pair<T,int> >& ownerVec, RedistributeInterface& redist, int proc)
+    {
+      redist.reserveSpaceForReceiveInterface(proc, ownerVec.size());
+    }
+
 
     /**
      * @brief get the owner- and overlap vertices for giving source and destination processes.
@@ -526,9 +555,10 @@ namespace Dune
      * @param ownerVec The output vector containing all owner vertices.
      * @param overlapSet The output vector containing all overlap vertices.
      */
-    template<class OwnerSet, class G, class IS, class GI>
+    template<class OwnerSet, class G, class IS, class T, class GI>
     void getOwnerOverlapVec(const G& graph, std::vector<int> part, IS& indexSet, ParmetisDuneIndexMap& parmetisVtxMapping,
-                            int myPe, int toPe, std::vector<GI>& ownerVec, std::set<GI>& overlapSet) {
+                            int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
+                            RedistributeInterface& redist) {
 
       //typedef typename IndexSet::const_iterator Iterator;
       typedef typename IS::const_iterator Iterator;
@@ -540,10 +570,12 @@ namespace Dune
           {
             getNeighbor<OwnerSet>(graph, part, index->local(), indexSet,
                                   parmetisVtxMapping, toPe, overlapSet);
-            ownerVec.push_back(index->global());
+            my_push_back(ownerVec, index->global(), toPe);
           }
         }
       }
+      reserve(ownerVec, redist, toPe);
+
     }
 
 
@@ -671,7 +703,7 @@ namespace Dune
       }
       xadj[j] = ew.index();
     }
-  }
+  } // end anonymous namespace
 
   /**
    * @brief execute a graph repartition for a giving graph and indexset.
@@ -952,15 +984,13 @@ namespace Dune
 
 
     typedef typename OOComm::ParallelIndexSet::GlobalIndex GI;
-    GlobalVector myOwnerVec;
+    std::vector<std::pair<GI,int> > myOwnerVec;
     std::set<GI> myOverlapSet;
     GlobalVector sendOwnerVec;
     std::set<GI> sendOverlapSet;
 
     getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
-                                 mype, mype, myOwnerVec, myOverlapSet);
-
-    redistInf.buildReceiveInterface(myOwnerVec, 0, mype);
+                                 mype, mype, myOwnerVec, myOverlapSet, redistInf);
 
     for(i=0; i < npes; ++i) {
       // the rank of the process defines the sending order,
@@ -975,7 +1005,7 @@ namespace Dune
             // get all owner and overlap vertices for process j and save these
             // in the vectors sendOwnerVec and sendOverlapSet
             getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
-                                         mype, j, sendOwnerVec, sendOverlapSet);
+                                         mype, j, sendOwnerVec, sendOverlapSet, redistInf);
             // +2, we need 2 integer more for the length of each part
             // (owner/overlap) of the array
             int buffersize=0;
@@ -1012,8 +1042,7 @@ namespace Dune
 #endif
           MPI_Recv(recvBuf, buffersize, MPI_PACKED, i, 0, oocomm.communicator(), &status);
           int oldsize=myOwnerVec.size();
-          saveRecvBuf(recvBuf, buffersize, myOwnerVec, myOverlapSet, oocomm.communicator());
-          redistInf.buildReceiveInterface(myOwnerVec, oldsize, i);
+          saveRecvBuf(recvBuf, buffersize, myOwnerVec, myOverlapSet, redistInf, i, oocomm.communicator());
           delete[] recvBuf;
         }
       }
@@ -1048,11 +1077,17 @@ namespace Dune
 
     outputIndexSet.beginResize();
     // 1) add the owner vertices
+    // Sort the owners
+    std::sort(myOwnerVec.begin(), myOwnerVec.end(), SortFirst());
+    // The owners are sorted according to there global index
+    // Therefore the entries of ownerVec are the same as the
+    // ones in the resulting index set.
     typedef typename OOComm::ParallelIndexSet::LocalIndex LocalIndex;
-    typedef typename GlobalVector::const_iterator VIter;
+    typedef typename std::vector<std::pair<GI,int> >::const_iterator VIter;
     i=0;
     for(VIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
-      outputIndexSet.add(*g,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
+      outputIndexSet.add(g->first,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
+      redistInf.addReceiveIndex(g->second, i);
     }
 
     // After all the vertices are received, the vectors must
@@ -1061,10 +1096,11 @@ namespace Dune
     // already included as owner vertiecs in the new partition
     mergeVec(myOwnerVec, myOverlapSet);
 
-
     // Trick to free memory
     myOwnerVec.clear();
     myOwnerVec.swap(myOwnerVec);
+
+
 
     // 2) add the overlap vertices
     typedef typename std::set<GI>::const_iterator SIter;

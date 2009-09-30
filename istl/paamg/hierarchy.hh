@@ -675,6 +675,9 @@ namespace Dune
       bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
                                                    newComm, ri.getInterface());
       ri.setSetup();
+#ifdef DEBUG_REPART
+      ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
+#endif
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
 #else
     #warning Parmetis is not installed or used. Did you use the parmetis flags? It is stronly recommend to use parallel AMG with parmetis.
