@@ -54,25 +54,24 @@ namespace Dune
       typename OwnerOverlapCopyCommunication<int>::OwnerSet flags;
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      std::cout <<rank<<" manual "<<interface<<std::endl;
-      //interface.free();
+      inf.free();
       inf.build(*ri, flags, flags);
-      std::cout <<rank<<" automatic "<<interface<<std::endl;
 
 
+#ifdef DEBUG_REPART
       if(inf!=interface) {
 
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#ifdef DEBUG_REPART
         if(rank==0)
           std::cout<<"Interfaces do not match!"<<std::endl;
         std::cout<<rank<<": redist interface new :"<<inf<<std::endl;
         std::cout<<rank<<": redist interface :"<<interface<<std::endl;
 
-#endif
         throw "autsch!";
       }
+
+        #endif*
     }
     void setSetup()
     {
@@ -202,10 +201,19 @@ namespace Dune
       typedef typename Dune::GlobalLookupIndexSet<I>::const_iterator IIter;
       typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
       std::size_t nnz=0;
+#ifdef DEBUG_REPART
+      int rank;
 
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
       for(IIter i= aggidxset.begin(), end=aggidxset.end(); i!=end; ++i) {
-        if(!OwnerSet::contains(i->local().attribute()))
+        if(!OwnerSet::contains(i->local().attribute())) {
+#ifdef DEBUG_REPART
+          std::cout<<rank<<" Inserting diagonal for"<<i->local()<<std::endl;
+#endif
           sparsity[i->local()].insert(i->local());
+        }
+
         nnz+=sparsity[i->local()].size();
       }
       assert( aggidxset.size()==sparsity.size());
@@ -217,6 +225,7 @@ namespace Dune
 #ifdef DEBUG_REPART
         std::size_t idx=0;
         bool correct=true;
+        Dune::GlobalLookupIndexSet<I> global(aggidxset);
 #endif
         typedef typename std::vector<std::set<size_type> >::const_iterator Iter;
         for(Iter i=sparsity.begin(), end=sparsity.end(); i!=end; ++i, ++citer)
@@ -226,7 +235,11 @@ namespace Dune
             citer.insert(*si);
 #ifdef DEBUG_REPART
           if(i->find(idx)==i->end()) {
-            std::cout<<"row "<<idx<<" is missing a diagonal entry!"<<std::endl;
+            const typename I::IndexPair* gi=global.pair(idx);
+            assert(gi);
+            std::cout<<rank<<": row "<<idx<<" is missing a diagonal entry! global="<<gi->global()<<" attr="<<gi->local().attribute()<<" "<<
+            OwnerSet::contains(gi->local().attribute())<<
+            " row size="<<i->size()<<std::endl;
             correct=false;
           }
           ++idx;
@@ -240,6 +253,7 @@ namespace Dune
     }
 
     M& matrix;
+    typedef Dune::GlobalLookupIndexSet<I> LookupIndexSet;
     const Dune::GlobalLookupIndexSet<I>& idxset;
     const I& aggidxset;
     std::vector<std::set<size_type> > sparsity;
@@ -371,6 +385,7 @@ namespace Dune
     }
     static void scatter(Container& cont, const typename M::size_type& rowsize, std::size_t i)
     {
+      assert(rowsize);
       cont.rowsize[i]=rowsize;
     }
 
@@ -410,6 +425,22 @@ namespace Dune
       }
       catch(Dune::RangeError er) {
         // Entry not present in the new index set. Ignore!
+#ifdef DEBUG_REPART
+        typedef typename Container::LookupIndexSet GlobalLookup;
+        typedef typename GlobalLookup::IndexPair IndexPair;
+        typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
+
+        GlobalLookup lookup(cont.aggidxset);
+        const IndexPair* pi=lookup.pair(i);
+        assert(pi);
+        if(OwnerSet::contains(pi->local().attribute())) {
+          int rank;
+          MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+          std::cout<<rank<<cont.aggidxset<<std::endl;
+          std::cout<<rank<<": row "<<i<<" (global="<<gi <<") not in index set for owner index "<<pi->global()<<std::endl;
+          throw er;
+        }
+#endif
       }
     }
 

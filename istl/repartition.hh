@@ -240,9 +240,10 @@ namespace Dune
       typedef std::vector<int>::const_iterator Iter;
       std::map<int,int> sizes;
 
-      for(Iter i=toPart.begin(), iend = toPart.end(); i!=iend; ++i) {
-        ++sizes[*i];
-      }
+      typedef typename IS::const_iterator IIter;
+      for(IIter i=idxset.begin(), end=idxset.end(); i!=end; ++i)
+        if(Flags::contains(i->local().attribute()))
+          ++sizes[toPart[i->local()]];
 
       // Allocate the necessary space
       typedef std::map<int,int>::const_iterator MIter;
@@ -253,7 +254,7 @@ namespace Dune
       typedef typename IS::const_iterator IIter;
       for(IIter i=idxset.begin(), end=idxset.end(); i!=end; ++i)
         if(Flags::contains(i->local().attribute()))
-          interfaces()[toPart[pdmap.toLocalParmetis(i->local())]].first.add(i->local());
+          interfaces()[toPart[i->local()]].first.add(i->local());
     }
 
     void reserveSpaceForReceiveInterface(int proc, int size)
@@ -502,7 +503,7 @@ namespace Dune
      * @param neighbor the output set to store the neighbor indices in.
      */
     template<class OwnerSet, class Graph, class IS, class GI>
-    void getNeighbor(const Graph& g, std::vector<int> part,
+    void getNeighbor(const Graph& g, std::vector<int>& part,
                      typename Graph::VertexDescriptor vtx, const IS& indexSet,
                      ParmetisDuneIndexMap& parmetisVtxMapping, int toPe,
                      std::set<GI>& neighbor) {
@@ -511,7 +512,7 @@ namespace Dune
       {
         const typename IS::IndexPair* pindex = indexSet.pair(edge.target());
         assert(pindex);
-        if(part[pindex->local()]!=toPe)
+        if(part[pindex->local()]!=toPe || !OwnerSet::contains(pindex->local().attribute()))
           // is sent to another process and therefore becomes overlap
           neighbor.insert(pindex->global());
       }
@@ -556,7 +557,7 @@ namespace Dune
      * @param overlapSet The output vector containing all overlap vertices.
      */
     template<class OwnerSet, class G, class IS, class T, class GI>
-    void getOwnerOverlapVec(const G& graph, std::vector<int> part, IS& indexSet, ParmetisDuneIndexMap& parmetisVtxMapping,
+    void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet, ParmetisDuneIndexMap& parmetisVtxMapping,
                             int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
                             RedistributeInterface& redist) {
 
@@ -868,8 +869,6 @@ namespace Dune
     std::vector<int> newPartition(indexMap.numOfOwnVtx());
     for(j=0; j<indexMap.numOfOwnVtx(); j++)
       newPartition[j] = domainMapping[part[j]];
-    // Build the send interface
-    redistInf.buildSendInterface<OwnerSet>(newPartition, indexMap, oocomm.indexSet());
 
     // Make a domain mapping for the indexset and translate
     //domain number to real process number
@@ -885,6 +884,9 @@ namespace Dune
       }
 
     oocomm.copyOwnerToAll(setPartition, setPartition);
+
+    // Build the send interface
+    redistInf.buildSendInterface<OwnerSet>(setPartition, indexMap, oocomm.indexSet());
 
 #ifdef PERF_REPART
     // stop the time for step 3)
@@ -1041,7 +1043,6 @@ namespace Dune
           std::cout<<mype<<" receiving "<<recvFrom[i]<<" from "<<i<<" buffersize="<<buffersize<<std::endl;
 #endif
           MPI_Recv(recvBuf, buffersize, MPI_PACKED, i, 0, oocomm.communicator(), &status);
-          int oldsize=myOwnerVec.size();
           saveRecvBuf(recvBuf, buffersize, myOwnerVec, myOverlapSet, redistInf, i, oocomm.communicator());
           delete[] recvBuf;
         }
@@ -1131,8 +1132,6 @@ namespace Dune
       for(Iterator old = outputIndexSet.begin(); index != end; old=index++) {
         if(old->global()>index->global())
           DUNE_THROW(ISTLError, "Index set's globalindex not sorted correctly");
-        if(old->local()>index->local())
-          DUNE_THROW(ISTLError, "Index set's local index not sorted correctly");
       }
     }
 #endif
@@ -1140,19 +1139,6 @@ namespace Dune
     if(color != MPI_UNDEFINED) {
       outcomm->remoteIndices().template rebuild<true>();
 
-#ifdef DEBUG_REPART
-      if(outcomm->communicator().size()==0) {
-        // Check that all indices are owner
-        bool correct=true;
-        for(Iterator index = outcomm->indexSet().begin(); index != outcomm->indexSet().end(); ++index)
-          if(!OwnerSet::contains(index->local().attribute())) {
-            std::cout<<*index<<" is overlap!!"<<std::endl;
-            correct=false;
-          }
-        if(!correct)
-          throw "hich";
-      }
-#endif
     }
 
     // release the memory
