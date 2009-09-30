@@ -71,7 +71,7 @@ namespace Dune
         throw "autsch!";
       }
 
-        #endif*
+#endif
     }
     void setSetup()
     {
