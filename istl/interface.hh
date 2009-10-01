@@ -141,7 +141,8 @@ namespace Dune
      */
     void free()
     {
-      delete[] indices_;
+      if(indices_)
+        delete[] indices_;
       maxSize_ = 0;
       size_=0;
       indices_=0;
@@ -256,7 +257,7 @@ namespace Dune
     {}
 
     Interface()
-      : interfaces_(), communicator_(MPI_COMM_NULL)
+      : communicator_(MPI_COMM_NULL), interfaces_()
     {}
 
     /**
@@ -496,6 +497,8 @@ namespace Dune
     typedef InformationMap::iterator const_iterator;
     for(const_iterator interfacePair = interfaces_.begin(); interfacePair != interfaces_.end();)
       if(interfacePair->second.first.size()==0 && interfacePair->second.second.size()==0) {
+        interfacePair->second.first.free();
+        interfacePair->second.second.free();
         const_iterator toerase=interfacePair++;
         interfaces_.erase(toerase);
       }else
