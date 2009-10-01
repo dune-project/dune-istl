@@ -28,6 +28,7 @@ namespace Dune
     public:
       typedef CollectiveCommunication<void*> MPICommunicator;
       typedef EmptySet<int> CopyFlags;
+      typedef AllSet<int> OwnerSet;
 
       enum {
         category = SolverCategory::sequential
