@@ -376,6 +376,8 @@ namespace Dune
        */
       std::size_t maxlevels() const;
 
+      bool hasCoarsest() const;
+
       /**
        * @brief Whether the hierarchy wis built.
        * @return true if the ::coarsen method was called.
@@ -821,9 +823,9 @@ namespace Dune
 
         Timer watch;
         watch.reset();
-        int noAggregates, isoAggregates, oneAggregates;
+        int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
-        tie(noAggregates, isoAggregates, oneAggregates) =
+        tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
           aggregatesMap->buildAggregates(matrix->getmat(), *(get<1>(graphs)), criterion);
 
 #ifdef TEST_AGGLO
@@ -981,9 +983,6 @@ namespace Dune
         }
       }
 
-      if(rank==0 && criterion.debugLevel()>1)
-        std::cout<<"operator complexity: "<<((double)allnonzeros)/finenonzeros<<std::endl;
-
       if(criterion.accumulate() && !redistributes_.back().isSetup() &&
          infoLevel->communicator().size()>1) {
 
@@ -1008,6 +1007,9 @@ namespace Dune
       int levels = matrices_.levels();
       maxlevels_ = parallelInformation_.finest()->communicator().max(levels);
       assert(matrices_.levels()==redistributes_.size());
+      if(hasCoarsest() && rank==0 && criterion.debugLevel()>1)
+        std::cout<<"operator complexity: "<<((double)allnonzeros)/finenonzeros<<std::endl;
+
     }
 
     template<class M, class IS, class A>
@@ -1212,6 +1214,13 @@ namespace Dune
     std::size_t MatrixHierarchy<M,IS,A>::maxlevels() const
     {
       return maxlevels_;
+    }
+
+    template<class M, class IS, class A>
+    bool MatrixHierarchy<M,IS,A>::hasCoarsest() const
+    {
+      return levels()==maxlevels() &&
+             (!matrices_.coarsest().isRedistributed() ||matrices_.coarsest()->getmat().N()>0);
     }
 
     template<class M, class IS, class A>

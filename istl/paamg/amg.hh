@@ -223,7 +223,7 @@ namespace Dune
       Timer watch;
       OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 
-      matrices->template build<typename P::CopyFlags>(criterion);
+      matrices->template build<NegateSet<typename P::OwnerSet> >(criterion);
 
       matrices_ = matrices;
       // build the necessary smoother hierarchies

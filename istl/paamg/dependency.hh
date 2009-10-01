@@ -125,7 +125,7 @@ namespace Dune
     class VertexProperties {
       friend std::ostream& operator<<(std::ostream& os, const VertexProperties& props);
     public:
-      enum { ISOLATED, VISITED, FRONT, /* EXCLUDED, */ SIZE };
+      enum { ISOLATED, VISITED, FRONT, BORDER, SIZE };
     private:
 
       /** @brief The attribute flags. */
@@ -192,18 +192,18 @@ namespace Dune
       /**
        * @brief Marks the vertex as excluded from the aggregation.
        */
-      void setExcluded();
+      void setExcludedBorder();
 
       /**
        * @brief Tests whether the vertex is excluded from the aggregation.
        * @return True if the vertex is excluded from the aggregation process.
        */
-      bool excluded() const;
+      bool excludedBorder() const;
 
       /**
        * @brief Marks the vertex as included in the aggregation.
        */
-      void resetExcluded();
+      void resetExcludedBorder();
 
       /**
        * @brief Reset all flags.
@@ -445,22 +445,22 @@ namespace Dune
     {
       flags_.reset(FRONT);
     }
-    /*
-       inline void VertexProperties::setExcluded()
-       {
-       flags_.set(EXCLUDED);
-       }
 
-       inline bool VertexProperties::excluded() const
-       {
-       return  flags_.test(EXCLUDED);
-       }
+    inline void VertexProperties::setExcludedBorder()
+    {
+      flags_.set(BORDER);
+    }
 
-       inline void VertexProperties::resetExcluded()
-       {
-       flags_.reset(EXCLUDED);
-       }
-     */
+    inline bool VertexProperties::excludedBorder() const
+    {
+      return flags_.test(BORDER);
+    }
+
+    inline void VertexProperties::resetExcludedBorder()
+    {
+      flags_.reset(BORDER);
+    }
+
     inline void VertexProperties::reset()
     {
       flags_.reset();
