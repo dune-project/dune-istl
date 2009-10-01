@@ -275,6 +275,9 @@ namespace Dune
       }
     }
 
+    ~RedistributeInterface()
+    {}
+
   };
 
 #if HAVE_PARMETIS
@@ -290,7 +293,7 @@ namespace Dune
      * @param comm Communicator for the send.
      */
     template<class GI>
-    void createSendBuf(std::vector<GI>& ownerVec, std::set<GI>& overlapVec, char *sendBuf, int buffersize, MPI_Comm comm) {
+    void createSendBuf(std::vector<GI>& ownerVec, std::set<GI>& overlapVec, std::set<int>& neighbors, char *sendBuf, int buffersize, MPI_Comm comm) {
       // Pack owner vertices
       std::size_t s=ownerVec.size();
       int pos=0;
@@ -301,6 +304,13 @@ namespace Dune
       typedef typename std::set<GI>::iterator Iter;
       for(Iter i=overlapVec.begin(), end= overlapVec.end(); i != end; ++i)
         MPI_Pack(const_cast<GI*>(&(*i)), 1, MPITraits<GI>::getType(), sendBuf, buffersize, &pos, comm);
+
+      int is=neighbors.size();
+      MPI_Pack(&is, 1, MPI_INT, sendBuf, buffersize, &pos, comm);
+      typedef typename std::set<int>::iterator IIter;
+
+      for(IIter i=neighbors.begin(), end= neighbors.end(); i != end; ++i)
+        MPI_Pack(const_cast<int*>(&(*i)), 1, MPI_INT, sendBuf, buffersize, &pos, comm);
     }
     /**
      * @brief save the values of the received MPI buffer to the owner/overlap vectors
@@ -312,7 +322,7 @@ namespace Dune
      */
     template<class GI>
     void saveRecvBuf(char *recvBuf, int bufferSize, std::vector<std::pair<GI,int> >& ownerVec,
-                     std::set<GI>& overlapVec, RedistributeInterface& inf, int from, MPI_Comm comm) {
+                     std::set<GI>& overlapVec, std::set<int>& neighbors, RedistributeInterface& inf, int from, MPI_Comm comm) {
       int size;
       int pos=0;
       // unpack owner vertices
@@ -333,7 +343,16 @@ namespace Dune
         MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
         ipos=overlapVec.insert(ipos, gi);
       }
+      //unpack neighbors
+      int s;
+      MPI_Unpack(recvBuf, bufferSize, &pos, &s, 1, MPI_INT, comm);
 
+      typename std::set<int>::const_iterator npos = neighbors.begin();
+      for(; s>0; --s) {
+        int n;
+        MPI_Unpack(recvBuf, bufferSize, &pos, &n, 1, MPI_INT, comm);
+        npos=neighbors.insert(npos, n);
+      }
     }
 
     /**
@@ -505,16 +524,18 @@ namespace Dune
     template<class OwnerSet, class Graph, class IS, class GI>
     void getNeighbor(const Graph& g, std::vector<int>& part,
                      typename Graph::VertexDescriptor vtx, const IS& indexSet,
-                     ParmetisDuneIndexMap& parmetisVtxMapping, int toPe,
-                     std::set<GI>& neighbor) {
+                     int toPe, std::set<GI>& neighbor, std::set<int>& neighborProcs) {
       typedef typename Graph::ConstEdgeIterator Iter;
       for(Iter edge=g.beginEdges(vtx), end=g.endEdges(vtx); edge!=end; ++edge)
       {
         const typename IS::IndexPair* pindex = indexSet.pair(edge.target());
         assert(pindex);
         if(part[pindex->local()]!=toPe || !OwnerSet::contains(pindex->local().attribute()))
+        {
           // is sent to another process and therefore becomes overlap
           neighbor.insert(pindex->global());
+          neighborProcs.insert(toPe);
+        }
       }
     }
 
@@ -557,9 +578,9 @@ namespace Dune
      * @param overlapSet The output vector containing all overlap vertices.
      */
     template<class OwnerSet, class G, class IS, class T, class GI>
-    void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet, ParmetisDuneIndexMap& parmetisVtxMapping,
+    void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet,
                             int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
-                            RedistributeInterface& redist) {
+                            RedistributeInterface& redist, std::set<int>& neighborProcs) {
 
       //typedef typename IndexSet::const_iterator Iterator;
       typedef typename IS::const_iterator Iterator;
@@ -570,7 +591,7 @@ namespace Dune
           if(part[index->local()]==toPe)
           {
             getNeighbor<OwnerSet>(graph, part, index->local(), indexSet,
-                                  parmetisVtxMapping, toPe, overlapSet);
+                                  toPe, overlapSet, neighborProcs);
             my_push_back(ownerVec, index->global(), toPe);
           }
         }
@@ -990,9 +1011,10 @@ namespace Dune
     std::set<GI> myOverlapSet;
     GlobalVector sendOwnerVec;
     std::set<GI> sendOverlapSet;
+    std::set<int> myNeighbors;
 
-    getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
-                                 mype, mype, myOwnerVec, myOverlapSet, redistInf);
+    getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(),
+                                 mype, mype, myOwnerVec, myOverlapSet, redistInf, myNeighbors);
 
     for(i=0; i < npes; ++i) {
       // the rank of the process defines the sending order,
@@ -1006,16 +1028,22 @@ namespace Dune
             sendOverlapSet.clear();
             // get all owner and overlap vertices for process j and save these
             // in the vectors sendOwnerVec and sendOverlapSet
-            getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(), indexMap,
-                                         mype, j, sendOwnerVec, sendOverlapSet, redistInf);
+            std::set<int> neighbors;
+            getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(),
+                                         mype, j, sendOwnerVec, sendOverlapSet, redistInf,
+                                         neighbors);
             // +2, we need 2 integer more for the length of each part
             // (owner/overlap) of the array
             int buffersize=0;
             int tsize;
-            MPI_Pack_size(1, MPI_INT, oocomm.communicator(), &buffersize);
-            MPI_Pack_size(1, MPI_INT, oocomm.communicator(), &tsize);
+            MPI_Pack_size(1, MPITraits<std::size_t>::getType(), oocomm.communicator(), &buffersize);
+            MPI_Pack_size(1, MPITraits<std::size_t>::getType(), oocomm.communicator(), &tsize);
             buffersize +=tsize;
             MPI_Pack_size(sendTo[j], MPITraits<GI>::getType(), oocomm.communicator(), &tsize);
+            buffersize += tsize;
+            MPI_Pack_size(1, MPI_INT, oocomm.communicator(), &tsize);
+            buffersize += tsize;
+            MPI_Pack_size(neighbors.size(), MPI_INT, oocomm.communicator(), &tsize);
             buffersize += tsize;
 
             char* sendBuf = new char[buffersize];
@@ -1023,27 +1051,24 @@ namespace Dune
             std::cout<<mype<<" sending "<<sendOwnerVec.size()<<" owner and "<<
             sendOverlapSet.size()<<" overlap to "<<j<<" buffersize="<<buffersize<<std::endl;
 #endif
-            createSendBuf(sendOwnerVec, sendOverlapSet, sendBuf, buffersize, oocomm.communicator());
+            createSendBuf(sendOwnerVec, sendOverlapSet, neighbors, sendBuf, buffersize, oocomm.communicator());
             MPI_Send(sendBuf, buffersize, MPI_PACKED, j, 0, oocomm.communicator());
             delete[] sendBuf;
           }
         }
       } else { // All the other processes have to wait for receive...
         if (recvFrom[i]>0) {
-          // Calculate buffer size
+          // Get buffer size
+          MPI_Status stat;
+          MPI_Probe(i, 0,oocomm.communicator(), &status);
           int buffersize=0;
-          int tsize;
-          MPI_Pack_size(1, MPI_INT, oocomm.communicator(), &buffersize);
-          MPI_Pack_size(1, MPI_INT, oocomm.communicator(), &tsize);
-          buffersize +=tsize;
-          MPI_Pack_size(recvFrom[i], MPITraits<GI>::getType(), oocomm.communicator(), &tsize);
-          buffersize += tsize;
+          MPI_Get_count(&status, MPI_PACKED, &buffersize);
           char* recvBuf = new char[buffersize];
 #ifdef DEBUG_REPART
           std::cout<<mype<<" receiving "<<recvFrom[i]<<" from "<<i<<" buffersize="<<buffersize<<std::endl;
 #endif
           MPI_Recv(recvBuf, buffersize, MPI_PACKED, i, 0, oocomm.communicator(), &status);
-          saveRecvBuf(recvBuf, buffersize, myOwnerVec, myOverlapSet, redistInf, i, oocomm.communicator());
+          saveRecvBuf(recvBuf, buffersize, myOwnerVec, myOverlapSet, myNeighbors, redistInf, i, oocomm.communicator());
           delete[] recvBuf;
         }
       }
@@ -1070,11 +1095,30 @@ namespace Dune
     }
     MPI_Comm outputComm;
 
-    oocomm.communicator().barrier();
-    MPI_Comm_split(oocomm.communicator(), color, 0, &outputComm);
+    MPI_Comm_split(oocomm.communicator(), color, oocomm.communicator().rank(), &outputComm);
     outcomm = new OOComm(outputComm);
 
+    // translate neighbor ranks.
+    int newrank=outcomm->communicator().rank();
+    int *newranks=new int[oocomm.communicator().size()];
+    std::vector<int> tneighbors;
+    tneighbors.reserve(myNeighbors.size());
+
     typename OOComm::ParallelIndexSet& outputIndexSet = outcomm->indexSet();
+
+    MPI_Allgather(&newrank, 1, MPI_INT, newranks, 1,
+                  MPI_INT, oocomm.communicator());
+    typedef typename std::set<int>::const_iterator IIter;
+    std::cout<<oocomm.communicator().rank()<<" ";
+    for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
+        i!=end; ++i) {
+      assert(newranks[*i]>=0);
+      std::cout<<*i<<"->"<<newranks[*i]<<" ";
+      tneighbors.push_back(newranks[*i]);
+    }
+    std::cout<<std::endl;
+    delete[] newranks;
+    myNeighbors.clear();
 
     outputIndexSet.beginResize();
     // 1) add the owner vertices
@@ -1137,6 +1181,7 @@ namespace Dune
 #endif
 
     if(color != MPI_UNDEFINED) {
+      outcomm->remoteIndices().setNeighbours(tneighbors);
       outcomm->remoteIndices().template rebuild<true>();
 
     }

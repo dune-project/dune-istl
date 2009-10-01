@@ -13,7 +13,8 @@
 #include <map>
 #include <utility>
 #include <iostream>
-
+#include <algorithm>
+#include <iterator>
 #if HAVE_MPI
 #include "mpitraits.hh"
 #include "mpi.h"
@@ -272,9 +273,13 @@ namespace Dune {
     void setIndexSets(const ParallelIndexSet& source, const ParallelIndexSet& destination,
                       const MPI_Comm& comm, const std::vector<int>& neighbours=std::vector<int>());
 
-    void setNeighbours(const std::vector<int>& neighbours)
+    template<typename C>
+    void setNeighbours(const C& neighbours)
     {
-      neighbourIds=neighbours;
+      typedef typename C::const_iterator Iter;
+      neighbourIds.clear();
+      neighbourIds.insert(neighbours.begin(), neighbours.end());
+
     }
 
     /**
@@ -374,7 +379,7 @@ namespace Dune {
 
     /** @brief The neighbours we share indices with.
      * If not empty this will speedup rebuild. */
-    std::vector<int> neighbourIds;
+    std::set<int> neighbourIds;
 
     /** @brief The communicator tag to use. */
     const static int commTag_=333;
@@ -877,9 +882,11 @@ namespace Dune {
                                            const ParallelIndexSet& destination,
                                            const MPI_Comm& comm,
                                            const std::vector<int>& neighbours)
-    : source_(&source), target_(&destination), comm_(comm), neighbourIds(neighbours),
+    : source_(&source), target_(&destination), comm_(comm),
       sourceSeqNo_(-1), destSeqNo_(-1), publicIgnored(false), firstBuild(true)
-  {}
+  {
+    setNeighbours(neighbours);
+  }
 
   template<typename T, typename A>
   RemoteIndices<T,A>::RemoteIndices()
@@ -898,7 +905,7 @@ namespace Dune {
     target_ = &destination;
     comm_ = comm;
     firstBuild = true;
-    neighbourIds=neighbours;
+    setNeighbours(neighbours);
   }
 
   template<typename T, typename A>
@@ -1129,6 +1136,8 @@ namespace Dune {
       unpackCreateRemote(buffer[0], sourcePairs, destPairs, rank, sourcePublish,
                          destPublish, bufferSize, sendTwo);
 
+    neighbourIds.erase(rank);
+
     if(neighbourIds.size()==0)
     {
       // send mesages in ring
@@ -1165,17 +1174,14 @@ namespace Dune {
       MPI_Request* requests=new MPI_Request[neighbourIds.size()];
       MPI_Request* req=requests;
 
-      typedef typename std::vector<int>::size_type size_type;
+      typedef typename std::set<int>::size_type size_type;
       size_type noNeighbours=neighbourIds.size();
 
       // setup sends
-      for(std::vector<int>::iterator neighbour=neighbourIds.begin();
+      for(std::set<int>::iterator neighbour=neighbourIds.begin();
           neighbour!= neighbourIds.end(); ++neighbour) {
-        if(*neighbour!=rank)
-          // Only send the information to the neighbouring processors
-          MPI_Issend(buffer[0], position , MPI_PACKED, *neighbour, commTag_, comm_, req++);
-        else
-          --noNeighbours;
+        // Only send the information to the neighbouring processors
+        MPI_Issend(buffer[0], position , MPI_PACKED, *neighbour, commTag_, comm_, req++);
       }
 
       //Test for received messages
