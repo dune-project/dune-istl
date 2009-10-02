@@ -516,6 +516,7 @@ namespace Dune
     CommMatrixRowSize<M> commRowSize(origMatrix, rowsize);
     ri.template redistribute<MatrixRowSizeGatherScatter<M,IndexSet> >(commRowSize,commRowSize);
 
+    origComm.buildGlobalLookup();
 
     CommMatrixSparsityPattern<M,IndexSet> origsp(origMatrix, origComm.globalLookup(), newComm.indexSet());
     CommMatrixSparsityPattern<M,IndexSet> newsp(origMatrix, origComm.globalLookup(), newComm.indexSet(), rowsize);

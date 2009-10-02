@@ -62,11 +62,6 @@ int testRepart(int N, int coarsenTarget)
   BCRSMat mat = setupAnisotropic2d<BS>(N, comm.indexSet(), comm.communicator(), &n, 1);
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
 
-  if(comm.communicator().rank()==0)
-    std::cout<<"Original matrix"<<std::endl;
-  comm.communicator().barrier();
-  printGlobalSparseMatrix(mat, comm, std::cout);
-
   MatrixGraph graph(mat);
   Communication* coarseComm;
 
@@ -80,6 +75,12 @@ int testRepart(int N, int coarsenTarget)
 
   std::cout<<coarseComm->communicator().rank()<<coarseComm->indexSet()<<std::endl;
   BCRSMat newMat;
+
+  if(comm.communicator().rank()==0)
+    std::cout<<"Original matrix"<<std::endl;
+  comm.communicator().barrier();
+  printGlobalSparseMatrix(mat, comm, std::cout);
+
 
   redistributeMatrix(mat, newMat, comm, *coarseComm, ri);
 
