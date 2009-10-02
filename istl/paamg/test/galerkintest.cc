@@ -96,8 +96,8 @@ void testCoarsenIndices(int N)
   std::cout << rank <<": coarse indices: " <<coarseIndices << std::endl;
   std::cout << rank <<": coarse remote indices:"<<coarseRemote <<std::endl;
 
-  typedef Dune::Interface<ParallelIndexSet> Interface;
-  typedef Dune::BufferedCommunicator<ParallelIndexSet> Communicator;
+  typedef Dune::Interface Interface;
+  typedef Dune::BufferedCommunicator Communicator;
   Interface interface;
   interface.build(remoteIndices, Dune::EnumItem<GridFlag,GridAttributes::owner>(), Dune::EnumItem<GridFlag, GridAttributes::copy>());
   Communicator communicator;

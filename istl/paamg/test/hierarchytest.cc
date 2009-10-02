@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 
   remoteIndices.rebuild<false>();
 
-  typedef Dune::Interface<ParallelIndexSet> Interface;
+  typedef Dune::Interface Interface;
 
   Interface interface;
 
