@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = doxygen layout comm
+SUBDIRS = doxygen comm
 
 TEXSOURCES = istl.tex istl.bib
 EPSFILES = blockstructure.eps
