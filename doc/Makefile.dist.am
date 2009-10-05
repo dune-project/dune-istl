@@ -1,6 +1,6 @@
 # $Id: Makefile.am 724 2007-03-01 11:30:49Z christi $
 
-SUBDIRS = doxygen layout comm
+SUBDIRS = doxygen comm
 
 docdir=$(datadir)/doc/dune-istl
 
