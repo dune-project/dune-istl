@@ -570,7 +570,7 @@ namespace Dune
         return accumulate_;
 #else
         std::cerr<<"Accumulation of data on coarse level only works with ParMETIS installed."
-                 <<"Falling back to no aacumulation"<<std::endl;
+                 <<"  Falling back to no accumulation"<<std::endl;
         return false;
 #endif
       }
