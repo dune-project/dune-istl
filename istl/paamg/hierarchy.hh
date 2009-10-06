@@ -569,8 +569,10 @@ namespace Dune
 #ifdef HAVE_PARMETIS
         return accumulate_;
 #else
+#ifdef HAVE_MPI
         std::cerr<<"Accumulation of data on coarse level only works with ParMETIS installed."
                  <<"  Falling back to no accumulation"<<std::endl;
+#endif
         return false;
 #endif
       }
