@@ -3,7 +3,7 @@
 # Process this file with autoconf to produce a configure script.
 DUNE_AC_INIT # gets module version from dune.module file
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([istl/allocator.hh])
+AC_CONFIG_SRCDIR([dune/istl/allocator.hh])
 AM_CONFIG_HEADER([config.h])
 
 # make dune -> . symlink
@@ -28,11 +28,12 @@ AC_CONFIG_FILES([Makefile
     doc/doxygen/Doxyfile
     doc/Makefile
     doc/Makefile.dist
-    istl/paamg/test/Makefile
-    istl/paamg/Makefile
-    istl/tutorial/Makefile
-    istl/test/Makefile
-    istl/Makefile
+    dune/istl/paamg/test/Makefile
+    dune/istl/paamg/Makefile
+    dune/istl/tutorial/Makefile
+    dune/istl/test/Makefile
+    dune/istl/Makefile
+    dune/Makefile
     m4/Makefile
     dune-istl.pc])
 AC_OUTPUT
