@@ -17,6 +17,5 @@ stamp-h1
 dune-istl-*.tar.gz
 dune-istl-?.?
 ltmain.sh
-dune
 am
 .libs
