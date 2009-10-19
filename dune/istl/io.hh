@@ -524,6 +524,9 @@ namespace Dune {
 
   /** \brief Writes sparse matrix in a Matlab-readable format
    *
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
    * This routine writes the argument BCRSMatrix to a file with the name given by
    * the filename argument.  The file format is ASCII, with no header, and three
    * data columns.  Each row describes a scalar matrix entry and consists of the
