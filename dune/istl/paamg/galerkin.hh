@@ -319,7 +319,7 @@ namespace Dune
       row.insert(aggregates[seed]);
       ConnectedBuilder<G,R,V> conBuilder(aggregates, graph, visitedMap, row);
       typedef typename G::VertexDescriptor Vertex;
-      typedef PoolAllocator<Vertex,100*sizeof(int)> Allocator;
+      typedef std::allocator<Vertex> Allocator;
       typedef SLList<Vertex,Allocator> VertexList;
       typedef typename AggregatesMap<Vertex>::DummyEdgeVisitor DummyVisitor;
       VertexList vlist;

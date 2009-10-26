@@ -700,7 +700,7 @@ namespace Dune {
       BCRSMatrix& Mat;     // the matrix we are defining
       size_type i;               // current row to be defined
       size_type nnz;             // count total number of nonzeros
-      typedef std::set<size_type,std::less<size_type>,PoolAllocator<size_type,10> > PatternType;
+      typedef std::set<size_type,std::less<size_type> > PatternType;
       PatternType pattern;     // used to compile entries in a row
       row_type current_row;     // row poiting to the current row to setup
     };
