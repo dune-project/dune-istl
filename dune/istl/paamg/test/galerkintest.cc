@@ -72,9 +72,9 @@ void testCoarsenIndices(int N)
   std::cout << "fine indices: "<<indices << std::endl;
   std::cout << "fine remote: "<<remoteIndices << std::endl;
 
-  int noAggregates, isoAggregates, oneAggregates;
+  int noAggregates, isoAggregates, oneAggregates, skipped;
 
-  Dune::tie(noAggregates, isoAggregates, oneAggregates) = aggregatesMap.buildAggregates(mat, pg, Criterion());
+  Dune::tie(noAggregates, isoAggregates, oneAggregates,skipped) = aggregatesMap.buildAggregates(mat, pg, Criterion());
 
   Dune::Amg::printAggregates2d(aggregatesMap, n, N, std::cout);
 
