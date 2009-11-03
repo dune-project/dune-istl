@@ -114,7 +114,7 @@ namespace Dune
 
     /**
      * @brief free allocated space.
-     * @warn later calling apply will result in an error.
+     * @warning later calling apply will result in an error.
      */
     void free();
   private:
