@@ -698,6 +698,8 @@ namespace Dune
     return a.global_>=b;
   }
 
+#ifndef DOXYGEN
+
   template<class TG, class TL>
   IndexPair<TG,TL>::IndexPair(const TG& global, const TL& local)
     : global_(global), local_(local){}
@@ -1076,5 +1078,8 @@ namespace Dune
   {
     return indexSet_.seqNo();
   }
+
+#endif // DOXYGEN
+
 }
 #endif
