@@ -461,7 +461,7 @@ namespace Dune {
     }
 
     /**
-     * @bief copy constructor
+     * @brief copy constructor
      *
      * Does a deep copy as expected.
      */
