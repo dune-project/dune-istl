@@ -1443,6 +1443,8 @@ namespace Dune
     int visitNeighbours(const G& graph, const typename G::VertexDescriptor& vertex,
                         V& visitor);
 
+#ifndef DOXYGEN
+
     template<class M>
     MatrixGraph<M>::MatrixGraph(M& matrix)
       : matrix_(matrix)
@@ -2366,6 +2368,7 @@ namespace Dune
       return noNeighbours;
     }
 
+#endif // DOXYGEN
 
     /** @} */
   }
