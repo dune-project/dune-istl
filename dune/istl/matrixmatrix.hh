@@ -26,9 +26,9 @@ namespace Dune
      * @brief Traverses over the nonzero pattern of the matrix-matrix product.
      *
      * Template parameter b is used to select the matrix product:
-     * <dt>0</dt><dd>\f$A\cdot B$\f</dd>
-     * <dt>1</dt><dd>\f$A^T\cdot B$\f</dd>
-     * <dt>2</dt><dd>\f$A\cdot B^T\f</dd>
+     * <dt>0</dt><dd>\f$A\cdot B\f$</dd>
+     * <dt>1</dt><dd>\f$A^T\cdot B\f$</dd>
+     * <dt>2</dt><dd>\f$A\cdot B^T\f$</dd>
      */
     template<int b>
     struct NonzeroPatternTraverser
@@ -494,7 +494,7 @@ namespace Dune
   }
 
   /**
-   * @brief Helper TMP to get the result type of a sparse matrix matrix multiplication (C=A*B)
+   * @brief Helper TMP to get the result type of a sparse matrix matrix multiplication (\f$C=A*B\f$)
    *
    * The type of matrix C will be stored as the associated type MatMultMatResult::type.
    * @tparam M1 The type of matrix A.
@@ -518,11 +518,12 @@ namespace Dune
   };
 
   /**
-   * @brief Calculate product of a sparse matrix with a transposed sparse matrices (\fC=A*B^T\f).
+   * @brief Calculate product of a sparse matrix with a transposed sparse matrices (\f$C=A*B^T\f$).
    *
    * @param res Matrix for the result of the computation.
    * @param mat Matrix A.
    * @param matt Matrix B, which will be transposed before the multiplication.
+   * @param tryHard <i>ignored</i>
    */
   template<class T, class A, class A1, class A2, int n, int m, int k>
   void matMultTransposeMat(BCRSMatrix<FieldMatrix<T,n,k>,A>& res, const BCRSMatrix<FieldMatrix<T,n,m>,A1>& mat,
@@ -532,11 +533,12 @@ namespace Dune
   }
 
   /**
-   * @brief Calculate product of two sparse matrices (C=A*B).
+   * @brief Calculate product of two sparse matrices (\f$C=A*B\f$).
    *
    * @param res Matrix for the result of the computation.
    * @param mat Matrix A.
    * @param matt Matrix B.
+   * @param tryHard <i>ignored</i>
    */
   template<class T, class A, class A1, class A2, int n, int m, int k>
   void matMultMat(BCRSMatrix<FieldMatrix<T,n,m>,A>& res, const BCRSMatrix<FieldMatrix<T,n,k>,A1>& mat,
@@ -546,11 +548,12 @@ namespace Dune
   }
 
   /**
-   * @brief Calculate product of a transposed sparse matrix with another sparse matrices (\fC=A^T*B\f).
+   * @brief Calculate product of a transposed sparse matrix with another sparse matrices (\f$C=A^T*B\f$).
    *
    * @param res Matrix for the result of the computation.
    * @param mat Matrix A, which will be transposed before the multiplication.
    * @param matt Matrix B.
+   * @param tryHard <i>ignored</i>
    */
   template<class T, class A, class A1, class A2, int n, int m, int k>
   void transposeMatMultMat(BCRSMatrix<FieldMatrix<T,n,m>,A>& res, const BCRSMatrix<FieldMatrix<T,k,n>,A1>& mat,
