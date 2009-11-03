@@ -2,8 +2,10 @@
 doxy-header.html
 bestpractice.html
 Doxyfile
+Doxyfile.in
 doxygen-tag
 doxygen.log
+doxyerr.log
 html
 html-dist
 latex
