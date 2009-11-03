@@ -58,8 +58,6 @@ namespace Dune {
 
        Constructor gets all parameters to operate the prec.
        \param A The matrix to operate on.
-       \param n The number of iterations to perform.
-       \param w The relaxation factor.
      */
     SeqPardiso (const M& A)
       : A_(A)

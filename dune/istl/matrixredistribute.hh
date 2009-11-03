@@ -130,20 +130,12 @@ namespace Dune
   {
     // Make the default communication policy work.
     typedef typename M::size_type value_type;
-
-    /**
-     * @brief Constructor.
-     * @param m The matrix whose sparsity pattern is communicated.
-     */
-    CommMatrixRowSize(const M& m_)
-      : matrix(m_)
-    {}
-
     typedef typename M::size_type size_type;
 
     /**
      * @brief Constructor.
-     * @param m The matrix whose sparsity pattern is communicated.
+     * @param m_ The matrix whose sparsity pattern is communicated.
+     * @param[out] rowsize_ The vector containing the row sizes
      */
     CommMatrixRowSize(const M& m_, std::vector<size_type>& rowsize_)
       : matrix(m_), rowsize(rowsize_)
@@ -169,9 +161,9 @@ namespace Dune
 
     /**
      * @brief Constructor for the original side
-     * @param m The matrix whose sparsity pattern is communicated.
-     * @param idxset The index set corresponding to the local matrix.
-     * @param aggidxset The index set corresponding to the redistributed matrix.
+     * @param m_ The matrix whose sparsity pattern is communicated.
+     * @param idxset_ The index set corresponding to the local matrix.
+     * @param aggidxset_ The index set corresponding to the redistributed matrix.
      */
     CommMatrixSparsityPattern(M& m_, const Dune::GlobalLookupIndexSet<I>& idxset_, const I& aggidxset_)
       : matrix(m_), idxset(idxset_), aggidxset(aggidxset_), rowsize()
@@ -297,16 +289,19 @@ namespace Dune
   {
     /**
      * @brief Constructor.
-     * @param The matrix to communicate the values. That is the local original matrix
+     * @param m_ The matrix to communicate the values. That is the local original matrix
      * as the source of the communication and the redistributed at the target of the
      * communication.
-     * @param idxset The index set for the original matrix.
-     * @param aggidxset The index set for the redistributed matrix.
+     * @param idxset_ The index set for the original matrix.
+     * @param aggidxset_ The index set for the redistributed matrix.
      */
     CommMatrixRow(M& m_, const Dune::GlobalLookupIndexSet<I>& idxset_, const I& aggidxset_)
       : matrix(m_), idxset(idxset_), aggidxset(aggidxset_), rowsize()
     {}
 
+    /**
+     * @brief Constructor.
+     */
     CommMatrixRow(M& m_, const Dune::GlobalLookupIndexSet<I>& idxset_, const I& aggidxset_,
                   std::vector<size_t>& rowsize_)
       : matrix(m_), idxset(idxset_), aggidxset(aggidxset_), rowsize(&rowsize_)

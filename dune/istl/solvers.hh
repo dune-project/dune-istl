@@ -1169,10 +1169,11 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
+       \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class P>
-    RestartedGMResSolver (L& A, P& M, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
-      _A_(A), _M(M),
+    RestartedGMResSolver (L& op, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
+      _A_(op), _M(prec),
       ssp(), _sp(ssp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _recalc_defect(recalc_defect)
@@ -1188,10 +1189,11 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
+       \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class S, class P>
-    RestartedGMResSolver (L& A, S& sp, P& M, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
-      _A_(A), _M(M),
+    RestartedGMResSolver (L& op, S& sp, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
+      _A_(op), _M(prec),
       _sp(sp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _recalc_defect(recalc_defect)
@@ -1202,7 +1204,7 @@ namespace Dune {
                          "L must be sequential!");
     }
 
-    //! \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+    //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       apply(x,b,_reduction,res);
@@ -1211,7 +1213,7 @@ namespace Dune {
     /*!
        \brief Apply inverse operator.
 
-       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
@@ -1275,7 +1277,7 @@ namespace Dune {
       }
 
       // check convergence
-      if (norm <= _reduction * norm_0) {
+      if (norm <= reduction * norm_0) {
         _M.post(x);                  // postprocess preconditioner
         res.converged  = true;
         if (_verbose > 0)                 // final print
@@ -1321,7 +1323,7 @@ namespace Dune {
 
           norm_old = norm;
 
-          if (norm < _reduction * norm_0) {
+          if (norm < reduction * norm_0) {
             res.converged = true;
           }
         }
@@ -1365,7 +1367,7 @@ namespace Dune {
 
         norm_old = norm;
 
-        if (norm < _reduction * norm_0) {
+        if (norm < reduction * norm_0) {
           // fill statistics
           res.converged = true;
         }
