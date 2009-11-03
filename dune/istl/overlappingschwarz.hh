@@ -365,8 +365,9 @@ namespace Dune
     /**
      * @brief Construct the overlapping Schwarz method.
      * @param mat The matrix to precondition.
-     * @param subdomains Array of sets of rowindices belonging to an overlapping
+     * @param subDomains Array of sets of rowindices belonging to an overlapping
      * subdomain
+     * @param relaxationFactor relaxation factor
      * @warning Each rowindex should be part of at least one subdomain!
      */
     SeqOverlappingSchwarz(const matrix_type& mat, const subdomain_vector& subDomains,
@@ -376,6 +377,7 @@ namespace Dune
      * Construct the overlapping Schwarz method
      * @param mat The matrix to precondition.
      * @param rowToDomain The mapping of the rows onto the domains.
+     * @param relaxationFactor relaxation factor
      */
     SeqOverlappingSchwarz(const matrix_type& mat, const rowtodomain_vector& rowToDomain,
                           field_type relaxationFactor=1);
