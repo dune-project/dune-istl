@@ -447,7 +447,7 @@ namespace Dune
     return interfaces_;
   }
 
-  void Interface::print() const
+  inline void Interface::print() const
   {
     typedef InformationMap::const_iterator const_iterator;
     const const_iterator end=interfaces_.end();
@@ -474,8 +474,8 @@ namespace Dune
   }
 
   template<typename R, typename T1, typename T2>
-  void Interface::build(const R& remoteIndices, const T1& sourceFlags,
-                        const T2& destFlags)
+  inline void Interface::build(const R& remoteIndices, const T1& sourceFlags,
+                               const T2& destFlags)
   {
     communicator_=remoteIndices.communicator();
 
@@ -492,7 +492,7 @@ namespace Dune
                                                                            destFlags, recvInformation);
     strip();
   }
-  void Interface::strip()
+  inline void Interface::strip()
   {
     typedef InformationMap::iterator const_iterator;
     for(const_iterator interfacePair = interfaces_.begin(); interfacePair != interfaces_.end();)
@@ -505,7 +505,7 @@ namespace Dune
         ++interfacePair;
   }
 
-  void Interface::free()
+  inline void Interface::free()
   {
     typedef InformationMap::iterator iterator;
     typedef InformationMap::const_iterator const_iterator;
@@ -517,7 +517,7 @@ namespace Dune
     interfaces_.clear();
   }
 
-  Interface::~Interface()
+  inline Interface::~Interface()
   {
     free();
   }
@@ -526,7 +526,7 @@ namespace Dune
 
 namespace std
 {
-  ostream& operator<<(ostream& os, const Dune::Interface& interface)
+  inline ostream& operator<<(ostream& os, const Dune::Interface& interface)
   {
     typedef Dune::Interface::InformationMap InfoMap;
     typedef InfoMap::const_iterator Iter;
