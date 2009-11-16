@@ -280,7 +280,6 @@ namespace Dune
 
   };
 
-#if HAVE_PARMETIS
   namespace
   {
     /**
@@ -368,7 +367,8 @@ namespace Dune
      * @param *myDomain the optimal output domain number
      * @param domainMapping[] the array of output domain mapping
      */
-    void getDomain(const MPI_Comm& comm, int *part, int numOfOwnVtx, int nparts, int *myDomain, int domainMapping[]) {
+    template<typename T>
+    void getDomain(const MPI_Comm& comm, T *part, int numOfOwnVtx, int nparts, int *myDomain, int domainMapping[]) {
       int npes, mype;
       MPI_Comm_size(comm, &npes);
       MPI_Comm_rank(comm, &mype);
@@ -787,88 +787,111 @@ namespace Dune
     t1=MPI_Wtime();
 #endif
 
+
+    typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
+    typedef typename  OOComm::OwnerSet OwnerSet;
+
     // Create the vtxdist array and parmetisVtxMapping.
     // Global communications are necessary
     // The parmetis global identifiers for the owner vertices.
     ParmetisDuneIndexMap indexMap(graph,oocomm);
-
-
-    // Create the xadj and adjncy arrays
-    typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
-    typedef typename  OOComm::OwnerSet OwnerSet;
+#if HAVE_PARMETIS
+    idxtype *part = new idxtype[indexMap.numOfOwnVtx()];
+#else
+    std::size_t *part = new std::size_t[indexMap.numOfOwnVtx()];
+#endif
 
     int numOfVtx = oocomm.indexSet().size();
-    int *xadj = new  int[indexMap.numOfOwnVtx()+1];
-    int *adjncy = new int[graph.noEdges()];
-    EdgeFunctor<G> ef(adjncy, indexMap, graph.noEdges());
-    getAdjArrays<OwnerSet>(graph, oocomm.globalLookup(), xadj, ef);
 
-    //
-    // 2) Call ParMETIS
-    //
-    //
-    idxtype *part = new idxtype[indexMap.numOfOwnVtx()];
-    int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
-    float *tpwgts = NULL;
-    float ubvec[1];
-    options[0] = 1; // 0=default, 1=options are defined in [1]+[2]
-#ifdef DEBUG_REPART
-    options[1] = 3; // show info: 0=no message
+#if !HAVE_PARMETIS
+    if(oocomm.communicator().rank()==0 && nparts>1)
+      std::cerr<<"ParMETIS not activated. Will repartition to 1 domain instead of requested "
+               <<nparts<<" domains."<<std::endl;
+    nparts=1; // No parmetis available, fallback to agglomerating to 1 process
+    typedef std::size_t idxtype;
+
 #else
-    options[1] = 0; // show info: 0=no message
+
+    if(nparts>1) {
+      // Create the xadj and adjncy arrays
+      int *xadj = new  int[indexMap.numOfOwnVtx()+1];
+      int *adjncy = new int[graph.noEdges()];
+      EdgeFunctor<G> ef(adjncy, indexMap, graph.noEdges());
+      getAdjArrays<OwnerSet>(graph, oocomm.globalLookup(), xadj, ef);
+
+      //
+      // 2) Call ParMETIS
+      //
+      //
+      int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
+      float *tpwgts = NULL;
+      float ubvec[1];
+      options[0] = 1; // 0=default, 1=options are defined in [1]+[2]
+#ifdef DEBUG_REPART
+      options[1] = 3; // show info: 0=no message
+#else
+      options[1] = 0; // show info: 0=no message
 #endif
-    options[2] = 1; // random number seed, default is 15
-    wgtflag = 0; //ef.getWeights()?1:0;
-    numflag = 0;
-    edgecut = 0;
-    ncon=1;
-    ubvec[0]=1.05; // recommended by ParMETIS
+      options[2] = 1; // random number seed, default is 15
+      wgtflag = 0; //ef.getWeights()?1:0;
+      numflag = 0;
+      edgecut = 0;
+      ncon=1;
+      ubvec[0]=1.05; // recommended by ParMETIS
 
 #ifdef DEBUG_REPART
-    if (mype == 0) {
-      std::cout<<std::endl;
-      std::cout<<"Testing ParMETIS_V3_PartKway with options[1-2] = {"
-               <<options[1]<<" "<<options[2]<<"}, Ncon: "
-               <<ncon<<", Nparts: "<<nparts<<std::endl;
-    }
+      if (mype == 0) {
+        std::cout<<std::endl;
+        std::cout<<"Testing ParMETIS_V3_PartKway with options[1-2] = {"
+                 <<options[1]<<" "<<options[2]<<"}, Ncon: "
+                 <<ncon<<", Nparts: "<<nparts<<std::endl;
+      }
 #endif
 #ifdef PERF_REPART
-    // stop the time for step 1)
-    t1=MPI_Wtime()-t1;
-    // reset timer for step 2)
-    t2=MPI_Wtime();
+      // stop the time for step 1)
+      t1=MPI_Wtime()-t1;
+      // reset timer for step 2)
+      t2=MPI_Wtime();
 #endif
 
-    //=======================================================
-    // ParMETIS_V3_PartKway
-    //=======================================================
-    ParMETIS_V3_PartKway(indexMap.vtxDist(), xadj, adjncy,
-                         NULL, true ? NULL : ef.getWeights(), &wgtflag,
-                         &numflag, &ncon, &nparts, tpwgts, ubvec, options, &edgecut, part, &const_cast<MPI_Comm&>(comm));
+      //=======================================================
+      // ParMETIS_V3_PartKway
+      //=======================================================
+      ParMETIS_V3_PartKway(indexMap.vtxDist(), xadj, adjncy,
+                           NULL, true ? NULL : ef.getWeights(), &wgtflag,
+                           &numflag, &ncon, &nparts, tpwgts, ubvec, options, &edgecut, part, &const_cast<MPI_Comm&>(comm));
 
 
-    delete[] xadj;
-    delete[] adjncy;
-    delete[] ef.getWeights();
+      delete[] xadj;
+      delete[] adjncy;
+      delete[] ef.getWeights();
 
 #ifdef DEBUG_REPART
-    if (mype == 0) {
+      if (mype == 0) {
+        std::cout<<std::endl;
+        std::cout<<"ParMETIS_V3_PartKway reported a cut of "<<edgecut<<std::endl;
+        std::cout<<std::endl;
+      }
+      std::cout<<mype<<": PARMETIS-Result: ";
+      for(i=0; i < indexMap.vtxDist()[mype+1]-indexMap.vtxDist()[mype]; ++i) {
+        std::cout<<part[i]<<" ";
+      }
       std::cout<<std::endl;
-      std::cout<<"ParMETIS_V3_PartKway reported a cut of "<<edgecut<<std::endl;
-      std::cout<<std::endl;
-    }
-    std::cout<<mype<<": PARMETIS-Result: ";
-    for(i=0; i < indexMap.vtxDist()[mype+1]-indexMap.vtxDist()[mype]; ++i) {
-      std::cout<<part[i]<<" ";
-    }
-    std::cout<<std::endl;
 #endif
 #ifdef PERF_REPART
-    // stop the time for step 2)
-    t2=MPI_Wtime()-t2;
-    // reset timer for step 3)
-    t3=MPI_Wtime();
+      // stop the time for step 2)
+      t2=MPI_Wtime()-t2;
+      // reset timer for step 3)
+      t3=MPI_Wtime();
 #endif
+
+    }else
+#endif
+    {
+      // Everything goes to process 0!
+      for(std::size_t i=0; i<indexMap.numOfOwnVtx(); ++i)
+        part[i]=0;
+    }
 
 
     //
@@ -877,7 +900,11 @@ namespace Dune
     //
 
     int domainMapping[nparts];
-    getDomain(comm, part, indexMap.numOfOwnVtx(), nparts, &myDomain, domainMapping);
+    if(nparts>1)
+      getDomain(comm, part, indexMap.numOfOwnVtx(), nparts, &myDomain, domainMapping);
+    else
+      domainMapping[0]=0;
+
 #ifdef DEBUG_REPART
     std::cout<<mype<<": myDomain: "<<myDomain<<std::endl;
     std::cout<<mype<<": DomainMapping: ";
@@ -1109,6 +1136,8 @@ namespace Dune
     MPI_Allgather(&newrank, 1, MPI_INT, newranks, 1,
                   MPI_INT, oocomm.communicator());
     typedef typename std::set<int>::const_iterator IIter;
+
+#ifdef DEBUG_REPART
     std::cout<<oocomm.communicator().rank()<<" ";
     for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
         i!=end; ++i) {
@@ -1117,6 +1146,7 @@ namespace Dune
       tneighbors.push_back(newranks[*i]);
     }
     std::cout<<std::endl;
+#endif
     delete[] newranks;
     myNeighbors.clear();
 
@@ -1209,7 +1239,6 @@ namespace Dune
 
   }
 
-#endif // HAVE_PARMETIS
 #endif // HAVE_MPI
 } // end of namespace Dune
 #endif

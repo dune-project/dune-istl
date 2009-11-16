@@ -566,15 +566,7 @@ namespace Dune
        */
       bool accumulate() const
       {
-#ifdef HAVE_PARMETIS
         return accumulate_;
-#else
-#ifdef HAVE_MPI
-        std::cerr<<"Accumulation of data on coarse level only works with ParMETIS installed."
-                 <<"  Falling back to no accumulation"<<std::endl;
-#endif
-        return false;
-#endif
       }
       /**
        * @brief Set whether he data should be accumulated on fewer processes on coarser levels.
@@ -675,7 +667,6 @@ namespace Dune
       origComm.communicator().barrier();
       printGlobalSparseMatrix(origMatrix, origComm, std::cout);
 #endif
-#if HAVE_PARMETIS
       bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
                                                    newComm, ri.getInterface());
       ri.setSetup();
@@ -683,12 +674,8 @@ namespace Dune
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
-#else
-#ifdef HAVE_MPI
+#if !HAVE_PARMETIS && HAVE_MPI
     #warning Parmetis is not installed or used. Did you use the parmetis flags? It is stronly recommend to use parallel AMG with parmetis.
-#endif
-      bool existentOnRedist=false;
-      DUNE_THROW(NotImplemented, "Parmetis is not installed or used, but needed here. Did you use the parmetis flags?");
 #endif
 
 #ifdef DEBUG_REPART
@@ -989,6 +976,11 @@ namespace Dune
 
       if(criterion.accumulate() && !redistributes_.back().isSetup() &&
          infoLevel->communicator().size()>1) {
+#if HAVE_MPI && !HAVE_PARMETIS
+        if(infoLevel->communicator().rank()==0)
+          std::cerr<<"Successive accumulation of data on coarse levels only works with ParMETIS installed."
+                   <<"  Fell back accumulation to one domain on coarsest level"<<std::endl;
+#endif
 
         // accumulate to fewer processors
         Matrix* redistMat= new Matrix();

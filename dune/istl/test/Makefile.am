@@ -5,7 +5,7 @@ if MPI
 	selectiontest
 endif
 
-if PARMETIS
+if MPI
   PARMETISTESTS= matrixredisttest
 endif
 
@@ -82,7 +82,7 @@ if MPI
   vectorcommtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
 endif
 
-if PARMETIS
+if MPI
   matrixredisttest_SOURCES = matrixredisttest.cc
   matrixredisttest_CXXFLAGS = ${PARMETIS_CPPFLAGS} $(MPI_CPPFLAGS)
   matrixredisttest_LDFLAGS  = $(AM_LDFLAGS) ${PARMETIS_LDFLAGS} ${PARMETIS_LIBS} ${MPI_LDFLAGS} ${MPI_LIBS}
