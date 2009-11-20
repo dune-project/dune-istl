@@ -1026,6 +1026,19 @@ namespace Dune {
       }
     }
 
+    //! y = A^T x
+    template<class X, class Y>
+    void mtv (const X& x, Y& y) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+#endif
+      for(int i=0; i<y.N(); ++i)
+        y[i]=0;
+      umtv(x,y);
+    }
+
     //! y += A^T x
     template<class X, class Y>
     void umtv (const X& x, Y& y) const

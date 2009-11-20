@@ -208,6 +208,13 @@ namespace Dune {
         y[i] = p_ * x[i];
     }
 
+    //! y = A^T x
+    template<class X, class Y>
+    void mtv (const X& x, Y& y) const
+    {
+      mv(x, y);
+    }
+
     //! y += A x
     template<class X, class Y>
     void umv (const X& x, Y& y) const
