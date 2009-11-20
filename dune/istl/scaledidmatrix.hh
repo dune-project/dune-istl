@@ -25,6 +25,8 @@ namespace Dune {
   template<class K, int n>
   class ScaledIdentityMatrix
   {
+    typedef DiagonalMatrixWrapper< ScaledIdentityMatrix<K,n> > WrapperType;
+
   public:
     //===== type definitions and constants
 
@@ -83,7 +85,7 @@ namespace Dune {
 
     //===== iterator interface to rows of the matrix
     //! Iterator class for sequential access
-    typedef ReferenceStorageIterator<ScaledIdentityMatrix<K,n>,reference,reference,ScaledIdentityMatrix<K,n>&> Iterator;
+    typedef ContainerWrapperIterator<const WrapperType, reference, reference> Iterator;
     //! typedef for stl compliant access
     typedef Iterator iterator;
     //! rename the iterators for easier access
@@ -94,30 +96,30 @@ namespace Dune {
     //! begin iterator
     Iterator begin ()
     {
-      return Iterator(*this,0);
+      return Iterator(WrapperType(this),0);
     }
 
     //! end iterator
     Iterator end ()
     {
-      return Iterator(*this,n);
+      return Iterator(WrapperType(this),n);
     }
 
     //! begin iterator
     Iterator rbegin ()
     {
-      return Iterator(*this,n-1);
+      return Iterator(WrapperType(this),n-1);
     }
 
     //! end iterator
     Iterator rend ()
     {
-      return Iterator(*this,-1);
+      return Iterator(WrapperType(this),-1);
     }
 
 
     //! Iterator class for sequential access
-    typedef ReferenceStorageIterator<const ScaledIdentityMatrix<K,n>,const_reference,const_reference,const ScaledIdentityMatrix<K,n>&> ConstIterator;
+    typedef ContainerWrapperIterator<const WrapperType, const_reference, const_reference> ConstIterator;
     //! typedef for stl compliant access
     typedef ConstIterator const_iterator;
     //! rename the iterators for easier access
@@ -128,25 +130,25 @@ namespace Dune {
     //! begin iterator
     ConstIterator begin () const
     {
-      return ConstIterator(*this,0);
+      return ConstIterator(WrapperType(this),0);
     }
 
     //! end iterator
     ConstIterator end () const
     {
-      return ConstIterator(*this,n);
+      return ConstIterator(WrapperType(this),n);
     }
 
     //! begin iterator
     ConstIterator rbegin () const
     {
-      return ConstIterator(*this,n-1);
+      return ConstIterator(WrapperType(this),n-1);
     }
 
     //! end iterator
     ConstIterator rend () const
     {
-      return ConstIterator(*this,-1);
+      return ConstIterator(WrapperType(this),-1);
     }
 
     //===== vector space arithmetic
@@ -239,7 +241,7 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(FMatrixError,"index out of range");
 #endif
       for (size_type i=0; i<n; i++)
-        y[i] += fm_ck(p_)*x[i];
+        y[i] += conjugateComplex(p_)*x[i];
     }
 
     //! y -= A x
@@ -275,7 +277,7 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(FMatrixError,"index out of range");
 #endif
       for (size_type i=0; i<n; i++)
-        y[i] -= fm_ck(p_)*x[i];
+        y[i] -= conjugateComplex(p_)*x[i];
     }
 
     //! y += alpha A x
@@ -311,7 +313,7 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(FMatrixError,"index out of range");
 #endif
       for (size_type i=0; i<n; i++)
-        y[i] += alpha * fm_ck(p_) * x[i];
+        y[i] += alpha * conjugateComplex(p_) * x[i];
     }
 
     //===== norms
