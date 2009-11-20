@@ -25,7 +25,6 @@ namespace Dune {
   template<class K, int n>
   class ScaledIdentityMatrix
   {
-
   public:
     //===== type definitions and constants
 
@@ -275,7 +274,6 @@ namespace Dune {
       if (x.N()!=N()) DUNE_THROW(FMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(FMatrixError,"index out of range");
 #endif
-
       for (size_type i=0; i<n; i++)
         y[i] -= fm_ck(p_)*x[i];
     }
@@ -347,14 +345,16 @@ namespace Dune {
     /** \brief Solve system A x = b
      */
     template<class V>
-    void solve (V& x, const V& b) const {
+    void solve (V& x, const V& b) const
+    {
       for (int i=0; i<n; i++)
         x[i] = b[i]/p_;
     }
 
     /** \brief Compute inverse
      */
-    void invert() {
+    void invert()
+    {
       p_ = 1/p_;
     }
 
@@ -390,22 +390,6 @@ namespace Dune {
     }
 
     //===== conversion operator
-
-    /** \brief Cast to a scalar */
-    //        operator K () const {return p_;}
-
-    /** \brief Cast to FieldMatrix
-     * Might be inefficient, but operator= has to be a member of FieldMatrix
-     * */
-    /*   operator FieldMatrix<K,n,n>() const
-       {
-       FieldMatrix<K, n, n> fm = 0.0;
-       for(int i=0; i<n; ++i)
-          fm[i][i] = p_;
-       return fm;
-       }*/
-
-
 
     /** \brief Sends the matrix to an output stream */
     friend std::ostream& operator<< (std::ostream& s, const ScaledIdentityMatrix<K,n>& a)
