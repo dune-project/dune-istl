@@ -1238,7 +1238,15 @@ namespace Dune
     return color!=MPI_UNDEFINED;
 
   }
-
+#else
+  template<class G, class P,class T1, class T2, class R>
+  bool graphRepartition(const G& graph, P& oocomm, int nparts,
+                        P*& outcomm,
+                        R& redistInf)
+  {
+    if(nparts!=oocomm.size())
+      DUNE_THROW(NotImplemented, "only available for MPI programs");
+  }
 #endif // HAVE_MPI
 } // end of namespace Dune
 #endif
