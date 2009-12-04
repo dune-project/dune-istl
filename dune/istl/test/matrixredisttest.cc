@@ -126,8 +126,10 @@ int main(int argc, char** argv)
   MPI_Errhandler handler;
   MPI_Errhandler_create(MPI_err_handler, &handler);
   MPI_Errhandler_set(MPI_COMM_WORLD, handler);
+  int procs;
+  MPI_Comm_size(MPI_COMM_WORLD, &procs);
 
-  int N=3;
+  int N=4*procs;
 
   int coarsenTarget=1;
 
@@ -136,5 +138,11 @@ int main(int argc, char** argv)
   if(argc>2)
     coarsenTarget = atoi(argv[2]);
 
+  if(N<procs*2) {
+    std::cerr<<"Problem size insufficient for process number"<<std::endl;
+    return 1;
+  }
+
   testRepart<1>(N,coarsenTarget);
+  return 0;
 }

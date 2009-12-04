@@ -132,7 +132,7 @@ namespace Dune
       {
         return parmetisToDune[i];
       }
-      int numOfOwnVtx() const
+      std::vector<int>::size_type numOfOwnVtx() const
       {
         return parmetisToDune.size();
       }
@@ -327,8 +327,8 @@ namespace Dune
       // unpack owner vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       inf.reserveSpaceForReceiveInterface(from, size);
-      int start=ownerVec.size();
       ownerVec.reserve(ownerVec.size()+size);
+
       for(; size>0; --size) {
         GI gi;
         MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
@@ -485,7 +485,12 @@ namespace Dune
         for(VIter i=old+1, end=ownerVec.end(); i != end; old=i++)
         {
           if(i->first==old->first)
+          {
+            std::cerr<<"Value at indes"<<old-ownerVec.begin()<<" is the same as at index "
+                     <<i-ownerVec.begin()<<" ["<<old->first<<","<<old->second<<"]==["
+                     <<i->first<<","<<i->second<<"]"<<std::endl;
             throw "Huch!";
+          }
         }
       }
 
@@ -653,8 +658,9 @@ namespace Dune
 
       int* getWeights()
       {
-        return 0;
+        return NULL;
       }
+      void free(){}
     };
 
     template<class G, class V, class E, class VM, class EM>
@@ -677,6 +683,12 @@ namespace Dune
       int* getWeights()
       {
         return weight_;
+      }
+      void free(){
+        if(weight_!=0) {
+          delete weight_;
+          weight_=0;
+        }
       }
     private:
       int* weight_;
@@ -758,7 +770,7 @@ namespace Dune
 #endif
 
     // Common variables
-    int i=0, j=0;
+    std::size_t i=0, j=0;
 
     // MPI variables
     int npes = oocomm.communicator().size();
@@ -833,7 +845,7 @@ namespace Dune
       options[1] = 0; // show info: 0=no message
 #endif
       options[2] = 1; // random number seed, default is 15
-      wgtflag = 0; //ef.getWeights()?1:0;
+      wgtflag = (ef.getWeights()!=NULL) ? 1 : 0;
       numflag = 0;
       edgecut = 0;
       ncon=1;
@@ -858,13 +870,13 @@ namespace Dune
       // ParMETIS_V3_PartKway
       //=======================================================
       ParMETIS_V3_PartKway(indexMap.vtxDist(), xadj, adjncy,
-                           NULL, true ? NULL : ef.getWeights(), &wgtflag,
+                           NULL, ef.getWeights(), &wgtflag,
                            &numflag, &ncon, &nparts, tpwgts, ubvec, options, &edgecut, part, &const_cast<MPI_Comm&>(comm));
 
 
       delete[] xadj;
       delete[] adjncy;
-      delete[] ef.getWeights();
+      ef.free();
 
 #ifdef DEBUG_REPART
       if (mype == 0) {
@@ -873,10 +885,13 @@ namespace Dune
         std::cout<<std::endl;
       }
       std::cout<<mype<<": PARMETIS-Result: ";
-      for(i=0; i < indexMap.vtxDist()[mype+1]-indexMap.vtxDist()[mype]; ++i) {
+      for(int i=0; i < indexMap.vtxDist()[mype+1]-indexMap.vtxDist()[mype]; ++i) {
         std::cout<<part[i]<<" ";
       }
       std::cout<<std::endl;
+      std::cout<<"Testing ParMETIS_V3_PartKway with options[1-2] = {"
+               <<options[1]<<" "<<options[2]<<"}, Ncon: "
+               <<ncon<<", Nparts: "<<nparts<<std::endl;
 #endif
 #ifdef PERF_REPART
       // stop the time for step 2)
@@ -908,7 +923,7 @@ namespace Dune
 #ifdef DEBUG_REPART
     std::cout<<mype<<": myDomain: "<<myDomain<<std::endl;
     std::cout<<mype<<": DomainMapping: ";
-    for(j=0; j<nparts; j++) {
+    for(int j=0; j<nparts; j++) {
       std::cout<<" do: "<<j<<" pe: "<<domainMapping[j]<<" ";
     }
     std::cout<<std::endl;
@@ -965,7 +980,7 @@ namespace Dune
     int *recvFrom = new int[npes];
     int *buf = new int[npes];
     // init the buffers
-    for(j=0; j<npes; j++) {
+    for(int j=0; j<npes; j++) {
       sendTo[j] = 0;
       recvFrom[j] = 0;
       buf[j] = 0;
@@ -999,7 +1014,7 @@ namespace Dune
     int dest = (mype+1)%npes;
 
     // ring communication, we need n-1 communication for n processors
-    for (i=0; i<npes-1; i++) {
+    for (int i=0; i<npes-1; i++) {
       MPI_Sendrecv_replace(buf, npes, MPI_INT, dest, 0, src, 0, comm, &status);
       // pe is the process of the actual received buffer
       pe = ((mype-1-i)+npes)%npes;
@@ -1011,12 +1026,12 @@ namespace Dune
 
 #ifdef DEBUG_REPART
     std::cout<<mype<<": recvFrom: ";
-    for(i=0; i<npes; i++) {
+    for(int i=0; i<npes; i++) {
       std::cout<<recvFrom[i]<<" ";
     }
     std::cout<<std::endl<<std::endl;
     std::cout<<mype<<": sendTo: ";
-    for(i=0; i<npes; i++) {
+    for(int i=0; i<npes; i++) {
       std::cout<<sendTo[i]<<" ";
     }
     std::cout<<std::endl<<std::endl;
@@ -1043,12 +1058,12 @@ namespace Dune
     getOwnerOverlapVec<OwnerSet>(graph, setPartition, oocomm.globalLookup(),
                                  mype, mype, myOwnerVec, myOverlapSet, redistInf, myNeighbors);
 
-    for(i=0; i < npes; ++i) {
+    for(int i=0; i < npes; ++i) {
       // the rank of the process defines the sending order,
       // so it starts naturally by 0
 
       if (i==mype) {
-        for(j=0; j < npes; ++j) {
+        for(int j=0; j < npes; ++j) {
           if (sendTo[j]>0) {
             // clear the vector for sending
             sendOwnerVec.clear();
@@ -1086,7 +1101,6 @@ namespace Dune
       } else { // All the other processes have to wait for receive...
         if (recvFrom[i]>0) {
           // Get buffer size
-          MPI_Status stat;
           MPI_Probe(i, 0,oocomm.communicator(), &status);
           int buffersize=0;
           MPI_Get_count(&status, MPI_PACKED, &buffersize);
