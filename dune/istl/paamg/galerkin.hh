@@ -57,7 +57,7 @@ namespace Dune
      * @brief Functor for building the sparsity pattern of the matrix
      * using examineConnectivity.
      */
-    template<class M, class V>
+    template<class M>
     class SparsityBuilder
     {
     public:
@@ -65,9 +65,8 @@ namespace Dune
        * @brief Constructor.
        * @param matrix The matrix whose sparsity pattern we
        * should set up.
-       * @param aggregates THe mapping of the vertices onto the aggregates.
        */
-      SparsityBuilder(M& matrix, const AggregatesMap<V>& aggregates);
+      SparsityBuilder(M& matrix);
 
       void insert(const typename M::size_type& index);
 
@@ -81,8 +80,6 @@ namespace Dune
     private:
       /** @brief Create iterator for the current row. */
       typename M::CreateIterator row_;
-      /** @brief The aggregates mapping. */
-      const AggregatesMap<V>& aggregates_;
       /** @brief The minim row size. */
       std::size_t minRowSize_;
       /** @brief The maximum row size. */
@@ -512,9 +509,9 @@ namespace Dune
 
     }
 
-    template<class M, class V>
-    SparsityBuilder<M,V>::SparsityBuilder(M& matrix, const AggregatesMap<V>& aggregates)
-      : row_(matrix.createbegin()), aggregates_(aggregates),
+    template<class M>
+    SparsityBuilder<M>::SparsityBuilder(M& matrix)
+      : row_(matrix.createbegin()),
         minRowSize_(std::numeric_limits<std::size_t>::max()),
         maxRowSize_(0), sumRowSize_(0)
     {
@@ -522,24 +519,24 @@ namespace Dune
       diagonalInserted = false;
 #endif
     }
-    template<class M, class V>
-    std::size_t SparsityBuilder<M,V>::maxRowSize()
+    template<class M>
+    std::size_t SparsityBuilder<M>::maxRowSize()
     {
       return maxRowSize_;
     }
-    template<class M, class V>
-    std::size_t SparsityBuilder<M,V>::minRowSize()
+    template<class M>
+    std::size_t SparsityBuilder<M>::minRowSize()
     {
       return minRowSize_;
     }
 
-    template<class M, class V>
-    std::size_t SparsityBuilder<M,V>::sumRowSize()
+    template<class M>
+    std::size_t SparsityBuilder<M>::sumRowSize()
     {
       return sumRowSize_;
     }
-    template<class M, class V>
-    void SparsityBuilder<M,V>::operator++()
+    template<class M>
+    void SparsityBuilder<M>::operator++()
     {
       sumRowSize_ += row_.size();
       minRowSize_=std::min(minRowSize_, row_.size());
@@ -551,8 +548,8 @@ namespace Dune
 #endif
     }
 
-    template<class M, class V>
-    void SparsityBuilder<M,V>::insert(const typename M::size_type& index)
+    template<class M>
+    void SparsityBuilder<M>::insert(const typename M::size_type& index)
     {
       row_.insert(index);
 #ifdef DUNE_ISTL_WITH_CHECKING
@@ -590,7 +587,7 @@ namespace Dune
         put(visitedMap, *vertex, aggregates[*vertex]==AggregatesMap<typename G::VertexDescriptor>::ISOLATED);
       }
 
-      SparsityBuilder<M,typename G::VertexDescriptor> sparsityBuilder(*coarseMatrix, aggregates);
+      SparsityBuilder<M> sparsityBuilder(*coarseMatrix);
 
       ConnectivityConstructor<G,T>::examine(fineGraph, visitedMap, pinfo,
                                             aggregates, overlap, overlapStart_,
@@ -630,7 +627,7 @@ namespace Dune
         put(visitedMap, *vertex, aggregates[*vertex]==AggregatesMap<typename G::VertexDescriptor>::ISOLATED);
       }
 
-      SparsityBuilder<M,typename G::VertexDescriptor> sparsityBuilder(*coarseMatrix, aggregates);
+      SparsityBuilder<M> sparsityBuilder(*coarseMatrix);
 
       ConnectivityConstructor<G,SequentialInformation>::examine(fineGraph, visitedMap, pinfo,
                                                                 aggregates, sparsityBuilder);
