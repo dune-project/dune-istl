@@ -1122,6 +1122,16 @@ namespace Dune
                      const AggregatesMap<Vertex>& aggregates) const;
 
       /**
+       * @brief Test whether the vertex is connected to an aggregate of a list.
+       * @param vertex The vertex descriptor.
+       * @param aggregateList The list of aggregate descriptors.
+       * @param aggregates The mapping of the vertices onto the aggregates.
+       * @return True if there is a connection to the aggregate.
+       */
+      bool connected(const Vertex& vertex, const SLList<AggregateDescriptor>& aggregateList,
+                     const AggregatesMap<Vertex>& aggregates) const;
+
+      /**
        * @brief Counts the edges depending on the dependency.
        *
        * If the inluence flag of the edge is set the counter is
@@ -1269,11 +1279,12 @@ namespace Dune
        *
        * @param vertex The vertex whose neighbouring aggregate we search.
        * @param aggregates The mapping of the vertices onto aggregates.
-       * @return A vertex of neighbouring aggregate the vertex is allowed to
+       * @param[out] list to store the vertices of neighbouring aggregates the vertex is allowed to
        * be added to.
        */
-      const AggregateDescriptor& nonisoNeighbourAggregate(const Vertex& vertex,
-                                                          const AggregatesMap<Vertex>& aggregates) const;
+      void nonisoNeighbourAggregate(const Vertex& vertex,
+                                    const AggregatesMap<Vertex>& aggregates,
+                                    SLList<Vertex>& neighbours) const;
 
       /**
        * @brief Grows the aggregate from a seed.
@@ -1962,18 +1973,20 @@ namespace Dune
     }
 
     template<class G>
-    inline const typename  Aggregator<G>::AggregateDescriptor&
-    Aggregator<G>::nonisoNeighbourAggregate(const Vertex & vertex,
-                                            const AggregatesMap<Vertex>& aggregates) const
+    inline void
+    Aggregator<G>::nonisoNeighbourAggregate(const Vertex& vertex,
+                                            const AggregatesMap<Vertex>& aggregates,
+                                            SLList<Vertex>& neighbours) const
     {
       typedef typename MatrixGraph::ConstEdgeIterator Iterator;
       Iterator end=graph_->beginEdges(vertex);
+      neighbours.clear();
+
       for(Iterator edge=graph_->beginEdges(vertex); edge!=end; ++edge)
       {
         if(aggregates[edge.target()]!=AggregatesMap<Vertex>::UNAGGREGATED && graph_->getVertexProperties(edge.target()).isolated())
-          return aggregates[edge.target()];
+          neighbours.push_back(aggregates[edge.target()]);
       }
-      return AggregatesMap<Vertex>::UNAGGREGATED;
     }
 
     template<class G>
@@ -2025,12 +2038,24 @@ namespace Dune
           return true;
       return false;
     }
+    template<class G>
+    inline bool Aggregator<G>::connected(const Vertex& vertex,
+                                         const SLList<AggregateDescriptor>& aggregateList,
+                                         const AggregatesMap<Vertex>& aggregates) const
+    {
+      typedef typename SLList<AggregateDescriptor>::const_iterator Iter;
+      for(Iter i=aggregateList.begin(); i!=aggregateList.end(); ++i)
+        if(connected(vertex, *i, aggregates))
+          return true;
+      return false;
+    }
 
     template<class G>
     template<class C>
     void Aggregator<G>::growIsolatedAggregate(const Vertex& seed, const AggregatesMap<Vertex>& aggregates, const C& c)
     {
-      AggregateDescriptor connectedAggregate = nonisoNeighbourAggregate(seed, aggregates);
+      SLList<Vertex> connectedAggregates;
+      nonisoNeighbourAggregate(seed, aggregates,connectedAggregates);
 
       while(aggregate_->size()< c.minAggregateSize() && aggregate_->connectSize() < c.maxConnectivity()) {
         double maxCon=-1;
@@ -2045,12 +2070,11 @@ namespace Dune
           if(distance(*vertex, aggregates)>c.maxDistance())
             continue; // distance of proposes aggregate too big
 
-          if(connectedAggregate != AggregatesMap<Vertex>::UNAGGREGATED) {
+          if(connectedAggregates.size()>0) {
             // there is already a neighbour cluster
             // front node must be connected to same neighbour cluster
 
-            if(nonisoNeighbourAggregate(seed, aggregates) &&
-               !connected(*vertex, connectedAggregate, aggregates))
+            if(!connected(*vertex, connectedAggregates, aggregates))
               continue;
           }
 
@@ -2218,6 +2242,7 @@ namespace Dune
 
       dverb<<"Build dependency took "<< watch.elapsed()<<" seconds."<<std::endl;
       int noAggregates, conAggregates, isoAggregates, oneAggregates;
+      std::size_t maxA=0, minA=1000000, avg=0;
       int skippedAggregates;
       noAggregates = conAggregates = isoAggregates = oneAggregates =
                                                        skippedAggregates = 0;
@@ -2255,7 +2280,7 @@ namespace Dune
 
 
         /* The rounding step. */
-        while(aggregate_->size() < c.maxAggregateSize()) {
+        while(!(graph.getVertexProperties(seed).isolated()) && aggregate_->size() < c.maxAggregateSize()) {
 
           unmarkFront();
           markFront(aggregates);
@@ -2296,7 +2321,7 @@ namespace Dune
         }
 
         // try to merge aggregates consisting of only one nonisolated vertex with other aggregates
-        if(aggregate_->size()==1)
+        if(aggregate_->size()==1) {
           if(!graph.getVertexProperties(seed).isolated()) {
             Vertex mergedNeighbour = mergeNeighbour(seed, aggregates);
 
@@ -2304,15 +2329,23 @@ namespace Dune
               // assign vertex to the neighbouring cluster
               aggregates[seed] = aggregates[mergedNeighbour];
             }else{
+              minA=std::min(minA,static_cast<std::size_t>(1));
+              maxA=std::max(maxA,static_cast<std::size_t>(1));
               ++oneAggregates;
               ++conAggregates;
             }
-
           }else{
+            ++avg;
+            minA=std::min(minA,static_cast<std::size_t>(1));
+            maxA=std::max(maxA,static_cast<std::size_t>(1));
             ++oneAggregates;
             ++isoAggregates;
           }
-        else{
+          ++avg;
+        }else{
+          avg+=aggregate_->size();
+          minA=std::min(minA,aggregate_->size());
+          maxA=std::max(maxA,aggregate_->size());
           if(graph.getVertexProperties(seed).isolated())
             ++isoAggregates;
           else
@@ -2326,7 +2359,8 @@ namespace Dune
 
       Dune::dinfo<<"connected aggregates: "<<conAggregates;
       Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
-      Dune::dinfo<<" one node aggregates: "<<oneAggregates<<std::endl;
+      Dune::dinfo<<" one node aggregates: "<<oneAggregates<<" min size="<<minA<<" max size="<<maxA
+                 <<" avg="<<avg/(conAggregates+isoAggregates)<<std::endl;
 
       delete aggregate_;
       return make_tuple(conAggregates+isoAggregates,isoAggregates,
@@ -2341,7 +2375,8 @@ namespace Dune
       Iterator end= front_.end();
       int count=0;
       for(Iterator vertex=front_.begin(); vertex != end; ++vertex,++count)
-        stack_.push(*vertex);
+        if(graph_->getVertexProperties(*vertex).isolated()==isolated)
+          stack_.push(*vertex);
       /*
          if(MINIMAL_DEBUG_LEVEL<=2 && count==0 && !isolated)
          Dune::dverb<< " no vertices pushed for nonisolated aggregate!"<<std::endl;
