@@ -127,7 +127,7 @@ void testAMG(int N, int coarsenTarget, int ml)
 int main(int argc, char** argv)
 {
 
-  int N=500;
+  int N=100;
   int coarsenTarget=1200;
   int ml=10;
 
