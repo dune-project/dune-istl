@@ -169,8 +169,8 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   //   More dimension stuff
   // ///////////////////////////////////////////////////////
 
-  size_type n = matrix.N();
-  size_type m = matrix.M();
+  size_type n = matrix.N(); ++n;
+  size_type m = matrix.M(); ++m;
 
   // ///////////////////////////////////////////////////////
   //   Test assignment operators and the copy constructor
@@ -306,10 +306,11 @@ int main()
   // ////////////////////////////////////////////////////////////////////////
   //   Test the FieldMatrix class
   // ////////////////////////////////////////////////////////////////////////
-
+  typedef FieldMatrix<double,4,4>::size_type size_type;
   FieldMatrix<double,4,4> fMatrix;
-  for (int i=0; i<fMatrix.N(); i++)
-    for (int j=0; j<fMatrix.M(); j++)
+
+  for (size_type i=0; i<fMatrix.N(); i++)
+    for (size_type j=0; j<fMatrix.M(); j++)
       fMatrix[i][j] = (i+j)/3;        // just anything
   FieldVector<double,4> fvX;
   FieldVector<double,4> fvY;

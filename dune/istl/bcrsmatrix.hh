@@ -1034,7 +1034,7 @@ namespace Dune {
       if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
 #endif
-      for(int i=0; i<y.N(); ++i)
+      for(size_type i=0; i<y.N(); ++i)
         y[i]=0;
       umtv(x,y);
     }
