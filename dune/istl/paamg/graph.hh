@@ -699,9 +699,9 @@ namespace Dune
       /** @brief The edges of this sub graph. */
       VertexDescriptor* edges_;
       /** @brief The start of the out edges of each vertex. */
-      int* start_;
+      std::ptrdiff_t* start_;
       /** @brief The edge behind the last out edge of each vertex. */
-      int* end_;
+      std::ptrdiff_t* end_;
       /** prevent copying */
       SubGraph(const SubGraph&)
       {}
@@ -1972,8 +1972,8 @@ namespace Dune
     SubGraph<G,T>::SubGraph(const G& graph, const T& excluded)
       : excluded_(excluded), noVertices_(0), endVertex_(0), maxVertex_(graph.maxVertex())
     {
-      start_ = new int[graph.noVertices()];
-      end_ = new int[graph.noVertices()];
+      start_ = new std::ptrdiff_t[graph.noVertices()];
+      end_ = new std::ptrdiff_t[graph.noVertices()];
       edges_ = new VertexDescriptor[graph.noEdges()];
 
       VertexDescriptor* edge=edges_;
