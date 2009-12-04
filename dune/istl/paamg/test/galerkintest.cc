@@ -67,7 +67,7 @@ void testCoarsenIndices(int N)
 
   SubGraph sg(mg, excluded);
   PropertiesGraph pg(sg, Dune::IdentityMap(), sg.getEdgeIndexMap());
-  Dune::Amg::AggregatesMap<Vertex> aggregatesMap(pg.maxVertex()+1);
+  Dune::Amg::AggregatesMap<Vertex> aggregatesMap(pg.noVertices());
 
   std::cout << "fine indices: "<<indices << std::endl;
   std::cout << "fine remote: "<<remoteIndices << std::endl;
@@ -126,7 +126,7 @@ void testCoarsenIndices(int N)
      visited.reserve(mg.maxVertex());
      Iterator visitedIterator=visited.begin();
    */
-  std::cout<<n*n<<"=="<<mg.maxVertex()<<std::endl;
+  std::cout<<n*n<<"=="<<mg.noVertices()<<std::endl;
 
   assert(mat.N()==mg.maxVertex()+1);
 

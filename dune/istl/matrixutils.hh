@@ -166,7 +166,7 @@ namespace Dune
           cur=ooc.communicator().min(rowidx);
 
         // print rows
-        typedef typename std::set<std::pair<GlobalIndex,Block> >::iterator SIter;
+        typedef typename std::set<std::pair<GlobalIndex,Block>,CompPair>::iterator SIter;
         for(SIter s=entries.begin(), send=entries.end(); s!=send; ++s)
           os<<idx->global()<<" "<<s->first<<" "<<s->second<<std::endl;
 
