@@ -419,7 +419,7 @@ namespace Dune
     struct SeqOverlappingSchwarzSmootherArgs
       : public DefaultSmootherArgs<T>
     {
-      enum Overlap {vertex, aggregate, none};
+      enum Overlap {vertex, aggregate, pairwise, none};
 
       Overlap overlap;
       SeqOverlappingSchwarzSmootherArgs(Overlap overlap_=vertex)
@@ -465,6 +465,11 @@ namespace Dune
           createSubdomains(matrix, graph, amap, visitor,  visitedMap);
         }
         break;
+        case SmootherArgs::pairwise :
+        {
+          createPairDomains(graph);
+        }
+        break;
         case SmootherArgs::aggregate :
         {
           AggregateAdder<VisitedMapType> visitor(subdomains, amap, graph, visitedMap);
@@ -474,6 +479,9 @@ namespace Dune
         case SmootherArgs::none :
           NoneAdder visitor;
           createSubdomains(matrix, graph, amap, visitor, visitedMap);
+          break;
+        default :
+          DUNE_THROW(NotImplemented, "This overlapping scheme is not supported!");
         }
       }
       void setMatrix(const M& matrix)
@@ -509,6 +517,11 @@ namespace Dune
              AggregateAdder<VisitedMapType> visitor(subdomains, amap, graph, visitedMap);
              createSubdomains(matrix, graph, amap, visitor, visitedMap);
            */
+        }
+        break;
+        case SmootherArgs::pairwise :
+        {
+          createPairDomains(graph);
         }
         break;
         case SmootherArgs::none :
@@ -611,6 +624,48 @@ namespace Dune
         VM& visitedMap;
       };
 
+      void createPairDomains(const MatrixGraph<const M>& graph)
+      {
+        typedef typename MatrixGraph<const M>::ConstVertexIterator VIter;
+        typedef typename MatrixGraph<const M>::ConstEdgeIterator EIter;
+        typedef typename M::size_type size_type;
+
+        std::set<std::pair<size_type,size_type> > pairs;
+        int total=0;
+        for(VIter v=graph.begin(), ve=graph.end(); ve != v; ++v)
+          for(EIter e = v.begin(), ee=v.end(); ee!=e; ++e)
+          {
+            ++total;
+            if(e.source()<e.target())
+              pairs.insert(std::make_pair(e.source(),e.target()));
+            else
+              pairs.insert(std::make_pair(e.target(),e.source()));
+          }
+
+
+        subdomains.resize(pairs.size());
+        std::cout <<std::endl<< "Created "<<pairs.size()<<" ("<<total<<") pair domains"<<std::endl<<std::endl;
+        typedef typename std::set<std::pair<size_type,size_type> >::const_iterator SIter;
+        typename Vector::iterator subdomain=subdomains.begin();
+
+        for(SIter s=pairs.begin(), se =pairs.end(); se!=s; ++s)
+        {
+          subdomain->insert(s->first);
+          subdomain->insert(s->second);
+          ++subdomain;
+        }
+        std::size_t minsize=10000;
+        std::size_t maxsize=0;
+        int sum=0;
+        for(int i=0; i < subdomains.size(); ++i) {
+          sum+=subdomains[i].size();
+          minsize=std::min(minsize, subdomains[i].size());
+          maxsize=std::max(maxsize, subdomains[i].size());
+        }
+        std::cout<<"Subdomain size: min="<<minsize<<" max="<<maxsize<<" avg="<<(sum/subdomains.size())
+                 <<" no="<<subdomains.size()<<std::endl;
+      }
+
       template<class Visitor>
       void createSubdomains(const M& matrix, const MatrixGraph<const M>& graph,
                             const AggregatesMap& amap, Visitor& overlapVisitor,
@@ -620,16 +675,16 @@ namespace Dune
         // aggregates are numbered consecutively from 0 exept
         // for the isolated ones. All isolated vertices form
         // one aggregate, here.
-        int isolated=false;
+        int isolated=0;
         AggregateDescriptor maxAggregate=0;
 
         for(int i=0; i < amap.noVertices(); ++i)
           if(amap[i]==AggregatesMap::ISOLATED)
-            isolated=true;
+            isolated++;
           else
             maxAggregate = std::max(maxAggregate, amap[i]);
 
-        subdomains.resize(maxAggregate+1);
+        subdomains.resize(maxAggregate+1+isolated);
 
         // reset the subdomains
         for(int i=0; i < subdomains.size(); ++i)
@@ -656,7 +711,6 @@ namespace Dune
             amap.template breadthFirstSearch<false,false>(i, aggregate, graph, vlist, aggregateVisitor,
                                                           overlapVisitor, visitedMap);
           }
-        subdomains.resize(aggregateVisitor.noSubdomains());
 
         std::size_t minsize=10000;
         std::size_t maxsize=0;
