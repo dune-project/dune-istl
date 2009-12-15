@@ -54,7 +54,7 @@ int main()
   try {
     test_matrix<float, 1>();
     test_matrix<double, 1>();
-    test_matrix<int, 10>();
+    //test_matrix<int, 10>(); Does not compile with icc because there is no std::sqrt(int)  std::fabs(int)
     test_matrix<double, 5>();
   }
   catch (Dune::Exception & e)
