@@ -95,14 +95,12 @@ namespace Dune
       const_iterator(typename Matrix::const_iterator firstRow,
                      typename RowIndexSet::const_iterator pos)
         : firstRow_(firstRow), pos_(pos)
-      {
-        currentRow_=firstRow_+(*pos_);
-      }
+      {}
 
 
       const typename Matrix::row_type& dereference() const
       {
-        return *currentRow_;
+        return *(firstRow_+ *pos_);
       }
       bool equals(const const_iterator& o) const
       {
@@ -111,7 +109,6 @@ namespace Dune
       void increment()
       {
         ++pos_;
-        currentRow_=firstRow_+(*pos_);
       }
       typename RowIndexSet::value_type index() const
       {
@@ -121,8 +118,6 @@ namespace Dune
     private:
       // @brief Iterator pointing to the first row of the matrix.
       typename Matrix::const_iterator firstRow_;
-      // @brief Iterator pointing to the current row of the matrix.
-      typename Matrix::const_iterator currentRow_;
       // @brief Iterator pointing to the current row index.
       typename RowIndexSet::const_iterator pos_;
     };
