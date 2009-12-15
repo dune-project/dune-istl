@@ -263,7 +263,13 @@ namespace Dune
         dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
         dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
         dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
-             <<" \texpansions "<<memusage.expansions<<std::endl;
+             <<" \texpansions ";
+
+#ifdef HAVE_MEM_USAGE_T_EXPANSIONS
+        std::cout<<memusage.expansions<<std::endl;
+#else
+        std::cout<<stat.expansions<<std::endl;
+#endif
       } else if ( info > 0 && lwork == -1 ) {
         dinfo<<"** Estimated memory: "<< info - n<<std::endl;
       }
