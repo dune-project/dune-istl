@@ -11,6 +11,8 @@
 #include <dune/common/sllist.hh>
 #include <dune/istl/overlappingschwarz.hh>
 
+#include <iterator>
+
 int main(int argc, char** argv)
 {
 
@@ -110,7 +112,8 @@ int main(int argc, char** argv)
   if(N<10) {
     int i=0;
     for(iterator iter=domains.begin(); iter != domains.end(); ++iter) {
-      typedef iterator::value_type::const_iterator entry_iterator;
+      typedef std::iterator_traits<iterator>::value_type
+      ::const_iterator entry_iterator;
       std::cout<<"domain "<<i++<<":";
       for(entry_iterator entry = iter->begin(); entry != iter->end(); ++entry) {
         std::cout<<" "<<*entry;
