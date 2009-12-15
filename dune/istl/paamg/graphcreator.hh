@@ -5,6 +5,7 @@
 
 #include "graph.hh"
 #include "dependency.hh"
+#include "pinfo.hh"
 #include <dune/istl/operators.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/tuples.hh>

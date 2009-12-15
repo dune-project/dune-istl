@@ -4,8 +4,11 @@
 #define DUNE_MATRIXMARKET_HH
 
 #include <ostream>
+#include <limits>
 #include "bcrsmatrix.hh"
 #include <dune/common/fmatrix.hh>
+#include <dune/common/tuples.hh>
+
 namespace Dune
 {
   namespace
