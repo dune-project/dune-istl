@@ -64,27 +64,58 @@ scaledidmatrixtest_SOURCES = scaledidmatrixtest.cc
 
 if MPI
   indicestest_SOURCES = indicestest.cc
-  indicestest_CXXFLAGS = $(MPI_CPPFLAGS)
-  indicestest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  indicestest_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)
+  indicestest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)
+  indicestest_LDADD =				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 
   selectiontest_SOURCES = selectiontest.cc
-  selectiontest_CXXFLAGS = $(MPI_CPPFLAGS)
-  selectiontest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  selectiontest_CPPFLAGS = $(AM_CPPFLAGS)	\
+	$(DUNEMPICPPFLAGS)
+  selectiontest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)
+  selectiontest_LDADD =				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 
   indexsettest_SOURCES = indexsettest.cc
 
   syncertest_SOURCES = syncertest.cc
-  syncertest_CXXFLAGS = $(MPI_CPPFLAGS)
-  syncertest_LDFLAGS = $(DUNE_COMMON_LDFLAGS) $(DUNE_COMMON_LIBS) $(MPI_LDFLAGS) $(MPI_LIBS)
+  syncertest_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)			\
+	$(DUNE_COMMON_CPPFLAGS)
+  syncertest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)			\
+	$(DUNE_COMMON_LDFLAGS)
+  syncertest_LDADD =					\
+	$(DUNE_COMMON_LDFLAGS) $(DUNE_COMMON_LIBS)	\
+	$(DUNEMPILIBS)					\
+	$(LDADD)
 
   vectorcommtest_SOURCES = vectorcommtest.cc
-  vectorcommtest_CXXFLAGS = $(MPI_CPPFLAGS)
-  vectorcommtest_LDFLAGS = $(MPI_LDFLAGS) $(MPI_LIBS)
+  vectorcommtest_CPPFLAGS = $(AM_CPPFLAGS)	\
+	$(DUNEMPICPPFLAGS)
+  vectorcommtest_LDFLAGS = $(AM_LDFLAGS)	\
+	$(DUNEMPILDFLAGS)
+  vectorcommtest_LDADD =			\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 endif
 
 if MPI
   matrixredisttest_SOURCES = matrixredisttest.cc
-  matrixredisttest_CXXFLAGS = ${PARMETIS_CPPFLAGS} $(MPI_CPPFLAGS)
-  matrixredisttest_LDFLAGS  = $(AM_LDFLAGS) ${PARMETIS_LDFLAGS} ${PARMETIS_LIBS} ${MPI_LDFLAGS} ${MPI_LIBS}
+  matrixredisttest_CPPFLAGS = $(AM_CPPFLAGS)	\
+	$(DUNEMPICPPFLAGS)			\
+	${PARMETIS_CPPFLAGS}
+  matrixredisttest_LDFLAGS = $(AM_LDFLAGS)	\
+	$(DUNEMPILDFLAGS)			\
+	${PARMETIS_LDFLAGS}
+  matrixredisttest_LDADD =			\
+	${PARMETIS_LDFLAGS} ${PARMETIS_LIBS}	\
+	${DUNEMPILIBS}				\
+	$(LDADD)
 endif
 include $(top_srcdir)/am/global-rules

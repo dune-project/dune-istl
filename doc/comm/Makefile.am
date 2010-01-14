@@ -28,5 +28,10 @@ include $(top_srcdir)/am/webstuff
 include $(top_srcdir)/am/global-rules
 
 indexset_SOURCES = indexset.cc buildindexset.hh reverse.hh
-indexset_CXXFLAGS = $(MPI_CPPFLAGS)
-indexset_LDADD = $(MPI_LDFLAGS)
+indexset_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)
+indexset_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)
+indexset_LDADD =				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)

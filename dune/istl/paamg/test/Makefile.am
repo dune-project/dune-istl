@@ -18,26 +18,51 @@ check_PROGRAMS = $(TESTPROGS) $(NORMALTESTS)
 graphtest_SOURCES = graphtest.cc
 
 transfertest_SOURCES = transfertest.cc
-transfertest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS)
-transfertest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
+transfertest_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)
+transfertest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)
+transfertest_LDADD =				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 
 galerkintest_SOURCES = galerkintest.cc anisotropic.hh
-galerkintest_CXXFLAGS = $(AM_CPPFLAGS)  $(MPI_CPPFLAGS)
-galerkintest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
+galerkintest_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)
+galerkintest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)
+galerkintest_LDADD =				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 
 hierarchytest_SOURCES = hierarchytest.cc anisotropic.hh
-hierarchytest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS)
-hierarchytest_LDADD =  $(AM_LIBS) $(MPI_LIBS)
-hierarchytest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS)
+hierarchytest_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)
+hierarchytest_LDADD =				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
+hierarchytest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)
 
 amgtest_SOURCES = amgtest.cc
 amgtest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 amgtest_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
-amgtest_LDADD = $(SUPERLU_LIBS)
+amgtest_LDADD =					\
+	$(SUPERLU_LIBS)				\
+	$(LDADD)
 
 pamgtest_SOURCES = parallelamgtest.cc
-pamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CPPFLAGS) $(SUPERLU_CPPFLAGS) $(PARMETIS_CPPFLAGS)
-pamgtest_LDFLAGS = $(AM_LDFLAGS) $(MPI_LDFLAGS) $(PARMETIS_LDFLAGS)
-pamgtest_LDADD = $(MPI_LIBS)  $(PARMETIS_LIBS) $(SUPERLU_LIBS)
+pamgtest_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)			\
+	$(SUPERLU_CPPFLAGS)			\
+	$(PARMETIS_CPPFLAGS)
+pamgtest_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)			\
+	$(PARMETIS_LDFLAGS)
+pamgtest_LDADD =				\
+	$(PARMETIS_LIBS)			\
+	$(SUPERLU_LIBS)				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 
 include $(top_srcdir)/am/global-rules
