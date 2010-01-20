@@ -500,6 +500,29 @@ namespace Dune
     };
 
     /**
+     * @brief Identifiers for the different accumulation modes.
+     */
+    enum AccumulationMode {
+      /**
+       * @brief No data accumulution.
+       *
+       * The coarse level data will be distributed to all processes.
+       */
+      noAccu = 0,
+      /**
+       * @brief Accumulate data to on process at once
+       *
+       * Once no further coarsening is possible all data will be accumulated to one process
+       */
+      atOnceAccu=1,
+      /**
+       * @brief Successively accumulate to fewer processes.
+       */
+      successiveAccu=2
+    };
+
+
+    /**
      * @brief The criterion describing the stop criteria for the coarsening process.
      */
     template<class T>
@@ -564,18 +587,21 @@ namespace Dune
       /**
        * @brief Whether the data should be accumulated on fewer processes on coarser levels.
        */
-      bool accumulate() const
+      AccumulationMode accumulate() const
       {
         return accumulate_;
       }
       /**
        * @brief Set whether he data should be accumulated on fewer processes on coarser levels.
        */
-      void setAccumulate(bool accu)
+      void setAccumulate(AccumulationMode accu)
       {
         accumulate_=accu;
       }
 
+      void setAccumulate(bool accu){
+        accumulate_=accu ? successiveAccu : noAccu;
+      }
       /**
        * @brief Set the damping factor for the prolongation.
        *
@@ -597,7 +623,7 @@ namespace Dune
       }
       /**
        * @brief Constructor
-       * @param maxLevel The macimum number of levels allowed in the matric hierarchy (default: 100).
+       * @param maxLevel The maximum number of levels allowed in the matrix hierarchy (default: 100).
        * @param coarsenTarget If the number of nodes in the matrix is below this threshold the
        * coarsening will stop (default: 1000).
        * @param minCoarsenRate If the coarsening rate falls below this threshold the
@@ -606,7 +632,7 @@ namespace Dune
        * @param accumulate Whether to accumulate the data onto fewer processors on coarser levels.
        */
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
-                       double prolongDamp=1.6, bool accumulate=true)
+                       double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
         : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate),
           dampingFactor_(prolongDamp), accumulate_( accumulate)
       {}
@@ -632,7 +658,7 @@ namespace Dune
        * @brief Whether the data should be agglomerated to fewer processor on
        * coarser levels.
        */
-      bool accumulate_;
+      AccumulationMode accumulate_;
     };
 
     template<typename M, typename C1>
@@ -753,9 +779,15 @@ namespace Dune
         MatrixOperator* matrix=&(*mlevel);
         ParallelInformation* info =&(*infoLevel);
 
-#ifdef HAVE_PARMETIS
-
-        if(criterion.accumulate() && infoLevel->communicator().size()>1 &&
+        if((
+#ifdef ENABLE_PARMETIS
+             (HAVE_PARMETIS && criterion.accumulate()==successiveAccu)
+#else
+             false
+#endif
+             || (criterion.accumulate()==atOnceAccu
+                 && unknowns < 30*infoLevel->communicator().size()))
+           && infoLevel->communicator().size()>1 &&
            unknowns/infoLevel->communicator().size() <= criterion.coarsenTarget())
         {
           // accumulate to fewer processors
@@ -777,6 +809,7 @@ namespace Dune
                      <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
           MatrixArgs args(*redistMat, *redistComm);
           mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
+          assert(mlevel.isRedistributed());
           infoLevel.addRedistributed(redistComm);
           infoLevel->freeGlobalLookup();
 
@@ -789,7 +822,6 @@ namespace Dune
           info = &(infoLevel.getRedistributed());
           info->buildGlobalLookup(matrix->getmat().N());
         }
-#endif
 
         rank = info->communicator().rank();
         procs = info->communicator().size();
@@ -977,9 +1009,10 @@ namespace Dune
       if(criterion.accumulate() && !redistributes_.back().isSetup() &&
          infoLevel->communicator().size()>1) {
 #if HAVE_MPI && !HAVE_PARMETIS
-        if(infoLevel->communicator().rank()==0)
+        if(criterion.accumulate()==successiveAccu &&
+           infoLevel->communicator().rank()==0)
           std::cerr<<"Successive accumulation of data on coarse levels only works with ParMETIS installed."
-                   <<"  Fell back accumulation to one domain on coarsest level"<<std::endl;
+                   <<"  Fell back to accumulation to one domain on coarsest level"<<std::endl;
 #endif
 
         // accumulate to fewer processors
