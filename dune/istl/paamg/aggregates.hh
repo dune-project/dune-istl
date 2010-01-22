@@ -476,7 +476,7 @@ namespace Dune
        * @brief The allocator we use for our lists and the
        * set.
        */
-      typedef std::allocator<VertexDescriptor> Allocator;
+      typedef PoolAllocator<VertexDescriptor,100> Allocator;
 
       /**
        * @brief The type of a single linked list of vertex
@@ -689,7 +689,7 @@ namespace Dune
        * @brief The allocator we use for our lists and the
        * set.
        */
-      typedef std::allocator<Vertex> Allocator;
+      typedef PoolAllocator<Vertex,100> Allocator;
 
       /**
        * @brief The type of a single linked list of vertex
@@ -844,7 +844,7 @@ namespace Dune
        * @brief The allocator we use for our lists and the
        * set.
        */
-      typedef std::allocator<Vertex> Allocator;
+      typedef PoolAllocator<Vertex,100> Allocator;
 
       /**
        * @brief The single linked list we use.
