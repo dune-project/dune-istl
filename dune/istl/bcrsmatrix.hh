@@ -14,6 +14,7 @@
 #include "istlexception.hh"
 #include "allocator.hh"
 #include "bvector.hh"
+#include <dune/common/shared_ptr.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
@@ -443,7 +444,7 @@ namespace Dune {
     //! an empty matrix
     BCRSMatrix ()
       : build_mode(unknown), ready(notbuilt), n(0), m(0), nnz(0),
-        r(0), a(0), j(0)
+        r(0), a(0)
     {}
 
     //! matrix with known number of nonzeroes
@@ -479,6 +480,7 @@ namespace Dune {
           _nnz += Mat.r[i].getsize();
       }
 
+      j = Mat.j; // enable column index sharing, release array in case of row-wise allocation
       allocate(Mat.n, Mat.m, _nnz);
 
       // build window structure
@@ -553,7 +555,8 @@ namespace Dune {
           nnz += Mat.r[i].getsize();
       }
 
-      // allocate a,j
+      // allocate a, share j
+      j = Mat.j;
       allocate(Mat.n, Mat.m, nnz, n!=Mat.n);
 
       // build window structure
@@ -576,7 +579,7 @@ namespace Dune {
     public:
       //! constructor
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
-        : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j, 0)
+        : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j.get(), 0)
       {
         if (i==0 && Mat.ready)
           DUNE_THROW(ISTLError,"creation only allowed for uninitialized matrix");
@@ -785,7 +788,7 @@ namespace Dune {
       // initialize j array with m (an invalid column index)
       // this indicates an unused entry
       for (size_type k=0; k<nnz; k++)
-        j[k] = m;
+        j.get()[k] = m;
       ready = rowSizesBuilt;
     }
 
@@ -1252,11 +1255,14 @@ namespace Dune {
 
     // dynamically allocated memory
     B*   a;      // [nnz] non-zero entries of the matrix in row-wise ordering
-    size_type* j;      // [nnz] column indices of entries
+    // If a single array of column indices is used, it can be shared
+    // between different matrices with the same sparsity pattern
+    Dune::shared_ptr<size_type> j;  // [nnz] column indices of entries
+
 
     void setWindowPointers(ConstRowIterator row)
     {
-      row_type current_row(a,j,0); // Pointers to current row data
+      row_type current_row(a,j.get(),0); // Pointers to current row data
       for (size_type i=0; i<n; i++, ++row) {
         // set row i
         size_type s = row->getsize();
@@ -1298,7 +1304,7 @@ namespace Dune {
       if (nnz>0)
       {
         // a,j have been allocated as one long vector
-        A::template free<size_type>(j);
+        j.reset();
         A::template free<B>(a);
       }
       else
@@ -1319,6 +1325,12 @@ namespace Dune {
       ready=notbuilt;
 
     }
+
+    struct Deallocator
+    {
+      void operator()(size_type* p) const { A::template free<size_type>(p); }
+    };
+
 
     /**
      *  @brief Allocate memory for the matrix structure
@@ -1357,10 +1369,12 @@ namespace Dune {
       // allocate a and j array
       if (nnz>0) {
         a = A::template malloc<B>(nnz);
-        j = A::template malloc<size_type>(nnz);
+        // allocate column indices only if not yet present (enable sharing)
+        if (!j.get())
+          j.reset(A::template malloc<size_type>(nnz),Deallocator());
       }else{
         a = 0;
-        j = 0;
+        j.reset();
       }
       // Mark the matrix as not built.
       ready = notbuilt;
