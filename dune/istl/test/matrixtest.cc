@@ -244,7 +244,18 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 int main()
 {
   // ////////////////////////////////////////////////////////////
-  //   Test the Matrix class -- a dense dynamic matrix
+  //   Test the Matrix class -- a scalar dense dynamic matrix
+  // ////////////////////////////////////////////////////////////
+
+  Matrix<FieldMatrix<double,1,1> > matrixScalar(10,10);
+  for (int i=0; i<10; i++)
+    for (int j=0; j<10; j++)
+      matrixScalar[i][j] = (i+j)/((double)(i*j));        // just anything
+
+  testSuperMatrix(matrixScalar);
+
+  // ////////////////////////////////////////////////////////////
+  //   Test the Matrix class -- a block-valued dense dynamic matrix
   // ////////////////////////////////////////////////////////////
 
   Matrix<FieldMatrix<double,3,3> > matrix(10,10);
@@ -314,6 +325,18 @@ int main()
       fMatrix[i][j] = (i+j)/3;        // just anything
   FieldVector<double,4> fvX;
   FieldVector<double,4> fvY;
+
+  testMatrix(fMatrix, fvX, fvY);
+
+  // ////////////////////////////////////////////////////////////////////////
+  //   Test the 1x1 specialization of the FieldMatrix class
+  // ////////////////////////////////////////////////////////////////////////
+
+  FieldMatrix<double,1,1> fMatrix1x1;
+  fMatrix1x1[0][0] = 2.3;    // just anything
+
+  FieldVector<double,1> fvX1;
+  FieldVector<double,1> fvY1;
 
   testMatrix(fMatrix, fvX, fvY);
 
