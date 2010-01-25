@@ -8,6 +8,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
 #include <dune/istl/bdmatrix.hh>
+#include <dune/istl/btdmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include <dune/istl/diagonalmatrix.hh>
 
@@ -238,8 +239,29 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
 }
 
+// ///////////////////////////////////////////////////////////////////
+//   Test the solve()-method for those matrix classes that have it
+// ///////////////////////////////////////////////////////////////////
+template <class MatrixType, class VectorType>
+void testSolve(const MatrixType& matrix)
+{
+  // create some right hand side
+  VectorType b(matrix.N());
+  for (int i=0; i<b.size(); i++)
+    b[i] = i;
 
+  // solution vector
+  VectorType x(matrix.M());
 
+  // Solve the system
+  matrix.solve(x,b);
+
+  // compute residual
+  matrix.mmv(x,b);
+
+  if (b.two_norm() > 1e-10)
+    DUNE_THROW(ISTLError, "Solve() method doesn't appear to produce the solution!");
+}
 
 int main()
 {
@@ -313,6 +335,24 @@ int main()
   bdMatrix = 4.0;
 
   testSuperMatrix(bdMatrix);
+
+  // ////////////////////////////////////////////////////////////////////////
+  //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
+  // ////////////////////////////////////////////////////////////////////////
+
+  BTDMatrix<FieldMatrix<double,1,1> > btdMatrix(4);
+  btdMatrix = 4.0;
+
+  testSuperMatrix(btdMatrix);
+
+  btdMatrix = 0.0;
+  for (int i=0; i<btdMatrix.N(); i++)    // diagonal
+    btdMatrix[i][i] = 1+i;
+
+  for (int i=0; i<btdMatrix.N()-1; i++)
+    btdMatrix[i][i+1] = 2+i;               // first off-diagonal
+
+  testSolve<BTDMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(btdMatrix);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the FieldMatrix class
