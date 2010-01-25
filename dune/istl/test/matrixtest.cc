@@ -8,6 +8,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
 #include <dune/istl/bdmatrix.hh>
+#include <dune/istl/btdmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include <dune/istl/diagonalmatrix.hh>
 
@@ -313,6 +314,15 @@ int main()
   bdMatrix = 4.0;
 
   testSuperMatrix(bdMatrix);
+
+  // ////////////////////////////////////////////////////////////////////////
+  //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
+  // ////////////////////////////////////////////////////////////////////////
+
+  BTDMatrix<FieldMatrix<double,1,1> > btdMatrix(4);
+  btdMatrix = 4.0;
+
+  testSuperMatrix(btdMatrix);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the FieldMatrix class
