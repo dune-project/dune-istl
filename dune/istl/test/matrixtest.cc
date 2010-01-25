@@ -239,8 +239,29 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
 }
 
+// ///////////////////////////////////////////////////////////////////
+//   Test the solve()-method for those matrix classes that have it
+// ///////////////////////////////////////////////////////////////////
+template <class MatrixType, class VectorType>
+void testSolve(const MatrixType& matrix)
+{
+  // create some right hand side
+  VectorType b(matrix.N());
+  for (int i=0; i<b.size(); i++)
+    b[i] = i;
 
+  // solution vector
+  VectorType x(matrix.M());
 
+  // Solve the system
+  matrix.solve(x,b);
+
+  // compute residual
+  matrix.mmv(x,b);
+
+  if (b.two_norm() > 1e-10)
+    DUNE_THROW(ISTLError, "Solve() method doesn't appear to produce the solution!");
+}
 
 int main()
 {
@@ -323,6 +344,15 @@ int main()
   btdMatrix = 4.0;
 
   testSuperMatrix(btdMatrix);
+
+  btdMatrix = 0.0;
+  for (int i=0; i<btdMatrix.N(); i++)    // diagonal
+    btdMatrix[i][i] = 1+i;
+
+  for (int i=0; i<btdMatrix.N()-1; i++)
+    btdMatrix[i][i+1] = 2+i;               // first off-diagonal
+
+  testSolve<BTDMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(btdMatrix);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the FieldMatrix class
