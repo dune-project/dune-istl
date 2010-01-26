@@ -7,7 +7,7 @@
 #include <dune/istl/indexset.hh>
 #include <dune/istl/plocalindex.hh>
 #include <iostream>
-#include "mpi.h"
+#include "dune/common/mpihelper.hh"
 #include "buildindexset.hh"
 #include "reverse.hh"
 
@@ -15,15 +15,13 @@ int main(int argc, char **argv)
 {
   // This is a parallel programm so we need to
   // initialize mpi first.
-  MPI_Init(&argc, &argv);
+  Dune::MPIHelper& helper = Dune::MPIHelper::instance(argc, argv);
 
   // The number of processes
-  int size;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int size = helper.size();
 
   // The rank of our process
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int rank = helper.rank();
 
   // The type used as the local index
   typedef Dune::ParallelLocalIndex<Flag> LocalIndex;
@@ -38,7 +36,7 @@ int main(int argc, char **argv)
   // The index set
   ParallelIndexSet indexSet;
 
-  build(indexSet);
+  build(helper, indexSet);
 
   // Print the index set
   std::cout<<indexSet<<std::endl;
@@ -50,13 +48,11 @@ int main(int argc, char **argv)
   if(rank==0)
     std::cout<<"Reordered lcoal indices:"<<std::endl;
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  // Wait for all processes
+  helper.getCollectiveCommunication().barrier();
 
   std::cout<<indexSet<<std::endl;
   // Assign new local indices
-
-  // Let MPI do a cleanup
-  MPI_Finalize();
 
   return 0;
 }

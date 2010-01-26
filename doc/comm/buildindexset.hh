@@ -7,7 +7,6 @@
 
 #include <dune/istl/indexset.hh>
 #include <dune/istl/plocalindex.hh>
-#include "mpi.h"
 
 /**
  * @brief Flag for marking the indices.
@@ -21,17 +20,15 @@ typedef Dune::ParallelLocalIndex<Flag> LocalIndex;
  * @brief Add indices to the example index set.
  * @param indexSet The index set to build.
  */
-template<class TG, int N>
-void build(Dune::ParallelIndexSet<TG,LocalIndex,N>& indexSet)
+template<class C, class TG, int N>
+void build(C& comm, Dune::ParallelIndexSet<TG,LocalIndex,N>& indexSet)
 {
   //
   // The number of processes
-  int size;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int size=comm.size();
 
   // The rank of our process
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int rank=comm.rank();
 
   // Indicate that we add or remove indices.
   indexSet.beginResize();
