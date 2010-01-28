@@ -622,7 +622,7 @@ namespace Dune {
       }
 
       /**
-       * @brief offset from the fist entry.
+       * @brief offset from the first entry.
        *
        * An iterator positioned at the beginning
        * has to be increment this amount of times to
