@@ -316,8 +316,11 @@ namespace Dune
       /** @brief The type of the redistribute information. */
       typedef RedistributeInformation<ParallelInformation> RedistributeInfoType;
 
+      /** @brief Allocator for RedistributeInfoType. */
+      typedef typename Allocator::template rebind<RedistributeInfoType>::other RILAllocator;
+
       /** @brief The type of the list of redistribute information. */
-      typedef std::list<RedistributeInfoType,AAllocator> RedistributeInfoList;
+      typedef std::list<RedistributeInfoType,RILAllocator> RedistributeInfoList;
 
       /**
        * @brief Constructor
