@@ -45,7 +45,7 @@ void testCoarsenIndices(int N)
 
   BCRSMat mat = setupAnisotropic2d<BS>(N, indices, cc, &n);
 
-  pinfo.remoteIndices().rebuild<false>();
+  pinfo.remoteIndices().template rebuild<false>();
 
   typedef Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
   typedef Dune::Amg::SubGraph<Dune::Amg::MatrixGraph<BCRSMat>,std::vector<bool> > SubGraph;

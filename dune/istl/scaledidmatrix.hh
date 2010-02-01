@@ -328,7 +328,7 @@ namespace Dune {
     //! frobenius norm: sqrt(sum over squared values of entries)
     double frobenius_norm () const
     {
-      return std::sqrt(n*p_*p_);
+      return fvmeta::sqrt(n*p_*p_);
     }
 
     //! square of frobenius norm, need for block recursion
@@ -340,13 +340,13 @@ namespace Dune {
     //! infinity norm (row sum norm, how to generalize for blocks?)
     double infinity_norm () const
     {
-      return std::fabs(p_);
+      return std::abs(p_);
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     double infinity_norm_real () const
     {
-      return fvmeta_absreal(p_);
+      return fvmeta::absreal(p_);
     }
 
     //===== solve

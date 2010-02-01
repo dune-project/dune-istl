@@ -336,7 +336,7 @@ namespace Dune
       }
       // unpack overlap vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
-      typename std::set<GI>::const_iterator ipos = overlapVec.begin();
+      typename std::set<GI>::iterator ipos = overlapVec.begin();
       for(; size>0; --size) {
         GI gi;
         MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
@@ -346,7 +346,7 @@ namespace Dune
       int s;
       MPI_Unpack(recvBuf, bufferSize, &pos, &s, 1, MPI_INT, comm);
 
-      typename std::set<int>::const_iterator npos = neighbors.begin();
+      typename std::set<int>::iterator npos = neighbors.begin();
       for(; s>0; --s) {
         int n;
         MPI_Unpack(recvBuf, bufferSize, &pos, &n, 1, MPI_INT, comm);
