@@ -672,7 +672,7 @@ namespace Dune
       typedef typename T::ParallelIndexSet::const_iterator ConstIterator;
       ConstIterator end = pinfo.indexSet().end();
       typedef typename M::block_type Block;
-      Block identity=0;
+      Block identity=Block(0.0);
       for(typename Block::RowIterator b=identity.begin(); b !=  identity.end(); ++b)
         b->operator[](b.index())=1.0;
 

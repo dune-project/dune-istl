@@ -81,7 +81,7 @@ namespace Dune
     template<class M>
     struct mm_header_printer;
 
-    template<typename T, typename A, size_t i, size_t j>
+    template<typename T, typename A, int i, int j>
     struct mm_header_printer<BCRSMatrix<FieldMatrix<T,i,j>,A> >
     {
       static void print(std::ostream& os)
@@ -91,7 +91,7 @@ namespace Dune
       }
     };
 
-    template<typename T, size_t i, size_t j>
+    template<typename T, int i, int j>
     struct mm_header_printer<FieldMatrix<T,i,j> >
     {
       static void print(std::ostream& os)
@@ -112,7 +112,7 @@ namespace Dune
     template<class M>
     struct mm_block_structure_header;
 
-    template<typename T, typename A, size_t i, size_t j>
+    template<typename T, typename A, int i, int j>
     struct mm_block_structure_header<BCRSMatrix<FieldMatrix<T,i,j>,A> >
     {
       typedef BCRSMatrix<FieldMatrix<T,i,j>,A> M;
@@ -124,7 +124,7 @@ namespace Dune
       }
     };
 
-    template<typename T, size_t i, size_t j>
+    template<typename T, int i, int j>
     struct mm_block_structure_header<FieldMatrix<T,i,j> >
     {
       typedef FieldMatrix<T,i,j> M;
