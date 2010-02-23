@@ -3,7 +3,7 @@
 #ifndef DUNE_SUPERLUMATRIX_HH
 #define DUNE_SUPERLUMATRIX_HH
 
-#ifdef HAVE_SUPERLU
+#if HAVE_SUPERLU
 #ifdef SUPERLU_POST_2005_VERSION
 #include "slu_ddefs.h"
 #else

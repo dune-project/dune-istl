@@ -26,7 +26,7 @@ namespace Dune
    * @author Markus Blatt
    * @brief Contains one level overlapping Schwarz preconditioners
    */
-#ifdef HAVE_SUPERLU
+#if HAVE_SUPERLU
 
   /**
    * @brief Initializer for SuperLU Matrices representing the subdomains.
