@@ -246,6 +246,11 @@ namespace Dune
     template<class M, class X, class S, class P, class A>
     void AMG<M,X,S,P,A>::pre(Domain& x, Range& b)
     {
+      if(smoothers_.levels()>0)
+        smoothers_.finest()->pre(x,b);
+      else
+        // No smoother to make x consistent! Do it by hand
+        matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
       Range* copy = new Range(b);
       rhs_ = new Hierarchy<Range,A>(*copy);
       Domain* dcopy = new Domain(x);
@@ -269,9 +274,6 @@ namespace Dune
         assert(lhs_->levels()==rhs_->levels());
         assert(smoothers_.levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
         assert(smoothers_.levels()+1==lhs_->levels() || matrices_->levels()<matrices_->maxlevels());
-
-        if(rhs!=rhs_->coarsest() || matrices_->levels()<matrices_->maxlevels())
-          smoother->pre(*lhs,*rhs);
 
         if(smoother!=coarsest)
           for(++smoother, ++lhs, ++rhs; smoother != coarsest; ++smoother, ++lhs, ++rhs)

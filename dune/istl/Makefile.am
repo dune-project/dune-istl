@@ -8,7 +8,8 @@ istl_HEADERS = allocator.hh basearray.hh bcrsmatrix.hh bvector.hh gsetc.hh io.hh
 	interface.hh indicessyncer.hh matrixindexset.hh selection.hh plocalindex.hh localindex.hh scalarproducts.hh \
 	solvercategory.hh bdmatrix.hh matrixutils.hh schwarz.hh owneroverlapcopy.hh matrix.hh supermatrix.hh superlu.hh \
 	pardiso.hh overlappingschwarz.hh scaledidmatrix.hh diagonalmatrix.hh btdmatrix.hh \
-	matrixmatrix.hh repartition.hh matrixredistribute.hh
+	matrixmatrix.hh repartition.hh matrixredistribute.hh \
+	matrixmarket.hh
 
 
 include $(top_srcdir)/am/global-rules

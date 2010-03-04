@@ -704,8 +704,8 @@ namespace Dune {
       // r = r - Ax; rt = r
       res.clear();              // clear solver statistics
       Timer watch;              // start a timer
-      _op.applyscaleadd(-1,x,r); // overwrite b with defect
       _prec.pre(x,r);           // prepare preconditioner
+      _op.applyscaleadd(-1,x,r); // overwrite b with defect
 
       rt=r;
 
