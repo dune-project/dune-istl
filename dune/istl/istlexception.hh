@@ -3,8 +3,6 @@
 #ifndef DUNE_ISTLEXC_HH
 #define DUNE_ISTLEXC_HH
 
-#include <stdlib.h>
-
 #include <dune/common/exceptions.hh>
 
 namespace Dune {
