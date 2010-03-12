@@ -18,7 +18,7 @@ namespace Dune
   /**
    * @file
    * @brief Provides classes for building the communication
-   * interface between remote inidices.
+   * interface between remote indices.
    * @author Markus Blatt
    */
 
