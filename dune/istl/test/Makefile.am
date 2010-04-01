@@ -18,7 +18,7 @@ if PARDISO
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = matrixutilstest matrixtest bvectortest \
+NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest vbvectortest \
 	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest
 
 # list of tests to run (indicestest is special case)
@@ -46,9 +46,13 @@ if PARDISO
   test_pardiso_LDADD = $(PARDISO_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS)
 endif
 
+basearraytest_SOURCES = basearraytest.cc
+
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
 bvectortest_SOURCES = bvectortest.cc
+
+vbvectortest_SOURCES = vbvectortest.cc
 
 matrixutilstest_SOURCES = matrixutilstest.cc laplacian.hh
 
