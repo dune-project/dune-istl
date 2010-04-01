@@ -17,5 +17,5 @@ AC_DEFUN([DUNE_ISTL_CHECKS],
 
 AC_DEFUN([DUNE_ISTL_CHECK_MODULE],
 [
-    DUNE_CHECK_MODULES([dune-istl], [istl/allocator.hh])
+    DUNE_CHECK_MODULES([dune-istl], [istl/istlexception.hh])
 ])

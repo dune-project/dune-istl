@@ -3,6 +3,8 @@
 #ifndef DUNE_BLOCK_DIAGONAL_MATRIX_HH
 #define DUNE_BLOCK_DIAGONAL_MATRIX_HH
 
+#include <memory>
+
 #include <dune/istl/bcrsmatrix.hh>
 
 /** \file
@@ -20,7 +22,7 @@ namespace Dune {
      \todo It would be safer and more efficient to have a real implementation of
      a block-diagonal matrix and not just subclassing from BCRSMatrix.  But that's
      quite a lot of work for that little advantage.*/
-  template <class B, class A=ISTLAllocator>
+  template <class B, class A=std::allocator<B> >
   class BDMatrix : public BCRSMatrix<B,A>
   {
   public:

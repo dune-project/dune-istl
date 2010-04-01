@@ -3,6 +3,8 @@
 #ifndef DUNE_ALLOCATOR_HH
 #define DUNE_ALLOCATOR_HH
 
+#warning The header file allocator.hh is deprecated.  Please use std::allocator instead of ISTLAllocator!
+
 #include <cstddef>
 #include <cstdlib>
 

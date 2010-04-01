@@ -6,9 +6,9 @@
 #include <cmath>
 #include <complex>
 #include <iostream>
+#include <memory>
 
 #include "istlexception.hh"
-#include "allocator.hh"
 #include "bvector.hh"
 
 /** \file
@@ -32,7 +32,7 @@ namespace Dune {
           VariableBlockVector is a container of containers!
 
    */
-  template<class B, class A=ISTLAllocator>
+  template<class B, class A=std::allocator<B> >
   class VariableBlockVector : public block_vector_unmanaged<B,A>
                               // this derivation gives us all the blas level 1 and norms
                               // on the large array. However, access operators have to be
@@ -88,7 +88,8 @@ namespace Dune {
       nblocks = _nblocks;
       if (nblocks>0)
       {
-        block = A::template malloc<window_type>(nblocks);
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
       }
       else
       {
@@ -102,7 +103,10 @@ namespace Dune {
     }
 
     /** make vector with given number of blocks each having a constant size,
-            object is fully usable then
+            object is fully usable then.
+
+            \param _nblocks Number of blocks
+            \param m Number of elements in each block
      */
     VariableBlockVector (int _nblocks, int m) : block_vector_unmanaged<B,A>()
     {
@@ -110,7 +114,8 @@ namespace Dune {
       this->n = _nblocks*m;
       if (this->n>0)
       {
-        this->p = A::template malloc<B>(this->n);
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
       }
       else
       {
@@ -122,8 +127,9 @@ namespace Dune {
       nblocks = _nblocks;
       if (nblocks>0)
       {
-        // alloc
-        block = A::template malloc<window_type>(nblocks);
+        // allocate and construct the windows
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
 
         // set the windows into the big array
         for (int i=0; i<nblocks; ++i)
@@ -146,8 +152,9 @@ namespace Dune {
       this->n = a.n;
       if (this->n>0)
       {
-        // alloc
-        this->p = A::template malloc<B>(this->n);
+        // allocate and construct objects
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
 
         // copy data
         for (int i=0; i<this->n; i++) this->p[i]=a.p[i];
@@ -163,7 +170,8 @@ namespace Dune {
       if (nblocks>0)
       {
         // alloc
-        block = A::template malloc<window_type>(nblocks);
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
 
         // and we must set the windows
         block[0].set(a.block[0].getsize(),this->p);           // first block
@@ -183,17 +191,38 @@ namespace Dune {
     //! free dynamic memory
     ~VariableBlockVector ()
     {
-      if (this->n>0) A::template free<B>(this->p);
-      if (nblocks>0) A::template free<window_type>(block);
+      if (this->n>0) {
+        int i=this->n;
+        while (i)
+          this->p[--i].~B();
+        allocator_.deallocate(this->p,1);
+      }
+      if (nblocks>0) {
+        int i=nblocks;
+        while (i)
+          block[--i].~window_type();
+        windowAllocator_.deallocate(block,1);
+      }
+
     }
 
 
     //! same effect as constructor with same argument
     void resize (int _nblocks)
     {
-      // deallocate memory if necessary
-      if (this->n>0) A::template free<B>(this->p);
-      if (nblocks>0) A::template free<window_type>(block);
+      // deconstruct objects and deallocate memory if necessary
+      if (this->n>0) {
+        int i=this->n;
+        while (i)
+          this->p[--i].~B();
+        allocator_.deallocate(this->p,1);
+      }
+      if (nblocks>0) {
+        int i=nblocks;
+        while (i)
+          block[--i].~window_type();
+        windowAllocator_.deallocate(block,1);
+      }
       this->n = 0;
       this->p = 0;
 
@@ -201,7 +230,8 @@ namespace Dune {
       nblocks = _nblocks;
       if (nblocks>0)
       {
-        block = A::template malloc<window_type>(nblocks);
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
       }
       else
       {
@@ -216,15 +246,26 @@ namespace Dune {
     //! same effect as constructor with same argument
     void resize (int _nblocks, int m)
     {
-      // deallocate memory if necessary
-      if (this->n>0) A::template free<B>(this->p);
-      if (nblocks>0) A::template free<window_type>(block);
+      // deconstruct objects and deallocate memory if necessary
+      if (this->n>0) {
+        int i=this->n;
+        while (i)
+          this->p[--i].~B();
+        allocator_.deallocate(this->p,1);
+      }
+      if (nblocks>0) {
+        int i=nblocks;
+        while (i)
+          block[--i].~window_type();
+        windowAllocator_.deallocate(block,1);
+      }
 
       // and we can allocate the big array in the base class
       this->n = _nblocks*m;
       if (this->n>0)
       {
-        this->p = A::template malloc<B>(this->n);
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
       }
       else
       {
@@ -236,8 +277,9 @@ namespace Dune {
       nblocks = _nblocks;
       if (nblocks>0)
       {
-        // alloc
-        block = A::template malloc<window_type>(nblocks);
+        // allocate and construct objects
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
 
         // set the windows into the big array
         for (int i=0; i<nblocks; ++i)
@@ -262,16 +304,27 @@ namespace Dune {
         // Note: still the block sizes may vary !
         if (this->n!=a.n || nblocks!=a.nblocks)
         {
-          // deallocate memory if necessary
-          if (this->n>0) A::template free<B>(this->p);
-          if (nblocks>0) A::template free<window_type>(block);
+          // deconstruct objects and deallocate memory if necessary
+          if (this->n>0) {
+            int i=this->n;
+            while (i)
+              this->p[--i].~B();
+            allocator_.deallocate(this->p,1);
+          }
+          if (nblocks>0) {
+            int i=nblocks;
+            while (i)
+              block[--i].~window_type();
+            windowAllocator_.deallocate(block,1);
+          }
 
           // allocate the big array in the base class
           this->n = a.n;
           if (this->n>0)
           {
-            // alloc
-            this->p = A::template malloc<B>(this->n);
+            // allocate and construct objects
+            this->p = allocator_.allocate(this->n);
+            new (this->p)B[this->n];
           }
           else
           {
@@ -284,7 +337,8 @@ namespace Dune {
           if (nblocks>0)
           {
             // alloc
-            block = A::template malloc<window_type>(nblocks);
+            block = windowAllocator_.allocate(nblocks);
+            new (block) window_type[nblocks];
           }
           else
           {
@@ -361,8 +415,9 @@ namespace Dune {
           v.n = n;
           if (n>0)
           {
-            // alloc
-            v.p = A::template malloc<B>(n);
+            // allocate and construct objects
+            v.p = v.allocator_.allocate(n);
+            new (v.p)B[n];
           }
           else
           {
@@ -702,6 +757,10 @@ namespace Dune {
     int nblocks;            // number of blocks in vector
     window_type* block;     // array of blocks pointing to the array in the base class
     bool initialized;       // true if vector has been initialized
+
+    A allocator_;
+
+    typename A::template rebind<window_type>::other windowAllocator_;
   };
 
 

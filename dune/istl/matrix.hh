@@ -8,6 +8,8 @@
  */
 
 #include <vector>
+#include <memory>
+
 #include <dune/istl/bvector.hh>
 
 namespace Dune {
@@ -21,7 +23,7 @@ namespace Dune {
       That makes the code fairly simple, as we get all iterators for free.
       However, it is not the best way as far as efficiency is concerned.
    */
-  template<class T, class A=ISTLAllocator>
+  template<class T, class A=std::allocator<T> >
   class Matrix
   {
   public:
@@ -575,7 +577,7 @@ namespace Dune {
 
   protected:
 
-    BlockVector<row_type, allocator_type> data_;
+    BlockVector<row_type, typename allocator_type::template rebind<row_type>::other> data_;
 
     size_type cols_;
   };

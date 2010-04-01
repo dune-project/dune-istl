@@ -12,14 +12,12 @@
 #include <vector>
 
 #include "istlexception.hh"
-#include "allocator.hh"
 #include "bvector.hh"
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
-#include <dune/common/poolallocator.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -176,7 +174,7 @@ namespace Dune {
      B[3][3] = 8;
      \endcode
    */
-  template<class B, class A=ISTLAllocator>
+  template<class B, class A=std::allocator<B> >
   class BCRSMatrix
   {
     friend class MatrixDimension<BCRSMatrix>;
@@ -544,9 +542,13 @@ namespace Dune {
       deallocate(false);
 
       // reallocate the rows if required
-      if (n>0 && n!=Mat.n)
+      if (n>0 && n!=Mat.n) {
         // free rows
-        A::template free<row_type>(r);
+        int i=n;
+        while (i)
+          r[--i].~row_type();
+        rowAllocator_.deallocate(r,1);
+      }
 
       nnz=Mat.nnz;
       if (nnz<=0)
@@ -626,8 +628,10 @@ namespace Dune {
           }else{
             // memory is allocated individually per row
             // allocate and set row i
-            B*   a = A::template malloc<B>(s);
-            size_type* j = A::template malloc<size_type>(s);
+            B*   a = Mat.allocator_.allocate(s);
+            new (a) B[s];
+            size_type* j = Mat.sizeAllocator_.allocate(s);
+            new (j) size_type[s];
             Mat.r[i].set(s,a,j);
           }
         }else
@@ -705,7 +709,7 @@ namespace Dune {
       size_type nnz;             // count total number of nonzeros
       typedef std::set<size_type,std::less<size_type> > PatternType;
       PatternType pattern;     // used to compile entries in a row
-      row_type current_row;     // row poiting to the current row to setup
+      row_type current_row;     // row pointing to the current row to setup
     };
 
     //! allow CreateIterator to access internal data
@@ -1244,6 +1248,13 @@ namespace Dune {
     BuildMode build_mode;     // row wise or whole matrix
     BuildStage ready;               // indicate the stage the matrix building is in
 
+    // The allocator used for memory management
+    A allocator_;
+
+    typename A::template rebind<row_type>::other rowAllocator_;
+
+    typename A::template rebind<size_type>::other sizeAllocator_;
+
     // size of the matrix
     size_type n;       // number of rows
     size_type m;       // number of columns
@@ -1305,7 +1316,10 @@ namespace Dune {
       {
         // a,j have been allocated as one long vector
         j.reset();
-        A::template free<B>(a);
+        int i=nnz;
+        while (i)
+          a[--i].~B();
+        allocator_.deallocate(a,1);
       }
       else
       {
@@ -1313,22 +1327,40 @@ namespace Dune {
         for (size_type i=0; i<n; i++)
           if (r[i].getsize()>0)
           {
-            A::template free<size_type>(r[i].getindexptr());
-            A::template free<B>(r[i].getptr());
+            int j=r[i].getsize();
+            while (j) {
+              r[i].getindexptr()[--j].~size_type();
+              r[i].getptr()[j].~B();
+            }
+            sizeAllocator_.deallocate(r[i].getindexptr(),1);
+            allocator_.deallocate(r[i].getptr(),1);
           }
       }
 
       // deallocate the rows
-      if (n>0 && deallocateRows) A::template free<row_type>(r);
+      if (n>0 && deallocateRows) {
+        int i=n;
+        while (i)
+          r[--i].~row_type();
+        rowAllocator_.deallocate(r,1);
+      }
 
       // Mark matrix as not built at all.
       ready=notbuilt;
 
     }
 
-    struct Deallocator
+    /** \brief Class used by shared_ptr to deallocate memory using the proper allocator */
+    class Deallocator
     {
-      void operator()(size_type* p) const { A::template free<size_type>(p); }
+      typename A::template rebind<size_type>::other& sizeAllocator_;
+
+    public:
+      Deallocator(typename A::template rebind<size_type>::other& sizeAllocator)
+        : sizeAllocator_(sizeAllocator)
+      {}
+
+      void operator()(size_type* p) { sizeAllocator_.deallocate(p,1); }
     };
 
 
@@ -1359,7 +1391,8 @@ namespace Dune {
       // allocate rows
       if(allocateRows) {
         if (n>0) {
-          r = A::template malloc<row_type>(rows);
+          r = rowAllocator_.allocate(rows);
+          new (r) row_type[rows];
         }else{
           r = 0;
         }
@@ -1368,10 +1401,10 @@ namespace Dune {
 
       // allocate a and j array
       if (nnz>0) {
-        a = A::template malloc<B>(nnz);
+        a = allocator_.allocate(nnz);
         // allocate column indices only if not yet present (enable sharing)
         if (!j.get())
-          j.reset(A::template malloc<size_type>(nnz),Deallocator());
+          j.reset(sizeAllocator_.allocate(nnz),Deallocator(sizeAllocator_));
       }else{
         a = 0;
         j.reset();
