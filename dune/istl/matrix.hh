@@ -36,7 +36,7 @@ namespace Dune {
     typedef A allocator_type;
 
     /** \brief The type implementing a matrix row */
-    typedef BlockVector<T> row_type;
+    typedef BlockVector<T,A> row_type;
 
     /** \brief Type for indices and sizes */
     typedef typename A::size_type size_type;
