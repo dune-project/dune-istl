@@ -55,7 +55,11 @@ namespace Dune
    */
   template<typename T, typename A, int n, int m>
   class SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A > >
-    : public InverseOperator<BlockVector<FieldVector<T,m>,A>,BlockVector<FieldVector<T,n>,A> >
+    : public InverseOperator<
+          BlockVector<FieldVector<T,m>,
+              typename A::template rebind<FieldVector<T,m> >::other>,
+          BlockVector<FieldVector<T,n>,
+              typename A::template rebind<FieldVector<T,n> >::other> >
   {
   public:
     /* @brief The matrix type. */
@@ -63,9 +67,13 @@ namespace Dune
     /* @brief The corresponding SuperLU Matrix type.*/
     typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
     /** @brief The type of the domain of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,m>,A> domain_type;
+    typedef Dune::BlockVector<
+        FieldVector<T,m>,
+        typename A::template rebind<FieldVector<T,m> >::other> domain_type;
     /** @brief The type of the range of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,n>,A> range_type;
+    typedef Dune::BlockVector<
+        FieldVector<T,n>,
+        typename A::template rebind<FieldVector<T,n> >::other> range_type;
     /**
      * @brief Constructs the SuperLU solver.
      *
