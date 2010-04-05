@@ -10,18 +10,14 @@
 #include <vector>
 #include <memory>
 
-#include <dune/istl/bvector.hh>
+#include <dune/istl/vbvector.hh>
 
 namespace Dune {
 
   /** \addtogroup ISTL_SPMV
      \{
    */
-  /** \brief A generic dynamic matrix
-
-      This matrix is currently implemented as a BlockVector of BlockVectors.
-      That makes the code fairly simple, as we get all iterators for free.
-      However, it is not the best way as far as efficiency is concerned.
+  /** \brief A generic dynamic dense matrix
    */
   template<class T, class A=std::allocator<T> >
   class Matrix
@@ -38,19 +34,19 @@ namespace Dune {
     typedef A allocator_type;
 
     /** \brief The type implementing a matrix row */
-    typedef BlockVector<T,A> row_type;
+    typedef typename VariableBlockVector<T,A>::window_type row_type;
 
     /** \brief Type for indices and sizes */
     typedef typename A::size_type size_type;
 
     /** \brief Iterator over the matrix rows */
-    typedef typename BlockVector<row_type>::iterator RowIterator;
+    typedef typename VariableBlockVector<T,A>::Iterator RowIterator;
 
     /** \brief Iterator for the entries of each row */
     typedef typename row_type::iterator ColIterator;
 
     /** \brief Const iterator over the matrix rows */
-    typedef typename BlockVector<row_type>::const_iterator ConstRowIterator;
+    typedef typename VariableBlockVector<T,A>::ConstIterator ConstRowIterator;
 
     /** \brief Const iterator for the entries of each row */
     typedef typename row_type::const_iterator ConstColIterator;
@@ -66,20 +62,15 @@ namespace Dune {
 
     /** \brief Create uninitialized matrix of size rows x cols
      */
-    Matrix(size_type rows, size_type cols) : data_(rows), cols_(cols)
-    {
-      for (size_type i=0; i<rows; i++)
-        data_[i].resize(cols);
-    }
+    Matrix(size_type rows, size_type cols) : data_(rows,cols), cols_(cols)
+    {}
 
     /** \brief Change the matrix size
      *
      * The way the data is handled is unpredictable.
      */
     void setSize(size_type rows, size_type cols) {
-      data_.resize(rows);
-      for (size_type i=0; i<rows; i++)
-        data_[i].resize(cols);
+      data_.resize(rows,cols);
       cols_ = cols;
     }
 
@@ -134,11 +125,7 @@ namespace Dune {
     /** \brief Assignment from scalar */
     Matrix& operator= (const field_type& t)
     {
-      typedef typename BlockVector<row_type,allocator_type>::size_type
-      size_type;
-
-      for (size_type i=0; i<data_.size(); i++)
-        data_[i] = t;
+      data_ = t;
       return *this;
     }
 
@@ -166,7 +153,7 @@ namespace Dune {
 
     /** \brief Return the number of rows */
     size_type N() const {
-      return data_.size();
+      return data_.N();
     }
 
     /** \brief Return the number of columns */
@@ -181,7 +168,7 @@ namespace Dune {
         DUNE_THROW(ISTLError, "Can't compute rowdim() when there are no columns!");
 #endif
       size_type dim = 0;
-      for (size_type i=0; i<data_.size(); i++)
+      for (size_type i=0; i<data_.N(); i++)
         dim += data_[i][0].rowdim();
 
       return dim;
@@ -224,19 +211,13 @@ namespace Dune {
 
     /** \brief Multiplication with a scalar */
     Matrix<T>& operator*=(const field_type& scalar) {
-      for (size_type row=0; row<data_.size(); row++)
-        for (size_type col=0; col<cols_; col++)
-          (*this)[row][col] *= scalar;
-
+      data_ *= scalar;
       return (*this);
     }
 
     /** \brief Multiplication with a scalar */
     Matrix<T>& operator/=(const field_type& scalar) {
-      for (size_type row=0; row<data_.size(); row++)
-        for (size_type col=0; col<cols_; col++)
-          (*this)[row][col] /= scalar;
-
+      data_ /= scalar;
       return (*this);
     }
 
@@ -250,9 +231,7 @@ namespace Dune {
       if(N()!=b.N() || M() != b.M())
         DUNE_THROW(RangeError, "Matrix sizes do not match!");
 #endif
-      for (size_type row=0; row<data_.size(); row++)
-        (*this)[row] += b[row];
-
+      data_ += b.data_;
       return (*this);
     }
 
@@ -266,9 +245,7 @@ namespace Dune {
       if(N()!=b.N() || M() != b.M())
         DUNE_THROW(RangeError, "Matrix sizes do not match!");
 #endif
-      for (size_type row=0; row<data_.size(); row++)
-        (*this)[row] -= b[row];
-
+      data_ -= b.data_;
       return (*this);
     }
 
@@ -341,7 +318,7 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
-      for (size_type i=0; i<data_.size(); i++) {
+      for (size_type i=0; i<data_.N(); i++) {
         y[i]=0;
         for (size_type j=0; j<cols_; j++)
           (*this)[i][j].umv(x[j], y[i]);
@@ -373,7 +350,7 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
-      for (size_type i=0; i<data_.size(); i++) {
+      for (size_type i=0; i<data_.N(); i++) {
 
         for (size_type j=0; j<cols_; j++)
           (*this)[i][j].umv(x[j], y[i]);
@@ -408,7 +385,7 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
-      for (size_type i=0; i<data_.size(); i++) {
+      for (size_type i=0; i<data_.N(); i++) {
 
         for (size_type j=0; j<cols_; j++)
           (*this)[i][j].usmv(alpha, x[j], y[i]);
@@ -577,8 +554,18 @@ namespace Dune {
 
   protected:
 
-    BlockVector<row_type, typename allocator_type::template rebind<row_type>::other> data_;
+    /** \brief Abuse VariableBlockVector as an engine for a 2d array ISTL-style
 
+       This is almost as good as it can get.  Further speedup may be possible by using
+       the fact that all rows have the same length.
+     */
+    VariableBlockVector<T,A> data_;
+
+    /** \brief Number of columns of the matrix
+
+       In general you can extract the same information from the data_ member.  However if you
+       want to be able to properly handle 0xn matrices then you need a separate member.
+     */
     size_type cols_;
   };
   /** \} */
