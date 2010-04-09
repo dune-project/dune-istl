@@ -14,6 +14,7 @@ TESTS = $(MPIPROGRAMS)
 if BUILD_DOCS
   DOCFILES = communication.pdf
   EXTRA_DIST = communication.pdf
+  EXTRAINSTALL = communication.pdf
 endif
 
 # setting like in dune-web
