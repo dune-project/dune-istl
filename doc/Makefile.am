@@ -7,6 +7,7 @@ EPSFILES = blockstructure.eps
 if BUILD_DOCS
   DOCFILES = istl.pdf
   EXTRA_DIST = istl.pdf
+  EXTRAINSTALL = istl.pdf
 endif
 
 # setting like in dune-web
