@@ -48,6 +48,9 @@ namespace Dune {
     //! export the allocator type
     typedef A allocator_type;
 
+    //! The size type for the index access
+    typedef typename A::size_type size_type;
+
     /** export the type representing the components, note that this
             is *not* the type refered to by the iterators and random access.
             However, it can be used to copy blocks (which is its only purpose).
@@ -747,14 +750,14 @@ namespace Dune {
     //===== sizes
 
     //! number of blocks in the vector (are of variable size here)
-    int N () const
+    size_type N () const
     {
       return nblocks;
     }
 
 
   private:
-    int nblocks;            // number of blocks in vector
+    size_type nblocks;            // number of blocks in vector
     window_type* block;     // array of blocks pointing to the array in the base class
     bool initialized;       // true if vector has been initialized
 
