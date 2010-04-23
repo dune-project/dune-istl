@@ -85,7 +85,7 @@ namespace Dune {
     /** make vector with given number of blocks, but size of each block is not yet known,
             object cannot be used yet
      */
-    explicit VariableBlockVector (int _nblocks) : block_vector_unmanaged<B,A>()
+    explicit VariableBlockVector (size_type _nblocks) : block_vector_unmanaged<B,A>()
     {
       // we can allocate the windows now
       nblocks = _nblocks;
@@ -111,7 +111,7 @@ namespace Dune {
             \param _nblocks Number of blocks
             \param m Number of elements in each block
      */
-    VariableBlockVector (int _nblocks, int m) : block_vector_unmanaged<B,A>()
+    VariableBlockVector (size_type _nblocks, size_type m) : block_vector_unmanaged<B,A>()
     {
       // and we can allocate the big array in the base class
       this->n = _nblocks*m;
@@ -135,7 +135,7 @@ namespace Dune {
         new (block) window_type[nblocks];
 
         // set the windows into the big array
-        for (int i=0; i<nblocks; ++i)
+        for (size_type i=0; i<nblocks; ++i)
           block[i].set(m,this->p+(i*m));
       }
       else
@@ -160,7 +160,7 @@ namespace Dune {
         new (this->p)B[this->n];
 
         // copy data
-        for (int i=0; i<this->n; i++) this->p[i]=a.p[i];
+        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
       }
       else
       {
@@ -178,7 +178,7 @@ namespace Dune {
 
         // and we must set the windows
         block[0].set(a.block[0].getsize(),this->p);           // first block
-        for (int i=1; i<nblocks; ++i)                         // and the rest
+        for (size_type i=1; i<nblocks; ++i)                         // and the rest
           block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
       }
       else
@@ -195,13 +195,13 @@ namespace Dune {
     ~VariableBlockVector ()
     {
       if (this->n>0) {
-        int i=this->n;
+        size_type i=this->n;
         while (i)
           this->p[--i].~B();
         allocator_.deallocate(this->p,1);
       }
       if (nblocks>0) {
-        int i=nblocks;
+        size_type i=nblocks;
         while (i)
           block[--i].~window_type();
         windowAllocator_.deallocate(block,1);
@@ -211,17 +211,17 @@ namespace Dune {
 
 
     //! same effect as constructor with same argument
-    void resize (int _nblocks)
+    void resize (size_type _nblocks)
     {
       // deconstruct objects and deallocate memory if necessary
       if (this->n>0) {
-        int i=this->n;
+        size_type i=this->n;
         while (i)
           this->p[--i].~B();
         allocator_.deallocate(this->p,1);
       }
       if (nblocks>0) {
-        int i=nblocks;
+        size_type i=nblocks;
         while (i)
           block[--i].~window_type();
         windowAllocator_.deallocate(block,1);
@@ -247,17 +247,17 @@ namespace Dune {
     }
 
     //! same effect as constructor with same argument
-    void resize (int _nblocks, int m)
+    void resize (size_type _nblocks, size_type m)
     {
       // deconstruct objects and deallocate memory if necessary
       if (this->n>0) {
-        int i=this->n;
+        size_type i=this->n;
         while (i)
           this->p[--i].~B();
         allocator_.deallocate(this->p,1);
       }
       if (nblocks>0) {
-        int i=nblocks;
+        size_type i=nblocks;
         while (i)
           block[--i].~window_type();
         windowAllocator_.deallocate(block,1);
@@ -285,7 +285,7 @@ namespace Dune {
         new (block) window_type[nblocks];
 
         // set the windows into the big array
-        for (int i=0; i<nblocks; ++i)
+        for (size_type i=0; i<nblocks; ++i)
           block[i].set(m,this->p+(i*m));
       }
       else
@@ -309,13 +309,13 @@ namespace Dune {
         {
           // deconstruct objects and deallocate memory if necessary
           if (this->n>0) {
-            int i=this->n;
+            size_type i=this->n;
             while (i)
               this->p[--i].~B();
             allocator_.deallocate(this->p,1);
           }
           if (nblocks>0) {
-            int i=nblocks;
+            size_type i=nblocks;
             while (i)
               block[--i].~window_type();
             windowAllocator_.deallocate(block,1);
@@ -355,12 +355,12 @@ namespace Dune {
         if (nblocks>0)
         {
           block[0].set(a.block[0].getsize(),this->p);                 // first block
-          for (int i=1; i<nblocks; ++i)                               // and the rest
+          for (size_type i=1; i<nblocks; ++i)                               // and the rest
             block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
         }
 
         // and copy the data
-        for (int i=0; i<this->n; i++) this->p[i]=a.p[i];
+        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
       }
 
       // and we have a usable vector
@@ -432,7 +432,7 @@ namespace Dune {
           if (v.nblocks>0)
           {
             v.block[0].setptr(v.p);                       // pointer tofirst block
-            for (int j=1; j<v.nblocks; ++j)               // and the rest
+            for (size_type j=1; j<v.nblocks; ++j)               // and the rest
               v.block[j].setptr(v.block[j-1].getptr()+v.block[j-1].getsize());
           }
 
@@ -458,22 +458,22 @@ namespace Dune {
       }
 
       //! dereferencing
-      int index () const
+      size_type index () const
       {
         return i;
       }
 
       //! set size of current block
-      void setblocksize (int _k)
+      void setblocksize (size_type _k)
       {
         k = _k;
       }
 
     private:
       VariableBlockVector& v;     // my vector
-      int i;                      // current block to be defined
-      int k;                      // size of current block to be defined
-      int n;                      // total number of elements to be allocated
+      size_type i;                      // current block to be defined
+      size_type k;                      // size of current block to be defined
+      size_type n;                      // total number of elements to be allocated
     };
 
     // CreateIterator wants to set all the arrays ...
@@ -500,16 +500,16 @@ namespace Dune {
     // return access to the windows
 
     //! random access to blocks
-    window_type& operator[] (int i)
+    window_type& operator[] (size_type i)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i<0 || i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+      if (i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
 #endif
       return block[i];
     }
 
     //! same for read only access
-    const window_type& operator[] (int i) const
+    const window_type& operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i<0 || i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
@@ -532,7 +532,7 @@ namespace Dune {
       }
 
       //! constructor
-      Iterator (window_type* _p, int _i) : p(_p), i(_i)
+      Iterator (window_type* _p, size_type _i) : p(_p), i(_i)
       {       }
 
       //! prefix increment
@@ -586,7 +586,7 @@ namespace Dune {
       }
 
       // return index corresponding to pointer
-      int index () const
+      size_type index () const
       {
         return i;
       }
@@ -595,7 +595,7 @@ namespace Dune {
 
     private:
       window_type* p;
-      int i;
+      size_type i;
     };
 
     //! begin Iterator
@@ -623,7 +623,7 @@ namespace Dune {
     }
 
     //! random access returning iterator (end if not contained)
-    Iterator find (int i)
+    Iterator find (size_type i)
     {
       if (i>=0 && i<nblocks)
         return Iterator(block,i);
@@ -632,7 +632,7 @@ namespace Dune {
     }
 
     //! random access returning iterator (end if not contained)
-    ConstIterator find (int i) const
+    ConstIterator find (size_type i) const
     {
       if (i>=0 && i<nblocks)
         return ConstIterator(block,i);
@@ -652,7 +652,7 @@ namespace Dune {
       }
 
       //! constructor from pointer
-      ConstIterator (const window_type* _p, int _i) : p(_p), i(_i)
+      ConstIterator (const window_type* _p, size_type _i) : p(_p), i(_i)
       {       }
 
       //! constructor from non_const iterator
@@ -710,7 +710,7 @@ namespace Dune {
       }
 
       // return index corresponding to pointer
-      int index () const
+      size_type index () const
       {
         return i;
       }
@@ -719,7 +719,7 @@ namespace Dune {
 
     private:
       const window_type* p;
-      int i;
+      size_type i;
     };
 
     //! begin ConstIterator
