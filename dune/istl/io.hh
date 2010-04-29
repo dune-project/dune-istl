@@ -250,6 +250,33 @@ namespace Dune {
     }
   };
 
+  template<typename K, int n, int m, typename TA>
+  struct MatrixDimension<Matrix<FieldMatrix<K,n,m>, TA> >
+  {
+    typedef Matrix<FieldMatrix<K,n,m>, TA> ThisMatrix;
+    typedef typename ThisMatrix::size_type size_type;
+
+    static size_type rowdim(const ThisMatrix& A, size_type r)
+    {
+      return n;
+    }
+
+    static size_type coldim(const ThisMatrix& A, size_type r)
+    {
+      return m;
+    }
+
+    static size_type rowdim(const ThisMatrix& A)
+    {
+      return A.N()*n;
+    }
+
+    static size_type coldim(const ThisMatrix& A)
+    {
+      return A.M()*m;
+    }
+  };
+
   //! print one row of a matrix
   template<class M>
   void print_row (std::ostream& s, const M& A, typename M::size_type I,
