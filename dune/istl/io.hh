@@ -22,54 +22,77 @@
 namespace Dune {
 
   /**
-              @addtogroup ISTL_SPMV
-              @{
+     @addtogroup ISTL_SPMV
+     @{
    */
 
 
   /** \file
 
-     \brief Some generic functions for pretty printing vectors and matrices
+      \brief Some generic functions for pretty printing vectors and matrices
    */
-  //==== pretty printing of vectors
+
+  ////////////////////////////////////////////////////////////////////////
+  //
+  // pretty printing of vectors
+  //
 
   // recursively print all the blocks
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class V>
-  void recursive_printvector (std::ostream& s, const V& v, std::string rowtext, int& counter,
-                              int columns, int width, int precision)
+  void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
+                              int& counter, int columns, int width,
+                              int precision)
   {
     for (typename V::ConstIterator i=v.begin(); i!=v.end(); ++i)
       recursive_printvector(s,*i,rowtext,counter,columns,width,precision);
   }
 
-  // specialization for FieldVector
+  // recursively print all the blocks -- specialization for FieldVector
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class K, int n>
-  void recursive_printvector (std::ostream& s, const FieldVector<K,n>& v, std::string rowtext, int& counter,
-                              int columns, int width, int precision)
+  void recursive_printvector (std::ostream& s, const FieldVector<K,n>& v,
+                              std::string rowtext, int& counter, int columns,
+                              int width, int precision)
   {
     // we now can print n numbers
     for (int i=0; i<n; i++)
     {
       if (counter%columns==0)
       {
-        s << rowtext;                 // start a new row
-        s << " ";                     // space in front of each entry
-        s.width(4);                   // set width for counter
-        s << counter;                 // number of first entry in a line
+        s << rowtext; // start a new row
+        s << " ";     // space in front of each entry
+        s.width(4);   // set width for counter
+        s << counter; // number of first entry in a line
       }
-      s << " ";                   // space in front of each entry
-      s.width(width);             // set width for each entry anew
-      s << v[i];                  // yeah, the number !
-      counter++;                  // increment the counter
+      s << " ";         // space in front of each entry
+      s.width(width);   // set width for each entry anew
+      s << v[i];        // yeah, the number !
+      counter++;        // increment the counter
       if (counter%columns==0)
-        s << std::endl;           // start a new line
+        s << std::endl; // start a new line
     }
   }
 
 
+  //! print an ISTL vector
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class V>
-  void printvector (std::ostream& s, const V& v, std::string title, std::string rowtext,
-                    int columns=1, int width=10, int precision=2)
+  void printvector (std::ostream& s, const V& v, std::string title,
+                    std::string rowtext, int columns=1, int width=10,
+                    int precision=2)
   {
     // count the numbers printed to make columns
     int counter=0;
@@ -83,7 +106,8 @@ namespace Dune {
     s.precision(precision);
 
     // print title
-    s << title << " [blocks=" << v.N() << ",dimension=" << v.dim() << "]" << std::endl;
+    s << title << " [blocks=" << v.N() << ",dimension=" << v.dim() << "]"
+      << std::endl;
 
     // print data from all blocks
     recursive_printvector(s,v,rowtext,counter,columns,width,precision);
@@ -98,17 +122,24 @@ namespace Dune {
   }
 
 
-  //==== pretty printing of matrices
-
+  ////////////////////////////////////////////////////////////////////////
+  //
+  // pretty printing of matrices
+  //
 
   //! print a row of zeros for a non-existing block
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   inline void fill_row (std::ostream& s, int m, int width, int precision)
   {
     for (int j=0; j<m; j++)
     {
-      s << " ";                   // space in front of each entry
-      s.width(width);             // set width for each entry anew
-      s << ".";                   // yeah, the number !
+      s << " ";         // space in front of each entry
+      s.width(width);   // set width for each entry anew
+      s << ".";         // yeah, the number !
     }
   }
 
@@ -181,7 +212,8 @@ namespace Dune {
       // The following code has a complexity of nnz, and
       // typically a very small constant.
       //
-      std::vector<size_type> coldims(A.M(),std::numeric_limits<size_type>::max());
+      std::vector<size_type> coldims(A.M(),
+                                     std::numeric_limits<size_type>::max());
 
       for (ConstRowIterator row=A.begin(); row!=A.end(); ++row)
         for (ConstColIterator col=row->begin(); col!=row->end(); ++col)
@@ -190,7 +222,8 @@ namespace Dune {
             coldims[col.index()] = MatrixDimension<block_type>::coldim(*col);
 
       size_type sum = 0;
-      for (typename std::vector<size_type>::iterator it=coldims.begin(); it!=coldims.end(); ++it)
+      for (typename std::vector<size_type>::iterator it=coldims.begin();
+           it!=coldims.end(); ++it)
         // skip rows for which no coldim could be determined
         if ((*it)>=0)
           sum += *it;
@@ -216,11 +249,11 @@ namespace Dune {
       return m;
     }
 
-    static size_type rowdim (const Matrix& A){
+    static size_type rowdim (const Matrix& A) {
       return A.N()*n;
     }
 
-    static size_type coldim (const Matrix& A){
+    static size_type coldim (const Matrix& A) {
       return A.M()*m;
     }
   };
@@ -280,6 +313,11 @@ namespace Dune {
   };
 
   //! print one row of a matrix
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class M>
   void print_row (std::ostream& s, const M& A, typename M::size_type I,
                   typename M::size_type J, typename M::size_type therow,
@@ -313,10 +351,17 @@ namespace Dune {
   }
 
   //! print one row of a matrix, specialization for FieldMatrix
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class K, int n, int m>
   void print_row (std::ostream& s, const FieldMatrix<K,n,m>& A,
-                  typename FieldMatrix<K,n,m>::size_type I, typename FieldMatrix<K,n,m>::size_type J,
-                  typename FieldMatrix<K,n,m>::size_type therow, int width, int precision)
+                  typename FieldMatrix<K,n,m>::size_type I,
+                  typename FieldMatrix<K,n,m>::size_type J,
+                  typename FieldMatrix<K,n,m>::size_type therow, int width,
+                  int precision)
   {
     typedef typename FieldMatrix<K,n,m>::size_type size_type;
 
@@ -324,32 +369,43 @@ namespace Dune {
       if (I+i==therow)
         for (int j=0; j<m; j++)
         {
-          s << " ";                         // space in front of each entry
-          s.width(width);                   // set width for each entry anew
-          s << A[i][j];                     // yeah, the number !
+          s << " ";         // space in front of each entry
+          s.width(width);   // set width for each entry anew
+          s << A[i][j];     // yeah, the number !
         }
   }
 
   //! print one row of a matrix, specialization for FieldMatrix<K,1,1>
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class K>
-  void print_row (std::ostream& s, const FieldMatrix<K,1,1>& A, typename FieldMatrix<K,1,1>::size_type I,
-                  typename FieldMatrix<K,1,1>::size_type J, typename FieldMatrix<K,1,1>::size_type therow,
+  void print_row (std::ostream& s, const FieldMatrix<K,1,1>& A,
+                  typename FieldMatrix<K,1,1>::size_type I,
+                  typename FieldMatrix<K,1,1>::size_type J,
+                  typename FieldMatrix<K,1,1>::size_type therow,
                   int width, int precision)
   {
     if (I==therow)
     {
-      s << " ";                   // space in front of each entry
-      s.width(width);             // set width for each entry anew
-      s << static_cast<K>(A);                   // yeah, the number !
+      s << " ";         // space in front of each entry
+      s.width(width);   // set width for each entry anew
+      s << static_cast<K>(A);         // yeah, the number !
     }
   }
 
-  /** \brief Prints a generic block matrix
-      \bug Empty rows and columns are omitted by this method.  (FlySpray #7)
+  //! Prints a generic block matrix
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   * \bug Empty rows and columns are omitted by this method.  (FlySpray #7)
    */
   template<class M>
-  void printmatrix (std::ostream& s, const M& A, std::string title, std::string rowtext,
-                    int width=10, int precision=2)
+  void printmatrix (std::ostream& s, const M& A, std::string title,
+                    std::string rowtext, int width=10, int precision=2)
   {
 
     // remember old flags
@@ -371,12 +427,12 @@ namespace Dune {
     // print all rows
     for (typename M::size_type i=0; i<MatrixDimension<M>::rowdim(A); i++)
     {
-      s << rowtext;            // start a new row
-      s << " ";                // space in front of each entry
-      s.width(4);              // set width for counter
-      s << i;                  // number of first entry in a line
-      print_row(s,A,0,0,i,width,precision);           // generic print
-      s << std::endl;          // start a new line
+      s << rowtext;  // start a new row
+      s << " ";      // space in front of each entry
+      s.width(4);    // set width for counter
+      s << i;        // number of first entry in a line
+      print_row(s,A,0,0,i,width,precision); // generic print
+      s << std::endl; // start a new line
     }
 
     // reset the output format
@@ -384,8 +440,11 @@ namespace Dune {
     s.precision(oldprec);
   }
 
+  //! Prints a BCRSMatrix with fixed sized blocks.
   /**
-   * @brief Prints a BCRSMatrix with fixed sized blocks.
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
    *
    * Only the nonzero entries will be printed as matrix blocks
    * together with their
@@ -440,14 +499,14 @@ namespace Dune {
               break;
             if(innerrow==0) {
               if(count==skipcols) {
-                s << rowtext;  // start a new row
-                s << " ";      // space in front of each entry
-                s.width(4);    // set width for counter
-                s << row.index()<<": ";        // number of first entry in a line
+                s << rowtext;           // start a new row
+                s << " ";               // space in front of each entry
+                s.width(4);             // set width for counter
+                s << row.index()<<": "; // number of first entry in a line
               }
               s.width(4);
               s<<col.index()<<": |";
-            }else{
+            } else {
               if(count==skipcols) {
                 for(int i=0; i < rowtext.length(); i++)
                   s<<" ";
@@ -463,14 +522,14 @@ namespace Dune {
             s<<"|";
           }
           if(innerrow==n-1 && col==row->end())
-            reachedEnd=true;
+            reachedEnd = true;
           else
-            s<<std::endl;
+            s << std::endl;
         }
-        skipcols+=width;
-        s<<std::endl;
+        skipcols += width;
+        s << std::endl;
       }
-      s<<std::endl;
+      s << std::endl;
     }
 
     // reset the output format
@@ -485,7 +544,7 @@ namespace Dune {
     {
       static std::ostream& write(const T& t,  std::ostream& s)
       {
-        s<<t;
+        s << t;
         return s;
       }
     };
@@ -494,19 +553,24 @@ namespace Dune {
     {
       static std::ostream& write(const std::complex<T>& t,  std::ostream& s)
       {
-        s<<t.real()<<" "<<t.imag();
+        s << t.real() << " " << t.imag();
         return s;
       }
     };
-  }
-  /** \brief Helper method for the writeMatrixToMatlab routine.
+  } // anonymous namespace
 
-     This specialization for FieldMatrices ends the recursion
+  //! Helper method for the writeMatrixToMatlab routine.
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   *
+   * This specialization for FieldMatrices ends the recursion
    */
   template <class FieldType, int rows, int cols>
-  void writeMatrixToMatlabHelper(const FieldMatrix<FieldType,rows,cols>& matrix,
-                                 int rowOffset, int colOffset,
-                                 std::ostream& s)
+  void writeMatrixToMatlabHelper
+    (   const FieldMatrix<FieldType,rows,cols>& matrix, int rowOffset,
+    int colOffset, std::ostream& s)
   {
     for (int i=0; i<rows; i++)
       for (int j=0; j<cols; j++) {
@@ -516,6 +580,12 @@ namespace Dune {
       }
   }
 
+  //! Helper method for the writeMatrixToMatlab routine.
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   */
   template <class MatrixType>
   void writeMatrixToMatlabHelper(const MatrixType& matrix,
                                  int externalRowOffset, int externalColOffset,
@@ -527,12 +597,14 @@ namespace Dune {
       colOffset[0] = 0;
 
     for (typename MatrixType::size_type i=0; i<matrix.M()-1; i++)
-      colOffset[i+1] = colOffset[i] + MatrixDimension<MatrixType>::coldim(matrix,i);
+      colOffset[i+1] = colOffset[i] +
+                       MatrixDimension<MatrixType>::coldim(matrix,i);
 
     typename MatrixType::size_type rowOffset = 0;
 
     // Loop over all matrix rows
-    for (typename MatrixType::size_type rowIdx=0; rowIdx<matrix.N(); rowIdx++) {
+    for (typename MatrixType::size_type rowIdx=0; rowIdx<matrix.N(); rowIdx++)
+    {
 
       const typename MatrixType::row_type& row = matrix[rowIdx];
 
@@ -551,19 +623,20 @@ namespace Dune {
 
   }
 
-  /** \brief Writes sparse matrix in a Matlab-readable format
-   *
+  //! Writes sparse matrix in a Matlab-readable format
+  /**
    * \code
    *#include <dune/istl/io.hh>
    * \endcode
-   * This routine writes the argument BCRSMatrix to a file with the name given by
-   * the filename argument.  The file format is ASCII, with no header, and three
-   * data columns.  Each row describes a scalar matrix entry and consists of the
-   * matrix row and column numbers (both counted starting from 1), and the matrix
-   * entry.  Such a file can be read from Matlab using the command
-   * \verbatim
-       new_mat = spconvert(load('filename'));
-     \endverbatim
+   * This routine writes the argument BCRSMatrix to a file with the name given
+   * by the filename argument.  The file format is ASCII, with no header, and
+   * three data columns.  Each row describes a scalar matrix entry and
+   * consists of the matrix row and column numbers (both counted starting from
+   * 1), and the matrix entry.  Such a file can be read from Matlab using the
+   * command
+   * \code
+     new_mat = spconvert(load('filename'));
+   * \endcode
    */
   template <class MatrixType>
   void writeMatrixToMatlab(const MatrixType& matrix,
@@ -576,6 +649,6 @@ namespace Dune {
 
   /** @} end documentation */
 
-} // end namespace
+} // namespace Dune
 
 #endif
