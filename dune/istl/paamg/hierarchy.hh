@@ -788,8 +788,8 @@ namespace Dune
         ParallelInformation* info =&(*infoLevel);
 
         if((
-#ifdef HAVE_PARMETIS
-             (HAVE_PARMETIS && criterion.accumulate()==successiveAccu)
+#if HAVE_PARMETIS
+             criterion.accumulate()==successiveAccu
 #else
              false
 #endif
