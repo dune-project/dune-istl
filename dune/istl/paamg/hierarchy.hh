@@ -860,6 +860,10 @@ namespace Dune
         tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
           aggregatesMap->buildAggregates(matrix->getmat(), *(get<1>(graphs)), criterion);
 
+        if(rank==0 && criterion.debugLevel()>2)
+          std::cout<<" Have built "<<noAggregates<<" aggregates totally ("<<isoAggregates<<" isolated aggregates, "<<
+          oneAggregates<<" aggregates of one vertex,  and skipped "<<
+          skippedAggregates<<" aggregates)."<<std::endl;
 #ifdef TEST_AGGLO
         {
           // calculate size of local matrix in the distributed direction
@@ -914,7 +918,7 @@ namespace Dune
           if(rank==0)
           {
             if(noAggregates)
-              std::cerr << "Stopped coarsening because of rate breakdown "<<unknowns/noAggregates<<"<"
+              std::cerr << "Stopped coarsening because of rate breakdown "<<((double)unknowns)/noAggregates<<"<"
                         <<criterion.minCoarsenRate()<<std::endl;
             else
               std::cerr<< "Could not build any aggregates. Probably no connected nodes."<<std::endl;
