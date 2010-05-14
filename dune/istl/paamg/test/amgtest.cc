@@ -91,6 +91,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   criterion.setAlpha(.67);
   criterion.setBeta(1.0e-4);
   criterion.setMaxLevel(ml);
+  criterion.setSkipIsolated(false);
 
   Dune::SeqScalarProduct<Vector> sp;
   typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
