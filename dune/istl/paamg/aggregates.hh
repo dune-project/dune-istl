@@ -59,7 +59,7 @@ namespace Dune
        */
       AggregationCriterion()
         : maxDistance_(2), minAggregateSize_(4), maxAggregateSize_(6),
-          connectivity_(15), debugLevel_(2)
+          connectivity_(15), debugLevel_(2), skipiso_(false)
       {}
 
       /**
@@ -118,9 +118,24 @@ namespace Dune
        */
       void setMaxDistance(std::size_t distance) { maxDistance_ = distance;}
 
+      /**
+       * @brief Whether isolated aggregates will not be represented on
+       * the coarse level.
+       * @return True if these aggregates will be skipped.
+       */
       bool skipIsolated() const
       {
-        return false;
+        return skipiso_;
+      }
+
+      /**
+       * @brief Set whether isolated aggregates will not be represented on
+       * the coarse level.
+       * @param skip True if these aggregates will be skipped.
+       */
+      void setSkipIsolated(bool skip)
+      {
+        skipiso_=skip;
       }
 
       /**
@@ -193,6 +208,7 @@ namespace Dune
     private:
       std::size_t maxDistance_, minAggregateSize_, maxAggregateSize_, connectivity_;
       int debugLevel_;
+      bool skipiso_;
     };
 
     template<class T>
