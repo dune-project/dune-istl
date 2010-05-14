@@ -104,7 +104,6 @@ namespace Dune
     void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
       apply(x,b,res);
-      res.converged=res.reduction<reduction;
     }
 
     /**
