@@ -827,9 +827,9 @@ namespace Dune {
    * The ContainerWrapper must be default and copy-constructable.
    * Furthermore it must provide the methods:
    *
-   * bool identical(other)  - check if this is identical (same container, not only equal)
-   * T* pointer(position)   - get pointer to data at position in underlying container
-   * size_t index(position) - get index in sparse container for position in underlying container
+   * bool identical(other)      - check if this is identical (same container, not only equal)
+   * T* pointer(position)       - get pointer to data at position in underlying container
+   * size_t realIndex(position) - get index in sparse container for position in underlying container
    *
    * Notice that the iterator stores a ContainerWrapper.
    * This allows to use proxy classes as underlying container
