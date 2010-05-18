@@ -817,7 +817,28 @@ namespace Dune {
 
 
 
-
+  /** \brief Iterator class for sparse vector-like containers
+   *
+   * This class provides an iterator for sparse vector like containers.
+   * It contains a ContainerWrapper that must provide the translation
+   * from the position in the underlying container to the index
+   * in the sparse container.
+   *
+   * The ContainerWrapper must be default and copy-constructable.
+   * Furthermore it must provide the methods:
+   *
+   * bool identical(other)  - check if this is identical (same container, not only equal)
+   * T* pointer(position)   - get pointer to data at position in underlying container
+   * size_t index(position) - get index in sparse container for position in underlying container
+   *
+   * Notice that the iterator stores a ContainerWrapper.
+   * This allows to use proxy classes as underlying container
+   * and as returned reference type.
+   *
+   * \tparam CW The container wrapper class
+   * \tparam T The contained type
+   * \tparam R The referernce type returned by dereference
+   */
   template<class CW, class T, class R>
   class ContainerWrapperIterator : public BidirectionalIteratorFacade<ContainerWrapperIterator<CW,T,R>,T, R, int>
   {
