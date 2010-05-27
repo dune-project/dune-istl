@@ -827,7 +827,7 @@ namespace Dune {
    * The ContainerWrapper must be default and copy-constructable.
    * Furthermore it must provide the methods:
    *
-   * bool identical(other)      - check if this is identical (same container, not only equal)
+   * bool identical(other)      - check if this is identical to other (same container, not only equal)
    * T* pointer(position)       - get pointer to data at position in underlying container
    * size_t realIndex(position) - get index in sparse container for position in underlying container
    *
@@ -837,7 +837,7 @@ namespace Dune {
    *
    * \tparam CW The container wrapper class
    * \tparam T The contained type
-   * \tparam R The referernce type returned by dereference
+   * \tparam R The reference type returned by dereference
    */
   template<class CW, class T, class R>
   class ContainerWrapperIterator : public BidirectionalIteratorFacade<ContainerWrapperIterator<CW,T,R>,T, R, int>
