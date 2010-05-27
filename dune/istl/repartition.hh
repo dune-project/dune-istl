@@ -8,7 +8,7 @@
 #endif
 #include "config.h"
 #include <dune/istl/owneroverlapcopy.hh>
-#include <dune/istl/mpitraits.hh>
+#include <dune/common/mpitraits.hh>
 #include <dune/istl/indexset.hh>
 #include <dune/istl/remoteindices.hh>
 #include <dune/istl/indicessyncer.hh>

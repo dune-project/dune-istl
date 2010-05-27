@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <iterator>
 #if HAVE_MPI
-#include "mpitraits.hh"
+#include <dune/common/mpitraits.hh>
 #include "mpi.h"
 
 namespace Dune {
