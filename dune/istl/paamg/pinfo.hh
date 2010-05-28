@@ -10,7 +10,7 @@
 #if HAVE_MPI
 
 #include <dune/common/mpicollectivecommunication.hh>
-#include <dune/istl/mpitraits.hh>
+#include <dune/common/mpitraits.hh>
 #include <dune/istl/remoteindices.hh>
 #include <dune/istl/interface.hh>
 #include <dune/istl/communicator.hh>
