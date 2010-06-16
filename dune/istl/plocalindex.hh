@@ -266,7 +266,7 @@ namespace Dune
       length[0]=length[1]=length[2]=1;
       MPI_Address(rep, disp); // lower bound of the datatype
       MPI_Address(&(rep[0].attribute_), disp+1);
-      MPI_Address(rep+1, disp+2); // upper bound od the datatype
+      MPI_Address(rep+1, disp+2); // upper bound of the datatype
       for(int i=2; i >= 0; --i)
         disp[i] -= disp[0];
       MPI_Type_struct(3, length, disp, types, &type);
