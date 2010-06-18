@@ -1400,7 +1400,7 @@ namespace Dune
         edge.properties().setDepends();
         typedef typename G::EdgeDescriptor ED;
         ED e= graph.findEdge(edge.target(), edge.source());
-        if(e!=std::numeric_limits<ED>::max)
+        if(e!=std::numeric_limits<ED>::max())
         {
           typename G::EdgeProperties& other = graph.getEdgeProperties(e);
           other.setInfluences();
