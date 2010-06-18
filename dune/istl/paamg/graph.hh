@@ -1500,7 +1500,10 @@ namespace Dune
       if(found == matrix_[source].end())
         DUNE_THROW(ISTLError, "Every matrix row is assumed to have a diagonal!");
 #endif
-      std::size_t offset = matrix_[source].find(target).offset();
+      typename M::ConstColIterator found =matrix_[source].find(target);
+      if(found == matrix_[source].end())
+        return std::numeric_limits<EdgeDescriptor>::max();
+      std::size_t offset = found.offset();
       if(target>source)
         offset--;
 
@@ -1952,10 +1955,8 @@ namespace Dune
                                                                                 const VertexDescriptor& target) const
     {
       const EdgeDescriptor edge = std::lower_bound(edges_+start_[source], edges_+end_[source], target);
-#ifdef DUNE_ISTL_WITH_CHECKING
       if(edge==edges_+end_[source] || *edge!=target)
-        DUNE_THROW(ISTLError, "No such edge found!");
-#endif
+        return std::numeric_limits<EdgeDescriptor>::max();
 
       return edge;
     }

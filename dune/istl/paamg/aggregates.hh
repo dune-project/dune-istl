@@ -1398,8 +1398,13 @@ namespace Dune
     {
       if(-norm_(*col) >= maxValue_ * alpha()) {
         edge.properties().setDepends();
-        typename G::EdgeProperties& other = graph.getEdgeProperties(edge.target(), edge.source());
-        other.setInfluences();
+        typedef typename G::EdgeDescriptor ED;
+        ED e= graph.findEdge(edge.target(), edge.source());
+        if(e!=std::numeric_limits<ED>::max)
+        {
+          typename G::EdgeProperties& other = graph.getEdgeProperties(e);
+          other.setInfluences();
+        }
       }
     }
 
