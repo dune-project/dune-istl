@@ -407,7 +407,7 @@ namespace Dune
        * @brief Find the descriptor of an edge.
        * @param source The source vertex of the edge we search for.
        * @param target The target vertex of the edge we search for.
-       * @return The edge we found.
+       * @return The edge we found or numeric_limits<EdgeIterator>::max() if it does not exist.
        */
       EdgeDescriptor findEdge(const VertexDescriptor& source,
                               const VertexDescriptor& target) const;
@@ -664,7 +664,7 @@ namespace Dune
        * @brief Find the descriptor of an edge.
        * @param source The source vertex of the edge we search for.
        * @param target The target vertex of the edge we search for.
-       * @return The edge we found.
+       * @return The edge we found or numeric_limits<EdgeIterator>::max() if it does not exist.
        */
       const EdgeDescriptor findEdge(const VertexDescriptor& source,
                                     const VertexDescriptor& target) const;
@@ -1250,6 +1250,18 @@ namespace Dune
       const VertexProperties& getVertexProperties(const VertexDescriptor& vertex) const;
 
       /**
+       * @brief Find the descriptor of an edge.
+       * @param source The source vertex of the edge we search for.
+       * @param target The target vertex of the edge we search for.
+       * @return The edge we found or numeric_limits<EdgeIterator>::max() if it does not exist.
+       */
+      EdgeDescriptor findEdge(const VertexDescriptor& source,
+                              const VertexDescriptor& target)
+      {
+        return graph_.findEdge(source,target);
+      }
+
+      /**
        * @brief Get the properties associated with a edge.
        * @param edge The descriptor identifying the edge.
        * @return The properties of the edge.
@@ -1491,15 +1503,6 @@ namespace Dune
     MatrixGraph<M>::findEdge(const VertexDescriptor& source,
                              const VertexDescriptor& target) const
     {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if(!matrix_.exists(source,target))
-        DUNE_THROW(ISTLError, "matrix entry ("<<source<<","<<target<<") does not exist!");
-      // diagonal is assumed to exist, so search for it
-      // If not present this should throw an exception
-      typename M::ConstColIterator found = matrix_[source].find(source);
-      if(found == matrix_[source].end())
-        DUNE_THROW(ISTLError, "Every matrix row is assumed to have a diagonal!");
-#endif
       typename M::ConstColIterator found =matrix_[source].find(target);
       if(found == matrix_[source].end())
         return std::numeric_limits<EdgeDescriptor>::max();
