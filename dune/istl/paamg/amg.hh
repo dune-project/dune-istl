@@ -515,17 +515,17 @@ namespace Dune
         }
 
         *update += *lhs;
-
-
+#else
+        *lhs=0;
 #endif
 
         // postsmoothing
-        for(std::size_t i=0; i < preSteps_; ++i) {
+        for(std::size_t i=0; i < postSteps_; ++i) {
           // update defect
           matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
           *lhs=0;
           pinfo->project(*rhs);
-          SmootherApplier<S>::preSmooth(*smoother, *lhs, *rhs);
+          SmootherApplier<S>::postSmooth(*smoother, *lhs, *rhs);
           // Accumulate update
           *update += *lhs;
         }
