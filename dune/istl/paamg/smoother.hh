@@ -381,6 +381,25 @@ namespace Dune
         smoother.template apply<false>(v,d);
       }
     };
+
+    template<class M, class X, class Y, class C, int l>
+    struct SmootherApplier<BlockPreconditioner<X,Y,C,SeqSOR<M,X,Y,l> > >
+    {
+      typedef BlockPreconditioner<X,Y,C,SeqSOR<M,X,Y,l> > Smoother;
+      typedef typename Smoother::range_type Range;
+      typedef typename Smoother::domain_type Domain;
+
+      static void preSmooth(Smoother& smoother, Domain& v, Range& d)
+      {
+        smoother.template apply<true>(v,d);
+      }
+
+
+      static void postSmooth(Smoother& smoother, Domain& v, Range& d)
+      {
+        smoother.template apply<false>(v,d);
+      }
+    };
 #if HAVE_SUPERLU
   } // end namespace Amg
 
