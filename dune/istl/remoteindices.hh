@@ -249,11 +249,24 @@ namespace Dune {
      * @param neighbours Optional: The neighbours the process shares indices with.
      * If this parameter is omitted a ring communication with all indices will take
      * place to calculate this information which is O(P).
+     * @param includeSelf If true, sending from indices of the processor to other
+     * indices on the same processor is enabled even if the same indexset is used
+     * on both the
+     * sending and receiving side.
      */
     inline RemoteIndices(const ParallelIndexSet& source, const ParallelIndexSet& destination,
-                         const MPI_Comm& comm, const std::vector<int>& neighbours=std::vector<int>());
+                         const MPI_Comm& comm, const std::vector<int>& neighbours=std::vector<int>(), bool includeSelf=false);
 
     RemoteIndices();
+
+    /**
+     * @brief Tell whether sending from indices of the processor to other
+     * indices on the same processor is enabled even if the same indexset is
+     * used on both the sending and receiving side.
+     *
+     * @param includeSelf If true it is enabled.
+     */
+    void setIncludeSelf(bool includeSelf);
 
     /**
      * @brief Set the index sets and communicator we work with.
@@ -407,6 +420,14 @@ namespace Dune {
      */
     bool firstBuild;
 
+    /*
+     * @brief If true, sending from indices of the processor to other
+     * indices on the same processor is enabled even if the same indexset is used
+     * on both the
+     * sending and receiving side.
+     */
+    bool includeSelf;
+
     /** @brief The index pair type. */
     typedef IndexPair<GlobalIndex, LocalIndex>
     PairType;
@@ -424,9 +445,13 @@ namespace Dune {
      *
      * If the template parameter ignorePublic is true all indices will be treated
      * as public.
+     * @param includeSelf If true, sending from indices of the processor to other
+     * indices on the same processor is enabled even if the same indexset is used
+     * on both the
+     * sending and receiving side.
      */
     template<bool ignorePublic>
-    inline void buildRemote();
+    inline void buildRemote(bool includeSelf);
 
     /**
      * @brief Count the number of public indices in an index set.
@@ -724,6 +749,8 @@ namespace Dune {
      */
     inline void advance(const GlobalIndex& global);
 
+    CollectiveIterator& operator++();
+
     /**
      * @brief Checks whether there are still iterators in the map.
      */
@@ -882,11 +909,19 @@ namespace Dune {
   inline RemoteIndices<T,A>::RemoteIndices(const ParallelIndexSet& source,
                                            const ParallelIndexSet& destination,
                                            const MPI_Comm& comm,
-                                           const std::vector<int>& neighbours)
+                                           const std::vector<int>& neighbours,
+                                           bool includeSelf_)
     : source_(&source), target_(&destination), comm_(comm),
-      sourceSeqNo_(-1), destSeqNo_(-1), publicIgnored(false), firstBuild(true)
+      sourceSeqNo_(-1), destSeqNo_(-1), publicIgnored(false), firstBuild(true),
+      includeSelf(includeSelf_)
   {
     setNeighbours(neighbours);
+  }
+
+  template<typename T, typename A>
+  void RemoteIndices<T,A>::setIncludeSelf(bool b)
+  {
+    includeSelf=b;
   }
 
   template<typename T, typename A>
@@ -1044,7 +1079,7 @@ namespace Dune {
 
   template<typename T, typename A>
   template<bool ignorePublic>
-  inline void RemoteIndices<T,A>::buildRemote()
+  inline void RemoteIndices<T,A>::buildRemote(bool includeSelf)
   {
     // Processor configuration
     int rank, procs;
@@ -1058,7 +1093,7 @@ namespace Dune {
     // Do we need to send two index sets?
     char sendTwo = (source_ != target_);
 
-    if(procs==0 && !sendTwo)
+    if(procs==1 && !(sendTwo || includeSelf))
       // Nothing to communicate
       return;
 
@@ -1133,7 +1168,7 @@ namespace Dune {
 
 
     // Update remote indices for ourself
-    if(sendTwo)
+    if(sendTwo|| includeSelf)
       unpackCreateRemote(buffer[0], sourcePairs, destPairs, rank, sourcePublish,
                          destPublish, bufferSize, sendTwo);
 
@@ -1360,7 +1395,7 @@ namespace Dune {
        isSynced()) {
       free();
 
-      buildRemote<ignorePublic>();
+      buildRemote<ignorePublic>(includeSelf);
 
       sourceSeqNo_ = source_->seqNo();
       destSeqNo_ = target_->seqNo();
@@ -1648,6 +1683,30 @@ namespace Dune {
       }
     }
     index_=index;
+  }
+
+  template<typename T, typename A>
+  inline CollectiveIterator<T,A>& CollectiveIterator<T,A>::operator++()
+  {
+    typedef typename Map::iterator iterator;
+    typedef typename Map::const_iterator const_iterator;
+    const const_iterator end = map_.end();
+
+    for(iterator iter = map_.begin(); iter != end;) {
+      // Step the iterator until we are >= index
+      typename RemoteIndexList::const_iterator current = iter->second.first;
+      typename RemoteIndexList::const_iterator rend = iter->second.second;
+
+      ++(iter->second.first);
+
+      // erase from the map if there are no more entries.
+      if(iter->second.first == iter->second.second)
+        map_.erase(iter++);
+      else{
+        ++iter;
+      }
+    }
+    return *this;
   }
 
   template<typename T, typename A>
