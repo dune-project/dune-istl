@@ -742,7 +742,7 @@ namespace Dune {
     /**
      * @brief Advances all underlying iterators.
      *
-     * All iterators are advaced until the point to an remote index whose
+     * All iterators are advanced until they point to a remote index whose
      * global id is bigger or equal to global.
      * Iterators pointing to their end are removed.
      * @param global The index we search for.
@@ -1697,7 +1697,9 @@ namespace Dune {
       typename RemoteIndexList::const_iterator current = iter->second.first;
       typename RemoteIndexList::const_iterator rend = iter->second.second;
 
-      ++(iter->second.first);
+      // move all iterators pointing to the current global index to next value
+      if(iter->second.first->localIndexPair().global()==index_)
+        ++(iter->second.first);
 
       // erase from the map if there are no more entries.
       if(iter->second.first == iter->second.second)
