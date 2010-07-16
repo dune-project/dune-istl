@@ -418,7 +418,7 @@ namespace Dune
           destFlags.contains(localIndex->local().attribute()))
       {
         // search for matching remote indices
-        for(remote.advance(localIndex->global());
+        for(remote.advance(localIndex->global()),oldremote=remote;
             remote.begin()!=remote.end(); ++remote)
         {
 
