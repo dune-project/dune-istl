@@ -471,11 +471,11 @@ namespace Dune
       // First step is to count the number of nonzeros
       typename BCRSMatrix<FieldMatrix<T,n1,m1>,A>::size_type rows, cols;
       tie(rows,cols)=SizeSelector<transpose>::size(mat1, mat2);
-      MatrixInitializer<transpose,T,A1,n1,m1> patternInit(res, rows);
+      MatrixInitializer<transpose,T,A,n1,m1> patternInit(res, rows);
       Timer timer;
       NonzeroPatternTraverser<transpose>::traverse(mat1,mat2,patternInit);
       res.setSize(rows, cols, patternInit.nonzeros());
-      res.setBuildMode(BCRSMatrix<FieldMatrix<T,n1,m1>,A1>::row_wise);
+      res.setBuildMode(BCRSMatrix<FieldMatrix<T,n1,m1>,A>::row_wise);
 
       std::cout<<"Counting nonzeros took "<<timer.elapsed()<<std::endl;
       timer.reset();
@@ -486,7 +486,7 @@ namespace Dune
       std::cout<<"Setting up sparsity pattern took "<<timer.elapsed()<<std::endl;
       timer.reset();
       // As a last step calculate the entries
-      EntryAccumulator<T,A1,n1,m1, transpose> entriesAccu(res);
+      EntryAccumulator<T,A,n1,m1, transpose> entriesAccu(res);
       NonzeroPatternTraverser<transpose>::traverse(mat1,mat2,entriesAccu);
       std::cout<<"Calculating entries took "<<timer.elapsed()<<std::endl;
     }
@@ -510,8 +510,8 @@ namespace Dune
     typedef FieldMatrix<T,n,m> type;
   };
 
-  template<typename T, typename A, int n, int k, int m>
-  struct MatMultMatResult<BCRSMatrix<FieldMatrix<T,n,k>,A >,BCRSMatrix<FieldMatrix<T,k,m>,A > >
+  template<typename T, typename A, typename A1, int n, int k, int m>
+  struct MatMultMatResult<BCRSMatrix<FieldMatrix<T,n,k>,A >,BCRSMatrix<FieldMatrix<T,k,m>,A1 > >
   {
     typedef BCRSMatrix<typename MatMultMatResult<FieldMatrix<T,n,k>,
             FieldMatrix<T,k,m> >::type,A> type;
