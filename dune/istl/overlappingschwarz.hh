@@ -423,7 +423,18 @@ namespace Dune
     template<typename T, typename A, int n>
     struct Assigner<BlockVector<FieldVector<T,n>,A> >
     {
+      /**
+       * @brief Constructor.
+       * @param mat The global matrix.
+       * @param rhs storage for the local defect.
+       * @param b the global right hand side.
+       * @param x the global left hand side.
+       */
       Assigner(const M& mat, T* rhs, const BlockVector<FieldVector<T,n>,A>& b, const BlockVector<FieldVector<T,n>,A>& x);
+      /**
+       * @brief calculate one entry of the local defect.
+       * @param domain One index of the domain.
+       */
       void operator()(const size_type& domain);
     private:
       const M* mat;
@@ -799,6 +810,7 @@ namespace Dune
     template<typename T, typename A, int n>
     void AdditiveAdder<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
     {
+      // add the result of the local solve to the current update
       for(size_type j=0; j<n; ++j, ++i)
         (*v)[domainIndex][j]+=t[i];
     }
@@ -807,6 +819,7 @@ namespace Dune
     template<typename T, typename A, int n>
     void AdditiveAdder<BlockVector<FieldVector<T,n>,A> >::axpy()
     {
+      // relax the update and add it to the current guess.
       x->axpy(relax,*v);
     }
 
@@ -822,6 +835,7 @@ namespace Dune
     template<typename T, typename A, int n>
     void MultiplicativeAdder<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
     {
+      // add the result of the local solve to the current guess
       for(size_type j=0; j<n; ++j, ++i)
         (*x)[domainIndex][j]+=relax*t[i];
     }
@@ -829,7 +843,9 @@ namespace Dune
 
     template<typename T, typename A, int n>
     void MultiplicativeAdder<BlockVector<FieldVector<T,n>,A> >::axpy()
-    {}
+    {
+      // nothing to do, as the corrections already relaxed and added in operator()
+    }
   }
 
   /** @} */
