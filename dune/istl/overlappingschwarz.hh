@@ -773,9 +773,6 @@ namespace Dune
   template<typename T, typename A, int n>
   void SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
   {
-    // The current index.
-    size_type starti = i;
-
     //assign right hand side of current domainindex block
     // rhs is an array of doubles!
     // rhs[starti] = b[domainindex]
@@ -789,10 +786,8 @@ namespace Dune
     // calculate defect for current row index block
     for(col_iterator col=(*mat)[domainIndex].begin(); col!=(*mat)[domainIndex].end(); ++col) {
       typename X::block_type tmp;
-      // T = A(domainIndex,k)*x(k)
       (*col).mv((*x)[col.index()], tmp);
       i-=n;
-      //rhs[starti] -= tmp
       for(size_type j=0; j<n; ++j, ++i)
         rhs[i]-=tmp[j];
     }
