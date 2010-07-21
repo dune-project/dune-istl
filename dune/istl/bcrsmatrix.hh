@@ -1249,7 +1249,7 @@ namespace Dune {
     BuildStage ready;               // indicate the stage the matrix building is in
 
     // The allocator used for memory management
-    A allocator_;
+    typename A::template rebind<B>::other allocator_;
 
     typename A::template rebind<row_type>::other rowAllocator_;
 
