@@ -773,6 +773,11 @@ namespace Dune
   template<typename T, typename A, int n>
   void SeqOverlappingSchwarz<M,X,TM,onTheFly,TA>::Assigner<BlockVector<FieldVector<T,n>,A> >::operator()(const size_type& domainIndex)
   {
+#ifndef NDEBUG
+    // The current index.
+    size_type starti = i;
+#endif
+
     //assign right hand side of current domainindex block
     // rhs is an array of doubles!
     // rhs[starti] = b[domainindex]
