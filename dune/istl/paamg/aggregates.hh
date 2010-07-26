@@ -73,7 +73,7 @@ namespace Dune
        */
       void setDefaultValuesIsotropic(std::size_t dim, std::size_t diameter=2)
       {
-        maxDistance_=0;
+        maxDistance_=diameter-1;
         std::size_t csize=1;
 
         for(; dim>0; dim--) {
@@ -416,7 +416,7 @@ namespace Dune
       };
       /**
        * @brief compute the norm of a matrix.
-       * @param m The matrix ro compute the norm of.
+       * @param m The matrix row to compute the norm of.
        */
       template<class M>
       typename M::field_type operator()(const M& m) const
@@ -425,6 +425,38 @@ namespace Dune
       }
     };
 
+    struct FrobeniusNorm
+    {
+
+      enum { /* @brief We preserve the sign.*/
+        is_sign_preserving = false
+      };
+      /**
+       * @brief compute the norm of a matrix.
+       * @param m The matrix row to compute the norm of.
+       */
+      template<class M>
+      typename M::field_type operator()(const M& m) const
+      {
+        return m.frobenius_norm();
+      }
+    };
+    struct AlwaysOneNorm
+    {
+
+      enum { /* @brief We preserve the sign.*/
+        is_sign_preserving = false
+      };
+      /**
+       * @brief compute the norm of a matrix.
+       * @param m The matrix row to compute the norm of.
+       */
+      template<class M>
+      typename M::field_type operator()(const M& m) const
+      {
+        return 1;
+      }
+    };
     /**
      * @brief Criterion taking advantage of symmetric matrices.
      *
@@ -2342,7 +2374,7 @@ namespace Dune
         }
 
         // try to merge aggregates consisting of only one nonisolated vertex with other aggregates
-        if(aggregate_->size()==1) {
+        if(aggregate_->size()==1 && c.maxAggregateSize()>1) {
           if(!graph.getVertexProperties(seed).isolated()) {
             Vertex mergedNeighbour = mergeNeighbour(seed, aggregates);
 
