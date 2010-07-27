@@ -198,13 +198,13 @@ namespace Dune {
         size_type i=this->n;
         while (i)
           this->p[--i].~B();
-        allocator_.deallocate(this->p,1);
+        allocator_.deallocate(this->p,this->n);
       }
       if (nblocks>0) {
         size_type i=nblocks;
         while (i)
           block[--i].~window_type();
-        windowAllocator_.deallocate(block,1);
+        windowAllocator_.deallocate(block,nblocks);
       }
 
     }
@@ -218,13 +218,13 @@ namespace Dune {
         size_type i=this->n;
         while (i)
           this->p[--i].~B();
-        allocator_.deallocate(this->p,1);
+        allocator_.deallocate(this->p,this->n);
       }
       if (nblocks>0) {
         size_type i=nblocks;
         while (i)
           block[--i].~window_type();
-        windowAllocator_.deallocate(block,1);
+        windowAllocator_.deallocate(block,nblocks);
       }
       this->n = 0;
       this->p = 0;
@@ -254,13 +254,13 @@ namespace Dune {
         size_type i=this->n;
         while (i)
           this->p[--i].~B();
-        allocator_.deallocate(this->p,1);
+        allocator_.deallocate(this->p,this->n);
       }
       if (nblocks>0) {
         size_type i=nblocks;
         while (i)
           block[--i].~window_type();
-        windowAllocator_.deallocate(block,1);
+        windowAllocator_.deallocate(block,nblocks);
       }
 
       // and we can allocate the big array in the base class
@@ -312,13 +312,13 @@ namespace Dune {
             size_type i=this->n;
             while (i)
               this->p[--i].~B();
-            allocator_.deallocate(this->p,1);
+            allocator_.deallocate(this->p,this->n);
           }
           if (nblocks>0) {
             size_type i=nblocks;
             while (i)
               block[--i].~window_type();
-            windowAllocator_.deallocate(block,1);
+            windowAllocator_.deallocate(block,nblocks);
           }
 
           // allocate the big array in the base class
