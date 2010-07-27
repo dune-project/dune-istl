@@ -343,7 +343,7 @@ namespace Dune {
               int i=capacity_;
               while (i)
                 pold[--i].~B();
-              this->allocator_.deallocate(pold,1);
+              this->allocator_.deallocate(pold,capacity_);
             }
           }
         }else{
@@ -447,7 +447,7 @@ namespace Dune {
         int i=capacity_;
         while (i)
           this->p[--i].~B();
-        this->allocator_.deallocate(this->p,1);
+        this->allocator_.deallocate(this->p,capacity_);
       }
     }
 
@@ -463,7 +463,7 @@ namespace Dune {
             int i=capacity_;
             while (i)
               this->p[--i].~B();
-            this->allocator_.deallocate(this->p,1);                     // free old memory
+            this->allocator_.deallocate(this->p,capacity_);                     // free old memory
           }
           capacity_ = a.capacity_;
           if (capacity_>0) {

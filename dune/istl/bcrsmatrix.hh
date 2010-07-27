@@ -547,7 +547,7 @@ namespace Dune {
         int i=n;
         while (i)
           r[--i].~row_type();
-        rowAllocator_.deallocate(r,1);
+        rowAllocator_.deallocate(r,n);
       }
 
       nnz=Mat.nnz;
@@ -1319,7 +1319,7 @@ namespace Dune {
         int i=nnz;
         while (i)
           a[--i].~B();
-        allocator_.deallocate(a,1);
+        allocator_.deallocate(a,n);
       }
       else
       {
@@ -1342,7 +1342,7 @@ namespace Dune {
         int i=n;
         while (i)
           r[--i].~row_type();
-        rowAllocator_.deallocate(r,1);
+        rowAllocator_.deallocate(r,n);
       }
 
       // Mark matrix as not built at all.
