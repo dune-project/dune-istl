@@ -676,7 +676,7 @@ namespace Dune
         std::size_t minsize=10000;
         std::size_t maxsize=0;
         int sum=0;
-        for(int i=0; i < subdomains.size(); ++i) {
+        for(typename Vector::size_type i=0; i < subdomains.size(); ++i) {
           sum+=subdomains[i].size();
           minsize=std::min(minsize, subdomains[i].size());
           maxsize=std::max(maxsize, subdomains[i].size());
@@ -697,7 +697,7 @@ namespace Dune
         int isolated=0;
         AggregateDescriptor maxAggregate=0;
 
-        for(int i=0; i < amap.noVertices(); ++i)
+        for(std::size_t i=0; i < amap.noVertices(); ++i)
           if(amap[i]==AggregatesMap::ISOLATED)
             isolated++;
           else
@@ -706,7 +706,7 @@ namespace Dune
         subdomains.resize(maxAggregate+1+isolated);
 
         // reset the subdomains
-        for(int i=0; i < subdomains.size(); ++i)
+        for(typename Vector::size_type i=0; i < subdomains.size(); ++i)
           subdomains[i].clear();
 
         // Create the subdomains from the aggregates mapping.
@@ -734,13 +734,13 @@ namespace Dune
         std::size_t minsize=10000;
         std::size_t maxsize=0;
         int sum=0;
-        for(int i=0; i < subdomains.size(); ++i) {
+        for(typename Vector::size_type i=0; i < subdomains.size(); ++i) {
           sum+=subdomains[i].size();
           minsize=std::min(minsize, subdomains[i].size());
           maxsize=std::max(maxsize, subdomains[i].size());
         }
         std::cout<<"Subdomain size: min="<<minsize<<" max="<<maxsize<<" avg="<<(sum/subdomains.size())
-                 <<" no="<<subdomains.size()<<std::endl;
+                 <<" no="<<subdomains.size()<<" isolated="<<isolated<<std::endl;
 
 
 
