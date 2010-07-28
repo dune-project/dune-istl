@@ -302,9 +302,6 @@ namespace Dune
    * @tparam X The range and domain type.
    * @tparam TM The Schwarz mode. Currently supported modes are AdditiveSchwarzMode,
    * MultiplicativeSchwarzMode, and SymmetricMultiplicativeSchwarzMode. (Default values is AdditiveSchwarzMode)
-   * @tparam onTheFly If true the decomposition of the exact local solvers is computed on the fly for each subdomain and
-   * iteration step. If false all decompositions are computed in pre and only forward and backward substitution takes place
-   * in the iteration steps.
    * @tparam TA The type of the allocator to use.
    */
   template<class M, class X, class TM=AdditiveSchwarzMode, class TA=std::allocator<X> >
@@ -377,6 +374,11 @@ namespace Dune
      * @param subDomains Array of sets of rowindices belonging to an overlapping
      * subdomain
      * @param relaxationFactor relaxation factor
+     * @param onTheFly If true the decomposition of the exact local solvers is
+     * computed on the fly for each subdomain and
+     * iteration step. If false all decompositions are computed in pre and
+     * only forward and backward substitution takes place
+     * in the iteration steps.
      * @warning Each rowindex should be part of at least one subdomain!
      */
     SeqOverlappingSchwarz(const matrix_type& mat, const subdomain_vector& subDomains,
@@ -387,6 +389,11 @@ namespace Dune
      * @param mat The matrix to precondition.
      * @param rowToDomain The mapping of the rows onto the domains.
      * @param relaxationFactor relaxation factor
+     * @param onTheFly If true the decomposition of the exact local solvers is
+     * computed on the fly for each subdomain and
+     * iteration step. If false all decompositions are computed in pre and
+     * only forward and backward substitution takes place
+     * in the iteration steps.
      */
     SeqOverlappingSchwarz(const matrix_type& mat, const rowtodomain_vector& rowToDomain,
                           field_type relaxationFactor=1, bool onTheFly_=true);
