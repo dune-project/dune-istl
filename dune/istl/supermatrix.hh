@@ -188,7 +188,7 @@ namespace Dune
   struct SuperMatrixInitializer
   {};
 
-  template<class M, class X, class TM, bool b, class T1>
+  template<class M, class X, class TM, class T1>
   class SeqOverlappingSchwarz;
 
   /**
@@ -197,7 +197,7 @@ namespace Dune
   template<class B, class TA, int n, int m>
   class SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
   {
-    template<class M, class X, class TM, bool b, class T1>
+    template<class M, class X, class TM, class T1>
     friend class SeqOverlappingSchwarz;
     friend class SuperMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
 
@@ -238,6 +238,11 @@ namespace Dune
     size_type N() const
     {
       return N_;
+    }
+
+    size_type nnz() const
+    {
+      return Nnz_/n/m;
     }
 
     /**
@@ -317,7 +322,7 @@ namespace Dune
   template<class T, class A, int n, int m>
   class SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   {
-    template<class I, class S>
+    template<class I, class S, class D>
     friend class OverlappingSchwarzInitializer;
   public:
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
@@ -333,6 +338,9 @@ namespace Dune
 
     template<typename Iter>
     void addRowNnz(const Iter& row) const;
+
+    template<typename Iter, typename Set>
+    void addRowNnz(const Iter& row, const Set& s) const;
 
     void allocate();
 
@@ -358,7 +366,7 @@ namespace Dune
 
     SuperLUMatrix* mat;
     int cols;
-    typename Matrix::size_type *marker;
+    mutable typename Matrix::size_type *marker;
   };
 
   template<class T, class A, int n, int m>
@@ -388,6 +396,25 @@ namespace Dune
   }
 
   template<class T, class A, int n, int m>
+  template<typename Iter, typename Map>
+  void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::addRowNnz(const Iter& row,
+                                                                            const Map& indices) const
+  {
+    typedef typename  Iter::value_type::const_iterator RIter;
+    typedef typename Map::const_iterator MIter;
+    MIter siter =indices.begin();
+    for(RIter entry=row->begin(); entry!=row->end(); ++entry)
+    {
+      for(; siter!=indices.end() && *siter<entry.index(); ++siter) ;
+      if(siter==indices.end())
+        break;
+      if(*siter==entry.index())
+        // index is in subdomain
+        ++mat->Nnz_;
+    }
+  }
+
+  template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocate()
   {
     allocateMatrixStorage();
@@ -398,6 +425,8 @@ namespace Dune
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocateMatrixStorage() const
   {
     mat->Nnz_*=n*m;
+    if( mat->Nnz_>mat->N()*mat->M())
+      throw "huch";
     // initialize data
     mat->values=new T[mat->Nnz_];
     mat->rowindex=new int[mat->Nnz_];
@@ -424,8 +453,11 @@ namespace Dune
   template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::countEntries(size_type colindex) const
   {
-    for(int i=0; i < m; ++i)
+    for(int i=0; i < m; ++i) {
+      assert(colindex*m+i<cols);
       marker[colindex*m+i]+=n;
+    }
+
   }
 
   template<class T, class A, int n, int m>
@@ -433,6 +465,7 @@ namespace Dune
   {
     mat->colstart[0]=0;
     for(int i=0; i < cols; ++i) {
+      assert(i<cols);
       mat->colstart[i+1]=mat->colstart[i]+marker[i];
       marker[i]=mat->colstart[i];
     }
@@ -450,9 +483,11 @@ namespace Dune
   {
     for(int i=0; i<n; i++) {
       for(int j=0; j<m; j++) {
+        assert(colindex*m+j<cols-1 || marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
+        assert(marker[colindex*m+j]<mat->Nnz_);
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
         mat->values[marker[colindex*m+j]]=(*col)[i][j];
-        ++marker[colindex*m+j];
+        ++marker[colindex*m+j]; // index for next entry in column
       }
     }
   }
@@ -460,6 +495,8 @@ namespace Dune
   template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::createMatrix() const
   {
+    delete[] marker;
+    marker=0;
     dCreate_CompCol_Matrix(&mat->A, mat->N_, mat->M_, mat->colstart[cols],
                            mat->values, mat->rowindex, mat->colstart, SLU_NC, static_cast<Dtype_t>(GetSuperLUType<T>::type), SLU_GE);
   }
@@ -483,8 +520,10 @@ namespace Dune
     initializer.calcColstart();
 
     for(Iter row=mrs.begin(); row!= mrs.end(); ++row) {
-      for(CIter col=row->begin(); col != row->end(); ++col)
+      for(CIter col=row->begin(); col != row->end(); ++col) {
         initializer.copyValue(row, col);
+      }
+
     }
     initializer.createMatrix();
   }
@@ -501,7 +540,7 @@ namespace Dune
 
     // Calculate upper Bound for nonzeros
     for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
-      initializer.addRowNnz(row);
+      initializer.addRowNnz(row, mrs.rowIndexSet());
 
     initializer.allocate();
 

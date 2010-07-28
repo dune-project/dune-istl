@@ -43,7 +43,7 @@ namespace Dune
   class SuperLU
   {};
 
-  template<class M, class T, class TM, bool b, class TA>
+  template<class M, class T, class TM, class TA>
   class SeqOverlappingSchwarz;
 
   /**
@@ -114,6 +114,11 @@ namespace Dune
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& mat);
 
+    const SuperLUMatrix& superLUMatrix() const
+    {
+      return mat;
+    }
+
     template<class S>
     void setSubMatrix(const Matrix& mat, const S& rowIndexSet);
 
@@ -126,7 +131,7 @@ namespace Dune
     void free();
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
-    template<class M,class X, class TM, bool b, class T1>
+    template<class M,class X, class TM, class T1>
     friend class SeqOverlappingSchwarz;
 
     /** @brief computes the LU Decomposition */
@@ -269,6 +274,7 @@ namespace Dune
         dinfo<<"No of nonzeros in factor L = "<< Lstore->nnz<<std::endl;
         dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
         dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
+        dQuerySpace(&L, &U, &memusage);
         dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
              <<" \texpansions ";
 
