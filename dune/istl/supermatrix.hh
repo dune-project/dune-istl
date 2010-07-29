@@ -425,8 +425,6 @@ namespace Dune
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocateMatrixStorage() const
   {
     mat->Nnz_*=n*m;
-    if( mat->Nnz_>mat->N()*mat->M())
-      throw "huch";
     // initialize data
     mat->values=new T[mat->Nnz_];
     mat->rowindex=new int[mat->Nnz_];
