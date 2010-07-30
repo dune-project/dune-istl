@@ -245,9 +245,11 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 template <class MatrixType, class VectorType>
 void testSolve(const MatrixType& matrix)
 {
+  typedef typename VectorType::size_type size_type;
+
   // create some right hand side
   VectorType b(matrix.N());
-  for (int i=0; i<b.size(); i++)
+  for (size_type i=0; i<b.size(); i++)
     b[i] = i;
 
   // solution vector
@@ -341,15 +343,17 @@ int main()
   // ////////////////////////////////////////////////////////////////////////
 
   BTDMatrix<FieldMatrix<double,1,1> > btdMatrix(4);
+  typedef BTDMatrix<FieldMatrix<double,1,1> >::size_type size_type;
+
   btdMatrix = 4.0;
 
   testSuperMatrix(btdMatrix);
 
   btdMatrix = 0.0;
-  for (int i=0; i<btdMatrix.N(); i++)    // diagonal
+  for (size_type i=0; i<btdMatrix.N(); i++)    // diagonal
     btdMatrix[i][i] = 1+i;
 
-  for (int i=0; i<btdMatrix.N()-1; i++)
+  for (size_type i=0; i<btdMatrix.N()-1; i++)
     btdMatrix[i][i+1] = 2+i;               // first off-diagonal
 
   testSolve<BTDMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(btdMatrix);
