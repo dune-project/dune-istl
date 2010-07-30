@@ -145,7 +145,7 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //  setBoundary(x,b,N);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,false> prec0o(mat, domains, 1);
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode> prec0o(mat, domains, 1, false);
   Dune::LoopSolver<BVector> solver0o(fop, prec0o, 1e-2,100,2);
   solver0o.apply(x,b, res);
   std::cout << "Multiplicative Schwarz (domains vector)"<<std::endl;
