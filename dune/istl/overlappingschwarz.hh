@@ -295,6 +295,20 @@ namespace Dune
     };
   }
 
+  template<class T>
+  struct SeqOverlappingSchwarzAssembler
+  {};
+
+  template<class T>
+  struct SeqOverlappingSchwarzAssembler<SuperLU<T> >
+  {
+    typedef T matrix_type;
+    template<class RowToDomain, class Solvers, class SubDomains>
+    static std::size_t assembleLocalProblems(const RowToDomain& rowToDomain, const matrix_type& mat,
+                                             Solvers& solvers, const SubDomains& domains,
+                                             bool onTheFly);
+  };
+
   /**
    * @brief Sequential overlapping Schwarz preconditioner
    *
@@ -435,7 +449,6 @@ namespace Dune
 
     bool onTheFly;
 
-    void initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat);
 
     template<typename T>
     struct Assigner
@@ -634,7 +647,8 @@ namespace Dune
       std::cout<<std::endl;
     }
 #endif
-    initialize(rowToDomain, mat);
+    maxlength = SeqOverlappingSchwarzAssembler<SuperLU<matrix_type> >
+                ::assembleLocalProblems(rowToDomain, mat, solvers, subDomains, onTheFly);
   }
 
   template<class M, class X, class TM, class TA>
@@ -674,7 +688,8 @@ namespace Dune
         rowToDomain[*row].push_back(domainId);
     }
 
-    initialize(rowToDomain, mat);
+    maxlength = SeqOverlappingSchwarzAssembler<SuperLU<matrix_type> >
+                ::assembleLocalProblems(rowToDomain, mat, solvers, subDomains, onTheFly);
   }
 
   /**
@@ -697,15 +712,20 @@ namespace Dune
     }
   };
 
-  template<class M, class X, class TM, class TA>
-  void SeqOverlappingSchwarz<M,X,TM,TA>::initialize(const rowtodomain_vector& rowToDomain, const matrix_type& mat)
+  template<class T>
+  template<class RowToDomain, class Solvers, class SubDomains>
+  std::size_t SeqOverlappingSchwarzAssembler<SuperLU<T> >::assembleLocalProblems(const RowToDomain& rowToDomain,
+                                                                                 const matrix_type& mat,
+                                                                                 Solvers& solvers,
+                                                                                 const SubDomains& subDomains,
+                                                                                 bool onTheFly)
   {
     typedef typename std::vector<SuperMatrixInitializer<matrix_type> >::iterator InitializerIterator;
-    typedef typename subdomain_vector::const_iterator DomainIterator;
-    typedef typename slu_vector::iterator SolverIterator;
+    typedef typename SubDomains::const_iterator DomainIterator;
+    typedef typename Solvers::iterator SolverIterator;
+    std::size_t maxlength = 0;
 
     if(onTheFly) {
-      maxlength=0;
       for(DomainIterator domain=subDomains.begin(); domain!=subDomains.end(); ++domain)
         maxlength=std::max(maxlength, domain->size());
       maxlength*=mat[0].begin()->N();
@@ -719,15 +739,15 @@ namespace Dune
       SolverIterator solver=solvers.begin();
       for(InitializerIterator initializer=initializers.begin(); initializer!=initializers.end();
           ++initializer, ++solver, ++domain) {
-        solver->mat.N_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
-        solver->mat.M_=SeqOverlappingSchwarzDomainSize<M>::size(*domain);
+        solver->mat.N_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
+        solver->mat.M_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
         //solver->setVerbosity(true);
         *initializer=SuperMatrixInitializer<matrix_type>(solver->mat);
       }
 
       // Set up the supermatrices according to the subdomains
       typedef OverlappingSchwarzInitializer<std::vector<SuperMatrixInitializer<matrix_type> >,
-          rowtodomain_vector, subdomain_vector> Initializer;
+          RowToDomain, SubDomains> Initializer;
 
       Initializer initializer(initializers, rowToDomain, subDomains);
       copyToSuperMatrix(initializer, mat);
@@ -738,14 +758,14 @@ namespace Dune
             dPrint_CompCol_Matrix("superlu", &static_cast<SuperMatrix&>(solver->mat)); */
 
       // Calculate the LU decompositions
-      std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&slu::decompose));
-      maxlength=0;
+      std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&SuperLU<matrix_type>::decompose));
       for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
         assert(solver->mat.N()==solver->mat.M());
         maxlength=std::max(maxlength, solver->mat.N());
         //writeCompColMatrixToMatlab(static_cast<SuperLUMatrix<M>&>(solver->mat), std::cout);
       }
     }
+    return maxlength;
   }
 
   template<class M, class X, class TM, class TA>
