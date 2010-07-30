@@ -20,7 +20,9 @@ int main()
 
   VariableBlockVector<FieldVector<double,1> >::CreateIterator cIt = v1.createbegin();
 
-  for (; cIt!=v1.createend(); ++cIt)
-    int foo = 0;
+  for (; cIt!=v1.createend(); ++cIt) {
+    int foo = 0; ++foo;
+  }
+
 
 }
