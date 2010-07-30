@@ -3,13 +3,45 @@
 SUBDIRS = . tutorial test paamg
 
 istldir = $(includedir)/dune/istl
-istl_HEADERS = allocator.hh basearray.hh bcrsmatrix.hh bvector.hh gsetc.hh io.hh istlexception.hh vbvector.hh \
-	ilu.hh operators.hh preconditioners.hh solvers.hh indexset.hh communicator.hh remoteindices.hh \
-	interface.hh indicessyncer.hh matrixindexset.hh selection.hh plocalindex.hh localindex.hh scalarproducts.hh \
-	solvercategory.hh bdmatrix.hh matrixutils.hh schwarz.hh owneroverlapcopy.hh matrix.hh supermatrix.hh superlu.hh \
-	pardiso.hh overlappingschwarz.hh scaledidmatrix.hh diagonalmatrix.hh btdmatrix.hh \
-	matrixmatrix.hh repartition.hh matrixredistribute.hh \
-	matrixmarket.hh
+istl_HEADERS = allocator.hh \
+	basearray.hh \
+	bcrsmatrix.hh \
+	bdmatrix.hh \
+	btdmatrix.hh \
+	bvector.hh \
+	communicator.hh \
+	diagonalmatrix.hh \
+	gsetc.hh \
+	ilu.hh \
+	indexset.hh \
+	indicessyncer.hh \
+	interface.hh \
+	io.hh \
+	istlexception.hh \
+	localindex.hh \
+	matrix.hh \
+	matrixindexset.hh \
+	matrixmarket.hh\
+	matrixmatrix.hh \
+	matrixredistribute.hh \
+	matrixutils.hh \
+	operators.hh \
+	overlappingschwarz.hh \
+	owneroverlapcopy.hh \
+	pardiso.hh \
+	plocalindex.hh \
+	preconditioners.hh \
+	remoteindices.hh \
+	repartition.hh \
+	selection.hh \
+	scalarproducts.hh \
+	scaledidmatrix.hh \
+	schwarz.hh \
+	solvercategory.hh \
+	solvers.hh \
+	supermatrix.hh \
+	superlu.hh \
+	vbvector.hh
 
 
 include $(top_srcdir)/am/global-rules
