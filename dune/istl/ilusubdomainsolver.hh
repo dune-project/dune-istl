@@ -50,8 +50,8 @@ namespace Dune {
     typedef typename S::const_iterator SIter;
     for(SIter rowIdx = rowSet.begin(), rowEnd=rowSet.end();
         rowIdx!= rowEnd; ++rowIdx, ++localIndex)
-      guess = indexMap.insert(std::make_pair(*rowIdx,localIndex),
-                              guess);
+      guess = indexMap.insert(guess,
+                              std::make_pair(*rowIdx,localIndex));
 
     // Build Matrix for local subproblem
     ILU.setSize(rowSet.size(),rowSet.size());
@@ -69,13 +69,10 @@ namespace Dune {
       for(typename matrix_type::ConstColIterator& col=A[rowIdx].begin(),
           endcol=A[rowIdx].end(); col != endcol; ++col) {
         // search for the entry in the row set
-        IMIter oldguess = guess;
         guess = indexMap.find(col.index(), guess);
         if(guess!=indexMap.end())
           // add local index to row
           rowCreator.insert(guess->second);
-        else
-          guess = oldguess;
       }
     }
 
@@ -86,11 +83,9 @@ namespace Dune {
         rowIdx!= rowEnd; ++rowIdx, ++iluRow) {
       // See wich row entries are in our subset and add them to
       // the sparsity pattern
-      guess = indexMap.begin();
       for(typename matrix_type::ConstColIterator& col=A[rowIdx].begin(),
           endcol=A[rowIdx].end(), localCol=iluRow.begin(); col != endcol; ++col) {
         // search for the entry in the row set
-        IMIter oldguess = guess;
         guess = indexMap.find(col.index(), guess);
         if(guess!=indexMap.end()) {
           // set local value
