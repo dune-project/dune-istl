@@ -136,7 +136,9 @@ int main(int argc, char** argv)
   //  b=0;
   //  x=100;
   //  setBoundary(x,b,N);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector> prec0(mat, domains, 1);
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+      Dune::ILU0SubdomainSolver<BCRSMat,BVector,BVector> > prec0(mat, domains, 1);
+  //Dune::SeqOverlappingSchwarz<BCRSMat,BVector> prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-2,100,2);
   solver0.apply(x,b, res);
 

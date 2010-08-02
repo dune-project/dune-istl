@@ -25,7 +25,7 @@ namespace Dune {
     }
 
     template<class S>
-    void setMatrix(const M& A, S& rowset);
+    void setSubMatrix(const M& A, S& rowset);
 
   private:
     //! \brief The relaxation factor to use.
@@ -36,12 +36,12 @@ namespace Dune {
 
   template<class M, class X, class Y>
   template<class S>
-  void ILU0SubdomainSolver<M,X,Y>::setMatrix(const M& A, S& rowSet)
+  void ILU0SubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
   {
     // Calculate consecutive indices for local problem
     // while perserving the ordering
     typedef typename M::size_type size_type;
-    typedef std::map<typename S::key_type,size_type> IndexMap;
+    typedef std::map<typename S::value_type,size_type> IndexMap;
     typedef typename IndexMap::iterator IMIter;
     IndexMap indexMap;
     IMIter guess = indexMap.begin();
@@ -66,10 +66,10 @@ namespace Dune {
       // See wich row entries are in our subset and add them to
       // the sparsity pattern
       guess = indexMap.begin();
-      for(typename matrix_type::ConstColIterator& col=A[rowIdx].begin(),
-          endcol=A[rowIdx].end(); col != endcol; ++col) {
+      for(typename matrix_type::ConstColIterator col=A[*rowIdx].begin(),
+          endcol=A[*rowIdx].end(); col != endcol; ++col) {
         // search for the entry in the row set
-        guess = indexMap.find(col.index(), guess);
+        guess = indexMap.find(col.index());
         if(guess!=indexMap.end())
           // add local index to row
           rowCreator.insert(guess->second);
@@ -83,13 +83,14 @@ namespace Dune {
         rowIdx!= rowEnd; ++rowIdx, ++iluRow) {
       // See wich row entries are in our subset and add them to
       // the sparsity pattern
-      for(typename matrix_type::ConstColIterator& col=A[rowIdx].begin(),
-          endcol=A[rowIdx].end(), localCol=iluRow.begin(); col != endcol; ++col) {
+      typename matrix_type::ColIterator localCol=iluRow->begin();
+      for(typename matrix_type::ConstColIterator col=A[*rowIdx].begin(),
+          endcol=A[*rowIdx].end(); col != endcol; ++col) {
         // search for the entry in the row set
-        guess = indexMap.find(col.index(), guess);
+        guess = indexMap.find(col.index());
         if(guess!=indexMap.end()) {
           // set local value
-          *localCol*col;
+          (*localCol)=(*col);
           ++localCol;
         }
       }

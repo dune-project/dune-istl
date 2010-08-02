@@ -187,7 +187,7 @@ namespace Dune
   struct SuperMatrixInitializer
   {};
 
-  template<class M, class X, class TM, class T1>
+  template<class M, class X, class TM, class TD, class T1>
   class SeqOverlappingSchwarz;
 
 
@@ -203,7 +203,7 @@ namespace Dune
   template<class B, class TA, int n, int m>
   class SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
   {
-    template<class M, class X, class TM, class T1>
+    template<class M, class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
     friend class SuperMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
 

@@ -43,7 +43,7 @@ namespace Dune
   class SuperLU
   {};
 
-  template<class M, class T, class TM, class TA>
+  template<class M, class T, class TM, class TD, class TA>
   class SeqOverlappingSchwarz;
 
   template<class T>
@@ -117,9 +117,9 @@ namespace Dune
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& mat);
 
-    const SuperLUMatrix& superLUMatrix() const
+    typename SuperLUMatrix::size_type nnz() const
     {
-      return mat;
+      return mat.nnz();
     }
 
     template<class S>
@@ -134,7 +134,7 @@ namespace Dune
     void free();
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
-    template<class M,class X, class TM, class T1>
+    template<class M,class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
     friend class SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
 
