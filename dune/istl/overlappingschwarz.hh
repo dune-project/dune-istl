@@ -27,7 +27,9 @@ namespace Dune
    * @author Markus Blatt
    * @brief Contains one level overlapping Schwarz preconditioners
    */
-#if HAVE_SUPERLU
+
+  template<class M, class X, class TM, class TD, class TA>
+  class SeqOverlappingSchwarz;
 
   /**
    * @brief Initializer for SuperLU Matrices representing the subdomains.
@@ -128,6 +130,8 @@ namespace Dune
   struct OverlappingAssigner
   {};
 
+
+#if HAVE_SUPERLU
   template<typename T, typename A, int n, int m>
   struct OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
   {
@@ -175,6 +179,8 @@ namespace Dune
     std::size_t i;
     std::size_t maxlength_;
   };
+
+#endif
 
   template<class M, class X, class Y>
   class OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >
@@ -400,6 +406,8 @@ namespace Dune
   struct SeqOverlappingSchwarzAssembler
   {};
 
+
+#if HAVE_SUPERLU
   template<class T>
   struct SeqOverlappingSchwarzAssembler<SuperLU<T> >
   {
@@ -409,6 +417,7 @@ namespace Dune
                                              Solvers& solvers, const SubDomains& domains,
                                              bool onTheFly);
   };
+#endif
 
   template<class M,class X, class Y>
   struct SeqOverlappingSchwarzAssembler<ILU0SubdomainSolver<M,X,Y> >
@@ -430,7 +439,8 @@ namespace Dune
    * @tparam TD The type of the local subdomain solver to be used.
    * @tparam TA The type of the allocator to use.
    */
-  template<class M, class X, class TM=AdditiveSchwarzMode, class TD=SuperLU<M>, class TA=std::allocator<X> >
+  template<class M, class X, class TM=AdditiveSchwarzMode,
+      class TD=ILU0SubdomainSolver<M,X,X>, class TA=std::allocator<X> >
   class SeqOverlappingSchwarz
     : public Preconditioner<X,X>
   {
@@ -795,6 +805,7 @@ namespace Dune
     }
   };
 
+#if HAVE_SUPERLU
   template<class T>
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t SeqOverlappingSchwarzAssembler<SuperLU<T> >::assembleLocalProblems(const RowToDomain& rowToDomain,
@@ -851,6 +862,8 @@ namespace Dune
     return maxlength;
   }
 
+#endif
+
   template<class M,class X,class Y>
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t SeqOverlappingSchwarzAssembler<ILU0SubdomainSolver<M,X,Y> >::assembleLocalProblems(const RowToDomain& rowToDomain,
@@ -859,7 +872,6 @@ namespace Dune
                                                                                                  const SubDomains& subDomains,
                                                                                                  bool onTheFly)
   {
-    typedef typename std::vector<SuperMatrixInitializer<matrix_type> >::iterator InitializerIterator;
     typedef typename SubDomains::const_iterator DomainIterator;
     typedef typename Solvers::iterator SolverIterator;
     std::size_t maxlength = 0;
@@ -937,6 +949,9 @@ namespace Dune
     adder.axpy();
     assigner.deallocate();
   }
+
+
+#if HAVE_SUPERLU
 
   template<typename T, typename A, int n, int m>
   OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
@@ -1027,6 +1042,8 @@ namespace Dune
   {
     return rhs_;
   }
+
+#endif
 
   template<class M, class X, class Y>
   OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::OverlappingAssigner(std::size_t maxlength,
@@ -1144,7 +1161,6 @@ namespace Dune
 
 
   /** @} */
-#endif
 }
 
 #endif
