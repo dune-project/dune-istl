@@ -1090,7 +1090,7 @@ namespace Dune
   template<class M, class X, class Y>
   void OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::assignResult(block_type& res)
   {
-    res=(*lhs_)[i++];
+    res+=(*lhs_)[i++];
   }
 
   template<class M, class X, class Y>
