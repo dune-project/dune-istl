@@ -153,7 +153,6 @@ namespace Dune
     bool first, verbose;
   };
 
-
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::~SuperLU()
@@ -419,10 +418,6 @@ namespace Dune
     dgssvx(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
            &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
            &memusage, &stat, &info);
-
-    if(options.Equil==YES)
-      // undo scaling of right hand side
-      std::transform(b, b+mat.M(), C, b, std::divides<T>());
 
     if(verbose) {
       dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
