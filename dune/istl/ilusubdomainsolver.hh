@@ -5,11 +5,30 @@
 
 #include <map>
 #include <dune/common/typetraits.hh>
+#include "matrix.hh"
 
 namespace Dune {
 
+  /**
+   * @file
+   * @brief Various local subdomain solvers based on ILU
+   * for SeqOverlappingSchwarz.
+   * @author Markus Blatt
+   */
+  /**
+   * @addtogroup ISTL
+   * @{
+   */
+  /**
+   * @brief base class encapsulating common algorithms of ILU0SubdomainSolver
+   * and ILUNSubdomainSolver.
+   * @tparam M The type of the matrix.
+   * @tparam X The type of the vector for the domain.
+   * @tparam X The type of the vector for the range.
+   *
+   */
   template<class M, class X, class Y>
-  class ILU0SubdomainSolver  {
+  class ILUSubdomainSolver  {
   public:
     //! \brief The matrix type the preconditioner is for.
     typedef typename Dune::remove_const<M>::type matrix_type;
@@ -17,26 +36,114 @@ namespace Dune {
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
     typedef Y range_type;
-    typedef typename X::field_type field_type;
 
+    /**
+     * @brief Apply the subdomain solver.
+     *
+     * On entry v=? and d=b-A(x) (although this might not be
+     * computed in that way. On exit v contains the update
+     */
+    virtual void apply (X& v, const Y& d) =0;
+
+    virtual ~ILUSubdomainSolver()
+    {}
+
+  protected:
+    /**
+     * @brief Copy the local part of the global matrix to ILU.
+     * @param A The global matrix.
+     * @param rowset The global indices of the local problem.
+     */
+    template<class S>
+    std::size_t copyToLocalMatrix(const M& A, S& rowset);
+
+    //! \brief The ILU0 decomposition of the matrix, or the local matrix
+    // for ILUN
+    matrix_type ILU;
+  };
+
+  /**
+   * @brief Exact subdomain solver using ILU(p) with appropriate p.
+   * @tparam M The type of the matrix.
+   * @tparam X The type of the vector for the domain.
+   * @tparam X The type of the vector for the range.
+   */
+  template<class M, class X, class Y>
+  class ILU0SubdomainSolver
+    : public ILUSubdomainSolver<M,X,Y>{
+  public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef typename Dune::remove_const<M>::type matrix_type;
+    typedef typename Dune::remove_const<M>::type rilu_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+
+
+    /**
+     * @brief Apply the subdomain solver.
+     * @copydoc ILUSubdomainSolver::apply
+     */
     void apply (X& v, const Y& d)
     {
-      bilu_backsolve(ILU,v,d);
+      bilu_backsolve(this->ILU,v,d);
+    }
+    /**
+     * @brief Set the data of the local problem.
+     *
+     * @param A The global matrix.
+     * @param rowset The global indices of the local problem.
+     * @tparam S The type of the set with the indices.
+     */
+    template<class S>
+    void setSubMatrix(const M& A, S& rowset);
+
+  };
+
+  template<class M, class X, class Y>
+  class ILUNSubdomainSolver
+    : public ILUSubdomainSolver<M,X,Y>{
+  public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef typename Dune::remove_const<M>::type matrix_type;
+    typedef typename Dune::remove_const<M>::type rilu_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+
+    /**
+     * @brief Apply the subdomain solver.
+     * @copydoc ILUSubdomainSolver::apply
+     */
+    void apply (X& v, const Y& d)
+    {
+      bilu_backsolve(RILU,v,d);
     }
 
+    /**
+     * @brief Set the data of the local problem.
+     *
+     * @param A The global matrix.
+     * @param rowset The global indices of the local problem.
+     * @tparam S The type of the set with the indices.
+     */
     template<class S>
     void setSubMatrix(const M& A, S& rowset);
 
   private:
-    //! \brief The relaxation factor to use.
-    field_type _w;
-    //! \brief The ILU0 decomposition of the matrix.
-    matrix_type ILU;
+    /**
+     * @brief Storage for the ILUN decomposition.
+     */
+    rilu_type RILU;
   };
+
+
 
   template<class M, class X, class Y>
   template<class S>
-  void ILU0SubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
+  std::size_t ILUSubdomainSolver<M,X,Y>::copyToLocalMatrix(const M& A, S& rowSet)
   {
     // Calculate consecutive indices for local problem
     // while perserving the ordering
@@ -55,25 +162,33 @@ namespace Dune {
 
     // Build Matrix for local subproblem
     ILU.setSize(rowSet.size(),rowSet.size());
+
+    // Build Matrix for local subproblem
+    ILU.setSize(rowSet.size(),rowSet.size());
     ILU.setBuildMode(matrix_type::row_wise);
 
     // Create sparsity pattern
     typedef typename matrix_type::CreateIterator CIter;
     CIter rowCreator = ILU.createbegin();
     typedef typename S::const_iterator RIter;
+    std::size_t offset=0;
     for(SIter rowIdx = rowSet.begin(), rowEnd=rowSet.end();
         rowIdx!= rowEnd; ++rowIdx, ++rowCreator) {
       // See wich row entries are in our subset and add them to
       // the sparsity pattern
       guess = indexMap.begin();
+
       for(typename matrix_type::ConstColIterator col=A[*rowIdx].begin(),
           endcol=A[*rowIdx].end(); col != endcol; ++col) {
         // search for the entry in the row set
         guess = indexMap.find(col.index());
-        if(guess!=indexMap.end())
+        if(guess!=indexMap.end()) {
           // add local index to row
           rowCreator.insert(guess->second);
+          offset=std::max(offset,(std::size_t)std::abs((int)(guess->second-rowCreator.index())));
+        }
       }
+
     }
 
     // Insert the matrix values for the local problem
@@ -95,9 +210,29 @@ namespace Dune {
         }
       }
     }
-    bilu0_decomposition(ILU);
+    return offset;
   }
 
+
+  template<class M, class X, class Y>
+  template<class S>
+  void ILU0SubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
+  {
+    copyToLocalMatrix(A,rowSet);
+    bilu0_decomposition(this->ILU);
+  }
+
+  template<class M, class X, class Y>
+  template<class S>
+  void ILUNSubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
+  {
+    std::size_t offset=copyToLocalMatrix(A,rowSet);
+    RILU.setSize(rowSet.size(),rowSet.size(), (this->ILU.nonzeroes()/rowSet.size()+2*offset)*rowSet.size());
+    RILU.setBuildMode(matrix_type::row_wise);
+    bilu_decomposition(this->ILU, (offset+1)/2, RILU);
+  }
+
+  /** @} */
 } // end name space DUNE
 
 

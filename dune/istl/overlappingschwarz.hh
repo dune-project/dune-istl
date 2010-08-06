@@ -151,15 +151,34 @@ namespace Dune
      */
     OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<T,n,m>,A>& mat,
                         const range_type& b, range_type& x);
-
+    /**
+     * @brief Deallocates memory of the local vector.
+     * @warning memory is released by the destructor as this Functor
+     * is copied and the copy needs to still have the data.
+     */
     void deallocate();
 
+    /*
+     * @brief Resets the local index to zero.
+     */
     void resetIndexForNextDomain();
 
+    /**
+     * @brief Get the local left hand side.
+     * @return The local left hand side.
+     */
     field_type* lhs();
 
+    /**
+     * @brief Get the local left hand side.
+     * @return The local left hand side.
+     */
     field_type* rhs();
 
+    /**
+     * @brief relax the result.
+     * @param relax The relaxation parameter.
+     */
     void relaxResult(field_type relax);
 
     /**
@@ -168,22 +187,38 @@ namespace Dune
      */
     void operator()(const size_type& domain);
 
+    /**
+     * @brief Assigns the block to the current local
+     * index.
+     * At the same time the local defect is calculated
+     * for the index and stored in the rhs.
+     * Afterwards the is incremented for the next block.
+     */
     void assignResult(block_type& res);
 
   private:
+    /**
+     * @brief The global matrix for the defect calculation.
+     */
     const matrix_type* mat;
+    /** @brief The local right hand side. */
     field_type* rhs_;
+    /** @brief The local left hand side. */
     field_type* lhs_;
+    /** @brief The global right hand side for the defect calculation. */
     const range_type* b;
+    /** @brief The global left hand side for adding the local update to. */
     range_type* x;
+    /** @brief The current local index. */
     std::size_t i;
+    /** @brief The maximum entries over all subdomains. */
     std::size_t maxlength_;
   };
 
 #endif
 
   template<class M, class X, class Y>
-  class OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >
+  class OverlappingAssignerILUBase
   {
   public:
     typedef M matrix_type;
@@ -200,18 +235,35 @@ namespace Dune
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
-    OverlappingAssigner(std::size_t maxlength, const M& mat,
-                        const Y& b, X& x);
-
+    OverlappingAssignerILUBase(std::size_t maxlength, const M& mat,
+                               const Y& b, X& x);
+    /**
+     * @brief Deallocates memory of the local vector.
+     * @warning memory is released by the destructor as this Functor
+     * is copied and the copy needs to still have the data.
+     */
     void deallocate();
 
-
+    /*
+     * @brief Resets the local index to zero.
+     */
     void resetIndexForNextDomain();
 
+    /*
+     * @brief Resets the local index to zero.
+     */
     X& lhs();
 
+    /**
+     * @brief Get the local left hand side.
+     * @return The local left hand side.
+     */
     Y& rhs();
 
+    /**
+     * @brief relax the result.
+     * @param relax The relaxation parameter.
+     */
     void relaxResult(field_type relax);
 
     /**
@@ -220,16 +272,69 @@ namespace Dune
      */
     void operator()(const size_type& domain);
 
+    /**
+     * @brief Assigns the block to the current local
+     * index.
+     * At the same time the local defect is calculated
+     * for the index and stored in the rhs.
+     * Afterwards the is incremented for the next block.
+     */
     void assignResult(block_type& res);
+
   private:
+    /**
+     * @brief The global matrix for the defect calculation.
+     */
     const M* mat;
+    /** @brief The local right hand side. */
     X* lhs_;
+    /** @brief The local left hand side. */
     Y* rhs_;
+    /** @brief The global right hand side for the defect calculation. */
     const Y* b;
+    /** @brief The global left hand side for adding the local update to. */
     X* x;
+    /** @brief The maximum entries over all subdomains. */
     size_type i;
   };
 
+  // specialization for ILU0
+  template<class M, class X, class Y>
+  class OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >
+    : public OverlappingAssignerILUBase<M,X,Y>
+  {
+  public:
+    /**
+     * @brief Constructor.
+     * @param mat The global matrix.
+     * @param rhs storage for the local defect.
+     * @param b the global right hand side.
+     * @param x the global left hand side.
+     */
+    OverlappingAssigner(std::size_t maxlength, const M& mat,
+                        const Y& b, X& x)
+      : OverlappingAssignerILUBase<M,X,Y>(maxlength, mat,b,x)
+    {}
+  };
+
+  // specialization for ILUN
+  template<class M, class X, class Y>
+  class OverlappingAssigner<ILUNSubdomainSolver<M,X,Y> >
+    : public OverlappingAssignerILUBase<M,X,Y>
+  {
+  public:
+    /**
+     * @brief Constructor.
+     * @param mat The global matrix.
+     * @param rhs storage for the local defect.
+     * @param b the global right hand side.
+     * @param x the global left hand side.
+     */
+    OverlappingAssigner(std::size_t maxlength, const M& mat,
+                        const Y& b, X& x)
+      : OverlappingAssignerILUBase<M,X,Y>(maxlength, mat,b,x)
+    {}
+  };
 
   template<typename S, typename T>
   struct AdditiveAdder
@@ -420,7 +525,7 @@ namespace Dune
 #endif
 
   template<class M,class X, class Y>
-  struct SeqOverlappingSchwarzAssembler<ILU0SubdomainSolver<M,X,Y> >
+  struct SeqOverlappingSchwarzAssemblerILUBase
   {
     typedef M matrix_type;
     template<class RowToDomain, class Solvers, class SubDomains>
@@ -428,6 +533,16 @@ namespace Dune
                                              Solvers& solvers, const SubDomains& domains,
                                              bool onTheFly);
   };
+
+  template<class M,class X, class Y>
+  struct SeqOverlappingSchwarzAssembler<ILU0SubdomainSolver<M,X,Y> >
+    : public SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>
+  {};
+
+  template<class M,class X, class Y>
+  struct SeqOverlappingSchwarzAssembler<ILUNSubdomainSolver<M,X,Y> >
+    : public SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>
+  {};
 
   /**
    * @brief Sequential overlapping Schwarz preconditioner
@@ -866,11 +981,11 @@ namespace Dune
 
   template<class M,class X,class Y>
   template<class RowToDomain, class Solvers, class SubDomains>
-  std::size_t SeqOverlappingSchwarzAssembler<ILU0SubdomainSolver<M,X,Y> >::assembleLocalProblems(const RowToDomain& rowToDomain,
-                                                                                                 const matrix_type& mat,
-                                                                                                 Solvers& solvers,
-                                                                                                 const SubDomains& subDomains,
-                                                                                                 bool onTheFly)
+  std::size_t SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>::assembleLocalProblems(const RowToDomain& rowToDomain,
+                                                                                  const matrix_type& mat,
+                                                                                  Solvers& solvers,
+                                                                                  const SubDomains& subDomains,
+                                                                                  bool onTheFly)
   {
     typedef typename SubDomains::const_iterator DomainIterator;
     typedef typename Solvers::iterator SolverIterator;
@@ -1046,10 +1161,10 @@ namespace Dune
 #endif
 
   template<class M, class X, class Y>
-  OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::OverlappingAssigner(std::size_t maxlength,
-                                                                        const M& mat_,
-                                                                        const Y& b_,
-                                                                        X& x_)
+  OverlappingAssignerILUBase<M,X,Y>::OverlappingAssignerILUBase(std::size_t maxlength,
+                                                                const M& mat_,
+                                                                const Y& b_,
+                                                                X& x_)
     : mat(&mat_),
       b(&b_),
       x(&x_), i(0)
@@ -1059,14 +1174,14 @@ namespace Dune
   }
 
   template<class M, class X, class Y>
-  void OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::deallocate()
+  void OverlappingAssignerILUBase<M,X,Y>::deallocate()
   {
     delete rhs_;
     delete lhs_;
   }
 
   template<class M, class X, class Y>
-  void OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::operator()(const size_type& domainIndex)
+  void OverlappingAssignerILUBase<M,X,Y>::operator()(const size_type& domainIndex)
   {
     (*rhs_)[i]=(*b)[domainIndex];
 
@@ -1082,31 +1197,31 @@ namespace Dune
   }
 
   template<class M, class X, class Y>
-  void OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::relaxResult(field_type relax)
+  void OverlappingAssignerILUBase<M,X,Y>::relaxResult(field_type relax)
   {
     (*lhs_)[i]*=relax;
   }
 
   template<class M, class X, class Y>
-  void OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::assignResult(block_type& res)
+  void OverlappingAssignerILUBase<M,X,Y>::assignResult(block_type& res)
   {
     res+=(*lhs_)[i++];
   }
 
   template<class M, class X, class Y>
-  X& OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::lhs()
+  X& OverlappingAssignerILUBase<M,X,Y>::lhs()
   {
     return *lhs_;
   }
 
   template<class M, class X, class Y>
-  Y& OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::rhs()
+  Y& OverlappingAssignerILUBase<M,X,Y>::rhs()
   {
     return *rhs_;
   }
 
   template<class M, class X, class Y>
-  void OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >::resetIndexForNextDomain()
+  void OverlappingAssignerILUBase<M,X,Y>::resetIndexForNextDomain()
   {
     i=0;
   }
