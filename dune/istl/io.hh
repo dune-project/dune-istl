@@ -508,7 +508,7 @@ namespace Dune {
               s<<col.index()<<": |";
             } else {
               if(count==skipcols) {
-                for(int i=0; i < rowtext.length(); i++)
+                for(typename std::string::size_type i=0; i < rowtext.length(); i++)
                   s<<" ";
                 s<<"       ";
               }
