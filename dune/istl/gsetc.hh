@@ -8,8 +8,8 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include "cvector.hh"
-#include "cmatrix.hh"
+#include "multitypeblockvector.hh"
+#include "multitypeblockmatrix.hh"
 
 #include "istlexception.hh"
 
