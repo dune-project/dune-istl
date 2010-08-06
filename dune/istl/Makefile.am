@@ -25,6 +25,8 @@ istl_HEADERS = allocator.hh \
 	matrixmatrix.hh \
 	matrixredistribute.hh \
 	matrixutils.hh \
+	multitypeblockmatrix.hh \
+	multitypeblockvector.hh \
 	operators.hh \
 	overlappingschwarz.hh \
 	owneroverlapcopy.hh \

@@ -8,6 +8,8 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include "cvector.hh"
+#include "cmatrix.hh"
 
 #include "istlexception.hh"
 
@@ -369,6 +371,25 @@ namespace Dune {
   // template meta program for iterative solver steps
   template<int I>
   struct algmeta_itsteps {
+
+#ifdef HAVE_BOOST_FUSION
+
+    template<typename T11, typename T12, typename T13, typename T14,
+        typename T15, typename T16, typename T17, typename T18,
+        typename T19, typename T21, typename T22, typename T23,
+        typename T24, typename T25, typename T26, typename T27,
+        typename T28, typename T29, class K>
+    static void dbgs (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+                      MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
+                      const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                      const K& w)
+    {
+      const int rowcount =
+        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
+      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::dbgs(A, x, b, w);
+    }
+#endif
+
     template<class M, class X, class Y, class K>
     static void dbgs (const M& A, X& x, const Y& b, const K& w)
     {
@@ -396,6 +417,24 @@ namespace Dune {
       x *= w;
       x.axpy(1-w,xold);
     }
+
+#ifdef HAVE_BOOST_FUSION
+    template<typename T11, typename T12, typename T13, typename T14,
+        typename T15, typename T16, typename T17, typename T18,
+        typename T19, typename T21, typename T22, typename T23,
+        typename T24, typename T25, typename T26, typename T27,
+        typename T28, typename T29, class K>
+    static void bsorf (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
+                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                       const K& w)
+    {
+      const int rowcount =
+        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
+      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::bsorf(A, x, b, w);
+    }
+#endif
+
     template<class M, class X, class Y, class K>
     static void bsorf (const M& A, X& x, const Y& b, const K& w)
     {
@@ -425,6 +464,25 @@ namespace Dune {
         x[i.index()].axpy(w,v);
       }
     }
+
+#ifdef HAVE_BOOST_FUSION
+
+    template<typename T11, typename T12, typename T13, typename T14,
+        typename T15, typename T16, typename T17, typename T18,
+        typename T19, typename T21, typename T22, typename T23,
+        typename T24, typename T25, typename T26, typename T27,
+        typename T28, typename T29, class K>
+    static void bsorb (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
+                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                       const K& w)
+    {
+      const int rowcount =
+        mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
+      Dune::MultiTypeBlockMatrix_Solver<I,rowcount-1,rowcount>::bsorb(A, x, b, w);
+    }
+#endif
+
     template<class M, class X, class Y, class K>
     static void bsorb (const M& A, X& x, const Y& b, const K& w)
     {
@@ -454,6 +512,24 @@ namespace Dune {
         x[i.index()].axpy(w,v);
       }
     }
+
+#ifdef HAVE_BOOST_FUSION
+    template<typename T11, typename T12, typename T13, typename T14,
+        typename T15, typename T16, typename T17, typename T18,
+        typename T19, typename T21, typename T22, typename T23,
+        typename T24, typename T25, typename T26, typename T27,
+        typename T28, typename T29, class K>
+    static void dbjac (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
+                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                       const K& w)
+    {
+      const int rowcount =
+        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value
+        Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount >::dbjac(A, x, b, w);
+    }
+#endif
+
     template<class M, class X, class Y, class K>
     static void dbjac (const M& A, X& x, const Y& b, const K& w)
     {

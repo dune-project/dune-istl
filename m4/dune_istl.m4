@@ -10,6 +10,8 @@ AC_DEFUN([DUNE_ISTL_CHECKS],
   AC_REQUIRE([__AC_FC_NAME_MANGLING])
   AC_REQUIRE([AC_PROG_F77])
   AC_REQUIRE([ACX_BLAS])
+  AX_BOOST_BASE(1.35, [ DUNE_BOOST_FUSION ] , [] )
+  
   # add summary entries for tests not maintained by dune
   DUNE_ADD_SUMMARY_ENTRY([METIS],[$with_metis])
   DUNE_ADD_SUMMARY_ENTRY([BLAS],[$acx_blas_ok])

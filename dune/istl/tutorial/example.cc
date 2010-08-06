@@ -26,6 +26,10 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
 
+#include <dune/istl/multitypeblockvector.hh>
+#include <dune/istl/multitypeblockmatrix.hh>
+
+
 // a simple stop watch
 class Timer
 {
@@ -503,6 +507,100 @@ void test_Interface ()
 }
 
 
+#ifdef HAVE_BOOST_FUSION
+
+void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                           //Jacobi Solver Test MultiTypeBlockMatrix_Solver::dbjac on MultiTypeBlockMatrix<BCRSMatrix>
+
+  std::cout << "\n\n\nJacobi Solver Test on MultiTypeBlockMatrix<BCRSMatrix>\n";
+
+  typedef Dune::FieldMatrix<double,1,1> LittleBlock;                    //matrix block type
+  typedef Dune::BCRSMatrix<LittleBlock> BCRSMat;                        //matrix type
+  typedef Dune::BlockVector<Dune::FieldVector<double,1> > VecType;
+
+  const int X1=3;                                                       //index bounds of all four matrices
+  const int X2=2;
+  const int Y1=3;
+  const int Y2=2;
+  BCRSMat A11 = BCRSMat(X1,Y1,X1*Y1,BCRSMat::random);                   //A11 is 3x3
+  BCRSMat A12 = BCRSMat(X1,Y2,X1*Y2,BCRSMat::random);                   //A12 is 2x3
+  BCRSMat A21 = BCRSMat(X2,Y1,X2*Y1,BCRSMat::random);                   //A11 is 3x2
+  BCRSMat A22 = BCRSMat(X2,Y2,X2*Y2,BCRSMat::random);                   //A12 is 2x2
+
+  typedef Dune::MultiTypeBlockVector<Dune::BlockVector<Dune::FieldVector<double,1> >,Dune::BlockVector<Dune::FieldVector<double,1> > > TestVector;
+  TestVector x, b;
+
+  fusion::at_c<0>(x).resize(Y1);
+  fusion::at_c<1>(x).resize(Y2);
+  fusion::at_c<0>(b).resize(X1);
+  fusion::at_c<1>(b).resize(X2);
+
+  x = 1; b = 1;
+
+  //set row sizes
+  for (int i=0; i<Y1; i++) {A11.setrowsize(i,X1); A12.setrowsize(i,X2);} A11.endrowsizes(); A12.endrowsizes();
+  for (int i=0; i<Y2; i++) {A21.setrowsize(i,X1); A22.setrowsize(i,X2);} A21.endrowsizes(); A22.endrowsizes();
+
+  //set indices
+  for (int i=0; i<X1+X2; i++) {
+    for (int j=0; j<Y1+Y2; j++) {
+      if (i<X1 && j<Y1) {A11.addindex(i,j);}
+      if (i<X1 && j>=Y1) {A12.addindex(i,j-Y1);}
+      if (i>=X1 && j<Y1) {A21.addindex(i-X1,j);}
+      if (i>=X1 && j>=Y1) {A22.addindex(i-X1,j-Y1);}
+    }
+  }
+  A11.endindices(); A12.endindices(); A21.endindices(); A22.endindices();
+  A11 = 0; A12 = 0; A21 = 0; A22 = 0;
+
+  //fill in values (row-wise) in A11 and A22
+  for (int i=0; i<Y1; i++) {
+    if (i>0) {A11[i][i-1]=-1;}
+    A11[i][i]=2;                                                        //diag
+    if (i<Y1-1) {A11[i][i+1]=-1;}
+    if (i<Y2) {                                                         //also in A22
+      if (i>0) {A22[i][i-1]=-1;}
+      A22[i][i]=2;
+      if (i<Y2-1) {A22[i][i+1]=-1;}
+    }
+  }
+  A12[2][0] = -1; A21[0][2] = -1;                                       //fill A12 & A21
+
+
+  typedef Dune::MultiTypeBlockVector<BCRSMat,BCRSMat> BCRS_Row;
+  typedef Dune::MultiTypeBlockMatrix<BCRS_Row,BCRS_Row> CM_BCRS;
+  CM_BCRS A;
+  fusion::at_c<0>(fusion::at_c<0>(A)) = A11;
+  fusion::at_c<1>(fusion::at_c<0>(A)) = A12;
+  fusion::at_c<0>(fusion::at_c<1>(A)) = A21;
+  fusion::at_c<1>(fusion::at_c<1>(A)) = A22;
+
+  printmatrix(std::cout,A11,"matrix A11","row",9,1);
+  printmatrix(std::cout,A12,"matrix A12","row",9,1);
+  printmatrix(std::cout,A21,"matrix A21","row",9,1);
+  printmatrix(std::cout,A22,"matrix A22","row",9,1);
+
+  x = 1;
+  b = 1;
+
+  Dune::MatrixAdapter<CM_BCRS,TestVector,TestVector> op(A);             // make linear operator from A
+  Dune::SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
+  Dune::SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
+  Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SSOR preconditioner
+  Dune::SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
+
+  Dune::LoopSolver<TestVector> loop(op,gs,1E-4,18000,2);           // an inverse operator
+  Dune::InverseOperatorResult r;
+
+  loop.apply(x,b,r);
+
+  printvector(std::cout,fusion::at_c<0>(x),"solution x1","entry",11,9,1);
+  printvector(std::cout,fusion::at_c<1>(x),"solution x2","entry",11,9,1);
+
+}
+#endif
+
+
+
 
 int main (int argc , char ** argv)
 {
@@ -515,6 +613,9 @@ int main (int argc , char ** argv)
     test_IO();
     test_Iter();
     test_Interface();
+#ifdef HAVE_BOOST_FUSION
+    test_MultiTypeBlockVector_MultiTypeBlockMatrix();
+#endif
   }
   catch (Dune::ISTLError& error)
   {
