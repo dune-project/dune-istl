@@ -4,6 +4,6 @@ dist_noinst_DATA = example.cc
 
 noinst_PROGRAMS = example
 example_SOURCES = example.cc
-example_CPPFLAGS = $(BOOST_CPPFALGS) $(DUNE_CPPFLAGS)
+example_CPPFLAGS = $(BOOST_CPPFLAGS) $(DUNE_CPPFLAGS)
 
 include $(top_srcdir)/am/global-rules
