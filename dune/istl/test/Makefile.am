@@ -19,7 +19,8 @@ endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest vbvectortest \
-	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest
+	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest\
+	cvectorcmatrix
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
@@ -66,6 +67,7 @@ iotest_SOURCES = iotest.cc
 
 scaledidmatrixtest_SOURCES = scaledidmatrixtest.cc
 
+cvectorcmatrix_SOURCES = cvectorcmatrix.cc
 
 if MPI
   indicestest_SOURCES = indicestest.cc

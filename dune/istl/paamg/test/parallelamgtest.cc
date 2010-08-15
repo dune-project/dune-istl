@@ -124,7 +124,7 @@ void testAmg(int N, int coarsenTarget)
   watch.reset();
   Operator fop(cmat, comm);
 
-  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
+  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
   typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;

@@ -876,51 +876,51 @@ namespace Dune {
 
     //===== vector space arithmetic
 
-    // //! vector space multiplication with scalar
-    // BCRSMatrix& operator*= (const field_type& k)
-    // {
-    //   if (nnz>0)
-    //  {
-    //    // process 1D array
-    //    for (size_type i=0; i<nnz; i++)
-    //          a[i] *= k;
-    //  }
-    //   else
-    //  {
-    //    RowIterator endi=end();
-    //    for (RowIterator i=begin(); i!=endi; ++i)
-    //          {
-    //            ColIterator endj = (*i).end();
-    //            for (ColIterator j=(*i).begin(); j!=endj; ++j)
-    //                  (*j) *= k;
-    //          }
-    //  }
+    //! vector space multiplication with scalar
+    BCRSMatrix& operator*= (const field_type& k)
+    {
+      if (nnz>0)
+      {
+        // process 1D array
+        for (size_type i=0; i<nnz; i++)
+          a[i] *= k;
+      }
+      else
+      {
+        RowIterator endi=end();
+        for (RowIterator i=begin(); i!=endi; ++i)
+        {
+          ColIterator endj = (*i).end();
+          for (ColIterator j=(*i).begin(); j!=endj; ++j)
+            (*j) *= k;
+        }
+      }
 
-    //   return *this;
-    // }
+      return *this;
+    }
 
-    // //! vector space division by scalar
-    // BCRSMatrix& operator/= (const field_type& k)
-    // {
-    //   if (nnz>0)
-    //  {
-    //    // process 1D array
-    //    for (size_type i=0; i<nnz; i++)
-    //          a[i] /= k;
-    //  }
-    //   else
-    //  {
-    //    RowIterator endi=end();
-    //    for (RowIterator i=begin(); i!=endi; ++i)
-    //          {
-    //            ColIterator endj = (*i).end();
-    //            for (ColIterator j=(*i).begin(); j!=endj; ++j)
-    //                  (*j) /= k;
-    //          }
-    //  }
+    //! vector space division by scalar
+    BCRSMatrix& operator/= (const field_type& k)
+    {
+      if (nnz>0)
+      {
+        // process 1D array
+        for (size_type i=0; i<nnz; i++)
+          a[i] /= k;
+      }
+      else
+      {
+        RowIterator endi=end();
+        for (RowIterator i=begin(); i!=endi; ++i)
+        {
+          ColIterator endj = (*i).end();
+          for (ColIterator j=(*i).begin(); j!=endj; ++j)
+            (*j) /= k;
+        }
+      }
 
-    //   return *this;
-    // }
+      return *this;
+    }
 
 
     /*! \brief Add the entries of another matrix to this one.

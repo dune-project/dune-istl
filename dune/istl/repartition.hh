@@ -57,7 +57,7 @@ namespace Dune
     std::size_t sum=0, needed = graph.noVertices()-indexSet.size();
     std::vector<std::size_t> neededall(oocomm.communicator().size(), 0);
 
-    MPI_Allgather(&needed, 1, MPITraits<std::size_t>::getType() , &(neededall[0]), 1, MPITraits<std::size_t>::getType(), oocomm.communicator());
+    MPI_Allgather(&needed, 1, Generic_MPI_Datatype<std::size_t>::get() , &(neededall[0]), 1, Generic_MPI_Datatype<std::size_t>::get(), oocomm.communicator());
     for(int i=0; i<oocomm.communicator().size(); ++i)
       sum=sum+neededall[i];   // MAke this for generic
 
