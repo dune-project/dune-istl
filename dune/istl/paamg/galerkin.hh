@@ -77,6 +77,10 @@ namespace Dune
       std::size_t maxRowSize();
 
       std::size_t sumRowSize();
+      std::size_t index()
+      {
+        return row_.index();
+      }
     private:
       /** @brief Create iterator for the current row. */
       typename M::CreateIterator row_;
@@ -313,6 +317,7 @@ namespace Dune
                                                                       const AggregatesMap<typename G::VertexDescriptor>& aggregates,
                                                                       const typename G::VertexDescriptor& seed)
     {
+      assert(row.index()==aggregates[seed]);
       row.insert(aggregates[seed]);
       ConnectedBuilder<G,R,V> conBuilder(aggregates, graph, visitedMap, row);
       typedef typename G::VertexDescriptor Vertex;
@@ -333,6 +338,7 @@ namespace Dune
     {
       ConnectedBuilder<G,R,V> conBuilder(aggregates, graph, visitedMap, row);
       const typename G::VertexDescriptor aggregate=seed->aggregate;
+      assert(row.index()==seed->aggregate);
 
       while(seed != overlapEnd && aggregate == seed->aggregate) {
         row.insert(seed->aggregate);
@@ -469,6 +475,10 @@ namespace Dune
             ++row;
           }
         }
+
+#ifdef DUNE_ISTL_WITH_CHECKING
+      //examined.clear();
+#endif
 
       // Now come the aggregates not owned by use.
       // They represent the rows n+1, ..., N

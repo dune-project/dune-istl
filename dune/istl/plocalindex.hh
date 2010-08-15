@@ -167,6 +167,17 @@ namespace Dune
 
   };
 
+
+  template<typename T>
+  struct LocalIndexComparator<ParallelLocalIndex<T> >
+  {
+    static bool compare(const ParallelLocalIndex<T>& t1,
+                        const ParallelLocalIndex<T>& t2){
+      return t1.attribute()<t2.attribute();
+    }
+  };
+
+
 #if HAVE_MPI
 
   //! \todo Please doc me!

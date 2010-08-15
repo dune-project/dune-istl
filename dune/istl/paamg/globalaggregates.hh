@@ -133,6 +133,15 @@ namespace Dune
   {
 
 #if HAVE_MPI
+    /**
+     * @brief Utility class for publishing the aggregate number
+     * of the DOFs in the overlap to other processors and convert
+     * them to local indices.
+     * @tparam T The type of the vertices
+     * @tparam O The set of overlap flags.
+     * @tparam T1 The type of the global indices.
+     * @tparam T2 The type of the local indices.
+     */
     template<typename T, typename O, typename T1, typename T2>
     struct AggregatesPublisher<T,O,OwnerOverlapCopyCommunication<T1,T2> >
     {
@@ -149,8 +158,44 @@ namespace Dune
         typedef Dune::Amg::GlobalAggregatesMap<Vertex,IndexSet> GlobalMap;
         GlobalMap gmap(aggregates, globalLookup);
         pinfo.copyOwnerToAll(gmap,gmap);
-      }
 
+        typedef typename ParallelInformation::RemoteIndices::const_iterator Lists;
+        Lists lists = pinfo.remoteIndices().find(pinfo.communicator().rank());
+        if(lists!=pinfo.remoteIndices().end()) {
+
+          // For periodic boundary conditions we must renumber
+          // the aggregates of vertices in the overlap whose owners are
+          // on the same process
+          Vertex maxAggregate =0;
+          typedef typename AggregatesMap<Vertex>::const_iterator Iter;
+          for(Iter i=aggregates.begin(), end=aggregates.end(); i!=end; ++i)
+            maxAggregate = std::max(maxAggregate, *i);
+
+          // Compute new mapping of aggregates in the overlap that we also own
+          std::map<Vertex,Vertex> newMapping;
+
+          // insert all elements into map
+          typedef typename ParallelInformation::RemoteIndices::RemoteIndexList
+          ::const_iterator RIter;
+          for(RIter ri=lists->second.first->begin(), rend = lists->second.first->end();
+              ri!=rend; ++ri)
+            if(O::contains(ri->localIndexPair().local().attribute()))
+              newMapping.insert(std::make_pair(aggregates[ri->localIndexPair().local()],
+                                               maxAggregate));
+          // renumber
+          typedef typename std::map<Vertex,Vertex>::iterator MIter;
+          for(MIter mi=newMapping.begin(), mend=newMapping.end();
+              mi != mend; ++mi)
+            mi->second=++maxAggregate;
+
+
+          for(RIter ri=lists->second.first->begin(), rend = lists->second.first->end();
+              ri!=rend; ++ri)
+            if(O::contains(ri->localIndexPair().local().attribute()))
+              aggregates[ri->localIndexPair().local()] =
+                newMapping[aggregates[ri->localIndexPair().local()]];
+        }
+      }
     };
 #endif
 

@@ -75,6 +75,7 @@ namespace Dune
      * No global communication is necessary!
      * All indices added to the index will become the local index
      * std::numeric_limits<size_t>::max()
+     *
      */
     void sync();
 
@@ -86,6 +87,7 @@ namespace Dune
      * @param numberer Functor providing the local indices for the added global indices.
      * has to provide a function size_t operator()(const TG& global) that provides the
      * local index to a global one. It will be called for ascending global indices.
+     *
      */
     template<typename T1>
     void sync(T1& numberer);
@@ -931,13 +933,11 @@ namespace Dune
 
     }
 
-    if(iterators.isAtEnd() || iterators.globalIndex() != global) {
+    if(iterators.isAtEnd() || iterators.globalIndex() != global ||
+       iterators.remoteIndex().attribute() != attribute) {
       // The entry is not yet known
       // Insert in the the list and do not change the first iterator.
       iterators.insert(RemoteIndex(Attribute(attribute)),global);
-    }else if(iterators.isNotAtEnd()) {
-      // Assert that the attributes match
-      assert(iterators.remoteIndex().attribute() == attribute);
     }
   }
 
@@ -1010,18 +1010,20 @@ namespace Dune
 
         if(process==rank_) {
           // Now we know the local attribute of the global index
+          //Only add the index if it is unknown.
           // Do we know that global index already?
           IndexIterator pos = std::lower_bound(index, iEnd, IndexPair(global));
 
-          if(pos == iEnd || pos->global() != global) {
+          if(pos == iEnd || pos->global() != global || sourceAttribute != attribute) {
             // No, we do not. Add it!
-            indexSet_.add(global,ParallelLocalIndex<Attribute>(numberer(global),
-                                                               Attribute(attribute), true));
+            indexSet_.add(global,
+                          ParallelLocalIndex<Attribute>(numberer(global),
+                                                        Attribute(attribute), true));
+            index=pos;
           }else{
             // Attributes have to match!
             assert(attribute==pos->local().attribute());
           }
-          index=pos;
         }else{
           insertIntoRemoteIndexList(process, global, attribute);
         }
