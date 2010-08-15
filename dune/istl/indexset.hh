@@ -606,6 +606,27 @@ namespace Dune
   };
 
 
+  template<typename T>
+  struct LocalIndexComparator
+  {
+    static bool compare(const T& t1, const T& t2){
+      return false;
+    }
+  };
+
+  template<class TG, class TL>
+  struct IndexSetSortFunctor
+  {
+    bool operator()(const IndexPair<TG,TL>& i1, const IndexPair<TG,TL>& i2)
+    {
+      return i1.global()<i2.global() || (i1.global()==i2.global() &&
+                                         LocalIndexComparator<TL>::compare(i1.local(),
+                                                                           i2.local()));
+    }
+  };
+
+
+
   template<class TG, class TL>
   inline std::ostream& operator<<(std::ostream& os, const IndexPair<TG,TL>& pair)
   {
@@ -802,7 +823,7 @@ namespace Dune
                  <<"in RESIZE state!");
 #endif
 
-    std::sort(newIndices_.begin(), newIndices_.end());
+    std::sort(newIndices_.begin(), newIndices_.end(), IndexSetSortFunctor<TG,TL>());
     merge();
     seqNo_++;
     state_ = GROUND;
@@ -832,20 +853,20 @@ namespace Dune
         if(old->local().state()==DELETED) {
           old.eraseToHere();
         }
-        else if(old->global() < added->global())
-        {
-          tempPairs.push_back(*old);
-          old.eraseToHere();
-        }
-        else if(old->global() == added->global()) {
-          // Indices have to be the same
-          assert(old->local()==added->local());
-          old.eraseToHere();
-        }
         else
         {
-          tempPairs.push_back(*added);
-          added.eraseToHere();
+          if(old->global() < added->global() ||
+             (old->global() == added->global()
+              && LocalIndexComparator<TL>::compare(old->local(),added->local())))
+          {
+            tempPairs.push_back(*old);
+            old.eraseToHere();
+            continue;
+          }else
+          {
+            tempPairs.push_back(*added);
+            added.eraseToHere();
+          }
         }
       }
 
