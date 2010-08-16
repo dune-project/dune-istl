@@ -1013,17 +1013,30 @@ namespace Dune
           //Only add the index if it is unknown.
           // Do we know that global index already?
           IndexIterator pos = std::lower_bound(index, iEnd, IndexPair(global));
+          index=pos;
 
-          if(pos == iEnd || pos->global() != global || sourceAttribute != attribute) {
-            // No, we do not. Add it!
+          if(pos == iEnd)
+            continue;
+          if(pos->global() != global) {
             indexSet_.add(global,
                           ParallelLocalIndex<Attribute>(numberer(global),
                                                         Attribute(attribute), true));
-            index=pos;
-          }else{
-            // Attributes have to match!
-            assert(attribute==pos->local().attribute());
+            continue;
           }
+
+          // because of above the global indices match. Add only if the attribute is different
+          bool indexIsThere = false;
+
+          for(; pos->global()==global; ++pos)
+            if(sourceAttribute == attribute) {
+              indexIsThere = true;
+              break;
+            }
+
+          if(!indexIsThere)
+            indexSet_.add(global,
+                          ParallelLocalIndex<Attribute>(numberer(global),
+                                                        Attribute(attribute), true));
         }else{
           insertIntoRemoteIndexList(process, global, attribute);
         }
