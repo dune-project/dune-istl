@@ -19,8 +19,7 @@ endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest vbvectortest \
-	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest\
-	cvectorcmatrix
+	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
