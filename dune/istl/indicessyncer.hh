@@ -14,6 +14,7 @@
 #include <limits>
 #include <algorithm>
 #include <functional>
+#include <map>
 
 #if HAVE_MPI
 namespace Dune
@@ -156,7 +157,7 @@ namespace Dune
      * @brief List type for temporarily storing the global indices of the
      * remote indices.
      */
-    typedef SLList<GlobalIndex, typename RemoteIndices::Allocator> GlobalIndexList;
+    typedef SLList<std::pair<GlobalIndex,Attribute>, typename RemoteIndices::Allocator> GlobalIndexList;
 
     /** @brief The modifying iterator for the global index list. */
     typedef typename GlobalIndexList::ModifyIterator GlobalIndexModifier;
@@ -262,7 +263,8 @@ namespace Dune
        * @param index The remote index.
        * @param global The global index corresponding to the remote index.
        */
-      void insert(const RemoteIndex& index, const GlobalIndex& global);
+      void insert(const RemoteIndex& index,
+                  const std::pair<GlobalIndex,Attribute>& global);
 
       /**
        * @brief Get the remote index at current position.
@@ -274,7 +276,9 @@ namespace Dune
        * @brief Get the global index of the remote index at current position.
        * @return The current global index.
        */
-      GlobalIndex& globalIndex() const;
+      std::pair<GlobalIndex,Attribute>& globalIndexPair() const;
+
+      Attribute& attribute() const;
 
       /**
        * @brief Was this entry already in the remote index list before the sync process?
@@ -365,7 +369,9 @@ namespace Dune
     /**
      * @brief Insert an entry into the  remote index list if not yet present.
      */
-    void insertIntoRemoteIndexList(int process, const GlobalIndex& global, char attribute);
+    void insertIntoRemoteIndexList(int process,
+                                   const std::pair<GlobalIndex,Attribute>& global,
+                                   char attribute);
 
     /**
      * @brief Reset the iterator tuples of all neighbouring processes.
@@ -390,6 +396,50 @@ namespace Dune
                     BoolList& bList);
   };
 
+  template<typename TG, typename TA>
+  bool operator<(const IndexPair<TG,ParallelLocalIndex<TA> >& i1,
+                 const std::pair<TG,TA>& i2)
+  {
+    return i1.global() < i2.first ||
+           (i1.global() == i2.first && i1.local().attribute()<i2.second);
+  }
+
+  template<typename TG, typename TA>
+  bool operator<(const std::pair<TG,TA>& i1,
+                 const IndexPair<TG,ParallelLocalIndex<TA> >& i2)
+  {
+    return i1.first < i2.global() ||
+           (i1.first == i2.global() && i1.second<i2.local().attribute());
+  }
+
+  template<typename TG, typename TA>
+  bool operator==(const IndexPair<TG,ParallelLocalIndex<TA> >& i1,
+                  const std::pair<TG,TA>& i2)
+  {
+    return (i1.global() == i2.first && i1.local().attribute()==i2.second);
+  }
+
+  template<typename TG, typename TA>
+  bool operator!=(const IndexPair<TG,ParallelLocalIndex<TA> >& i1,
+                  const std::pair<TG,TA>& i2)
+  {
+    return (i1.global() != i2.first || i1.local().attribute()!=i2.second);
+  }
+
+  template<typename TG, typename TA>
+  bool operator==(const std::pair<TG,TA>& i2,
+                  const IndexPair<TG,ParallelLocalIndex<TA> >& i1)
+  {
+    return (i1.global() == i2.first && i1.local().attribute()==i2.second);
+  }
+
+  template<typename TG, typename TA>
+  bool operator!=(const std::pair<TG,TA>& i2,
+                  const IndexPair<TG,ParallelLocalIndex<TA> >& i1)
+  {
+    return (i1.global() != i2.first || i1.local().attribute()!=i2.second);
+  }
+
   /**
    * @brief Stores the corresponding global indices of the remote index information.
    *
@@ -407,7 +457,7 @@ namespace Dune
    * index information.
    */
   template<typename T, typename A, typename A1>
-  void storeGlobalIndicesOfRemoteIndices(std::map<int,SLList<typename T::GlobalIndex,A> >& globalMap,
+  void storeGlobalIndicesOfRemoteIndices(std::map<int,SLList<std::pair<typename T::GlobalIndex, typename T::LocalIndex::Attribute>,A> >& globalMap,
                                          const RemoteIndices<T,A1>& remoteIndices,
                                          const T& indexSet)
   {
@@ -416,13 +466,14 @@ namespace Dune
     for(RemoteIterator remote = remoteIndices.begin(), end =remoteIndices.end(); remote != end; ++remote) {
       typedef typename RemoteIndices<T,A1>::RemoteIndexList RemoteIndexList;
       typedef typename RemoteIndexList::const_iterator RemoteIndexIterator;
-      typedef SLList<typename T::GlobalIndex,A> GlobalIndexList;
+      typedef SLList<std::pair<typename T::GlobalIndex, typename T::LocalIndex::Attribute>,A> GlobalIndexList;
       GlobalIndexList& global = globalMap[remote->first];
       RemoteIndexList& rList = *(remote->second.first);
 
       for(RemoteIndexIterator index = rList.begin(), riEnd = rList.end();
           index != riEnd; ++index) {
-        global.push_back(index->localIndexPair().global());
+        global.push_back(std::make_pair(index->localIndexPair().global(),
+                                        index->localIndexPair().local().attribute()));
       }
     }
   }
@@ -436,18 +487,23 @@ namespace Dune
    * @param indexSet The set of local indices of the current process.
    */
   template<typename T, typename A, typename A1>
-  inline void repairLocalIndexPointers(std::map<int,SLList<typename T::GlobalIndex,A> >& globalMap,
+  inline void repairLocalIndexPointers(std::map<int,
+                                           SLList<std::pair<typename T::GlobalIndex,
+                                                   typename T::LocalIndex::Attribute>,A> >& globalMap,
                                        RemoteIndices<T,A1>& remoteIndices,
                                        const T& indexSet)
   {
-    typedef typename RemoteIndices<T>::RemoteIndexMap::iterator RemoteIterator;
-    typedef typename RemoteIndices<T>::RemoteIndexList::iterator RemoteIndexIterator;
+    typedef typename RemoteIndices<T,A1>::RemoteIndexMap::iterator RemoteIterator;
+    typedef typename RemoteIndices<T,A1>::RemoteIndexList::iterator RemoteIndexIterator;
     typedef typename T::GlobalIndex GlobalIndex;
-    typedef typename SLList<GlobalIndex,A>::iterator GlobalIndexIterator;
+    typedef typename T::LocalIndex::Attribute Attribute;
+    typedef std::pair<GlobalIndex,Attribute> GlobalIndexPair;
+    typedef SLList<GlobalIndexPair,A> GlobalIndexPairList;
+    typedef typename GlobalIndexPairList::iterator GlobalIndexIterator;
 
-    assert(globalMap.size()==remoteIndices.remoteIndices_.size());
+    assert(globalMap.size()==static_cast<std::size_t>(remoteIndices.neighbours()));
     // Repair pointers to index set in remote indices.
-    typename std::map<int,SLList<GlobalIndex,A> >::iterator global = globalMap.begin();
+    typename std::map<int,GlobalIndexPairList>::iterator global = globalMap.begin();
     RemoteIterator end = remoteIndices.remoteIndices_.end();
 
     for(RemoteIterator remote = remoteIndices.remoteIndices_.begin(); remote != end; ++remote, ++global) {
@@ -467,10 +523,10 @@ namespace Dune
         // Search for the index in the set.
         assert(gIndex != global->second.end());
 
-        while(index->global() < *gIndex)
+        while(*index < *gIndex)
           ++index;
 
-        assert(index != indexSet.end() && index->global() == *gIndex);
+        assert(index != indexSet.end() && *index == *gIndex);
 
         rIndex->localIndex_ = &(*index);
 
@@ -517,7 +573,7 @@ namespace Dune
 
   template<typename T>
   inline void IndicesSyncer<T>::Iterators::insert(const RemoteIndex & index,
-                                                  const GlobalIndex & global)
+                                                  const std::pair<GlobalIndex,Attribute>& global)
   {
     get<0>(iterators_).insert(index);
     get<1>(iterators_).insert(global);
@@ -532,7 +588,8 @@ namespace Dune
   }
 
   template<typename T>
-  inline typename IndicesSyncer<T>::GlobalIndex&  IndicesSyncer<T>::Iterators::globalIndex() const
+  inline std::pair<typename IndicesSyncer<T>::GlobalIndex,typename IndicesSyncer<T>::Attribute>&
+  IndicesSyncer<T>::Iterators::globalIndexPair() const
   {
     return *(get<1>(iterators_));
   }
@@ -598,7 +655,7 @@ namespace Dune
     CollectiveIterator collIter = remoteIndices_.template iterator<true>();
 
     for(IndexIterator index = indexSet_.begin(); index != iEnd; ++index) {
-      collIter.advance(index->global());
+      collIter.advance(index->global(), index->local().attribute());
       if(collIter.empty())
         break;
       int knownRemote=0;
@@ -731,7 +788,8 @@ namespace Dune
 
       for(RemoteIndexIterator index = rList.begin();
           index != riEnd; ++index) {
-        global.push_back(index->localIndexPair().global());
+        global.push_back(std::make_pair(index->localIndexPair().global(),
+                                        index->localIndexPair().local().attribute()));
         added.push_back(true);
       }
 
@@ -808,7 +866,7 @@ namespace Dune
 
     delete[] oldNeighbours;
 
-    repairLocalIndexPointers<T,typename RemoteIndices::Allocator>(globalMap_, remoteIndices_, indexSet_);
+    repairLocalIndexPointers(globalMap_, remoteIndices_, indexSet_);
 
     oldMap_.clear();
     globalMap_.clear();
@@ -840,10 +898,11 @@ namespace Dune
       // Search for corresponding remote indices in all iterator tuples
       typedef typename IteratorsMap::iterator Iterator;
       Iterator iteratorsEnd = iteratorsMap_.end();
+      GlobalIndex global = index->global();
 
       // advance all iterators to a position with global index >= index->global()
       for(Iterator iterators = iteratorsMap_.begin(); iteratorsEnd != iterators; ++iterators)
-        while(iterators->second.isNotAtEnd() && iterators->second.globalIndex() < index->global())
+        while(iterators->second.isNotAtEnd() && iterators->second.globalIndexPair() < *index)
           ++(iterators->second);
 
       // Add all remote indices positioned at global which were already present before calling sync
@@ -853,12 +912,22 @@ namespace Dune
       bool knownRemote = false; // Is the remote process supposed to know this index?
 
       for(Iterator iterators = iteratorsMap_.begin(); iteratorsEnd != iterators; ++iterators)
+      {
+        std::pair<GlobalIndex,Attribute> p;
+        bool old, valid=iterators->second.isNotAtEnd();
+        if(valid)
+        {
+          p =iterators->second.globalIndexPair();
+          old=iterators->second.isOld();
+        }
+
         if(iterators->second.isNotAtEnd() && iterators->second.isOld()
-           && iterators->second.globalIndex() == index->global()) {
+           && iterators->second.globalIndexPair() == *index) {
           indices++;
           if(destination == iterators->first)
             knownRemote = true;
         }
+      }
 
       if(!knownRemote || indices==0)
         // We do not need to send any indices
@@ -884,7 +953,7 @@ namespace Dune
       // Pack the information about the remote indices
       for(Iterator iterators = iteratorsMap_.begin(); iteratorsEnd != iterators; ++iterators)
         if(iterators->second.isNotAtEnd() && iterators->second.isOld()
-           && iterators->second.globalIndex() == index->global()) {
+           && iterators->second.globalIndexPair() == *index) {
           int process = iterators->first;
           MPI_Pack(&process, 1, MPI_INT, buffer, bufferSize, &bpos,
                    remoteIndices_.communicator());
@@ -892,14 +961,18 @@ namespace Dune
 
           MPI_Pack(&attr, 1, MPI_CHAR, buffer, bufferSize, &bpos,
                    remoteIndices_.communicator());
+          ++pairs;
+          assert(pairs <= infoSend_[destination].pairs);
         }
+
       ++published;
+      Dune::dvverb<<" (publish="<<published<<", pairs="<<pairs<<")"<<std::endl;
       assert(published <= infoSend_[destination].publish);
     }
 
     // Make sure we send all expected entries
     assert(published == infoSend_[destination].publish);
-
+    assert(pairs == infoSend_[destination].pairs);
     resetIteratorsMap();
 
     Dune::dverb << rank_<<": Sending message of "<<bpos<<" bytes to "<<destination<<std::endl;
@@ -908,10 +981,12 @@ namespace Dune
   }
 
   template<typename T>
-  inline void IndicesSyncer<T>::insertIntoRemoteIndexList(int process, const GlobalIndex& global,
+  inline void IndicesSyncer<T>::insertIntoRemoteIndexList(int process,
+                                                          const std::pair<GlobalIndex,Attribute>& globalPair,
                                                           char attribute)
   {
-    Dune::dvverb<<"Inserting from "<<process<<" "<<global<<" "<<attribute<<std::endl;
+    Dune::dverb<<"Inserting from "<<process<<" "<<globalPair.first<<", "<<
+    globalPair.second<<" "<<attribute<<std::endl;
 
     // There might be cases where there no remote indices for that process yet
     typename IteratorsMap::iterator found = iteratorsMap_.find(process);
@@ -927,18 +1002,33 @@ namespace Dune
     Iterators& iterators = found->second;
 
     // Search for the remote index
-    while(iterators.isNotAtEnd() && iterators.globalIndex() < global) {
+    while(iterators.isNotAtEnd() && iterators.globalIndexPair() < globalPair) {
       // Increment all iterators
       ++iterators;
 
     }
 
-    if(iterators.isAtEnd() || iterators.globalIndex() != global ||
-       iterators.remoteIndex().attribute() != attribute) {
+    if(iterators.isAtEnd() || iterators.globalIndexPair() != globalPair) {
       // The entry is not yet known
       // Insert in the the list and do not change the first iterator.
-      iterators.insert(RemoteIndex(Attribute(attribute)),global);
+      iterators.insert(RemoteIndex(Attribute(attribute)),globalPair);
+      return;
     }
+
+    // Global indices match
+    bool indexIsThere=false;
+    for(Iterators tmpIterators = iterators;
+        !tmpIterators.isAtEnd() && tmpIterators.globalIndexPair() == globalPair;
+        ++tmpIterators)
+      if(tmpIterators.remoteIndex().attribute() == attribute) {
+        indexIsThere=true;
+        break;
+      }
+
+    if(!indexIsThere)
+      // The entry is not yet known
+      // Insert in the the list and do not change the first iterator.
+      iterators.insert(RemoteIndex(Attribute(attribute)),globalPair);
   }
 
   template<typename T>
@@ -995,10 +1085,13 @@ namespace Dune
 
       // Insert the entry on the remote process to our
       // remote index list
-      insertIntoRemoteIndexList(source, global, sourceAttribute);
+      SLList<std::pair<int,Attribute> > sourceAttributeList;
+      sourceAttributeList.push_back(std::make_pair(source,Attribute(sourceAttribute)));
+      bool foundSelf=false;
+      Attribute myAttribute;
 
       // Unpack the remote indices
-      while(pairs>0) {
+      for(; pairs>0; --pairs) {
         // Unpack the process id that knows the index
         int process;
         char attribute;
@@ -1009,40 +1102,51 @@ namespace Dune
                    remoteIndices_.communicator());
 
         if(process==rank_) {
+          foundSelf=true;
+          myAttribute=Attribute(attribute);
           // Now we know the local attribute of the global index
           //Only add the index if it is unknown.
           // Do we know that global index already?
           IndexIterator pos = std::lower_bound(index, iEnd, IndexPair(global));
-          index=pos;
 
-          if(pos == iEnd)
-            continue;
-          if(pos->global() != global) {
+          if(pos == iEnd || pos->global() != global) {
+            // no entry with this global index
             indexSet_.add(global,
                           ParallelLocalIndex<Attribute>(numberer(global),
-                                                        Attribute(attribute), true));
+                                                        myAttribute, true));
+            Dune::dvverb << "Adding "<<global<<" "<<myAttribute<<std::endl;
             continue;
           }
 
           // because of above the global indices match. Add only if the attribute is different
           bool indexIsThere = false;
+          index=pos;
 
           for(; pos->global()==global; ++pos)
-            if(sourceAttribute == attribute) {
+            if(pos->local().attribute() == myAttribute) {
+              Dune::dvverb<<"found "<<global<<" "<<myAttribute<<std::endl;
               indexIsThere = true;
               break;
             }
 
-          if(!indexIsThere)
+          if(!indexIsThere) {
             indexSet_.add(global,
                           ParallelLocalIndex<Attribute>(numberer(global),
-                                                        Attribute(attribute), true));
-        }else{
-          insertIntoRemoteIndexList(process, global, attribute);
-        }
+                                                        myAttribute, true));
+            Dune::dvverb << "Adding "<<global<<" "<<myAttribute<<std::endl;
+          }
 
-        --pairs;
+        }else{
+          sourceAttributeList.push_back(std::make_pair(source,Attribute(attribute)));
+        }
       }
+      assert(foundSelf);
+      // Insert remote indices
+      typedef typename SLList<std::pair<int,Attribute> >::const_iterator Iter;
+      for(Iter i=sourceAttributeList.begin(), end=sourceAttributeList.end();
+          i!=end; ++i)
+        insertIntoRemoteIndexList(i->first, std::make_pair(global, myAttribute),
+                                  i->second);
       --publish;
     }
 

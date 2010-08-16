@@ -47,6 +47,8 @@ namespace Dune
   void fillIndexSetHoles(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm)
   {
     typedef typename Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet IndexSet;
+    typedef typename IndexSet::LocalIndex::Attribute Attribute;
+
     IndexSet& indexSet = oocomm.indexSet();
     const typename Dune::OwnerOverlapCopyCommunication<T1,T2>::GlobalLookupIndexSet& lookup =oocomm.globalLookup();
 
@@ -57,7 +59,7 @@ namespace Dune
     std::size_t sum=0, needed = graph.noVertices()-indexSet.size();
     std::vector<std::size_t> neededall(oocomm.communicator().size(), 0);
 
-    MPI_Allgather(&needed, 1, Generic_MPI_Datatype<std::size_t>::get() , &(neededall[0]), 1, Generic_MPI_Datatype<std::size_t>::get(), oocomm.communicator());
+    MPI_Allgather(&needed, 1, MPITraits<std::size_t>::getType() , &(neededall[0]), 1, MPITraits<std::size_t>::getType(), oocomm.communicator());
     for(int i=0; i<oocomm.communicator().size(); ++i)
       sum=sum+neededall[i];   // MAke this for generic
 
@@ -83,7 +85,7 @@ namespace Dune
       maxgi=maxgi+neededall[i];   // TODO: make this more generic
 
     // Store the global index information for repairing the remote index information
-    std::map<int,SLList<T1> > globalIndices;
+    std::map<int,SLList<std::pair<T1,Attribute> > > globalIndices;
     storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices(), indexSet);
     indexSet.beginResize();
 
