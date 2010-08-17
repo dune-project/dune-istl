@@ -13,6 +13,7 @@ istl_HEADERS = allocator.hh \
 	diagonalmatrix.hh \
 	gsetc.hh \
 	ilu.hh \
+	ilusubdomainsolver.hh
 	indexset.hh \
 	indicessyncer.hh \
 	interface.hh \
@@ -25,6 +26,7 @@ istl_HEADERS = allocator.hh \
 	matrixmatrix.hh \
 	matrixredistribute.hh \
 	matrixutils.hh \
+	mpitraits.hh \
 	multitypeblockmatrix.hh \
 	multitypeblockvector.hh \
 	operators.hh \
@@ -35,14 +37,14 @@ istl_HEADERS = allocator.hh \
 	preconditioners.hh \
 	remoteindices.hh \
 	repartition.hh \
-	selection.hh \
 	scalarproducts.hh \
 	scaledidmatrix.hh \
 	schwarz.hh \
+	selection.hh \
 	solvercategory.hh \
 	solvers.hh \
-	supermatrix.hh \
 	superlu.hh \
+	supermatrix.hh \
 	vbvector.hh
 
 
