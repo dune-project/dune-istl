@@ -793,7 +793,7 @@ namespace Dune {
 
       //! \todo Please doc me!
       iterator(const RealIterator& iter, const ConstRealIterator& end, GlobalIndex& index)
-        : iter_(iter), end_(end), index_(index), noattribute(true)
+        : iter_(iter), end_(end), index_(index), hasAttribute(false)
       {
         // Move to the first valid entry
         while(iter_!=end_ && iter_->second.first->localIndexPair().global()!=index_)
@@ -802,14 +802,11 @@ namespace Dune {
 
       iterator(const RealIterator& iter, const ConstRealIterator& end, GlobalIndex index,
                Attribute attribute)
-        : iter_(iter), end_(end), index_(index), attribute_(attribute), noattribute(false)
+        : iter_(iter), end_(end), index_(index), attribute_(attribute), hasAttribute(true)
       {
-        // Move to the first valid entry
-        while(iter_!=end_ && iter_->second.first->localIndexPair().global()!=index_)
-          ++iter_;
-        // Move to the first valid entry
-        while(iter_!=end_ && iter_->second.first->localIndexPair().global()==index_
-              && iter_->second.first->localIndexPair().local().attribute()!=attribute)
+        // Move to the first valid entry or the end
+        while(iter_!=end_ && (iter_->second.first->localIndexPair().global()!=index_
+                              || iter_->second.first->localIndexPair().local().attribute()!=attribute))
           ++iter_;
       }
       //! \todo Please doc me!
@@ -822,11 +819,14 @@ namespace Dune {
       {
         ++iter_;
         // If entry is not valid move on
-        while(iter_!=end_ && iter_->second.first->localIndexPair().global()!=index_ &&
-              (noattribute ||
-               iter_->second.first->localIndexPair().local().attribute()!=attribute_))
+        while(iter_!=end_ && (iter_->second.first->localIndexPair().global()!=index_ ||
+                              (hasAttribute &&
+                               iter_->second.first->localIndexPair().local().attribute()!=attribute_)))
           ++iter_;
-
+        assert(iter_==end_ ||
+               (iter_->second.first->localIndexPair().global()==index_));
+        assert(iter_==end_ ||
+               (iter_->second.first->localIndexPair().local().attribute()==attribute_));
         return *this;
       }
 
@@ -867,7 +867,7 @@ namespace Dune {
       RealIterator end_;
       GlobalIndex index_;
       Attribute attribute_;
-      bool noattribute;
+      bool hasAttribute;
     };
 
     iterator begin();
@@ -1804,7 +1804,8 @@ namespace Dune {
       typename RemoteIndexList::const_iterator rend = iter->second.second;
 
       // move all iterators pointing to the current global index to next value
-      if(iter->second.first->localIndexPair().global()==index_)
+      if(iter->second.first->localIndexPair().global()==index_ &&
+         (noattribute || iter->second.first->localIndexPair().local().attribute() == attribute_))
         ++(iter->second.first);
 
       // erase from the map if there are no more entries.
