@@ -13,7 +13,7 @@ istl_HEADERS = allocator.hh \
 	diagonalmatrix.hh \
 	gsetc.hh \
 	ilu.hh \
-	ilusubdomainsolver.hh
+	ilusubdomainsolver.hh \
 	indexset.hh \
 	indicessyncer.hh \
 	interface.hh \
