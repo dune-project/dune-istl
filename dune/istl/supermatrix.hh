@@ -373,8 +373,8 @@ namespace Dune
     void allocateMarker();
 
     SuperLUMatrix* mat;
-    int cols;
-    mutable typename Matrix::size_type *marker;
+    size_type cols;
+    mutable size_type *marker;
   };
 
   template<class T, class A, int n, int m>
@@ -444,7 +444,7 @@ namespace Dune
   {
     marker = new typename Matrix::size_type[cols];
 
-    for(int i=0; i < cols; ++i)
+    for(size_type i=0; i < cols; ++i)
       marker[i]=0;
   }
 
@@ -459,7 +459,7 @@ namespace Dune
   template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::countEntries(size_type colindex) const
   {
-    for(int i=0; i < m; ++i) {
+    for(size_type i=0; i < m; ++i) {
       assert(colindex*m+i<cols);
       marker[colindex*m+i]+=n;
     }
@@ -470,7 +470,7 @@ namespace Dune
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::calcColstart() const
   {
     mat->colstart[0]=0;
-    for(int i=0; i < cols; ++i) {
+    for(size_type i=0; i < cols; ++i) {
       assert(i<cols);
       mat->colstart[i+1]=mat->colstart[i]+marker[i];
       marker[i]=mat->colstart[i];
@@ -487,10 +487,10 @@ namespace Dune
   template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::copyValue(const CIter& col, size_type rowindex, size_type colindex) const
   {
-    for(int i=0; i<n; i++) {
-      for(int j=0; j<m; j++) {
-        assert(colindex*m+j<cols-1 || marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
-        assert(marker[colindex*m+j]<mat->Nnz_);
+    for(size_type i=0; i<n; i++) {
+      for(size_type j=0; j<m; j++) {
+        assert(colindex*m+j<cols-1 || (int)marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
+        assert((int)marker[colindex*m+j]<mat->Nnz_);
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
         mat->values[marker[colindex*m+j]]=(*col)[i][j];
         ++marker[colindex*m+j]; // index for next entry in column
