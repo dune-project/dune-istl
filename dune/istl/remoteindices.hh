@@ -825,7 +825,7 @@ namespace Dune {
           ++iter_;
         assert(iter_==end_ ||
                (iter_->second.first->localIndexPair().global()==index_));
-        assert(iter_==end_ ||
+        assert(iter_==end_ || !hasAttribute ||
                (iter_->second.first->localIndexPair().local().attribute()==attribute_));
         return *this;
       }
