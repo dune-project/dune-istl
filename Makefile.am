@@ -17,3 +17,4 @@ pkgconfig_DATA = dune-istl.pc
 DISTCHECK_CONFIGURE_FLAGS = --with-dune-common="$(DUNE_COMMON_ROOT)" CXX="$(CXX)" CC="$(CC)" --enable-parallel=@ENABLE_PARALLEL@ MPICC="$(MPICC)"
 
 include $(top_srcdir)/am/global-rules
+include $(top_srcdir)/am/top-rules
