@@ -6,6 +6,7 @@
 #define DUNE_PLOCALINDEX_HH
 
 #include "localindex.hh"
+#include "indexset.hh"
 #include <iostream>
 
 #include <dune/common/mpitraits.hh>
