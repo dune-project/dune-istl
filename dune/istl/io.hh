@@ -337,7 +337,9 @@ namespace Dune {
 
           // print row or filler
           if (it!=A[i].end())
+          {
             print_row(s,*it,i0,j0,therow,width,precision);
+          }
           else
             fill_row(s,MatrixDimension<M>::coldim(A,j),width,precision);
 
@@ -366,13 +368,24 @@ namespace Dune {
     typedef typename FieldMatrix<K,n,m>::size_type size_type;
 
     for (size_type i=0; i<n; i++)
+    {
       if (I+i==therow)
         for (int j=0; j<m; j++)
         {
           s << " ";         // space in front of each entry
-          s.width(width);   // set width for each entry anew
+          //          s.width(width);   // set width for each entry anew
+#if 0 // def OLDIO
           s << A[i][j];     // yeah, the number !
+#else
+          if (std::abs(A[i][j]) < 1e-12)
+            s << "\n" << 0.0; //"0";
+          // else if (std::floor(A[i][j]) == A[i][j])
+          //   s << int(std::floor(A[i][j]));
+          else
+            s << "\n" << A[i][j];     // yeah, the number !
+#endif
         }
+    }
   }
 
   //! print one row of a matrix, specialization for FieldMatrix<K,1,1>
@@ -427,6 +440,7 @@ namespace Dune {
     // print all rows
     for (typename M::size_type i=0; i<MatrixDimension<M>::rowdim(A); i++)
     {
+      s << "\n";
       s << rowtext;  // start a new row
       s << " ";      // space in front of each entry
       s.width(4);    // set width for counter
