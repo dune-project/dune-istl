@@ -6,6 +6,8 @@
 #include <map>
 #include <dune/common/typetraits.hh>
 #include "matrix.hh"
+#include <cmath>
+#include <cstdlib>
 
 namespace Dune {
 
