@@ -162,8 +162,6 @@ namespace Dune {
       guess = indexMap.insert(guess,
                               std::make_pair(*rowIdx,localIndex));
 
-    // Build Matrix for local subproblem
-    ILU.setSize(rowSet.size(),rowSet.size());
 
     // Build Matrix for local subproblem
     ILU.setSize(rowSet.size(),rowSet.size());
@@ -229,7 +227,7 @@ namespace Dune {
   void ILUNSubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
   {
     std::size_t offset=copyToLocalMatrix(A,rowSet);
-    RILU.setSize(rowSet.size(),rowSet.size(), (this->ILU.nonzeroes()/rowSet.size()+2*offset)*rowSet.size());
+    RILU.setSize(rowSet.size(),rowSet.size(), (1+2*offset)*rowSet.size());
     RILU.setBuildMode(matrix_type::row_wise);
     bilu_decomposition(this->ILU, (offset+1)/2, RILU);
   }
