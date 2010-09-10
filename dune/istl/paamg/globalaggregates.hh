@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef GLOBALAGGREGATES_HH
-#define GLOBALAGGREGATES_HH
+#ifndef DUNE_GLOBALAGGREGATES_HH
+#define DUNE_GLOBALAGGREGATES_HH
 
 #include "aggregates.hh"
 #include "pinfo.hh"
@@ -94,7 +94,8 @@ namespace Dune
     };
 
     template<typename T, typename TI>
-    const typename TI::GlobalIndex GlobalAggregatesMap<T,TI>::isolatedMarker = -1;
+    const typename TI::GlobalIndex GlobalAggregatesMap<T,TI>::isolatedMarker =
+      std::numeric_limits<typename TI::GlobalIndex>::max();
 
     template<typename T, typename TI>
     struct AggregatesGatherScatter
