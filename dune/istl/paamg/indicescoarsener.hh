@@ -247,6 +247,8 @@ namespace Dune
                                                             ParallelIndexSet& coarseIndices,
                                                             ParallelAggregateRenumberer<Graph,I>& renumberer)
     {
+      // fineGraph is the local subgraph corresponding to the vertices the process owns.
+      // i.e. no overlap/copy vertices can be visited traversing the graph
       typedef typename Graph::VertexDescriptor Vertex;
       typedef typename Graph::ConstVertexIterator Iterator;
       typedef typename ParallelInformation::GlobalLookupIndexSet GlobalLookupIndexSet;
@@ -261,13 +263,21 @@ namespace Dune
       // to the aggregate
       for(Iterator index = fineGraph.begin(); index != end; ++index) {
         if(aggregates[*index]!=AggregatesMap<typename Graph::VertexDescriptor>::ISOLATED)
+          // Isolated vertices will not be represented on the next level.
+          // These should only be there if skipIsolated is activiated in
+          // the coarsening criterion as otherwise they will be aggregated
+          // and should have real aggregate number in the map right now.
           if(!get(visitedMap, *index)) {
-
+            // This vertex was not visited by breadthFirstSearch yet.
             typedef typename GlobalLookupIndexSet::IndexPair IndexPair;
             const IndexPair* pair= lookup.pair(*index);
 
-            renumberer.reset();
-            if(pair!=0 && !ExcludedAttributes::contains(pair->local().attribute())) {
+            renumberer.reset(); // reset attribute and global index.
+            if(pair!=0) {
+              // vertex is in the index set. Note that not all vertices have
+              // to be in the index set, just the ones where communication
+              // will happen.
+              assert(!ExcludedAttributes::contains(pair->local().attribute()));
               renumberer.attribute(pair->local().attribute());
               renumberer.isPublic(pair->local().isPublic());
               renumberer.globalIndex(pair->global());
@@ -280,6 +290,7 @@ namespace Dune
             typedef typename GlobalLookupIndexSet::IndexPair::GlobalIndex GlobalIndex;
 
             if(renumberer.globalIndex()!=std::numeric_limits<GlobalIndex>::max()) {
+              // vertex is in the index set.
               //std::cout <<" Adding global="<< renumberer.globalIndex()<<" local="<<static_cast<std::size_t>(renumberer)<<std::endl;
               coarseIndices.add(renumberer.globalIndex(),
                                 LocalIndex(renumberer, renumberer.attribute(),
