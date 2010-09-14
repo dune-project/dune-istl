@@ -43,7 +43,7 @@ namespace Dune
       /**
        * @brief The aggregate the vertex belongs to.
        */
-      Aggregate aggregate;
+      Aggregate* aggregate;
 
       /**
        * @brief The vertex descriptor.
@@ -131,11 +131,10 @@ namespace Dune
       template<class M, class G, class V, class Set>
       M* build(const M& fine, G& fineGraph, V& visitedMap,
                const ParallelInformation& pinfo,
-               const AggregatesMap<typename G::VertexDescriptor>& aggregates,
+               AggregatesMap<typename G::VertexDescriptor>& aggregates,
                const typename M::size_type& size,
                const Set& copy);
     private:
-      std::size_t* overlapStart_;
 
       /**
        * @brief Builds the data structure needed for rebuilding the aggregates int the overlap.
@@ -146,16 +145,16 @@ namespace Dune
       template<class G, class I, class Set>
       const OverlapVertex<typename G::VertexDescriptor>*
       buildOverlapVertices(const G& graph,  const I& pinfo,
-                           const AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                           AggregatesMap<typename G::VertexDescriptor>& aggregates,
                            const Set& overlap,
-                           int& overlapCount);
+                           std::size_t& overlapCount);
 
       template<class A>
       struct OVLess
       {
         bool operator()(const OverlapVertex<A>& o1, const OverlapVertex<A>& o2)
         {
-          return o1.aggregate < o2.aggregate;
+          return *o1.aggregate < *o2.aggregate;
         }
       };
     };
@@ -279,7 +278,6 @@ namespace Dune
                           const T& pinfo,
                           const AggregatesMap<Vertex>& aggregates,
                           const O& overlap,
-                          const std::size_t* overlapStart,
                           const OverlapVertex<Vertex>* overlapVertices,
                           const OverlapVertex<Vertex>* overlapEnd,
                           R& row);
@@ -337,11 +335,11 @@ namespace Dune
                                                                    const OverlapVertex<typename G::VertexDescriptor>* overlapEnd)
     {
       ConnectedBuilder<G,R,V> conBuilder(aggregates, graph, visitedMap, row);
-      const typename G::VertexDescriptor aggregate=seed->aggregate;
-      assert(row.index()==seed->aggregate);
+      const typename G::VertexDescriptor aggregate=*seed->aggregate;
+      assert(row.index()==*seed->aggregate);
 
-      while(seed != overlapEnd && aggregate == seed->aggregate) {
-        row.insert(seed->aggregate);
+      while(seed != overlapEnd && aggregate == *seed->aggregate) {
+        row.insert(*seed->aggregate);
         // Walk over all neighbours and add them to the connected array.
         visitNeighbours(graph, seed->vertex, conBuilder);
         // Mark vertex as visited
@@ -371,9 +369,9 @@ namespace Dune
     template<class G, class I, class Set>
     const OverlapVertex<typename G::VertexDescriptor>*
     GalerkinProduct<T>::buildOverlapVertices(const G& graph, const I& pinfo,
-                                             const AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                                             AggregatesMap<typename G::VertexDescriptor>& aggregates,
                                              const Set& overlap,
-                                             int& overlapCount)
+                                             std::size_t& overlapCount)
     {
       // count the overlap vertices.
       typedef typename G::ConstVertexIterator ConstIterator;
@@ -391,11 +389,12 @@ namespace Dune
         if(pair!=0 && overlap.contains(pair->local().attribute()))
           ++overlapCount;
       }
-
       // Allocate space
       typedef typename G::VertexDescriptor Vertex;
 
-      OverlapVertex<Vertex>* overlapVertices = new OverlapVertex<Vertex>[overlapCount];
+      OverlapVertex<Vertex>* overlapVertices = new OverlapVertex<Vertex>[overlapCount=0 ? 1 : overlapCount];
+      if(overlapCount=0)
+        return overlapVertices;
 
       // Initialize them
       overlapCount=0;
@@ -403,7 +402,7 @@ namespace Dune
         const IndexPair* pair = lookup.pair(*vertex);
 
         if(pair!=0 && overlap.contains(pair->local().attribute())) {
-          overlapVertices[overlapCount].aggregate = aggregates[pair->local()];
+          overlapVertices[overlapCount].aggregate = &aggregates[pair->local()];
           overlapVertices[overlapCount].vertex = pair->local();
           ++overlapCount;
         }
@@ -412,26 +411,8 @@ namespace Dune
       dverb << overlapCount<<" overlap vertices"<<std::endl;
 
       std::sort(overlapVertices, overlapVertices+overlapCount, OVLess<Vertex>());
+      // due to the sorting the isolated aggregates (to be skipped) are at the end.
 
-      overlapStart_ = new std::size_t[graph.maxVertex()+1];
-
-#ifndef NDEBUG
-      for(typename G::VertexDescriptor i=typename G::VertexDescriptor(); i <= graph.maxVertex(); ++i)
-        overlapStart_[i]=-1;
-#endif
-
-      std::size_t startIndex = 0;
-
-      Vertex aggregate = graph.maxVertex()+1;
-      OverlapVertex<Vertex>* vend = overlapVertices+overlapCount;
-
-      for(OverlapVertex<Vertex>* vertex=overlapVertices; vertex != vend; ++vertex) {
-        if(aggregate != vertex->aggregate) {
-          aggregate = vertex->aggregate;
-          startIndex=vertex-overlapVertices;
-        }
-        overlapStart_[vertex->vertex]=startIndex;
-      }
       return overlapVertices;
     }
 
@@ -442,7 +423,6 @@ namespace Dune
                                                const T& pinfo,
                                                const AggregatesMap<Vertex>& aggregates,
                                                const O& overlap,
-                                               const std::size_t* overlapStart,
                                                const OverlapVertex<Vertex>* overlapVertices,
                                                const OverlapVertex<Vertex>* overlapEnd,
                                                R& row)
@@ -477,13 +457,13 @@ namespace Dune
         }
 
 #ifdef DUNE_ISTL_WITH_CHECKING
-      //examined.clear();
+      std::cout<<"constructed "<<row.index()<<" non-overlapping rows"<<std::endl;
 #endif
 
       // Now come the aggregates not owned by use.
       // They represent the rows n+1, ..., N
       while(overlapVertices != overlapEnd)
-        if(overlapVertices->aggregate!=AggregatesMap<Vertex>::ISOLATED) {
+        if(*overlapVertices->aggregate!=AggregatesMap<Vertex>::ISOLATED) {
 
 #ifdef DUNE_ISTL_WITH_CHECKING
           typedef typename GlobalLookup::IndexPair IndexPair;
@@ -571,14 +551,14 @@ namespace Dune
     template<class M, class G, class V, class Set>
     M* GalerkinProduct<T>::build(const M& fine, G& fineGraph, V& visitedMap,
                                  const ParallelInformation& pinfo,
-                                 const AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                                 AggregatesMap<typename G::VertexDescriptor>& aggregates,
                                  const typename M::size_type& size,
                                  const Set& overlap)
     {
 
       typedef OverlapVertex<typename G::VertexDescriptor> OverlapVertex;
 
-      int count;
+      std::size_t count;
 
       const OverlapVertex* overlapVertices = buildOverlapVertices(fineGraph,
                                                                   pinfo,
@@ -600,7 +580,7 @@ namespace Dune
       SparsityBuilder<M> sparsityBuilder(*coarseMatrix);
 
       ConnectivityConstructor<G,T>::examine(fineGraph, visitedMap, pinfo,
-                                            aggregates, overlap, overlapStart_,
+                                            aggregates, overlap,
                                             overlapVertices,
                                             overlapVertices+count,
                                             sparsityBuilder);
@@ -611,7 +591,6 @@ namespace Dune
            <<std::endl;
 
       delete[] overlapVertices;
-      delete[] overlapStart_;
 
       //calculate(fine, aggregates, *coarse, overlap);
 
