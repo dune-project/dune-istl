@@ -138,6 +138,7 @@ namespace Dune {
      \tparam M The matrix type to operate on
      \tparam X Type of the update
      \tparam Y Type of the defect
+     \tparam l The block level to invert. Default is 1
    */
   template<class M, class X, class Y, int l=1>
   class SeqSSOR : public Preconditioner<X,Y> {
@@ -217,6 +218,7 @@ namespace Dune {
      \tparam M The matrix type to operate on
      \tparam X Type of the update
      \tparam Y Type of the defect
+     \tparam l The block level to invert. Default is 1
    */
   template<class M, class X, class Y, int l=1>
   class SeqSOR : public Preconditioner<X,Y> {
@@ -312,6 +314,7 @@ namespace Dune {
      \tparam M The matrix type to operate on
      \tparam X Type of the update
      \tparam Y Type of the defect
+     \tparam l The block level to invert. Default is 1
    */
   template<class M, class X, class Y, int l=1>
   class SeqGS : public Preconditioner<X,Y> {
@@ -388,6 +391,7 @@ namespace Dune {
      \tparam M The matrix type to operate on
      \tparam X Type of the update
      \tparam Y Type of the defect
+     \tparam l The block level to invert. Default is 1
    */
   template<class M, class X, class Y, int l=1>
   class SeqJac : public Preconditioner<X,Y> {
@@ -465,8 +469,10 @@ namespace Dune {
      \tparam M The matrix type to operate on
      \tparam X Type of the update
      \tparam Y Type of the defect
+     \tparam l Ignored. Just there to have the same number of template arguments
+     as other preconditioners.
    */
-  template<class M, class X, class Y>
+  template<class M, class X, class Y, int l=1>
   class SeqILU0 : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
@@ -540,8 +546,10 @@ namespace Dune {
      \tparam M The matrix type to operate on
      \tparam X Type of the update
      \tparam Y Type of the defect
+     \tparam l Ignored. Just there to have the same number of template arguments
+     as other preconditioners.
    */
-  template<class M, class X, class Y>
+  template<class M, class X, class Y, int l=1>
   class SeqILUn : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
