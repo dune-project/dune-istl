@@ -202,15 +202,15 @@ namespace Dune
       matrices_->coarsenSmoother(smoothers_, smootherArgs_);
     }
 
-    template<class M, class X, class S, class P, class A>
+    template<class M, class X, class S, class PI, class A>
     template<class C>
-    AMG<M,X,S,P,A>::AMG(const Operator& matrix,
-                        const C& criterion,
-                        const SmootherArgs& smootherArgs,
-                        std::size_t gamma, std::size_t preSmoothingSteps,
-                        std::size_t postSmoothingSteps,
-                        bool additive_,
-                        const P& pinfo)
+    AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
+                         const C& criterion,
+                         const SmootherArgs& smootherArgs,
+                         std::size_t gamma, std::size_t preSmoothingSteps,
+                         std::size_t postSmoothingSteps,
+                         bool additive_,
+                         const PI& pinfo)
       : smootherArgs_(smootherArgs),
         smoothers_(), solver_(), scalarProduct_(0), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
@@ -218,12 +218,12 @@ namespace Dune
     {
       dune_static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
-      dune_static_assert(static_cast<int>(P::category)==static_cast<int>(S::category),
+      dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
       Timer watch;
       OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 
-      matrices->template build<NegateSet<typename P::OwnerSet> >(criterion);
+      matrices->template build<NegateSet<typename PI::OwnerSet> >(criterion);
 
       matrices_ = matrices;
       // build the necessary smoother hierarchies
