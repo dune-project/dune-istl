@@ -1562,7 +1562,7 @@ namespace Dune
     }
 
     template<class V>
-    inline std::size_t AggregatesMap<V>::AggregatesMap::noVertices() const
+    inline std::size_t AggregatesMap<V>::noVertices() const
     {
       return noVertices_;
     }
