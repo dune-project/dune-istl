@@ -17,3 +17,4 @@ indexset
 *.rel
 Makefile.dist.in
 Makefile.dist
+poosc08_test
