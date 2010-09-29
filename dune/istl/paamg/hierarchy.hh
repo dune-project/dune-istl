@@ -709,7 +709,7 @@ namespace Dune
 #endif
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
 #if !HAVE_PARMETIS && HAVE_MPI
-    #warning Parmetis is not installed or used. Did you use the parmetis flags? It is stronly recommend to use parallel AMG with parmetis.
+    #warning Parmetis is not installed or used. Did you use the parmetis flags? It is strongly recommend to use parallel AMG with parmetis.
 #endif
 
 #ifdef DEBUG_REPART
