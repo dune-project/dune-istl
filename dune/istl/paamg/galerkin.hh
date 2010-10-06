@@ -393,7 +393,7 @@ namespace Dune
       typedef typename G::VertexDescriptor Vertex;
 
       OverlapVertex<Vertex>* overlapVertices = new OverlapVertex<Vertex>[overlapCount=0 ? 1 : overlapCount];
-      if(overlapCount=0)
+      if(overlapCount==0)
         return overlapVertices;
 
       // Initialize them
