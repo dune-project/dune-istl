@@ -66,8 +66,6 @@ iotest_SOURCES = iotest.cc
 
 scaledidmatrixtest_SOURCES = scaledidmatrixtest.cc
 
-cvectorcmatrix_SOURCES = cvectorcmatrix.cc
-
 if MPI
   indicestest_SOURCES = indicestest.cc
   indicestest_CPPFLAGS = $(AM_CPPFLAGS)		\
