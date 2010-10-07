@@ -376,15 +376,15 @@ void test_Iter ()
   //   printmatrix(std::cout,E,"offdiagonal block","row",10,2);
 
   // make a block compressed row matrix with five point stencil
-  const int N=10000, BW1=1, BW2=100;
+  const unsigned N=10000, BW1=1, BW2=100;
   Dune::BCRSMatrix<MB> A(N,N,5*N,Dune::BCRSMatrix<MB>::row_wise);
   for (Dune::BCRSMatrix<MB>::CreateIterator i=A.createbegin(); i!=A.createend(); ++i)
   {
     i.insert(i.index());
-    if (i.index()-BW1>=0) i.insert(i.index()-BW1);
-    if (i.index()+BW1< N) i.insert(i.index()+BW1);
-    if (i.index()-BW2>=0) i.insert(i.index()-BW2);
-    if (i.index()+BW2< N) i.insert(i.index()+BW2);
+    if (i.index() >= BW1    ) i.insert(i.index()-BW1);
+    if (i.index() +  BW1 < N) i.insert(i.index()+BW1);
+    if (i.index() >= BW2    ) i.insert(i.index()-BW2);
+    if (i.index() +  BW2 < N) i.insert(i.index()+BW2);
   }
   for (Dune::BCRSMatrix<MB>::RowIterator i=A.begin(); i!=A.end(); ++i)
     for (Dune::BCRSMatrix<MB>::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
