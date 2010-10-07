@@ -4,6 +4,9 @@
 #define DUNE_MultiTypeMATRIX_HH
 
 #ifdef HAVE_BOOST_FUSION
+#warning The code which is normally enabled by HAVE_BOOST_FUSION has been
+#warning disabled since it does not compile at the moment.
+#if 0
 
 #include <cmath>
 #include <iostream>
@@ -450,6 +453,7 @@ namespace Dune {
 
 } // end namespace
 
+#endif // 0
 #endif
 
 #endif

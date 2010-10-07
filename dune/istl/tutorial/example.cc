@@ -30,6 +30,10 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
+#ifdef HAVE_BOOST_FUSION
+#warning The code which is normally enabled by HAVE_BOOST_FUSION has been
+#warning disabled since it does not compile at the moment.
+#endif
 
 // a simple stop watch
 class Timer
@@ -509,6 +513,7 @@ void test_Interface ()
 
 
 #ifdef HAVE_BOOST_FUSION
+#if 0
 
 void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                           //Jacobi Solver Test MultiTypeBlockMatrix_Solver::dbjac on MultiTypeBlockMatrix<BCRSMatrix>
 
@@ -598,6 +603,7 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   printvector(std::cout,fusion::at_c<1>(x),"solution x2","entry",11,9,1);
 
 }
+#endif // 0
 #endif
 
 
@@ -615,7 +621,9 @@ int main (int argc , char ** argv)
     test_Iter();
     test_Interface();
 #ifdef HAVE_BOOST_FUSION
+#if 0
     test_MultiTypeBlockVector_MultiTypeBlockMatrix();
+#endif // 0
 #endif
   }
   catch (Dune::ISTLError& error)
