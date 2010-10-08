@@ -89,7 +89,7 @@ void testIndices(MPI_Comm comm)
 
     globalIndexSet.endResize();
   }else
-    globalArray=new Array(0);
+    globalArray=new Array(1); // Size one is needed for CommPolicy
 
   typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
 
