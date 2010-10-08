@@ -61,26 +61,33 @@ namespace Dune
    * @brief Check whether the a matrix has diagonal values
    * on blocklevel recursion levels.
    */
-  template<std::size_t blocklevel, std::size_t l=blocklevel>
+  template<class Matrix, std::size_t blocklevel, std::size_t l=blocklevel>
   struct CheckIfDiagonalPresent
   {
     /**
      * @brief Check whether the a matrix has diagonal values
      * on blocklevel recursion levels.
      */
-    template<class Matrix>
     static void check(const Matrix& mat)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      CheckIfDiagonalPresent<blocklevel-1,l>::check(mat);
+      typedef typename Matrix::ConstRowIterator Row;
+      typedef typename Matrix::ConstColIterator Entry;
+      for(Row row = mat.begin(); row!=mat.end(); ++row) {
+        Entry diagonal = row->find(row.index());
+        if(diagonal==row->end())
+          DUNE_THROW(ISTLError, "Missing diagonal value in row "<<row.index()
+                                                                <<" at block recursion level "<<l-blocklevel);
+        else
+          CheckIfDiagonalPresent<typename Matrix::block_type,blocklevel-1,l>::check(*diagonal);
+      }
 #endif
     }
   };
 
-  template<std::size_t l>
-  struct CheckIfDiagonalPresent<0,l>
+  template<class Matrix, std::size_t l>
+  struct CheckIfDiagonalPresent<Matrix,0,l>
   {
-    template<class Matrix>
     static void check(const Matrix& mat)
     {
       typedef typename Matrix::ConstRowIterator Row;
@@ -89,6 +96,29 @@ namespace Dune
           DUNE_THROW(ISTLError, "Missing diagonal value in row "<<row.index()
                                                                 <<" at block recursion level "<<l);
       }
+    }
+  };
+
+  template<typename T1, typename T2, typename T3, typename T4, typename T5,
+      typename T6, typename T7, typename T8, typename T9>
+  class MultiTypeBlockMatrix;
+
+  template<typename T1, typename T2, typename T3, typename T4, typename T5,
+      typename T6, typename T7, typename T8, typename T9, std::size_t blocklevel, std::size_t l>
+  struct CheckIfDiagonalPresent<MultiTypeBlockMatrix<T1,T2,T3,T4,T5,T6,T7,T8,T9>,
+      blocklevel,l>
+  {
+    typedef MultiTypeBlockMatrix<T1,T2,T3,T4,T5,T6,T7,T8,T9> Matrix;
+
+    /**
+     * @brief Check whether the a matrix has diagonal values
+     * on blocklevel recursion levels.
+     */
+    static void check(const Matrix& mat)
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      // TODO Implement check
+#endif
     }
   };
 
