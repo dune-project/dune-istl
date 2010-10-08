@@ -513,7 +513,6 @@ void test_Interface ()
 
 
 #ifdef HAVE_BOOST_FUSION
-#if 0
 
 void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                           //Jacobi Solver Test MultiTypeBlockMatrix_Solver::dbjac on MultiTypeBlockMatrix<BCRSMatrix>
 
@@ -603,7 +602,6 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   printvector(std::cout,fusion::at_c<1>(x),"solution x2","entry",11,9,1);
 
 }
-#endif // 0
 #endif
 
 

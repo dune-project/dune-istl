@@ -168,7 +168,7 @@ namespace Dune {
     SeqSSOR (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
-      CheckIfDiagonalPresent<l>::check(_A_);
+      CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
     /*!
@@ -248,7 +248,7 @@ namespace Dune {
     SeqSOR (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
-      CheckIfDiagonalPresent<l>::check(_A_);
+      CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
     /*!
@@ -344,7 +344,7 @@ namespace Dune {
     SeqGS (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
-      CheckIfDiagonalPresent<l>::check(_A_);
+      CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
     /*!
@@ -421,7 +421,7 @@ namespace Dune {
     SeqJac (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
-      CheckIfDiagonalPresent<l>::check(_A_);
+      CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
     /*!

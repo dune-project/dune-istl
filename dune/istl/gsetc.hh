@@ -13,10 +13,6 @@
 
 #include "istlexception.hh"
 
-#ifdef HAVE_BOOST_FUSION
-#warning The code which is normally enabled by HAVE_BOOST_FUSION has been
-#warning disabled since it does not compile at the moment.
-#endif
 
 /*! \file
    \brief Simple iterative methods like Jacobi, Gauss-Seidel, SOR, SSOR, etc.
@@ -378,7 +374,6 @@ namespace Dune {
   struct algmeta_itsteps {
 
 #ifdef HAVE_BOOST_FUSION
-#if 0
 
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
@@ -394,7 +389,6 @@ namespace Dune {
         boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
       Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::dbgs(A, x, b, w);
     }
-#endif // 0
 #endif
 
     template<class M, class X, class Y, class K>
@@ -426,7 +420,6 @@ namespace Dune {
     }
 
 #ifdef HAVE_BOOST_FUSION
-#if 0
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
         typename T19, typename T21, typename T22, typename T23,
@@ -441,7 +434,6 @@ namespace Dune {
         boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
       Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::bsorf(A, x, b, w);
     }
-#endif // 0
 #endif
 
     template<class M, class X, class Y, class K>
@@ -475,7 +467,6 @@ namespace Dune {
     }
 
 #ifdef HAVE_BOOST_FUSION
-#if 0
 
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
@@ -491,7 +482,6 @@ namespace Dune {
         mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
       Dune::MultiTypeBlockMatrix_Solver<I,rowcount-1,rowcount>::bsorb(A, x, b, w);
     }
-#endif // 0
 #endif
 
     template<class M, class X, class Y, class K>
@@ -525,7 +515,6 @@ namespace Dune {
     }
 
 #ifdef HAVE_BOOST_FUSION
-#if 0
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
         typename T19, typename T21, typename T22, typename T23,
@@ -537,10 +526,9 @@ namespace Dune {
                        const K& w)
     {
       const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value
-        Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount >::dbjac(A, x, b, w);
+        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
+      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount >::dbjac(A, x, b, w);
     }
-#endif // 0
 #endif
 
     template<class M, class X, class Y, class K>
