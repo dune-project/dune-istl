@@ -10,6 +10,8 @@
 
 #include "gsetc.hh"
 
+#ifdef HAVE_BOOST_FUSION
+
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/container.hpp>
 #include <boost/fusion/iterator.hpp>
@@ -444,7 +446,8 @@ namespace Dune {
                       const TVector& b, const K& w) {}
   };
 
-
 } // end namespace
+
+#endif // HAVE_BOOST_FUSION
 
 #endif
