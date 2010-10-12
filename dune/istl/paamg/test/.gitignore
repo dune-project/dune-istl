@@ -1,0 +1,12 @@
+Makefile
+Makefile.in
+.deps
+.libs
+semantic.cache
+graphtest
+galerkintest
+hierarchytest
+amgtest
+pamgtest
+transfertest
+kamgtest
