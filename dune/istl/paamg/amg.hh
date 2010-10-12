@@ -35,6 +35,12 @@ namespace Dune
      * @brief The AMG preconditioner.
      */
 
+    template<class M, class X, class S, class P, class K, class A>
+    class KAMG;
+
+    template<class T>
+    class KAmgTwoGrid;
+
     /**
      * @brief Parallel algebraic multigrid based on agglomeration.
      *
@@ -46,6 +52,11 @@ namespace Dune
         class A=std::allocator<X> >
     class AMG : public Preconditioner<X,X>
     {
+      template<class M1, class X1, class S1, class P1, class K1, class A1>
+      friend class KAMG;
+
+      friend class KAmgTwoGrid<AMG>;
+
     public:
       /** @brief The matrix operator type. */
       typedef M Operator;
@@ -141,18 +152,36 @@ namespace Dune
       std::size_t maxlevels();
     private:
       /** @brief Multigrid cycle on a level. */
-      void mgc(typename Hierarchy<Smoother,A>::Iterator& smoother,
-               typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator& matrix,
-               typename ParallelInformationHierarchy::Iterator& pinfo,
-               typename OperatorHierarchy::RedistributeInfoList::const_iterator& redist,
-               typename OperatorHierarchy::AggregatesMapList::const_iterator& aggregates,
-               typename Hierarchy<Domain,A>::Iterator& lhs,
-               typename Hierarchy<Domain,A>::Iterator& update,
-               typename Hierarchy<Range,A>::Iterator& rhs);
+      void mgc();
+
+      typename Hierarchy<Smoother,A>::Iterator smoother;
+      typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix;
+      typename ParallelInformationHierarchy::Iterator pinfo;
+      typename OperatorHierarchy::RedistributeInfoList::const_iterator redist;
+      typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates;
+      typename Hierarchy<Domain,A>::Iterator lhs;
+      typename Hierarchy<Domain,A>::Iterator update;
+      typename Hierarchy<Range,A>::Iterator rhs;
+
 
       void additiveMgc();
 
-      //      void setupIndices(typename Matrix::ParallelIndexSet& indices, const Matrix& matrix);
+      /** @brief Apply pre smoothing on the current level. */
+      void presmooth();
+
+      /** @brief Apply post smoothing on the current level. */
+      void postsmooth();
+
+      /**
+       * @brief Move the iterators to the finer level
+       * @*/
+      bool moveToFineLevel();
+
+      /** @brief Move the iterators to the coarser level */
+      void moveToCoarseLevel(bool processedFineLevel);
+
+      /** @brief Initialize iterators over levels with fine level */
+      void initIteratorsWithFineLevel();
 
       /**  @brief The matrix we solve. */
       const OperatorHierarchy* matrices_;
@@ -364,22 +393,16 @@ namespace Dune
         additiveMgc();
         v=*lhs_->finest();
       }else{
-        typename Hierarchy<Smoother,A>::Iterator smoother = smoothers_.finest();
-        typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix = matrices_->matrices().finest();
-        typename ParallelInformationHierarchy::Iterator pinfo = matrices_->parallelInformation().finest();
-        typename OperatorHierarchy::RedistributeInfoList::const_iterator redist =
-          matrices_->redistributeInformation().begin();
-        typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates = matrices_->aggregatesMaps().begin();
-        typename Hierarchy<Domain,A>::Iterator lhs = lhs_->finest();
-        typename Hierarchy<Domain,A>::Iterator update = update_->finest();
-        typename Hierarchy<Range,A>::Iterator rhs = rhs_->finest();
+        // Init all iterators for the current level
+        initIteratorsWithFineLevel();
+
 
         *lhs = v;
         *rhs = d;
         *update=0;
         level=0;
 
-        mgc(smoother, matrix, pinfo, redist, aggregates, lhs, update, rhs);
+        mgc();
 
         if(postSteps_==0||matrices_->maxlevels()==1)
           pinfo->copyOwnerToAll(*update, *update);
@@ -390,14 +413,141 @@ namespace Dune
     }
 
     template<class M, class X, class S, class P, class A>
-    void AMG<M,X,S,P,A>::mgc(typename Hierarchy<Smoother,A>::Iterator& smoother,
-                             typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator& matrix,
-                             typename ParallelInformationHierarchy::Iterator& pinfo,
-                             typename OperatorHierarchy::RedistributeInfoList::const_iterator& redist,
-                             typename OperatorHierarchy::AggregatesMapList::const_iterator& aggregates,
-                             typename Hierarchy<Domain,A>::Iterator& lhs,
-                             typename Hierarchy<Domain,A>::Iterator& update,
-                             typename Hierarchy<Range,A>::Iterator& rhs){
+    void AMG<M,X,S,P,A>::initIteratorsWithFineLevel()
+    {
+      smoother = smoothers_.finest();
+      matrix = matrices_->matrices().finest();
+      pinfo = matrices_->parallelInformation().finest();
+      redist =
+        matrices_->redistributeInformation().begin();
+      aggregates = matrices_->aggregatesMaps().begin();
+      lhs = lhs_->finest();
+      update = update_->finest();
+      rhs = rhs_->finest();
+    }
+
+    template<class M, class X, class S, class P, class A>
+    bool AMG<M,X,S,P,A>
+    ::moveToFineLevel()
+    {
+
+      bool processNextLevel=true;
+
+      if(redist->isSetup()) {
+        redist->redistribute(static_cast<const Range&>(*rhs), rhs.getRedistributed());
+        processNextLevel =rhs.getRedistributed().size()>0;
+        if(processNextLevel) {
+          //restrict defect to coarse level right hand side.
+          typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
+          ++pinfo;
+          Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
+          ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(fineRhs.getRedistributed()), *pinfo);
+        }
+      }else{
+        //restrict defect to coarse level right hand side.
+        typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
+        ++pinfo;
+        Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
+        ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
+      }
+
+      if(processNextLevel) {
+        // prepare coarse system
+        ++lhs;
+        ++update;
+        ++matrix;
+        ++level;
+        ++redist;
+
+        if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
+          // next level is not the globally coarsest one
+          ++smoother;
+          ++aggregates;
+        }
+        // prepare the update on the next level
+        *update=0;
+      }
+      return processNextLevel;
+    }
+
+    template<class M, class X, class S, class P, class A>
+    void AMG<M,X,S,P,A>
+    ::moveToCoarseLevel(bool processNextLevel)
+    {
+      if(processNextLevel) {
+        if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
+          // previous level is not the globally coarsest one
+          --smoother;
+          --aggregates;
+        }
+        --redist;
+        --level;
+        //prolongate and add the correction (update is in coarse left hand side)
+        --matrix;
+
+        //typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--;
+        --lhs;
+        --pinfo;
+      }
+      if(redist->isSetup()) {
+        // Need to redistribute during prolongate
+        lhs.getRedistributed()=0;
+        Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
+        ::prolongate(*(*aggregates), *update, *lhs, lhs.getRedistributed(), matrices_->getProlongationDampingFactor(),
+                     *pinfo, *redist);
+      }else{
+        *lhs=0;
+        Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
+        ::prolongate(*(*aggregates), *update, *lhs,
+                     matrices_->getProlongationDampingFactor(), *pinfo);
+      }
+
+
+      if(processNextLevel) {
+        --update;
+        --rhs;
+      }
+
+      *update += *lhs;
+    }
+
+
+    template<class M, class X, class S, class P, class A>
+    void AMG<M,X,S,P,A>
+    ::presmooth()
+    {
+
+      for(std::size_t i=0; i < preSteps_; ++i) {
+        *lhs=0;
+        SmootherApplier<S>::preSmooth(*smoother, *lhs, *rhs);
+        // Accumulate update
+        *update += *lhs;
+
+        // update defect
+        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
+        pinfo->project(*rhs);
+      }
+    }
+
+    template<class M, class X, class S, class P, class A>
+    void AMG<M,X,S,P,A>
+    ::postsmooth()
+    {
+
+      for(std::size_t i=0; i < postSteps_; ++i) {
+        // update defect
+        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
+        *lhs=0;
+        pinfo->project(*rhs);
+        SmootherApplier<S>::postSmooth(*smoother, *lhs, *rhs);
+        // Accumulate update
+        *update += *lhs;
+      }
+    }
+
+
+    template<class M, class X, class S, class P, class A>
+    void AMG<M,X,S,P,A>::mgc(){
       if(matrix == matrices_->matrices().coarsest() && levels()==maxlevels()) {
         // Solve directly
         InverseOperatorResult res;
@@ -426,109 +576,25 @@ namespace Dune
           DUNE_THROW(MathError, "Coarse solver did not converge");
       }else{
         // presmoothing
-        for(std::size_t i=0; i < preSteps_; ++i) {
-          *lhs=0;
-          SmootherApplier<S>::preSmooth(*smoother, *lhs, *rhs);
-          // Accumulate update
-          *update += *lhs;
-
-          // update defect
-          matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-          pinfo->project(*rhs);
-        }
+        presmooth();
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
-
-        bool processNextLevel=true;
-
-        if(redist->isSetup()) {
-          redist->redistribute(static_cast<const Range&>(*rhs), rhs.getRedistributed());
-          processNextLevel =rhs.getRedistributed().size()>0;
-          if(processNextLevel) {
-            //restrict defect to coarse level right hand side.
-            typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
-            ++pinfo;
-            Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-            ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(fineRhs.getRedistributed()), *pinfo);
-          }
-        }else{
-          //restrict defect to coarse level right hand side.
-          typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
-          ++pinfo;
-          Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-          ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
-        }
+        bool processNextLevel = moveToFineLevel();
 
         if(processNextLevel) {
-          // prepare coarse system
-          ++lhs;
-          ++update;
-          ++matrix;
-          ++level;
-          ++redist;
-
-          if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
-            // next level is not the globally coarsest one
-            ++smoother;
-            ++aggregates;
-          }
-
-          // prepare the update on the next level
-          *update=0;
-
           // next level
           for(std::size_t i=0; i<gamma_; i++)
-            mgc(smoother, matrix, pinfo, redist, aggregates, lhs, update, rhs);
-
-          if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
-            // previous level is not the globally coarsest one
-            --smoother;
-            --aggregates;
-          }
-          --redist;
-          --level;
-          //prolongate and add the correction (update is in coarse left hand side)
-          --matrix;
-
-          //typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--;
-          --lhs;
-          --pinfo;
+            mgc();
         }
 
-        if(redist->isSetup()) {
-          // Need to redistribute during prolongate
-          lhs.getRedistributed()=0;
-          Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-          ::prolongate(*(*aggregates), *update, *lhs, lhs.getRedistributed(), matrices_->getProlongationDampingFactor(),
-                       *pinfo, *redist);
-        }else{
-          *lhs=0;
-          Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-          ::prolongate(*(*aggregates), *update, *lhs,
-                       matrices_->getProlongationDampingFactor(), *pinfo);
-        }
-
-
-        if(processNextLevel) {
-          --update;
-          --rhs;
-        }
-
-        *update += *lhs;
+        moveToCoarseLevel(processNextLevel);
 #else
         *lhs=0;
 #endif
 
         // postsmoothing
-        for(std::size_t i=0; i < postSteps_; ++i) {
-          // update defect
-          matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-          *lhs=0;
-          pinfo->project(*rhs);
-          SmootherApplier<S>::postSmooth(*smoother, *lhs, *rhs);
-          // Accumulate update
-          *update += *lhs;
-        }
+        postsmooth();
+
       }
     }
 
