@@ -1147,7 +1147,7 @@ namespace Dune {
      Generalized Minimal Residual method as described the SIAM Templates
      book (http://www.netlib.org/templates/templates.pdf).
 
-     \todo F durch rebind erzeugen und nur den field_type für F übergeben
+     \todo construct F via rebind and an appropriate field_type
 
    */
 
