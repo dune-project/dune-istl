@@ -247,8 +247,9 @@ namespace Dune
     {
       dune_static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
-      dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
-                         "Matrix and Solver must match in terms of category!");
+      // TODO: reestablish compile time checks.
+      //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
+      //			 "Matrix and Solver must match in terms of category!");
       Timer watch;
       OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 

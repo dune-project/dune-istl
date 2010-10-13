@@ -29,6 +29,7 @@ istl_HEADERS = allocator.hh \
 	mpitraits.hh \
 	multitypeblockmatrix.hh \
 	multitypeblockvector.hh \
+	novlpschwarz.hh \
 	operators.hh \
 	overlappingschwarz.hh \
 	owneroverlapcopy.hh \

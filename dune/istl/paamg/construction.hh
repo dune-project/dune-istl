@@ -91,11 +91,25 @@ namespace Dune
       C* comm_;
     };
 
+    template<class M, class C>
+    struct NonoverlappingOperatorArgs
+    {
+      NonoverlappingOperatorArgs(M& matrix, C& comm)
+        : matrix_(&matrix), comm_(&comm)
+      {}
+
+      M* matrix_;
+      C* comm_;
+    };
+
   } // end Amg namspace
 
   // foward declaration
   template<class M, class X, class Y, class C>
   class OverlappingSchwarzOperator;
+
+  template<class M, class X, class Y, class C>
+  class NonoverlappingSchwarzOperator;
 
   namespace Amg
   {
@@ -116,6 +130,22 @@ namespace Dune
       }
     };
 
+    template<class M, class X, class Y, class C>
+    class ConstructionTraits<NonoverlappingSchwarzOperator<M,X,Y,C> >
+    {
+    public:
+      typedef NonoverlappingOperatorArgs<M,C> Arguments;
+
+      static inline NonoverlappingSchwarzOperator<M,X,Y,C>* construct(const Arguments& args)
+      {
+        return new NonoverlappingSchwarzOperator<M,X,Y,C>(*args.matrix_, *args.comm_);
+      }
+
+      static inline void deconstruct(NonoverlappingSchwarzOperator<M,X,Y,C>* t)
+      {
+        delete t;
+      }
+    };
 
     template<class M, class X, class Y>
     struct MatrixAdapterArgs

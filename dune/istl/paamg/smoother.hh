@@ -7,6 +7,7 @@
 #include <dune/istl/paamg/aggregates.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/schwarz.hh>
+#include <dune/istl/novlpschwarz.hh>
 #include <dune/common/propertymap.hh>
 
 namespace Dune
@@ -71,6 +72,12 @@ namespace Dune
 
     };
 
+    template<class C, class T>
+    struct SmootherTraits<NonoverlappingBlockPreconditioner<C,T> >
+    {
+      typedef DefaultSmootherArgs<typename T::matrix_type::field_type> Arguments;
+
+    };
 
     /**
      * @brief Construction Arguments for the default smoothers
@@ -321,6 +328,25 @@ namespace Dune
 
     };
 
+    template<class C, class T>
+    struct ConstructionTraits<NonoverlappingBlockPreconditioner<C,T> >
+    {
+      typedef DefaultParallelConstructionArgs<T,C> Arguments;
+      typedef ConstructionTraits<T> SeqConstructionTraits;
+      static inline NonoverlappingBlockPreconditioner<C,T>* construct(Arguments& args)
+      {
+        return new NonoverlappingBlockPreconditioner<C,T>(*SeqConstructionTraits::construct(args),
+                                                          args.getComm());
+      }
+
+      static inline void deconstruct(NonoverlappingBlockPreconditioner<C,T>* bp)
+      {
+        SeqConstructionTraits::deconstruct(static_cast<T*>(&bp->preconditioner));
+        delete bp;
+      }
+
+    };
+
     /**
      * @brief Helper class for applying the smoothers.
      *
@@ -386,6 +412,25 @@ namespace Dune
     struct SmootherApplier<BlockPreconditioner<X,Y,C,SeqSOR<M,X,Y,l> > >
     {
       typedef BlockPreconditioner<X,Y,C,SeqSOR<M,X,Y,l> > Smoother;
+      typedef typename Smoother::range_type Range;
+      typedef typename Smoother::domain_type Domain;
+
+      static void preSmooth(Smoother& smoother, Domain& v, Range& d)
+      {
+        smoother.template apply<true>(v,d);
+      }
+
+
+      static void postSmooth(Smoother& smoother, Domain& v, Range& d)
+      {
+        smoother.template apply<false>(v,d);
+      }
+    };
+
+    template<class M, class X, class Y, class C, int l>
+    struct SmootherApplier<NonoverlappingBlockPreconditioner<C,SeqSOR<M,X,Y,l> > >
+    {
+      typedef NonoverlappingBlockPreconditioner<C,SeqSOR<M,X,Y,l> > Smoother;
       typedef typename Smoother::range_type Range;
       typedef typename Smoother::domain_type Domain;
 
