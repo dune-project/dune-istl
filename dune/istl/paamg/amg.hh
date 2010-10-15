@@ -175,10 +175,10 @@ namespace Dune
       /**
        * @brief Move the iterators to the finer level
        * @*/
-      bool moveToFineLevel();
+      void moveToFineLevel(bool processedFineLevel);
 
       /** @brief Move the iterators to the coarser level */
-      void moveToCoarseLevel(bool processedFineLevel);
+      bool moveToCoarseLevel();
 
       /** @brief Initialize iterators over levels with fine level */
       void initIteratorsWithFineLevel();
@@ -429,7 +429,7 @@ namespace Dune
 
     template<class M, class X, class S, class P, class A>
     bool AMG<M,X,S,P,A>
-    ::moveToFineLevel()
+    ::moveToCoarseLevel()
     {
 
       bool processNextLevel=true;
@@ -473,7 +473,7 @@ namespace Dune
 
     template<class M, class X, class S, class P, class A>
     void AMG<M,X,S,P,A>
-    ::moveToCoarseLevel(bool processNextLevel)
+    ::moveToFineLevel(bool processNextLevel)
     {
       if(processNextLevel) {
         if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
@@ -580,7 +580,7 @@ namespace Dune
         presmooth();
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
-        bool processNextLevel = moveToFineLevel();
+        bool processNextLevel = moveToCoarseLevel();
 
         if(processNextLevel) {
           // next level
@@ -588,7 +588,7 @@ namespace Dune
             mgc();
         }
 
-        moveToCoarseLevel(processNextLevel);
+        moveToFineLevel(processNextLevel);
 #else
         *lhs=0;
 #endif
