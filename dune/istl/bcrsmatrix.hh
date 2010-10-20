@@ -963,6 +963,29 @@ namespace Dune {
 
       return *this;
     }
+
+    /*! \brief Add the scaled entries of another matrix to this one.
+     *
+     * Matrix axpy operation: *this += alpha * b
+     *
+     * \param alpha Scaling factor.
+     * \param b     The matrix to add to this one. Its sparsity pattern has to
+     *              be subset of the sparsity pattern of this matrix.
+     */
+    BCRSMatrix& axpy(field_type alpha, const BCRSMatrix& b)
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if(N()!=b.N() || M() != b.M())
+        DUNE_THROW(RangeError, "Matrix sizes do not match!");
+#endif
+      RowIterator endi=end();
+      ConstRowIterator j=b.begin();
+      for(RowIterator i=begin(); i!=endi; ++i, ++j)
+        i->axpy(alpha, *j);
+
+      return *this;
+    }
+
     //===== linear maps
 
     //! y = A x
