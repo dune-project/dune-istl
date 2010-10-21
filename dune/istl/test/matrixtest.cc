@@ -358,6 +358,11 @@ int main()
 
   testSolve<BTDMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(btdMatrix);
 
+  // test a 1x1 BTDMatrix, because that is a special case
+  BTDMatrix<FieldMatrix<double,1,1> > btdMatrixScalar(1);
+  btdMatrixScalar = 1.0;
+  testSuperMatrix(btdMatrixScalar);
+
   // ////////////////////////////////////////////////////////////////////////
   //   Test the FieldMatrix class
   // ////////////////////////////////////////////////////////////////////////
