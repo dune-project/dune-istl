@@ -372,83 +372,43 @@ namespace Dune
     for(const_iterator process=remoteIndices.begin(); process != end; ++process) {
       // Messure the number of indices send to the remote process first
       int size=0;
-      LocalIterator localIndex = send ? remoteIndices.source_->begin() : remoteIndices.target_->begin();
-      const LocalIterator localEnd = send ?  remoteIndices.source_->end() : remoteIndices.target_->end();
       typedef typename RemoteIndices::RemoteIndexList::const_iterator RemoteIterator;
       const RemoteIterator remoteEnd = send ? process->second.first->end() :
                                        process->second.second->end();
       RemoteIterator remote = send ? process->second.first->begin() : process->second.second->begin();
 
-      while(localIndex!=localEnd && remote!=remoteEnd) {
-        LocalIterator oldlocalIndex=localIndex;
+      while(remote!=remoteEnd) {
         if( send ?  destFlags.contains(remote->attribute()) :
             sourceFlags.contains(remote->attribute())) {
-          // search for the matching local index
-          while(localIndex->global()<remote->localIndexPair().global()) {
-            localIndex++;
-            assert(localIndex != localEnd);   // Should never happen
-          }
-          assert(localIndex->global()==remote->localIndexPair().global());
-          while(localIndex!=localEnd && localIndex->global()==remote->localIndexPair().global()) {
-            // do we send the index?
-            if( send ? sourceFlags.contains(localIndex->local().attribute()) :
-                destFlags.contains(localIndex->local().attribute()))
-              ++size;
-            ++localIndex;
-          }
+
+          // do we send the index?
+          if( send ? sourceFlags.contains(remote->localIndexPair().local().attribute()) :
+              destFlags.contains(remote->localIndexPair().local().attribute()))
+            ++size;
         }
-        typename RemoteIndices::GlobalIndex oldRemote=remote->localIndexPair().global();
         ++remote;
-        if(remote!=remoteEnd && remote->localIndexPair().global()==oldRemote)
-          localIndex=oldlocalIndex;
       }
       interfaceInformation.reserve(process->first, size);
     }
 
     // compare the local and remote indices and set up the types
 
-    typedef typename RemoteIndices::CollectiveIteratorT CIter;
-    CIter remote = remoteIndices.template iterator<send>();
-    LocalIterator localIndex = send ? remoteIndices.source_->begin() : remoteIndices.target_->begin();
-    const LocalIterator localEnd = send ?  remoteIndices.source_->end() : remoteIndices.target_->end();
-    CIter oldremote = remote;
+    for(const_iterator process=remoteIndices.begin(); process != end; ++process) {
+      typedef typename RemoteIndices::RemoteIndexList::const_iterator RemoteIterator;
+      const RemoteIterator remoteEnd = send ? process->second.first->end() :
+                                       process->second.second->end();
+      RemoteIterator remote = send ? process->second.first->begin() : process->second.second->begin();
 
-    if(localIndex==localEnd)
-      //no indices
-      return;
-
-    while(!remote.empty()) {
-      if( send ? sourceFlags.contains(localIndex->local().attribute()) :
-          destFlags.contains(localIndex->local().attribute()))
-      {
-        // search for matching remote indices
-        for(remote.advance(localIndex->global()),oldremote=remote;
-            remote.begin()!=remote.end(); ++remote)
-        {
-
-          // Iterate over the list that are positioned at global
-          typedef typename CIter::iterator ValidIterator;
-          const ValidIterator end = remote.end();
-          ValidIterator validEntry = remote.begin();
-
-          for(int i=0; validEntry != end; ++i) {
-            if( send ?  destFlags.contains(validEntry->attribute()) :
-                sourceFlags.contains(validEntry->attribute())) {
-              // We will receive data for this index
-              interfaceInformation.add(validEntry.process(),localIndex->local());
-            }
-            ++validEntry;
-          }
+      while(remote!=remoteEnd) {
+        if( send ?  destFlags.contains(remote->attribute()) :
+            sourceFlags.contains(remote->attribute())) {
+          // do we send the index?
+          if( send ? sourceFlags.contains(remote->localIndexPair().local().attribute()) :
+              destFlags.contains(remote->localIndexPair().local().attribute()))
+            interfaceInformation.add(process->first,remote->localIndexPair().local().local());
         }
-
+        ++remote;
       }
-      typename RemoteIndices::GlobalIndex old=localIndex->global();
-      ++localIndex;
-      if(localIndex==localEnd) // no more indices
-        break;
-      if(old==localIndex->global())
-        // we have the same global index as the previous one
-        remote=oldremote;
     }
   }
 
