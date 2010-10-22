@@ -194,6 +194,9 @@ namespace Dune
       void post(Domain& x);
       /**  \copydoc Solver::apply(X&,Y&) */
       void apply(Domain& x, const Range& b);
+
+      std::size_t maxlevels();
+
     private:
       /** @brief The underlying amg. */
       Amg amg;
@@ -296,8 +299,21 @@ namespace Dune
     void KAMG<M,X,S,P,K,A>::apply(Domain& x, const Range& b)
     {
       amg.initIteratorsWithFineLevel();
-      ksolvers.back()->apply(x,b);
+      if(ksolvers.size()==0)
+      {
+        Range tb=b;
+        InverseOperatorResult res;
+        amg.solver_->apply(x,tb,res);
+      }else
+        ksolvers.back()->apply(x,b);
     }
+
+    template<class M, class X, class S, class P, class K, class A>
+    std::size_t KAMG<M,X,S,P,K,A>::maxlevels()
+    {
+      return amg.maxlevels();
+    }
+
     /** @}*/
   } // Amg
 } // Dune
