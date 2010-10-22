@@ -51,18 +51,6 @@ namespace Dune {
     explicit BTDMatrix(int size)
       : BCRSMatrix<B,A>(size, size, BCRSMatrix<B,A>::random)
     {
-      // special handling for 1x1 matrices
-      if (size==1) {
-
-        this->BCRSMatrix<B,A>::setrowsize(0, 1);
-        this->BCRSMatrix<B,A>::endrowsizes();
-
-        this->BCRSMatrix<B,A>::addindex(0, 0);
-        this->BCRSMatrix<B,A>::endindices();
-
-        return;
-      }
-
       // Set number of entries for each row
       this->BCRSMatrix<B,A>::setrowsize(0, 2);
 
@@ -110,12 +98,6 @@ namespace Dune {
      */
     template <class V>
     void solve (V& x, const V& rhs) const {
-
-      // special handling for 1x1 matrices.  The generic algorithm doesn't work for them
-      if (this->N()==1) {
-        (*this)[0][0].solve(x[0],rhs[0]);
-        return;
-      }
 
       // Make copies of the rhs and the right matrix band
       V d = rhs;
