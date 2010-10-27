@@ -370,7 +370,7 @@ namespace Dune
           }else
             solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
                                             *scalarProduct_,
-                                            *coarseSmoother_, 1E-2, 10000, 0);
+                                            *coarseSmoother_, 1E-2, 1000, 0);
         }
       }
     }
@@ -558,18 +558,12 @@ namespace Dune
           if(rhs.getRedistributed().size()>0) {
             // We are still participating in the computation
             pinfo.getRedistributed().copyOwnerToAll(rhs.getRedistributed(), rhs.getRedistributed());
-            if(maxlevels()==1)
-              // prepare for iterativr solver
-              update.getRedistributed()=0.1;
             solver_->apply(update.getRedistributed(), rhs.getRedistributed(), res);
           }
           redist->redistributeBackward(*update, update.getRedistributed());
           pinfo->copyOwnerToAll(*update, *update);
         }else{
           pinfo->copyOwnerToAll(*rhs, *rhs);
-          if(maxlevels()==1)
-            // prepare for iterativr solver
-            *update=0.1;
           solver_->apply(*update, *rhs, res);
         }
 
