@@ -392,6 +392,10 @@ namespace Dune {
     inline const ParallelIndexSet& destinationIndexSet() const;
 
   private:
+    /** copying is forbidden. */
+    RemoteIndices(const RemoteIndices&)
+    {}
+
     /** @brief Index set used at the source of the communication. */
     const ParallelIndexSet* source_;
 
