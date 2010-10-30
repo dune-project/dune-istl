@@ -8,8 +8,6 @@
 
 #include "istlexception.hh"
 
-#include "gsetc.hh"
-
 #ifdef HAVE_BOOST_FUSION
 
 #include <boost/fusion/sequence.hpp>
@@ -18,10 +16,22 @@
 #include <boost/typeof/typeof.hpp>
 #include <boost/fusion/algorithm.hpp>
 
-#include "multitypeblockmatrix.hh"
-
 namespace mpl=boost::mpl;
 namespace fusion=boost::fusion;
+
+// forward decl
+namespace Dune
+{
+  template<typename T1, typename T2=fusion::void_, typename T3=fusion::void_, typename T4=fusion::void_,
+      typename T5=fusion::void_, typename T6=fusion::void_, typename T7=fusion::void_,
+      typename T8=fusion::void_, typename T9=fusion::void_>
+  class MultiTypeBlockMatrix;
+
+  template<int I, int crow, int remain_row>
+  class MultiTypeBlockMatrix_Solver;
+}
+
+#include "gsetc.hh"
 
 namespace Dune {
 
@@ -198,8 +208,8 @@ namespace Dune {
 
       This matrix class combines MultiTypeBlockVector elements as rows.
    */
-  template<typename T1, typename T2=fusion::void_, typename T3=fusion::void_, typename T4=fusion::void_,
-      typename T5=fusion::void_, typename T6=fusion::void_, typename T7=fusion::void_, typename T8=fusion::void_, typename T9=fusion::void_>
+  template<typename T1, typename T2, typename T3, typename T4,
+      typename T5, typename T6, typename T7, typename T8, typename T9>
   class MultiTypeBlockMatrix : public fusion::vector<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
 
   public:
