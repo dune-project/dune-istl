@@ -15,6 +15,15 @@
 
 using namespace Dune;
 
+// forward decls
+
+template <class MatrixType>
+void testSuperMatrix(MatrixType& matrix);
+template <class MatrixType, class X, class Y>
+void testMatrix(MatrixType& matrix, X& x, Y& y);
+template <class MatrixType, class VectorType>
+void testSolve(const MatrixType& matrix);
+
 template <class MatrixType>
 void testSuperMatrix(MatrixType& matrix)
 {
