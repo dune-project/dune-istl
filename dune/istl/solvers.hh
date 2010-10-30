@@ -1225,7 +1225,7 @@ namespace Dune {
       int i, j = 1, k;
       std::vector<field_type> s(m+1), cs(m), sn(m);
       // helper vector
-      X w(b.size());
+      X w(b);
       std::vector< std::vector<field_type> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
@@ -1272,6 +1272,7 @@ namespace Dune {
         if (_verbose > 1)
         {
           this->printHeader(std::cout);
+          this->printOutput(std::cout,0,norm_0);
           this->printOutput(std::cout,0,norm);
         }
       }
