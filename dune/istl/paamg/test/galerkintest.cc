@@ -80,7 +80,7 @@ void testCoarsenIndices(int N)
 
   ParallelInformation coarseInfo(MPI_COMM_WORLD);
   ParallelIndexSet&      coarseIndices = coarseInfo.indexSet();
-  RemoteIndices coarseRemote = coarseInfo.remoteIndices();
+  RemoteIndices& coarseRemote = coarseInfo.remoteIndices();
 
   typename Dune::PropertyMapTypeSelector<Dune::Amg::VertexVisitedTag,PropertiesGraph>::Type visitedMap = Dune::get(Dune::Amg::VertexVisitedTag(), pg);
 
