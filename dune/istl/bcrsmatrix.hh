@@ -66,7 +66,7 @@ namespace Dune {
    */
 
   template<typename M>
-  class MatrixDimension;
+  struct MatrixDimension;
 
   /**
      \brief A sparse block matrix with compressed row storage
@@ -178,7 +178,7 @@ namespace Dune {
   template<class B, class A=std::allocator<B> >
   class BCRSMatrix
   {
-    friend class MatrixDimension<BCRSMatrix>;
+    friend struct MatrixDimension<BCRSMatrix>;
 
   private:
     enum BuildStage {
