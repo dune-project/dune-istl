@@ -218,7 +218,7 @@ namespace Dune {
   template<class S>
   void ILU0SubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
   {
-    copyToLocalMatrix(A,rowSet);
+    this->copyToLocalMatrix(A,rowSet);
     bilu0_decomposition(this->ILU);
   }
 
