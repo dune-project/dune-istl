@@ -729,7 +729,6 @@ namespace Dune
                                         RedistributeInformation<SequentialInformation>& ri)
     {
       return true;
-
     }
 
     template<class M, class IS, class A>
@@ -1247,13 +1246,29 @@ namespace Dune
       AggregatesMapIterator amap = aggregatesMaps_.begin();
       BaseGalerkinProduct productBuilder;
       InfoIterator info = parallelInformation_.finest();
+      typename RedistributeInfoList::iterator riIter = redistributes_.begin();
+      Iterator level = matrices_.finest(), coarsest=matrices_.coarsest();
+      if(level.isRedistributed()) {
+        info->buildGlobalLookup(info->indexSet().size());
+        redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
+                                  const_cast<Matrix&>(level.getRedistributed().getmat()),
+                                  *info,info.getRedistributed(), *riIter);
+        info->freeGlobalLookup();
+      }
 
-      for(Iterator level = matrices_.finest(), coarsest=matrices_.coarsest(); level!=coarsest; ++amap) {
-        const Matrix& fine = level->getmat();
+      for(; level!=coarsest; ++amap) {
+        const Matrix& fine = (level.isRedistributed() ? level.getRedistributed() : *level).getmat();
         ++level;
         ++info;
+        ++riIter;
         productBuilder.calculate(fine, *(*amap), const_cast<Matrix&>(level->getmat()), *info, copyFlags);
-
+        if(level.isRedistributed()) {
+          info->buildGlobalLookup(info->indexSet().size());
+          redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
+                                    const_cast<Matrix&>(level.getRedistributed().getmat()), *info,
+                                    info.getRedistributed(), *riIter);
+          info->freeGlobalLookup();
+        }
       }
     }
 
