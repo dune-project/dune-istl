@@ -708,9 +708,6 @@ namespace Dune
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
-#if !HAVE_PARMETIS && HAVE_MPI
-    #warning Parmetis is not installed or used. Did you use the parmetis flags? It is strongly recommend to use parallel AMG with parmetis.
-#endif
 
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
