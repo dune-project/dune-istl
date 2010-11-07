@@ -2412,8 +2412,10 @@ namespace Dune
 
       Dune::dinfo<<"connected aggregates: "<<conAggregates;
       Dune::dinfo<<" isolated aggregates: "<<isoAggregates;
-      Dune::dinfo<<" one node aggregates: "<<oneAggregates<<" min size="<<minA<<" max size="<<maxA
-                 <<" avg="<<avg/(conAggregates+isoAggregates)<<std::endl;
+      if(conAggregates+isoAggregates>0)
+        Dune::dinfo<<" one node aggregates: "<<oneAggregates<<" min size="
+                   <<minA<<" max size="<<maxA
+                   <<" avg="<<avg/(conAggregates+isoAggregates)<<std::endl;
 
       delete aggregate_;
       return make_tuple(conAggregates+isoAggregates,isoAggregates,
