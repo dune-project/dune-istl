@@ -672,7 +672,7 @@ namespace Dune
        \copydoc Preconditioner::post(X&)
      */
     virtual void post (X& x) {
-      std::cout<<" avg nnz over subdomain is "<<nnz<<std::endl;
+      Dune::dverb<<" avg nnz over subdomain is "<<nnz<<std::endl;
     }
 
   private:
@@ -848,11 +848,11 @@ namespace Dune
     typedef typename subdomain_vector::const_iterator iterator;
     for(iterator iter=subDomains.begin(); iter != subDomains.end(); ++iter) {
       typedef typename subdomain_type::const_iterator entry_iterator;
-      std::cout<<"domain "<<i++<<":";
+      Dune::dvverb<<"domain "<<i++<<":";
       for(entry_iterator entry = iter->begin(); entry != iter->end(); ++entry) {
-        std::cout<<" "<<*entry;
+        Dune::dvverb<<" "<<*entry;
       }
-      std::cout<<std::endl;
+      Dune::dvverb<<std::endl;
     }
 #endif
     maxlength = SeqOverlappingSchwarzAssembler<slu>
@@ -876,11 +876,11 @@ namespace Dune
       //std::cout<<i<<": "<<d->size()<<std::endl;
       assert(d->size()>0);
       typedef typename DomainIterator::value_type::const_iterator entry_iterator;
-      std::cout<<"domain "<<i<<":";
+      Dune::dvverb<<"domain "<<i<<":";
       for(entry_iterator entry = d->begin(); entry != d->end(); ++entry) {
-        std::cout<<" "<<*entry;
+        Dune::dvverb<<" "<<*entry;
       }
-      std::cout<<std::endl;
+      Dune::dvverb<<std::endl;
     }
 
 #endif
