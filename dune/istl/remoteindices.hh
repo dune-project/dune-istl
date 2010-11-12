@@ -1215,7 +1215,7 @@ namespace Dune {
     // Update remote indices for ourself
     if(sendTwo|| includeSelf)
       unpackCreateRemote(buffer[0], sourcePairs, destPairs, rank, sourcePublish,
-                         destPublish, bufferSize, sendTwo, true);
+                         destPublish, bufferSize, sendTwo, includeSelf);
 
     neighbourIds.erase(rank);
 
