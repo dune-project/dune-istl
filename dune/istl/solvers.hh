@@ -617,7 +617,8 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (X& x, X& b, double reduction,
+                        InverseOperatorResult& res)
     {
       _reduction = reduction;
       (*this).apply(x,b,res);
