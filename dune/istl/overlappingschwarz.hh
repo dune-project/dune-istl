@@ -7,6 +7,7 @@
 #include <functional>
 #include <vector>
 #include <set>
+#include <dune/common/dynmatrix.hh>
 #include <dune/common/sllist.hh>
 #include "preconditioners.hh"
 #include "superlu.hh"
@@ -124,12 +125,177 @@ namespace Dune
   struct SymmetricMultiplicativeSchwarzMode
   {};
 
+  /**
+   * @brief Exact subdomain solver using Dune::DynamicMatrix<T>::solve
+   * @tparam M The type of the matrix.
+   */
+  template<class M, class X, class Y>
+  class DynamicMatrixSubdomainSolver;
 
+  // Specialization for BCRSMatrix
+  template<class K, int n, class Al, class X, class Y>
+  class DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >
+  {
+    typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> M;
+  public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef typename Dune::remove_const<M>::type matrix_type;
+    typedef K field_type;
+    typedef typename Dune::remove_const<M>::type rilu_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+
+    /**
+     * @brief Apply the subdomain solver.
+     * @copydoc ILUSubdomainSolver::apply
+     */
+    void apply (DynamicVector<field_type>& v, DynamicVector<field_type>& d)
+    {
+      assert(v.size() > 0);
+      assert(v.size() == d.size());
+      assert(A.rows() <= v.size());
+      assert(A.cols() <= v.size());
+      size_t sz = A.rows();
+      v.resize(sz);
+      d.resize(sz);
+      A.solve(v,d);
+      v.resize(v.capacity());
+      d.resize(d.capacity());
+    }
+
+    /**
+     * @brief Set the data of the local problem.
+     *
+     * @param A The global matrix.
+     * @param rowset The global indices of the local problem.
+     * @tparam S The type of the set with the indices.
+     */
+    template<class S>
+    void setSubMatrix(const M& BCRS, S& rowset)
+    {
+      size_t sz = rowset.size();
+      A.resize(sz*n,sz*n);
+      typename DynamicMatrix<K>::RowIterator rIt = A.begin();
+      typedef typename S::const_iterator SIter;
+      size_t r = 0, c = 0;
+      for(SIter rowIdx = rowset.begin(), rowEnd=rowset.end();
+          rowIdx!= rowEnd; ++rowIdx, r++)
+      {
+        c = 0;
+        for(SIter colIdx = rowset.begin(), colEnd=rowset.end();
+            colIdx!= colEnd; ++colIdx, c++)
+        {
+          if (BCRS[*rowIdx].find(*colIdx) == BCRS[*rowIdx].end())
+            continue;
+          for (size_t i=0; i<n; i++)
+          {
+            for (size_t j=0; j<n; j++)
+            {
+              A[r*n+i][c*n+j] = BCRS[*rowIdx][*colIdx][i][j];
+            }
+          }
+        }
+      }
+    }
+  private:
+    DynamicMatrix<K> A;
+  };
 
   template<typename T>
   struct OverlappingAssigner
   {};
 
+  // specialization for DynamicMatrix
+  template<class K, int n, class Al, class X, class Y>
+  class OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  {
+  public:
+    typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> matrix_type;
+    typedef K field_type;
+    typedef Y range_type;
+    typedef typename range_type::block_type block_type;
+    typedef typename matrix_type::size_type size_type;
+
+    /**
+     * @brief Constructor.
+     * @param mat The global matrix.
+     * @param rhs storage for the local defect.
+     * @param b the global right hand side.
+     * @param x the global left hand side.
+     */
+    OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_, const X& b_, Y& x_);
+
+    /**
+     * @brief Deallocates memory of the local vector.
+     */
+    inline
+    void deallocate();
+
+    /*
+     * @brief Resets the local index to zero.
+     */
+    inline
+    void resetIndexForNextDomain();
+
+    /**
+     * @brief Get the local left hand side.
+     * @return The local left hand side.
+     */
+    inline
+    DynamicVector<K> & lhs();
+
+    /**
+     * @brief Get the local left hand side.
+     * @return The local left hand side.
+     */
+    inline
+    DynamicVector<K> & rhs();
+
+    /**
+     * @brief relax the result.
+     * @param relax The relaxation parameter.
+     */
+    inline
+    void relaxResult(field_type relax);
+
+    /**
+     * @brief calculate one entry of the local defect.
+     * @param domain One index of the domain.
+     */
+    void operator()(const size_type& domainIndex);
+
+    /**
+     * @brief Assigns the block to the current local
+     * index.
+     * At the same time the local defect is calculated
+     * for the index and stored in the rhs.
+     * Afterwards the is incremented for the next block.
+     */
+    inline
+    void assignResult(block_type& res);
+
+  private:
+    /**
+     * @brief The global matrix for the defect calculation.
+     */
+    const matrix_type* mat;
+    /** @brief The local right hand side. */
+    // we need a pointer, because we have to avoid deep copies
+    DynamicVector<field_type> * rhs_;
+    /** @brief The local left hand side. */
+    // we need a pointer, because we have to avoid deep copies
+    DynamicVector<field_type> * lhs_;
+    /** @brief The global right hand side for the defect calculation. */
+    const range_type* b;
+    /** @brief The global left hand side for adding the local update to. */
+    range_type* x;
+    /** @brief The current local index. */
+    std::size_t i;
+    /** @brief The maximum entries over all subdomains. */
+    std::size_t maxlength_;
+  };
 
 #if HAVE_SUPERLU
   template<typename T, typename A, int n, int m>
@@ -511,6 +677,16 @@ namespace Dune
   struct SeqOverlappingSchwarzAssembler
   {};
 
+
+  template<class K, int n, class Al, class X, class Y>
+  struct SeqOverlappingSchwarzAssembler< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  {
+    typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> matrix_type;
+    template<class RowToDomain, class Solvers, class SubDomains>
+    static std::size_t assembleLocalProblems(const RowToDomain& rowToDomain, const matrix_type& mat,
+                                             Solvers& solvers, const SubDomains& domains,
+                                             bool onTheFly);
+  };
 
 #if HAVE_SUPERLU
   template<class T>
@@ -920,6 +1096,28 @@ namespace Dune
     }
   };
 
+  template<class K, int n, class Al, class X, class Y>
+  template<class RowToDomain, class Solvers, class SubDomains>
+  std::size_t
+  SeqOverlappingSchwarzAssembler< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >::
+  assembleLocalProblems(const RowToDomain& rowToDomain,
+                        const matrix_type& mat,
+                        Solvers& solvers,
+                        const SubDomains& subDomains,
+                        bool onTheFly)
+  {
+    typedef typename SubDomains::const_iterator DomainIterator;
+    std::size_t maxlength = 0;
+
+    assert(onTheFly);
+
+    for(DomainIterator domain=subDomains.begin(); domain!=subDomains.end(); ++domain)
+      maxlength=std::max(maxlength, domain->size());
+    maxlength*=n;
+
+    return maxlength;
+  }
+
 #if HAVE_SUPERLU
   template<class T>
   template<class RowToDomain, class Solvers, class SubDomains>
@@ -1065,6 +1263,116 @@ namespace Dune
     assigner.deallocate();
   }
 
+  template<class K, int n, class Al, class X, class Y>
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_,
+                        const X& b_, Y& x_) :
+    mat(&mat_),
+    rhs_( new DynamicVector<field_type>(maxlength, 42) ),
+    lhs_( new DynamicVector<field_type>(maxlength, -42) ),
+    b(&b_),
+    x(&x_),
+    i(0),
+    maxlength_(maxlength)
+  {}
+
+  template<class K, int n, class Al, class X, class Y>
+  void
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::deallocate()
+  {
+    delete rhs_;
+    delete lhs_;
+  }
+
+  template<class K, int n, class Al, class X, class Y>
+  void
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::resetIndexForNextDomain()
+  {
+    i=0;
+  }
+
+  template<class K, int n, class Al, class X, class Y>
+  DynamicVector<K> &
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::lhs()
+  {
+    return *lhs_;
+  }
+
+  template<class K, int n, class Al, class X, class Y>
+  DynamicVector<K> &
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::rhs()
+  {
+    return *rhs_;
+  }
+
+  template<class K, int n, class Al, class X, class Y>
+  void
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::relaxResult(field_type relax)
+  {
+    lhs() *= relax;
+  }
+
+  template<class K, int n, class Al, class X, class Y>
+  void
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::operator()(const size_type& domainIndex)
+  {
+    lhs() = 0.0;
+#if 0
+    //assign right hand side of current domainindex block
+    for(size_type j=0; j<n; ++j, ++i) {
+      assert(i<maxlength_);
+      rhs()[i]=(*b)[domainIndex][j];
+    }
+
+    // loop over all Matrix row entries and calculate defect.
+    typedef typename matrix_type::ConstColIterator col_iterator;
+
+    // calculate defect for current row index block
+    for(col_iterator col=(*mat)[domainIndex].begin(); col!=(*mat)[domainIndex].end(); ++col) {
+      block_type tmp(0.0);
+      (*col).mv((*x)[col.index()], tmp);
+      i-=n;
+      for(size_type j=0; j<n; ++j, ++i) {
+        assert(i<maxlength_);
+        rhs()[i]-=tmp[j];
+      }
+    }
+#else
+    //assign right hand side of current domainindex block
+    for(size_type j=0; j<n; ++j, ++i) {
+      assert(i<maxlength_);
+      rhs()[i]=(*b)[domainIndex][j];
+
+      // loop over all Matrix row entries and calculate defect.
+      typedef typename matrix_type::ConstColIterator col_iterator;
+
+      // calculate defect for current row index block
+      for(col_iterator col=(*mat)[domainIndex].begin(); col!=(*mat)[domainIndex].end(); ++col) {
+        for(size_type k=0; k<n; ++k) {
+          rhs()[i]-=(*col)[j][k] * (*x)[col.index()][k];
+        }
+      }
+    }
+#endif
+  }
+
+  template<class K, int n, class Al, class X, class Y>
+  void
+  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  ::assignResult(block_type& res)
+  {
+    // assign the result of the local solve to the global vector
+    for(size_type j=0; j<n; ++j, ++i) {
+      assert(i<maxlength_);
+      res[j]+=lhs()[i];
+    }
+  }
 
 #if HAVE_SUPERLU
 
