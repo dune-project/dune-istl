@@ -107,8 +107,13 @@ namespace Dune {
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
     {
+      // only apply communication to alpha*A*x to make it consistent,
+      // y already has to be consistent.
+      Y y1(y);
+      y = 0;
       novlp_op_apply(x,y,alpha);
       communication.addOwnerCopyToAll(y,y);
+      y += y1;
     }
 
     //! get matrix via *
@@ -363,6 +368,9 @@ namespace Dune {
      */
     virtual void apply (domain_type& v, const range_type& d)
     {
+      // block preconditioner equivalent to WrappedPreconditioner from
+      // pdelab/backend/ovlpistsolverbackend.hh,
+      // but not to BlockPreconditioner from schwarz.hh
       preconditioner.apply(v,d);
       communication.addOwnerCopyToAll(v,v);
     }
