@@ -186,6 +186,7 @@ namespace Dune {
     typedef Dune::BufferedCommunicator BC;
     typedef Dune::Interface IF;
     typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner> OwnerSet;
+    typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopySet;
     typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
     typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
   protected:
