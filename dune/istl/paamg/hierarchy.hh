@@ -50,7 +50,7 @@ namespace Dune
        *
        * This is needed to prevent overflows when calculating
        * the coarsening rate. Currently set 72,000 which is
-       * enogh for JUGENE.
+       * enough for JUGENE.
        */
       MAX_PROCESSES = 72000
     };
