@@ -139,7 +139,7 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<double,BS> >& lhs,
     G y = i->global()%n;
 
     if(x==0 || y ==0 || x==n-1 || y==n-1) {
-      double h = 1.0 / ((double) (n-1));
+      //double h = 1.0 / ((double) (n-1));
       lhs[i->local()]=rhs[i->local()]=0; //((double)x)*((double)y)*h*h;
     }
   }
