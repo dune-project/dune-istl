@@ -782,7 +782,7 @@ namespace Dune
       idxtype * adjncy=new idxtype[noNeighbours], *adjwgt = new idxtype[noNeighbours];
 
       // each process has exactly one vertex!
-      for(std::size_t i=0; i<oocomm.communicator().size(); ++i)
+      for(int i=0; i<oocomm.communicator().size(); ++i)
         vtxdist[i]=i;
       vtxdist[oocomm.communicator().size()]=oocomm.communicator().size();
 
@@ -838,7 +838,7 @@ namespace Dune
 
       int wgtflag=3, numflag=0, ncon=1, edgecut;
       float *tpwgts = new float[nparts];
-      for(std::size_t i=0; i<nparts; ++i)
+      for(int i=0; i<nparts; ++i)
         tpwgts[i]=1.0/nparts;
       float ubvec = 1.15;
       int options[3] ={ 0,0,0 };
@@ -903,16 +903,11 @@ namespace Dune
     double t1=0.0, t2=0.0, t3=0.0, t4=0.0, tSum=0.0;
 #endif
 
-    // Common variables
-    std::size_t i=0, j=0;
 
     // MPI variables
-    int npes = oocomm.communicator().size();
     int mype = oocomm.communicator().rank();
 
-    MPI_Status status;
-
-    assert(nparts<=npes);
+    assert(nparts<=oocomm.communicator().size());
 
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet::GlobalIndex GI;
     typedef std::vector<GI> GlobalVector;
@@ -948,8 +943,6 @@ namespace Dune
 #endif
     for(std::size_t i=0; i < indexMap.numOfOwnVtx(); ++i)
       part[i]=mype;
-
-    int numOfVtx = oocomm.indexSet().size();
 
 #if !HAVE_PARMETIS
     if(oocomm.communicator().rank()==0 && nparts>1)
@@ -1072,7 +1065,7 @@ namespace Dune
     std::vector<int> setPartition(oocomm.indexSet().size(), -1);
 
     typedef typename  OOComm::ParallelIndexSet::const_iterator Iterator;
-    i=0; // parmetis index
+    std::size_t i=0; // parmetis index
     for(Iterator index = oocomm.indexSet().begin(); index != oocomm.indexSet().end(); ++index)
       if(OwnerSet::contains(index->local().attribute())) {
         setPartition[index->local()]=domainMapping[part[i++]];
