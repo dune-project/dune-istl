@@ -236,8 +236,7 @@ namespace Dune
       communicator_=comm;
     }
     template<class Flags,class IS>
-    void buildSendInterface(const std::vector<int>& toPart, const ParmetisDuneIndexMap& pdmap,
-                            const IS& idxset)
+    void buildSendInterface(const std::vector<int>& toPart, const IS& idxset)
     {
       typedef std::vector<int>::const_iterator Iter;
       std::map<int,int> sizes;
@@ -741,6 +740,139 @@ namespace Dune
     }
   } // end anonymous namespace
 
+  template<class G, class T1, class T2>
+  bool buildCommunication(const G& graph, std::vector<int>& realparts,
+                          Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
+                          Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                          RedistributeInterface& redistInf);
+
+
+  template<class M, class T1, class T2>
+  bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
+                            Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                            RedistributeInterface& redistInf)
+  {
+    int rank = oocomm.communicator().rank();
+    int* part = new int[1]; // where all our data moves to
+    part[0]=rank;
+
+    { // sublock for automatic memory deletion
+
+      // Build the graph of the communication scheme and create an appropriate indexset.
+      // calculate the neighbour vertices
+      int noNeighbours = oocomm.remoteIndices().neighbours();
+      typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::RemoteIndices RemoteIndices;
+      typedef typename RemoteIndices::const_iterator
+      NeighbourIterator;
+
+      for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+          ++n)
+        if(n->first==rank) {
+          //do not include ourselves.
+          --noNeighbours;
+          break;
+        }
+
+      // A parmetis graph representing the communication graph.
+      // The diagonal entries are the number of nodes on the process.
+      // The offdiagonal entries are the number of edges leading to other processes.
+
+      idxtype *xadj=new idxtype[2], *vwgt = new idxtype[1];
+      idxtype *vtxdist=new idxtype[oocomm.communicator().size()+1];
+      idxtype * adjncy=new idxtype[noNeighbours], *adjwgt = new idxtype[noNeighbours];
+
+      // each process has exactly one vertex!
+      for(std::size_t i=0; i<oocomm.communicator().size(); ++i)
+        vtxdist[i]=i;
+      vtxdist[oocomm.communicator().size()]=oocomm.communicator().size();
+
+
+      vwgt[0]=mat.N(); // weight is numer of rows TODO: Should actually be the nonzeros.
+      xadj[0]=0;
+      xadj[1]=noNeighbours;
+
+      // count edges to other processor
+      // a vector mapping the index to the owner
+      std::vector<int> owner(mat.N(), oocomm.communicator().rank());
+      for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+          ++n)
+      {
+        if(n->first!=oocomm.communicator().rank()) {
+          typedef typename RemoteIndices::RemoteIndexList RIList;
+          const RIList& rlist = *(n->second.first);
+          typedef typename RIList::const_iterator LIter;
+          for(LIter entry=rlist.begin(); entry!=rlist.end(); ++entry) {
+            if(entry->attribute()==OwnerOverlapCopyAttributeSet::owner)
+              owner[entry->localIndexPair().local()] = n->first;
+          }
+        }
+      }
+
+      std::map<int,idxtype> edgecount; // edges to other processors
+      typedef typename M::ConstRowIterator RIter;
+      typedef typename M::ConstColIterator CIter;
+
+      // calculate edge count
+      for(RIter row=mat.begin(), endr=mat.end(); row != endr; ++row)
+        if(owner[row.index()]==OwnerOverlapCopyAttributeSet::owner)
+          for(CIter entry= row->begin(), ende = row->end(); entry != ende; ++entry)
+            ++edgecount[owner[entry.index()]];
+
+      // setup edge and weight pattern
+      typedef typename  RemoteIndices::const_iterator NeighbourIterator;
+      typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet IndexSet;
+      typedef typename  IndexSet::LocalIndex LocalIndex;
+
+      idxtype* adjp=adjncy;
+      idxtype* adjwp=adjwgt;
+
+      for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+          ++n)
+        if(n->first != rank) {
+          *adjp=n->first;
+          *adjwp=edgecount[n->first];
+          ++adjp;
+          ++adjwp;
+        }
+
+
+      int wgtflag=3, numflag=0, ncon=1, edgecut;
+      float *tpwgts = new float[nparts];
+      for(std::size_t i=0; i<nparts; ++i)
+        tpwgts[i]=1.0/nparts;
+      float ubvec = 1.15;
+      int options[3] ={ 0,0,0 };
+      MPI_Comm comm=oocomm.communicator();
+
+      //=======================================================
+      // ParMETIS_V3_PartKway
+      //=======================================================
+      ParMETIS_V3_PartKway(vtxdist, xadj, adjncy,
+                           vwgt, adjwgt, &wgtflag,
+                           &numflag, &ncon, &nparts, tpwgts, &ubvec, options, &edgecut, part,
+                           &comm);
+
+
+      std::cout<<" repart "<<rank <<" -> "<< part[0]<<std::endl;
+      delete[] xadj;
+      delete[] vwgt;
+      delete[] adjncy;
+      delete[] adjwgt;
+
+    }
+
+    std::vector<int> realpart(mat.N(), part[0]);
+
+
+    oocomm.copyOwnerToAll(realpart, realpart);
+
+    oocomm.buildGlobalLookup(mat.N());
+    Dune::Amg::MatrixGraph<M> graph(const_cast<M&>(mat));
+    fillIndexSetHoles(graph, oocomm);
+    return buildCommunication(graph, realpart, oocomm, outcomm, redistInf);
+
+  }
+
   /**
    * @brief execute a graph repartition for a giving graph and indexset.
    *
@@ -814,6 +946,8 @@ namespace Dune
 #else
     std::size_t *part = new std::size_t[indexMap.numOfOwnVtx()];
 #endif
+    for(std::size_t i=0; i < indexMap.numOfOwnVtx(); ++i)
+      part[i]=mype;
 
     int numOfVtx = oocomm.indexSet().size();
 
@@ -828,8 +962,8 @@ namespace Dune
 
     if(nparts>1) {
       // Create the xadj and adjncy arrays
-      int *xadj = new  int[indexMap.numOfOwnVtx()+1];
-      int *adjncy = new int[graph.noEdges()];
+      idxtype *xadj = new  idxtype[indexMap.numOfOwnVtx()+1];
+      idxtype *adjncy = new idxtype[graph.noEdges()];
       EdgeFunctor<G> ef(adjncy, indexMap, graph.noEdges());
       getAdjArrays<OwnerSet>(graph, oocomm.globalLookup(), xadj, ef);
 
@@ -930,10 +1064,6 @@ namespace Dune
     }
     std::cout<<std::endl;
 #endif
-    // translate the domain number to real process number
-    std::vector<int> newPartition(indexMap.numOfOwnVtx());
-    for(j=0; j<indexMap.numOfOwnVtx(); j++)
-      newPartition[j] = domainMapping[part[j]];
 
     // Make a domain mapping for the indexset and translate
     //domain number to real process number
@@ -948,10 +1078,24 @@ namespace Dune
         setPartition[index->local()]=domainMapping[part[i++]];
       }
 
+    delete[] part;
     oocomm.copyOwnerToAll(setPartition, setPartition);
+    return buildCommunication(graph, setPartition, oocomm, outcomm, redistInf);
+  }
+
+
+
+  template<class G, class T1, class T2>
+  bool buildCommunication(const G& graph,
+                          std::vector<int>& setPartition, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
+                          Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                          RedistributeInterface& redistInf)
+  {
+    typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
+    typedef typename  OOComm::OwnerSet OwnerSet;
 
     // Build the send interface
-    redistInf.buildSendInterface<OwnerSet>(setPartition, indexMap, oocomm.indexSet());
+    redistInf.buildSendInterface<OwnerSet>(setPartition, oocomm.indexSet());
 
 #ifdef PERF_REPART
     // stop the time for step 3)
@@ -977,7 +1121,7 @@ namespace Dune
     //
     // 4.1) Let's start...
     //
-
+    int npes = oocomm.communicator().size();
     int *sendTo = new int[npes];
     int *recvFrom = new int[npes];
     int *buf = new int[npes];
@@ -995,11 +1139,15 @@ namespace Dune
     // TODO: optimize buffer size
     bool existentOnNextLevel=false;
 
-    for(i=0; i<indexMap.numOfOwnVtx(); ++i) {
-      if (newPartition[i]!=mype) {
-        if (sendTo[newPartition[i]]==0) {
-          sendTo[newPartition[i]] = numOfVtx;
-          buf[newPartition[i]] = numOfVtx;
+    typedef typename std::vector<int>::const_iterator VIter;
+    int numOfVtx = oocomm.indexSet().size();
+    int mype = oocomm.communicator().rank();
+
+    for(VIter i=setPartition.begin(), iend = setPartition.end(); i!=iend; ++i) {
+      if (*i!=mype) {
+        if (sendTo[*i]==0) {
+          sendTo[*i] = numOfVtx;
+          buf[*i] = numOfVtx;
         }
       }
       else
@@ -1014,6 +1162,9 @@ namespace Dune
     int pe=0;
     int src = (mype-1+npes)%npes;
     int dest = (mype+1)%npes;
+
+    MPI_Comm comm = oocomm.communicator();
+    MPI_Status status;
 
     // ring communication, we need n-1 communication for n processors
     for (int i=0; i<npes-1; i++) {
@@ -1051,6 +1202,7 @@ namespace Dune
 
 
     typedef typename OOComm::ParallelIndexSet::GlobalIndex GI;
+    typedef std::vector<GI> GlobalVector;
     std::vector<std::pair<GI,int> > myOwnerVec;
     std::set<GI> myOverlapSet;
     GlobalVector sendOwnerVec;
@@ -1119,10 +1271,6 @@ namespace Dune
 
     redistInf.setCommunicator(oocomm.communicator());
 
-    // Trick to free memory
-    newPartition.clear();
-    newPartition.swap(newPartition);
-
     //
     // 4.2) Create the IndexSet etc.
     //
@@ -1174,9 +1322,9 @@ namespace Dune
     // Therefore the entries of ownerVec are the same as the
     // ones in the resulting index set.
     typedef typename OOComm::ParallelIndexSet::LocalIndex LocalIndex;
-    typedef typename std::vector<std::pair<GI,int> >::const_iterator VIter;
-    i=0;
-    for(VIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
+    typedef typename std::vector<std::pair<GI,int> >::const_iterator VPIter;
+    int i=0;
+    for(VPIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
       outputIndexSet.add(g->first,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
       redistInf.addReceiveIndex(g->second, i);
     }
@@ -1203,6 +1351,7 @@ namespace Dune
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     int numOfOwnVtx =0;
+    typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
     Iterator end = outputIndexSet.end();
     for(Iterator index = outputIndexSet.begin(); index != end; ++index) {
       if (OwnerSet::contains(index->local().attribute())) {
@@ -1210,12 +1359,12 @@ namespace Dune
       }
     }
     numOfOwnVtx = oocomm.communicator().sum(numOfOwnVtx);
-    if(numOfOwnVtx!=indexMap.globalOwnerVertices)
-    {
-      std::cerr<<numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones!"<<std::endl;
-      DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
-                                       <<" during repartitioning.");
-    }
+    // if(numOfOwnVtx!=indexMap.globalOwnerVertices)
+    //   {
+    //     std::cerr<<numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones!"<<std::endl;
+    //     DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
+    //             <<" during repartitioning.");
+    //   }
     Iterator index=outputIndexSet.begin();
     if(index!=end) {
       ++index;
@@ -1235,7 +1384,6 @@ namespace Dune
     // release the memory
     delete[] sendTo;
     delete[] recvFrom;
-    delete[] part;
 
 
 #ifdef PERF_REPART
