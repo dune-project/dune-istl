@@ -2,7 +2,7 @@
 
 if MPI
   MPITESTS =
-  TESTPROGS = galerkintest hierarchytest pamgtest transfertest
+  TESTPROGS = galerkintest hierarchytest pamgtest transfertest pamg_comm_repart_test
 endif
 
 NORMALTESTS = kamgtest amgtest graphtest $(MPITESTS)
@@ -71,5 +71,20 @@ pamgtest_LDADD =				\
 	$(SUPERLU_LIBS)				\
 	$(DUNEMPILIBS)				\
 	$(LDADD)
+
+pamg_comm_repart_test_SOURCES = parallelamgtest.cc
+pamg_comm_repart_test_CPPFLAGS = $(AM_CPPFLAGS)		\
+	$(DUNEMPICPPFLAGS)			\
+	$(SUPERLU_CPPFLAGS)			\
+	$(PARMETIS_CPPFLAGS) -DAMG_REPART_ON_COMM_GRAPH
+pamg_comm_repart_test_LDFLAGS = $(AM_LDFLAGS)		\
+	$(DUNEMPILDFLAGS)			\
+	$(PARMETIS_LDFLAGS)
+pamg_comm_repart_test_LDADD =				\
+	$(PARMETIS_LIBS)			\
+	$(SUPERLU_LIBS)				\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
+
 
 include $(top_srcdir)/am/global-rules
