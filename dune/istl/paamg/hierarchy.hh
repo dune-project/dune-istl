@@ -698,6 +698,13 @@ namespace Dune
                                         RedistributeInformation<C>& ri,
                                         int nparts, C1& criterion)
     {
+
+#ifdef AMG_REPART_ON_COMM_GRAPH
+      // Done not repartition the matrix graph, but a graph of the communication scheme.
+      bool existentOnRedist=Dune::commGraphRepartition(origMatrix, origComm, nparts, newComm,
+                                                       ri.getInterface());
+
+#else
       typedef Dune::Amg::MatrixGraph<const M> MatrixGraph;
       typedef Dune::Amg::PropertiesGraph<MatrixGraph,
           VertexProperties,
@@ -716,10 +723,14 @@ namespace Dune
 #endif
       bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
                                                    newComm, ri.getInterface());
+#endif // if else AMG_REPART
+
       ri.setSetup();
+
 #ifdef DEBUG_REPART
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
+
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
 
 #ifdef DEBUG_REPART
