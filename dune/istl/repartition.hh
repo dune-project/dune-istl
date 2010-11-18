@@ -297,6 +297,8 @@ namespace Dune
       // Pack owner vertices
       std::size_t s=ownerVec.size();
       int pos=0;
+      if(s==0)
+        ownerVec.resize(1); // otherwise would read beyond the memory bound
       MPI_Pack(&s, 1, MPITraits<std::size_t>::getType(), sendBuf, buffersize, &pos, comm);
       MPI_Pack(&(ownerVec[0]), s, MPITraits<GI>::getType(), sendBuf, buffersize, &pos, comm);
       s = overlapVec.size();
@@ -305,8 +307,8 @@ namespace Dune
       for(Iter i=overlapVec.begin(), end= overlapVec.end(); i != end; ++i)
         MPI_Pack(const_cast<GI*>(&(*i)), 1, MPITraits<GI>::getType(), sendBuf, buffersize, &pos, comm);
 
-      int is=neighbors.size();
-      MPI_Pack(&is, 1, MPI_INT, sendBuf, buffersize, &pos, comm);
+      s=neighbors.size();
+      MPI_Pack(&s, 1, MPITraits<std::size_t>::getType(), sendBuf, buffersize, &pos, comm);
       typedef typename std::set<int>::iterator IIter;
 
       for(IIter i=neighbors.begin(), end= neighbors.end(); i != end; ++i)
@@ -329,8 +331,7 @@ namespace Dune
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       inf.reserveSpaceForReceiveInterface(from, size);
       ownerVec.reserve(ownerVec.size()+size);
-
-      for(; size>0; --size) {
+      for(; size!=0; --size) {
         GI gi;
         MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
         ownerVec.push_back(std::make_pair(gi,from));
@@ -338,17 +339,17 @@ namespace Dune
       // unpack overlap vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       typename std::set<GI>::iterator ipos = overlapVec.begin();
-      for(; size>0; --size) {
+      std::cout << "unpacking "<<size<<" overlap"<<std::endl;
+      for(; size!=0; --size) {
         GI gi;
         MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
         ipos=overlapVec.insert(ipos, gi);
       }
       //unpack neighbors
-      int s;
-      MPI_Unpack(recvBuf, bufferSize, &pos, &s, 1, MPI_INT, comm);
-
+      MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1,  MPITraits<std::size_t>::getType(), comm);
+      std::cout << "unpacking "<<size<<" neighbors"<<std::endl;
       typename std::set<int>::iterator npos = neighbors.begin();
-      for(; s>0; --s) {
+      for(; size!=0; --size) {
         int n;
         MPI_Unpack(recvBuf, bufferSize, &pos, &n, 1, MPI_INT, comm);
         npos=neighbors.insert(npos, n);
@@ -1226,11 +1227,13 @@ namespace Dune
             int buffersize=0;
             int tsize;
             MPI_Pack_size(1, MPITraits<std::size_t>::getType(), oocomm.communicator(), &buffersize);
+            MPI_Pack_size(sendOwnerVec.size(), MPITraits<GI>::getType(), oocomm.communicator(), &tsize);
+            buffersize +=tsize;
             MPI_Pack_size(1, MPITraits<std::size_t>::getType(), oocomm.communicator(), &tsize);
             buffersize +=tsize;
-            MPI_Pack_size(sendTo[j], MPITraits<GI>::getType(), oocomm.communicator(), &tsize);
+            MPI_Pack_size(sendOverlapSet.size(), MPITraits<GI>::getType(), oocomm.communicator(), &tsize);
             buffersize += tsize;
-            MPI_Pack_size(1, MPI_INT, oocomm.communicator(), &tsize);
+            MPI_Pack_size(1, MPITraits<std::size_t>::getType(), oocomm.communicator(), &tsize);
             buffersize += tsize;
             MPI_Pack_size(neighbors.size(), MPI_INT, oocomm.communicator(), &tsize);
             buffersize += tsize;
