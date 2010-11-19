@@ -3,21 +3,23 @@
 #ifndef DUNE_REPARTITION_HH
 #define DUNE_REPARTITION_HH
 
+#include <cassert>
+#include <map>
+#include <utility>
+
 #if HAVE_PARMETIS
 #include <parmetis.h>
 #endif
-#include "config.h"
-#include <dune/istl/owneroverlapcopy.hh>
-#include <dune/common/mpitraits.hh>
-#include <dune/istl/indexset.hh>
-#include <dune/istl/remoteindices.hh>
-#include <dune/istl/indicessyncer.hh>
-#include <dune/istl/communicator.hh>
-#include <dune/istl/paamg/graph.hh>
+
 #include <dune/common/enumset.hh>
-#include <map>
-#include <utility>
-#include <cassert>
+#include <dune/common/mpitraits.hh>
+
+#include <dune/istl/communicator.hh>
+#include <dune/istl/indexset.hh>
+#include <dune/istl/indicessyncer.hh>
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/paamg/graph.hh>
+#include <dune/istl/remoteindices.hh>
 
 /**
  * @file
