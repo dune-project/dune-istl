@@ -13,6 +13,7 @@
 
 #include <dune/common/enumset.hh>
 #include <dune/common/mpitraits.hh>
+#include <dune/common/stdstreams.hh>
 
 #include <dune/istl/communicator.hh>
 #include <dune/istl/indexset.hh>
