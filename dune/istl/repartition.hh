@@ -342,7 +342,7 @@ namespace Dune
       // unpack overlap vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
       typename std::set<GI>::iterator ipos = overlapVec.begin();
-      std::cout << "unpacking "<<size<<" overlap"<<std::endl;
+      Dune::dverb << "unpacking "<<size<<" overlap"<<std::endl;
       for(; size!=0; --size) {
         GI gi;
         MPI_Unpack(recvBuf, bufferSize, &pos, &gi, 1, MPITraits<GI>::getType(), comm);
@@ -350,7 +350,7 @@ namespace Dune
       }
       //unpack neighbors
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1,  MPITraits<std::size_t>::getType(), comm);
-      std::cout << "unpacking "<<size<<" neighbors"<<std::endl;
+      Dune::dverb << "unpacking "<<size<<" neighbors"<<std::endl;
       typename std::set<int>::iterator npos = neighbors.begin();
       for(; size!=0; --size) {
         int n;
@@ -750,6 +750,18 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf);
 
+  extern "C" {
+    void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
+                             idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
+                             int *options, int *edgecut, idxtype *part);
+  }
+
+  template<class S, class T>
+  inline void print_carray(S& os, T* array, std::size_t l)
+  {
+    for(T *cur=array, *end=array+l; cur!=end; ++cur)
+      os<<*cur<<" ";
+  }
 
   template<class M, class T1, class T2>
   bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
@@ -758,115 +770,278 @@ namespace Dune
   {
     int rank = oocomm.communicator().rank();
     int* part = new int[1]; // where all our data moves to
-    part[0]=rank;
+    if(nparts>1) {
 
-    { // sublock for automatic memory deletion
+      part[0]=rank;
 
-      // Build the graph of the communication scheme and create an appropriate indexset.
-      // calculate the neighbour vertices
-      int noNeighbours = oocomm.remoteIndices().neighbours();
-      typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::RemoteIndices RemoteIndices;
-      typedef typename RemoteIndices::const_iterator
-      NeighbourIterator;
+      { // sublock for automatic memory deletion
 
-      for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
-          ++n)
-        if(n->first==rank) {
-          //do not include ourselves.
-          --noNeighbours;
-          break;
-        }
+        // Build the graph of the communication scheme and create an appropriate indexset.
+        // calculate the neighbour vertices
+        int noNeighbours = oocomm.remoteIndices().neighbours();
+        typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::RemoteIndices RemoteIndices;
+        typedef typename RemoteIndices::const_iterator
+        NeighbourIterator;
 
-      // A parmetis graph representing the communication graph.
-      // The diagonal entries are the number of nodes on the process.
-      // The offdiagonal entries are the number of edges leading to other processes.
+        for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+            ++n)
+          if(n->first==rank) {
+            //do not include ourselves.
+            --noNeighbours;
+            break;
+          }
 
-      idxtype *xadj=new idxtype[2], *vwgt = new idxtype[1];
-      idxtype *vtxdist=new idxtype[oocomm.communicator().size()+1];
-      idxtype * adjncy=new idxtype[noNeighbours], *adjwgt = new idxtype[noNeighbours];
+        // A parmetis graph representing the communication graph.
+        // The diagonal entries are the number of nodes on the process.
+        // The offdiagonal entries are the number of edges leading to other processes.
 
-      // each process has exactly one vertex!
-      for(int i=0; i<oocomm.communicator().size(); ++i)
-        vtxdist[i]=i;
-      vtxdist[oocomm.communicator().size()]=oocomm.communicator().size();
+        idxtype *xadj=new idxtype[2], *vwgt = new idxtype[1];
+        idxtype *vtxdist=new idxtype[oocomm.communicator().size()+1];
+        idxtype * adjncy=new idxtype[noNeighbours], *adjwgt = new idxtype[noNeighbours];
+
+        // each process has exactly one vertex!
+        for(int i=0; i<oocomm.communicator().size(); ++i)
+          vtxdist[i]=i;
+        vtxdist[oocomm.communicator().size()]=oocomm.communicator().size();
 
 
-      vwgt[0]=mat.N(); // weight is numer of rows TODO: Should actually be the nonzeros.
-      xadj[0]=0;
-      xadj[1]=noNeighbours;
+        vwgt[0]=mat.N(); // weight is numer of rows TODO: Should actually be the nonzeros.
+        xadj[0]=0;
+        xadj[1]=noNeighbours;
 
-      // count edges to other processor
-      // a vector mapping the index to the owner
-      std::vector<int> owner(mat.N(), oocomm.communicator().rank());
-      for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
-          ++n)
-      {
-        if(n->first!=oocomm.communicator().rank()) {
-          typedef typename RemoteIndices::RemoteIndexList RIList;
-          const RIList& rlist = *(n->second.first);
-          typedef typename RIList::const_iterator LIter;
-          for(LIter entry=rlist.begin(); entry!=rlist.end(); ++entry) {
-            if(entry->attribute()==OwnerOverlapCopyAttributeSet::owner)
-              owner[entry->localIndexPair().local()] = n->first;
+        // count edges to other processor
+        // a vector mapping the index to the owner
+        std::vector<int> owner(mat.N(), oocomm.communicator().rank());
+        for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+            ++n)
+        {
+          if(n->first!=oocomm.communicator().rank()) {
+            typedef typename RemoteIndices::RemoteIndexList RIList;
+            const RIList& rlist = *(n->second.first);
+            typedef typename RIList::const_iterator LIter;
+            for(LIter entry=rlist.begin(); entry!=rlist.end(); ++entry) {
+              if(entry->attribute()==OwnerOverlapCopyAttributeSet::owner)
+                owner[entry->localIndexPair().local()] = n->first;
+            }
           }
         }
-      }
 
-      std::map<int,idxtype> edgecount; // edges to other processors
-      typedef typename M::ConstRowIterator RIter;
-      typedef typename M::ConstColIterator CIter;
+        std::map<int,idxtype> edgecount; // edges to other processors
+        typedef typename M::ConstRowIterator RIter;
+        typedef typename M::ConstColIterator CIter;
 
-      // calculate edge count
-      for(RIter row=mat.begin(), endr=mat.end(); row != endr; ++row)
-        if(owner[row.index()]==OwnerOverlapCopyAttributeSet::owner)
-          for(CIter entry= row->begin(), ende = row->end(); entry != ende; ++entry)
-            ++edgecount[owner[entry.index()]];
+        // calculate edge count
+        for(RIter row=mat.begin(), endr=mat.end(); row != endr; ++row)
+          if(owner[row.index()]==OwnerOverlapCopyAttributeSet::owner)
+            for(CIter entry= row->begin(), ende = row->end(); entry != ende; ++entry)
+              ++edgecount[owner[entry.index()]];
 
-      // setup edge and weight pattern
-      typedef typename  RemoteIndices::const_iterator NeighbourIterator;
-      typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet IndexSet;
-      typedef typename  IndexSet::LocalIndex LocalIndex;
+        // setup edge and weight pattern
+        typedef typename  RemoteIndices::const_iterator NeighbourIterator;
+        typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet IndexSet;
+        typedef typename  IndexSet::LocalIndex LocalIndex;
 
-      idxtype* adjp=adjncy;
-      idxtype* adjwp=adjwgt;
+        idxtype* adjp=adjncy;
+        idxtype* adjwp=adjwgt;
 
-      for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
-          ++n)
-        if(n->first != rank) {
-          *adjp=n->first;
-          *adjwp=edgecount[n->first];
-          ++adjp;
-          ++adjwp;
+        for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+            ++n)
+          if(n->first != rank) {
+            *adjp=n->first;
+            *adjwp=edgecount[n->first];
+            ++adjp;
+            ++adjwp;
+          }
+
+
+        int wgtflag=3, numflag=0, edgecut;
+        float *tpwgts = new float[nparts];
+        for(int i=0; i<nparts; ++i)
+          tpwgts[i]=1.0/nparts;
+        int options[4] ={ 0,0,0,0};
+        MPI_Comm comm=oocomm.communicator();
+
+        Dune::dinfo<<rank<<" vtxdist: ";
+        print_carray(Dune::dinfo, vtxdist, oocomm.communicator().size()+1);
+        Dune::dinfo<<std::endl<<rank<<" xadj: ";
+        print_carray(Dune::dinfo, xadj, 2);
+        Dune::dinfo<<std::endl<<rank<<" adjncy: ";
+        print_carray(Dune::dinfo, adjncy, noNeighbours);
+        Dune::dinfo<<std::endl<<rank<<" adwgt: ";
+        print_carray(Dune::dinfo, adjwgt, noNeighbours);
+        Dune::dinfo<<std::endl;
+        oocomm.communicator().barrier();
+
+#ifdef PARALLEL_PARTITION
+        float ubvec = 1.15;
+        int ncon=1;
+
+        //=======================================================
+        // ParMETIS_V3_PartKway
+        //=======================================================
+        ParMETIS_V3_PartKway(vtxdist, xadj, adjncy,
+                             vwgt, adjwgt, &wgtflag,
+                             &numflag, &ncon, &nparts, tpwgts, &ubvec, options, &edgecut, part,
+                             &comm);
+#else
+        std::size_t gnoedges=0;
+        int* noedges = 0;
+        if(rank==0)
+          noedges = new int[oocomm.communicator().size()];
+        Dune::dverb<<"noNeighbours: "<<noNeighbours<<std::endl;
+        // gather number of edges for each vertex.
+        oocomm.communicator().gather(&noNeighbours, noedges, 1, 0);
+
+        int noVertices = vtxdist[oocomm.communicator().size()];
+        idxtype *gxadj = 0;
+        idxtype *gvwgt = 0;
+        idxtype *gadjncy = 0;
+        idxtype *gadjwgt = 0;
+        idxtype *gpart = 0;
+        int* displ = 0;
+        int* noxs = 0;
+        int* xdispl = 0;  // displacement for xadj
+        int* novs = 0;
+        int* vdispl=0; // real vertex displacement
+        std::size_t localNoVtx=vtxdist[rank+1]-vtxdist[rank];
+        std::size_t gxadjlen = vtxdist[oocomm.communicator().size()]-vtxdist[0]+oocomm.communicator().size();
+
+        if(rank==0) {
+          Dune::dinfo<<"noedges: ";
+          print_carray(Dune::dinfo, noedges, oocomm.communicator().size());
+          Dune::dinfo<<std::endl;
+          displ = new int[oocomm.communicator().size()];
+          xdispl = new int[oocomm.communicator().size()];
+          noxs = new int[oocomm.communicator().size()];
+          vdispl = new int[oocomm.communicator().size()];
+          novs = new int[oocomm.communicator().size()];
+
+          for(int i=0; i < oocomm.communicator().size(); ++i) {
+            noxs[i]=vtxdist[i+1]-vtxdist[i]+1;
+            novs[i]=vtxdist[i+1]-vtxdist[i];
+          }
+
+          idxtype *so= vtxdist;
+          int offset = 0;
+          for(int *xcurr = xdispl, *vcurr = vdispl, *end=vdispl+oocomm.communicator().size();
+              vcurr!=end; ++vcurr, ++xcurr, ++so, ++offset) {
+            *vcurr = *so;
+            *xcurr = offset + *so;
+          }
+
+          int *pdispl =displ;
+          int cdispl = 0;
+          *pdispl = 0;
+          for(int *curr=noedges, *end=noedges+oocomm.communicator().size()-1;
+              curr!=end; ++curr) {
+            ++pdispl; // next displacement
+            cdispl += *curr; // next value
+            *pdispl = cdispl;
+          }
+          Dune::dinfo<<"displ: ";
+          print_carray(Dune::dinfo, displ, oocomm.communicator().size());
+          Dune::dinfo<<std::endl;
+
+          // calculate global number of edges
+          // It is bigger than the actual one as we habe size-1 additional end entries
+          for(int *curr=noedges, *end=noedges+oocomm.communicator().size();
+              curr!=end; ++curr)
+            gnoedges += *curr;
+
+          // alocate gobal graph
+          Dune::dinfo<<"gxadjlen: "<<gxadjlen<<" noVertices: "<<noVertices
+                     <<" gnoedges: "<<gnoedges<<std::endl;
+          gxadj = new idxtype[gxadjlen];
+          gpart = new idxtype[noVertices];
+          gvwgt = new idxtype[noVertices];
+          gadjncy = new idxtype[gnoedges];
+          gadjwgt = new idxtype[gnoedges];
+        }
+
+        // Communicate data
+
+        MPI_Gatherv(xadj,2,MPITraits<idxtype>::getType(),
+                    gxadj,noxs,xdispl,MPITraits<idxtype>::getType(),
+                    0,comm);
+        MPI_Gatherv(vwgt,localNoVtx,MPITraits<idxtype>::getType(),
+                    gvwgt,novs,vdispl,MPITraits<idxtype>::getType(),
+                    0,comm);
+        MPI_Gatherv(adjncy,noNeighbours,MPITraits<idxtype>::getType(),
+                    gadjncy,noedges,displ,MPITraits<idxtype>::getType(),
+                    0,comm);
+        MPI_Gatherv(adjwgt,noNeighbours,MPITraits<idxtype>::getType(),
+                    gadjwgt,noedges,displ,MPITraits<idxtype>::getType(),
+                    0,comm);
+
+        if(rank==0) {
+          // create the real gxadj array
+          // i.e. shift entries and add displacements.
+
+          print_carray(Dune::dinfo, gxadj, gxadjlen);
+
+          int offset = 0;
+          idxtype increment = vtxdist[1];
+          idxtype *start=gxadj+1;
+          for(int i=1; i<oocomm.communicator().size(); ++i) {
+            offset+=1;
+            int lprev = vtxdist[i]-vtxdist[i-1];
+            int l = vtxdist[i+1]-vtxdist[i];
+            start+=lprev;
+            assert((start+l+offset)-gxadj<=gxadjlen);
+            increment = *(start-1);
+            std::transform(start+offset, start+l+offset, start, std::bind2nd(std::plus<idxtype>(), increment));
+          }
+          Dune::dinfo<<std::endl<<"shifted xadj:";
+          print_carray(Dune::dinfo, gxadj, noVertices+1);
+          Dune::dinfo<<std::endl<<" gvwgt: ";
+          print_carray(Dune::dinfo, gvwgt, noVertices);
+          Dune::dinfo<<std::endl<<" gadjncy: ";
+          print_carray(Dune::dinfo, gadjncy, gnoedges);
+          Dune::dinfo<<std::endl<<"adjwgt: ";
+          print_carray(Dune::dinfo, gadjwgt, gnoedges);
+          Dune::dinfo<<std::endl;
+          // everything should be fine now!!!
+
+          // Call metis
+          METIS_PartGraphKway(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
+                              &numflag, &nparts, options, &edgecut, gpart);
+
+          Dune::dinfo<<std::endl<<"part:";
+          print_carray(Dune::dinfo, gpart, noVertices);
+
+          delete[] gxadj;
+          delete[] gvwgt;
+          delete[] gadjncy;
+          delete[] gadjwgt;
+        }
+        // Scatter result
+        MPI_Scatter(gpart, 1, MPITraits<idxtype>::getType(), part, 1,
+                    MPITraits<idxtype>::getType(), 0, comm);
+
+        if(rank==0) {
+          // release remaining memory
+          delete[] gpart;
+          delete[] noedges;
+          delete[] displ;
         }
 
 
-      int wgtflag=3, numflag=0, ncon=1, edgecut;
-      float *tpwgts = new float[nparts];
-      for(int i=0; i<nparts; ++i)
-        tpwgts[i]=1.0/nparts;
-      float ubvec = 1.15;
-      int options[3] ={ 0,0,0 };
-      MPI_Comm comm=oocomm.communicator();
-
-      //=======================================================
-      // ParMETIS_V3_PartKway
-      //=======================================================
-      ParMETIS_V3_PartKway(vtxdist, xadj, adjncy,
-                           vwgt, adjwgt, &wgtflag,
-                           &numflag, &ncon, &nparts, tpwgts, &ubvec, options, &edgecut, part,
-                           &comm);
-
-
-      std::cout<<" repart "<<rank <<" -> "<< part[0]<<std::endl;
-      delete[] xadj;
-      delete[] vwgt;
-      delete[] adjncy;
-      delete[] adjwgt;
-
+#endif
+        delete[] xadj;
+        delete[] vwgt;
+        delete[] vtxdist;
+        delete[] adjncy;
+        delete[] adjwgt;
+        delete[] tpwgts;
+      }
+    }else{
+      part[0]=0;
     }
 
-    std::vector<int> realpart(mat.N(), part[0]);
+    Dune::dinfo<<" repart "<<rank <<" -> "<< part[0]<<std::endl;
 
+    std::vector<int> realpart(mat.N(), part[0]);
+    delete[] part;
 
     oocomm.copyOwnerToAll(realpart, realpart);
 
