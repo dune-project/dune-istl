@@ -749,12 +749,13 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf);
-
+#if HAVE_PARMETIS
   extern "C" {
     void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
                              idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                              int *options, int *edgecut, idxtype *part);
   }
+#endif
 
   template<class S, class T>
   inline void print_carray(S& os, T* array, std::size_t l)
@@ -769,7 +770,12 @@ namespace Dune
                             RedistributeInterface& redistInf)
   {
     int rank = oocomm.communicator().rank();
-    int* part = new int[1]; // where all our data moves to
+#if !HAVE_PARMETIS
+    int* part = new int[1];
+    part[0]=0;
+#else
+    idxtype* part = new idxtype[1]; // where all our data moves to
+
     if(nparts>1) {
 
       part[0]=rank;
@@ -1037,7 +1043,7 @@ namespace Dune
     }else{
       part[0]=0;
     }
-
+#endif
     Dune::dinfo<<" repart "<<rank <<" -> "<< part[0]<<std::endl;
 
     std::vector<int> realpart(mat.N(), part[0]);
