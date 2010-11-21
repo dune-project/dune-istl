@@ -767,7 +767,7 @@ namespace Dune
   typedef idxtype std::size_t;
 #endif
 
-  bool isValidGraph(std::size_t noVtx, idxtype noEdges, idxtype* xadj,
+  bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, idxtype noEdges, idxtype* xadj,
                     idxtype* adjncy, bool checkSymmetry)
   {
     bool correct=true;
@@ -785,7 +785,7 @@ namespace Dune
       }
       // Check numbers in adjncy
       for(idxtype i=xadj[vtx]; i< xadj[vtx+1]; ++i) {
-        if(adjncy[i]<0||((std::size_t)adjncy[i])>=noVtx) {
+        if(adjncy[i]<0||((std::size_t)adjncy[i])>gnoVtx) {
           std::cerr<<" Edge "<<adjncy[i]<<" out of range ["<<0<<","<<noVtx<<")"
                    <<std::endl;
           correct=false;
@@ -904,8 +904,9 @@ namespace Dune
             ++adjwp;
           }
 
-        assert(isValidGraph(vtxdist[rank+1]-vtxdist[rank], noNeighbours,
-                            xadj, adjncy, false));
+        assert(isValidGraph(vtxdist[rank+1]-vtxdist[rank],
+                            vtxdist[oocomm.communicator().size()],
+                            noNeighbours, xadj, adjncy, false));
 
         int wgtflag=3, numflag=0, edgecut;
         float *tpwgts = new float[nparts];
@@ -1055,7 +1056,7 @@ namespace Dune
           Dune::dinfo<<std::endl;
           // everything should be fine now!!!
 
-          assert(isValidGraph(noVertices, gnoedges,
+          assert(isValidGraph(noVertices, noVertices, gnoedges,
                               gxadj, gadjncy, true));
 
           // Call metis
