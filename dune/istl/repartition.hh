@@ -763,6 +763,51 @@ namespace Dune
     for(T *cur=array, *end=array+l; cur!=end; ++cur)
       os<<*cur<<" ";
   }
+#if !HAVE_PARMETIS
+  typedef idxtype std::size_t;
+#endif
+
+  bool isValidGraph(std::size_t noVtx, idxtype noEdges, idxtype* xadj,
+                    idxtype* adjncy, bool checkSymmetry)
+  {
+    bool correct=true;
+
+    for(idxtype vtx=0; vtx<(idxtype)noVtx; ++vtx) {
+      if(xadj[vtx]>noEdges||xadj[vtx]<0) {
+        std::cerr <<"Check graph: xadj["<<vtx<<"]="<<xadj[vtx]<<" (>"
+                  <<noEdges<<") out of range!"<<std::endl;
+        correct=false;
+      }
+      if(xadj[vtx+1]>noEdges||xadj[vtx+1]<0) {
+        std::cerr <<"Check graph: xadj["<<vtx+1<<"]="<<xadj[vtx+1]<<" (>"
+                  <<noEdges<<") out of range!"<<std::endl;
+        correct=false;
+      }
+      // Check numbers in adjncy
+      for(idxtype i=xadj[vtx]; i< xadj[vtx+1]; ++i) {
+        if(adjncy[i]<0||((std::size_t)adjncy[i])>=noVtx) {
+          std::cerr<<" Edge "<<adjncy[i]<<" out of range ["<<0<<","<<noVtx<<")"
+                   <<std::endl;
+          correct=false;
+        }
+      }
+      if(checkSymmetry) {
+        for(idxtype i=xadj[vtx]; i< xadj[vtx+1]; ++i) {
+          idxtype target=adjncy[i];
+          // search for symmetric edge
+          int found=0;
+          for(idxtype j=xadj[target]; j< xadj[target+1]; ++j)
+            if(adjncy[j]==vtx)
+              found++;
+          if(found!=1) {
+            std::cerr<<"Edge ("<<target<<","<<vtx<<") "<<i<<" time"<<std::endl;
+            correct=false;
+          }
+        }
+      }
+    }
+    return correct;
+  }
 
   template<class M, class T1, class T2>
   bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
@@ -832,15 +877,15 @@ namespace Dune
           }
         }
 
-        std::map<int,idxtype> edgecount; // edges to other processors
-        typedef typename M::ConstRowIterator RIter;
-        typedef typename M::ConstColIterator CIter;
+        // std::map<int,idxtype> edgecount; // edges to other processors
+        // typedef typename M::ConstRowIterator RIter;
+        // typedef typename M::ConstColIterator CIter;
 
-        // calculate edge count
-        for(RIter row=mat.begin(), endr=mat.end(); row != endr; ++row)
-          if(owner[row.index()]==OwnerOverlapCopyAttributeSet::owner)
-            for(CIter entry= row->begin(), ende = row->end(); entry != ende; ++entry)
-              ++edgecount[owner[entry.index()]];
+        // // calculate edge count
+        // for(RIter row=mat.begin(), endr=mat.end(); row != endr; ++row)
+        //   if(owner[row.index()]==OwnerOverlapCopyAttributeSet::owner)
+        //     for(CIter entry= row->begin(), ende = row->end(); entry != ende; ++entry)
+        //       ++edgecount[owner[entry.index()]];
 
         // setup edge and weight pattern
         typedef typename  RemoteIndices::const_iterator NeighbourIterator;
@@ -854,11 +899,13 @@ namespace Dune
             ++n)
           if(n->first != rank) {
             *adjp=n->first;
-            *adjwp=edgecount[n->first];
+            *adjwp=1; //edgecount[n->first];
             ++adjp;
             ++adjwp;
           }
 
+        assert(isValidGraph(vtxdist[rank+1]-vtxdist[rank], noNeighbours,
+                            xadj, adjncy, false));
 
         int wgtflag=3, numflag=0, edgecut;
         float *tpwgts = new float[nparts];
@@ -1007,6 +1054,9 @@ namespace Dune
           print_carray(Dune::dinfo, gadjwgt, gnoedges);
           Dune::dinfo<<std::endl;
           // everything should be fine now!!!
+
+          assert(isValidGraph(noVertices, gnoedges,
+                              gxadj, gadjncy, true));
 
           // Call metis
           METIS_PartGraphKway(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
