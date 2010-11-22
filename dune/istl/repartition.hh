@@ -862,20 +862,20 @@ namespace Dune
 
         // count edges to other processor
         // a vector mapping the index to the owner
-        std::vector<int> owner(mat.N(), oocomm.communicator().rank());
-        for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
-            ++n)
-        {
-          if(n->first!=oocomm.communicator().rank()) {
-            typedef typename RemoteIndices::RemoteIndexList RIList;
-            const RIList& rlist = *(n->second.first);
-            typedef typename RIList::const_iterator LIter;
-            for(LIter entry=rlist.begin(); entry!=rlist.end(); ++entry) {
-              if(entry->attribute()==OwnerOverlapCopyAttributeSet::owner)
-                owner[entry->localIndexPair().local()] = n->first;
-            }
-          }
-        }
+        // std::vector<int> owner(mat.N(), oocomm.communicator().rank());
+        // for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+        //     ++n)
+        //   {
+        //     if(n->first!=oocomm.communicator().rank()){
+        //       typedef typename RemoteIndices::RemoteIndexList RIList;
+        //       const RIList& rlist = *(n->second.first);
+        //       typedef typename RIList::const_iterator LIter;
+        //       for(LIter entry=rlist.begin(); entry!=rlist.end(); ++entry){
+        //         if(entry->attribute()==OwnerOverlapCopyAttributeSet::owner)
+        //           owner[entry->localIndexPair().local()] = n->first;
+        //       }
+        //     }
+        //   }
 
         // std::map<int,idxtype> edgecount; // edges to other processors
         // typedef typename M::ConstRowIterator RIter;
