@@ -682,7 +682,7 @@ namespace Dune
       template<class T>
       void operator()(const T& edge)
       {
-        weight_[index()]=edge.properties().depends() ? 1 : 0;
+        weight_[index()]=edge.properties().depends() ? 3 : 1;
         BaseEdgeFunctor::operator()(edge);
       }
       int* getWeights()
