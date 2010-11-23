@@ -8,6 +8,7 @@
 #include "interface.hh"
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/stdstreams.hh>
 
 #if HAVE_MPI
 // MPI header
