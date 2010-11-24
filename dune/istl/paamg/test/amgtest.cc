@@ -25,20 +25,23 @@
 #include <cstdlib>
 #include <ctime>
 
-typedef HPA::xreal XREAL;
-//typedef double XREAL;
-namespace Dune
-{
-  template<>
-  struct DoubleConverter<HPA::xreal>
-  {
-    static double toDouble(const HPA::xreal& t)
-    {
-      return t._2double();
-    }
-  };
-}
+typedef double XREAL;
 
+/*
+   typedef HPA::xreal XREAL;
+
+   namespace Dune
+   {
+   template<>
+   struct DoubleConverter<HPA::xreal>
+   {
+   static double toDouble(const HPA::xreal& t)
+   {
+     return t._2double();
+   }
+   };
+   }
+ */
 
 template<class M, class V>
 void randomize(const M& mat, V& b)
