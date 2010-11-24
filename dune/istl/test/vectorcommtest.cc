@@ -1,9 +1,9 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
-#include <dune/istl/indexset.hh>
-#include <dune/istl/communicator.hh>
-#include <dune/istl/remoteindices.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/communicator.hh>
+#include <dune/common/parallel/remoteindices.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/common/enumset.hh>
 #include <dune/common/fvector.hh>
