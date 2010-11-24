@@ -991,6 +991,8 @@ namespace Dune
     Dune::dverb<<"Inserting from "<<process<<" "<<globalPair.first<<", "<<
     globalPair.second<<" "<<attribute<<std::endl;
 
+    resetIteratorsMap();
+
     // There might be cases where there no remote indices for that process yet
     typename IteratorsMap::iterator found = iteratorsMap_.find(process);
 
@@ -1023,7 +1025,8 @@ namespace Dune
     for(Iterators tmpIterators = iterators;
         !tmpIterators.isAtEnd() && tmpIterators.globalIndexPair() == globalPair;
         ++tmpIterators)
-      if(tmpIterators.remoteIndex().attribute() == attribute) {
+      //entry already exists with the same attribute
+      if(tmpIterators.globalIndexPair().second == attribute) {
         indexIsThere=true;
         break;
       }
