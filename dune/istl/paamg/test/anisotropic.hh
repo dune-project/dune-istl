@@ -3,11 +3,11 @@
 // $Id$
 #ifndef ANISOTROPIC_HH
 #define  ANISOTROPIC_HH
-#include <dune/istl/indexset.hh>
+#include <dune/common/parallel/indexset.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
-#include <dune/istl/plocalindex.hh>
+#include <dune/common/parallel/plocalindex.hh>
 #include <dune/common/collectivecommunication.hh>
 
 typedef Dune::OwnerOverlapCopyAttributeSet GridAttributes;

@@ -4,12 +4,12 @@
 #define DUNE_MATRIXREDIST_HH
 #include "repartition.hh"
 #include <dune/common/exceptions.hh>
-#include <dune/istl/indexset.hh>
+#include <dune/common/parallel/indexset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 /**
  * @file
  * @brief Functionality for redistributing a sparse matrix.
- * @author Mark Blatt
+ * @author Markus Blatt
  */
 namespace Dune
 {

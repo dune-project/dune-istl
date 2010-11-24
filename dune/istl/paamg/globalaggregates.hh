@@ -5,7 +5,7 @@
 
 #include "aggregates.hh"
 #include "pinfo.hh"
-#include <dune/istl/indexset.hh>
+#include <dune/common/parallel/indexset.hh>
 
 namespace Dune
 {

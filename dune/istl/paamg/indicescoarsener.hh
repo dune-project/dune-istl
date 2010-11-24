@@ -4,7 +4,7 @@
 #ifndef DUNE_AMG_INDICESCOARSENER_HH
 #define DUNE_AMG_INDICESCOARSENER_HH
 
-#include <dune/istl/indicessyncer.hh>
+#include <dune/common/parallel/indicessyncer.hh>
 #include <vector>
 #include "renumberer.hh"
 

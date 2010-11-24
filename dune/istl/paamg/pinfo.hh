@@ -11,9 +11,9 @@
 
 #include <dune/common/mpicollectivecommunication.hh>
 #include <dune/common/mpitraits.hh>
-#include <dune/istl/remoteindices.hh>
-#include <dune/istl/interface.hh>
-#include <dune/istl/communicator.hh>
+#include <dune/common/parallel/remoteindices.hh>
+#include <dune/common/parallel/interface.hh>
+#include <dune/common/parallel/communicator.hh>
 
 #endif
 

@@ -5,12 +5,12 @@
 #include <iostream>
 #include <dune/common/enumset.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/parallel/communicator.hh>
 #include <dune/istl/paamg/galerkin.hh>
 #include <dune/istl/paamg/dependency.hh>
 #include <dune/istl/paamg/globalaggregates.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/io.hh>
-#include <dune/istl/communicator.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/paamg/indicescoarsener.hh>

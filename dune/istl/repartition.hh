@@ -14,13 +14,13 @@
 #include <dune/common/enumset.hh>
 #include <dune/common/mpitraits.hh>
 #include <dune/common/stdstreams.hh>
+#include <dune/common/parallel/communicator.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/indicessyncer.hh>
+#include <dune/common/parallel/remoteindices.hh>
 
-#include <dune/istl/communicator.hh>
-#include <dune/istl/indexset.hh>
-#include <dune/istl/indicessyncer.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/graph.hh>
-#include <dune/istl/remoteindices.hh>
 
 /**
  * @file

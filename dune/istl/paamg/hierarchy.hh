@@ -18,7 +18,7 @@
 #include <dune/common/tuples.hh>
 #include <dune/common/bigunsignedint.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/istl/indexset.hh>
+#include <dune/common/parallel/indexset.hh>
 #include <dune/istl/matrixutils.hh>
 #include <dune/istl/matrixredistribute.hh>
 #include <dune/istl/paamg/dependency.hh>
@@ -363,7 +363,7 @@ namespace Dune
        * @brief Recalculate the galerkin products.
        *
        * If the data of the fine matrix changes but not its sparsity pattern
-       * this will recalculate all coarser level without starting the expensive
+       * this will recalculate all coarser levels without starting the expensive
        * aggregation process all over again.
        */
       template<class F>

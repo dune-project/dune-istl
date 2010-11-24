@@ -23,9 +23,9 @@
 #include <dune/common/enumset.hh>
 
 #if HAVE_MPI
-#include "indexset.hh"
-#include "communicator.hh"
-#include "remoteindices.hh"
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/communicator.hh>
+#include <dune/common/parallel/remoteindices.hh>
 #include <dune/common/mpicollectivecommunication.hh>
 #endif
 
