@@ -1041,7 +1041,7 @@ namespace Dune
             int lprev = vtxdist[i]-vtxdist[i-1];
             int l = vtxdist[i+1]-vtxdist[i];
             start+=lprev;
-            assert((start+l+offset)-gxadj<=gxadjlen);
+            assert((start+l+offset)-gxadj<=static_cast<idxtype>(gxadjlen));
             increment = *(start-1);
             std::transform(start+offset, start+l+offset, start, std::bind2nd(std::plus<idxtype>(), increment));
           }
