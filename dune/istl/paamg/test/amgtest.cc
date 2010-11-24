@@ -1,14 +1,44 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
+
+/*#include"xreal.h"
+
+   namespace std
+   {
+
+   HPA::xreal abs(const HPA::xreal& t)
+   {
+    return t>=0?t:-t;
+   }
+
+   };
+ */
+
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/indexset.hh>
+#include <dune/istl/solvers.hh>
 #include <dune/common/collectivecommunication.hh>
 #include <cstdlib>
 #include <ctime>
+
+typedef HPA::xreal XREAL;
+//typedef double XREAL;
+namespace Dune
+{
+  template<>
+  struct DoubleConverter<HPA::xreal>
+  {
+    static double toDouble(const HPA::xreal& t)
+    {
+      return t._2double();
+    }
+  };
+}
+
 
 template<class M, class V>
 void randomize(const M& mat, V& b)
@@ -35,16 +65,16 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
   ParallelIndexSet indices;
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
+  typedef Dune::FieldMatrix<XREAL,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
+  typedef Dune::FieldVector<XREAL,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
   typedef Dune::CollectiveCommunication<void*> Comm;
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<BS>(N, indices, c, &n, 1);
+  BCRSMat mat = setupAnisotropic2d<BS,XREAL>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
 
@@ -96,6 +126,8 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::SeqScalarProduct<Vector> sp;
   typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
 
+  Smoother smoother(mat,1,1);
+
   AMG amg(fop, criterion, smootherArgs, 1, 1, 1, false);
 
 
@@ -109,7 +141,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::InverseOperatorResult r;
   amgCG.apply(x,b,r);
 
-  double solvetime = watch.elapsed();
+  XREAL solvetime = watch.elapsed();
 
   std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
 

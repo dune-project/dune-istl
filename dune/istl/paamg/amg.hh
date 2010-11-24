@@ -151,6 +151,20 @@ namespace Dune
       std::size_t levels();
 
       std::size_t maxlevels();
+
+      /**
+       * @brief Recalculate the matrix hierarchy.
+       *
+       * It is assumed that the coarsening for the changed fine level
+       * matrix would yield the same aggregates. In this case it suffices
+       * to recalculate all the Galerkin products for the matrices of the
+       * coarser levels.
+       */
+      void recalculateHierarchy()
+      {
+        matrices_->recalculateGalerkin(NegateSet<typename PI::OwnerSet>());
+      }
+
     private:
       /** @brief Multigrid cycle on a level. */
       void mgc();
@@ -184,7 +198,7 @@ namespace Dune
       void initIteratorsWithFineLevel();
 
       /**  @brief The matrix we solve. */
-      const OperatorHierarchy* matrices_;
+      OperatorHierarchy* matrices_;
       /** @brief The arguments to construct the smoother */
       SmootherArgs smootherArgs_;
       /** @brief The hierarchy of the smoothers. */
@@ -251,11 +265,10 @@ namespace Dune
       //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //			 "Matrix and Solver must match in terms of category!");
       Timer watch;
-      OperatorHierarchy* matrices = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
+      matrices_ = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
 
-      matrices->template build<NegateSet<typename PI::OwnerSet> >(criterion);
+      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
 
-      matrices_ = matrices;
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(smoothers_, smootherArgs_);
 
