@@ -1176,9 +1176,9 @@ namespace Dune {
     //===== norms
 
     //! square of frobenius norm, need for block recursion
-    double frobenius_norm2 () const
+    typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
-      double sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
 
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1192,19 +1192,19 @@ namespace Dune {
     }
 
     //! frobenius norm: sqrt(sum over squared values of entries)
-    double frobenius_norm () const
+    typename FieldTraits<field_type>::real_type frobenius_norm () const
     {
       return sqrt(frobenius_norm2());
     }
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
-    double infinity_norm () const
+    typename FieldTraits<field_type>::real_type infinity_norm () const
     {
-      double max=0;
+      typename FieldTraits<field_type>::real_type max=0;
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
       {
-        double sum=0;
+        typename FieldTraits<field_type>::real_type sum=0;
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
           sum += (*j).infinity_norm();
@@ -1214,13 +1214,13 @@ namespace Dune {
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    double infinity_norm_real () const
+    typename FieldTraits<field_type>::real_type infinity_norm_real () const
     {
-      double max=0;
+      typename FieldTraits<field_type>::real_type max=0;
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
       {
-        double sum=0;
+        typename FieldTraits<field_type>::real_type sum=0;
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
           sum += (*j).infinity_norm_real();

@@ -11,6 +11,7 @@
 
 #include "solvercategory.hh"
 
+#include <dune/common/ftraits.hh>
 
 namespace Dune {
   /**
@@ -55,7 +56,8 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x) = 0;
+    virtual typename FieldTraits<X>::real_type
+    norm (const X& x) = 0;
 
 
     //! every abstract base class has a virtual destructor
@@ -113,7 +115,8 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x)
+    virtual typename FieldTraits<X>::real_type
+    norm (const X& x)
     {
       return x.two_norm();
     }
