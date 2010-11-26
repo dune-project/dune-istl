@@ -210,7 +210,7 @@ namespace Dune {
   class MultiTypeBlockVector_Norm {
   public:
     /** @brief real type of T. */
-    typedef typename typename FieldTraits<typname T::field_type>::real_type
+    typedef typename FieldTraits<typename T::field_type>::real_type
     real_type;
 
     /**
@@ -224,7 +224,7 @@ namespace Dune {
   class MultiTypeBlockVector_Norm<0,T> {
   public:
     /** @brief real type of T. */
-    typedef typename typename FieldTraits<typname T::field_type>::real_type
+    typedef typename FieldTraits<typename T::field_type>::real_type
     real_type;
     static real_type result (const T& a) {return 0.0;}
   };
@@ -276,7 +276,7 @@ namespace Dune {
 
     field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<mpl::size<type>::value,type>::mul(*this,newv);}
 
-    typedef typename FieldTraits<field_type>::real_type realtype;
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /**
      * two-norm^2
