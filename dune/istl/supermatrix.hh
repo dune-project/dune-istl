@@ -498,13 +498,43 @@ namespace Dune
     }
   }
 
+  // Unfortunately SuperLU uses a lot of copy and paste in its headers.
+  // This results in some structs being declares in the headers of the float
+  // AND double version. To get around this we only include the double version
+  // and define the functions of the other versions as extern.
+  extern "C"
+  {
+    // single precision versions of SuperMatrix creation
+    void
+    sCreate_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
+                           float *nzval, int *rowind, int *colptr,
+                           Stype_t stype, Dtype_t dtype, Mtype_t mtype);
+  }
+
+
+  void createCompColSuperMatrix(SuperMatrix *A, int m, int n, int nnz,
+                                double *nzval, int *rowind, int *colptr,
+                                Stype_t stype, Mtype_t mtype)
+  {
+    dCreate_CompCol_Matrix(A, m, n, nnz, nzval, rowind, colptr, stype,
+                           SLU_D, mtype);
+  }
+
+  void createCompColSuperMatrix(SuperMatrix *A, int m, int n, int nnz,
+                                float *nzval, int *rowind, int *colptr,
+                                Stype_t stype, Mtype_t mtype)
+  {
+    sCreate_CompCol_Matrix(A, m, n, nnz, nzval, rowind, colptr, stype,
+                           SLU_S, mtype);
+  }
+
   template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::createMatrix() const
   {
     delete[] marker;
     marker=0;
-    dCreate_CompCol_Matrix(&mat->A, mat->N_, mat->M_, mat->colstart[cols],
-                           mat->values, mat->rowindex, mat->colstart, SLU_NC, static_cast<Dtype_t>(GetSuperLUType<T>::type), SLU_GE);
+    createCompColSuperMatrix(&mat->A, mat->N_, mat->M_, mat->colstart[cols],
+                             mat->values, mat->rowindex, mat->colstart, SLU_NC, SLU_GE);
   }
 
   template<class F, class MRS>

@@ -8,20 +8,12 @@
 #include <laplacian.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/superlu.hh>
-int main(int argc, char** argv)
-{
 
-  const int BS=1;
-  std::size_t N=100;
-
-  if(argc>1)
-    N = atoi(argv[1]);
-  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
-
-
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
+template<class T, int BS>
+void testSuperLU(std::size_t N){
+  typedef Dune::FieldMatrix<T,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
+  typedef Dune::FieldVector<T,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
 
@@ -54,4 +46,22 @@ int main(int argc, char** argv)
   std::cout<<"Defect reduction is "<<res.reduction<<std::endl;
   solver1.apply(x,b, res);
 
+}
+
+int main(int argc, char** argv)
+{
+
+  const int BS=1;
+  std::size_t N=100;
+
+  if(argc>1)
+    N = atoi(argv[1]);
+  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+
+  testSuperLU<double,BS>(N);
+
+  testSuperLU<float,BS>(N);
+
+
+  //testSuperLU<std::complex<double>,1>(N);
 }
