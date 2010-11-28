@@ -2,7 +2,7 @@
 
 dist_noinst_DATA = example.cc
 
-noinst_PROGRAMS = example
+check_PROGRAMS = example
 example_SOURCES = example.cc
 example_CPPFLAGS = $(AM_CPPFLAGS) $(BOOST_CPPFLAGS) $(DUNE_CPPFLAGS)
 
