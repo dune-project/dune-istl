@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "istlexception.hh"
+#include <dune/common/ftraits.hh>
 
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/container.hpp>
