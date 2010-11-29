@@ -147,8 +147,10 @@ namespace Dune
     SuperLUMatrix mat;
     SuperMatrix L, U, B, X;
     int *perm_c, *perm_r, *etree;
-    T *R, *C;
-    T *bstore;
+    // get the corresponding superlu type (different from the
+    // original one for complex<(double|float)>
+    typedef typename GetSuperLUStorageType<T>::type storage_type;
+    storage_type *R, *C;
     superlu_options_t options;
     char equed;
     void *work;
@@ -238,8 +240,11 @@ namespace Dune
     perm_c = new int[mat.M()];
     perm_r = new int[mat.N()];
     etree  = new int[mat.M()];
-    R = new T[mat.N()];
-    C = new T[mat.M()];
+    // get the corresponding superlu type (different from the
+    // original one for complex<(double|float)>
+    typedef typename GetSuperLUStorageType<T>::type storage_type;
+    R = new storage_type[mat.N()];
+    C = new storage_type[mat.M()];
 
     set_default_options(&options);
     // Do the factorization
@@ -264,7 +269,7 @@ namespace Dune
     StatInit(&stat);
     applySuperLU(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
                  &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr,
-                 &berr, &memusage, &stat, &info);
+                 &berr, &memusage, &stat, &info, T());
 
     if(verbose) {
       dinfo<<"LU factorization: dgssvx() returns info "<< info<<std::endl;
@@ -345,6 +350,26 @@ namespace Dune
                 void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
                 float *rpg, float *rcond, float *ferr, float *berr,
                 mem_usage_t *memusage, SuperLUStat_t *stat, int *info);
+
+    // single precision versions of SuperLU
+    void cCreate_Dense_Matrix(SuperMatrix* B, int rows, int cols, complex* b, int size,
+                              Stype_t stype, Dtype_t dtype, Mtype_t mtype);
+
+
+    void cgssvx(superlu_options_t *options, SuperMatrix *mat, int *permc, int *permr, int *etree,
+                char *equed, float *R, float *C, SuperMatrix *L, SuperMatrix *U,
+                void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
+                float *rpg, float *rcond, float *ferr, float *berr,
+                mem_usage_t *memusage, SuperLUStat_t *stat, int *info);
+
+    void zCreate_Dense_Matrix(SuperMatrix* B, int rows, int cols, doublecomplex* b, int size,
+                              Stype_t stype, Dtype_t dtype, Mtype_t mtype);
+
+    void zgssvx(superlu_options_t *options, SuperMatrix *mat, int *permc, int *permr, int *etree,
+                char *equed, double *R, double *C, SuperMatrix *L, SuperMatrix *U,
+                void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
+                double *rpg, double *rcond, double *ferr, double *berr,
+                mem_usage_t *memusage, SuperLUStat_t *stat, int *info);
   }
 
   void createDenseSuperLUMatrix(SuperMatrix* B, int rows, int cols, float* b, int size,
@@ -353,11 +378,23 @@ namespace Dune
     sCreate_Dense_Matrix(B, rows, cols, b, size, stype, SLU_S, mtype);
   }
 
+  void createDenseSuperLUMatrix(SuperMatrix* B, int rows, int cols, complex* b, int size,
+                                Stype_t stype, Mtype_t mtype)
+  {
+    cCreate_Dense_Matrix(B, rows, cols, b, size, stype, SLU_S, mtype);
+  }
+
+  void createDenseSuperLUMatrix(SuperMatrix* B, int rows, int cols, doublecomplex* b, int size,
+                                Stype_t stype, Mtype_t mtype)
+  {
+    zCreate_Dense_Matrix(B, rows, cols, b, size, stype, SLU_S, mtype);
+  }
+
   void applySuperLU(superlu_options_t *options, SuperMatrix *mat, int *permc, int *permr, int *etree,
                     char *equed, double *R, double *C, SuperMatrix *L, SuperMatrix *U,
                     void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
                     double *rpg, double *rcond, double *ferr, double *berr,
-                    mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
+                    mem_usage_t *memusage, SuperLUStat_t *stat, int *info, const double&)
   {
     dgssvx(options, mat, permc, permr, etree, equed, R, C,
            L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
@@ -369,12 +406,36 @@ namespace Dune
                     char *equed, float *R, float *C, SuperMatrix *L, SuperMatrix *U,
                     void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
                     float *rpg, float *rcond, float *ferr, float *berr,
-                    mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
+                    mem_usage_t *memusage, SuperLUStat_t *stat, int *info, const float&)
   {
     sgssvx(options, mat, permc, permr, etree, equed, R, C,
            L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
            memusage, stat, info);
   }
+
+  void applySuperLU(superlu_options_t *options, SuperMatrix *mat, int *permc, int *permr, int *etree,
+                    char *equed, double *R, double *C, SuperMatrix *L, SuperMatrix *U,
+                    void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
+                    double *rpg, double *rcond, double *ferr, double *berr,
+                    mem_usage_t *memusage, SuperLUStat_t *stat, int *info, const doublecomplex&)
+  {
+    zgssvx(options, mat, permc, permr, etree, equed, R, C,
+           L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+           memusage, stat, info);
+  }
+
+
+  void applySuperLU(superlu_options_t *options, SuperMatrix *mat, int *permc, int *permr, int *etree,
+                    char *equed, float *R, float *C, SuperMatrix *L, SuperMatrix *U,
+                    void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
+                    float *rpg, float *rcond, float *ferr, float *berr,
+                    mem_usage_t *memusage, SuperLUStat_t *stat, int *info, const complex&)
+  {
+    cgssvx(options, mat, permc, permr, etree, equed, R, C,
+           L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+           memusage, stat, info);
+  }
+
   template<typename T, typename A, int n, int m>
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::apply(domain_type& x, range_type& b, InverseOperatorResult& res)
@@ -384,6 +445,7 @@ namespace Dune
 
     if(first) {
       assert(mat.N()<=static_cast<std::size_t>(std::numeric_limits<int>::max()));
+
       createDenseSuperLUMatrix(&B, mat.N(), 1,  reinterpret_cast<T*>(&b[0]),
                                mat.N(), SLU_DN, SLU_GE);
       createDenseSuperLUMatrix(&X, mat.N(), 1,  reinterpret_cast<T*>(&x[0]),
@@ -408,9 +470,10 @@ namespace Dune
      */
     options.IterRefine=DOUBLE;
 
+
     applySuperLU(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
                  &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
-                 &memusage, &stat, &info);
+                 &memusage, &stat, &info, T());
 
     res.iterations=1;
 
@@ -475,7 +538,7 @@ namespace Dune
 
     applySuperLU(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
                  &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
-                 &memusage, &stat, &info);
+                 &memusage, &stat, &info, T());
 
     if(verbose) {
       dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
