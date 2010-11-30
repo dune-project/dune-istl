@@ -35,15 +35,6 @@ namespace Dune {
      as well.
    */
 
-  template<class T>
-  struct DoubleConverter
-  {
-    static double toDouble(const T& t)
-    {
-      return static_cast<double>(t);
-    }
-  };
-
   /**
       \brief Statistics about the application of an inverse operator
 
@@ -131,9 +122,7 @@ namespace Dune {
        \param reduction The minimum defect reduction to achieve.
        \param res Object to store the statistics about applying the operator.
      */
-    virtual void apply (X& x, Y& b,
-                        typename FieldTraits<X>::real_type reduction,
-                        InverseOperatorResult& res) = 0;
+    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) = 0;
 
     //! \brief Destructor
     virtual ~InverseOperator () {}
@@ -538,7 +527,7 @@ namespace Dune {
       X p(x);              // the search direction
       X q(x);              // a temporary vector
 
-      typename FieldTraits<X>::real_type def0 = _sp.norm(b); // compute norm
+      double def0 = _sp.norm(b); // compute norm
       if (def0<1E-30)    // convergence check
       {
         res.converged  = true;
@@ -563,7 +552,7 @@ namespace Dune {
       }
 
       // some local variables
-      typename FieldTraits<X>::real_type def=def0;   // loop variables
+      double def=def0;   // loop variables
       field_type rho,rholast,lambda,alpha,beta;
 
       // determine initial search direction
@@ -583,7 +572,7 @@ namespace Dune {
         b.axpy(-lambda,q);          // update defect
 
         // convergence test
-        typename FieldTraits<X>::real_type defnew=_sp.norm(b); // comp defect norm
+        double defnew=_sp.norm(b); // comp defect norm
 
         if (_verbose>1)             // print
           this->printOutput(std::cout,i,defnew,def);
@@ -610,8 +599,7 @@ namespace Dune {
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = DoubleConverter<typename FieldTraits<X>
-          ::real_type>::toDouble(def/def0);
+      res.reduction = def/def0;
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -629,8 +617,7 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b,
-                        typename FieldTraits<X>::real_type reduction,
+    virtual void apply (X& x, X& b, double reduction,
                         InverseOperatorResult& res)
     {
       _reduction = reduction;
@@ -642,7 +629,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    typename FieldTraits<X>::real_type _reduction;
+    double _reduction;
     int _maxit;
     int _verbose;
   };
@@ -667,7 +654,7 @@ namespace Dune {
      */
     template<class L, class P>
     BiCGSTABSolver (L& op, P& prec,
-                    typename FieldTraits<X>::real_type reduction, int maxit, int verbose) :
+                    double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category), "L and P must be of the same category!");
@@ -680,7 +667,7 @@ namespace Dune {
      */
     template<class L, class S, class P>
     BiCGSTABSolver (L& op, S& sp, P& prec,
-                    typename FieldTraits<X>::real_type reduction, int maxit, int verbose) :
+                    double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -696,7 +683,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      const typename FieldTraits<X>::real_type EPSILON=1e-80;
+      const double EPSILON=1e-80;
 
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
@@ -891,9 +878,7 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b,
-                        typename FieldTraits<X>::real_type reduction,
-                        InverseOperatorResult& res)
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       _reduction = reduction;
       (*this).apply(x,b,res);
@@ -904,7 +889,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    typename FieldTraits<X>::real_type _reduction;
+    double _reduction;
     int _maxit;
     int _verbose;
   };
@@ -931,8 +916,7 @@ namespace Dune {
             \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
-    MINRESSolver (L& op, P& prec, typename FieldTraits<X>::real_type reduction,
-                  int maxit, int verbose) :
+    MINRESSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -946,8 +930,7 @@ namespace Dune {
             \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S, class P>
-    MINRESSolver (L& op, S& sp, P& prec,
-                  typename FieldTraits<X>::real_type reduction, int maxit, int verbose) :
+    MINRESSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -968,7 +951,7 @@ namespace Dune {
       _prec.pre(x,b);                                   // prepare preconditioner
       _op.applyscaleadd(-1,x,b);                // overwrite b with defect/residual
 
-      typename FieldTraits<X>::real_type def0 = _sp.norm(b);            // compute residual norm
+      double def0 = _sp.norm(b);                // compute residual norm
 
       if (def0<1E-30)              // convergence check
       {
@@ -992,7 +975,7 @@ namespace Dune {
       }
 
       // some local variables
-      typename FieldTraits<X>::real_type def=def0;           // the defect/residual norm
+      double def=def0;                                                  // the defect/residual norm
       field_type alpha,                                                 // recurrence coefficients as computed in the Lanczos alg making up the matrix T
                  beta,                                                          //
                  c[2]={0.0, 0.0},                                       // diagonal entry of Givens rotation
@@ -1011,7 +994,7 @@ namespace Dune {
       _prec.apply(z,b);                         // apply preconditioner z=M^-1*b
 
       beta = sqrt(fabs(_sp.dot(z,b)));
-      typename FieldTraits<X>::real_type beta0 = beta;
+      double beta0 = beta;
 
       X p[3];                   // the search directions
       X q[3];                   // Orthonormal basis vectors (in unpreconditioned case)
@@ -1106,7 +1089,7 @@ namespace Dune {
 
         //                      convergence test
         //                      double defnew=_sp.norm(b);	// residual norm of original system
-        typename FieldTraits<X>::real_type defnew = fabs(beta0*xi[i%2]);                        // the last entry the QR-transformed least squares RHS is the new residual norm
+        double defnew = fabs(beta0*xi[i%2]);                    // the last entry the QR-transformed least squares RHS is the new residual norm
 
         if (_verbose>1)                             // print
           this->printOutput(std::cout,i,defnew,def);
@@ -1143,9 +1126,7 @@ namespace Dune {
 
             \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b,
-                        typename FieldTraits<X>::real_type reduction,
-                        InverseOperatorResult& res)
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       _reduction = reduction;
       (*this).apply(x,b,res);
@@ -1156,7 +1137,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    typename FieldTraits<X>::real_type _reduction;
+    double _reduction;
     int _maxit;
     int _verbose;
   };
@@ -1193,9 +1174,7 @@ namespace Dune {
        \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class P>
-    RestartedGMResSolver (L& op, P& prec,
-                          typename FieldTraits<X>::real_type reduction,
-                          int restart, int maxit, int verbose, bool recalc_defect = false) :
+    RestartedGMResSolver (L& op, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
       _A_(op), _M(prec),
       ssp(), _sp(ssp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
@@ -1215,8 +1194,7 @@ namespace Dune {
        \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class S, class P>
-    RestartedGMResSolver (L& op, S& sp, P& prec,
-                          typename FieldTraits<X>::real_type reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
+    RestartedGMResSolver (L& op, S& sp, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
       _A_(op), _M(prec),
       _sp(sp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
@@ -1239,9 +1217,7 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, Y& b,
-                        typename FieldTraits<X>::real_type reduction,
-                        InverseOperatorResult& res)
+    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
       int m = _restart;
       field_type norm;
@@ -1476,7 +1452,7 @@ namespace Dune {
     SeqScalarProduct<X> ssp;
     ScalarProduct<X>& _sp;
     int _restart;
-    typename FieldTraits<X>::real_type _reduction;
+    double _reduction;
     int _maxit;
     int _verbose;
     bool _recalc_defect;

@@ -499,15 +499,15 @@ namespace Dune {
     //===== norms
 
     //! frobenius norm: sqrt(sum over squared values of entries)
-    typename FieldTraits<field_type>::real_type frobenius_norm () const
+    double frobenius_norm () const
     {
       return std::sqrt(frobenius_norm2());
     }
 
     //! square of frobenius norm, need for block recursion
-    typename FieldTraits<field_type>::real_type frobenius_norm2 () const
+    double frobenius_norm2 () const
     {
-      typename FieldTraits<field_type>::real_type sum=0;
+      double sum=0;
       for (size_type i=0; i<N(); ++i)
         for (size_type j=0; j<M(); ++j)
           sum += data_[i][j].frobenius_norm2();
@@ -515,11 +515,11 @@ namespace Dune {
     }
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
-    typename FieldTraits<field_type>::real_type infinity_norm () const
+    double infinity_norm () const
     {
-      typename FieldTraits<field_type>::real_type max=0;
+      double max=0;
       for (size_type i=0; i<N(); ++i) {
-        typename FieldTraits<field_type>::real_type sum=0;
+        double sum=0;
         for (size_type j=0; j<M(); j++)
           sum += data_[i][j].infinity_norm();
         max = std::max(max,sum);
@@ -528,11 +528,11 @@ namespace Dune {
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<field_type>::real_type infinity_norm_real () const
+    double infinity_norm_real () const
     {
-      typename FieldTraits<field_type>::real_type max=0;
+      double max=0;
       for (size_type i=0; i<N(); ++i) {
-        typename FieldTraits<field_type>::real_type sum=0;
+        double sum=0;
         for (size_type j=0; j<M(); j++)
           sum += data_[i][j].infinity_norm_real();
         max = std::max(max,sum);

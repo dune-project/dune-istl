@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include "istlexception.hh"
-#include <dune/common/ftraits.hh>
 
 #include <boost/fusion/sequence.hpp>
 #include <boost/fusion/container.hpp>
@@ -210,29 +209,20 @@ namespace Dune {
   template<int count, typename T>
   class MultiTypeBlockVector_Norm {
   public:
-    /** @brief real type of T. */
-    typedef typename FieldTraits<typename T::field_type>::real_type
-    real_type;
 
     /**
      * sum up all elements' 2-norms
      */
-    static real_type result (const T& a) {             //result = sum of all elements' 2-norms
+    static double result (const T& a) {             //result = sum of all elements' 2-norms
       return fusion::at_c<count-1>(a).two_norm2() + MultiTypeBlockVector_Norm<count-1,T>::result(a);
     }
   };
+
   template<typename T>                                    //recursion end: no more vector elements to add...
   class MultiTypeBlockVector_Norm<0,T> {
   public:
-    /** @brief real type of T. */
-    typedef typename FieldTraits<typename T::field_type>::real_type
-    real_type;
-    static real_type result (const T& a) {return 0.0;}
+    static double result (const T& a) {return 0.0;}
   };
-
-
-
-
 
   /**
       @brief A Vector class to support different block types
@@ -273,21 +263,21 @@ namespace Dune {
      */
     void operator-= (const type& newv) {MultiTypeBlockVector_Add<mpl::size<type>::value,type>::sub(*this,newv);}
 
-    void operator*= (const field_type& w) {MultiTypeBlockVector_Mulscal<mpl::size<type>::value,type,const int>::mul(*this,w);}
+    void operator*= (const int& w) {MultiTypeBlockVector_Mulscal<mpl::size<type>::value,type,const int>::mul(*this,w);}
+    void operator*= (const float& w) {MultiTypeBlockVector_Mulscal<mpl::size<type>::value,type,const float>::mul(*this,w);}
+    void operator*= (const double& w) {MultiTypeBlockVector_Mulscal<mpl::size<type>::value,type,const double>::mul(*this,w);}
 
     field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<mpl::size<type>::value,type>::mul(*this,newv);}
-
-    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /**
      * two-norm^2
      */
-    real_type two_norm2() const {return MultiTypeBlockVector_Norm<mpl::size<type>::value,type>::result(*this);}
+    double two_norm2() const {return MultiTypeBlockVector_Norm<mpl::size<type>::value,type>::result(*this);}
 
     /**
      * the real two-norm
      */
-    real_type two_norm() const {return sqrt(this->two_norm2());}
+    double two_norm() const {return sqrt(this->two_norm2());}
 
     /**
      * axpy operation on this vector (*this += a * y)

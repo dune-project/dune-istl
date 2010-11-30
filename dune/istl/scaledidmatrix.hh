@@ -326,29 +326,25 @@ namespace Dune {
     //===== norms
 
     //! frobenius norm: sqrt(sum over squared values of entries)
-    typename FieldTraits<field_type>::real_type
-    frobenius_norm () const
+    double frobenius_norm () const
     {
       return fvmeta::sqrt(n*p_*p_);
     }
 
     //! square of frobenius norm, need for block recursion
-    typename FieldTraits<field_type>::real_type
-    frobenius_norm2 () const
+    double frobenius_norm2 () const
     {
       return n*p_*p_;
     }
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
-    typename FieldTraits<field_type>::real_type
-    infinity_norm () const
+    double infinity_norm () const
     {
       return std::abs(p_);
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<field_type>::real_type
-    infinity_norm_real () const
+    double infinity_norm_real () const
     {
       return fvmeta::absreal(p_);
     }

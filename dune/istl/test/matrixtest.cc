@@ -238,10 +238,7 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   //   Test the matrix norms
   // //////////////////////////////////////////////////////////////
 
-  typedef typename FieldTraits<typename MatrixType::field_type>::real_type
-  real_type;
-
-  real_type frobenius_norm = matrix.frobenius_norm();
+  double frobenius_norm = matrix.frobenius_norm();
 
   frobenius_norm += matrix.frobenius_norm2();
 
@@ -289,20 +286,6 @@ int main()
       matrixScalar[i][j] = (i+j)/((double)(i*j));        // just anything
 
   testSuperMatrix(matrixScalar);
-
-  Matrix<FieldMatrix<float,1,1> > fmatrixScalar(10,10);
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++)
-      fmatrixScalar[i][j] = (i+j)/((double)(i*j));        // just anything
-
-  testSuperMatrix(fmatrixScalar);
-
-  Matrix<FieldMatrix<std::complex<double>,1,1> > cmatrixScalar(10,10);
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++)
-      cmatrixScalar[i][j] = (i+j)/((double)(i*j));        // just anything
-
-  testSuperMatrix(cmatrixScalar);
 
   // ////////////////////////////////////////////////////////////
   //   Test the Matrix class -- a block-valued dense dynamic matrix
