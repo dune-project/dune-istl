@@ -6,8 +6,6 @@
 #if HAVE_SUPERLU
 #ifdef SUPERLU_POST_2005_VERSION
 #include "slu_ddefs.h"
-#include "slu_dcomplex.h"
-#include "slu_scomplex.h"
 #else
 #include "dsp_defs.h"
 #endif
@@ -20,41 +18,6 @@
 namespace Dune
 {
 
-  template<typename T>
-  void copySuperLUValue(T& t, const T& s)
-  {
-    t=s;
-  }
-
-  void copySuperLUValue(doublecomplex& t, const std::complex<double>& s)
-  {
-    t.r = s.real();
-    t.i = s.imag();
-  }
-
-  void copySuperLUValue(complex& t, const std::complex<float>& s)
-  {
-    t.r = s.real();
-    t.i = s.imag();
-  }
-
-  template<typename T>
-  struct GetSuperLUStorageType
-  {
-    typedef T type;
-  };
-
-  template<>
-  struct GetSuperLUStorageType<std::complex<float> >
-  {
-    typedef complex type;
-  };
-
-  template<>
-  struct GetSuperLUStorageType<std::complex<double> >
-  {
-    typedef doublecomplex type;
-  };
   /**
    * @brief Provides access to an iterator over all matrix rows.
    *
@@ -318,10 +281,7 @@ namespace Dune
     void setMatrix(const Matrix& mat);
 
     int N_, M_, Nnz_;
-    // get the corresponding superlu type (different from the
-    // original one for complex<(double|float)>
-    typedef typename GetSuperLUStorageType<B>::type storage_type;
-    storage_type* values;
+    B* values;
     int* rowindex;
     int* colstart;
     SuperMatrix A;
@@ -473,11 +433,8 @@ namespace Dune
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocateMatrixStorage() const
   {
     mat->Nnz_*=n*m;
-    // get the corresponding superlu type (different from the
-    // original one for complex<(double|float)>
-    typedef typename GetSuperLUStorageType<T>::type storage_type;
     // initialize data
-    mat->values=new storage_type[mat->Nnz_];
+    mat->values=new T[mat->Nnz_];
     mat->rowindex=new int[mat->Nnz_];
     mat->colstart=new int[cols+1];
   }
@@ -535,7 +492,7 @@ namespace Dune
         assert(colindex*m+j<cols-1 || (int)marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
         assert((int)marker[colindex*m+j]<mat->Nnz_);
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
-        copySuperLUValue(mat->values[marker[colindex*m+j]],(*col)[i][j]);
+        mat->values[marker[colindex*m+j]]=(*col)[i][j];
         ++marker[colindex*m+j]; // index for next entry in column
       }
     }
@@ -551,15 +508,6 @@ namespace Dune
     void
     sCreate_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
                            float *nzval, int *rowind, int *colptr,
-                           Stype_t stype, Dtype_t dtype, Mtype_t mtype);
-    void
-    cCreate_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
-                           complex *nzval, int *rowind, int *colptr,
-                           Stype_t stype, Dtype_t dtype, Mtype_t mtype);
-
-    void
-    zCreate_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
-                           doublecomplex *nzval, int *rowind, int *colptr,
                            Stype_t stype, Dtype_t dtype, Mtype_t mtype);
   }
 
@@ -580,22 +528,6 @@ namespace Dune
                            SLU_S, mtype);
   }
 
-
-  void createCompColSuperMatrix(SuperMatrix *A, int m, int n, int nnz,
-                                complex *nzval, int *rowind, int *colptr,
-                                Stype_t stype, Mtype_t mtype)
-  {
-    cCreate_CompCol_Matrix(A, m, n, nnz, nzval, rowind, colptr, stype,
-                           SLU_D, mtype);
-  }
-
-  void createCompColSuperMatrix(SuperMatrix *A, int m, int n, int nnz,
-                                doublecomplex *nzval, int *rowind, int *colptr,
-                                Stype_t stype, Mtype_t mtype)
-  {
-    zCreate_CompCol_Matrix(A, m, n, nnz, nzval, rowind, colptr, stype,
-                           SLU_S, mtype);
-  }
   template<class T, class A, int n, int m>
   void SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::createMatrix() const
   {
@@ -746,7 +678,7 @@ namespace Dune
     }
 
     if(Nnz_>0) {
-      values = new storage_type[Nnz_];
+      values = new B[Nnz_];
       rowindex = new int[Nnz_];
 
       for(int i=0; i<Nnz_; ++i)

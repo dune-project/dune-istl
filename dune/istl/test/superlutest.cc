@@ -62,5 +62,6 @@ int main(int argc, char** argv)
 
   testSuperLU<float,BS>(N);
 
-  testSuperLU<std::complex<double>,1>(N);
+
+  //testSuperLU<std::complex<double>,1>(N);
 }
