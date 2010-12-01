@@ -90,12 +90,12 @@ namespace Dune {
       typedef typename Y::block_type bblock;
 
       // local solve at each block and immediate update
-      rowiterator rendi=A.rend();
-      for (rowiterator i=A.rbegin(); i!=rendi; --i)
+      rowiterator rendi=A.beforeBegin();
+      for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
       {
         bblock rhs(d[i.index()]);
         coliterator j;
-        for (j=(*i).rbegin(); j.index()>i.index(); --j)
+        for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
           (*j).mmv(v[j.index()],rhs);
         algmeta_btsolve<I-1,diag,relax>::butsolve(*j,v[i.index()],rhs,w);
       }
@@ -295,8 +295,8 @@ namespace Dune {
       typedef typename M::ConstColIterator coliterator;
 
       // local solve at each block and immediate update
-      rowiterator rendi=A.rend();
-      for (rowiterator i=A.rbegin(); i!=rendi; --i)
+      rowiterator rendi=A.beforeBegin();
+      for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
       {
         coliterator ii=(*i).find(i.index());
         algmeta_bdsolve<I-1,relax>::bdsolve(*ii,v[i.index()],d[i.index()],w);
@@ -498,8 +498,8 @@ namespace Dune {
       if(A.begin()!=A.end())
         v=x[0];
 
-      rowiterator endi=A.rend();
-      for (rowiterator i=A.rbegin(); i!=endi; --i)
+      rowiterator endi=A.beforeBegin();
+      for (rowiterator i=A.beforeEnd(); i!=endi; --i)
       {
         rhs = b[i.index()];
         coliterator endj=(*i).end();

@@ -112,12 +112,12 @@ namespace Dune {
     }
 
     // upper triangular solve
-    rowiterator rendi=A.rend();
-    for (rowiterator i=A.rbegin(); i!=rendi; --i)
+    rowiterator rendi=A.beforeBegin();
+    for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
     {
       vblock rhs(v[i.index()]);
       coliterator j;
-      for (j=(*i).rbegin(); j.index()>i.index(); --j)
+      for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
         (*j).mmv(v[j.index()],rhs);
       v[i.index()] = 0;
       (*j).umv(rhs,v[i.index()]);           // diagonal stores inverse!

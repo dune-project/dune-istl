@@ -610,14 +610,34 @@ namespace Dune {
       return Iterator(block,nblocks);
     }
 
-    //! begin Iterator
-    Iterator rbegin ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    Iterator rbegin() DUNE_DEPRECATED
+    {
+      return beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector, i.e. at the last entry.
+    Iterator beforeEnd ()
     {
       return Iterator(block,nblocks-1);
     }
 
-    //! end Iterator
-    Iterator rend ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    Iterator rend ()  DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    Iterator beforeBegin ()
     {
       return Iterator(block,-1);
     }
@@ -734,8 +754,18 @@ namespace Dune {
       return ConstIterator(block,nblocks);
     }
 
-    //! begin ConstIterator
-    ConstIterator rbegin () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    ConstIterator rbegin() const DUNE_DEPRECATED
+    {
+      return beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector. i.e. at the last element.
+    ConstIterator beforeEnd() const
     {
       return ConstIterator(block,nblocks-1);
     }

@@ -128,16 +128,16 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   //   This time we're counting backwards
   // ////////////////////////////////////////////////////////
 
-  rowIt    = matrix.rbegin();
-  rowEndIt = matrix.rend();
+  rowIt    = matrix.beforeEnd();
+  rowEndIt = matrix.beforeBegin();
 
   numRows    = 0;
   numEntries = 0;
 
   for (; rowIt!=rowEndIt; --rowIt) {
 
-    typename MatrixType::ColIterator colIt    = rowIt->rbegin();
-    typename MatrixType::ColIterator colEndIt = rowIt->rend();
+    typename MatrixType::ColIterator colIt    = rowIt->beforeEnd();
+    typename MatrixType::ColIterator colEndIt = rowIt->beforeBegin();
 
     for (; colIt!=colEndIt; --colIt) {
       assert(matrix.exists(rowIt.index(), colIt.index()));
@@ -155,16 +155,16 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   //   This time use the const iterators and count backwards.
   // ///////////////////////////////////////////////////////////////
 
-  constRowIt    = matrix.rbegin();
-  constRowEndIt = matrix.rend();
+  constRowIt    = matrix.beforeEnd();
+  constRowEndIt = matrix.beforeBegin();
 
   numRows    = 0;
   numEntries = 0;
 
   for (; constRowIt!=constRowEndIt; --constRowIt) {
 
-    typename MatrixType::ConstColIterator constColIt    = constRowIt->rbegin();
-    typename MatrixType::ConstColIterator constColEndIt = constRowIt->rend();
+    typename MatrixType::ConstColIterator constColIt    = constRowIt->beforeEnd();
+    typename MatrixType::ConstColIterator constColEndIt = constRowIt->beforeBegin();
 
     for (; constColIt!=constColEndIt; --constColIt)
       numEntries++;

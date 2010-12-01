@@ -168,14 +168,35 @@ namespace Dune {
       return iterator(p,p+n);
     }
 
-    //! begin reverse iterator
-    iterator rbegin ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    iterator rbegin() DUNE_DEPRECATED
+    {
+      return beforeEnd();
+    }
+
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector, i.e. at the last entry.
+    iterator beforeEnd ()
     {
       return iterator(p,p+n-1);
     }
 
-    //! end reverse iterator
-    iterator rend ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    iterator rend ()  DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    iterator beforeBegin ()
     {
       return iterator(p,p-1);
     }
@@ -204,14 +225,34 @@ namespace Dune {
       return const_iterator(p,p+n);
     }
 
-    //! begin reverse const_iterator
-    const_iterator rbegin () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    const_iterator rbegin() const DUNE_DEPRECATED
+    {
+      return beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector. i.e. at the last element.
+    const_iterator beforeEnd () const
     {
       return const_iterator(p,p+n-1);
     }
 
-    //! end reverse const_iterator
-    const_iterator rend () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    const_iterator rend () const DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    const_iterator beforeBegin () const
     {
       return const_iterator(p,p-1);
     }
@@ -695,14 +736,34 @@ namespace Dune {
       return iterator(p,j,n);
     }
 
-    //! begin reverse iterator
-    iterator rbegin ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    iterator rbegin() DUNE_DEPRECATED
+    {
+      return beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector, i.e. at the last entry.
+    iterator beforeEnd ()
     {
       return iterator(p,j,n-1);
     }
 
-    //! end reverse iterator
-    iterator rend ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    iterator rend ()  DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    iterator beforeBegin ()
     {
       return iterator(p,j,-1);
     }
@@ -739,14 +800,34 @@ namespace Dune {
       return const_iterator(p,j,n);
     }
 
-    //! begin reverse const_iterator
-    const_iterator rbegin () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    const_iterator rbegin() const DUNE_DEPRECATED
+    {
+      return beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector. i.e. at the last element.
+    const_iterator beforeEnd () const
     {
       return const_iterator(p,j,n-1);
     }
 
-    //! end reverse const_iterator
-    const_iterator rend () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    const_iterator rend () const DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    const_iterator beforeBegin () const
     {
       return const_iterator(p,j,-1);
     }

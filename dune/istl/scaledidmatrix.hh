@@ -105,14 +105,34 @@ namespace Dune {
       return Iterator(WrapperType(this),n);
     }
 
-    //! begin iterator
-    Iterator rbegin ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    Iterator rbegin() DUNE_DEPRECATED
+    {
+      beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the rows, i.e. at the last row.
+    Iterator beforeEnd ()
     {
       return Iterator(WrapperType(this),n-1);
     }
 
-    //! end iterator
-    Iterator rend ()
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    Iterator rend ()  DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first row of the matrix.
+    Iterator beforeBegin ()
     {
       return Iterator(WrapperType(this),-1);
     }
@@ -139,14 +159,34 @@ namespace Dune {
       return ConstIterator(WrapperType(this),n);
     }
 
-    //! begin iterator
-    ConstIterator rbegin () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeEnd
+    //! instead.
+    ConstIterator rbegin() const DUNE_DEPRECATED
+    {
+      beforeEnd();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the rows. i.e. at the last row.
+    ConstIterator beforeEnd() const
     {
       return ConstIterator(WrapperType(this),n-1);
     }
 
-    //! end iterator
-    ConstIterator rend () const
+    //! @deprecated This method was renamed to make
+    //! it distinct from the STL version which returns
+    //! a reverse iterator. Use the new method beforeBegin
+    //! instead.
+    ConstIterator rend () const DUNE_DEPRECATED
+    {
+      return beforeBegin();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first row of the matrix.
+    ConstIterator beforeBegin () const
     {
       return ConstIterator(WrapperType(this),-1);
     }
