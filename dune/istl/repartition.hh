@@ -948,6 +948,7 @@ namespace Dune
           std::cout<<"ParMETIS took "<<time.elapsed()<<std::endl;
         time.reset();
 #else
+        Timer time1;
         std::size_t gnoedges=0;
         int* noedges = 0;
         if(rank==0)
@@ -955,6 +956,10 @@ namespace Dune
         Dune::dverb<<"noNeighbours: "<<noNeighbours<<std::endl;
         // gather number of edges for each vertex.
         oocomm.communicator().gather(&noNeighbours, noedges, 1, 0);
+
+        if(verbose && oocomm.communicator().rank()==0)
+          std::cout<<"Gathering noedges took "<<time1.elapsed()<<std::endl;
+        time1.reset();
 
         int noVertices = vtxdist[oocomm.communicator().size()];
         idxtype *gxadj = 0;
@@ -1022,6 +1027,9 @@ namespace Dune
           gadjwgt = new idxtype[gnoedges];
         }
 
+        if(verbose && oocomm.communicator().rank()==0)
+          std::cout<<"Preparing global graph took "<<time1.elapsed()<<std::endl;
+        time1.reset();
         // Communicate data
 
         MPI_Gatherv(xadj,2,MPITraits<idxtype>::getType(),
@@ -1036,6 +1044,9 @@ namespace Dune
         MPI_Gatherv(adjwgt,noNeighbours,MPITraits<idxtype>::getType(),
                     gadjwgt,noedges,displ,MPITraits<idxtype>::getType(),
                     0,comm);
+        if(verbose && oocomm.communicator().rank()==0)
+          std::cout<<"Gathering global graph data took "<<time1.elapsed()<<std::endl;
+        time1.reset();
 
         if(rank==0) {
           // create the real gxadj array
@@ -1065,7 +1076,9 @@ namespace Dune
           print_carray(Dune::dinfo, gadjwgt, gnoedges);
           Dune::dinfo<<std::endl;
           // everything should be fine now!!!
-
+          if(verbose && oocomm.communicator().rank()==0)
+            std::cout<<"Postprocesing global graph data took "<<time1.elapsed()<<std::endl;
+          time1.reset();
           assert(isValidGraph(noVertices, noVertices, gnoedges,
                               gxadj, gadjncy, true));
 
