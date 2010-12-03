@@ -698,7 +698,7 @@ namespace Dune
                                         RedistributeInformation<C>& ri,
                                         int nparts, C1& criterion)
     {
-
+      Timer time;
 #ifdef AMG_REPART_ON_COMM_GRAPH
       // Done not repartition the matrix graph, but a graph of the communication scheme.
       bool existentOnRedist=Dune::commGraphRepartition(origMatrix, origComm, nparts, newComm,
@@ -731,7 +731,8 @@ namespace Dune
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
 
-      redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
+      redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri,
+                         criterion.debugLevel()>1);
 
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
@@ -742,6 +743,8 @@ namespace Dune
       origComm.communicator().barrier();
 #endif
 
+      if(origComm.communicator().rank()==0  && criterion.debugLevel()>1)
+        std::cout<<"Repartitioning took "<<time.elapsed()<<" seconds."<<std::endl;
       return existentOnRedist;
 
     }

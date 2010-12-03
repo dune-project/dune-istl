@@ -11,6 +11,7 @@
 #include <parmetis.h>
 #endif
 
+#include <dune/common/timer.hh>
 #include <dune/common/enumset.hh>
 #include <dune/common/mpitraits.hh>
 #include <dune/common/stdstreams.hh>
@@ -748,7 +749,8 @@ namespace Dune
   bool buildCommunication(const G& graph, std::vector<int>& realparts,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
-                          RedistributeInterface& redistInf);
+                          RedistributeInterface& redistInf,
+                          bool b=false);
 #if HAVE_PARMETIS
   extern "C" {
     void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
@@ -1126,11 +1128,18 @@ namespace Dune
   template<class G, class T1, class T2>
   bool graphRepartition(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
                         Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
-                        RedistributeInterface& redistInf)
+                        RedistributeInterface& redistInf,
+                        bool verbose=false)
   {
+    Timer time;
+
     MPI_Comm comm=oocomm.communicator();
     oocomm.buildGlobalLookup(graph.noVertices());
     fillIndexSetHoles(graph, oocomm);
+
+    if(verbose && oocomm.communicator().rank()==0)
+      std::cout<<"Filling holes took "<<time.elapsed()<<std::endl;
+    time.reset();
 
     // simple precondition checks
 
@@ -1231,6 +1240,13 @@ namespace Dune
       t2=MPI_Wtime();
 #endif
 
+      if(verbose) {
+        oocomm.communicator().barrier();
+        if(oocomm.communicator().rank()==0)
+          std::cout<<"Preparing for parmetis took "<<time.elapsed()<<std::endl;
+      }
+      time.reset();
+
       //=======================================================
       // ParMETIS_V3_PartKway
       //=======================================================
@@ -1265,6 +1281,13 @@ namespace Dune
       t3=MPI_Wtime();
 #endif
 
+
+      if(verbose) {
+        oocomm.communicator().barrier();
+        if(oocomm.communicator().rank()==0)
+          std::cout<<"Parmetis took "<<time.elapsed()<<std::endl;
+      }
+      time.reset();
     }else
 #endif
     {
@@ -1309,7 +1332,13 @@ namespace Dune
 
     delete[] part;
     oocomm.copyOwnerToAll(setPartition, setPartition);
-    return buildCommunication(graph, setPartition, oocomm, outcomm, redistInf);
+    bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf);
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<"Creating indexsets took "<<time.elapsed()<<std::endl;
+    }
+    return ret;
   }
 
 
@@ -1318,7 +1347,8 @@ namespace Dune
   bool buildCommunication(const G& graph,
                           std::vector<int>& setPartition, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
-                          RedistributeInterface& redistInf)
+                          RedistributeInterface& redistInf,
+                          bool verbose=false)
   {
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
     typedef typename  OOComm::OwnerSet OwnerSet;
@@ -1637,7 +1667,8 @@ namespace Dune
   template<class G, class P,class T1, class T2, class R>
   bool graphRepartition(const G& graph, P& oocomm, int nparts,
                         P*& outcomm,
-                        R& redistInf)
+                        R& redistInf,
+                        bool v=false)
   {
     if(nparts!=oocomm.size())
       DUNE_THROW(NotImplemented, "only available for MPI programs");
@@ -1647,7 +1678,8 @@ namespace Dune
   template<class G, class P,class T1, class T2, class R>
   bool commGraphRepartition(const G& graph, P& oocomm, int nparts,
                             P*& outcomm,
-                            R& redistInf)
+                            R& redistInf,
+                            bool v=false)
   {
     if(nparts!=oocomm.size())
       DUNE_THROW(NotImplemented, "only available for MPI programs");
