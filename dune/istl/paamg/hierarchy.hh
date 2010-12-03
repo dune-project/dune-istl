@@ -702,7 +702,8 @@ namespace Dune
 #ifdef AMG_REPART_ON_COMM_GRAPH
       // Done not repartition the matrix graph, but a graph of the communication scheme.
       bool existentOnRedist=Dune::commGraphRepartition(origMatrix, origComm, nparts, newComm,
-                                                       ri.getInterface());
+                                                       ri.getInterface(),
+                                                       criterion.debugLevel()>1);
 
 #else
       typedef Dune::Amg::MatrixGraph<const M> MatrixGraph;
@@ -722,7 +723,8 @@ namespace Dune
       printGlobalSparseMatrix(origMatrix, origComm, std::cout);
 #endif
       bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
-                                                   newComm, ri.getInterface());
+                                                   newComm, ri.getInterface(),
+                                                   criterion.debugLevel()>1);
 #endif // if else AMG_REPART
 
       ri.setSetup();
@@ -731,8 +733,7 @@ namespace Dune
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
 
-      redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri,
-                         criterion.debugLevel()>1);
+      redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
 
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
