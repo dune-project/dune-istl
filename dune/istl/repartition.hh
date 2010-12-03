@@ -814,8 +814,10 @@ namespace Dune
   template<class M, class T1, class T2>
   bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
                             Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
-                            RedistributeInterface& redistInf)
+                            RedistributeInterface& redistInf,
+                            bool verbose=false)
   {
+    Timer time;
     int rank = oocomm.communicator().rank();
 #if !HAVE_PARMETIS
     int* part = new int[1];
@@ -927,6 +929,9 @@ namespace Dune
         print_carray(Dune::dinfo, adjwgt, noNeighbours);
         Dune::dinfo<<std::endl;
         oocomm.communicator().barrier();
+        if(verbose && oocomm.communicator().rank()==0)
+          std::cout<<"Creating comm graph took "<<time.elapsed()<<std::endl;
+        time.reset();
 
 #ifdef PARALLEL_PARTITION
         float ubvec = 1.15;
@@ -939,6 +944,9 @@ namespace Dune
                              vwgt, adjwgt, &wgtflag,
                              &numflag, &ncon, &nparts, tpwgts, &ubvec, options, &edgecut, part,
                              &comm);
+        if(verbose && oocomm.communicator().rank()==0)
+          std::cout<<"ParMETIS took "<<time.elapsed()<<std::endl;
+        time.reset();
 #else
         std::size_t gnoedges=0;
         int* noedges = 0;
@@ -1061,9 +1069,17 @@ namespace Dune
           assert(isValidGraph(noVertices, noVertices, gnoedges,
                               gxadj, gadjncy, true));
 
+          if(verbose && oocomm.communicator().rank()==0)
+            std::cout<<"Creating grah one 1 process took "<<time.elapsed()<<std::endl;
+          time.reset();
+
           // Call metis
           METIS_PartGraphKway(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
                               &numflag, &nparts, options, &edgecut, gpart);
+
+          if(verbose && oocomm.communicator().rank()==0)
+            std::cout<<"METIS took "<<time.elapsed()<<std::endl;
+          time.reset();
 
           Dune::dinfo<<std::endl<<"part:";
           print_carray(Dune::dinfo, gpart, noVertices);
@@ -1104,10 +1120,26 @@ namespace Dune
 
     oocomm.copyOwnerToAll(realpart, realpart);
 
+    if(verbose && oocomm.communicator().rank()==0)
+      std::cout<<"Scattering repartitioning took "<<time.elapsed()<<std::endl;
+    time.reset();
+
+
     oocomm.buildGlobalLookup(mat.N());
     Dune::Amg::MatrixGraph<M> graph(const_cast<M&>(mat));
     fillIndexSetHoles(graph, oocomm);
-    return buildCommunication(graph, realpart, oocomm, outcomm, redistInf);
+    if(verbose && oocomm.communicator().rank()==0)
+      std::cout<<"Filling index set took "<<time.elapsed()<<std::endl;
+    time.reset();
+
+
+    bool ret = buildCommunication(graph, realpart, oocomm, outcomm, redistInf);
+    if(verbose && oocomm.communicator().rank()==0)
+      std::cout<<"Building index sets took "<<time.elapsed()<<std::endl;
+    time.reset();
+
+
+    return ret;
 
   }
 
