@@ -933,7 +933,7 @@ namespace Dune
           std::cout<<"Creating comm graph took "<<time.elapsed()<<std::endl;
         time.reset();
 
-#ifdef PARALLEL_PARTITION
+#ifndef SEQUENTIAL_PARTITION
         float ubvec = 1.15;
         int ncon=1;
 
