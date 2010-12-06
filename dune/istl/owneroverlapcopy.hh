@@ -258,6 +258,16 @@ namespace Dune {
       OwnerCopyToAllInterfaceBuilt = true;
     }
 
+    void buildOwnerCopyToOwnerCopyInterface () const
+    {
+      if (OwnerCopyToOwnerCopyInterfaceBuilt)
+        OwnerCopyToOwnerCopyInterface.free();
+      typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> OwnerCopySet;
+      OwnerCopySet sourceFlags;
+      OwnerCopySet destFlags;
+      OwnerCopyToOwnerCopyInterface.build(ri,sourceFlags,destFlags);
+      OwnerCopyToOwnerCopyInterfaceBuilt = true;
+    }
 
   public:
 
@@ -334,6 +344,24 @@ namespace Dune {
       communicator.template forward<AddGatherScatter<T> >(source,dest);
       communicator.free();
     }
+
+    /**
+     * @brief Communicate values from owner and copy data points to owner and copy data points and add them to those values.
+     *
+     * @brief source The data to send from.
+     * @brief dest The data to add the communicated values to.
+     */
+    template<class T>
+    void addOwnerCopyToOwnerCopy (const T& source, T& dest) const
+    {
+      if (!OwnerCopyToOwnerCopyInterfaceBuilt)
+        buildOwnerCopyToOwnerCopyInterface ();
+      BC communicator;
+      communicator.template build<T>(OwnerCopyToOwnerCopyInterface);
+      communicator.template forward<AddGatherScatter<T> >(source,dest);
+      communicator.free();
+    }
+
 
     /**
      * @brief Compute a global dot product of two vectors.
@@ -496,8 +524,9 @@ namespace Dune {
      */
     OwnerOverlapCopyCommunication (MPI_Comm comm_,int cat = Dune::SolverCategory::overlapping)
       : cc(comm_), pis(), ri(pis,pis,comm_),
-        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false), globalLookup_(0), category(cat)
-        //category(SolverCategory::overlapping)
+        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
+        OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
+        globalLookup_(0), category(cat)
     {}
 
     /**
@@ -508,8 +537,9 @@ namespace Dune {
      */
     OwnerOverlapCopyCommunication (int cat = Dune::SolverCategory::overlapping)
       : cc(MPI_COMM_WORLD), pis(), ri(pis,pis,MPI_COMM_WORLD),
-        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false), globalLookup_(0), category(cat)
-        //category(SolverCategory::overlapping)
+        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
+        OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
+        globalLookup_(0), category(cat)
     {}
 
     /**
@@ -518,7 +548,8 @@ namespace Dune {
      * @param comm_ The communicator to use in the communication.
      */
     OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType,LocalIdType>& indexinfo, MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
-      : cc(comm_), OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false),
+      : cc(comm_), OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
+        OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
         globalLookup_(0), category(cat)
     {
       // set up an ISTL index set
@@ -582,6 +613,7 @@ namespace Dune {
       if (OwnerToAllInterfaceBuilt) OwnerToAllInterface.free();
       if (OwnerOverlapToAllInterfaceBuilt) OwnerOverlapToAllInterface.free();
       if (OwnerCopyToAllInterfaceBuilt) OwnerCopyToAllInterface.free();
+      if (OwnerCopyToOwnerCopyInterfaceBuilt) OwnerCopyToOwnerCopyInterface.free();
       if (globalLookup_) delete globalLookup_;
     }
 
@@ -597,6 +629,8 @@ namespace Dune {
     mutable bool OwnerOverlapToAllInterfaceBuilt;
     mutable IF OwnerCopyToAllInterface;
     mutable bool OwnerCopyToAllInterfaceBuilt;
+    mutable IF OwnerCopyToOwnerCopyInterface;
+    mutable bool OwnerCopyToOwnerCopyInterfaceBuilt;
     mutable std::vector<double> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;
