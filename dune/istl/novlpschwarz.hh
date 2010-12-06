@@ -101,7 +101,7 @@ namespace Dune {
     {
       y = 0;
       novlp_op_apply(x,y,1);
-      communication.addOwnerCopyToAll(y,y);
+      communication.addOwnerCopyToOwnerCopy(y,y);
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
@@ -112,7 +112,7 @@ namespace Dune {
       Y y1(y);
       y = 0;
       novlp_op_apply(x,y,alpha);
-      communication.addOwnerCopyToAll(y,y);
+      communication.addOwnerCopyToOwnerCopy(y,y);
       y += y1;
     }
 
@@ -134,7 +134,7 @@ namespace Dune {
         for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
           mask[i] = 1;
         for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
-          if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
+          if (i->local().attribute()==OwnerOverlapCopyAttributeSet::copy)
             mask[i->local().local()] = 0;
           else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
             mask[i->local().local()] = 2;
@@ -149,7 +149,7 @@ namespace Dune {
           bordercontribution.erase(iter);
         for (RowIterator i = _A_.begin(); i != _A_.end(); ++i) {
           if (mask[i.index()] == 0) {
-            std::set<int> neighbours; //processes have i as interior/border dof
+            std::set<int> neighbours; //processes that have i as interior/border dof
             int iowner; //process which owns i
             for (RIIterator remote = ri.begin(); remote != ri.end(); ++remote) {
               RIL& ril = *(remote->second.first);
@@ -175,7 +175,7 @@ namespace Dune {
                           && rindex->localIndexPair().local().local()==j.index()) {
                         if (rindex->attribute() == OwnerOverlapCopyAttributeSet::owner
                             || remote->first == iowner
-                            || remote->first << communication.communicator().rank())
+                            || remote->first < communication.communicator().rank())
                           flag = false;
                       }
                   }
@@ -213,7 +213,8 @@ namespace Dune {
         }
         else if (mask[i.index()] == 1) {
           for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j)
-            (*j).usmv(alpha,x[j.index()],y[i.index()]);
+            if (mask[j.index()] != 2)
+              (*j).usmv(alpha,x[j.index()],y[i.index()]);
         }
       }
     }
