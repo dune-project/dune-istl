@@ -271,6 +271,7 @@ namespace Dune
             // This vertex was not visited by breadthFirstSearch yet.
             typedef typename GlobalLookupIndexSet::IndexPair IndexPair;
             const IndexPair* pair= lookup.pair(*index);
+
             renumberer.reset(); // reset attribute and global index.
             if(pair!=0) {
               // vertex is in the index set. Note that not all vertices have
@@ -302,7 +303,6 @@ namespace Dune
       }
 
       coarseIndices.endResize();
-      //std::cout << "after build remote indices" << coarseIndices << std::endl;
 
       assert(static_cast<std::size_t>(renumberer) >= coarseIndices.size());
 
@@ -348,15 +348,9 @@ namespace Dune
              AggregatesMap<typename Graph::VertexDescriptor>::ISOLATED)
           {
             assert(aggregates[index->localIndexPair().local()]<attributes.size());
-            // assert(attributes[aggregates[index->localIndexPair().local()]] == std::numeric_limits<char>::max()
-            //	   || attributes[aggregates[index->localIndexPair().local()]] == index->attribute());
-
-            //if indices of one aggregate were ghost and copy => new attribute is copy
-            //overlap attribute does not work yet.
-            if (attributes[aggregates[index->localIndexPair().local()]] != 3)
-              attributes[aggregates[index->localIndexPair().local()]] = index->attribute();
-            else
-              attributes[aggregates[index->localIndexPair().local()]] = 3;
+            assert(attributes[aggregates[index->localIndexPair().local()]] == std::numeric_limits<char>::max()
+                   || attributes[aggregates[index->localIndexPair().local()]] == index->attribute());
+            attributes[aggregates[index->localIndexPair().local()]] = index->attribute();
           }
         }
 

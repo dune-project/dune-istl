@@ -10,7 +10,6 @@
 #include <list>
 #include <map>
 #include <set>
-#include <string>
 
 #include "cmath"
 
@@ -256,21 +255,9 @@ namespace Dune {
       OwnerCopySet sourceFlags;
       AllSet destFlags;
       OwnerCopyToAllInterface.build(ri,sourceFlags,destFlags);
-      //OwnerCopyToAllInterface.print();
       OwnerCopyToAllInterfaceBuilt = true;
     }
 
-    void buildOwnerCopyToOwnerCopyInterface () const
-    {
-      if (OwnerCopyToOwnerCopyInterfaceBuilt)
-        OwnerCopyToOwnerCopyInterface.free();
-      typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> OwnerCopySet;
-      OwnerCopySet sourceFlags;
-      OwnerCopySet destFlags;
-      OwnerCopyToOwnerCopyInterface.build(ri,sourceFlags,destFlags);
-      //OwnerCopyToOwnerCopyInterface.print();
-      OwnerCopyToOwnerCopyInterfaceBuilt = true;
-    }
 
   public:
 
@@ -349,23 +336,6 @@ namespace Dune {
     }
 
     /**
-     * @brief Communicate values from owner and copy data points to owner and copy data points and add them to those values.
-     *
-     * @brief source The data to send from.
-     * @brief dest The data to add the communicated values to.
-     */
-    template<class T>
-    void addOwnerCopyToOwnerCopy (const T& source, T& dest) const
-    {
-      if (!OwnerCopyToOwnerCopyInterfaceBuilt)
-        buildOwnerCopyToOwnerCopyInterface ();
-      BC communicator;
-      communicator.template build<T>(OwnerCopyToOwnerCopyInterface);
-      communicator.template forward<AddGatherScatter<T> >(source,dest);
-      communicator.free();
-    }
-
-    /**
      * @brief Compute a global dot product of two vectors.
      *
      * @param x The first vector of the product.
@@ -416,62 +386,6 @@ namespace Dune {
       for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i].two_norm2()*mask[i];
       return sqrt(cc.sum(result));
-    }
-
-    template<class T1>
-    void printvec (const T1& x, std::string title) const
-    {
-      if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size())) {
-        mask.resize(x.size());
-        for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
-          mask[i] = 1;
-        for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
-          if (i->local().attribute()==OwnerOverlapCopyAttributeSet::copy)
-            mask[i->local().local()] = 0;
-          else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
-            mask[i->local().local()] = 2;
-      }
-
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-      std::cout << title << ", process " << rank << std::endl;
-      for (typename T1::size_type i=0; i < x.size(); i++)
-        if (mask[i] != 2 && x[i] != 0)
-          std::cout << i << ": " << x[i] << " (att " << mask[i] << ")" << std::endl;
-    }
-
-    template<class T1>
-    void printmat (const T1& A, std::string title) const
-    {
-
-      typedef typename T1::ConstColIterator ColIterator;
-      typedef typename T1::ConstRowIterator RowIterator;
-
-      if (mask.size()!=static_cast<typename std::vector<double>::size_type>(A.N())) {
-        mask.resize(A.N());
-        for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
-          mask[i] = 1;
-        for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
-          if (i->local().attribute()==OwnerOverlapCopyAttributeSet::copy)
-            mask[i->local().local()] = 0;
-          else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
-            mask[i->local().local()] = 2;
-      }
-
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-      std::cout << title << ", process " << rank << std::endl;
-      for (RowIterator i = A.begin(); i != A.end(); i++) {
-        if (mask[i.index()] != 2) {
-          std::cout << "row " << i.index() << ": ";
-          for (ColIterator j = A[i.index()].begin(); j != A[i.index()].end(); j++)
-            if (mask[j.index()] != 2)
-              std::cout << j.index() << ", ";
-        }
-        std::cout << std::endl;
-      }
     }
 
     typedef Dune::EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopyFlags;
@@ -582,8 +496,8 @@ namespace Dune {
      */
     OwnerOverlapCopyCommunication (MPI_Comm comm_,int cat = Dune::SolverCategory::overlapping)
       : cc(comm_), pis(), ri(pis,pis,comm_),
-        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false),
-        OwnerCopyToOwnerCopyInterfaceBuilt(false), globalLookup_(0), category(cat)
+        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false), globalLookup_(0), category(cat)
+        //category(SolverCategory::overlapping)
     {}
 
     /**
@@ -594,8 +508,8 @@ namespace Dune {
      */
     OwnerOverlapCopyCommunication (int cat = Dune::SolverCategory::overlapping)
       : cc(MPI_COMM_WORLD), pis(), ri(pis,pis,MPI_COMM_WORLD),
-        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false),
-        OwnerCopyToOwnerCopyInterfaceBuilt(false), globalLookup_(0), category(cat)
+        OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false), globalLookup_(0), category(cat)
+        //category(SolverCategory::overlapping)
     {}
 
     /**
@@ -605,7 +519,7 @@ namespace Dune {
      */
     OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType,LocalIdType>& indexinfo, MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
       : cc(comm_), OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false),
-        OwnerCopyToOwnerCopyInterfaceBuilt(false), globalLookup_(0), category(cat)
+        globalLookup_(0), category(cat)
     {
       // set up an ISTL index set
       pis.beginResize();
@@ -668,7 +582,6 @@ namespace Dune {
       if (OwnerToAllInterfaceBuilt) OwnerToAllInterface.free();
       if (OwnerOverlapToAllInterfaceBuilt) OwnerOverlapToAllInterface.free();
       if (OwnerCopyToAllInterfaceBuilt) OwnerCopyToAllInterface.free();
-      if (OwnerCopyToOwnerCopyInterfaceBuilt) OwnerCopyToOwnerCopyInterface.free();
       if (globalLookup_) delete globalLookup_;
     }
 
@@ -684,8 +597,6 @@ namespace Dune {
     mutable bool OwnerOverlapToAllInterfaceBuilt;
     mutable IF OwnerCopyToAllInterface;
     mutable bool OwnerCopyToAllInterfaceBuilt;
-    mutable IF OwnerCopyToOwnerCopyInterface;
-    mutable bool OwnerCopyToOwnerCopyInterfaceBuilt;
     mutable std::vector<double> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;

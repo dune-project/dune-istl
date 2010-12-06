@@ -290,10 +290,7 @@ namespace Dune
       matrices_->coarsenVector(*rhs_);
       matrices_->coarsenVector(*lhs_);
       matrices_->coarsenVector(*update_);
-      // for(int p=0; p<(matrices_->parallelInformation().coarsest()->communicator().size()); ++p){
-      //        if(p == (matrices_->parallelInformation().coarsest()->communicator().rank())){
-      //          std::cout << "Process " << p << " (AMG)" << std::endl;
-      //          Dune::printvector(std::cout,*(rhs_->coarsest()), "rhs coarse", "row");}}
+
       // Preprocess all smoothers
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
       typedef typename Hierarchy<Range,A>::Iterator RIterator;
@@ -312,13 +309,14 @@ namespace Dune
           for(++smoother, ++lhs, ++rhs; smoother != coarsest; ++smoother, ++lhs, ++rhs)
             smoother->pre(*lhs,*rhs);
         smoother->pre(*lhs,*rhs);
-
       }
+
 
       // The preconditioner might change x and b. So we have to
       // copy the changes to the original vectors.
       x = *lhs_->finest();
       b = *rhs_->finest();
+
       if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
         // We have the carsest level. Create the coarse Solver
         SmootherArgs sargs(smootherArgs_);
@@ -333,27 +331,10 @@ namespace Dune
 
           coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
           scalarProduct_ = ScalarProductChooser::construct(matrices_->parallelInformation().coarsest().getRedistributed());
-
-          //print matrices
-          //for(int p=0; p<(matrices_->
-          //              parallelInformation().coarsest()->communicator().size()); ++p)
-          //  if(p == (matrices_->parallelInformation().coarsest()->communicator().rank())){
-          //    std::cout << "Process " << p << " (AMG)" << std::endl;
-          //    Dune::printSparseMatrix(std::cout,
-          //			      matrices_->matrices().coarsest()->getmat(),
-          //			      "CoarseMatrix", "row");}
         }else{
           cargs.setMatrix(matrices_->matrices().coarsest()->getmat());
           cargs.setComm(*matrices_->parallelInformation().coarsest());
 
-          //print matrices
-          //      for(int p=0; p<(matrices_->
-          //                      parallelInformation().coarsest()->communicator().size()); ++p)
-          //        if(p == (matrices_->parallelInformation().coarsest()->communicator().rank())){
-          //          std::cout << "Process " << p << " (AMG)" << std::endl;
-          //          Dune::printSparseMatrix(std::cout,
-          //                                  matrices_->matrices().coarsest()->getmat(),
-          //                                  "CoarseMatrix", "row");}
           coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
           scalarProduct_ = ScalarProductChooser::construct(*matrices_->parallelInformation().coarsest());
         }
@@ -383,15 +364,13 @@ namespace Dune
               // We are still participating on this level
               solver_ = new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
                                               *scalarProduct_,
-                                              *coarseSmoother_, 1E-2, 1000, 0);
+                                              *coarseSmoother_, 1E-2, 10000, 0);
             else
               solver_ = 0;
-          }else{
-            //	      Dune::printSparseMatrix(std::cout,matrices_->matrices().coarsest()->getmat(), "A", "row");
+          }else
             solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
                                             *scalarProduct_,
-                                            *coarseSmoother_, 1E-2, 100, 0);
-          }
+                                            *coarseSmoother_, 1E-2, 1000, 0);
         }
       }
     }
@@ -426,10 +405,9 @@ namespace Dune
 
         mgc();
 
-
         if(postSteps_==0||matrices_->maxlevels()==1)
           pinfo->copyOwnerToAll(*update, *update);
-        //pinfo->addOwnerCopyToAll(*update, *update);
+
         v=*update;
       }
 
@@ -586,27 +564,14 @@ namespace Dune
           pinfo->copyOwnerToAll(*update, *update);
         }else{
           pinfo->copyOwnerToAll(*rhs, *rhs);
-          //      for(int p=0; p<(matrices_->parallelInformation().coarsest()->communicator().size()); ++p){
-          //        if(p == (matrices_->parallelInformation().coarsest()->communicator().rank())){
-          //          std::cout << "Process " << p << " (AMG)" << std::endl;
-          //          Dune::printvector(std::cout,*rhs, "rhs coarse", "row");}}
           solver_->apply(*update, *rhs, res);
-          // if(pinfo->communicator().rank() == 0)
-          //   std::cout << "=== rateprecond=" << res.conv_rate
-          //          << ", T=" << res.elapsed
-          //          << ", TIT=" << res.elapsed/res.iterations
-          //          << ", IT=" << res.iterations << std::endl;
         }
 
-        //if(!res.converged)
-        //  DUNE_THROW(MathError, "Coarse solver did not converge");
+        if(!res.converged)
+          DUNE_THROW(MathError, "Coarse solver did not converge");
       }else{
         // presmoothing
         presmooth();
-        //      for(int p=0; p<(matrices_->parallelInformation().coarsest()->communicator().size()); ++p){
-        //        if(p == (matrices_->parallelInformation().coarsest()->communicator().rank())){
-        //          std::cout << "Process " << p << " (AMG)" << std::endl;
-        //          Dune::printvector(std::cout,*rhs, "rhs fine", "row");}}
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
         bool processNextLevel = moveToCoarseLevel();

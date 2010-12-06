@@ -221,7 +221,7 @@ bool testIndicesSyncer()
   //using namespace Dune;
 
   // The global grid size
-  const int Nx = 10;
+  const int Nx = 6;
   const int Ny = 1;
 
   // Process configuration

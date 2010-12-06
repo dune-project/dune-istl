@@ -250,8 +250,6 @@ namespace Dune {
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      //Dune::printvector(std::cout, b, "b", "row");
-      X test(b);
       // clear solver statistics
       res.clear();
 
@@ -263,12 +261,10 @@ namespace Dune {
 
       // overwrite b with defect
       _op.applyscaleadd(-1,x,b);
-      //_op.applyscaleadd(-1,x,test);
-      //Dune::printvector(std::cout, b, "defect", "row");
 
       // compute norm, \todo parallelization
       double def0 = _sp.norm(b);
-      //std::cout << "Norm Defekt" << _sp.norm(b) << std::endl;
+
       // printing
       if (_verbose>0)
       {
@@ -289,11 +285,8 @@ namespace Dune {
       {
         v = 0;                    // clear correction
         _prec.apply(v,b);         // apply preconditioner
-        // Dune::printvector(std::cout, v, "update v", "row");
-        //Dune::printvector(std::cout, b, "defect", "row");
         x += v;                   // update solution
         _op.applyscaleadd(-1,v,b); // update defect
-        //Dune::printvector(std::cout, x, "x", "row");
         double defnew=_sp.norm(b); // comp defect norm
         if (_verbose>1)           // print
           this->printOutput(std::cout,i,defnew,def);
@@ -401,6 +394,7 @@ namespace Dune {
       Timer watch;                // start a timer
       _prec.pre(x,b);             // prepare preconditioner
       _op.applyscaleadd(-1,x,b);  // overwrite b with defect
+
       X p(x);                     // create local vectors
       X q(b);
 
@@ -524,15 +518,13 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-
-      X p(x);              // the search direction
-      X q(x);              // a temporary vector
-      X b_orig(b);              // a temporary vector
-
       res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec.pre(x,b);             // prepare preconditioner
       _op.applyscaleadd(-1,x,b);  // overwrite b with defect
+
+      X p(x);              // the search direction
+      X q(x);              // a temporary vector
 
       double def0 = _sp.norm(b); // compute norm
       if (def0<1E-30)    // convergence check
@@ -565,9 +557,6 @@ namespace Dune {
       // determine initial search direction
       p = 0;                          // clear correction
       _prec.apply(p,b);               // apply preconditioner
-      //Dune::printvector(std::cout, b, "b_CG", "row");
-      //      Dune::printvector(std::cout, p, "p_CG", "row");
-
       rholast = _sp.dot(p,b);         // orthogonalization
 
       // the loop
@@ -576,14 +565,11 @@ namespace Dune {
       {
         // minimize in given search direction p
         _op.apply(p,q);             // q=Ap
-        //Dune::printvector(std::cout, q, "q_CG", "row");
         alpha = _sp.dot(p,q);       // scalar product
         lambda = rholast/alpha;     // minimization
         x.axpy(lambda,p);           // update solution
-        //Dune::printvector(std::cout, b, "b_CG_alt", "row");
         b.axpy(-lambda,q);          // update defect
-        //Dune::printvector(std::cout, b, "b_CG", "row");
-        //Dune::printvector(std::cout, x, "x_CG", "row");
+
         // convergence test
         double defnew=_sp.norm(b); // comp defect norm
 
@@ -615,10 +601,7 @@ namespace Dune {
       res.reduction = def/def0;
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
-      X cg2(b_orig);
-      //_op.applyscaleadd(-1,x,cg2);
-      //std::cout << "final Norm b-Ax in LS: " << _sp.norm(cg2) << std::endl;
-      //Dune::printvector(std::cout, x, "x_BCGS", "row");
+
       if (_verbose>0)                 // final print
       {
         std::cout << "=== rate=" << res.conv_rate
@@ -713,8 +696,6 @@ namespace Dune {
       X t(x);
       X y(x);
       X rt(x);
-      X b_orig(b);
-      //Dune::printvector(std::cout, b_orig, "b_orig_bcgs", "row");
 
       //
       // begin iteration
@@ -725,7 +706,6 @@ namespace Dune {
       Timer watch;              // start a timer
       _prec.pre(x,r);           // prepare preconditioner
       _op.applyscaleadd(-1,x,r); // overwrite b with defect
-      //Dune::printvector(std::cout, r, "defect_bcgs", "row");
 
       rt=r;
 
@@ -850,15 +830,10 @@ namespace Dune {
         // apply second correction to x
         // x <- x + omega y
         x.axpy(omega,y);
-        X cg2(b_orig);
-        _op.applyscaleadd(-1,x,cg2);
-        //    std::cout << "BiCG Norm b-Ax in LS: " << _sp.norm(cg2) << std::endl;
-        //     Dune::printvector(std::cout, x, "x", "row");
-        //     Dune::printvector(std::cout, cg2, "cg2", "row");
-        //     Dune::printvector(std::cout, b_orig, "b_orig", "row");
+
         // r = s - omega*t (remember : r = s)
         r.axpy(-omega,t);
-        //std::cout << "Norm b(cg) in LS: " << _sp.norm(r) << std::endl;
+
         rho = rho_new;
 
         //
@@ -889,10 +864,6 @@ namespace Dune {
       res.reduction = norm/norm_0;
       res.conv_rate  = pow(res.reduction,1.0/it);
       res.elapsed = watch.elapsed();
-      X cg2(b_orig);
-      _op.applyscaleadd(-1,x,cg2);
-      //std::cout << "final Norm b-Ax in LS: " << _sp.norm(cg2) << std::endl;
-      //Dune::printvector(std::cout, x, "x_BCGS", "row");
       if (_verbose>0)               // final print
         std::cout << "=== rate=" << res.conv_rate
                   << ", T=" << res.elapsed
