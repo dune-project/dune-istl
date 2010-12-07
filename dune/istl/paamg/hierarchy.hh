@@ -727,6 +727,9 @@ namespace Dune
                                                    criterion.debugLevel()>1);
 #endif // if else AMG_REPART
 
+      if(origComm.communicator().rank()==0  && criterion.debugLevel()>1)
+        std::cout<<"Repartitioning took "<<time.elapsed()<<" seconds."<<std::endl;
+
       ri.setSetup();
 
 #ifdef DEBUG_REPART
@@ -745,7 +748,7 @@ namespace Dune
 #endif
 
       if(origComm.communicator().rank()==0  && criterion.debugLevel()>1)
-        std::cout<<"Repartitioning took "<<time.elapsed()<<" seconds."<<std::endl;
+        std::cout<<"Redistributing matrix took "<<time.elapsed()<<" seconds."<<std::endl;
       return existentOnRedist;
 
     }
