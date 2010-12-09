@@ -1423,6 +1423,8 @@ namespace Dune
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
     typedef typename  OOComm::OwnerSet OwnerSet;
 
+    Time time;
+
     // Build the send interface
     redistInf.buildSendInterface<OwnerSet>(setPartition, oocomm.indexSet());
 
@@ -1529,6 +1531,12 @@ namespace Dune
     std::cout<<std::endl<<std::endl;
 #endif
 
+    if(verbose)
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Communicating the receive information took "<<
+        time.elapsed();
+    time.reset();
+
     //
     // 4.2) Start the communication
     //
@@ -1591,6 +1599,13 @@ namespace Dune
       MPI_Issend(sendBuffers[i], buffersize, MPI_PACKED, sendTo[i], 99, oocomm.communicator(), requests+i);
     }
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Creating sends took "<<
+        time.elapsed();
+    }
+    time.reset();
 
     // Receive Messages
     int noRecv = recvFrom.size();
@@ -1618,6 +1633,7 @@ namespace Dune
     if(recvBuf)
       delete[] recvBuf;
 
+    time.reset();
     // Wait for sending messages to complete
     MPI_Status *statuses = new MPI_Status[noSendTo];
     int send = MPI_Waitall(noSendTo, requests, statuses);
@@ -1636,6 +1652,13 @@ namespace Dune
             std::cout<<message[i];
         }
       std::cerr<<std::endl;
+    }
+
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Receiving and saving took "<<
+        time.elapsed();
     }
 
     for(int i=0; i < noSendTo; ++i)
@@ -1760,6 +1783,12 @@ namespace Dune
     // release the memory
     delete[] sendTo;
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Storing indexsets took "<<
+        time.elapsed();
+    }
 
 #ifdef PERF_REPART
     // stop the time for step 4) and print the results
