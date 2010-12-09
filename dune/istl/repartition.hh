@@ -1423,7 +1423,7 @@ namespace Dune
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
     typedef typename  OOComm::OwnerSet OwnerSet;
 
-    Time time;
+    Timer time;
 
     // Build the send interface
     redistInf.buildSendInterface<OwnerSet>(setPartition, oocomm.indexSet());
