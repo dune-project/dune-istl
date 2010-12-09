@@ -1,5 +1,6 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
+
 #ifndef DUNE_SOLVERS_HH
 #define DUNE_SOLVERS_HH
 
@@ -616,7 +617,8 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (X& x, X& b, double reduction,
+                        InverseOperatorResult& res)
     {
       _reduction = reduction;
       (*this).apply(x,b,res);
@@ -1225,7 +1227,7 @@ namespace Dune {
       int i, j = 1, k;
       std::vector<field_type> s(m+1), cs(m), sn(m);
       // helper vector
-      X w(b.size());
+      X w(b);
       std::vector< std::vector<field_type> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
@@ -1272,6 +1274,7 @@ namespace Dune {
         if (_verbose > 1)
         {
           this->printHeader(std::cout);
+          this->printOutput(std::cout,0,norm_0);
           this->printOutput(std::cout,0,norm);
         }
       }

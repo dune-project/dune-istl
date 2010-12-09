@@ -23,9 +23,9 @@
 #include <dune/common/enumset.hh>
 
 #if HAVE_MPI
-#include "indexset.hh"
-#include "communicator.hh"
-#include "remoteindices.hh"
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/communicator.hh>
+#include <dune/common/parallel/remoteindices.hh>
 #include <dune/common/mpicollectivecommunication.hh>
 #endif
 
@@ -188,7 +188,7 @@ namespace Dune {
     typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner> OwnerSet;
     typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopySet;
     typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
-    typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
+    typedef Dune::AllSet<AttributeSet> AllSet;
   protected:
 
 
@@ -522,7 +522,7 @@ namespace Dune {
      * later on.
      * @param comm_ The MPI Communicator to use, e. g. MPI_COMM_WORLD
      */
-    OwnerOverlapCopyCommunication (MPI_Comm comm_,int cat = Dune::SolverCategory::overlapping)
+    OwnerOverlapCopyCommunication (MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
       : cc(comm_), pis(), ri(pis,pis,comm_),
         OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
@@ -547,7 +547,7 @@ namespace Dune {
      * @param indexinfo The set of IndexTripels describing the local and remote indices.
      * @param comm_ The communicator to use in the communication.
      */
-    OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType,LocalIdType>& indexinfo, MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
+    OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType, LocalIdType>& indexinfo, MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
       : cc(comm_), OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
         globalLookup_(0), category(cat)

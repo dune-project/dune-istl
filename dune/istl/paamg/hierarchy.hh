@@ -16,8 +16,9 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/bigunsignedint.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/istl/indexset.hh>
+#include <dune/common/parallel/indexset.hh>
 #include <dune/istl/matrixutils.hh>
 #include <dune/istl/matrixredistribute.hh>
 #include <dune/istl/paamg/dependency.hh>
@@ -42,6 +43,18 @@ namespace Dune
      * @author Markus Blatt
      * @brief Provides a classes representing the hierarchies in AMG.
      */
+
+    enum {
+      /**
+       * @brief Hard limit for the number of processes allowed.
+       *
+       * This is needed to prevent overflows when calculating
+       * the coarsening rate. Currently set 72,000 which is
+       * enough for JUGENE.
+       */
+      MAX_PROCESSES = 72000
+    };
+
     /**
      * @brief A hierarchy of coantainers (e.g. matrices or vectors)
      *
@@ -350,7 +363,7 @@ namespace Dune
        * @brief Recalculate the galerkin products.
        *
        * If the data of the fine matrix changes but not its sparsity pattern
-       * this will recalculate all coarser level without starting the expensive
+       * this will recalculate all coarser levels without starting the expensive
        * aggregation process all over again.
        */
       template<class F>
@@ -686,6 +699,14 @@ namespace Dune
                                         RedistributeInformation<C>& ri,
                                         int nparts, C1& criterion)
     {
+      Timer time;
+#ifdef AMG_REPART_ON_COMM_GRAPH
+      // Done not repartition the matrix graph, but a graph of the communication scheme.
+      bool existentOnRedist=Dune::commGraphRepartition(origMatrix, origComm, nparts, newComm,
+                                                       ri.getInterface(),
+                                                       criterion.debugLevel()>1);
+
+#else
       typedef Dune::Amg::MatrixGraph<const M> MatrixGraph;
       typedef Dune::Amg::PropertiesGraph<MatrixGraph,
           VertexProperties,
@@ -703,15 +724,20 @@ namespace Dune
       printGlobalSparseMatrix(origMatrix, origComm, std::cout);
 #endif
       bool existentOnRedist=Dune::graphRepartition(pgraph, origComm, nparts,
-                                                   newComm, ri.getInterface());
+                                                   newComm, ri.getInterface(),
+                                                   criterion.debugLevel()>1);
+#endif // if else AMG_REPART
+
+      if(origComm.communicator().rank()==0  && criterion.debugLevel()>1)
+        std::cout<<"Repartitioning took "<<time.elapsed()<<" seconds."<<std::endl;
+
       ri.setSetup();
+
 #ifdef DEBUG_REPART
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
+
       redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
-#if !HAVE_PARMETIS && HAVE_MPI
-    #warning Parmetis is not installed or used. Did you use the parmetis flags? It is strongly recommend to use parallel AMG with parmetis.
-#endif
 
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
@@ -722,6 +748,8 @@ namespace Dune
       origComm.communicator().barrier();
 #endif
 
+      if(origComm.communicator().rank()==0  && criterion.debugLevel()>1)
+        std::cout<<"Redistributing matrix took "<<time.elapsed()<<" seconds."<<std::endl;
       return existentOnRedist;
 
     }
@@ -733,7 +761,6 @@ namespace Dune
                                         RedistributeInformation<SequentialInformation>& ri)
     {
       return true;
-
     }
 
     template<class M, class IS, class A>
@@ -764,22 +791,27 @@ namespace Dune
       typedef typename ParallelMatrixHierarchy::Iterator MatIterator;
       typedef typename ParallelInformationHierarchy::Iterator PInfoIterator;
 
+      static const int noints=(Dune::Amg::MAX_PROCESSES/4096>0) ? (Dune::Amg::MAX_PROCESSES/4096) : 1;
+
+      typedef bigunsignedint<sizeof(int)*8*noints> BIGINT;
       GalerkinProduct<ParallelInformation> productBuilder;
       MatIterator mlevel = matrices_.finest();
       MatrixStats<typename M::matrix_type,MINIMAL_DEBUG_LEVEL<=INFO_DEBUG_LEVEL>::stats(mlevel->getmat());
 
       PInfoIterator infoLevel = parallelInformation_.finest();
-      std::size_t finenonzeros=countNonZeros(mlevel->getmat());
+      BIGINT finenonzeros=countNonZeros(mlevel->getmat());
       finenonzeros = infoLevel->communicator().sum(finenonzeros);
-      std::size_t allnonzeros = finenonzeros;
+      BIGINT allnonzeros = finenonzeros;
 
 
       int procs = infoLevel->communicator().size();
       int level = 0;
       int rank = 0;
-      int unknowns = mlevel->getmat().N();
+
+      BIGINT unknowns = mlevel->getmat().N();
 
       unknowns = infoLevel->communicator().sum(unknowns);
+      double dunknowns=unknowns.todouble();
       infoLevel->buildGlobalLookup(mlevel->getmat().N());
       redistributes_.push_back(RedistributeInfoType());
 
@@ -787,7 +819,7 @@ namespace Dune
         assert(matrices_.levels()==redistributes_.size());
         rank = infoLevel->communicator().rank();
         if(rank==0 && criterion.debugLevel()>1)
-          std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()
+          std::cout<<"Level "<<level<<" has "<<dunknowns<<" unknowns, "<<dunknowns/infoLevel->communicator().size()
                    <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
 
         MatrixOperator* matrix=&(*mlevel);
@@ -800,27 +832,28 @@ namespace Dune
              false
 #endif
              || (criterion.accumulate()==atOnceAccu
-                 && unknowns < 30*infoLevel->communicator().size()))
+                 && dunknowns < 30*infoLevel->communicator().size()))
            && infoLevel->communicator().size()>1 &&
-           unknowns/infoLevel->communicator().size() <= criterion.coarsenTarget())
+           dunknowns/infoLevel->communicator().size() <= criterion.coarsenTarget())
         {
           // accumulate to fewer processors
           Matrix* redistMat= new Matrix();
           ParallelInformation* redistComm=0;
-          std::size_t nodomains = unknowns/(criterion.minAggregateSize()
-                                            *criterion.coarsenTarget());
+          std::size_t nodomains = dunknowns/(criterion.minAggregateSize()
+                                             *criterion.coarsenTarget());
           if( nodomains<=criterion.minAggregateSize()/2 ||
-              unknowns <= criterion.coarsenTarget() )
+              dunknowns <= criterion.coarsenTarget() )
             nodomains=1;
 
           bool existentOnNextLevel =
             repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
                                            redistComm, redistributes_.back(), nodomains,
                                            criterion);
-          int unknowns = redistMat->N();
+          BIGINT unknowns = redistMat->N();
           unknowns = infoLevel->communicator().sum(unknowns);
+          dunknowns= unknowns.todouble();
           if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
-            std::cout<<"Level "<<level<<" (redistributed) has "<<unknowns<<" unknowns, "<<unknowns/redistComm->communicator().size()
+            std::cout<<"Level "<<level<<" (redistributed) has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
                      <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
           MatrixArgs args(*redistMat, *redistComm);
           mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
@@ -840,7 +873,7 @@ namespace Dune
 
         rank = info->communicator().rank();
         procs = info->communicator().size();
-        if(unknowns <= criterion.coarsenTarget())
+        if(dunknowns <= criterion.coarsenTarget())
           // No further coarsening needed
           break;
 
@@ -910,21 +943,26 @@ namespace Dune
             }
         }
 #endif
-        noAggregates = info->communicator().sum(noAggregates);
+        if(info->communicator().rank()==0)
+          std::cout<<"aggregating finished."<<std::endl;
 
+        BIGINT gnoAggregates=noAggregates;
+        gnoAggregates = info->communicator().sum(gnoAggregates);
+        double dgnoAggregates = gnoAggregates.todouble();
 #ifdef TEST_AGGLO
-        noAggregates=((UNKNOWNS)/2)*((UNKNOWNS)/2);
+        BIGINT gnoAggregates=((UNKNOWNS)/2)*((UNKNOWNS)/2);
 #endif
 
         if(criterion.debugLevel()>2 && rank==0)
-          std::cout << "Building "<<noAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
+          std::cout << "Building "<<dgnoAggregates<<" aggregates took "<<watch.elapsed()<<" seconds."<<std::endl;
 
-        if(!noAggregates || ((double)unknowns)/noAggregates<criterion.minCoarsenRate())
+        if(dgnoAggregates==0 || dunknowns/dgnoAggregates<criterion.minCoarsenRate())
         {
           if(rank==0)
           {
-            if(noAggregates)
-              std::cerr << "Stopped coarsening because of rate breakdown "<<((double)unknowns)/noAggregates<<"<"
+            if(dgnoAggregates>0)
+              std::cerr << "Stopped coarsening because of rate breakdown "<<dunknowns<<"/"<<dgnoAggregates
+                        <<"="<<dunknowns/dgnoAggregates<<"<"
                         <<criterion.minCoarsenRate()<<std::endl;
             else
               std::cerr<< "Could not build any aggregates. Probably no connected nodes."<<std::endl;
@@ -947,6 +985,7 @@ namespace Dune
           break;
         }
         unknowns =  noAggregates;
+        dunknowns = dgnoAggregates;
 
         CommunicationArgs commargs(info->communicator(),info->getSolverCategory());
         parallelInformation_.addCoarser(commargs);
@@ -1013,8 +1052,8 @@ namespace Dune
             std::cout<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
         }
 
-        std::size_t nonzeros = countNonZeros(*coarseMatrix);
-        allnonzeros += infoLevel->communicator().sum(nonzeros);
+        BIGINT nonzeros = countNonZeros(*coarseMatrix);
+        allnonzeros = allnonzeros + infoLevel->communicator().sum(nonzeros);
         MatrixArgs args(*coarseMatrix, *infoLevel);
 
         matrices_.addCoarser(args);
@@ -1030,11 +1069,13 @@ namespace Dune
 
       if(criterion.debugLevel()>0) {
         if(level==criterion.maxLevel()) {
-          int unknowns = mlevel->getmat().N();
+          BIGINT unknowns = mlevel->getmat().N();
           unknowns = infoLevel->communicator().sum(unknowns);
-          if(rank==0 && criterion.debugLevel()>1)
-            std::cout<<"Level "<<level<<" has "<<unknowns<<" unknowns, "<<unknowns/infoLevel->communicator().size()
+          double dunknowns = unknowns.todouble();
+          if(rank==0 && criterion.debugLevel()>1) {
+            std::cout<<"Level "<<level<<" has "<<dunknowns<<" unknowns, "<<dunknowns/infoLevel->communicator().size()
                      <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
+          }
         }
       }
 
@@ -1055,11 +1096,14 @@ namespace Dune
         repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
                                        redistComm, redistributes_.back(), nodomains,criterion);
         MatrixArgs args(*redistMat, *redistComm);
-        int unknowns = redistMat->N();
+        BIGINT unknowns = redistMat->N();
         unknowns = infoLevel->communicator().sum(unknowns);
-        if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
-          std::cout<<"Level "<<level<<" redistributed has "<<unknowns<<" unknowns, "<<unknowns/redistComm->communicator().size()
+
+        if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1) {
+          double dunknowns= unknowns.todouble();
+          std::cout<<"Level "<<level<<" redistributed has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
                    <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
+        }
         mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
         infoLevel.addRedistributed(redistComm);
         infoLevel->freeGlobalLookup();
@@ -1069,7 +1113,7 @@ namespace Dune
       maxlevels_ = parallelInformation_.finest()->communicator().max(levels);
       assert(matrices_.levels()==redistributes_.size());
       if(hasCoarsest() && rank==0 && criterion.debugLevel()>1)
-        std::cout<<"operator complexity: "<<((double)allnonzeros)/finenonzeros<<std::endl;
+        std::cout<<"operator complexity: "<<allnonzeros.todouble()/finenonzeros.todouble()<<std::endl;
 
     }
 
@@ -1255,13 +1299,29 @@ namespace Dune
       AggregatesMapIterator amap = aggregatesMaps_.begin();
       BaseGalerkinProduct productBuilder;
       InfoIterator info = parallelInformation_.finest();
+      typename RedistributeInfoList::iterator riIter = redistributes_.begin();
+      Iterator level = matrices_.finest(), coarsest=matrices_.coarsest();
+      if(level.isRedistributed()) {
+        info->buildGlobalLookup(info->indexSet().size());
+        redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
+                                  const_cast<Matrix&>(level.getRedistributed().getmat()),
+                                  *info,info.getRedistributed(), *riIter);
+        info->freeGlobalLookup();
+      }
 
-      for(Iterator level = matrices_.finest(), coarsest=matrices_.coarsest(); level!=coarsest; ++amap) {
-        const Matrix& fine = level->getmat();
+      for(; level!=coarsest; ++amap) {
+        const Matrix& fine = (level.isRedistributed() ? level.getRedistributed() : *level).getmat();
         ++level;
         ++info;
+        ++riIter;
         productBuilder.calculate(fine, *(*amap), const_cast<Matrix&>(level->getmat()), *info, copyFlags);
-
+        if(level.isRedistributed()) {
+          info->buildGlobalLookup(info->indexSet().size());
+          redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
+                                    const_cast<Matrix&>(level.getRedistributed().getmat()), *info,
+                                    info.getRedistributed(), *riIter);
+          info->freeGlobalLookup();
+        }
       }
     }
 

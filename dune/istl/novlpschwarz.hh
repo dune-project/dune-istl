@@ -134,7 +134,7 @@ namespace Dune {
         for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
           mask[i] = 1;
         for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
-          if (i->local().attribute()==OwnerOverlapCopyAttributeSet::copy)
+          if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
             mask[i->local().local()] = 0;
           else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
             mask[i->local().local()] = 2;
@@ -149,7 +149,7 @@ namespace Dune {
           bordercontribution.erase(iter);
         for (RowIterator i = _A_.begin(); i != _A_.end(); ++i) {
           if (mask[i.index()] == 0) {
-            std::set<int> neighbours; //processes that have i as interior/border dof
+            std::set<int> neighbours; //processes have i as interior/border dof
             int iowner; //process which owns i
             for (RIIterator remote = ri.begin(); remote != ri.end(); ++remote) {
               RIL& ril = *(remote->second.first);
@@ -200,9 +200,9 @@ namespace Dune {
         if (mask[i.index()] == 0) {
           //dof doesn't belong to process but is border (not ghost)
           for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j) {
-            if (mask[j.index()]==1) //j is owner => then sum entries
+            if (mask[j.index()] == 1) //j is owner => then sum entries
               (*j).usmv(alpha,x[j.index()],y[i.index()]);
-            else if (mask[j.index()]==0) {
+            else if (mask[j.index()] == 0) {
               std::pair<MM::iterator, MM::iterator> itp =
                 bordercontribution.equal_range(i.index());
               for (MM::iterator it = itp.first; it != itp.second; ++it)
@@ -373,7 +373,7 @@ namespace Dune {
       // pdelab/backend/ovlpistsolverbackend.hh,
       // but not to BlockPreconditioner from schwarz.hh
       preconditioner.apply(v,d);
-      communication.addOwnerCopyToAll(v,v);
+      communication.addOwnerCopyToOwnerCopy(v,v);
     }
 
     /*!
