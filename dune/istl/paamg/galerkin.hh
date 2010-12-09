@@ -638,7 +638,6 @@ namespace Dune
       for(RowIterator row = fine.begin(); row != endRow; ++row)
         if(aggregates[row.index()] != AggregatesMap<V>::ISOLATED) {
           assert(aggregates[row.index()]!=AggregatesMap<V>::UNAGGREGATED);
-          //typedef typename RowIterator::Iterator ColIterator;
           typedef typename M::ConstColIterator ColIterator;
           ColIterator endCol = row->end();
 
@@ -650,8 +649,8 @@ namespace Dune
         }
 
       // get the right diagonal matrix values on copy lines from owner processes
-
-      std::vector<typename M::block_type> rowsize(coarse.N(),0);
+      typedef typename M::block_type BlockType;
+      std::vector<BlockType> rowsize(coarse.N(),BlockType(0));
       for (RowIterator row = coarse.begin(); row != coarse.end(); ++row)
         rowsize[row.index()]=coarse[row.index()][row.index()];
       pinfo.copyOwnerToAll(rowsize,rowsize);
