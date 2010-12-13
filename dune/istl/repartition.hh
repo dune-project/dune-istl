@@ -925,7 +925,9 @@ namespace Dune
         float *tpwgts = new float[nparts];
         for(int i=0; i<nparts; ++i)
           tpwgts[i]=1.0/nparts;
-        int options[5] ={ 0,1,15,0,0};
+        int options[5] ={ 1,1,15,0,0};
+        if(!verbose)
+          options[0]=0;
         MPI_Comm comm=oocomm.communicator();
 
         Dune::dinfo<<rank<<" vtxdist: ";
@@ -1106,7 +1108,9 @@ namespace Dune
           if(verbose && oocomm.communicator().rank()==0)
             std::cout<<"Creating grah one 1 process took "<<time.elapsed()<<std::endl;
           time.reset();
-          options[0]=0; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
+          options[0]=1; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
+          if(!verbose)
+            options[0]=0;
           // Call metis
           METIS_PartGraphKway(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
                               &numflag, &nparts, options, &edgecut, gpart);
@@ -1708,110 +1712,106 @@ namespace Dune
         i!=end; ++i) {
       assert(newranks[*i]>=0);
       std::cout<<*i<<"->"<<newranks[*i]<<" ";
+      tneighbors.push_back(newranks[*i]);
     }
     std::cout<<std::endl;
 #endif
+    delete[] newranks;
+    myNeighbors.clear();
 
-    for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
-        i!=end; ++i) {
-      tneighbors.push_back(newranks[*i]);
+    outputIndexSet.beginResize();
+    // 1) add the owner vertices
+    // Sort the owners
+    std::sort(myOwnerVec.begin(), myOwnerVec.end(), SortFirst());
+    // The owners are sorted according to there global index
+    // Therefore the entries of ownerVec are the same as the
+    // ones in the resulting index set.
+    typedef typename OOComm::ParallelIndexSet::LocalIndex LocalIndex;
+    typedef typename std::vector<std::pair<GI,int> >::const_iterator VPIter;
+    int i=0;
+    for(VPIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
+      outputIndexSet.add(g->first,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
+      redistInf.addReceiveIndex(g->second, i);
+    }
 
-      delete[] newranks;
-      myNeighbors.clear();
+    // After all the vertices are received, the vectors must
+    // be "merged" together to create the final vectors.
+    // Because some vertices that are sent as overlap could now
+    // already included as owner vertiecs in the new partition
+    mergeVec(myOwnerVec, myOverlapSet);
 
-      outputIndexSet.beginResize();
-      // 1) add the owner vertices
-      // Sort the owners
-      std::sort(myOwnerVec.begin(), myOwnerVec.end(), SortFirst());
-      // The owners are sorted according to there global index
-      // Therefore the entries of ownerVec are the same as the
-      // ones in the resulting index set.
-      typedef typename OOComm::ParallelIndexSet::LocalIndex LocalIndex;
-      typedef typename std::vector<std::pair<GI,int> >::const_iterator VPIter;
-      int i=0;
-      for(VPIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
-        outputIndexSet.add(g->first,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
-        redistInf.addReceiveIndex(g->second, i);
-      }
-
-      // After all the vertices are received, the vectors must
-      // be "merged" together to create the final vectors.
-      // Because some vertices that are sent as overlap could now
-      // already included as owner vertiecs in the new partition
-      mergeVec(myOwnerVec, myOverlapSet);
-
-      // Trick to free memory
-      myOwnerVec.clear();
-      myOwnerVec.swap(myOwnerVec);
+    // Trick to free memory
+    myOwnerVec.clear();
+    myOwnerVec.swap(myOwnerVec);
 
 
 
-      // 2) add the overlap vertices
-      typedef typename std::set<GI>::const_iterator SIter;
-      for(SIter g=myOverlapSet.begin(), end=myOverlapSet.end(); g!=end; ++g, i++) {
-        outputIndexSet.add(*g,LocalIndex(i, OwnerOverlapCopyAttributeSet::copy, true));
-      }
-      myOverlapSet.clear();
-      outputIndexSet.endResize();
+    // 2) add the overlap vertices
+    typedef typename std::set<GI>::const_iterator SIter;
+    for(SIter g=myOverlapSet.begin(), end=myOverlapSet.end(); g!=end; ++g, i++) {
+      outputIndexSet.add(*g,LocalIndex(i, OwnerOverlapCopyAttributeSet::copy, true));
+    }
+    myOverlapSet.clear();
+    outputIndexSet.endResize();
 
 #ifdef DUNE_ISTL_WITH_CHECKING
-      int numOfOwnVtx =0;
-      typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
-      Iterator end = outputIndexSet.end();
-      for(Iterator index = outputIndexSet.begin(); index != end; ++index) {
-        if (OwnerSet::contains(index->local().attribute())) {
-          numOfOwnVtx++;
-        }
+    int numOfOwnVtx =0;
+    typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
+    Iterator end = outputIndexSet.end();
+    for(Iterator index = outputIndexSet.begin(); index != end; ++index) {
+      if (OwnerSet::contains(index->local().attribute())) {
+        numOfOwnVtx++;
       }
-      numOfOwnVtx = oocomm.communicator().sum(numOfOwnVtx);
-      // if(numOfOwnVtx!=indexMap.globalOwnerVertices)
-      //   {
-      //     std::cerr<<numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones!"<<std::endl;
-      //     DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
-      //           <<" during repartitioning.");
-      //   }
-      Iterator index=outputIndexSet.begin();
-      if(index!=end) {
-        ++index;
-        for(Iterator old = outputIndexSet.begin(); index != end; old=index++) {
-          if(old->global()>index->global())
-            DUNE_THROW(ISTLError, "Index set's globalindex not sorted correctly");
-        }
+    }
+    numOfOwnVtx = oocomm.communicator().sum(numOfOwnVtx);
+    // if(numOfOwnVtx!=indexMap.globalOwnerVertices)
+    //   {
+    //     std::cerr<<numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones!"<<std::endl;
+    //     DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
+    //             <<" during repartitioning.");
+    //   }
+    Iterator index=outputIndexSet.begin();
+    if(index!=end) {
+      ++index;
+      for(Iterator old = outputIndexSet.begin(); index != end; old=index++) {
+        if(old->global()>index->global())
+          DUNE_THROW(ISTLError, "Index set's globalindex not sorted correctly");
       }
+    }
 #endif
 
-      if(color != MPI_UNDEFINED) {
-        outcomm->remoteIndices().setNeighbours(tneighbors);
-        outcomm->remoteIndices().template rebuild<true>();
-
-      }
-
-      // release the memory
-      delete[] sendTo;
-
-      if(verbose) {
-        oocomm.communicator().barrier();
-        if(oocomm.communicator().rank()==0)
-          std::cout<<" Storing indexsets took "<<
-          time.elapsed();
-      }
-
-#ifdef PERF_REPART
-      // stop the time for step 4) and print the results
-      t4=MPI_Wtime()-t4;
-      tSum = t1 + t2 + t3 + t4;
-      std::cout<<std::endl
-               <<mype<<": WTime for step 1): "<<t1
-               <<" 2): "<<t2
-               <<" 3): "<<t3
-               <<" 4): "<<t4
-               <<" total: "<<tSum
-               <<std::endl;
-#endif
-
-      return color!=MPI_UNDEFINED;
+    if(color != MPI_UNDEFINED) {
+      outcomm->remoteIndices().setNeighbours(tneighbors);
+      outcomm->remoteIndices().template rebuild<true>();
 
     }
+
+    // release the memory
+    delete[] sendTo;
+
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Storing indexsets took "<<
+        time.elapsed();
+    }
+
+#ifdef PERF_REPART
+    // stop the time for step 4) and print the results
+    t4=MPI_Wtime()-t4;
+    tSum = t1 + t2 + t3 + t4;
+    std::cout<<std::endl
+             <<mype<<": WTime for step 1): "<<t1
+             <<" 2): "<<t2
+             <<" 3): "<<t3
+             <<" 4): "<<t4
+             <<" total: "<<tSum
+             <<std::endl;
+#endif
+
+    return color!=MPI_UNDEFINED;
+
+  }
 #else
   template<class G, class P,class T1, class T2, class R>
   bool graphRepartition(const G& graph, P& oocomm, int nparts,
@@ -1834,5 +1834,5 @@ namespace Dune
       DUNE_THROW(NotImplemented, "only available for MPI programs");
   }
 #endif // HAVE_MPI
-  } // end of namespace Dune
+} // end of namespace Dune
 #endif
