@@ -1175,7 +1175,8 @@ namespace Dune
     time.reset();
 
 
-    bool ret = buildCommunication(graph, realpart, oocomm, outcomm, redistInf);
+    bool ret = buildCommunication(graph, realpart, oocomm, outcomm, redistInf,
+                                  verbose);
     if(verbose && oocomm.communicator().rank()==0)
       std::cout<<"Building index sets took "<<time.elapsed()<<std::endl;
     time.reset();
@@ -1406,7 +1407,8 @@ namespace Dune
 
     delete[] part;
     oocomm.copyOwnerToAll(setPartition, setPartition);
-    bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf);
+    bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf,
+                                  verbose);
     if(verbose) {
       oocomm.communicator().barrier();
       if(oocomm.communicator().rank()==0)
