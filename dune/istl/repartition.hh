@@ -925,9 +925,7 @@ namespace Dune
         float *tpwgts = new float[nparts];
         for(int i=0; i<nparts; ++i)
           tpwgts[i]=1.0/nparts;
-        int options[5] ={ 1,1,15,0,0};
-        if(!verbose)
-          options[0]=0;
+        int options[5] ={ 0,1,15,0,0};
         MPI_Comm comm=oocomm.communicator();
 
         Dune::dinfo<<rank<<" vtxdist: ";
@@ -1108,9 +1106,7 @@ namespace Dune
           if(verbose && oocomm.communicator().rank()==0)
             std::cout<<"Creating grah one 1 process took "<<time.elapsed()<<std::endl;
           time.reset();
-          options[0]=1; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
-          if(!verbose)
-            options[0]=0;
+          options[0]=0; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
           // Call metis
           METIS_PartGraphKway(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
                               &numflag, &nparts, options, &edgecut, gpart);
@@ -1287,7 +1283,7 @@ namespace Dune
       int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
       float *tpwgts = NULL;
       float ubvec[1];
-      options[0] = 1; // 0=default, 1=options are defined in [1]+[2]
+      options[0] = 0; // 0=default, 1=options are defined in [1]+[2]
 #ifdef DEBUG_REPART
       options[1] = 3; // show info: 0=no message
 #else
