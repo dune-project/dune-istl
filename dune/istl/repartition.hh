@@ -545,7 +545,7 @@ namespace Dune
         {
           // is sent to another process and therefore becomes overlap
           neighbor.insert(pindex->global());
-          neighborProcs.insert(toPe);
+          neighborProcs.insert(part[pindex->local()]);
         }
       }
     }
@@ -817,6 +817,9 @@ namespace Dune
                             RedistributeInterface& redistInf,
                             bool verbose=false)
   {
+    if(verbose && oocomm.communicator().rank()==0)
+      std::cout<<"Repartitioning from "<<oocomm.communicator().size()
+               <<" to "<<nparts<<" parts"<<std::endl;
     Timer time;
     int rank = oocomm.communicator().rank();
 #if !HAVE_PARMETIS
@@ -1170,7 +1173,13 @@ namespace Dune
       std::cout<<"Filling index set took "<<time.elapsed()<<std::endl;
     time.reset();
 
-
+    if(verbose) {
+      int noNeighbours=oocomm.remoteIndices().neighbours();
+      noNeighbours = oocomm.communicator().sum(noNeighbours)
+                     / oocomm.communicator().size();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<"Average no neighbours was "<<noNeighbours<<std::endl;
+    }
     bool ret = buildCommunication(graph, realpart, oocomm, outcomm, redistInf,
                                   verbose);
     if(verbose && oocomm.communicator().rank()==0)
@@ -1536,7 +1545,7 @@ namespace Dune
     if(verbose)
       if(oocomm.communicator().rank()==0)
         std::cout<<" Communicating the receive information took "<<
-        time.elapsed();
+        time.elapsed()<<std::endl;
     time.reset();
 
     //
@@ -1605,7 +1614,7 @@ namespace Dune
       oocomm.communicator().barrier();
       if(oocomm.communicator().rank()==0)
         std::cout<<" Creating sends took "<<
-        time.elapsed();
+        time.elapsed()<<std::endl;
     }
     time.reset();
 
@@ -1660,8 +1669,9 @@ namespace Dune
       oocomm.communicator().barrier();
       if(oocomm.communicator().rank()==0)
         std::cout<<" Receiving and saving took "<<
-        time.elapsed();
+        time.elapsed()<<std::endl;
     }
+    time.reset();
 
     for(int i=0; i < noSendTo; ++i)
       delete[] sendBuffers[i];
@@ -1711,9 +1721,23 @@ namespace Dune
       tneighbors.push_back(newranks[*i]);
     }
     std::cout<<std::endl;
+#else
+    for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
+        i!=end; ++i) {
+      tneighbors.push_back(newranks[*i]);
+    }
 #endif
     delete[] newranks;
     myNeighbors.clear();
+
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Calculating new neighbours ("<<tneighbors.size()<<") took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
+
 
     outputIndexSet.beginResize();
     // 1) add the owner vertices
@@ -1730,6 +1754,15 @@ namespace Dune
       redistInf.addReceiveIndex(g->second, i);
     }
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Adding owner indices took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
+
+
     // After all the vertices are received, the vectors must
     // be "merged" together to create the final vectors.
     // Because some vertices that are sent as overlap could now
@@ -1740,6 +1773,13 @@ namespace Dune
     myOwnerVec.clear();
     myOwnerVec.swap(myOwnerVec);
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Merging indices took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
 
 
     // 2) add the overlap vertices
@@ -1775,6 +1815,14 @@ namespace Dune
       }
     }
 #endif
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Adding overlap indices took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
+
 
     if(color != MPI_UNDEFINED) {
       outcomm->remoteIndices().setNeighbours(tneighbors);
@@ -1789,7 +1837,7 @@ namespace Dune
       oocomm.communicator().barrier();
       if(oocomm.communicator().rank()==0)
         std::cout<<" Storing indexsets took "<<
-        time.elapsed();
+        time.elapsed()<<std::endl;
     }
 
 #ifdef PERF_REPART
