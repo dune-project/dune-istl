@@ -128,22 +128,23 @@ namespace Dune {
       const PIS& pis=communication.indexSet();
       const RI& ri = communication.remoteIndices();
 
-      // set up mask vector
-      if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size())) {
-        mask.resize(x.size());
-        for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
-          mask[i] = 1;
-        for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
-          if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
-            mask[i->local().local()] = 0;
-          else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
-            mask[i->local().local()] = 2;
-      }
-
       // at the beginning make a multimap "bordercontribution".
       // process has i and j as border dofs but is not the owner
       // => only contribute to Ax if i,j is in bordercontribution
       if (buildcomm == true) {
+
+        // set up mask vector
+        if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size())) {
+          mask.resize(x.size());
+          for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
+            mask[i] = 1;
+          for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
+            if (i->local().attribute()==OwnerOverlapCopyAttributeSet::copy)
+              mask[i->local().local()] = 0;
+            else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
+              mask[i->local().local()] = 2;
+        }
+
         for (MM::iterator iter = bordercontribution.begin();
              iter != bordercontribution.end(); ++iter)
           bordercontribution.erase(iter);
@@ -175,9 +176,13 @@ namespace Dune {
                           && rindex->localIndexPair().local().local()==j.index()) {
                         if (rindex->attribute() == OwnerOverlapCopyAttributeSet::owner
                             || remote->first == iowner
-                            || remote->first < communication.communicator().rank())
+                            || remote->first < communication.communicator().rank()) {
                           flag = false;
+                          continue;
+                        }
                       }
+                    if (flag == false)
+                      continue;
                   }
                 //don´t contribute to Ax if
                 //1. the owner of j has i as interior/border dof
