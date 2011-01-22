@@ -545,7 +545,7 @@ namespace Dune
         {
           // is sent to another process and therefore becomes overlap
           neighbor.insert(pindex->global());
-          neighborProcs.insert(toPe);
+          neighborProcs.insert(part[pindex->local()]);
         }
       }
     }
@@ -756,6 +756,10 @@ namespace Dune
     void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
                              idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                              int *options, int *edgecut, idxtype *part);
+
+    void METIS_PartGraphRecursive(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
+                                  idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
+                                  int *options, int *edgecut, idxtype *part);
   }
 #endif
 
@@ -769,8 +773,8 @@ namespace Dune
   typedef std::size_t idxtype;
 #endif
 
-  bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, idxtype noEdges, idxtype* xadj,
-                    idxtype* adjncy, bool checkSymmetry)
+  inline bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, idxtype noEdges, idxtype* xadj,
+                           idxtype* adjncy, bool checkSymmetry)
   {
     bool correct=true;
 
@@ -817,6 +821,9 @@ namespace Dune
                             RedistributeInterface& redistInf,
                             bool verbose=false)
   {
+    if(verbose && oocomm.communicator().rank()==0)
+      std::cout<<"Repartitioning from "<<oocomm.communicator().size()
+               <<" to "<<nparts<<" parts"<<std::endl;
     Timer time;
     int rank = oocomm.communicator().rank();
 #if !HAVE_PARMETIS
@@ -925,7 +932,7 @@ namespace Dune
         float *tpwgts = new float[nparts];
         for(int i=0; i<nparts; ++i)
           tpwgts[i]=1.0/nparts;
-        int options[5] ={ 1,3,15,0,0};
+        int options[5] ={ 0,1,15,0,0};
         MPI_Comm comm=oocomm.communicator();
 
         Dune::dinfo<<rank<<" vtxdist: ";
@@ -1106,10 +1113,10 @@ namespace Dune
           if(verbose && oocomm.communicator().rank()==0)
             std::cout<<"Creating grah one 1 process took "<<time.elapsed()<<std::endl;
           time.reset();
-          options[0]=1; options[1]=3; options[2]=1; options[3]=3; options[4]=3;
+          options[0]=0; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
           // Call metis
-          METIS_PartGraphKway(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
-                              &numflag, &nparts, options, &edgecut, gpart);
+          METIS_PartGraphRecursive(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
+                                   &numflag, &nparts, options, &edgecut, gpart);
 
           if(verbose && oocomm.communicator().rank()==0)
             std::cout<<"METIS took "<<time.elapsed()<<std::endl;
@@ -1170,8 +1177,15 @@ namespace Dune
       std::cout<<"Filling index set took "<<time.elapsed()<<std::endl;
     time.reset();
 
-
-    bool ret = buildCommunication(graph, realpart, oocomm, outcomm, redistInf);
+    if(verbose) {
+      int noNeighbours=oocomm.remoteIndices().neighbours();
+      noNeighbours = oocomm.communicator().sum(noNeighbours)
+                     / oocomm.communicator().size();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<"Average no neighbours was "<<noNeighbours<<std::endl;
+    }
+    bool ret = buildCommunication(graph, realpart, oocomm, outcomm, redistInf,
+                                  verbose);
     if(verbose && oocomm.communicator().rank()==0)
       std::cout<<"Building index sets took "<<time.elapsed()<<std::endl;
     time.reset();
@@ -1282,7 +1296,7 @@ namespace Dune
       int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
       float *tpwgts = NULL;
       float ubvec[1];
-      options[0] = 1; // 0=default, 1=options are defined in [1]+[2]
+      options[0] = 0; // 0=default, 1=options are defined in [1]+[2]
 #ifdef DEBUG_REPART
       options[1] = 3; // show info: 0=no message
 #else
@@ -1402,7 +1416,8 @@ namespace Dune
 
     delete[] part;
     oocomm.copyOwnerToAll(setPartition, setPartition);
-    bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf);
+    bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf,
+                                  verbose);
     if(verbose) {
       oocomm.communicator().barrier();
       if(oocomm.communicator().rank()==0)
@@ -1422,6 +1437,8 @@ namespace Dune
   {
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
     typedef typename  OOComm::OwnerSet OwnerSet;
+
+    Timer time;
 
     // Build the send interface
     redistInf.buildSendInterface<OwnerSet>(setPartition, oocomm.indexSet());
@@ -1529,6 +1546,12 @@ namespace Dune
     std::cout<<std::endl<<std::endl;
 #endif
 
+    if(verbose)
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Communicating the receive information took "<<
+        time.elapsed()<<std::endl;
+    time.reset();
+
     //
     // 4.2) Start the communication
     //
@@ -1591,6 +1614,13 @@ namespace Dune
       MPI_Issend(sendBuffers[i], buffersize, MPI_PACKED, sendTo[i], 99, oocomm.communicator(), requests+i);
     }
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Creating sends took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
 
     // Receive Messages
     int noRecv = recvFrom.size();
@@ -1618,6 +1648,7 @@ namespace Dune
     if(recvBuf)
       delete[] recvBuf;
 
+    time.reset();
     // Wait for sending messages to complete
     MPI_Status *statuses = new MPI_Status[noSendTo];
     int send = MPI_Waitall(noSendTo, requests, statuses);
@@ -1637,6 +1668,14 @@ namespace Dune
         }
       std::cerr<<std::endl;
     }
+
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Receiving and saving took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
 
     for(int i=0; i < noSendTo; ++i)
       delete[] sendBuffers[i];
@@ -1686,9 +1725,23 @@ namespace Dune
       tneighbors.push_back(newranks[*i]);
     }
     std::cout<<std::endl;
+#else
+    for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
+        i!=end; ++i) {
+      tneighbors.push_back(newranks[*i]);
+    }
 #endif
     delete[] newranks;
     myNeighbors.clear();
+
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Calculating new neighbours ("<<tneighbors.size()<<") took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
+
 
     outputIndexSet.beginResize();
     // 1) add the owner vertices
@@ -1705,6 +1758,15 @@ namespace Dune
       redistInf.addReceiveIndex(g->second, i);
     }
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Adding owner indices took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
+
+
     // After all the vertices are received, the vectors must
     // be "merged" together to create the final vectors.
     // Because some vertices that are sent as overlap could now
@@ -1715,6 +1777,13 @@ namespace Dune
     myOwnerVec.clear();
     myOwnerVec.swap(myOwnerVec);
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Merging indices took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
 
 
     // 2) add the overlap vertices
@@ -1750,6 +1819,14 @@ namespace Dune
       }
     }
 #endif
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Adding overlap indices took "<<
+        time.elapsed()<<std::endl;
+    }
+    time.reset();
+
 
     if(color != MPI_UNDEFINED) {
       outcomm->remoteIndices().setNeighbours(tneighbors);
@@ -1760,6 +1837,12 @@ namespace Dune
     // release the memory
     delete[] sendTo;
 
+    if(verbose) {
+      oocomm.communicator().barrier();
+      if(oocomm.communicator().rank()==0)
+        std::cout<<" Storing indexsets took "<<
+        time.elapsed()<<std::endl;
+    }
 
 #ifdef PERF_REPART
     // stop the time for step 4) and print the results
