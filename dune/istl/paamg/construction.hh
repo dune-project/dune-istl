@@ -199,7 +199,6 @@ namespace Dune
     class ConstructionTraits<SequentialInformation>
     {
     public:
-      //typedef const CollectiveCommunication<void*> Arguments;
       typedef const SequentialCommunicationArgs Arguments;
       static inline SequentialInformation* construct(Arguments& args)
       {

@@ -184,11 +184,11 @@ namespace Dune {
                     if (flag == false)
                       continue;
                   }
-                //don´t contribute to Ax if
-                //1. the owner of j has i as interior/border dof
-                //2. iowner has j as interior/border dof
-                //3. there is another process with smaller rank that has i and j
-                //   as interor/border dofs
+                // don´t contribute to Ax if
+                // 1. the owner of j has i as interior/border dof
+                // 2. iowner has j as interior/border dof
+                // 3. there is another process with smaller rank that has i and j
+                // as interor/border dofs
                 // if the owner of j does not have i as interior/border dof,
                 // it will not be taken into account
                 if (flag==true)
