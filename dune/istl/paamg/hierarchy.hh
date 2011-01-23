@@ -450,6 +450,7 @@ namespace Dune
 
     private:
       typedef typename ConstructionTraits<MatrixOperator>::Arguments MatrixArgs;
+      typedef typename ConstructionTraits<ParallelInformation>::Arguments CommunicationArgs;
       /** @brief The list of aggregates maps. */
       AggregatesMapList aggregatesMaps_;
       /** @brief The list of redistributes. */
@@ -768,13 +769,16 @@ namespace Dune
       : matrices_(const_cast<MatrixOperator&>(fineOperator)),
         parallelInformation_(const_cast<ParallelInformation&>(pinfo))
     {
-      // TODO: reestablish compile time checks.
-      /*      dune_static_assert((static_cast<int>(MatrixOperator::category) == static_cast<int>(SolverCategory::sequential) ||
-         static_cast<int>(MatrixOperator::category) == static_cast<int>(SolverCategory::overlapping)),
-                         "MatrixOperator must be of category sequential or overlapping");
-         dune_static_assert((static_cast<int>(MatrixOperator::category) == static_cast<int>(ParallelInformation::category)),
-                         "MatrixOperator and ParallelInformation must belong to the same category!");
-       */
+      dune_static_assert((static_cast<int>(MatrixOperator::category) ==
+                          static_cast<int>(SolverCategory::sequential) ||
+                          static_cast<int>(MatrixOperator::category) ==
+                          static_cast<int>(SolverCategory::overlapping) ||
+                          static_cast<int>(MatrixOperator::category) ==
+                          static_cast<int>(SolverCategory::nonoverlapping)),
+                         "MatrixOperator must be of category sequential or overlapping or nonoverlapping");
+      if (static_cast<int>(MatrixOperator::category) != pinfo.getSolverCategory())
+        DUNE_THROW(ISTLError, "MatrixOperator and ParallelInformation must belong to the same category!");
+
     }
 
     template<class M, class IS, class A>
@@ -983,7 +987,8 @@ namespace Dune
         unknowns =  noAggregates;
         dunknowns = dgnoAggregates;
 
-        parallelInformation_.addCoarser(info->communicator());
+        CommunicationArgs commargs(info->communicator(),info->getSolverCategory());
+        parallelInformation_.addCoarser(commargs);
 
         ++infoLevel; // parallel information on coarse level
 

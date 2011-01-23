@@ -34,7 +34,23 @@ namespace Dune
     void setNoRows(std::size_t size)
     {}
 
+    void setNoCopyRows(std::size_t size)
+    {}
+
+    void setNoBackwardsCopyRows(std::size_t size)
+    {}
+
     std::size_t getRowSize(std::size_t index) const
+    {
+      return -1;
+    }
+
+    std::size_t getCopyRowSize(std::size_t index) const
+    {
+      return -1;
+    }
+
+    std::size_t getBackwardsCopyRowSize(std::size_t index) const
     {
       return -1;
     }
@@ -143,14 +159,46 @@ namespace Dune
     {
       return rowSize[index];
     }
+
+    std::size_t& getCopyRowSize(std::size_t index)
+    {
+      return copyrowSize[index];
+    }
+
+    std::size_t getCopyRowSize(std::size_t index) const
+    {
+      return copyrowSize[index];
+    }
+
+    std::size_t& getBackwardsCopyRowSize(std::size_t index)
+    {
+      return backwardscopyrowSize[index];
+    }
+
+    std::size_t getBackwardsCopyRowSize(std::size_t index) const
+    {
+      return backwardscopyrowSize[index];
+    }
+
     void setNoRows(std::size_t rows)
     {
       rowSize.resize(rows, 0);
     }
 
+    void setNoCopyRows(std::size_t rows)
+    {
+      copyrowSize.resize(rows, 0);
+    }
+
+    void setNoBackwardsCopyRows(std::size_t rows)
+    {
+      backwardscopyrowSize.resize(rows, 0);
+    }
+
   private:
     std::vector<std::size_t> rowSize;
-
+    std::vector<std::size_t> copyrowSize;
+    std::vector<std::size_t> backwardscopyrowSize;
     RedistributeInterface interface;
     bool setup_;
   };
@@ -161,7 +209,7 @@ namespace Dune
    *
    * @tparam M The type of the matrix that the row size
    * is communicated of.
-   * @tparam I The type of the index set.
+   * @tparam RI The type of class for redistribution information
    */
   template<class M, class RI>
   struct CommMatrixRowSize
@@ -173,7 +221,7 @@ namespace Dune
     /**
      * @brief Constructor.
      * @param m_ The matrix whose sparsity pattern is communicated.
-     * @param[out] rowsize_ The vector containing the row sizes
+     * @param[out] rowsize_ RedistributeInformation object
      */
     CommMatrixRowSize(const M& m_, RI& rowsize_)
       : matrix(m_), rowsize(rowsize_)
@@ -192,7 +240,7 @@ namespace Dune
    * is communicated of.
    * @tparam I The type of the index set.
    */
-  template<class M, class I, class RI>
+  template<class M, class I>
   struct CommMatrixSparsityPattern
   {
     typedef typename M::size_type size_type;
@@ -215,12 +263,12 @@ namespace Dune
      * @param rowsize_ The row size for the redistributed owner rows.
      */
     CommMatrixSparsityPattern(const M& m_, const Dune::GlobalLookupIndexSet<I>& idxset_, const I& aggidxset_,
-                              const RI& rowsize_)
+                              const std::vector<typename M::size_type>& rowsize_)
       : matrix(m_), idxset(idxset_), aggidxset(aggidxset_), sparsity(aggidxset_.size()), rowsize(&rowsize_)
     {}
 
     /**
-     * @brief Creates ans stores the sparsity pattern of the redistributed matrix.
+     * @brief Creates and stores the sparsity pattern of the redistributed matrix.
      *
      * After the pattern is communicated this function can be used.
      * @param m The matrix to build.
@@ -282,18 +330,40 @@ namespace Dune
       }
     }
 
+    /**
+     * @brief Completes the sparsity pattern of the redistributed matrix with data
+     * from copy rows for the novlp case.
+     *
+     * After the pattern communication this function can be used.
+     * @param add_sparsity Sparsity pattern from the copy rows.
+     */
+    void completeSparsityPattern(std::vector<std::set<size_type> > add_sparsity)
+    {
+      typedef typename std::vector<std::set<size_type> >::const_iterator Iter;
+      for (unsigned int i = 0; i != sparsity.size(); ++i) {
+        if (add_sparsity[i].size() != 0) {
+          typedef std::set<size_type> Set;
+          Set tmp_set;
+          std::insert_iterator<Set> tmp_insert (tmp_set, tmp_set.begin());
+          std::set_union(add_sparsity[i].begin(), add_sparsity[i].end(),
+                         sparsity[i].begin(), sparsity[i].end(), tmp_insert);
+          sparsity[i].swap(tmp_set);
+        }
+      }
+    }
+
     const M& matrix;
     typedef Dune::GlobalLookupIndexSet<I> LookupIndexSet;
     const Dune::GlobalLookupIndexSet<I>& idxset;
     const I& aggidxset;
     std::vector<std::set<size_type> > sparsity;
-    const RI* rowsize;
+    const std::vector<size_type>* rowsize;
   };
 
-  template<class M, class I, class RI>
-  struct CommPolicy<CommMatrixSparsityPattern<M,I,RI> >
+  template<class M, class I>
+  struct CommPolicy<CommMatrixSparsityPattern<M,I> >
   {
-    typedef CommMatrixSparsityPattern<M,I,RI> Type;
+    typedef CommMatrixSparsityPattern<M,I> Type;
 
     /**
      *  @brief The indexed type we send.
@@ -310,8 +380,8 @@ namespace Dune
         return t.matrix[i].size();
       else
       {
-        assert(t.rowsize->getRowSize(i)>0);
-        return t.rowsize->getRowSize(i);
+        assert((*t.rowsize)[i]>0);
+        return (*t.rowsize)[i];
       }
     }
   };
@@ -322,7 +392,7 @@ namespace Dune
    * @tparam M The type of the matrix.
    * @tparam I The type of the ParallelIndexSet.
    */
-  template<class M, class I, class RI>
+  template<class M, class I>
   struct CommMatrixRow
   {
     /**
@@ -341,7 +411,7 @@ namespace Dune
      * @brief Constructor.
      */
     CommMatrixRow(M& m_, const Dune::GlobalLookupIndexSet<I>& idxset_, const I& aggidxset_,
-                  RI& rowsize_)
+                  std::vector<size_t>& rowsize_)
       : matrix(m_), idxset(idxset_), aggidxset(aggidxset_), rowsize(&rowsize_)
     {}
     /**
@@ -378,13 +448,13 @@ namespace Dune
     /** @brief Index set for the redistributed matrix. */
     const I& aggidxset;
     /** @brief row size information for the receiving side. */
-    RI* rowsize; // row sizes differ from sender side in ovelap!
+    std::vector<size_t>* rowsize; // row sizes differ from sender side in overlap!
   };
 
-  template<class M, class I, class RI>
-  struct CommPolicy<CommMatrixRow<M,I,RI> >
+  template<class M, class I>
+  struct CommPolicy<CommMatrixRow<M,I> >
   {
-    typedef CommMatrixRow<M,I,RI> Type;
+    typedef CommMatrixRow<M,I> Type;
 
     /**
      *  @brief The indexed type we send.
@@ -401,8 +471,8 @@ namespace Dune
         return t.matrix[i].size();
       else
       {
-        assert(t.rowsize->getRowSize(i)>0);
-        return t.rowsize->getRowSize(i);
+        assert((*t.rowsize)[i]>0);
+        return (*t.rowsize)[i];
       }
     }
   };
@@ -423,38 +493,76 @@ namespace Dune
     }
 
   };
+
   template<class M, class I, class RI>
+  struct MatrixCopyRowSizeGatherScatter
+  {
+    typedef CommMatrixRowSize<M,RI> Container;
+
+    static const typename M::size_type gather(const Container& cont, std::size_t i)
+    {
+      return cont.matrix[i].size();
+    }
+    static void scatter(Container& cont, const typename M::size_type& rowsize, std::size_t i)
+    {
+      assert(rowsize);
+      if (rowsize > cont.rowsize.getCopyRowSize(i))
+        cont.rowsize.getCopyRowSize(i)=rowsize;
+    }
+
+  };
+
+  template<class M, class I>
   struct MatrixSparsityPatternGatherScatter
   {
     typedef typename I::GlobalIndex GlobalIndex;
-    typedef CommMatrixSparsityPattern<M,I,RI> Container;
+    typedef CommMatrixSparsityPattern<M,I> Container;
     typedef typename M::ConstColIterator ColIter;
 
     static ColIter col;
+    static GlobalIndex numlimits;
 
     static const GlobalIndex& gather(const Container& cont, std::size_t i, std::size_t j)
     {
       if(j==0)
         col=cont.matrix[i].begin();
-      else
+      else if (col!=cont.matrix[i].end())
         ++col;
-      assert(col!=cont.matrix[i].end());
-      const typename I::IndexPair* index=cont.idxset.pair(col.index());
-      assert(index);
-      return index->global();
+
+      //copy communication: different row sizes for copy rows with the same global index
+      //are possible. If all values of current  matrix row are sent, send
+      //std::numeric_limits<GlobalIndex>::max()
+      //and receiver will ignore it.
+      if (col==cont.matrix[i].end()) {
+        numlimits = std::numeric_limits<GlobalIndex>::max();
+        return numlimits;
+      }
+      else {
+        const typename I::IndexPair* index=cont.idxset.pair(col.index());
+        assert(index);
+        // Only send index if col is no ghost
+        if ( index->local().attribute() != 2)
+          return index->global();
+        else {
+          numlimits = std::numeric_limits<GlobalIndex>::max();
+          return numlimits;
+        }
+      }
     }
     static void scatter(Container& cont, const GlobalIndex& gi, std::size_t i, std::size_t j)
     {
       try{
-        const typename I::IndexPair& ip=cont.aggidxset.at(gi);
-        assert(ip.global()==gi);
-        std::size_t col = ip.local();
-        cont.sparsity[i].insert(col);
+        if (gi != std::numeric_limits<GlobalIndex>::max()) {
+          const typename I::IndexPair& ip=cont.aggidxset.at(gi);
+          assert(ip.global()==gi);
+          std::size_t col = ip.local();
+          cont.sparsity[i].insert(col);
 
-        typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
-        if(!OwnerSet::contains(ip.local().attribute()))
-          // preserve symmetry for overlap
-          cont.sparsity[col].insert(i);
+          typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
+          if(!OwnerSet::contains(ip.local().attribute()))
+            // preserve symmetry for overlap
+            cont.sparsity[col].insert(i);
+        }
       }
       catch(Dune::RangeError er) {
         // Entry not present in the new index set. Ignore!
@@ -478,37 +586,61 @@ namespace Dune
     }
 
   };
-  template<class M, class I, class RI>
-  typename MatrixSparsityPatternGatherScatter<M,I,RI>::ColIter MatrixSparsityPatternGatherScatter<M,I,RI>::col;
+  template<class M, class I>
+  typename MatrixSparsityPatternGatherScatter<M,I>::ColIter MatrixSparsityPatternGatherScatter<M,I>::col;
 
-  template<class M, class I, class RI>
+  template<class M, class I>
+  typename MatrixSparsityPatternGatherScatter<M,I>::GlobalIndex MatrixSparsityPatternGatherScatter<M,I>::numlimits;
+
+
+  template<class M, class I>
   struct MatrixRowGatherScatter
   {
     typedef typename I::GlobalIndex GlobalIndex;
-    typedef CommMatrixRow<M,I,RI> Container;
+    typedef CommMatrixRow<M,I> Container;
     typedef typename M::ConstColIterator ColIter;
     typedef typename std::pair<GlobalIndex,typename M::block_type> Data;
     static ColIter col;
     static Data datastore;
+    static GlobalIndex numlimits;
 
     static const Data& gather(const Container& cont, std::size_t i, std::size_t j)
     {
       if(j==0)
         col=cont.matrix[i].begin();
-      else
+      else if (col!=cont.matrix[i].end())
         ++col;
-      // convert local column index to global index
-      const typename I::IndexPair* index=cont.idxset.pair(col.index());
-      assert(index);
-      // Store the data to prevent reference to temporary
-      datastore = std::make_pair(index->global(),*col);
-      return datastore;
+      // copy communication: different row sizes for copy rows with the same global index
+      // are possible. If all values of current  matrix row are sent, send
+      // std::numeric_limits<GlobalIndex>::max()
+      // and receiver will ignore it.
+      if (col==cont.matrix[i].end()) {
+        numlimits = std::numeric_limits<GlobalIndex>::max();
+        datastore = std::make_pair(numlimits,*col);
+        return datastore;
+      }
+      else {
+        // convert local column index to global index
+        const typename I::IndexPair* index=cont.idxset.pair(col.index());
+        assert(index);
+        // Store the data to prevent reference to temporary
+        // Only send index if col is no ghost
+        if ( index->local().attribute() != 2)
+          datastore = std::make_pair(index->global(),*col);
+        else {
+          numlimits = std::numeric_limits<GlobalIndex>::max();
+          datastore = std::make_pair(numlimits,*col);
+        }
+        return datastore;
+      }
     }
     static void scatter(Container& cont, const Data& data, std::size_t i, std::size_t j)
     {
       try{
-        typename M::size_type column=cont.aggidxset.at(data.first).local();
-        cont.matrix[i][column]=data.second;
+        if (data.first != std::numeric_limits<GlobalIndex>::max()) {
+          typename M::size_type column=cont.aggidxset.at(data.first).local();
+          cont.matrix[i][column]=data.second;
+        }
       }
       catch(Dune::RangeError er) {
         // This an overlap row and might therefore lack some entries!
@@ -517,33 +649,83 @@ namespace Dune
     }
   };
 
-  template<class M, class I, class RI>
-  typename MatrixRowGatherScatter<M,I,RI>::ColIter MatrixRowGatherScatter<M,I,RI>::col;
+  template<class M, class I>
+  typename MatrixRowGatherScatter<M,I>::ColIter MatrixRowGatherScatter<M,I>::col;
 
-  template<class M, class I, class RI>
-  typename MatrixRowGatherScatter<M,I,RI>::Data MatrixRowGatherScatter<M,I,RI>::datastore;
+  template<class M, class I>
+  typename MatrixRowGatherScatter<M,I>::Data MatrixRowGatherScatter<M,I>::datastore;
 
-
+  template<class M, class I>
+  typename MatrixRowGatherScatter<M,I>::GlobalIndex MatrixRowGatherScatter<M,I>::numlimits;
 
   template<typename M, typename C>
   void redistributeSparsityPattern(M& origMatrix, M& newMatrix, C& origComm, C& newComm,
                                    RedistributeInformation<C>& ri)
   {
+    typename C::CopySet copyflags;
+    typename C::OwnerSet ownerflags;
     typedef typename C::ParallelIndexSet IndexSet;
     typedef RedistributeInformation<C> RI;
+    std::vector<typename M::size_type> rowsize(newComm.indexSet().size(), 0);
+    std::vector<typename M::size_type> copyrowsize(newComm.indexSet().size(), 0);
+    std::vector<typename M::size_type> backwardscopyrowsize(origComm.indexSet().size(), 0);
+
+    // get owner rowsizes
     CommMatrixRowSize<M,RI> commRowSize(origMatrix, ri);
     ri.template redistribute<MatrixRowSizeGatherScatter<M,IndexSet,RI> >(commRowSize,commRowSize);
 
     origComm.buildGlobalLookup();
 
-    CommMatrixSparsityPattern<M,IndexSet,RedistributeInformation<C> >
+    for (std::size_t i=0; i < newComm.indexSet().size(); i++) {
+      rowsize[i] = ri.getRowSize(i);
+    }
+    // get sparsity pattern from owner rows
+    CommMatrixSparsityPattern<M,IndexSet>
     origsp(origMatrix, origComm.globalLookup(), newComm.indexSet());
-    CommMatrixSparsityPattern<M,IndexSet,RedistributeInformation<C> >
-    newsp(origMatrix, origComm.globalLookup(), newComm.indexSet(), ri);
+    CommMatrixSparsityPattern<M,IndexSet>
+    newsp(origMatrix, origComm.globalLookup(), newComm.indexSet(), rowsize);
 
-    ri.template redistribute<MatrixSparsityPatternGatherScatter<M,IndexSet,RI> >(origsp,newsp);
+    ri.template redistribute<MatrixSparsityPatternGatherScatter<M,IndexSet> >(origsp,newsp);
 
-    newsp.storeSparsityPattern(newMatrix);
+    // build copy to owner interface to get missing matrix values for novlp case
+    if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+      RemoteIndices<IndexSet> *ris = new RemoteIndices<IndexSet>(origComm.indexSet(),
+                                                                 newComm.indexSet(),
+                                                                 origComm.communicator());
+      ris->template rebuild<true>();
+
+      ri.getInterface().free();
+      ri.getInterface().build(*ris,copyflags,ownerflags);
+
+      // get copy rowsizes
+      CommMatrixRowSize<M,RI> commRowSize_copy(origMatrix, ri);
+      ri.template redistribute<MatrixCopyRowSizeGatherScatter<M,IndexSet,RI> >(commRowSize_copy,
+                                                                               commRowSize_copy);
+
+      for (std::size_t i=0; i < newComm.indexSet().size(); i++) {
+        copyrowsize[i] = ri.getCopyRowSize(i);
+      }
+      //get copy rowsizes for sender
+      ri.redistributeBackward(backwardscopyrowsize,copyrowsize);
+      for (std::size_t i=0; i < origComm.indexSet().size(); i++) {
+        ri.getBackwardsCopyRowSize(i) = backwardscopyrowsize[i];
+      }
+
+      // get sparsity pattern from copy rows
+      CommMatrixSparsityPattern<M,IndexSet> origsp_copy(origMatrix,
+                                                        origComm.globalLookup(),
+                                                        newComm.indexSet(),
+                                                        backwardscopyrowsize);
+      CommMatrixSparsityPattern<M,IndexSet> newsp_copy(origMatrix, origComm.globalLookup(),
+                                                       newComm.indexSet(), copyrowsize);
+      ri.template redistribute<MatrixSparsityPatternGatherScatter<M,IndexSet> >(origsp_copy,
+                                                                                newsp_copy);
+
+      newsp.completeSparsityPattern(newsp_copy.sparsity);
+      newsp.storeSparsityPattern(newMatrix);
+    }
+    else
+      newsp.storeSparsityPattern(newMatrix);
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     // Check for symmetry
@@ -576,13 +758,46 @@ namespace Dune
   {
     typedef typename C::ParallelIndexSet IndexSet;
     typedef RedistributeInformation<C> RI;
-    CommMatrixRow<M,IndexSet,RedistributeInformation<C> >
-    origrow(origMatrix, origComm.globalLookup(), newComm.indexSet());
-    CommMatrixRow<M,IndexSet,RedistributeInformation<C> >
-    newrow(newMatrix, origComm.globalLookup(), newComm.indexSet(),ri);
+    typename C::OwnerSet ownerflags;
+    std::vector<typename M::size_type> rowsize(newComm.indexSet().size(), 0);
+    std::vector<typename M::size_type> copyrowsize(newComm.indexSet().size(), 0);
+    std::vector<typename M::size_type> backwardscopyrowsize(origComm.indexSet().size(), 0);
 
-    ri.template redistribute<MatrixRowGatherScatter<M,IndexSet,RI> >(origrow,newrow);
-    newrow.setOverlapRowsToDirichlet();
+    for (std::size_t i=0; i < newComm.indexSet().size(); i++) {
+      rowsize[i] = ri.getRowSize(i);
+      if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+        copyrowsize[i] = ri.getCopyRowSize(i);
+      }
+    }
+
+    for (std::size_t i=0; i < origComm.indexSet().size(); i++)
+      if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping))
+        backwardscopyrowsize[i] = ri.getBackwardsCopyRowSize(i);
+
+
+    if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+      // fill sparsity pattern from copy rows
+      CommMatrixRow<M,IndexSet> origrow_copy(origMatrix, origComm.globalLookup(),
+                                             newComm.indexSet(), backwardscopyrowsize);
+      CommMatrixRow<M,IndexSet> newrow_copy(newMatrix, origComm.globalLookup(),
+                                            newComm.indexSet(),copyrowsize);
+      ri.template redistribute<MatrixRowGatherScatter<M,IndexSet> >(origrow_copy,
+                                                                    newrow_copy);
+      ri.getInterface().free();
+      RemoteIndices<IndexSet> *ris = new RemoteIndices<IndexSet>(origComm.indexSet(),
+                                                                 newComm.indexSet(),
+                                                                 origComm.communicator());
+      ris->template rebuild<true>();
+      ri.getInterface().build(*ris,ownerflags,ownerflags);
+    }
+
+    CommMatrixRow<M,IndexSet>
+    origrow(origMatrix, origComm.globalLookup(), newComm.indexSet());
+    CommMatrixRow<M,IndexSet>
+    newrow(newMatrix, origComm.globalLookup(), newComm.indexSet(),rowsize);
+    ri.template redistribute<MatrixRowGatherScatter<M,IndexSet> >(origrow,newrow);
+    if (origComm.getSolverCategory() != static_cast<int>(SolverCategory::nonoverlapping))
+      newrow.setOverlapRowsToDirichlet();
     if(newMatrix.N()>0&&newMatrix.N()<20)
       printmatrix(std::cout, newMatrix, "redist", "row");
   }
@@ -608,6 +823,8 @@ namespace Dune
                           RedistributeInformation<C>& ri)
   {
     ri.setNoRows(newComm.indexSet().size());
+    ri.setNoCopyRows(newComm.indexSet().size());
+    ri.setNoBackwardsCopyRows(origComm.indexSet().size());
     redistributeSparsityPattern(origMatrix, newMatrix, origComm, newComm, ri);
     redistributeMatrixEntries(origMatrix, newMatrix, origComm, newComm, ri);
   }

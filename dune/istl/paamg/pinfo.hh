@@ -34,6 +34,10 @@ namespace Dune
         category = SolverCategory::sequential
       };
 
+      const int getSolverCategory () const {
+        return SolverCategory::sequential;
+      }
+
       MPICommunicator communicator() const
       {
         return comm_;

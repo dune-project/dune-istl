@@ -102,6 +102,27 @@ namespace Dune
       C* comm_;
     };
 
+#if HAVE_MPI
+    struct OwnerOverlapCopyCommunicationArgs
+    {
+      OwnerOverlapCopyCommunicationArgs(MPI_Comm comm, int cat)
+        : comm_(comm), cat_(cat)
+      {}
+
+      MPI_Comm comm_;
+      int cat_;
+    };
+#endif
+
+    struct SequentialCommunicationArgs
+    {
+      SequentialCommunicationArgs(CollectiveCommunication<void*> comm, int cat)
+        : comm_(comm)
+      {}
+
+      CollectiveCommunication<void*> comm_;
+    };
+
   } // end Amg namspace
 
   // foward declaration
@@ -178,11 +199,10 @@ namespace Dune
     class ConstructionTraits<SequentialInformation>
     {
     public:
-      typedef const CollectiveCommunication<void*> Arguments;
-
+      typedef const SequentialCommunicationArgs Arguments;
       static inline SequentialInformation* construct(Arguments& args)
       {
-        return new SequentialInformation(args);
+        return new SequentialInformation(args.comm_);
       }
 
       static inline void deconstruct(SequentialInformation* si)
@@ -198,11 +218,11 @@ namespace Dune
     class ConstructionTraits<OwnerOverlapCopyCommunication<T1,T2> >
     {
     public:
-      typedef const MPI_Comm Arguments;
+      typedef const OwnerOverlapCopyCommunicationArgs Arguments;
 
       static inline OwnerOverlapCopyCommunication<T1,T2>* construct(Arguments& args)
       {
-        return new OwnerOverlapCopyCommunication<T1,T2>(args);
+        return new OwnerOverlapCopyCommunication<T1,T2>(args.comm_, args.cat_);
       }
 
       static inline void deconstruct(OwnerOverlapCopyCommunication<T1,T2>* com)

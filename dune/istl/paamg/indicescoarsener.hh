@@ -348,9 +348,8 @@ namespace Dune
              AggregatesMap<typename Graph::VertexDescriptor>::ISOLATED)
           {
             assert(aggregates[index->localIndexPair().local()]<attributes.size());
-            assert(attributes[aggregates[index->localIndexPair().local()]] == std::numeric_limits<char>::max()
-                   || attributes[aggregates[index->localIndexPair().local()]] == index->attribute());
-            attributes[aggregates[index->localIndexPair().local()]] = index->attribute();
+            if (attributes[aggregates[index->localIndexPair().local()]] != 3)
+              attributes[aggregates[index->localIndexPair().local()]] = index->attribute();
           }
         }
 

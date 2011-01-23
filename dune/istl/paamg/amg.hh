@@ -360,15 +360,15 @@ namespace Dune
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
           std::cout<<"Using superlu"<<std::endl;
-          if(matrices_->parallelInformation().coarsest().isRedistributed()) {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0) {
+          if(matrices_->parallelInformation().coarsest().isRedistributed())
+          {
+            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
               // We are still participating on this level
               solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat());
-            }else
+            else
               solver_ = 0;
-          }else{
+          }else
             solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat());
-          }
         }else
 #endif
         {

@@ -101,14 +101,19 @@ namespace Dune {
     {
       y = 0;
       novlp_op_apply(x,y,1);
-      communication.addOwnerCopyToAll(y,y);
+      communication.addOwnerCopyToOwnerCopy(y,y);
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
     {
+      // only apply communication to alpha*A*x to make it consistent,
+      // y already has to be consistent.
+      Y y1(y);
+      y = 0;
       novlp_op_apply(x,y,alpha);
-      communication.addOwnerCopyToAll(y,y);
+      communication.addOwnerCopyToOwnerCopy(y,y);
+      y += y1;
     }
 
     //! get matrix via *
@@ -123,22 +128,23 @@ namespace Dune {
       const PIS& pis=communication.indexSet();
       const RI& ri = communication.remoteIndices();
 
-      // set up mask vector
-      if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size())) {
-        mask.resize(x.size());
-        for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
-          mask[i] = 1;
-        for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
-          if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
-            mask[i->local().local()] = 0;
-          else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
-            mask[i->local().local()] = 2;
-      }
-
       // at the beginning make a multimap "bordercontribution".
       // process has i and j as border dofs but is not the owner
       // => only contribute to Ax if i,j is in bordercontribution
       if (buildcomm == true) {
+
+        // set up mask vector
+        if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size())) {
+          mask.resize(x.size());
+          for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
+            mask[i] = 1;
+          for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
+            if (i->local().attribute()==OwnerOverlapCopyAttributeSet::copy)
+              mask[i->local().local()] = 0;
+            else if (i->local().attribute()==OwnerOverlapCopyAttributeSet::overlap)
+              mask[i->local().local()] = 2;
+        }
+
         for (MM::iterator iter = bordercontribution.begin();
              iter != bordercontribution.end(); ++iter)
           bordercontribution.erase(iter);
@@ -170,15 +176,19 @@ namespace Dune {
                           && rindex->localIndexPair().local().local()==j.index()) {
                         if (rindex->attribute() == OwnerOverlapCopyAttributeSet::owner
                             || remote->first == iowner
-                            || remote->first << communication.communicator().rank())
+                            || remote->first < communication.communicator().rank()) {
                           flag = false;
+                          continue;
+                        }
                       }
+                    if (flag == false)
+                      continue;
                   }
-                //don´t contribute to Ax if
-                //1. the owner of j has i as interior/border dof
-                //2. iowner has j as interior/border dof
-                //3. there is another process with smaller rank that has i and j
-                //   as interor/border dofs
+                // don´t contribute to Ax if
+                // 1. the owner of j has i as interior/border dof
+                // 2. iowner has j as interior/border dof
+                // 3. there is another process with smaller rank that has i and j
+                // as interor/border dofs
                 // if the owner of j does not have i as interior/border dof,
                 // it will not be taken into account
                 if (flag==true)
@@ -195,9 +205,9 @@ namespace Dune {
         if (mask[i.index()] == 0) {
           //dof doesn't belong to process but is border (not ghost)
           for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j) {
-            if (mask[j.index()]==1) //j is owner => then sum entries
+            if (mask[j.index()] == 1) //j is owner => then sum entries
               (*j).usmv(alpha,x[j.index()],y[i.index()]);
-            else if (mask[j.index()]==0) {
+            else if (mask[j.index()] == 0) {
               std::pair<MM::iterator, MM::iterator> itp =
                 bordercontribution.equal_range(i.index());
               for (MM::iterator it = itp.first; it != itp.second; ++it)
@@ -208,7 +218,8 @@ namespace Dune {
         }
         else if (mask[i.index()] == 1) {
           for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j)
-            (*j).usmv(alpha,x[j.index()],y[i.index()]);
+            if (mask[j.index()] != 2)
+              (*j).usmv(alpha,x[j.index()],y[i.index()]);
         }
       }
     }
@@ -363,8 +374,11 @@ namespace Dune {
      */
     virtual void apply (domain_type& v, const range_type& d)
     {
+      // block preconditioner equivalent to WrappedPreconditioner from
+      // pdelab/backend/ovlpistsolverbackend.hh,
+      // but not to BlockPreconditioner from schwarz.hh
       preconditioner.apply(v,d);
-      communication.addOwnerCopyToAll(v,v);
+      communication.addOwnerCopyToOwnerCopy(v,v);
     }
 
     /*!
