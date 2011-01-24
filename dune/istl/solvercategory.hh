@@ -17,7 +17,7 @@ namespace Dune {
    */
   struct SolverCategory
   {
-    enum {
+    enum  Category {
       //! \brief Category for sequential solvers.
       sequential,
       //! \brief Category for on overlapping solvers.

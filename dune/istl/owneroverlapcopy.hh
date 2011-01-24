@@ -275,7 +275,7 @@ namespace Dune {
      * @brief Set right Solver Category (default is overlapping).
      */
 
-    void setSolverCategory (int set) {
+    void setSolverCategory (SolverCategory set) {
       category = set;
     }
 
@@ -284,7 +284,7 @@ namespace Dune {
      * @return The Solver Category.
      */
 
-    const int getSolverCategory () const {
+    const SolverCategory getSolverCategory () const {
       return category;
     }
 
@@ -522,7 +522,7 @@ namespace Dune {
      * later on.
      * @param comm_ The MPI Communicator to use, e. g. MPI_COMM_WORLD
      */
-    OwnerOverlapCopyCommunication (MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
+    OwnerOverlapCopyCommunication (MPI_Comm comm_, SolverCategory::Category cat = SolverCategory::overlapping)
       : cc(comm_), pis(), ri(pis,pis,comm_),
         OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
@@ -535,7 +535,7 @@ namespace Dune {
      * The local index set and the remote indices have to be set up
      * later on.
      */
-    OwnerOverlapCopyCommunication (int cat = Dune::SolverCategory::overlapping)
+    OwnerOverlapCopyCommunication (SolverCategory::Category cat = SolverCategory::overlapping)
       : cc(MPI_COMM_WORLD), pis(), ri(pis,pis,MPI_COMM_WORLD),
         OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
@@ -547,7 +547,7 @@ namespace Dune {
      * @param indexinfo The set of IndexTripels describing the local and remote indices.
      * @param comm_ The communicator to use in the communication.
      */
-    OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType, LocalIdType>& indexinfo, MPI_Comm comm_, int cat = Dune::SolverCategory::overlapping)
+    OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType, LocalIdType>& indexinfo, MPI_Comm comm_, SolverCategory::Category cat = SolverCategory::overlapping)
       : cc(comm_), OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
         globalLookup_(0), category(cat)
@@ -634,7 +634,7 @@ namespace Dune {
     mutable std::vector<double> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;
-    int category;
+    SolverCategory::Category category;
   };
 
 #endif
