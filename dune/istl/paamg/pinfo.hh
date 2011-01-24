@@ -34,7 +34,7 @@ namespace Dune
         category = SolverCategory::sequential
       };
 
-      const int getSolverCategory () const {
+      const SolverCategory::Category getSolverCategory () const {
         return SolverCategory::sequential;
       }
 
