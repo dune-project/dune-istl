@@ -102,11 +102,10 @@ namespace Dune {
       return *this;
     }
 
-    /** \brief Use the Thomas algorithm to solve the system Ax=b
+    /** \brief Use the Thomas algorithm to solve the system Ax=b in O(n) time
      *
      * \exception ISTLError if the matrix is singular
      *
-     * \todo Implementation currently only works for scalar matrices
      */
     template <class V>
     void solve (V& x, const V& rhs) const {
@@ -119,27 +118,52 @@ namespace Dune {
 
       // Make copies of the rhs and the right matrix band
       V d = rhs;
-      V c(this->N()-1);
+      std::vector<block_type> c(this->N()-1);
       for (size_t i=0; i<this->N()-1; i++)
         c[i] = (*this)[i][i+1];
 
       /* Modify the coefficients. */
-      c[0] /= (*this)[0][0];    /* Division by zero risk. */
-      d[0] /= (*this)[0][0];    /* Division by zero would imply a singular matrix. */
+      block_type a_00_inv;
+      FMatrixHelp::invertMatrix((*this)[0][0], a_00_inv);
+
+      //c[0] /= (*this)[0][0];	/* Division by zero risk. */
+      block_type c_0_tmp = c[0];
+      FMatrixHelp::multMatrix(a_00_inv, c_0_tmp, c[0]);
+
+      // d = a^{-1} d        /* Division by zero would imply a singular matrix. */
+      typename V::block_type d_0_tmp = d[0];
+      (*this)[0][0].solve(d[0], d_0_tmp);
 
       for (unsigned int i = 1; i < this->N(); i++) {
 
-        double id = 1.0 / ((*this)[i][i] - c[i-1] * (*this)[i][i-1]);      /* Division by zero risk. */
-        if (i<c.size())
-          c[i] *= id;                                                  /* Last value calculated is redundant. */
-        d[i] = (d[i] - d[i-1] * (*this)[i][i-1]) * id;
+        // id = ( a_ii - c_{i-1} a_{i, i-1} ) ^{-1}
+        block_type tmp;
+        FMatrixHelp::multMatrix(c[i-1], (*this)[i][i-1], tmp);
+        block_type id = (*this)[i][i];
+        id -= tmp;
+        id.invert();         /* Division by zero risk. */
+
+        if (i<c.size()) {
+          // c[i] *= id
+          tmp = c[i];
+          FMatrixHelp::multMatrix(tmp, id, c[i]);                      /* Last value calculated is redundant. */
+        }
+
+        // d[i] = (d[i] - d[i-1] * (*this)[i][i-1]) * id;
+        (*this)[i][i-1].mmv(d[i-1], d[i]);
+        typename V::block_type tmpVec = d[i];
+        id.mv(tmpVec, d[i]);
+        //d[i] *= id;
 
       }
 
       /* Now back substitute. */
       x[this->N() - 1] = d[this->N() - 1];
-      for (int i = this->N() - 2; i >= 0; i--)
-        x[i] = d[i] - c[i] * x[i + 1];
+      for (int i = this->N() - 2; i >= 0; i--) {
+        //x[i] = d[i] - c[i] * x[i + 1];
+        x[i] = d[i];
+        c[i].mmv(x[i+1], x[i]);
+      }
 
     }
 

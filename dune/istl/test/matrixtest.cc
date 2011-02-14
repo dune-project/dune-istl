@@ -354,28 +354,54 @@ int main()
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
+  //   a) the scalar case
   // ////////////////////////////////////////////////////////////////////////
 
-  BTDMatrix<FieldMatrix<double,1,1> > btdMatrix(4);
+  BTDMatrix<FieldMatrix<double,1,1> > btdMatrixScalar(4);
   typedef BTDMatrix<FieldMatrix<double,1,1> >::size_type size_type;
 
-  btdMatrix = 4.0;
+  btdMatrixScalar = 4.0;
 
-  testSuperMatrix(btdMatrix);
+  testSuperMatrix(btdMatrixScalar);
+
+  btdMatrixScalar = 0.0;
+  for (size_type i=0; i<btdMatrixScalar.N(); i++)    // diagonal
+    btdMatrixScalar[i][i] = 1+i;
+
+  for (size_type i=0; i<btdMatrixScalar.N()-1; i++)
+    btdMatrixScalar[i][i+1] = 2+i;               // first off-diagonal
+
+  testSolve<BTDMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(btdMatrixScalar);
+
+  // test a 1x1 BTDMatrix, because that is a special case
+  BTDMatrix<FieldMatrix<double,1,1> > btdMatrixScalar_1x1(1);
+  btdMatrixScalar_1x1 = 1.0;
+  testSuperMatrix(btdMatrixScalar_1x1);
+
+  // ////////////////////////////////////////////////////////////////////////
+  //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
+  //   b) the block-valued case
+  // ////////////////////////////////////////////////////////////////////////
+
+  BTDMatrix<FieldMatrix<double,2,2> > btdMatrix(4);
+  typedef BTDMatrix<FieldMatrix<double,2,2> >::size_type size_type;
 
   btdMatrix = 0.0;
   for (size_type i=0; i<btdMatrix.N(); i++)    // diagonal
-    btdMatrix[i][i] = 1+i;
+    btdMatrix[i][i] = ScaledIdentityMatrix<double,2>(1+i);
 
   for (size_type i=0; i<btdMatrix.N()-1; i++)
-    btdMatrix[i][i+1] = 2+i;               // first off-diagonal
+    btdMatrix[i][i+1] = ScaledIdentityMatrix<double,2>(2+i);               // first off-diagonal
 
-  testSolve<BTDMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(btdMatrix);
+  BTDMatrix<FieldMatrix<double,2,2> > btdMatrixThrowAway = btdMatrix;    // the test method overwrites the matrix
+  testSuperMatrix(btdMatrixThrowAway);
+
+  testSolve<BTDMatrix<FieldMatrix<double,2,2> >, BlockVector<FieldVector<double,2> > >(btdMatrix);
 
   // test a 1x1 BTDMatrix, because that is a special case
-  BTDMatrix<FieldMatrix<double,1,1> > btdMatrixScalar(1);
-  btdMatrixScalar = 1.0;
-  testSuperMatrix(btdMatrixScalar);
+  BTDMatrix<FieldMatrix<double,2,2> > btdMatrix_1x1(1);
+  btdMatrix_1x1 = 1.0;
+  testSuperMatrix(btdMatrix_1x1);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the FieldMatrix class
