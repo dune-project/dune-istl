@@ -288,7 +288,7 @@ int main()
   Matrix<FieldMatrix<double,1,1> > matrixScalar(10,10);
   for (int i=0; i<10; i++)
     for (int j=0; j<10; j++)
-      matrixScalar[i][j] = (i+j)/((double)(i*j));        // just anything
+      matrixScalar[i][j] = (i+j)/((double)(i*j+1));        // just anything
 
   testSuperMatrix(matrixScalar);
 
@@ -301,7 +301,7 @@ int main()
     for (int j=0; j<10; j++)
       for (int k=0; k<3; k++)
         for (int l=0; l<3; l++)
-          matrix[i][j][k][l] = (i+j)/((double)(k*l));            // just anything
+          matrix[i][j][k][l] = (i+j)/((double)(k*l+1));            // just anything
 
   testSuperMatrix(matrix);
 
