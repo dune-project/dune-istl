@@ -73,7 +73,8 @@ namespace Dune
       void project(V& v) const
       {}
 
-      SequentialInformation(const CollectiveCommunication<void*>&)
+      template<class T>
+      SequentialInformation(const CollectiveCommunication<T>&)
       {}
 
       SequentialInformation()
