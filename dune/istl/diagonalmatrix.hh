@@ -258,6 +258,19 @@ namespace Dune {
       return *this;
     }
 
+    //===== comparison ops
+
+    //! comparison operator
+    bool operator==(const DiagonalMatrix& other) const
+    {
+      return diag_==other.diagonal();
+    }
+
+    //! incomparison operator
+    bool operator!=(const DiagonalMatrix& other) const
+    {
+      return diag_!=other.diagonal();
+    }
 
 
     //===== linear maps
