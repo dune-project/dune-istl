@@ -481,7 +481,7 @@ namespace Dune {
     {
 #ifdef DUNE_FMatrix_WITH_CHECKING
       if (i<0 || i>=n) DUNE_THROW(FMatrixError,"row index out of range");
-      if (j<0 || j>=m) DUNE_THROW(FMatrixError,"column index out of range");
+      if (j<0 || j>=n) DUNE_THROW(FMatrixError,"column index out of range");
 #endif
       return i==j;
     }
