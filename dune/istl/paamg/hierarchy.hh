@@ -522,29 +522,6 @@ namespace Dune
     };
 
     /**
-     * @brief Identifiers for the different accumulation modes.
-     */
-    enum AccumulationMode {
-      /**
-       * @brief No data accumulution.
-       *
-       * The coarse level data will be distributed to all processes.
-       */
-      noAccu = 0,
-      /**
-       * @brief Accumulate data to on process at once
-       *
-       * Once no further coarsening is possible all data will be accumulated to one process
-       */
-      atOnceAccu=1,
-      /**
-       * @brief Successively accumulate to fewer processes.
-       */
-      successiveAccu=2
-    };
-
-
-    /**
      * @brief The criterion describing the stop criteria for the coarsening process.
      */
     template<class T>
@@ -555,94 +532,8 @@ namespace Dune
        * @brief The criterion for tagging connections as strong and nodes as isolated.
        * This might be e.g. SymmetricDependency or UnSymmetricCriterion.
        */
-      typedef T DependencyCriterion;
+      typedef T AggregationCriterion;
 
-      /**
-       * @brief Set the maximum number of levels allowed in the hierarchy.
-       */
-      void setMaxLevel(int l)
-      {
-        maxLevel_ = l;
-      }
-      /**
-       * @brief Get the maximum number of levels allowed in the hierarchy.
-       */
-      int maxLevel() const
-      {
-        return maxLevel_;
-      }
-
-      /**
-       * @brief Set the maximum number of unknowns allowed on the coarsest level.
-       */
-      void setCoarsenTarget(int nodes)
-      {
-        coarsenTarget_ = nodes;
-      }
-
-      /**
-       * @brief Get the maximum number of unknowns allowed on the coarsest level.
-       */
-      int coarsenTarget() const
-      {
-        return coarsenTarget_;
-      }
-
-      /**
-       * @brief Set the minimum coarsening rate to be achieved in each coarsening.
-       *
-       * The default value is 1.2
-       */
-      void setMinCoarsenRate(double rate)
-      {
-        minCoarsenRate_ = rate;
-      }
-
-      /**
-       * @brief Get the minimum coarsening rate to be achieved.
-       */
-      double minCoarsenRate() const
-      {
-        return minCoarsenRate_;
-      }
-
-      /**
-       * @brief Whether the data should be accumulated on fewer processes on coarser levels.
-       */
-      AccumulationMode accumulate() const
-      {
-        return accumulate_;
-      }
-      /**
-       * @brief Set whether he data should be accumulated on fewer processes on coarser levels.
-       */
-      void setAccumulate(AccumulationMode accu)
-      {
-        accumulate_=accu;
-      }
-
-      void setAccumulate(bool accu){
-        accumulate_=accu ? successiveAccu : noAccu;
-      }
-      /**
-       * @brief Set the damping factor for the prolongation.
-       *
-       * @param d The new damping factor.
-       */
-      void setProlongationDampingFactor(double d)
-      {
-        dampingFactor_ = d;
-      }
-
-      /**
-       * @brief Get the damping factor for the prolongation.
-       *
-       * @return d The damping factor.
-       */
-      double getProlongationDampingFactor() const
-      {
-        return dampingFactor_;
-      }
       /**
        * @brief Constructor
        * @param maxLevel The maximum number of levels allowed in the matrix hierarchy (default: 100).
@@ -655,32 +546,13 @@ namespace Dune
        */
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
                        double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
-        : T(), maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate),
-          dampingFactor_(prolongDamp), accumulate_( accumulate)
+        : AggregationCriterion(Dune::Amg::Parameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate))
       {}
 
-    private:
-      /**
-       * @brief The maximum number of levels allowed in the hierarchy.
-       */
-      int maxLevel_;
-      /**
-       * @brief The maximum number of unknowns allowed on the coarsest level.
-       */
-      int coarsenTarget_;
-      /**
-       * @brief The minimum coarsening rate to be achieved.
-       */
-      double minCoarsenRate_;
-      /**
-       * @brief The damping factor to apply to the prologated correction.
-       */
-      double dampingFactor_;
-      /**
-       * @brief Whether the data should be agglomerated to fewer processor on
-       * coarser levels.
-       */
-      AccumulationMode accumulate_;
+      CoarsenCriterion(const Dune::Amg::Parameters& parms)
+        : AggregationCriterion(parms)
+      {}
+
     };
 
     template<typename M, typename C1>
