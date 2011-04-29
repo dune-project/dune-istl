@@ -406,6 +406,74 @@ namespace Dune
       {
         return debugLevel_;
       }
+
+      /**
+       * @brief Set the number of presmoothing steps to apply
+       * @param steps The number of steps:
+       */
+      void setNoPreSmoothSteps(std::size_t steps)
+      {
+        preSmoothSteps_=steps;
+      }
+      /**
+       * @brief Get the number of presmoothing steps to apply
+       * @return The number of steps:
+       */
+      std::size_t getNoPreSmoothSteps() const
+      {
+        return preSmoothSteps_;
+      }
+
+      /**
+       * @brief Set the number of postsmoothing steps to apply
+       * @param steps The number of steps:
+       */
+      void setNoPostSmoothSteps(std::size_t steps)
+      {
+        postSmoothSteps_=steps;
+      }
+      /**
+       * @brief Get the number of postsmoothing steps to apply
+       * @return The number of steps:
+       */
+      std::size_t getNoPostSmoothSteps() const
+      {
+        return postSmoothSteps_;
+      }
+
+      /**
+       * @brief Set the value of gamma; 1 for V-cycle, 2 for W-cycle
+       */
+      void setGamma(std::size_t gamma)
+      {
+        gamma_=gamma;
+      }
+      /**
+       * @brief Get the value of gamma; 1 for V-cycle, 2 for W-cycle
+       */
+      std::size_t getGamma() const
+      {
+        return gamma_;
+      }
+
+      /**
+       * @brief Set whether to use additive multigrid.
+       * @param additive True if multigrid should be additive.
+       */
+      void setAdditive(bool additive)
+      {
+        additive_=additive;
+      }
+
+      /**
+       * @brief Get whether to use additive multigrid.
+       * @return True if multigrid should be additive.
+       */
+      bool getAdditive() const
+      {
+        return additive_;
+      }
+
       /**
        * @brief Constructor
        * @param maxLevel The maximum number of levels allowed in the matrix hierarchy (default: 100).
@@ -419,10 +487,15 @@ namespace Dune
       Parameters(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
                  double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
         : CoarseningParameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate)
-          , debugLevel_(2)
+          , debugLevel_(2), preSmoothSteps_(2), postSmoothSteps_(2), gamma_(1),
+          additive_(false)
       {}
     private:
       int debugLevel_;
+      std::size_t preSmoothSteps_;
+      std::size_t postSmoothSteps_;
+      std::size_t gamma_;
+      bool additive_;
     };
 
   } //namespace AMG
