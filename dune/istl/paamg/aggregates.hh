@@ -188,30 +188,8 @@ namespace Dune
        */
       void setMaxConnectivity(std::size_t connectivity){ connectivity_ = connectivity;}
 
-      /**
-       * @brief Set the debugging level.
-       *
-       * @param level If 0 no debugging output will be generated.
-       */
-      void setDebugLevel(int level)
-      {
-        debugLevel_ = level;
-      }
-
-      /**
-       * @brief Get the debugging Level.
-       *
-       * @return 0 if no debugging output will be generated.
-       */
-      int debugLevel() const
-      {
-        return debugLevel_;
-      }
-
-
     private:
       std::size_t maxDistance_, minAggregateSize_, maxAggregateSize_, connectivity_;
-      int debugLevel_;
       bool skipiso_;
     };
 
