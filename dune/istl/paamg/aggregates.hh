@@ -77,15 +77,15 @@ namespace Dune
        */
       void setDefaultValuesIsotropic(std::size_t dim, std::size_t diameter=2)
       {
-        maxDistance_=diameter-1;
+        this->setMaxDistance(diameter-1);
         std::size_t csize=1;
 
         for(; dim>0; dim--) {
           csize*=diameter;
-          maxDistance_+=diameter-1;
+          this->setMaxDistance(this->maxDistance()+diameter-1);
         }
-        minAggregateSize_=csize;
-        maxAggregateSize_=static_cast<std::size_t>(csize*1.5);
+        this->setMinAggregateSize(csize);
+        this->setMaxAggregateSize(static_cast<std::size_t>(csize*1.5));
       }
 
       /**
@@ -101,96 +101,8 @@ namespace Dune
       void setDefaultValuesAnisotropic(std::size_t dim,std::size_t diameter=2)
       {
         setDefaultValuesIsotropic(dim, diameter);
-        maxDistance_+=dim-1;
+        this->setMaxDistance(this->maxDistance()+dim-1);
       }
-      /**
-       * @brief Get the maximal distance allowed between to nodes in a aggregate.
-       *
-       * The distance between two nodes in a aggregate is the minimal number of edges
-       * it takes to travel from one node to the other without leaving the aggregate.
-       * @return The maximum distance allowed.
-       */
-      std::size_t maxDistance() const { return maxDistance_;}
-
-      /**
-       * @brief Set the maximal distance allowed between to nodes in a aggregate.
-       *
-       * The distance between two nodes in a aggregate is the minimal number of edges
-       * it takes to travel from one node to the other without leaving the aggregate.
-       * The default value is 2.
-       * @param distance The maximum distance allowed.
-       */
-      void setMaxDistance(std::size_t distance) { maxDistance_ = distance;}
-
-      /**
-       * @brief Whether isolated aggregates will not be represented on
-       * the coarse level.
-       * @return True if these aggregates will be skipped.
-       */
-      bool skipIsolated() const
-      {
-        return skipiso_;
-      }
-
-      /**
-       * @brief Set whether isolated aggregates will not be represented on
-       * the coarse level.
-       * @param skip True if these aggregates will be skipped.
-       */
-      void setSkipIsolated(bool skip)
-      {
-        skipiso_=skip;
-      }
-
-      /**
-       * @brief Get the minimum number of nodes a aggregate has to consist of.
-       * @return The minimum number of nodes.
-       */
-      std::size_t minAggregateSize() const { return minAggregateSize_;}
-
-      /**
-       * @brief Set the minimum number of nodes a aggregate has to consist of.
-       *
-       * the default value is 4.
-       * @return The minimum number of nodes.
-       */
-      void setMinAggregateSize(std::size_t size){ minAggregateSize_=size;}
-
-      /**
-       * @brief Get the maximum number of nodes a aggregate is allowed to have.
-       * @return The maximum number of nodes.
-       */
-      std::size_t maxAggregateSize() const { return maxAggregateSize_;}
-
-      /**
-       * @brief Set the maximum number of nodes a aggregate is allowed to have.
-       *
-       * The default values is 6.
-       * @param size The maximum number of nodes.
-       */
-      void setMaxAggregateSize(std::size_t size){ maxAggregateSize_ = size;}
-
-      /**
-       * @brief Get the maximum number of connections a aggregate is allowed to have.
-       *
-       * This limit exists to achieve sparsity of the coarse matrix. the default value is 15.
-       *
-       * @return The maximum number of connections a aggregate is allowed to have.
-       */
-      std::size_t maxConnectivity() const { return connectivity_;}
-
-      /**
-       * @brief Set the maximum number of connections a aggregate is allowed to have.
-       *
-       * This limit exists to achieve sparsity of the coarse matrix. the default value is 15.
-       *
-       * @param connectivity The maximum number of connections a aggregate is allowed to have.
-       */
-      void setMaxConnectivity(std::size_t connectivity){ connectivity_ = connectivity;}
-
-    private:
-      std::size_t maxDistance_, minAggregateSize_, maxAggregateSize_, connectivity_;
-      bool skipiso_;
     };
 
     template<class T>
