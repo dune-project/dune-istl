@@ -815,7 +815,7 @@ namespace Dune
             }
         }
 #endif
-        if(info->communicator().rank()==0)
+        if(criterion.debugLevel()>1 && info->communicator().rank()==0)
           std::cout<<"aggregating finished."<<std::endl;
 
         BIGINT gnoAggregates=noAggregates;
