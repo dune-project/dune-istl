@@ -336,15 +336,16 @@ namespace Dune
     {
       ConnectedBuilder<G,R,V> conBuilder(aggregates, graph, visitedMap, row);
       const typename G::VertexDescriptor aggregate=*seed->aggregate;
-      assert(row.index()==*seed->aggregate);
 
-      while(seed != overlapEnd && aggregate == *seed->aggregate) {
-        row.insert(*seed->aggregate);
-        // Walk over all neighbours and add them to the connected array.
-        visitNeighbours(graph, seed->vertex, conBuilder);
-        // Mark vertex as visited
-        put(visitedMap, seed->vertex, true);
-        ++seed;
+      if (row.index()==*seed->aggregate) {
+        while(seed != overlapEnd && aggregate == *seed->aggregate) {
+          row.insert(*seed->aggregate);
+          // Walk over all neighbours and add them to the connected array.
+          visitNeighbours(graph, seed->vertex, conBuilder);
+          // Mark vertex as visited
+          put(visitedMap, seed->vertex, true);
+          ++seed;
+        }
       }
     }
 
@@ -452,6 +453,19 @@ namespace Dune
             examined.insert(aggregates[*vertex]);
 #endif
             constructNonOverlapConnectivity(row, graph, visitedMap, aggregates, *vertex);
+
+            // only needed for ALU
+            // (ghosts with same global id as owners on the same process)
+            if (pinfo.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+              if(overlapVertices != overlapEnd) {
+                if(*overlapVertices->aggregate!=AggregatesMap<Vertex>::ISOLATED) {
+                  constructOverlapConnectivity(row, graph, visitedMap, aggregates, overlapVertices, overlapEnd);
+                }
+                else{
+                  ++overlapVertices;
+                }
+              }
+            }
             ++row;
           }
         }
