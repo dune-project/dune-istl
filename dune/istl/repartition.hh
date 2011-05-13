@@ -1416,6 +1416,11 @@ namespace Dune
 
     delete[] part;
     oocomm.copyOwnerToAll(setPartition, setPartition);
+    // communication only needed for ALU
+    // (ghosts with same global id as owners on the same process)
+    if (oocomm.getSolverCategory() ==
+        static_cast<int>(SolverCategory::nonoverlapping))
+      oocomm.copyCopyToAll(setPartition, setPartition);
     bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf,
                                   verbose);
     if(verbose) {

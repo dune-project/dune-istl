@@ -159,6 +159,11 @@ namespace Dune
         typedef Dune::Amg::GlobalAggregatesMap<Vertex,IndexSet> GlobalMap;
         GlobalMap gmap(aggregates, globalLookup);
         pinfo.copyOwnerToAll(gmap,gmap);
+        // communication only needed for ALU
+        // (ghosts with same global id as owners on the same process)
+        if (pinfo.getSolverCategory() ==
+            static_cast<int>(SolverCategory::nonoverlapping))
+          pinfo.copyCopyToAll(gmap,gmap);
 
         typedef typename ParallelInformation::RemoteIndices::const_iterator Lists;
         Lists lists = pinfo.remoteIndices().find(pinfo.communicator().rank());
