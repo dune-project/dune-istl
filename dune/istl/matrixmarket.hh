@@ -4,7 +4,12 @@
 #define DUNE_MATRIXMARKET_HH
 
 #include <ostream>
+#include <istream>
+#include <fstream>
+#include <sstream>
 #include <limits>
+#include <ios>
+#include "matrixutils.hh"
 #include "bcrsmatrix.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/tuples.hh>
@@ -155,11 +160,17 @@ namespace Dune
 
     bool lineFeed(std::istream& file)
     {
-      char c=file.peek();
+      char c;
+      if(!file.eof())
+        c=file.peek();
+      else
+        return false;
       // ignore whitespace
       while(c==' ')
       {
         file.get();
+        if(file.eof())
+          return false;
         c=file.peek();
       }
 
@@ -189,13 +200,13 @@ namespace Dune
     {
       std::string buffer;
       char c;
-      c=file.peek();
+      file >> buffer;
+      c=buffer[0];
       mmHeader=MMHeader();
       if(c!='%')
         return false;
-
+      std::cout<<buffer<<std::endl;
       /* read the banner */
-      file >> buffer;
       if(buffer!="%%MatrixMarket") {
         /* disgard the rest of the line */
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
@@ -652,12 +663,152 @@ namespace Dune
 
     readSparseEntries(matrix, istr, entries, header,d);
   }
+
   template<typename M>
-  void printMatrixMarket(M& matrix,
-                         std::ostream ostr)
+  struct mm_multipliers
+  {};
+
+  template<typename B, int i, int j, typename A>
+  struct mm_multipliers<BCRSMatrix<FieldMatrix<B,i,j>,A> >
   {
-    mm_header_printer<M>::print(ostr, matrix);
+    enum {
+      rows = i,
+      cols = j
+    };
+  };
+
+  template<typename B, int i, int j>
+  void mm_print_entry(const FieldMatrix<B,i,j>& entry,
+                      typename FieldMatrix<B,i,j>::size_type rowidx,
+                      typename FieldMatrix<B,i,j>::size_type colidx,
+                      std::ostream& ostr)
+  {
+    typedef typename FieldMatrix<B,i,j>::const_iterator riterator;
+    typedef typename FieldMatrix<B,i,j>::ConstColIterator citerator;
+    for(riterator row=entry.begin(); row != entry.end(); ++row, ++rowidx) {
+      int coli=colidx;
+      for(citerator col = row->begin(); col != row->end(); ++col, ++coli)
+        ostr<< rowidx<<" "<<coli<<" "<<*col<<std::endl;
+    }
+  }
+
+
+  /**
+   * @brief writes a ISTL block matrix to a stream in matrix market format.
+   */
+  template<typename M>
+  void writeMatrixMarket(const M& matrix,
+                         std::ostream& ostr)
+  {
+    mm_header_printer<M>::print(ostr);
     mm_block_structure_header<M>::print(ostr,matrix);
+    ostr<<matrix.M()*mm_multipliers<M>::rows<<" "
+        <<matrix.N()*mm_multipliers<M>::cols<<" "
+        <<countNonZeros(matrix)<<std::endl;
+
+    typedef typename M::const_iterator riterator;
+    typedef typename M::ConstColIterator citerator;
+    for(riterator row=matrix.begin(); row != matrix.end(); ++row)
+      for(citerator col = row->begin(); col != row->end(); ++col)
+        // Matrix Market indexing start with 1!
+        mm_print_entry(*col, row.index()*mm_multipliers<M>::rows+1,
+                       col.index()*mm_multipliers<M>::cols+1, ostr);
+  }
+
+  template<typename M, typename G, typename L>
+  void storeMatrixMarket(const M& matrix,
+                         std::string filename,
+                         const OwnerOverlapCopyCommunication<G,L>& comm)
+  {
+    // Get our rank
+    int rank = comm.communicator().rank();
+    // Write the local matrix
+    std::ostringstream rfilename;
+    rfilename<<filename <<"_"<<rank<<".mm";
+    std::cout<< rfilename.str()<<std::endl;
+    std::ofstream file(rfilename.str().c_str());
+    file.setf(std::ios::scientific,std::ios::floatfield);
+    writeMatrixMarket(matrix, file);
+    file.close();
+
+    // Write the global to local index mapping
+    rfilename.str("");
+    rfilename<<filename<<"_"<<rank<<".idx";
+    file.open(rfilename.str().c_str());
+    file.setf(std::ios::scientific,std::ios::floatfield);
+    typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet IndexSet;
+    typedef typename IndexSet::const_iterator Iterator;
+    for(Iterator iter = comm.indexSet().begin();
+        iter != comm.indexSet().end(); ++iter) {
+      file << iter->global()<<" "<<(std::size_t)iter->local()<<" "
+           <<iter->local().attribute()<<" "<<(int)iter->local().isPublic()<<std::endl;
+    }
+    // Store neighbour information for efficient remote indices setup.
+    file<<"neighbours:";
+    const std::set<int>& neighbours=comm.remoteIndices().getNeighbours();
+    typedef std::set<int>::const_iterator SIter;
+    for(SIter neighbour=neighbours.begin(); neighbour != neighbours.end(); ++neighbour) {
+      file<<" "<< *neighbour;
+    }
+    file.close();
+  }
+
+  template<typename M, typename G, typename L>
+  void loadMatrixMarket(M& matrix,
+                        const std::string& filename,
+                        OwnerOverlapCopyCommunication<G,L>& comm)
+  {
+    typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet::LocalIndex LocalIndex;
+    typedef typename LocalIndex::Attribute Attribute;
+    // Get our rank
+    int rank = comm.communicator().rank();
+    // load local matrix
+    std::ostringstream rfilename;
+    rfilename<<filename <<"_"<<rank<<".mm";
+    std::ifstream file;
+    file.open(rfilename.str().c_str(), std::ios::in);
+    if(!file)
+      DUNE_THROW(IOError, "Could not open file" << rfilename.str().c_str());
+    //if(!file.is_open())
+    //
+    readMatrixMarket(matrix,file);
+    file.close();
+    // read indices
+    typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet IndexSet;
+    IndexSet& pis=comm.pis;
+    rfilename.str("");
+    rfilename<<filename<<"_"<<rank<<".idx";
+    file.open(rfilename.str().c_str());
+    pis.beginResize();
+    while(!file.eof() && file.peek()!='n') {
+      G g;
+      file >>g;
+      std::size_t l;
+      file >>l;
+      char c;
+      file >>c;
+      bool b;
+      file >> b;
+      pis.add(g,LocalIndex(l,Attribute(c),b));
+      lineFeed(file);
+    }
+    pis.endResize();
+    if(!file.eof()) {
+      // read neighbours
+      std::string s;
+      file>>s;
+      if(s!="neighbours:")
+        DUNE_THROW(MatrixMarketFormatError, "was exspecting the string: \"neighbours:\"");
+      std::set<int> nb;
+      while(!file.eof()) {
+        int i;
+        file >> i;
+        nb.insert(i);
+      }
+      file.close();
+      comm.ri.setNeighbours(nb);
+    }
+    comm.ri.template rebuild<false>();
   }
 
 }
