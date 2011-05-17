@@ -171,6 +171,10 @@ namespace Dune {
   template <class GlobalIdType, class LocalIdType=int>
   class OwnerOverlapCopyCommunication
   {
+    template<typename M, typename G, typename L>
+    friend void loadMatrixMarket(M&,
+                                 const std::string&,
+                                 OwnerOverlapCopyCommunication<G,L>&);
     // used types
     typedef typename IndexInfoFromGrid<GlobalIdType,LocalIdType>::IndexTripel IndexTripel;
     typedef typename IndexInfoFromGrid<GlobalIdType,LocalIdType>::RemoteIndexTripel RemoteIndexTripel;
