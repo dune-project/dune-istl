@@ -79,6 +79,8 @@ namespace Dune {
     typedef typename M::ConstColIterator ColIterator;
     typedef typename M::ConstRowIterator RowIterator;
     typedef std::multimap<int,int> MM;
+    typedef std::multimap<int,std::pair<int,RILIterator> > RIMap;
+    typedef typename RIMap::iterator RIMapit;
 
     enum {
       //! \brief The solver category.
@@ -148,42 +150,48 @@ namespace Dune {
         for (MM::iterator iter = bordercontribution.begin();
              iter != bordercontribution.end(); ++iter)
           bordercontribution.erase(iter);
-        for (RowIterator i = _A_.begin(); i != _A_.end(); ++i) {
-          if (mask[i.index()] == 0) {
-            std::set<int> neighbours; //processes have i as interior/border dof
-            int iowner; //process which owns i
+        std::map<int,int> owner; //key: local index i, value: process, that owns i
+        RIMap rimap;
+
+        // for each local index make multimap rimap:
+        // key: local index i, data: pair of process that knows i and pointer to RI entry
+        for (RowIterator i = _A_.begin(); i != _A_.end(); ++i)
+          if (mask[i.index()] == 0)
             for (RIIterator remote = ri.begin(); remote != ri.end(); ++remote) {
               RIL& ril = *(remote->second.first);
-              for (RILIterator rindex = ril.begin(); rindex != ril.end(); ++rindex) {
-                if (rindex->attribute() != OwnerOverlapCopyAttributeSet::overlap) {
+              for (RILIterator rindex = ril.begin(); rindex != ril.end(); ++rindex)
+                if (rindex->attribute() != OwnerOverlapCopyAttributeSet::overlap)
                   if (rindex->localIndexPair().local().local() == i.index()) {
-                    neighbours.insert(remote->first);
+                    rimap.insert
+                      (std::make_pair(i.index(),
+                                      std::pair<int,RILIterator>(remote->first, rindex)));
                     if(rindex->attribute()==OwnerOverlapCopyAttributeSet::owner)
-                      iowner = remote->first;
+                      owner.insert(std::make_pair(i.index(),remote->first));
                   }
-                }
-              }
             }
+
+        int iowner = 0;
+        for (RowIterator i = _A_.begin(); i != _A_.end(); ++i) {
+          if (mask[i.index()] == 0) {
+            std::map<int,int>::iterator it = owner.find(i.index());
+            iowner = it->second;
+            std::pair<RIMapit, RIMapit> foundiit = rimap.equal_range(i.index());
             for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j) {
               if (mask[j.index()] == 0) {
                 bool flag = true;
-                for (RIIterator remote = ri.begin(); remote != ri.end(); ++remote)
-                  if (neighbours.find(remote->first) != neighbours.end()) {
-                    RIL& ril = *(remote->second.first);
-                    for (RILIterator rindex = ril.begin(); rindex != ril.end();
-                         ++rindex)
-                      if (rindex->attribute() != OwnerOverlapCopyAttributeSet::overlap
-                          && rindex->localIndexPair().local().local()==j.index()) {
-                        if (rindex->attribute() == OwnerOverlapCopyAttributeSet::owner
-                            || remote->first == iowner
-                            || remote->first < communication.communicator().rank()) {
-                          flag = false;
-                          continue;
-                        }
+                for (RIMapit foundi = foundiit.first; foundi != foundiit.second; ++foundi) {
+                  std::pair<RIMapit, RIMapit> foundjit = rimap.equal_range(j.index());
+                  for (RIMapit foundj = foundjit.first; foundj != foundjit.second; ++foundj)
+                    if (foundj->second.first == foundi->second.first)
+                      if (foundj->second.second->attribute() == OwnerOverlapCopyAttributeSet::owner
+                          || foundj->second.first == iowner
+                          || foundj->second.first  < communication.communicator().rank()) {
+                        flag = false;
+                        continue;
                       }
-                    if (flag == false)
-                      continue;
-                  }
+                  if (flag == false)
+                    continue;
+                }
                 // don´t contribute to Ax if
                 // 1. the owner of j has i as interior/border dof
                 // 2. iowner has j as interior/border dof
