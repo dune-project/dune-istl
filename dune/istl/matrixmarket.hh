@@ -945,7 +945,7 @@ namespace Dune
     for(Iterator iter = comm.indexSet().begin();
         iter != comm.indexSet().end(); ++iter) {
       file << iter->global()<<" "<<(std::size_t)iter->local()<<" "
-           <<iter->local().attribute()<<" "<<(int)iter->local().isPublic()<<std::endl;
+           <<(char)iter->local().attribute()<<" "<<(int)iter->local().isPublic()<<std::endl;
     }
     // Store neighbour information for efficient remote indices setup.
     file<<"neighbours:";
