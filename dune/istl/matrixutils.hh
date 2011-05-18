@@ -8,6 +8,8 @@
 #include <limits>
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/istl/bcrsmatrix.hh>
 #include "istlexception.hh"
 
 namespace Dune
@@ -384,6 +386,43 @@ namespace Dune
     {
       return A.M()*m;
     }
+  };
+
+  /**
+   * @brief Test whether a type is an ISTL Matrix
+   */
+  template<typename T>
+  struct IsMatrix
+  {
+    enum {
+      /**
+       * @brief True if T is an ISTL matrix
+       */
+      value = false
+    };
+  };
+
+  template<typename T>
+  struct IsMatrix<DenseMatrix<T> >
+  {
+    enum {
+      /**
+       * @brief True if T is an ISTL matrix
+       */
+      value = true
+    };
+  };
+
+
+  template<typename T, typename A>
+  struct IsMatrix<BCRSMatrix<T,A> >
+  {
+    enum {
+      /**
+       * @brief True if T is an ISTL matrix
+       */
+      value = true
+    };
   };
 
 }

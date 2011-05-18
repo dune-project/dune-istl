@@ -40,19 +40,37 @@ int main(int argc, char** argv)
 
   BCRSMat mat = setupAnisotropic2d<BS,double>(N, comm.indexSet(), comm.communicator(), &n, .011);
 
+  BVector bv = BVector(mat.N());
+  typedef BVector::iterator VIter;
+
+  int i=0;
+  for(VIter entry=bv.begin(); bv.end() != entry; ++entry) {
+    typedef BVector::block_type::iterator SIter;
+    for(SIter sentry=entry->begin(); sentry != entry->end(); ++sentry,++i)
+      *sentry=i;
+  }
+  comm.remoteIndices().rebuild<false>();
+  comm.copyOwnerToAll(bv,bv);
+
   storeMatrixMarket(mat, std::string("testmat"), comm);
+  storeMatrixMarket(bv, std::string("testvec"), comm, false);
 
   BCRSMat mat1;
+  BVector bv1;
+
   Communication comm1(MPI_COMM_WORLD);
 
   loadMatrixMarket(mat1, std::string("testmat"), comm1);
+  loadMatrixMarket(bv1, std::string("testvec"), comm1, false);
 
   int ret=0;
-  // if(mat!=mat1)
-  //   {
-  //     std::cerr<<"written and read matrix do not match"<<std::endl;
-  //     ++ret;
-  //   }
+  for(VIter entry=bv.begin(), entry1=bv1.begin(); bv.end() != entry; ++entry, ++entry1)
+    if(*entry!=*entry1)
+    {
+      std::cerr<<"written and read vector do not match"<<std::endl;
+      ++ret;
+    }
+
   if(comm1.indexSet()!=comm.indexSet())
   {
     std::cerr<<"written and read idxset do not match"<<std::endl;

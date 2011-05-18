@@ -13,6 +13,7 @@
 #include "bcrsmatrix.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/misc.hh>
 
 namespace Dune
 {
@@ -28,11 +29,25 @@ namespace Dune
      * the type.
      */
     template<class T>
-    struct mm_numeric_type;
+    struct mm_numeric_type {
+      enum {
+        /**
+         * @brief Whethe T is a supported numeric type.
+         */
+        is_numeric=false
+      };
+    };
 
     template<>
     struct mm_numeric_type<int>
     {
+      enum {
+        /**
+         * @brief Whethe T is a supported numeric type.
+         */
+        is_numeric=true
+      };
+
       static std::string str()
       {
         return "integer";
@@ -42,6 +57,13 @@ namespace Dune
     template<>
     struct mm_numeric_type<double>
     {
+      enum {
+        /**
+         * @brief Whethe T is a supported numeric type.
+         */
+        is_numeric=true
+      };
+
       static std::string str()
       {
         return "real";
@@ -51,6 +73,13 @@ namespace Dune
     template<>
     struct mm_numeric_type<float>
     {
+      enum {
+        /**
+         * @brief Whethe T is a supported numeric type.
+         */
+        is_numeric=true
+      };
+
       static std::string str()
       {
         return "real";
@@ -60,6 +89,13 @@ namespace Dune
     template<>
     struct mm_numeric_type<std::complex<double> >
     {
+      enum {
+        /**
+         * @brief Whethe T is a supported numeric type.
+         */
+        is_numeric=true
+      };
+
       static std::string str()
       {
         return "complex";
@@ -69,6 +105,13 @@ namespace Dune
     template<>
     struct mm_numeric_type<std::complex<float> >
     {
+      enum {
+        /**
+         * @brief Whethe T is a supported numeric type.
+         */
+        is_numeric=true
+      };
+
       static std::string str()
       {
         return "complex";
@@ -96,6 +139,26 @@ namespace Dune
       }
     };
 
+    template<typename B, typename A>
+    struct mm_header_printer<BlockVector<B,A> >
+    {
+      static void print(std::ostream& os)
+      {
+        os<<"%%MatrixMarket matrix array ";
+        os<<mm_numeric_type<typename B::field_type>::str()<<" general"<<std::endl;
+      }
+    };
+
+    template<typename T, int j>
+    struct mm_header_printer<FieldVector<T,j> >
+    {
+      static void print(std::ostream& os)
+      {
+        os<<"%%MatrixMarket matrix array ";
+        os<<mm_numeric_type<T>::str()<<" general"<<std::endl;
+      }
+    };
+
     template<typename T, int i, int j>
     struct mm_header_printer<FieldMatrix<T,i,j> >
     {
@@ -110,12 +173,24 @@ namespace Dune
      * @brief Metaprogram for writing the ISTL block
      * structure header.
      *
-     * Member function mm_block_structure_header::operaor() writes
+     * Member function mm_block_structure_header::print(os, mat) writes
      * the corresponding header to the specified ostream.
      * @tparam The type of the matrix to generate the header for.
      */
     template<class M>
     struct mm_block_structure_header;
+
+    template<typename T, typename A, int i>
+    struct mm_block_structure_header<BlockVector<FieldVector<T,i>,A> >
+    {
+      typedef BlockVector<FieldVector<T,i>,A> M;
+
+      static void print(std::ostream& os, const M& m)
+      {
+        os<<"% ISTL_STRUCT blocked ";
+        os<<i<<" "<<1<<std::endl;
+      }
+    };
 
     template<typename T, typename A, int i, int j>
     struct mm_block_structure_header<BCRSMatrix<FieldMatrix<T,i,j>,A> >
@@ -129,6 +204,7 @@ namespace Dune
       }
     };
 
+
     template<typename T, int i, int j>
     struct mm_block_structure_header<FieldMatrix<T,i,j> >
     {
@@ -138,6 +214,14 @@ namespace Dune
       {}
     };
 
+    template<typename T, int i>
+    struct mm_block_structure_header<FieldVector<T,i> >
+    {
+      typedef FieldVector<T,i> M;
+
+      static void print(std::ostream& os, const M& m)
+      {}
+    };
 
     enum LineType { MM_HEADER, MM_ISTLSTRUCT, DATA };
     enum { MM_MAX_LINE_LENGTH=1025 };
@@ -565,9 +649,12 @@ namespace Dune
                            const MMHeader& mmHeader, D)
     {
       typedef Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A> Matrix;
+      // First path
+      // store entries together with column index in a speparate
+      // data structure
       std::vector<std::set<IndexData<D> > > rows(matrix.N()*brows);
 
-      for(entries; entries>0; --entries) {
+      for(; entries>0; --entries) {
         std::size_t row;
         IndexData<D> data;
         skipComments(file);
@@ -609,6 +696,69 @@ namespace Dune
 
   class MatrixMarketFormatError : public Dune::Exception
   {};
+
+
+  void mm_read_header(std::size_t& rows, std::size_t& cols, MMHeader& header, std::istream& istr)
+  {
+    if(!readMatrixMarketBanner(istr, header))
+      std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"
+                << "%%MatrixMarket matrix coordinate real general"<<std::endl;
+
+    skipComments(istr);
+
+    if(lineFeed(istr))
+      throw MatrixMarketFormatError();
+
+    istr >> rows;
+
+    if(lineFeed(istr))
+      throw MatrixMarketFormatError();
+    istr >> cols;
+  }
+
+  template<typename T, typename A, int entries>
+  void mm_read_vector_entries(Dune::BlockVector<Dune::FieldVector<T,entries>,A>& vector,
+                              std::size_t size,
+                              std::istream& istr)
+  {
+    for(int i=0; size>0; ++i, --size) {
+      T val;
+      istr>>val;
+      vector[i/entries][i%entries]=val;
+    }
+  }
+
+
+  /**
+   * @brief Reads a sparse matrix from a matrix market file.
+   * @param matrix The matrix to store the data in.
+   * @param istr The input stream to read the data from.
+   * @warning Not all formats are supported!
+   */
+  template<typename T, typename A, int entries>
+  void readMatrixMarket(Dune::BlockVector<Dune::FieldVector<T,entries>,A>& vector,
+                        std::istream& istr)
+  {
+    MMHeader header;
+    std::size_t rows, cols;
+    mm_read_header(rows,cols,header,istr);
+    if(cols!=1)
+      DUNE_THROW(MatrixMarketFormatError, "cols!=1, therefore this is no vector!");
+
+    if(header.type!=array_type)
+      DUNE_THROW(MatrixMarketFormatError, "Vectors have to be stored in array format!");
+
+    std::size_t size=rows/entries;
+    if(size*entries!=rows)
+      DUNE_THROW(MatrixMarketFormatError, "Block size of vector is not correct1");
+
+    vector.resize(size);
+
+    istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+
+    mm_read_vector_entries(vector, rows, istr);
+  }
+
 
   /**
    * @brief Reads a sparse matrix from a matrix market file.
@@ -657,7 +807,7 @@ namespace Dune
     matrix.setBuildMode(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>::row_wise);
 
     if(header.type==array_type)
-      DUNE_THROW(Dune::NotImplemented, "currently not supported!");
+      DUNE_THROW(Dune::NotImplemented, "Array format currently not supported for matrices!");
 
     NumericWrapper<double> d;
 
@@ -692,16 +842,51 @@ namespace Dune
     }
   }
 
+  // Write a vector entry
+  template<typename V>
+  void mm_print_vector_entry(const V& entry, std::ostream& ostr,
+                             const integral_constant<int,1>&)
+  {
+    ostr<<entry<<std::endl;
+  }
 
-  /**
-   * @brief writes a ISTL block matrix to a stream in matrix market format.
-   */
+  // Write a vector
+  template<typename V>
+  void mm_print_vector_entry(const V& vector, std::ostream& ostr,
+                             const integral_constant<int,0>&)
+  {
+    // Is the entry a supported numeric type?
+    const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
+    typedef typename V::const_iterator VIter;
+
+    for(VIter i=vector.begin(); i != vector.end(); ++i)
+
+      mm_print_vector_entry(*i, ostr,
+                            integral_constant<int,isnumeric>());
+  }
+
+  template<typename T, typename A, int i>
+  std::size_t countEntries(const BlockVector<FieldVector<T,i>,A>& vector)
+  {
+    return vector.size()*i;
+  }
+
+  // Version for writing vectors.
+  template<typename V>
+  void writeMatrixMarket(const V& vector, std::ostream& ostr,
+                         const integral_constant<int,0>&)
+  {
+    ostr<<countEntries(vector)<<" "<<1<<std::endl;
+    const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
+    mm_print_vector_entry(vector,ostr, integral_constant<int,isnumeric>());
+  }
+
+  // Versions for writing matrices
   template<typename M>
   void writeMatrixMarket(const M& matrix,
-                         std::ostream& ostr)
+                         std::ostream& ostr,
+                         const integral_constant<int,1>&)
   {
-    mm_header_printer<M>::print(ostr);
-    mm_block_structure_header<M>::print(ostr,matrix);
     ostr<<matrix.M()*mm_multipliers<M>::rows<<" "
         <<matrix.N()*mm_multipliers<M>::cols<<" "
         <<countNonZeros(matrix)<<std::endl;
@@ -715,10 +900,26 @@ namespace Dune
                        col.index()*mm_multipliers<M>::cols+1, ostr);
   }
 
+
+  /**
+   * @brief writes a ISTL matrix or vector to a stream in matrix market format.
+   */
+  template<typename M>
+  void writeMatrixMarket(const M& matrix,
+                         std::ostream& ostr)
+  {
+    // Write header information
+    mm_header_printer<M>::print(ostr);
+    mm_block_structure_header<M>::print(ostr,matrix);
+    // Choose the correct function for matrix and vector
+    writeMatrixMarket(matrix,ostr,integral_constant<int,IsMatrix<M>::value>());
+  }
+
   template<typename M, typename G, typename L>
   void storeMatrixMarket(const M& matrix,
                          std::string filename,
-                         const OwnerOverlapCopyCommunication<G,L>& comm)
+                         const OwnerOverlapCopyCommunication<G,L>& comm,
+                         bool storeIndices=true)
   {
     // Get our rank
     int rank = comm.communicator().rank();
@@ -730,6 +931,9 @@ namespace Dune
     file.setf(std::ios::scientific,std::ios::floatfield);
     writeMatrixMarket(matrix, file);
     file.close();
+
+    if(!storeIndices)
+      return;
 
     // Write the global to local index mapping
     rfilename.str("");
@@ -753,10 +957,22 @@ namespace Dune
     file.close();
   }
 
+  /**
+   * @brief Load a parallel matrix/vector stored in matrix market format.
+   *
+   * @param matrix Where to store the matrix/vector.
+   * @param filename the name of the filename (without suffix and rank!)
+   *        rank i will read the file filename_i.mm
+   * @param comm The information about the data distribution.
+   * @param readIndices Whether to read the parallel index information.
+   *        If true rank i reads the index information form file filename_i.idx
+   *        And builds the remote indices information.
+   */
   template<typename M, typename G, typename L>
   void loadMatrixMarket(M& matrix,
                         const std::string& filename,
-                        OwnerOverlapCopyCommunication<G,L>& comm)
+                        OwnerOverlapCopyCommunication<G,L>& comm,
+                        bool readIndices=true)
   {
     typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet::LocalIndex LocalIndex;
     typedef typename LocalIndex::Attribute Attribute;
@@ -773,12 +989,19 @@ namespace Dune
     //
     readMatrixMarket(matrix,file);
     file.close();
+
+    if(!readIndices)
+      return;
+
     // read indices
     typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet IndexSet;
     IndexSet& pis=comm.pis;
     rfilename.str("");
     rfilename<<filename<<"_"<<rank<<".idx";
     file.open(rfilename.str().c_str());
+    if(pis.size()!=0)
+      DUNE_THROW(InvalidIndexSetState, "Index set is not empty!");
+
     pis.beginResize();
     while(!file.eof() && file.peek()!='n') {
       G g;
