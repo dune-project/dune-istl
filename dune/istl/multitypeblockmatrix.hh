@@ -8,6 +8,7 @@
 
 #include "istlexception.hh"
 
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
 #include <boost/fusion/sequence.hpp>
@@ -207,6 +208,9 @@ namespace Dune {
       @brief A Matrix class to support different block types
 
       This matrix class combines MultiTypeBlockVector elements as rows.
+
+      You must add BOOST_CPPFLAGS and BOOT_LDFLAGS to the CPPFLAGS and LDFLAGS during
+      compilation, respectively, to use this class
    */
   template<typename T1, typename T2, typename T3, typename T4,
       typename T5, typename T6, typename T7, typename T8, typename T9>
@@ -459,5 +463,5 @@ namespace Dune {
 } // end namespace
 
 #endif // HAVE_BOOST_FUSION
-
+#endif // HAVE_BOOST
 #endif

@@ -3,6 +3,7 @@
 #ifndef DUNE_MULTITYPEVECTOR_HH
 #define DUNE_MULTITYPEVECTOR_HH
 
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
 #include <cmath>
@@ -228,6 +229,9 @@ namespace Dune {
       @brief A Vector class to support different block types
 
       This vector class combines elements of different types known at compile-time.
+
+      You must add BOOST_CPPFLAGS and BOOT_LDFLAGS to the CPPFLAGS and LDFLAGS during
+      compilation, respectively, to use this class
    */
   template<typename T1, typename T2, typename T3, typename T4,
       typename T5, typename T6, typename T7, typename T8, typename T9>
@@ -306,6 +310,7 @@ namespace Dune {
 
 } // end namespace
 
-#endif
+#endif // end HAVE_BOOST_FUSION
+#endif // end HAVE_BOOST
 
 #endif
