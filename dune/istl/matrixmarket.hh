@@ -11,12 +11,37 @@
 #include <ios>
 #include "matrixutils.hh"
 #include "bcrsmatrix.hh"
+#include "owneroverlapcopy.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/misc.hh>
 
 namespace Dune
 {
+
+  /**
+   * @defgroup ISTL_IO IO for matrices and vectors.
+   * @ingroup ISTL_SPMV
+   * @brief Provides methods for reading and writing matrices and vectors
+   * in various formats.
+   *
+   *
+   * Routine printmatix prints a (sparse matrix with all entries (even zeroes).
+   * Function printvector prints a vector to a stream.
+   * PrintSparseMatrix prints a sparse matrix omitting all nonzeroes.
+   * With writeMatrixToMatlab one can write a matrix in a Matlab readable format.
+   * Using storeMartrixMarket and loadMatrixMarket one can store and load a parallel ISTL
+   * matrix in MatrixMarket format.
+   *
+   * @addtogroup ISTL_IO
+   * @{
+   */
+
+  /** @file
+   * @author Markus Blatt
+   * @brief Provides classes for reading and writing MatrixMarket Files with
+   * an extension for parallel matrices.
+   */
   namespace
   {
     /**
@@ -945,7 +970,7 @@ namespace Dune
     for(Iterator iter = comm.indexSet().begin();
         iter != comm.indexSet().end(); ++iter) {
       file << iter->global()<<" "<<(std::size_t)iter->local()<<" "
-           <<(char)iter->local().attribute()<<" "<<(int)iter->local().isPublic()<<std::endl;
+           <<(int)iter->local().attribute()<<" "<<(int)iter->local().isPublic()<<std::endl;
     }
     // Store neighbour information for efficient remote indices setup.
     file<<"neighbours:";
@@ -1008,7 +1033,7 @@ namespace Dune
       file >>g;
       std::size_t l;
       file >>l;
-      char c;
+      int c;
       file >>c;
       bool b;
       file >> b;
@@ -1033,6 +1058,6 @@ namespace Dune
     }
     comm.ri.template rebuild<false>();
   }
-
+  /** @} */
 }
 #endif
