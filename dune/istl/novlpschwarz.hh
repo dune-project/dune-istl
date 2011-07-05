@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include <cmath>                // Yes, we do some math here
-#include <sys/times.h>           // for timing measurements
 
 #include <dune/common/timer.hh>
 
