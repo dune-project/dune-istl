@@ -723,11 +723,18 @@ namespace Dune
   {};
 
 
-  void mm_read_header(std::size_t& rows, std::size_t& cols, MMHeader& header, std::istream& istr)
+  void mm_read_header(std::size_t& rows, std::size_t& cols, MMHeader& header, std::istream& istr,
+                      bool isVector)
   {
-    if(!readMatrixMarketBanner(istr, header))
+    if(!readMatrixMarketBanner(istr, header)) {
       std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"
                 << "%%MatrixMarket matrix coordinate real general"<<std::endl;
+      // Go to the beginning of the file
+      istr.clear() ;
+      istr.seekg(0, std::ios::beg);
+      if(isVector)
+        header.type=array_type;
+    }
 
     skipComments(istr);
 
@@ -766,7 +773,7 @@ namespace Dune
   {
     MMHeader header;
     std::size_t rows, cols;
-    mm_read_header(rows,cols,header,istr);
+    mm_read_header(rows,cols,header,istr, true);
     if(cols!=1)
       DUNE_THROW(MatrixMarketFormatError, "cols!=1, therefore this is no vector!");
 
@@ -799,10 +806,13 @@ namespace Dune
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,brows,bcols> > Matrix;
 
     MMHeader header;
-    if(!readMatrixMarketBanner(istr, header))
+    if(!readMatrixMarketBanner(istr, header)) {
       std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"
                 << "%%MatrixMarket matrix coordinate real general"<<std::endl;
-
+      // Go to the beginning of the file
+      istr.clear() ;
+      istr.seekg(0, std::ios::beg);
+    }
     skipComments(istr);
 
     std::size_t rows, cols, entries;
