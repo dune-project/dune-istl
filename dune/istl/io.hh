@@ -23,7 +23,7 @@
 namespace Dune {
 
   /**
-     @addtogroup ISTL_SPMV
+     @addtogroup ISTL_IO
      @{
    */
 

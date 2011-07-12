@@ -1,14 +1,19 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
-#include "mpi.h"
 #include <dune/istl/io.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/istl/schwarz.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+#ifndef MM_SEQUENTIAL
 #include <dune/istl/paamg/test/anisotropic.hh>
+#include "mpi.h"
+#include <dune/istl/schwarz.hh>
+#else
+#include <dune/istl/operators.hh>
+#include <laplacian.hh>
+#endif
 #include <dune/common/timer.hh>
 #include <dune/istl/matrixmarket.hh>
 
@@ -16,10 +21,12 @@
 
 int main(int argc, char** argv)
 {
-
+#ifndef MM_SEQUENTIAL
   MPI_Init(&argc, &argv);
   int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+#endif
   const int BS=1;
   int N=100;
 
@@ -32,15 +39,20 @@ int main(int argc, char** argv)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
+
+#ifndef MM_SEQUENTIAL
   typedef int GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<GlobalId> Communication;
   Communication comm(MPI_COMM_WORLD);
-  int n;
-
   std::cout<<comm.communicator().rank()<<" "<<comm.communicator().size()<<
   " "<<size<<std::endl;
-
+  int n;
   BCRSMat mat = setupAnisotropic2d<BS,double>(N, comm.indexSet(), comm.communicator(), &n, .011);
+#else
+  BCRSMat mat;
+  setupLaplacian(mat, N);
+#endif
+
 
   BVector bv(mat.N()), cv(mat.N());
   typedef BVector::iterator VIter;
@@ -51,23 +63,38 @@ int main(int argc, char** argv)
     for(SIter sentry=entry->begin(); sentry != entry->end(); ++sentry,++i)
       *sentry=i;
   }
+
+#ifndef MM_SEQUENTIAL
   comm.remoteIndices().rebuild<false>();
   comm.copyOwnerToAll(bv,bv);
 
   Dune::OverlappingSchwarzOperator<BCRSMat,BVector,BVector,Communication> op(mat, comm);
   op.apply(bv, cv);
-
-
   storeMatrixMarket(mat, std::string("testmat"), comm);
   storeMatrixMarket(bv, std::string("testvec"), comm, false);
+#else
+  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  Operator op(mat);
+  op.apply(bv, cv);
+
+  storeMatrixMarket(mat, std::string("testmat"));
+  storeMatrixMarket(bv, std::string("testvec"));
+#endif
+
 
   BCRSMat mat1;
   BVector bv1,cv1;
 
+#ifndef MM_SEQUENTIAL
   Communication comm1(MPI_COMM_WORLD);
 
   loadMatrixMarket(mat1, std::string("testmat"), comm1);
   loadMatrixMarket(bv1, std::string("testvec"), comm1, false);
+#else
+  loadMatrixMarket(mat1, std::string("testmat"));
+  loadMatrixMarket(bv1, std::string("testvec"));
+#endif
+
   int ret=0;
   if(mat.N()!=mat1.N() || mat.M()!=mat1.M())
   {
@@ -98,21 +125,32 @@ int main(int argc, char** argv)
     }
 
   cv1.resize(mat1.M());
+
+#ifndef MM_SEQUENTIAL
   Dune::OverlappingSchwarzOperator<BCRSMat,BVector,BVector,Communication> op1(mat1, comm1);
   op1.apply(bv1, cv1);
+
+  if(comm1.indexSet()!=comm.indexSet())
+  {
+    std::cerr<<"written and read idxset do not match"<<std::endl;
+    ++ret;
+  }
+#else
+  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  Operator op1(mat1);
+  op1.apply(bv1, cv1);
+#endif
+
   for(VIter entry=cv.begin(), entry1=cv1.begin(); cv.end() != entry; ++entry, ++entry1)
     if(*entry!=*entry1)
     {
       std::cerr<<"computed vectors do not match"<<std::endl;
       ++ret;
     }
-  if(comm1.indexSet()!=comm.indexSet())
-  {
-    std::cerr<<"written and read idxset do not match"<<std::endl;
-    ++ret;
-  }
-  storeMatrixMarket(mat1, std::string("testmat1"), comm1);
+
+#ifndef MM_SEQUENTIAL
   if(ret!=0)
     MPI_Abort(MPI_COMM_WORLD, ret);
   MPI_Finalize();
+#endif
 }

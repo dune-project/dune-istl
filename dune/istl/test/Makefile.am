@@ -1,7 +1,7 @@
 # $Id$
 
 if MPI
-  MPITESTS = vectorcommtest
+  MPITESTS = vectorcommtest matrixmarkettest
 endif
 
 if MPI
@@ -18,7 +18,7 @@ endif
 
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest vbvectortest \
-	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest
+	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest seqmatrixmarkettest
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
@@ -74,7 +74,22 @@ if MPI
   vectorcommtest_LDADD =			\
 	$(DUNEMPILIBS)				\
 	$(LDADD)
+  matrixmarkettest_SOURCES = matrixmarkettest.cc
+  matrixmarkettest_CPPFLAGS = $(AM_CPPFLAGS)	\
+	$(DUNEMPICPPFLAGS)
+  matrixmarkettest_LDFLAGS = $(AM_LDFLAGS)	\
+	$(DUNEMPILDFLAGS)
+  matrixmarkettest_LDADD =			\
+	$(DUNEMPILIBS)				\
+	$(LDADD)
 endif
+
+seqmatrixmarkettest_SOURCES = matrixmarkettest.cc
+seqmatrixmarkettest_CPPFLAGS = $(AM_CPPFLAGS)	\
+	$(DUNEMPICPPFLAGS) -DMM_SEQUENTIAL
+seqmatrixmarkettest_LDFLAGS = $(AM_LDFLAGS)
+seqmatrixmarkettest_LDADD =			\
+	$(LDADD)
 
 if MPI
   matrixredisttest_SOURCES = matrixredisttest.cc
