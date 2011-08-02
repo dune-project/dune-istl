@@ -8,7 +8,7 @@
 
 #include "istlexception.hh"
 
-#ifdef HAVE_BOOST
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
 #include <boost/fusion/sequence.hpp>

@@ -3,7 +3,7 @@
 #ifndef DUNE_MULTITYPEVECTOR_HH
 #define DUNE_MULTITYPEVECTOR_HH
 
-#ifdef HAVE_BOOST
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
 #include <cmath>
