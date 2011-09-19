@@ -31,7 +31,9 @@ namespace Dune
    * PrintSparseMatrix prints a sparse matrix omitting all nonzeroes.
    * With writeMatrixToMatlab one can write a matrix in a Matlab readable format.
    * Using storeMartrixMarket and loadMatrixMarket one can store and load a parallel ISTL
-   * matrix in MatrixMarket format.
+   * matrix in MatrixMarket format. The latter can even read a matrix written with
+   * writeMatrixToMatlab.
+   *
    *
    * @addtogroup ISTL_IO
    * @{
