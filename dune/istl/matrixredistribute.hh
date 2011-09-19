@@ -688,7 +688,7 @@ namespace Dune
     ri.template redistribute<MatrixSparsityPatternGatherScatter<M,IndexSet> >(origsp,newsp);
 
     // build copy to owner interface to get missing matrix values for novlp case
-    if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+    if (origComm.getSolverCategory() == SolverCategory::nonoverlapping) {
       RemoteIndices<IndexSet> *ris = new RemoteIndices<IndexSet>(origComm.indexSet(),
                                                                  newComm.indexSet(),
                                                                  origComm.communicator());
@@ -765,17 +765,17 @@ namespace Dune
 
     for (std::size_t i=0; i < newComm.indexSet().size(); i++) {
       rowsize[i] = ri.getRowSize(i);
-      if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+      if (origComm.getSolverCategory() == SolverCategory::nonoverlapping) {
         copyrowsize[i] = ri.getCopyRowSize(i);
       }
     }
 
     for (std::size_t i=0; i < origComm.indexSet().size(); i++)
-      if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping))
+      if (origComm.getSolverCategory() == SolverCategory::nonoverlapping)
         backwardscopyrowsize[i] = ri.getBackwardsCopyRowSize(i);
 
 
-    if (origComm.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+    if (origComm.getSolverCategory() == SolverCategory::nonoverlapping) {
       // fill sparsity pattern from copy rows
       CommMatrixRow<M,IndexSet> origrow_copy(origMatrix, origComm.globalLookup(),
                                              newComm.indexSet(), backwardscopyrowsize);

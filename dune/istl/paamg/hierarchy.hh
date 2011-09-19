@@ -587,7 +587,7 @@ namespace Dune
           IdentityMap> PropertiesGraph;
       MatrixGraph graph(origMatrix);
       PropertiesGraph pgraph(graph);
-      buildDependency(pgraph, origMatrix, criterion);
+      buildDependency(pgraph, origMatrix, criterion, false);
 
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
@@ -657,7 +657,6 @@ namespace Dune
     template<typename O, typename T>
     void MatrixHierarchy<M,IS,A>::build(const T& criterion)
     {
-
       prolongDamp_ = criterion.getProlongationDampingFactor();
       typedef O OverlapFlags;
       typedef typename ParallelMatrixHierarchy::Iterator MatIterator;
@@ -769,7 +768,7 @@ namespace Dune
         int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
         tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
-          aggregatesMap->buildAggregates(matrix->getmat(), *(get<1>(graphs)), criterion);
+          aggregatesMap->buildAggregates(matrix->getmat(), *(get<1>(graphs)), criterion, level==0);
 
         if(rank==0 && criterion.debugLevel()>2)
           std::cout<<" Have built "<<noAggregates<<" aggregates totally ("<<isoAggregates<<" isolated aggregates, "<<
