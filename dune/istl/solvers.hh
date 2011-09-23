@@ -326,8 +326,9 @@ namespace Dune {
     //! \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      _reduction = reduction;
+      std::swap(_reduction,reduction);
       (*this).apply(x,b,res);
+      std::swap(_reduction,reduction);
     }
 
   private:
@@ -456,8 +457,9 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      _reduction = reduction;
+      std::swap(_reduction,reduction);
       (*this).apply(x,b,res);
+      std::swap(_reduction,reduction);
     }
 
   private:
@@ -620,8 +622,9 @@ namespace Dune {
     virtual void apply (X& x, X& b, double reduction,
                         InverseOperatorResult& res)
     {
-      _reduction = reduction;
+      std::swap(_reduction,reduction);
       (*this).apply(x,b,res);
+      std::swap(_reduction,reduction);
     }
 
   private:
@@ -880,8 +883,9 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      _reduction = reduction;
+      std::swap(_reduction,reduction);
       (*this).apply(x,b,res);
+      std::swap(_reduction,reduction);
     }
 
   private:
@@ -1128,8 +1132,9 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      _reduction = reduction;
+      std::swap(_reduction,reduction);
       (*this).apply(x,b,res);
+      std::swap(_reduction,reduction);
     }
 
   private:
