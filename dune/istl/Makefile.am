@@ -3,8 +3,7 @@
 SUBDIRS = . tutorial test paamg
 
 istldir = $(includedir)/dune/istl
-istl_HEADERS = allocator.hh \
-	basearray.hh \
+istl_HEADERS = basearray.hh \
 	bcrsmatrix.hh \
 	bdmatrix.hh \
 	btdmatrix.hh \
