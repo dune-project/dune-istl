@@ -30,7 +30,7 @@ namespace Dune {
            copy constuctor, assignment and destructor are all default.
 
            The constructor is made protected to emphasize that objects
-       are only usably in derived classes.
+       are only usable in derived classes.
 
            Error checking: no error checking is provided normally.
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
