@@ -492,7 +492,7 @@ void testGraph ()
   SymmetricCriterion<BCRSMat,FirstDiagonal> crit;
 
   Dune::Amg::AggregatesMap<PropertiesGraph::VertexDescriptor> aggregatesMap(pgraph.maxVertex()+1);
-  aggregatesMap.buildAggregates(laplacian2d, pgraph,  crit);
+  aggregatesMap.buildAggregates(laplacian2d, pgraph,  crit, false);
   Dune::Amg::printAggregates2d(aggregatesMap, N, N, std::cout);
 
 }
@@ -539,14 +539,14 @@ void testAggregate(double eps)
 
   Dune::Amg::AggregatesMap<PropertiesGraph::VertexDescriptor> aggregatesMap(pgraph.maxVertex()+1);
 
-  aggregatesMap.buildAggregates(mat, pgraph, crit);
+  aggregatesMap.buildAggregates(mat, pgraph, crit, false);
 
   Dune::Amg::printAggregates2d(aggregatesMap, N, N, std::cout);
 
   std::cout<<"Excluded!"<<std::endl;
 
   Dune::Amg::AggregatesMap<SPropertiesGraph::VertexDescriptor> saggregatesMap(pgraph.maxVertex()+1);
-  saggregatesMap.buildAggregates(mat, spgraph, crit);
+  saggregatesMap.buildAggregates(mat, spgraph, crit, false);
   Dune::Amg::printAggregates2d(saggregatesMap, N, N, std::cout);
 
 

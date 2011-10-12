@@ -74,7 +74,7 @@ void testCoarsenIndices(int N)
 
   int noAggregates, isoAggregates, oneAggregates, skipped;
 
-  Dune::tie(noAggregates, isoAggregates, oneAggregates,skipped) = aggregatesMap.buildAggregates(mat, pg, Criterion());
+  Dune::tie(noAggregates, isoAggregates, oneAggregates,skipped) = aggregatesMap.buildAggregates(mat, pg, Criterion(), false);
 
   Dune::Amg::printAggregates2d(aggregatesMap, n, N, std::cout);
 
