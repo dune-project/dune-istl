@@ -409,7 +409,7 @@ void test_Iter ()
   d=b; A.mmv(x,d); // compute defect
   std::cout << 0 << " " << d.two_norm() << std::endl;
   Dune::BlockVector<VB> v(x); // memory for update
-  double w=1.0;               // damping factor
+  //  double w=1.0;               // damping factor
   //  printmatrix(std::cout,A,"system matrix","row",12,4);
   Dune::BCRSMatrix<MB> ILU(A);
   bilu0_decomposition(ILU);
