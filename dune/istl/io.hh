@@ -469,14 +469,20 @@ namespace Dune {
    * \code
      new_mat = spconvert(load('filename'));
    * \endcode
+   * @param reference to matrix
+   * @param filename
+   * @param outputPrecision (number of digits) which is used to write the output file
    */
   template <class MatrixType>
   void writeMatrixToMatlab(const MatrixType& matrix,
-                           const std::string& filename)
+                           const std::string& filename, int outputPrecision = 18)
   {
     std::ofstream outStream(filename.c_str());
+    int oldPrecision = outStream.precision();
+    outStream.precision(outputPrecision);
 
     writeMatrixToMatlabHelper(matrix, 0, 0, outStream);
+    outStream.precision(oldPrecision);
   }
 
   /** @} end documentation */
