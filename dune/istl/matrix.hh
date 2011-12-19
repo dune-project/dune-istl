@@ -335,7 +335,7 @@ namespace Dune {
     template <class X, class Y>
     friend Y operator*(const Matrix<T>& m, const X& vec) {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (M()!=vec.size())
+      if (m.M()!=vec.size())
         DUNE_THROW(ISTLError, "Vector size doesn't match the number of matrix columns!");
 #endif
       Y out(m.N());
