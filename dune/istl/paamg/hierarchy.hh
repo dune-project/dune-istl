@@ -839,8 +839,8 @@ namespace Dune
           // accumulate to fewer processors
           Matrix* redistMat= new Matrix();
           ParallelInformation* redistComm=0;
-          std::size_t nodomains = dunknowns/(criterion.minAggregateSize()
-                                             *criterion.coarsenTarget());
+          std::size_t nodomains = (std::size_t)std::ceil(dunknowns/(criterion.minAggregateSize()
+                                                                    *criterion.coarsenTarget()));
           if( nodomains<=criterion.minAggregateSize()/2 ||
               dunknowns <= criterion.coarsenTarget() )
             nodomains=1;
