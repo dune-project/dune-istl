@@ -9,9 +9,6 @@ AUTOMAKE_OPTIONS = foreign 1.5
 
 SUBDIRS = dune doc m4
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = dune-istl.pc
-
 # use configured compiler for "make distcheck"
 # doxygen is difficult to convince to build in a special directory...
 DISTCHECK_CONFIGURE_FLAGS = --with-dune-common="$(DUNE_COMMON_ROOT)" CXX="$(CXX)" CC="$(CC)" --enable-parallel=@ENABLE_PARALLEL@ MPICC="$(MPICC)"
