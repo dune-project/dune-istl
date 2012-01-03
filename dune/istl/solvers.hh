@@ -1236,9 +1236,7 @@ namespace Dune {
 
       // clear solver statistics
       res.clear();
-
       _M.pre(x,b);
-
       if (_recalc_defect)
       {
         // norm_0 = norm(M^-1 b)
@@ -1254,9 +1252,9 @@ namespace Dune {
       {
         // norm_0 = norm(M^-1 b)
         w = 0.0; _M.apply(w,b); // w = M^-1 b
-        norm_0 = _sp.norm(w);
         // r = _M.solve(b - A * x);
         _A_.applyscaleadd(-1,x, /* => */ b); // b = b - Ax;
+        norm_0 = _sp.norm(b);
         v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
         beta = _sp.norm(v[0]);
       }
@@ -1264,7 +1262,6 @@ namespace Dune {
       // avoid division by zero
       if (norm_0 == 0.0)
         norm_0 = 1.0;
-
       norm = norm_old = _sp.norm(v[0]);
 
       // print header
@@ -1275,7 +1272,7 @@ namespace Dune {
         {
           this->printHeader(std::cout);
           this->printOutput(std::cout,0,norm_0);
-          this->printOutput(std::cout,0,norm);
+          this->printOutput(std::cout,0,norm, norm_0);
         }
       }
 
