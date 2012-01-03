@@ -1702,7 +1702,7 @@ namespace Dune
     MPI_Comm outputComm;
 
     MPI_Comm_split(oocomm.communicator(), color, oocomm.communicator().rank(), &outputComm);
-    outcomm = new OOComm(outputComm);
+    outcomm = new OOComm(outputComm,oocomm.getSolverCategory(),true);
 
     // translate neighbor ranks.
     int newrank=outcomm->communicator().rank();
