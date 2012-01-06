@@ -239,13 +239,13 @@ namespace Dune {
     //! comparison operator
     bool operator==(const ScaledIdentityMatrix& other) const
     {
-      return p_==other.diagonal();
+      return p_==other.scalar();
     }
 
     //! incomparison operator
     bool operator!=(const ScaledIdentityMatrix& other) const
     {
-      return p_!=other.diagonal();
+      return p_!=other.scalar();
     }
 
     //===== linear maps
