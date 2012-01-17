@@ -15,6 +15,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/typetraits.hh>
 #include <dune/common/genericiterator.hh>
 
 
@@ -540,6 +541,84 @@ namespace Dune {
     // the data, a FieldVector storing the diagonal
     FieldVector<K,n> diag_;
   };
+
+#ifndef DOXYGEN // hide specialization
+  /** \brief Special type for 1x1 matrices
+   */
+  template< class K >
+  class DiagonalMatrix<K, 1> : public FieldMatrix<K, 1, 1>
+  {
+    typedef FieldMatrix<K,1,1> Base;
+  public:
+    //! The type used for index access and size operations
+    typedef typename Base::size_type size_type;
+
+    //! We are at the leaf of the block recursion
+    enum {
+      //! The number of block levels we contain.
+      //! This is always one for this type.
+      blocklevel = 1
+    };
+
+    typedef typename Base::row_type row_type;
+
+    typedef typename Base::row_reference row_reference;
+    typedef typename Base::const_row_reference const_row_reference;
+
+    //! export size
+    enum {
+      //! \brief The number of rows.
+      //! This is always one for this type.
+      rows = 1,
+      //! \brief The number of columns.
+      //! This is always one for this type.
+      cols = 1
+    };
+
+
+    //! Default Constructor
+    DiagonalMatrix()
+    {}
+
+    //! Constructor initializing the whole matrix with a scalar
+    DiagonalMatrix(const K& scalar)
+    {
+      (*this)[0][0] = scalar;
+    }
+
+    //! Constructor initializing the whole matrix with a scalar from convertible type
+    template<typename T>
+    DiagonalMatrix(const T& t)
+    {
+      DenseMatrixAssigner<Conversion<T,K>::exists>::assign(*this, t);
+    }
+
+    //! Get const reference to diagonal entry
+    const K& diagonal(size_type) const
+    {
+      return (*this)[0][0];
+    }
+
+    //! Get reference to diagonal entry
+    K& diagonal(size_type)
+    {
+      return (*this)[0][0];
+    }
+
+    //! Get const reference to diagonal vector
+    const FieldVector<K,1>& diagonal() const
+    {
+      return (*this)[0];
+    }
+
+    //! Get reference to diagonal vector
+    FieldVector<K,1>& diagonal()
+    {
+      return (*this)[0];
+    }
+
+  };
+#endif
 
 
   template<class DiagonalMatrixType>
