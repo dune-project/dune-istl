@@ -196,8 +196,8 @@ V(\K) = V_1\times V_2 \times \ldots \times V_n.
 \end{equation*} 
 The $V_i$ can be \textit{any} vector space over the field $\K$. The
 dimension of $V$ is the sum of the dimensions of the $V_i$. For a
-a mathematician every finite-dimensional vector space is isomorphic to
-the $\R^k$ for an appropriate $k$ but in our applications it is
+mathematician every finite-dimensional vector space is isomorphic to
+the $\R^k$ for an appropriate $k$, but in our applications it is
 important to know the difference between $(\R^2)^7$ and
 $\R^{14}$. Having these remarks about vector spaces in mind we can now
 turn to the class design.
@@ -315,8 +315,8 @@ in the section on memory management.
 \texttt{X::operator=(X\&)} & \texttt{X\&} & \\
 \texttt{X::operator=(field\_type\&)} & \texttt{X\&} & from scalar\\
 \hline
-\texttt{X::operator[](int)} & \texttt{field\_type\&} & \\
-\texttt{X::operator[](int)} & \texttt{const field\_type\&} & \\
+\texttt{X::operator[](int)} & \texttt{block\_type\&} & \\
+\texttt{X::operator[](int)} & \texttt{const block\_type\&} & \\
 \texttt{X::begin()} & \texttt{Iterator} & \\
 \texttt{X::end()} & \texttt{Iterator} & \\
 \texttt{X::rbegin()} & \texttt{Iterator} & for reverse iteration \\
