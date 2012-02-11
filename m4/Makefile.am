@@ -2,9 +2,7 @@
 
 ALLM4S = 					\
 	dune_istl.m4				\
-	immdx_lib_metis.m4			\
 	pardiso.m4				\
-	parmetis.m4				\
 	superlu-dist.m4				\
 	superlu.m4
 
