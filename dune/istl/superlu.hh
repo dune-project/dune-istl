@@ -14,6 +14,7 @@
 #include "slu_ddefs.h"
 #else
 #include "dsp_defs.h"
+#warning Support for SuperLU older than SuperLU 3.0 from August 2005 is deprecated.
 #endif
 #include "solvers.hh"
 #include "supermatrix.hh"
@@ -348,7 +349,11 @@ namespace Dune
 
        double def0=d.two_norm();
      */
+    #if SUPERLU_MIN_VERSION_4_3
+    options.IterRefine=SLU_DOUBLE;
+    #else
     options.IterRefine=DOUBLE;
+    #endif
 
     dgssvx(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
            &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
@@ -413,7 +418,11 @@ namespace Dune
     /* Initialize the statistics variables. */
     StatInit(&stat);
 
+    #if SUPERLU_MIN_VERSION_4_3
+    options.IterRefine=SLU_DOUBLE;
+    #else
     options.IterRefine=DOUBLE;
+    #endif
 
     dgssvx(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
            &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,

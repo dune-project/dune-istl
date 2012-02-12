@@ -98,7 +98,7 @@ AC_DEFUN([_slu_search_default],
 #
 # Shell variables:
 #   with_superlu
-#     "no", "yes (post 2005)" or "yes (pre 2005)"
+#     "no", "yes (version 4.3 or newer)", "yes (version 4.2 or older, post 2005)" or "yes (pre 2005)"
 #   direct_SUPERLU_CPPFLAGS
 #   direct_SUPERLU_LIBS
 #      CPPFLAGS and LIBS necessary to link against SuperLU.  This variable
@@ -128,6 +128,9 @@ AC_DEFUN([_slu_search_default],
 #   SUPERLU_POST_2005_VERSION
 #     1 or undefined.  A post-2005 version of SuperLU uses the header
 #     "slu_ddefs.h" while earlier versions use "dsp_defs.h".
+#   SUPERLU_MIN_VERSION_4_3
+#     1 or undefined. SuperLU version 4.3 or newer uses the symbol
+#     "SLU_DOUBLE" while earlier versions use "DOUBLE".
 #   HAVE_MEM_USAGE_T_EXPANSIONS
 #     1 or undefined.  Whether "mem_usage_t.expansions" was found in
 #     "slu_ddefs.h" or "dsp_defs.h" as apropriate.
@@ -261,6 +264,11 @@ AC_DEFUN([DUNE_PATH_SUPERLU],[
                         HAVE_SUPERLU="1"
                     ])
             fi
+            
+            # test whether SuperLU version is at least 4.3
+            if test $HAVE_SUPERLU = "1" ; then
+                AC_CHECK_DECL([SLU_DOUBLE], [SUPERLU_MIN_VERSION_4_3="1"], [], [#include <$my_slu_header>])
+            fi
         fi
 
     else # $with_superlu = no
@@ -271,7 +279,11 @@ AC_DEFUN([DUNE_PATH_SUPERLU],[
     AC_MSG_CHECKING([SuperLU])
     if test x$HAVE_SUPERLU = x1 ; then
         if test "$my_slu_header" = "slu_ddefs.h"; then
-            with_superlu="yes (post 2005)"
+            if test x$SUPERLU_MIN_VERSION_4_3 = x1 ; then
+                with_superlu="yes (version 4.3 or newer)"
+            else
+                with_superlu="yes (version 4.2 or older, post 2005)"
+            fi
         else
             with_superlu="yes (pre 2005)"
         fi
@@ -306,6 +318,9 @@ AC_DEFUN([DUNE_PATH_SUPERLU],[
         AC_DEFINE([HAVE_SUPERLU], [ENABLE_SUPERLU], [Define to ENABLE_SUPERLU if SUPERLU is found])
         if test "$my_slu_header" = "slu_ddefs.h"; then
             AC_DEFINE([SUPERLU_POST_2005_VERSION], 1, [define to 1 if there is  a header slu_ddefs.h in SuperLU])
+            if test x$SUPERLU_MIN_VERSION_4_3 = x1 ; then
+                AC_DEFINE([SUPERLU_MIN_VERSION_4_3], 1, [define to 1 if there SLU_DOUBLE imported by header slu_ddefs.h from SuperLU])
+            fi
         fi
     fi
 
