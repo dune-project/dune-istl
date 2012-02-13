@@ -329,7 +329,7 @@ namespace Dune
     template<class GI>
     void saveRecvBuf(char *recvBuf, int bufferSize, std::vector<std::pair<GI,int> >& ownerVec,
                      std::set<GI>& overlapVec, std::set<int>& neighbors, RedistributeInterface& inf, int from, MPI_Comm comm) {
-      int size;
+      std::size_t size;
       int pos=0;
       // unpack owner vertices
       MPI_Unpack(recvBuf, bufferSize, &pos, &size, 1, MPITraits<std::size_t>::getType(), comm);
