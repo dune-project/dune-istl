@@ -1033,9 +1033,9 @@ namespace Dune {
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (x.N()!=M()) DUNE_THROW(ISTLError,
-                                 "Size missmatch: M: " << N() << "x" << "M()" << " x: " << x.N());
+                                 "Size mismatch: M: " << N() << "x" << M() << " x: " << x.N());
       if (y.N()!=N()) DUNE_THROW(ISTLError,
-                                 "Size missmatch: M: " << N() << "x" << M() << " y: " << y.N());
+                                 "Size mismatch: M: " << N() << "x" << M() << " y: " << y.N());
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
