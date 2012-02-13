@@ -1253,7 +1253,7 @@ namespace Dune
       typename Matrix::field_type eij = norm_(*col);
       typename Matrix::field_type eji = norm_(matrix_->operator[](col.index())[row_]);
 
-      // skip positve offdiagonals if norm preserves sign of them.
+      // skip positive offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || eij<0 || eji<0)
         maxValue_ = std::max(maxValue_,
                              eij /diagonal_ * eji/
