@@ -160,7 +160,7 @@ namespace Dune
         : Parameters()
       {}
 
-    private:
+    protected:
       /** @brief The matrix we work on. */
       const Matrix* matrix_;
       /** @brief The current max value.*/
@@ -219,7 +219,7 @@ namespace Dune
         : Parameters()
       {}
 
-    private:
+    protected:
       /** @brief The matrix we work on. */
       const Matrix* matrix_;
       /** @brief The current max value.*/
