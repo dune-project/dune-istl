@@ -675,7 +675,6 @@ namespace Dune
       BIGINT allnonzeros = finenonzeros;
 
 
-      int procs = infoLevel->communicator().size();
       int level = 0;
       int rank = 0;
 
@@ -743,7 +742,6 @@ namespace Dune
         }
 
         rank = info->communicator().rank();
-        procs = info->communicator().size();
         if(dunknowns <= criterion.coarsenTarget())
           // No further coarsening needed
           break;
@@ -778,9 +776,9 @@ namespace Dune
         {
           // calculate size of local matrix in the distributed direction
           int start, end, overlapStart, overlapEnd;
+          int procs=info->communicator().rank();
           int n = UNKNOWNS/procs; // number of unknowns per process
           int bigger = UNKNOWNS%procs; // number of process with n+1 unknows
-          int procs=info->communicator().rank();
 
           // Compute owner region
           if(rank<bigger) {
