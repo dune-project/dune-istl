@@ -22,17 +22,17 @@ namespace Dune {
       @ingroup ISTL
    */
   /** @addtogroup ISTL_Solvers
-     @{
+      @{
    */
 
 
   /** \file
 
-     \brief   Define general, extensible interface for inverse operators.
+      \brief   Define general, extensible interface for inverse operators.
 
-     Implementation here covers only inversion of linear operators,
-     but the implementation might be used for nonlinear operators
-     as well.
+      Implementation here covers only inversion of linear operators,
+      but the implementation might be used for nonlinear operators
+      as well.
    */
 
   /**
@@ -102,13 +102,13 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     /**
-       \brief Apply inverse operator,
+        \brief Apply inverse operator,
 
-       \warning Note: right hand side b may be overwritten!
+        \warning Note: right hand side b may be overwritten!
 
-       \param x The left hand side to store the result in.
-       \param b The right hand side
-       \param res Object to store the statistics about applying the operator.
+        \param x The left hand side to store the result in.
+        \param b The right hand side
+        \param res Object to store the statistics about applying the operator.
      */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res) = 0;
 
@@ -217,24 +217,24 @@ namespace Dune {
     }
 
     /**
-       \brief Set up loop solver
+        \brief Set up loop solver
 
-       \param op The operator we solve.
-       \param sp The scalar product to use, e. g. SeqScalarproduct.
-       \param prec The preconditioner to apply in each iteration of the loop.
-       Has to inherit from Preconditioner.
-       \param reduction The relative defect reduction to achieve when applying
-       the operator.
-       \param maxit The maximum number of iteration steps allowed when applying
-       the operator.
-       \param verbose The verbosity level.
+        \param op The operator we solve.
+        \param sp The scalar product to use, e. g. SeqScalarproduct.
+        \param prec The preconditioner to apply in each iteration of the loop.
+        Has to inherit from Preconditioner.
+        \param reduction The relative defect reduction to achieve when applying
+        the operator.
+        \param maxit The maximum number of iteration steps allowed when applying
+        the operator.
+        \param verbose The verbosity level.
 
-       Verbose levels are:
-       <ul>
-       <li> 0 : print nothing </li>
-       <li> 1 : print initial and final defect and statistics </li>
-       <li> 2 : print line for each iteration </li>
-       </ul>
+        Verbose levels are:
+        <ul>
+        <li> 0 : print nothing </li>
+        <li> 1 : print initial and final defect and statistics </li>
+        <li> 2 : print line for each iteration </li>
+        </ul>
      */
     template<class L, class S, class P>
     LoopSolver (L& op, S& sp, P& prec,
@@ -284,16 +284,16 @@ namespace Dune {
       int i=1; double def=def0;
       for ( ; i<=_maxit; i++ )
       {
-        v = 0;                    // clear correction
-        _prec.apply(v,b);         // apply preconditioner
-        x += v;                   // update solution
-        _op.applyscaleadd(-1,v,b); // update defect
-        double defnew=_sp.norm(b); // comp defect norm
-        if (_verbose>1)           // print
+        v = 0;                      // clear correction
+        _prec.apply(v,b);           // apply preconditioner
+        x += v;                     // update solution
+        _op.applyscaleadd(-1,v,b);  // update defect
+        double defnew=_sp.norm(b);  // comp defect norm
+        if (_verbose>1)             // print
           this->printOutput(std::cout,i,defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
-        def = defnew;             // update norm
-        if (def<def0*_reduction || def<1E-30)  // convergence check
+        def = defnew;               // update norm
+        if (def<def0*_reduction || def<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -707,10 +707,10 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      res.clear();              // clear solver statistics
-      Timer watch;              // start a timer
-      _prec.pre(x,r);           // prepare preconditioner
-      _op.applyscaleadd(-1,x,r); // overwrite b with defect
+      res.clear();                // clear solver statistics
+      Timer watch;                // start a timer
+      _prec.pre(x,r);             // prepare preconditioner
+      _op.applyscaleadd(-1,x,r);  // overwrite b with defect
 
       rt=r;
 
@@ -723,7 +723,7 @@ namespace Dune {
       alpha = 1;
       omega = 1;
 
-      if (_verbose>0)           // printing
+      if (_verbose>0)             // printing
       {
         std::cout << "=== BiCGSTABSolver" << std::endl;
         if (_verbose>1)
@@ -738,8 +738,8 @@ namespace Dune {
       if ( norm < (_reduction * norm_0)  || norm<1E-30)
       {
         res.converged = 1;
-        _prec.post(x);                // postprocess preconditioner
-        res.iterations = 0;           // fill statistics
+        _prec.post(x);                  // postprocess preconditioner
+        res.iterations = 0;             // fill statistics
         res.reduction = 0;
         res.conv_rate  = 0;
         res.elapsed = watch.elapsed();
@@ -782,7 +782,7 @@ namespace Dune {
 
         // y = W^-1 * p
         y = 0;
-        _prec.apply(y,p);         // apply preconditioner
+        _prec.apply(y,p);           // apply preconditioner
 
         // v = A * y
         _op.apply(y,v);
@@ -847,7 +847,7 @@ namespace Dune {
 
         norm = _sp.norm(r);
 
-        if (_verbose > 1)           // print
+        if (_verbose > 1)             // print
         {
           this->printOutput(std::cout,it,norm,norm_old);
         }
@@ -861,15 +861,15 @@ namespace Dune {
         norm_old = norm;
       } // end for
 
-      if (_verbose==1)              // printing for non verbose
+      if (_verbose==1)                // printing for non verbose
         this->printOutput(std::cout,it,norm);
 
-      _prec.post(x);                // postprocess preconditioner
-      res.iterations = static_cast<int>(std::ceil(it));            // fill statistics
+      _prec.post(x);                  // postprocess preconditioner
+      res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
       res.reduction = norm/norm_0;
       res.conv_rate  = pow(res.reduction,1.0/it);
       res.elapsed = watch.elapsed();
-      if (_verbose>0)               // final print
+      if (_verbose>0)                 // final print
         std::cout << "=== rate=" << res.conv_rate
                   << ", T=" << res.elapsed
                   << ", TIT=" << res.elapsed/it
@@ -915,9 +915,9 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     /*!
-            \brief Set up MINRES solver.
+       \brief Set up MINRES solver.
 
-            \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
     MINRESSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
@@ -929,9 +929,9 @@ namespace Dune {
                           "L must be sequential!");
     }
     /*!
-            \brief Set up MINRES solver.
+       \brief Set up MINRES solver.
 
-            \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S, class P>
     MINRESSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
@@ -944,32 +944,32 @@ namespace Dune {
     }
 
     /*!
-            \brief Apply inverse operator.
+       \brief Apply inverse operator.
 
-            \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      res.clear();                                      // clear solver statistics
-      Timer watch;                                      // start a timer
-      _prec.pre(x,b);                                   // prepare preconditioner
-      _op.applyscaleadd(-1,x,b);                // overwrite b with defect/residual
+      res.clear();                // clear solver statistics
+      Timer watch;                // start a timer
+      _prec.pre(x,b);             // prepare preconditioner
+      _op.applyscaleadd(-1,x,b);  // overwrite b with defect/residual
 
-      double def0 = _sp.norm(b);                // compute residual norm
+      double def0 = _sp.norm(b);  // compute residual norm
 
-      if (def0<1E-30)              // convergence check
+      if (def0<1E-30)    // convergence check
       {
         res.converged  = true;
-        res.iterations = 0;                               // fill statistics
+        res.iterations = 0;               // fill statistics
         res.reduction = 0;
         res.conv_rate  = 0;
         res.elapsed=0;
-        if (_verbose>0)                                 // final print
+        if (_verbose>0)                 // final print
           std::cout << "=== rate=" << res.conv_rate << ", T=" << res.elapsed << ", TIT=" << res.elapsed << ", IT=0" << std::endl;
         return;
       }
 
-      if (_verbose>0)                       // printing
+      if (_verbose>0)             // printing
       {
         std::cout << "=== MINRESSolver" << std::endl;
         if (_verbose>1) {
@@ -979,29 +979,29 @@ namespace Dune {
       }
 
       // some local variables
-      double def=def0;                                                  // the defect/residual norm
-      field_type alpha,                                                 // recurrence coefficients as computed in the Lanczos alg making up the matrix T
-                 beta,                                                          //
-                 c[2]={0.0, 0.0},                                       // diagonal entry of Givens rotation
-                 s[2]={0.0, 0.0};                                       // off-diagonal entries of Givens rotation
+      double def=def0;                    // the defect/residual norm
+      field_type alpha,                   // recurrence coefficients as computed in the Lanczos alg making up the matrix T
+                 beta,          //
+                 c[2]={0.0, 0.0}, // diagonal entry of Givens rotation
+                 s[2]={0.0, 0.0}; // off-diagonal entries of Givens rotation
 
-      field_type T[3]={0.0, 0.0, 0.0};                  // recurrence coefficients (column k of Matrix T)
+      field_type T[3]={0.0, 0.0, 0.0};      // recurrence coefficients (column k of Matrix T)
 
-      X z(b.size()),                    // some temporary vectors
+      X z(b.size()),        // some temporary vectors
       dummy(b.size());
 
       field_type xi[2]={1.0, 0.0};
 
       // initialize
-      z = 0.0;                                          // clear correction
+      z = 0.0;                  // clear correction
 
-      _prec.apply(z,b);                         // apply preconditioner z=M^-1*b
+      _prec.apply(z,b);         // apply preconditioner z=M^-1*b
 
       beta = sqrt(fabs(_sp.dot(z,b)));
       double beta0 = beta;
 
-      X p[3];                   // the search directions
-      X q[3];                   // Orthonormal basis vectors (in unpreconditioned case)
+      X p[3];       // the search directions
+      X q[3];       // Orthonormal basis vectors (in unpreconditioned case)
 
       q[0].resize(b.size());
       q[1].resize(b.size());
@@ -1019,20 +1019,20 @@ namespace Dune {
       p[2] = 0.0;
 
 
-      z /= beta;                        // this is w_current
+      z /= beta;        // this is w_current
 
       // the loop
       int i=1;
       for ( ; i<=_maxit; i++)
       {
-        dummy = z;                 // remember z_old for the computation of the search direction p in the next iteration
+        dummy = z;   // remember z_old for the computation of the search direction p in the next iteration
 
         int i1 = i%3,
             i0 = (i1+2)%3,
             i2 = (i1+1)%3;
 
         // Symmetrically Preconditioned Lanczos (Greenbaum p.121)
-        _op.apply(z,q[i2]);                             // q[i2] = Az
+        _op.apply(z,q[i2]);               // q[i2] = Az
         q[i2].axpy(-beta, q[i0]);
         alpha = _sp.dot(q[i2],z);
         q[i2].axpy(-alpha, q[i1]);
@@ -1062,7 +1062,7 @@ namespace Dune {
           T[2] = alpha;
 
         // recompute c, s -> current Givens rotation \TODO use BLAS-routine drotg instead for greater robustness
-        //                      cblas_drotg (a, b, c, s);
+        //          cblas_drotg (a, b, c, s);
         c[i%2] = 1.0/sqrt(T[2]*T[2] + beta*beta);
         s[i%2] = beta*c[i%2];
         c[i%2] *= T[2];
@@ -1088,34 +1088,34 @@ namespace Dune {
 
         // update residual - not necessary if in the preconditioned case we are content with the residual norm of the
         // preconditioned system as convergence test
-        //                      _op.apply(p[i2],dummy);
-        //                      b.axpy(-beta0*xi[(i+1)%2],dummy);
+        //          _op.apply(p[i2],dummy);
+        //          b.axpy(-beta0*xi[(i+1)%2],dummy);
 
-        //                      convergence test
-        //                      double defnew=_sp.norm(b);	// residual norm of original system
-        double defnew = fabs(beta0*xi[i%2]);                    // the last entry the QR-transformed least squares RHS is the new residual norm
+        //          convergence test
+        //          double defnew=_sp.norm(b);  // residual norm of original system
+        double defnew = fabs(beta0*xi[i%2]);      // the last entry the QR-transformed least squares RHS is the new residual norm
 
-        if (_verbose>1)                             // print
+        if (_verbose>1)               // print
           this->printOutput(std::cout,i,defnew,def);
 
-        def = defnew;                               // update norm
-        if (def<def0*_reduction || def<1E-30 || i==_maxit)                    // convergence check
+        def = defnew;                 // update norm
+        if (def<def0*_reduction || def<1E-30 || i==_maxit)      // convergence check
         {
           res.converged  = true;
           break;
         }
       }
 
-      if (_verbose==1)                          // printing for non verbose
+      if (_verbose==1)                  // printing for non verbose
         this->printOutput(std::cout,i,def);
 
-      _prec.post(x);                            // postprocess preconditioner
-      res.iterations = i;                         // fill statistics
+      _prec.post(x);                    // postprocess preconditioner
+      res.iterations = i;                 // fill statistics
       res.reduction = def/def0;
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
-      if (_verbose>0)                           // final print
+      if (_verbose>0)                   // final print
       {
         std::cout << "=== rate=" << res.conv_rate
                   << ", T=" << res.elapsed
@@ -1126,9 +1126,9 @@ namespace Dune {
     }
 
     /*!
-            \brief Apply inverse operator with given reduction factor.
+       \brief Apply inverse operator with given reduction factor.
 
-            \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
