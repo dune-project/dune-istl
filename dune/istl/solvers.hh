@@ -15,6 +15,7 @@
 #include "preconditioners.hh"
 #include "scalarproducts.hh"
 #include <dune/common/timer.hh>
+#include <dune/common/ftraits.hh>
 #include <dune/common/static_assert.hh>
 
 namespace Dune {
@@ -913,6 +914,8 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator to be inverted.
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
        \brief Set up MINRES solver.
@@ -955,7 +958,7 @@ namespace Dune {
       _prec.pre(x,b);             // prepare preconditioner
       _op.applyscaleadd(-1,x,b);  // overwrite b with defect/residual
 
-      double def0 = _sp.norm(b);  // compute residual norm
+      real_type def0 = _sp.norm(b);   // compute residual norm
 
       if (def0<1E-30)    // convergence check
       {
@@ -979,11 +982,11 @@ namespace Dune {
       }
 
       // some local variables
-      double def=def0;                    // the defect/residual norm
+      real_type def=def0;                 // the defect/residual norm
       field_type alpha,                   // recurrence coefficients as computed in the Lanczos alg making up the matrix T
-                 beta,          //
                  c[2]={0.0, 0.0}, // diagonal entry of Givens rotation
                  s[2]={0.0, 0.0}; // off-diagonal entries of Givens rotation
+      real_type beta;
 
       field_type T[3]={0.0, 0.0, 0.0};      // recurrence coefficients (column k of Matrix T)
 
@@ -997,8 +1000,8 @@ namespace Dune {
 
       _prec.apply(z,b);         // apply preconditioner z=M^-1*b
 
-      beta = sqrt(fabs(_sp.dot(z,b)));
-      double beta0 = beta;
+      beta = std::sqrt(std::abs(_sp.dot(z,b)));
+      real_type beta0 = beta;
 
       X p[3];       // the search directions
       X q[3];       // Orthonormal basis vectors (in unpreconditioned case)
@@ -1040,7 +1043,7 @@ namespace Dune {
         z=0.0;
         _prec.apply(z,q[i2]);
 
-        beta = sqrt(fabs(_sp.dot(q[i2],z)));
+        beta = std::sqrt(std::abs(_sp.dot(q[i2],z)));
 
         q[i2] /= beta;
         z /= beta;
@@ -1063,7 +1066,7 @@ namespace Dune {
 
         // recompute c, s -> current Givens rotation \TODO use BLAS-routine drotg instead for greater robustness
         //          cblas_drotg (a, b, c, s);
-        c[i%2] = 1.0/sqrt(T[2]*T[2] + beta*beta);
+        c[i%2] = 1.0/std::sqrt(T[2]*T[2] + beta*beta);
         s[i%2] = beta*c[i%2];
         c[i%2] *= T[2];
 
@@ -1092,8 +1095,7 @@ namespace Dune {
         //          b.axpy(-beta0*xi[(i+1)%2],dummy);
 
         //          convergence test
-        //          double defnew=_sp.norm(b);  // residual norm of original system
-        double defnew = fabs(beta0*xi[i%2]);      // the last entry the QR-transformed least squares RHS is the new residual norm
+        real_type defnew = std::abs(beta0*xi[i%2]);   // the last entry the QR-transformed least squares RHS is the new residual norm
 
         if (_verbose>1)               // print
           this->printOutput(std::cout,i,defnew,def);
