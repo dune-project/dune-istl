@@ -445,7 +445,7 @@ namespace Dune
         smoother.template apply<false>(v,d);
       }
     };
-#if HAVE_SUPERLU
+
   } // end namespace Amg
 
   // forward declarations
@@ -817,7 +817,7 @@ namespace Dune
       }
     };
 
-#endif
+
   } // namespace Amg
 } // namespace Dune
 
