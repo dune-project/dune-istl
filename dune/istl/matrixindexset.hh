@@ -14,43 +14,44 @@ namespace Dune {
   {
 
   public:
+    typedef size_t size_type;
 
     /** \brief Default constructor */
     MatrixIndexSet() : rows_(0), cols_(0)
     {}
 
     /** \brief Constructor setting the matrix size */
-    MatrixIndexSet(int rows, int cols) : rows_(rows), cols_(cols) {
+    MatrixIndexSet(size_type rows, size_type cols) : rows_(rows), cols_(cols) {
       indices_.resize(rows_);
     }
 
     /** \brief Reset the size of an index set */
-    void resize(int rows, int cols) {
+    void resize(size_type rows, size_type cols) {
       rows_ = rows;
       cols_ = cols;
       indices_.resize(rows_);
     }
 
     /** \brief Add an index to the index set */
-    void add(int i, int j) {
+    void add(size_type i, size_type j) {
       indices_[i].insert(j);
     }
 
     /** \brief Return the number of entries */
-    int size() const {
-      int entries = 0;
-      for (int i=0; i<rows_; i++)
+    size_type size() const {
+      size_type entries = 0;
+      for (size_type i=0; i<rows_; i++)
         entries += indices_[i].size();
 
       return entries;
     }
 
     /** \brief Return the number of rows */
-    int rows() const {return rows_;}
+    size_type rows() const {return rows_;}
 
 
     /** \brief Return the number of entries in a given row */
-    int rowsize(int row) const {return indices_[row].size();}
+    size_type rowsize(size_type row) const {return indices_[row].size();}
 
     /** \brief Import all nonzero entries of a sparse matrix into the index set
         \tparam MatrixType Needs to be BCRSMatrix<...>
@@ -59,12 +60,12 @@ namespace Dune {
         \param colOffset don't write to cols<colOffset
      */
     template <class MatrixType>
-    void import(const MatrixType& m, int rowOffset=0, int colOffset=0) {
+    void import(const MatrixType& m, size_type rowOffset=0, size_type colOffset=0) {
 
       typedef typename MatrixType::row_type RowType;
       typedef typename RowType::ConstIterator ColumnIterator;
 
-      for (int rowIdx=0; rowIdx<m.N(); rowIdx++) {
+      for (size_type rowIdx=0; rowIdx<m.N(); rowIdx++) {
 
         const RowType& row = m[rowIdx];
 
@@ -89,14 +90,14 @@ namespace Dune {
       matrix.setSize(rows_, cols_);
       matrix.setBuildMode(MatrixType::random);
 
-      for (int i=0; i<rows_; i++)
+      for (size_type i=0; i<rows_; i++)
         matrix.setrowsize(i, indices_[i].size());
 
       matrix.endrowsizes();
 
-      for (int i=0; i<rows_; i++) {
+      for (size_type i=0; i<rows_; i++) {
 
-        typename std::set<unsigned int>::iterator it = indices_[i].begin();
+        typename std::set<size_type>::iterator it = indices_[i].begin();
         for (; it!=indices_[i].end(); ++it)
           matrix.addindex(i, *it);
 
@@ -108,9 +109,9 @@ namespace Dune {
 
   private:
 
-    std::vector<std::set<unsigned int> > indices_;
+    std::vector<std::set<size_type> > indices_;
 
-    int rows_, cols_;
+    size_type rows_, cols_;
 
   };
 
