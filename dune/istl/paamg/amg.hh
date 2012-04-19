@@ -265,6 +265,7 @@ namespace Dune
       std::size_t level;
       bool buildHierarchy_;
       bool additive;
+      bool coarsesolverconverged;
       Smoother *coarseSmoother_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
@@ -278,7 +279,8 @@ namespace Dune
       : matrices_(&matrices), smootherArgs_(smootherArgs),
         smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
-        additive(additive_), coarseSmoother_(), verbosity_(2)
+        additive(additive_), coarsesolverconverged(true),
+        coarseSmoother_(), verbosity_(2)
     {
       assert(matrices_->isBuilt());
 
@@ -294,7 +296,8 @@ namespace Dune
         smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
-        additive(parms.getAdditive()), coarseSmoother_(), verbosity_(parms.debugLevel())
+        additive(parms.getAdditive()), coarsesolverconverged(true),
+        coarseSmoother_(), verbosity_(parms.debugLevel())
     {
       assert(matrices_->isBuilt());
 
@@ -314,7 +317,8 @@ namespace Dune
       : smootherArgs_(smootherArgs),
         smoothers_(), solver_(), scalarProduct_(0), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
-        additive(additive_), coarseSmoother_(), verbosity_(criterion.debugLevel())
+        additive(additive_), coarsesolverconverged(true),
+        coarseSmoother_(), verbosity_(criterion.debugLevel())
     {
       dune_static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
@@ -343,7 +347,8 @@ namespace Dune
         smoothers_(), solver_(), scalarProduct_(0),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
-        additive(criterion.getAdditive()), coarseSmoother_(), verbosity_(criterion.debugLevel())
+        additive(criterion.getAdditive()), coarsesolverconverged(true),
+        coarseSmoother_(), verbosity_(criterion.debugLevel())
     {
       dune_static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
@@ -668,8 +673,8 @@ namespace Dune
           solver_->apply(*update, *rhs, res);
         }
 
-        if(!res.converged)
-          DUNE_THROW(MathError, "Coarse solver did not converge");
+        if (!res.converged)
+          coarsesolverconverged = false;
       }else{
         // presmoothing
         presmooth();
@@ -688,6 +693,11 @@ namespace Dune
         *lhs=0;
 #endif
 
+        if(matrix == matrices_->matrices().finest()) {
+          coarsesolverconverged = matrices_->parallelInformation().finest()->communicator().prod(coarsesolverconverged);
+          if(!coarsesolverconverged)
+            DUNE_THROW(MathError, "Coarse solver did not converge");
+        }
         // postsmoothing
         postsmooth();
 
