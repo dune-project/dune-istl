@@ -5,9 +5,45 @@
 
 #if HAVE_SUPERLU
 #ifdef SUPERLU_POST_2005_VERSION
+
+#ifndef SUPERLU_NTYPE
+#define SUPERLU_NTYPE 1
+#endif
+
+#if SUPERLU_NTYPE==0
+#include "slu_sdefs.h"
+#endif
+
+#if SUPERLU_NTYPE==1
 #include "slu_ddefs.h"
+#endif
+
+#if SUPERLU_NTYPE==2
+#include "slu_cdefs.h"
+#endif
+
+#if SUPERLU_NTYPE>=3
+#include "slu_zdefs.h"
+#endif
+
 #else
+
+#if SUPERLU_NTYPE==0
+#include "ssp_defs.h"
+#endif
+
+#if SUPERLU_NTYPE==1
 #include "dsp_defs.h"
+#endif
+
+#if SUPERLU_NTYPE==2
+#include "csp_defs.h"
+#endif
+
+#if SUPERLU_NTYPE>=3
+#include "zsp_defs.h"
+#endif
+
 #endif
 #include "bcrsmatrix.hh"
 #include "bvector.hh"
@@ -17,6 +53,106 @@
 
 namespace Dune
 {
+
+  template<class T>
+  struct SuperMatrixCreateSparseChooser
+  {};
+
+  template<class T>
+  struct SuperMatrixPrinter
+  {};
+
+#if SUPERLU_NTYPE==0
+  template<>
+  struct SuperMatrixCreateSparseChooser<float>
+  {
+    static void create(SuperMatrix *mat, int n, int m, int offset,
+                       float *values, int *rowindex, int* colindex,
+                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
+    {
+      sCreate_CompCol_Matrix(mat, n, m, offset, values, rowindex, colindex,
+                             stype, dtype, mtype);
+    }
+  };
+
+  template<>
+  struct SuperMatrixPrinter<float>
+  {
+    static void print(char* name, SuperMatrix* mat)
+    {
+      sPrint_CompCol_Matrix(name, mat);
+    }
+  };
+#endif
+
+#if SUPERLU_NTYPE==1
+  template<>
+  struct SuperMatrixCreateSparseChooser<double>
+  {
+    static void create(SuperMatrix *mat, int n, int m, int offset,
+                       double *values, int *rowindex, int* colindex,
+                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
+    {
+      dCreate_CompCol_Matrix(mat, n, m, offset, values, rowindex, colindex,
+                             stype, dtype, mtype);
+    }
+  };
+
+  template<>
+  struct SuperMatrixPrinter<double>
+  {
+    static void print(char* name, SuperMatrix* mat)
+    {
+      dPrint_CompCol_Matrix(name, mat);
+    }
+  };
+#endif
+
+#if SUPERLU_NTYPE==2
+  template<>
+  struct SuperMatrixCreateSparseChooser<std::complex<float> >
+  {
+    static void create(SuperMatrix *mat, int n, int m, int offset,
+                       std::complex<float> *values, int *rowindex, int* colindex,
+                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
+    {
+      cCreate_CompCol_Matrix(mat, n, m, offset, reinterpret_cast< ::complex*>(values),
+                             rowindex, colindex, stype, dtype, mtype);
+    }
+  };
+
+  template<>
+  struct SuperMatrixPrinter<std::complex<float> >
+  {
+    static void print(char* name, SuperMatrix* mat)
+    {
+      cPrint_CompCol_Matrix(name, mat);
+    }
+  };
+#endif
+
+#if SUPERLU_NTYPE>=3
+  template<>
+  struct SuperMatrixCreateSparseChooser<std::complex<double> >
+  {
+    static void create(SuperMatrix *mat, int n, int m, int offset,
+                       std::complex<double> *values, int *rowindex, int* colindex,
+                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
+    {
+      zCreate_CompCol_Matrix(mat, n, m, offset, reinterpret_cast<doublecomplex*>(values),
+                             rowindex, colindex, stype, dtype, mtype);
+    }
+  };
+
+  template<>
+  struct SuperMatrixPrinter<std::complex<double> >
+  {
+    static void print(char* name, SuperMatrix* mat)
+    {
+      zPrint_CompCol_Matrix(name, mat);
+    }
+  };
+#endif
 
   /**
    * @brief Provides access to an iterator over all matrix rows.
@@ -150,31 +286,39 @@ namespace Dune
   template<>
   struct GetSuperLUType<double>
   {
-    enum { type = SLU_D};
+    static const Dtype_t type;
+    typedef double float_type;
 
   };
+  const Dtype_t GetSuperLUType<double>::type=SLU_D;
 
   template<>
   struct GetSuperLUType<float>
   {
-    enum { type = SLU_S};
-
+    static const Dtype_t type;
+    typedef float float_type;
   };
+
+  const Dtype_t GetSuperLUType<float>::type=SLU_S;
 
   template<>
   struct GetSuperLUType<std::complex<double> >
   {
-    enum { type = SLU_Z};
-
+    static const Dtype_t type;
+    typedef double float_type;
   };
+
+  const Dtype_t GetSuperLUType<std::complex<double> >::type=SLU_Z;
 
   template<>
   struct GetSuperLUType<std::complex<float> >
   {
-    enum { type = SLU_C};
+    static const Dtype_t type;
+    typedef float float_type;
 
   };
 
+  const Dtype_t GetSuperLUType<std::complex<float> >::type=SLU_C;
   /**
    * @brief Utility class for converting an ISTL Matrix
    * into a SsuperLU Matrix.
@@ -503,8 +647,10 @@ namespace Dune
   {
     delete[] marker;
     marker=0;
-    dCreate_CompCol_Matrix(&mat->A, mat->N_, mat->M_, mat->colstart[cols],
-                           mat->values, mat->rowindex, mat->colstart, SLU_NC, static_cast<Dtype_t>(GetSuperLUType<T>::type), SLU_GE);
+    SuperMatrixCreateSparseChooser<T>
+    ::create(&mat->A, mat->N_, mat->M_, mat->colstart[cols],
+             mat->values, mat->rowindex, mat->colstart, SLU_NC,
+             static_cast<Dtype_t>(GetSuperLUType<T>::type), SLU_GE);
   }
 
   template<class F, class MRS>
@@ -676,7 +822,7 @@ namespace Dune
 #ifdef DUNE_ISTL_WITH_CHECKING
     char name[] = {'A',0};
     if(N_<0)
-      dPrint_CompCol_Matrix(name,&A);
+      SuperMatrixPrinter<B>::print(name,&A);
     assert(*this==mat);
 #endif
   }
@@ -697,7 +843,7 @@ namespace Dune
 #ifdef DUNE_ISTL_WITH_CHECKING
     char name[] = {'A',0};
     if(N_<0)
-      dPrint_CompCol_Matrix(name,&A);
+      SuperMatrixPrinter<B>::print(name,&A);
 #endif
   }
 

@@ -9,7 +9,7 @@ if MPI
 endif
 
 if SUPERLU
-  SUPERLUTESTS =  superlutest overlappingschwarztest
+  SUPERLUTESTS =  superlutest superluztest superluctest superlustest overlappingschwarztest
 endif
 
 if PARDISO
@@ -33,6 +33,23 @@ if SUPERLU
   superlutest_LDADD= $(SUPERLU_LIBS)
   superlutest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
   superlutest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+
+  superlustest_SOURCES = superlutest.cc
+  superlustest_LDADD= $(SUPERLU_LIBS)
+  superlustest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+  superlustest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=0
+
+
+  superluctest_SOURCES = superlutest.cc
+  superluctest_LDADD= $(SUPERLU_LIBS)
+  superluctest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+  superluctest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=2
+
+
+  superluztest_SOURCES = superlutest.cc
+  superluztest_LDADD= $(SUPERLU_LIBS)
+  superluztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+  superluztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
 
   overlappingschwarztest_SOURCES = overlappingschwarztest.cc
   overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
