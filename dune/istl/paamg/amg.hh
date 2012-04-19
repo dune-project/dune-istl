@@ -12,6 +12,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/superlu.hh>
+#include <dune/istl/solvertype.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/exceptions.hh>
 
@@ -203,6 +204,12 @@ namespace Dune
       {
         matrices_->recalculateGalerkin(NegateSet<typename PI::OwnerSet>());
       }
+
+      /**
+       * @brief Check whether the coarse solver used is a direct solver.
+       * @return True if the coarse level solver is a direct solver.
+       */
+      bool usesDirectCoarseLevelSolver() const;
 
     private:
       /** @brief Multigrid cycle on a level. */
@@ -652,6 +659,12 @@ namespace Dune
       }
     }
 
+
+    template<class M, class X, class S, class PI, class A>
+    bool AMG<M,X,S,PI,A>::usesDirectCoarseLevelSolver() const
+    {
+      return IsDirectSolver< CoarseSolver>::value;
+    }
 
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::mgc(){
