@@ -43,6 +43,7 @@ istl_HEADERS = basearray.hh \
 	selection.hh \
 	solvercategory.hh \
 	solvers.hh \
+	solvertype.hh \
 	superlu.hh \
 	supermatrix.hh \
 	vbvector.hh
