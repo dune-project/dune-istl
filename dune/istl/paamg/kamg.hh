@@ -153,12 +153,14 @@ namespace Dune
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
-       * grid, must natch the soarse matrix in the matrix hierachy.
+       * grid, must match the sparse matrix in the matrix hierachy.
        * @param smootherArgs The  arguments needed for thesmoother to use
        * for pre and post smoothing
        * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
        * @param preSmoothingSteps The number of smoothing steps for premoothing.
        * @param postSmoothingSteps The number of smoothing steps for postmoothing.
+       * @param maxLevelKrylovSteps The maximum number of Krylov steps allowed at each level.
+       * @param minDefectReduction The minimal defect reduction to achieve on each Krylov level.
        */
       KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
            const SmootherArgs& smootherArgs, std::size_t gamma,
@@ -188,11 +190,11 @@ namespace Dune
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
            const ParallelInformation& pinfo=ParallelInformation());
 
-      /**  \copydoc Solver::pre(X&,Y&) */
+      /**  \copydoc Preconditioner::pre(X&,Y&) */
       void pre(Domain& x, Range& b);
-      /**  \copydoc Solver::post(X&) */
+      /**  \copydoc Preconditioner::post(X&) */
       void post(Domain& x);
-      /**  \copydoc Solver::apply(X&,Y&) */
+      /**  \copydoc Preconditioner::apply(X&,Y&) */
       void apply(Domain& x, const Range& b);
 
       std::size_t maxlevels();
