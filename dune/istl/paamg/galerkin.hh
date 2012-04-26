@@ -470,7 +470,7 @@ namespace Dune
           }
         }
 
-      std::dvverb<<"constructed "<<row.index()<<" non-overlapping rows"<<std::endl;
+      dvverb<<"constructed "<<row.index()<<" non-overlapping rows"<<std::endl;
 
       // Now come the aggregates not owned by use.
       // They represent the rows n+1, ..., N
