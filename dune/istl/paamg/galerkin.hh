@@ -470,9 +470,7 @@ namespace Dune
           }
         }
 
-#ifdef DUNE_ISTL_WITH_CHECKING
-      std::cout<<"constructed "<<row.index()<<" non-overlapping rows"<<std::endl;
-#endif
+      std::dvverb<<"constructed "<<row.index()<<" non-overlapping rows"<<std::endl;
 
       // Now come the aggregates not owned by use.
       // They represent the rows n+1, ..., N
