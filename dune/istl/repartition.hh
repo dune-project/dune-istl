@@ -1438,7 +1438,7 @@ namespace Dune
                           std::vector<int>& setPartition, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf,
-                          bool verbose=false)
+                          bool verbose)
   {
     typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2> OOComm;
     typedef typename  OOComm::OwnerSet OwnerSet;
