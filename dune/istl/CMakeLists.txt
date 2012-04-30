@@ -1,6 +1,6 @@
 add_subdirectory("paamg")
 add_subdirectory("tutorial")
-add_subdirectory("test")
+add_subdirectory("test" EXCLUDE_FROM_ALL)
 
 #install headers
 install(FILES

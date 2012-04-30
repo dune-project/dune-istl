@@ -1,11 +1,11 @@
 set(MPITESTS  galerkintest hierarchytest pamgtest
   pamg_comm_repart_test transfertest)
 
-set(NORMALTEST amgtest graphtest kamgtest)
+set(NORMALTESTS amgtest graphtest kamgtest)
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
-add_dependencies(build_tests ${MPITESTS} ${NORMALTEST})
+add_dependencies(build_tests ${MPITESTS} ${NORMALTESTS})
 
 add_executable(amgtest "amgtest.cc")
 add_executable(galerkintest "galerkintest.cc")
