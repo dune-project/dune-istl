@@ -8,6 +8,30 @@
 #include <laplacian.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/superlu.hh>
+#include <complex>
+
+#ifndef SUPERLU_NTYPE
+#define SUPERLU_NTYPE 1
+#endif
+
+#if SUPERLU_NTYPE==1
+typedef double FIELD_TYPE;
+#endif
+
+#if SUPERLU_NTYPE==0
+typedef float FIELD_TYPE;
+#endif
+
+
+#if SUPERLU_NTYPE==2
+typedef std::complex<float> FIELD_TYPE;
+#endif
+
+
+#if SUPERLU_NTYPE>=3
+typedef std::complex<double> FIELD_TYPE;
+#endif
+
 int main(int argc, char** argv)
 {
 
@@ -19,9 +43,9 @@ int main(int argc, char** argv)
   std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
 
 
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
+  typedef Dune::FieldMatrix<FIELD_TYPE,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
+  typedef Dune::FieldVector<FIELD_TYPE,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
 
