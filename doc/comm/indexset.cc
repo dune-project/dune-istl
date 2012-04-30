@@ -4,8 +4,8 @@
 
 #include "config.h"
 
-#include <dune/istl/indexset.hh>
-#include <dune/istl/plocalindex.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/plocalindex.hh>
 #include <iostream>
 #include "dune/common/mpihelper.hh"
 #include "buildindexset.hh"
@@ -16,9 +16,6 @@ int main(int argc, char **argv)
   // This is a parallel programm so we need to
   // initialize mpi first.
   Dune::MPIHelper& helper = Dune::MPIHelper::instance(argc, argv);
-
-  // The number of processes
-  int size = helper.size();
 
   // The rank of our process
   int rank = helper.rank();

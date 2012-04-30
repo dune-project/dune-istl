@@ -5,8 +5,8 @@
 #define BUILDINDEXSET_HH
 
 
-#include <dune/istl/indexset.hh>
-#include <dune/istl/plocalindex.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/plocalindex.hh>
 
 /**
  * @brief Flag for marking the indices.
@@ -23,9 +23,9 @@ typedef Dune::ParallelLocalIndex<Flag> LocalIndex;
 template<class C, class TG, int N>
 void build(C& comm, Dune::ParallelIndexSet<TG,LocalIndex,N>& indexSet)
 {
-  //
-  // The number of processes
-  int size=comm.size();
+
+
+
 
   // The rank of our process
   int rank=comm.rank();

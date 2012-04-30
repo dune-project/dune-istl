@@ -6,11 +6,11 @@
 #include <iostream>
 #include <dune/common/mpihelper.hh> // An initializer of MPI
 #include <dune/common/exceptions.hh> // We use exceptions
-#include <dune/istl/indexset.hh>
-#include <dune/istl/remoteindices.hh>
-#include <dune/istl/communicator.hh>
-#include <dune/istl/plocalindex.hh>
-#include <dune/istl/interface.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/remoteindices.hh>
+#include <dune/common/parallel/communicator.hh>
+#include <dune/common/parallel/plocalindex.hh>
+#include <dune/common/parallel/interface.hh>
 #include <dune/common/enumset.hh>
 
 enum Flags { owner, ghost };
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 
     //Maybe initialize Mpi
     MPIHelper& helper = MPIHelper::instance(argc, argv);
-    std::cout << "Hello World! This is poosc08." << std::endl;
+    std::cout << "Hello World! This is poosc08. rank=" <<helper.rank()<< std::endl;
     if(Dune::MPIHelper::isFake)
       std::cout<< "This is a sequential program." << std::endl;
     else{

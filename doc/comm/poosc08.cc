@@ -6,8 +6,8 @@
 #include <iostream>
 #include <dune/common/mpihelper.hh> // An initializer of MPI
 #include <dune/common/exceptions.hh> // We use exceptions
-#include <dune/istl/indexset.hh>
-#include <dune/istl/plocalindex.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/plocalindex.hh>
 
 enum Flags { owner, ghost };
 
