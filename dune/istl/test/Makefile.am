@@ -102,11 +102,6 @@ if MPI
 endif
 
 seqmatrixmarkettest_SOURCES = matrixmarkettest.cc
-seqmatrixmarkettest_CPPFLAGS = $(AM_CPPFLAGS)	\
-	$(DUNEMPICPPFLAGS) -DMM_SEQUENTIAL
-seqmatrixmarkettest_LDFLAGS = $(AM_LDFLAGS)
-seqmatrixmarkettest_LDADD =			\
-	$(LDADD)
 
 if MPI
   matrixredisttest_SOURCES = matrixredisttest.cc
