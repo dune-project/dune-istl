@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
 
-#ifndef HAVE_MPI
+#if HAVE_MPI
   typedef int GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<GlobalId> Communication;
   Communication comm(MPI_COMM_WORLD);
