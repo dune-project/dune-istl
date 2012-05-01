@@ -1,23 +1,25 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
-#include <dune/istl/io.hh>
-#include <dune/istl/bvector.hh>
+
+#include <iterator>
+
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+
+#include <dune/istl/matrixmarket.hh>
+#include <dune/istl/io.hh>
+#include <dune/istl/bvector.hh>
+
 #if HAVE_MPI
 #include <dune/istl/paamg/test/anisotropic.hh>
 #include "mpi.h"
 #include <dune/istl/schwarz.hh>
 #else
 #include <dune/istl/operators.hh>
-#include <laplacian.hh>
+#include "laplacian.hh"
 #endif
-#include <dune/common/timer.hh>
-#include <dune/istl/matrixmarket.hh>
-
-#include <iterator>
 
 int main(int argc, char** argv)
 {
@@ -52,7 +54,6 @@ int main(int argc, char** argv)
   setupLaplacian(mat, N);
 #endif
 
-
   BVector bv(mat.N()), cv(mat.N());
   typedef BVector::iterator VIter;
 
@@ -79,7 +80,6 @@ int main(int argc, char** argv)
   storeMatrixMarket(mat, std::string("testmat"));
   storeMatrixMarket(bv, std::string("testvec"));
 #endif
-
 
   BCRSMat mat1;
   BVector bv1,cv1;
