@@ -433,10 +433,18 @@ int main()
   //   Test the DiagonalMatrix class
   // ////////////////////////////////////////////////////////////////////////
 
-  DiagonalMatrix<double,4> dMatrix;
-  dMatrix = 3.1459;
+  FieldVector<double,1> dMatrixConstructFrom;
+  dMatrixConstructFrom = 3.1459;
 
-  testMatrix(dMatrix, fvX, fvY);
+  DiagonalMatrix<double,4> dMatrix1;
+  dMatrix1 = 3.1459;
+  testMatrix(dMatrix1, fvX, fvY);
+
+  DiagonalMatrix<double,4> dMatrix2(3.1459);
+  testMatrix(dMatrix2, fvX, fvY);
+
+  DiagonalMatrix<double,4> dMatrix3(dMatrixConstructFrom);
+  testMatrix(dMatrix3, fvX, fvY);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the ScaledIdentityMatrix class
