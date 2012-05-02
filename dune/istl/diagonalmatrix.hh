@@ -4,7 +4,7 @@
 #define DUNE_DIAGONAL_MATRIX_HH
 
 /*! \file
-   \brief  This file implements a quadratic matrix of fixed size which is diagonal.
+   \brief  This file implements a quadratic diagonal matrix of fixed size.
  */
 
 #include <cmath>
@@ -34,8 +34,12 @@ namespace Dune {
 
   /**
      *@brief A diagonal matrix of static size.
+   *
    * This is meant to be a replacement of FieldMatrix for the case that
    * it is a diagonal matrix.
+   *
+   * \tparam K Type used for scalars
+   * \tparam n Matrix size
    */
   template<class K, int n>
   class DiagonalMatrix
@@ -68,9 +72,9 @@ namespace Dune {
 
     //! export size
     enum {
-      //! The number of rows.
+      //! The number of rows
       rows = n,
-      //! The number of columns.
+      //! The number of columns
       cols = n
     };
 
@@ -92,14 +96,14 @@ namespace Dune {
     {}
 
 
-    //===== assignment from scalar
+    /** \brief Assignment from a scalar */
     DiagonalMatrix& operator= (const K& k)
     {
       diag_ = k;
       return *this;
     }
 
-    // check if matrix is identical to other matrix (not only identical values)
+    /** \brief Check if matrix is the same object as the other matrix */
     bool identical(const DiagonalMatrix<K,n>& other) const
     {
       return (this==&other);
@@ -207,7 +211,7 @@ namespace Dune {
     }
 
     //! @returns an iterator that is positioned before
-    //! the first rowof the matrix.
+    //! the first row of the matrix.
     ConstIterator beforeBegin () const
     {
       return ConstIterator(WrapperType(this),-1);
