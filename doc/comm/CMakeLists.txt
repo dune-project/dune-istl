@@ -5,8 +5,9 @@ target_link_libraries(poosc08_test "dunecommon")
 add_executable(indexset "indexset.cc")
 target_link_libraries(indexset "dunecommon")
 add_dune_mpi_flags("poosc08;poosc08_test;indexset")
-include(UseLATEX)
-ADD_LATEX_DOCUMENT(communication.tex FATHER_TARGET doc
-  BIBFILES communication.bib DEFAULT_SAFEPDF INPUTS poosc08_test.cc
-  IMAGE_DIRS figures)
-create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/communication.pdf share/doc/dune-istl/comm)
+if(LATEX_USABLE)
+  ADD_LATEX_DOCUMENT(communication.tex FATHER_TARGET doc
+    BIBFILES communication.bib DEFAULT_SAFEPDF INPUTS poosc08_test.cc
+    IMAGE_DIRS figures)
+  create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/communication.pdf share/doc/dune-istl/comm)
+endif(LATEX_USABLE)
