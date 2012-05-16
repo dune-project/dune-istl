@@ -1,10 +1,10 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_DIAGONAL_MATRIX_NEW_HH
-#define DUNE_DIAGONAL_MATRIX_NEW_HH
+#ifndef DUNE_DIAGONAL_MATRIX_HH
+#define DUNE_DIAGONAL_MATRIX_HH
 
 /*! \file
-   \brief  This file implements a quadratic matrix of fixed size which is diagonal.
+   \brief  This file implements a quadratic diagonal matrix of fixed size.
  */
 
 #include <cmath>
@@ -34,8 +34,12 @@ namespace Dune {
 
   /**
      *@brief A diagonal matrix of static size.
+   *
    * This is meant to be a replacement of FieldMatrix for the case that
    * it is a diagonal matrix.
+   *
+   * \tparam K Type used for scalars
+   * \tparam n Matrix size
    */
   template<class K, int n>
   class DiagonalMatrix
@@ -68,9 +72,9 @@ namespace Dune {
 
     //! export size
     enum {
-      //! The number of rows.
+      //! The number of rows
       rows = n,
-      //! The number of columns.
+      //! The number of columns
       cols = n
     };
 
@@ -92,14 +96,14 @@ namespace Dune {
     {}
 
 
-    //===== assignment from scalar
+    /** \brief Assignment from a scalar */
     DiagonalMatrix& operator= (const K& k)
     {
       diag_ = k;
       return *this;
     }
 
-    // check if matrix is identical to other matrix (not only identical values)
+    /** \brief Check if matrix is the same object as the other matrix */
     bool identical(const DiagonalMatrix<K,n>& other) const
     {
       return (this==&other);
@@ -127,29 +131,11 @@ namespace Dune {
       return Iterator(WrapperType(this),n);
     }
 
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeEnd
-    //! instead.
-    Iterator rbegin() DUNE_DEPRECATED
-    {
-      return beforeEnd();
-    }
-
     //! @returns an iterator that is positioned before
     //! the end iterator of the rows, i.e. at the last row.
     Iterator beforeEnd ()
     {
       return Iterator(WrapperType(this),n-1);
-    }
-
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeBegin
-    //! instead.
-    Iterator rend ()  DUNE_DEPRECATED
-    {
-      return beforeBegin();
     }
 
     //! @returns an iterator that is positioned before
@@ -181,15 +167,6 @@ namespace Dune {
       return ConstIterator(WrapperType(this),n);
     }
 
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeEnd
-    //! instead.
-    ConstIterator rbegin() const DUNE_DEPRECATED
-    {
-      return beforeEnd();
-    }
-
     //! @returns an iterator that is positioned before
     //! the end iterator of the rows. i.e. at the last row.
     ConstIterator beforeEnd() const
@@ -197,17 +174,8 @@ namespace Dune {
       return ConstIterator(WrapperType(this),n-1);
     }
 
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeBegin
-    //! instead.
-    ConstIterator rend () const DUNE_DEPRECATED
-    {
-      return beforeBegin();
-    }
-
     //! @returns an iterator that is positioned before
-    //! the first rowof the matrix.
+    //! the first row of the matrix.
     ConstIterator beforeBegin () const
     {
       return ConstIterator(WrapperType(this),-1);
@@ -753,29 +721,11 @@ namespace Dune {
       return ConstIterator(*this,1);
     }
 
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeEnd
-    //! instead.
-    ConstIterator rbegin() const DUNE_DEPRECATED
-    {
-      return beforeEnd();
-    }
-
     //! @returns an iterator that is positioned before
     //! the end iterator of the rows. i.e. at the row.
     ConstIterator beforeEnd() const
     {
       return ConstIterator(*this,0);
-    }
-
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeBegin
-    //! instead.
-    ConstIterator rend () const DUNE_DEPRECATED
-    {
-      return beforeBegin();
     }
 
     //! @returns an iterator that is positioned before
@@ -905,29 +855,11 @@ namespace Dune {
       return Iterator(*this, 1);
     }
 
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeEnd
-    //! instead.
-    Iterator rbegin() DUNE_DEPRECATED
-    {
-      return beforeEnd();
-    }
-
     //! @returns an iterator that is positioned before
     //! the end iterator of the rows, i.e. at the last row.
     Iterator beforeEnd ()
     {
       return Iterator(*this, 0);
-    }
-
-    //! @deprecated This method was renamed to make
-    //! it distinct from the STL version which returns
-    //! a reverse iterator. Use the new method beforeBegin
-    //! instead.
-    Iterator rend ()  DUNE_DEPRECATED
-    {
-      return beforeBegin();
     }
 
     //! @returns an iterator that is positioned before
@@ -947,8 +879,6 @@ namespace Dune {
     using DiagonalRowVectorConst<K,n>::operator==;
     using DiagonalRowVectorConst<K,n>::begin;
     using DiagonalRowVectorConst<K,n>::end;
-    using DiagonalRowVectorConst<K,n>::rbegin;
-    using DiagonalRowVectorConst<K,n>::rend;
     using DiagonalRowVectorConst<K,n>::beforeEnd;
     using DiagonalRowVectorConst<K,n>::beforeBegin;
     using DiagonalRowVectorConst<K,n>::N;

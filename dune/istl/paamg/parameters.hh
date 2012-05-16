@@ -394,6 +394,7 @@ namespace Dune
        * @brief Set the debugging level.
        *
        * @param level If 0 no debugging output will be generated.
+       * @warning In parallel the level has to be consistent over all procceses.
        */
       void setDebugLevel(int level)
       {
