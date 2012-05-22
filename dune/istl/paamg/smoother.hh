@@ -491,7 +491,7 @@ namespace Dune
 
       SeqOverlappingSchwarzSmootherArgs(Overlap overlap_=vertex,
                                         bool onthefly_=false)
-        : overlap(overlap_), onthefly(onthefly)
+        : overlap(overlap_), onthefly(onthefly_)
       {}
     };
 
