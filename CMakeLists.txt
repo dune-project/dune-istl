@@ -1,5 +1,8 @@
+# set up project
+project("dune-istl" C CXX)
+
+# general stuff
 cmake_minimum_required(VERSION 2.8)
-project(dune-istl CXX)
 
 # make sure our own modules are found
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules")
