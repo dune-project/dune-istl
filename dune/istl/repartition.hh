@@ -750,7 +750,7 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf,
-                          bool b=false);
+                          bool verbose=false);
 #if HAVE_PARMETIS
   extern "C" {
     void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
