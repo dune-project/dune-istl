@@ -66,7 +66,7 @@ if(HAVE_MPI)
   add_executable(vectorcommtest "vectorcommtest.cc")
   add_executable(matrixmarkettest "matrixmarkettest.cc")
   add_dune_mpi_flags("${MPITESTS}")
-  add_parmetis_flags(matrixredisttest)
+  add_dune_parmetis_flags(matrixredisttest)
 endif(HAVE_MPI)
 
 foreach(_exe ${ALLTESTS})
