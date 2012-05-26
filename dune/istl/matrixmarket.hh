@@ -764,8 +764,8 @@ namespace Dune
 
 
   /**
-   * @brief Reads a sparse matrix from a matrix market file.
-   * @param matrix The matrix to store the data in.
+   * @brief Reads a BlockVector from a matrix market file.
+   * @param vector The vector to store the data in.
    * @param istr The input stream to read the data from.
    * @warning Not all formats are supported!
    */

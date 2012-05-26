@@ -168,7 +168,7 @@ namespace Dune
     /**
      * @brief Set the data of the local problem.
      *
-     * @param A The global matrix.
+     * @param BCRS The global matrix.
      * @param rowset The global indices of the local problem.
      * @tparam S The type of the set with the indices.
      */
@@ -220,10 +220,10 @@ namespace Dune
 
     /**
      * @brief Constructor.
-     * @param mat The global matrix.
-     * @param rhs storage for the local defect.
-     * @param b the global right hand side.
-     * @param x the global left hand side.
+     * @param maxlength The maximum entries over all subdomains.
+     * @param mat_ The global matrix.
+     * @param b_ the global right hand side.
+     * @param x_ the global left hand side.
      */
     OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_, const X& b_, Y& x_);
 
@@ -233,7 +233,7 @@ namespace Dune
     inline
     void deallocate();
 
-    /*
+    /**
      * @brief Resets the local index to zero.
      */
     inline
@@ -262,7 +262,7 @@ namespace Dune
 
     /**
      * @brief calculate one entry of the local defect.
-     * @param domain One index of the domain.
+     * @param domainIndex One index of the domain.
      */
     void operator()(const size_type& domainIndex);
 
@@ -310,8 +310,8 @@ namespace Dune
 
     /**
      * @brief Constructor.
+     * @param maxlength The maximum entries over all subdomains.
      * @param mat The global matrix.
-     * @param rhs storage for the local defect.
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
@@ -396,8 +396,8 @@ namespace Dune
     typedef typename matrix_type::size_type size_type;
     /**
      * @brief Constructor.
+     * @param maxlength The maximum entries over all subdomains.
      * @param mat The global matrix.
-     * @param rhs storage for the local defect.
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
@@ -410,13 +410,14 @@ namespace Dune
      */
     void deallocate();
 
-    /*
+    /**
      * @brief Resets the local index to zero.
      */
     void resetIndexForNextDomain();
 
-    /*
-     * @brief Resets the local index to zero.
+    /**
+     * @brief Get the local left hand side.
+     * @return The local left hand side.
      */
     X& lhs();
 
@@ -472,8 +473,8 @@ namespace Dune
   public:
     /**
      * @brief Constructor.
+     * @param maxlength The maximum entries over all subdomains.
      * @param mat The global matrix.
-     * @param rhs storage for the local defect.
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
@@ -491,8 +492,8 @@ namespace Dune
   public:
     /**
      * @brief Constructor.
+     * @param maxlength The maximum entries over all subdomains.
      * @param mat The global matrix.
-     * @param rhs storage for the local defect.
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
@@ -546,7 +547,7 @@ namespace Dune
    *
    * There are specialization for the additive, the multiplicative, and the symmetric multiplicative mode.
    *
-   * \tparam The Schwarz mode (either AdditiveSchwarzMode or MuliplicativeSchwarzMode or
+   * \tparam T The Schwarz mode (either AdditiveSchwarzMode or MuliplicativeSchwarzMode or
    * SymmetricMultiplicativeSchwarzMode)
    * \tparam X The vector field type
    */
@@ -800,7 +801,7 @@ namespace Dune
      * @param subDomains Array of sets of rowindices belonging to an overlapping
      * subdomain
      * @param relaxationFactor relaxation factor
-     * @param onTheFly If true the decomposition of the exact local solvers is
+     * @param onTheFly_ If true the decomposition of the exact local solvers is
      * computed on the fly for each subdomain and
      * iteration step. If false all decompositions are computed in pre and
      * only forward and backward substitution takes place
@@ -815,7 +816,7 @@ namespace Dune
      * @param mat The matrix to precondition.
      * @param rowToDomain The mapping of the rows onto the domains.
      * @param relaxationFactor relaxation factor
-     * @param onTheFly If true the decomposition of the exact local solvers is
+     * @param onTheFly_ If true the decomposition of the exact local solvers is
      * computed on the fly for each subdomain and
      * iteration step. If false all decompositions are computed in pre and
      * only forward and backward substitution takes place

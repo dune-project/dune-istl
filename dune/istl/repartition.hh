@@ -1206,8 +1206,8 @@ namespace Dune
    * @param nparts The number of domains the repartitioning should achieve.
    * @param[out] outcomm Pointer store the parallel information of the
    * redistributed domains in.
-   * @param[out] datari Pointer to store the remote index information
-   * for send the data from the original partitioning to the new one in.
+   * @param redistInf Redistribute interface
+   * @param verbose Verbosity flag to give out additional information.
    */
   template<class G, class T1, class T2>
   bool graphRepartition(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
