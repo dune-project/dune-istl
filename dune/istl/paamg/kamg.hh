@@ -59,7 +59,7 @@ namespace Dune
       void post(typename AMG::Domain& x)
       {}
 
-      /** \copydoc Preconditioner::pre(X&,Y&) */
+      /** \copydoc Preconditioner::apply(X&,const Y&) */
       void apply(typename AMG::Domain& v, const typename AMG::Range& d)
       {
         *amg_.rhs = d;
@@ -194,8 +194,8 @@ namespace Dune
       void pre(Domain& x, Range& b);
       /**  \copydoc Preconditioner::post(X&) */
       void post(Domain& x);
-      /**  \copydoc Preconditioner::apply(X&,Y&) */
-      void apply(Domain& x, const Range& b);
+      /**  \copydoc Preconditioner::apply(X&,const Y&) */
+      void apply(Domain& v, const Range& d);
 
       std::size_t maxlevels();
 
@@ -298,16 +298,16 @@ namespace Dune
     }
 
     template<class M, class X, class S, class P, class K, class A>
-    void KAMG<M,X,S,P,K,A>::apply(Domain& x, const Range& b)
+    void KAMG<M,X,S,P,K,A>::apply(Domain& v, const Range& d)
     {
       amg.initIteratorsWithFineLevel();
       if(ksolvers.size()==0)
       {
-        Range tb=b;
+        Range td=d;
         InverseOperatorResult res;
-        amg.solver_->apply(x,tb,res);
+        amg.solver_->apply(v,td,res);
       }else
-        ksolvers.back()->apply(x,b);
+        ksolvers.back()->apply(v,d);
     }
 
     template<class M, class X, class S, class P, class K, class A>
