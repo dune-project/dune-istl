@@ -24,7 +24,7 @@ find_path(SUPERLU_INCLUDE_DIR
 
 # look for library
 find_library(SUPERLU_LIBRARY
-  NAMES "libsuperlu.a" "libsuperlu_4.3.a" "libsuperlu_4.2.a" "libsuperlu_4.1.a" "libsuperlu_4.0.a" "libsuperlu_3.1.a" "libsuperlu_3.0.a"
+  NAMES "superlu" "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0"
   PATH_SUFFIXES "lib" "lib64"
 )
 
@@ -57,7 +57,7 @@ find_package_handle_standard_args(
   SUPERLU_LIBRARY
 )
 
-mark_as_advanced(SUPERLU_INCLUDE_DIRS SUPERLU_LIBRARIES)
+mark_as_advanced(SUPERLU_INCLUDE_DIRS SUPERLU_LIBRARIES SUPERLU_MIN_VERSION_4_3)
 
 # if both headers and library are found, store results
 if(SUPERLU_FOUND)
