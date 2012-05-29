@@ -400,7 +400,7 @@ namespace Dune
       bool hasCoarsest() const;
 
       /**
-       * @brief Whether the hierarchy wis built.
+       * @brief Whether the hierarchy was built.
        * @return true if the ::coarsen method was called.
        */
       bool isBuilt() const;

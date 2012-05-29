@@ -469,7 +469,7 @@ namespace Dune {
    * \code
      new_mat = spconvert(load('filename'));
    * \endcode
-   * @param reference to matrix
+   * @param matrix reference to matrix
    * @param filename
    * @param outputPrecision (number of digits) which is used to write the output file
    */
