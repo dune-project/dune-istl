@@ -388,9 +388,7 @@ namespace Dune {
       if(size > block_vector_unmanaged<B,A>::N())
         if(capacity_ < size)
           this->reserve(size, copyOldValues);
-
-      if(size >=0)
-        this->n=size;
+      this->n = size;
     }
 
 
