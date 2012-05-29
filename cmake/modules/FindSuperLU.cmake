@@ -19,14 +19,14 @@ endif(NOT BLAS_FOUND AND REQUIRED)
 # look for header files
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
-  HINTS ${SUPERLU_ROOT}
+  HINTS ${SUPERLU_DIR}
   PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
 )
 
 # look for library
 find_library(SUPERLU_LIBRARY
   NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
-  HINTS ${SUPERLU_ROOT}
+  HINTS ${SUPERLU_DIR}
   PATH_SUFFIXES "lib" "lib64"
 )
 
