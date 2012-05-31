@@ -1,5 +1,11 @@
-set(MPITESTS  galerkintest hierarchytest transfertest)
-set(PARMETISTESTS pamgtest pamg_comm_repart_test)
+if(MPI_FOUND)
+  set(MPITESTS  galerkintest hierarchytest transfertest)
+endif(MPI_FOUND)
+
+if(ParMETIS_FOUND)
+  set(PARMETISTESTS pamgtest pamg_comm_repart_test)
+endif(ParMETIS_FOUND)
+
 set(NORMALTESTS amgtest graphtest kamgtest)
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
 
