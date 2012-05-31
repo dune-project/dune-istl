@@ -6,10 +6,10 @@ if(HAVE_PARDISO)
   set(PARDISOTEST test_pardiso)
 endif(HAVE_PARDISO)
 
-if(HAVE_SUPERLU)
+if(SUPERLU_FOUND)
   set(SUPERLUTESTS superlutest superluztest superluctest superlustest
     overlappingschwarztest)
-endif(HAVE_SUPERLU)
+endif(SUPERLU_FOUND)
 
 if(HAVE_MPI)
   set(MPITESTS vectorcommtest matrixmarkettest matrixredisttest)
@@ -47,7 +47,7 @@ if(HAVE_PARDISO)
   # TODO add pardiso flags
 endif(HAVE_PARDISO)
 
-if(HAVE_SUPERLU)
+if(SUPERLU_FOUND)
   add_executable(superlutest "superlutest.cc")
 
   add_executable(superlustest "superlutest.cc")
@@ -62,7 +62,7 @@ if(HAVE_SUPERLU)
   add_executable(overlappingschwarztest "overlappingschwarztest.cc")
 
   add_dune_superlu_flags("${SUPERLUTESTS}")
-endif(HAVE_SUPERLU)
+endif(SUPERLU_FOUND)
 
 if(HAVE_MPI)
   add_executable(matrixredisttest "matrixredisttest.cc")

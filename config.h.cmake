@@ -39,6 +39,15 @@
    by configure _and_ if the application uses the PARMETIS_CPPFLAGS */
 #define HAVE_PARMETIS ENABLE_PARMETIS
 
+/* Define to ENABLE_SUPERLU if the SuperLU library is available */
+#cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
+
+/* define to 1 because older versions of SuperLU are no longer supported*/
+#define SUPERLU_POST_2005_VERSION 1
+
+/* define to 1 if SuperLU header slu_ddefs.h contains SLU_DOUBLE */
+#cmakedefine SUPERLU_MIN_VERSION_4_3 @SUPERLU_MIN_VERSION_4_3@
+
 /* end dune-istl
    Everything below here will be overwritten
 */

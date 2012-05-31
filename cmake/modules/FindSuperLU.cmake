@@ -72,7 +72,7 @@ if(SUPERLU_FOUND)
     "Determing location of ${SUPERLU_WITH_VERSION} succeded:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
-  set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU" CACHE STRING
+  set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS}" CACHE STRING
     "Compile flags used by DUNE when compiling SuperLU programs")
   set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES} CACHE STRING
     "Libraries used by DUNE when linking SuperLU programs")
@@ -84,6 +84,9 @@ else(SUPERLU_FOUND)
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
 endif(SUPERLU_FOUND)
 
+# set HAVE_SUPERLU for config.h
+set(HAVE_SUPERLU SUPERLU_FOUND)
+
 # adds SuperLU flags to the targets
 function(add_dune_superlu_flags _targets)
   if(SUPERLU_FOUND)
@@ -92,7 +95,7 @@ function(add_dune_superlu_flags _targets)
       GET_TARGET_PROPERTY(_props ${_target} COMPILE_FLAGS)
       string(REPLACE "_props-NOTFOUND" "" _props "${_props}")
       SET_TARGET_PROPERTIES(${_target} PROPERTIES COMPILE_FLAGS
-        "${_props} ${PARMETIS_COMPILE_FLAGS} -DENABLE_SUPERLU=1")
+        "${_props} ${SUPERLU_DUNE_COMPILE_FLAGS} -DENABLE_SUPERLU=1")
     endforeach(_target ${_targets})
   endif(SUPERLU_FOUND)
 endfunction(add_dune_superlu_flags)
