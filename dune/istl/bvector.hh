@@ -372,7 +372,7 @@ namespace Dune {
     /**
      * @brief Resize the vector.
      *
-     * After calling this method ::N() will return size
+     * After calling this method BlockVector::N() will return size
      * If the capacity of the vector is smaller than the specified
      * size then reserve(size) will be called.
      *
@@ -388,9 +388,7 @@ namespace Dune {
       if(size > block_vector_unmanaged<B,A>::N())
         if(capacity_ < size)
           this->reserve(size, copyOldValues);
-
-      if(size >=0)
-        this->n=size;
+      this->n = size;
     }
 
 

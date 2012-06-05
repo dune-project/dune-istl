@@ -778,8 +778,6 @@ namespace Dune {
       size_type total=0;
       for (size_type i=0; i<n; i++)
       {
-        if (r[i].getsize()<0)
-          DUNE_THROW(ISTLError,"rowsize must be nonnegative");
         total += r[i].getsize();
       }
 
@@ -860,11 +858,6 @@ namespace Dune {
       {
         ColIterator endj = (*i).end();
         for (ColIterator j=(*i).begin(); j!=endj; ++j) {
-          if (j.index()<0)
-          {
-            std::cout << "j[" << j.offset() << "]=" << j.index() << std::endl;
-            DUNE_THROW(ISTLError,"undefined index detected");
-          }
           if (j.index()>=m) {
             dwarn << "WARNING: size of row "<< i.index()<<" is "<<j.offset()<<". But was specified as being "<< (*i).end().offset()
                   <<". This means you are wasting valuable space and creating additional cache misses!"<<std::endl;
