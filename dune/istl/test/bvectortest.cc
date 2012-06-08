@@ -114,9 +114,9 @@ int main()
   int ret = 0;
 
   ret += testVector<1>();
-  ret += testVector<1, Dune::PoolAllocator<void,1000> >();
+  //  ret += testVector<1, Dune::PoolAllocator<void,1000000> >();
   ret += testVector<3>();
-  ret += testVector<3, Dune::PoolAllocator<void,1000> >();
+  //  ret += testVector<3, Dune::PoolAllocator<void,1000000> >();
 
   return ret;
 }
