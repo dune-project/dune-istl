@@ -49,6 +49,7 @@
 #include "bvector.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/typetraits.hh>
 #include <limits>
 
 namespace Dune
@@ -280,45 +281,50 @@ namespace Dune
   };
 
   template<class T>
+  struct BaseGetSuperLUType
+  {
+    static const Dtype_t type;
+  };
+
+  template<class T>
   struct GetSuperLUType
   {};
 
+  template<class T>
+  const Dtype_t BaseGetSuperLUType<T>::type =
+    Dune::is_same<T,float>::value ? SLU_S :
+    (  Dune::is_same<T,std::complex<double> >::value ? SLU_Z :
+       ( Dune::is_same<T,std::complex<float> >::value ? SLU_C : SLU_D ));
+
   template<>
   struct GetSuperLUType<double>
+    : public BaseGetSuperLUType<double>
   {
-    static const Dtype_t type;
     typedef double float_type;
-
   };
-  const Dtype_t GetSuperLUType<double>::type=SLU_D;
 
   template<>
   struct GetSuperLUType<float>
+    : public BaseGetSuperLUType<float>
   {
-    static const Dtype_t type;
     typedef float float_type;
   };
-
-  const Dtype_t GetSuperLUType<float>::type=SLU_S;
 
   template<>
   struct GetSuperLUType<std::complex<double> >
+    : public BaseGetSuperLUType<std::complex<double> >
   {
-    static const Dtype_t type;
     typedef double float_type;
   };
 
-  const Dtype_t GetSuperLUType<std::complex<double> >::type=SLU_Z;
-
   template<>
   struct GetSuperLUType<std::complex<float> >
+    : public BaseGetSuperLUType<std::complex<float> >
   {
-    static const Dtype_t type;
     typedef float float_type;
 
   };
 
-  const Dtype_t GetSuperLUType<std::complex<float> >::type=SLU_C;
   /**
    * @brief Utility class for converting an ISTL Matrix
    * into a SsuperLU Matrix.
