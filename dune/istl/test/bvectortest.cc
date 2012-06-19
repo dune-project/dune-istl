@@ -3,6 +3,7 @@
 #include "config.h"
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/poolallocator.hh>
 
 template<typename T, int BS>
 void assign(Dune::FieldVector<T,BS>& b, const T& i)
@@ -12,12 +13,14 @@ void assign(Dune::FieldVector<T,BS>& b, const T& i)
     b[j] = i;
 }
 
-template<int BS>
+
+template<int BS, class A=std::allocator<void> >
 int testVector()
 {
 
   typedef Dune::FieldVector<int,BS> VectorBlock;
-  typedef Dune::BlockVector<VectorBlock> Vector;
+  typedef typename A::template rebind<VectorBlock>::other Alloc;
+  typedef Dune::BlockVector<VectorBlock, Alloc> Vector;
   typedef typename Vector::size_type size_type;
 
   // empty vector
@@ -47,7 +50,7 @@ int testVector()
   for(typename Vector::size_type i=0; i < v.N(); ++i)
     assert(v[i] == w[i]);
 
-  w = static_cast<const Dune::block_vector_unmanaged<VectorBlock>&>(v);
+  w = static_cast<const Dune::block_vector_unmanaged<VectorBlock,Alloc>&>(v);
 
   for(typename Vector::size_type i=0; i < w.N(); ++i)
     assert(v[i] == w[i]);
@@ -60,7 +63,7 @@ int testVector()
   for(typename Vector::size_type i=0; i < w.N(); ++i)
     assert(z[i] == w[i]);
 
-  Vector z1(static_cast<const Dune::block_vector_unmanaged<VectorBlock>&>(v2));
+  Vector z1(static_cast<const Dune::block_vector_unmanaged<VectorBlock,Alloc>&>(v2));
 
   assert(v2.N()==z1.N());
   assert(v2.capacity()==z1.capacity());
@@ -108,6 +111,12 @@ int main()
   Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
   v1=0;
 
-  int ret = testVector<1>();
-  return ret + testVector<3>();
+  int ret = 0;
+
+  ret += testVector<1>();
+  //  ret += testVector<1, Dune::PoolAllocator<void,1000000> >();
+  ret += testVector<3>();
+  //  ret += testVector<3, Dune::PoolAllocator<void,1000000> >();
+
+  return ret;
 }
