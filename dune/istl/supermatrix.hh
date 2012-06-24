@@ -355,7 +355,7 @@ namespace Dune
   {
     template<class M, class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
-    friend class SuperMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
+    friend struct SuperMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
 
   public:
     /** @brief The type of the matrix to convert. */
