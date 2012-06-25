@@ -1217,7 +1217,7 @@ namespace Dune {
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       apply(x,b,_reduction,res);
-    };
+    }
 
     /*!
        \brief Apply inverse operator.
