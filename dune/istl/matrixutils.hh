@@ -9,6 +9,8 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/istl/diagonalmatrix.hh>
+#include <dune/istl/scaledidmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include "istlexception.hh"
 
@@ -385,6 +387,60 @@ namespace Dune
     static size_type coldim(const ThisMatrix& A)
     {
       return A.M()*m;
+    }
+  };
+
+  template<typename K, int n>
+  struct MatrixDimension<DiagonalMatrix<K,n> >
+  {
+    typedef DiagonalMatrix<K,n> Matrix;
+    typedef typename Matrix::size_type size_type;
+
+    static size_type rowdim(const Matrix& A, size_type r)
+    {
+      return 1;
+    }
+
+    static size_type coldim(const Matrix& A, size_type r)
+    {
+      return 1;
+    }
+
+    static size_type rowdim(const Matrix& A)
+    {
+      return n;
+    }
+
+    static size_type coldim(const Matrix& A)
+    {
+      return n;
+    }
+  };
+
+  template<typename K, int n>
+  struct MatrixDimension<ScaledIdentityMatrix<K,n> >
+  {
+    typedef ScaledIdentityMatrix<K,n> Matrix;
+    typedef typename Matrix::size_type size_type;
+
+    static size_type rowdim(const Matrix& A, size_type r)
+    {
+      return 1;
+    }
+
+    static size_type coldim(const Matrix& A, size_type r)
+    {
+      return 1;
+    }
+
+    static size_type rowdim(const Matrix& A)
+    {
+      return n;
+    }
+
+    static size_type coldim(const Matrix& A)
+    {
+      return n;
     }
   };
 
