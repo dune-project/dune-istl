@@ -327,7 +327,7 @@ namespace Dune
 
   /**
    * @brief Utility class for converting an ISTL Matrix
-   * into a SsuperLU Matrix.
+   * into a SuperLU Matrix.
    */
   template<class M>
   struct SuperLUMatrix
@@ -348,7 +348,7 @@ namespace Dune
   class SuperLU;
 
   /**
-   * @brief Coverter for BCRSMatrix to SuperLU Matrix.
+   * @brief Converter for BCRSMatrix to SuperLU Matrix.
    */
   template<class B, class TA, int n, int m>
   class SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
