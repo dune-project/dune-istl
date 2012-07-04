@@ -252,7 +252,7 @@ namespace Dune
       if (A.nnz>0)
       {
         for (size_type k=0; k<A.nnz; k++) {
-          if (A.j[k]==c) {
+          if (A.j.get()[k]==c) {
             return MatrixDimension<block_type>::coldim(A.a[k]);
           }
         }
