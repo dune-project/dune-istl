@@ -263,12 +263,6 @@ namespace Dune {
       return out;
     }
 
-    //! \brief Multiplication of the transposed matrix times a vector
-    //!
-    //! This method is deprecated. Use method mtv instead.
-    template <class X, class Y>
-    Y transposedMult(const X& vec) DUNE_DEPRECATED;
-
     /// Generic matrix multiplication.
     friend Matrix<T> operator*(const Matrix<T>& m1, const Matrix<T>& m2) {
       Matrix<T> out(m1.N(), m2.M());
@@ -560,25 +554,6 @@ namespace Dune {
      */
     size_type cols_;
   };
-
-  template<class T, class A>
-  template<class X, class Y>
-  inline Y Matrix<T,A>::transposedMult(const X& vec)
-  {
-#ifdef DUNE_ISTL_WITH_CHECKING
-    if (N()!=vec.size())
-      DUNE_THROW(ISTLError, "Vector size doesn't match the number of matrix rows!");
-#endif
-    Y out(M());
-    out = 0;
-
-    for (size_type i=0; i<out.size(); i++ ) {
-      for ( size_type j=0; j<vec.size(); j++ )
-        out[i] += (*this)[j][i]*vec[j];
-    }
-
-    return out;
-  }
 
   /** \} */
 } // end namespace Dune
