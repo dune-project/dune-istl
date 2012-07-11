@@ -9,6 +9,8 @@
 #include <cmath>
 #include <iostream>
 
+#include <dune/common/dotproduct.hh>
+
 #include "istlexception.hh"
 
 #include <boost/fusion/sequence.hpp>
@@ -183,18 +185,21 @@ namespace Dune {
      @brief Vector scalar multiplication
 
      multiplies the the current elements of x and y and recursively
-     and sums it all up.
+     and sums it all up. Provides to variants:
+     1) 'mul'  computes the indefinite inner product and
+     2) 'dot'  provides an inner product by conjugating the first argument
    */
   template<int count, typename TVec>
   class MultiTypeBlockVector_Mul {
   public:
-    static typename TVec::field_type mul(const TVec& x, const TVec& y) {
-      return (fusion::at_c<count-1>(x) * fusion::at_c<count-1>(y)) + MultiTypeBlockVector_Mul<count-1,TVec>::mul(x,y);
-    }
+    static typename TVec::field_type mul(const TVec& x, const TVec& y) { return (fusion::at_c<count-1>(x) * fusion::at_c<count-1>(y)) + MultiTypeBlockVector_Mul<count-1,TVec>::mul(x,y); }
+    static typename TVec::field_type dot(const TVec& x, const TVec& y) { return (Dune::dot(fusion::at_c<count-1>(x),fusion::at_c<count-1>(y))) + MultiTypeBlockVector_Mul<count-1,TVec>::dot(x,y); }
   };
   template<typename TVec>
   class MultiTypeBlockVector_Mul<0,TVec> {
-  public: static typename TVec::field_type mul(const TVec& x, const TVec& y) {return 0;}
+  public:
+    static typename TVec::field_type mul(const TVec& x, const TVec& y) {return 0;}
+    static typename TVec::field_type dot(const TVec& x, const TVec& y) {return 0;}
   };
 
 
@@ -272,6 +277,7 @@ namespace Dune {
     void operator*= (const double& w) {MultiTypeBlockVector_Mulscal<mpl::size<type>::value,type,const double>::mul(*this,w);}
 
     field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<mpl::size<type>::value,type>::mul(*this,newv);}
+    field_type dot (const type& newv) const {return MultiTypeBlockVector_Mul<mpl::size<type>::value,type>::dot(*this,newv);}
 
     /**
      * two-norm^2
