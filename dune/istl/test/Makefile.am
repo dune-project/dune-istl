@@ -17,7 +17,7 @@ if PARDISO
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest vbvectortest \
+NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest dotproducttest vbvectortest \
 	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest seqmatrixmarkettest
 
 # list of tests to run (indicestest is special case)
@@ -67,6 +67,8 @@ basearraytest_SOURCES = basearraytest.cc
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
 bvectortest_SOURCES = bvectortest.cc
+
+dotproducttest_SOURCES = dotproducttest.cc
 
 vbvectortest_SOURCES = vbvectortest.cc
 
