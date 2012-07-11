@@ -101,13 +101,13 @@ namespace Dune {
     //! define the category
     enum {category=SolverCategory::sequential};
 
-    /*! \brief Dot product of two vectors.
+    /*! \brief Dot product of two vectors. In the complex case, the first argument is conjugated.
        It is assumed that the vectors are consistent on the interior+border
        partition.
      */
     virtual field_type dot (const X& x, const X& y)
     {
-      return x*y;
+      return x.dot(y);
     }
 
     /*! \brief Norm of a right-hand side vector.
