@@ -8,6 +8,9 @@
 #include <complex>
 #include <memory>
 
+#include <dune/common/promotiontraits.hh>
+#include <dune/common/dotproduct.hh>
+
 #include "istlexception.hh"
 #include "basearray.hh"
 
@@ -116,19 +119,45 @@ namespace Dune {
     }
 
 
-    //===== Euclidean scalar product
-
-    //! scalar product
-    field_type operator* (const block_vector_unmanaged& y) const
+    /**
+     * \brief indefinite vector dot product \f$\left (x^T \cdot y \right)\f$ which corresponds to Petsc's VecTDot
+     *
+     * http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecTDot.html
+     * @param y other (compatible)  vector
+     * @return
+     */
+    template<class OtherB, class OtherA=std::allocator<OtherB> >
+    typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
+      typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
+      PromotedType sum = PromotedType();
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
-      field_type sum=0;
-      for (size_type i=0; i<this->n; ++i) sum += (*this)[i]*y[i];
+      for (size_type i=0; i<this->n; ++i) {
+        sum += PromotedType(((*this)[i])*y[i]);
+      }
       return sum;
     }
 
+    /**
+     * @brief vector dot product \f$\left (x^H \cdot y \right)\f$ which corresponds to Petsc's VecDot
+     *
+     * http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecDot.html
+     * @param y other (compatible) vector
+     * @return
+     */
+    template<class OtherB, class OtherA=std::allocator<OtherB> >
+    typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
+    {
+      typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
+      PromotedType sum = PromotedType();
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
+#endif
+      for (size_type i=0; i<this->n; ++i) sum += ((*this)[i]).dot(y[i]);
+      return sum;
+    }
 
     //===== norms
 
