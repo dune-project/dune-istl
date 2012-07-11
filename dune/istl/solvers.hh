@@ -650,6 +650,8 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
        \brief Set up solver.
@@ -688,10 +690,9 @@ namespace Dune {
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       const double EPSILON=1e-80;
-
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
-      field_type norm, norm_old, norm_0;
+      real_type norm, norm_old, norm_0;
 
       //
       // get vectors and matrix
@@ -1170,6 +1171,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
     //! \brief The field type of the basis vectors
     typedef F basis_type;
 
@@ -1227,10 +1230,10 @@ namespace Dune {
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
       int m = _restart;
-      field_type norm;
-      field_type norm_old = 0.0;
-      field_type norm_0;
-      field_type beta;
+      real_type norm;
+      real_type norm_old = 0.0;
+      real_type norm_0;
+      real_type beta;
       int i, j = 1, k;
       std::vector<field_type> s(m+1), cs(m), sn(m);
       // helper vector
