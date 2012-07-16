@@ -1,6 +1,16 @@
-set(NORMALTEST basearraytest matrixutilstest matrixtest
-  bvectortest vbvectortest bcrsbuildtest matrixiteratortest mv
-  iotest scaledidmatrixtest seqmatrixmarkettest)
+set(NORMALTEST
+  basearraytest
+  bvectortest
+  bcrsbuildtest
+  dotproducttest
+  iotest
+  matrixiteratortest
+  matrixtest
+  matrixutilstest
+  mv
+  scaledidmatrixtest
+  seqmatrixmarkettest
+  vbvectortest)
 
 if(HAVE_PARDISO)
   set(PARDISOTEST test_pardiso)
@@ -28,6 +38,7 @@ include(DuneMPI)
 
 # Provide source files
 add_executable(basearraytest "basearraytest.cc")
+add_executable(dotproducttest "dotproducttest.cc")
 add_executable(matrixutilstest "matrixutilstest.cc")
 add_executable(matrixtest "matrixtest.cc")
 add_executable(bvectortest "bvectortest.cc")
