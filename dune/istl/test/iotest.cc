@@ -12,7 +12,7 @@
  *  Actual functionality is not tested.
  */
 template <class BlockType>
-bool testWriteMatrixToMatlab(BlockType b=BlockType(0.0))
+void testWriteMatrixToMatlab(BlockType b=BlockType(0.0))
 {
   typedef Dune::BCRSMatrix<BlockType> Matrix;
 
