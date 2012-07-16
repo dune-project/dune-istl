@@ -17,6 +17,8 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dune/istl/matrix.hh>
+#include <dune/istl/diagonalmatrix.hh>
+#include <dune/istl/scaledidmatrix.hh>
 #include "bcrsmatrix.hh"
 
 
@@ -390,6 +392,44 @@ namespace Dune {
       }
     };
   } // anonymous namespace
+
+  //! Helper method for the writeMatrixToMatlab routine.
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   *
+   * This specialization for DiagonalMatrices ends the recursion
+   */
+  template <class FieldType, int dim>
+  void writeMatrixToMatlabHelper(const ScaledIdentityMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
+  {
+    for (int i=0; i<dim; i++)
+    {
+      //+1 for Matlab numbering
+      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
+      MatlabPODWriter<FieldType>::write(matrix.scalar(), s)<< std::endl;
+    }
+  }
+
+  //! Helper method for the writeMatrixToMatlab routine.
+  /**
+   * \code
+   *#include <dune/istl/io.hh>
+   * \endcode
+   *
+   * This specialization for DiagonalMatrices ends the recursion
+   */
+  template <class FieldType, int dim>
+  void writeMatrixToMatlabHelper(const DiagonalMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
+  {
+    for (int i=0; i<dim; i++)
+    {
+      //+1 for Matlab numbering
+      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
+      MatlabPODWriter<FieldType>::write(matrix.diagonal(i), s)<< std::endl;
+    }
+  }
 
   //! Helper method for the writeMatrixToMatlab routine.
   /**

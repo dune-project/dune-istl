@@ -6,8 +6,8 @@ TEXSOURCES = istl.tex istl.bib
 EPSFILES = blockstructure.eps
 if BUILD_DOCS
   DOCFILES = istl.pdf
-  EXTRA_DIST = istl.pdf
-  EXTRAINSTALL = istl.pdf
+  EXTRA_DIST = $(DOCFILES)
+  EXTRAINSTALL = $(DOCFILES)
 endif
 
 # setting like in dune-web

@@ -13,8 +13,8 @@ TESTS = $(MPIPROGRAMS)
 
 if BUILD_DOCS
   DOCFILES = communication.pdf
-  EXTRA_DIST = communication.pdf
-  EXTRAINSTALL = communication.pdf
+  EXTRA_DIST = $(DOCFILES)
+  EXTRAINSTALL = $(DOCFILES)
 endif
 
 # setting like in dune-web
