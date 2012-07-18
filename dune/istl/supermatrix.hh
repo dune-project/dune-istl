@@ -342,7 +342,7 @@ namespace Dune
 
 
   template<class T>
-  class SeqOverlappingSchwarzAssembler;
+  struct SeqOverlappingSchwarzAssembler;
 
   template<class T>
   class SuperLU;
@@ -361,7 +361,7 @@ namespace Dune
     /** @brief The type of the matrix to convert. */
     typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
 
-    friend class SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
 
     typedef typename Matrix::size_type size_type;
 
