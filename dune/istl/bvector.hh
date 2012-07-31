@@ -130,7 +130,7 @@ namespace Dune {
     typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
       typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
-      PromotedType sum = PromotedType();
+      PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
@@ -151,7 +151,7 @@ namespace Dune {
     typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
       typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
-      PromotedType sum = PromotedType();
+      PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
