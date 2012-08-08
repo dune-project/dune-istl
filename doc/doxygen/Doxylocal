@@ -1,0 +1,8 @@
+INPUT                 += @srcdir@/mainpage \
+                         @srcdir@/modules \
+                         @top_srcdir@/dune/istl
+
+EXCLUDE               += @top_srcdir@/dune/istl/test \
+                         @top_srcdir@/dune/istl/paamg/test
+
+PREDEFINED            += HAVE_SUPERLU
