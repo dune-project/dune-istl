@@ -1,4 +1,4 @@
 Module: dune-istl
-Version: 2.3-svn
+Version: 2.3-mn
 Maintainer: dune-devel@dune-project.org
 Depends: dune-common (>= 2.3)

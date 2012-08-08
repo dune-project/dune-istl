@@ -1,5 +1,7 @@
 AC_DEFUN([DUNE_ISTL_CHECKS],
 [
+  AC_DEFINE(DUNE_ISTL_FLAVOR_MN, 1, [This is Martin's personal development version of dune-istl!])
+
   AC_REQUIRE([DUNE_PATH_PARMETIS])
   AC_REQUIRE([DUNE_PATH_SUPERLU])
   AC_REQUIRE([DUNE_PATH_SUPERLU_DIST])
