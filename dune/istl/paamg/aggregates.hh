@@ -4,26 +4,26 @@
 #ifndef DUNE_AMG_AGGREGATES_HH
 #define DUNE_AMG_AGGREGATES_HH
 
-
-#include "parameters.hh"
-#include "graph.hh"
-#include "properties.hh"
-#include "combinedfunctor.hh"
-
-#include <dune/common/timer.hh>
-#include <dune/common/tuples.hh>
-#include <dune/common/stdstreams.hh>
-#include <dune/common/poolallocator.hh>
-#include <dune/common/sllist.hh>
-
-#include <utility>
-#include <set>
 #include <algorithm>
 #include <limits>
 #include <ostream>
+#include <set>
+#include <utility>
+
+#include <dune/common/container/sllist.hh>
+#include <dune/common/poolallocator.hh>
+#include <dune/common/stdstreams.hh>
+#include <dune/common/timer.hh>
+#include <dune/common/tuples.hh>
+
+#include <dune/istl/paamg/parameters.hh>
+#include <dune/istl/paamg/graph.hh>
+#include <dune/istl/paamg/properties.hh>
+#include <dune/istl/paamg/combinedfunctor.hh>
 
 namespace Dune
 {
+
   namespace Amg
   {
 
@@ -2472,10 +2472,8 @@ namespace Dune
       os.flags(oldOpts);
     }
 
-
   } // namespace Amg
 
 } // namespace Dune
 
-
-#endif
+#endif // #ifndef DUNE_AMG_AGGREGATES_HH

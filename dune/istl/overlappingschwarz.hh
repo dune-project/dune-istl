@@ -2,18 +2,21 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_OVERLAPPINGSCHWARZ_HH
 #define DUNE_OVERLAPPINGSCHWARZ_HH
+
 #include <cassert>
 #include <algorithm>
 #include <functional>
 #include <vector>
 #include <set>
+
 #include <dune/common/dynmatrix.hh>
-#include <dune/common/sllist.hh>
-#include "preconditioners.hh"
-#include "superlu.hh"
-#include "bvector.hh"
-#include "bcrsmatrix.hh"
-#include "ilusubdomainsolver.hh"
+#include <dune/common/container/sllist.hh>
+
+#include <dune/istl/preconditioners.hh>
+#include <dune/istl/superlu.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/ilusubdomainsolver.hh>
 
 namespace Dune
 {
@@ -1582,8 +1585,8 @@ namespace Dune
     // nothing to do, as the corrections already relaxed and added in operator()
   }
 
-
   /** @} */
-}
 
-#endif
+} // namespace Dune
+
+#endif // #ifndef DUNE_OVERLAPPINGSCHWARZ_HH
