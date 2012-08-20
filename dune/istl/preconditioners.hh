@@ -128,6 +128,62 @@ namespace Dune {
   // Implementation of this interface for sequential ISTL-preconditioners
   //=====================================================================
 
+  /*!
+     \brief Dummy preconditioner class which does nothing, i.e. uses the identity as preconditioner
+
+     \tparam M The matrix type to operate on
+     \tparam X Type of the update
+     \tparam Y Type of the defect
+     \tparam l The block level to invert. Default is 1
+   */
+  template<class M, class X, int l=1>
+  class IdentityPrec : public Preconditioner<X,X> {
+  public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef M matrix_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef X range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+
+    // define the category
+    enum {
+      //! \brief The category the preconditioner is part of.
+      category=SolverCategory::sequential
+    };
+
+    /*! \brief Constructor does not need any arguments as the preconditioner does nothing.    */
+    IdentityPrec() {}
+
+    /*!
+       \brief Prepare the preconditioner.
+
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre (X& x, X& b) {}
+
+    /*!
+       \brief Apply the preconditioner
+
+       \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply (X& v, const X& d)
+    {
+      v = d;
+    }
+
+    /*!
+       \brief Clean up.
+
+       \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (X& x) {}
+
+  private:
+  };
+
 
   /*!
      \brief Sequential SSOR preconditioner.
