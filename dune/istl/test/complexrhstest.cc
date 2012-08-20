@@ -144,7 +144,7 @@ int main(int argc, char** argv)
   JacobiPreconditioner jacobiPrec2(mat,maxIter,relaxFactor);
 
   GaussSeidelPreconditioner gsPrec1(mat,1,relaxFactor);
-  GaussSeidelPreconditioner gsPrec2(mat,maxIter,relaxFactor);
+  // GaussSeidelPreconditioner gsPrec2(mat,maxIter,relaxFactor);
 
   SORPreconditioner sorPrec1(mat,1,relaxFactor);
   SORPreconditioner sorPrec2(mat,maxIter,relaxFactor);
@@ -184,9 +184,9 @@ int main(int argc, char** argv)
   GaussSeidelSolver solverGaussSeidel1(fop,gsPrec1,reduction,maxIter,1);
   std::cout << "LoopSolver with a single GaussSeidel iteration as preconditione converged: " << solverTest(solverGaussSeidel1)  << std::endl <<  std::endl;
 
-  typedef  Dune::LoopSolver<Vector> GaussSeidelSolver;
-  GaussSeidelSolver solverGaussSeidel2(fop,gsPrec2,reduction,maxIter,1);
-  std::cout << "LoopSolver with multiple GaussSeidel iterations as preconditioner converged: " << solverTest(solverGaussSeidel2) << std::endl <<  std::endl;
+  // typedef  Dune::LoopSolver<Vector> GaussSeidelSolver;
+  // GaussSeidelSolver solverGaussSeidel2(fop,gsPrec2,reduction,maxIter,1);
+  // std::cout << "LoopSolver with multiple GaussSeidel iterations as preconditioner converged: " << solverTest(solverGaussSeidel2) << std::endl <<  std::endl;
 
   typedef  Dune::LoopSolver<Vector> SORSolver;
   SORSolver solverSOR1(fop,sorPrec1,reduction,maxIter,1);
