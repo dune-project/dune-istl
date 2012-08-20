@@ -126,7 +126,7 @@ int main(int argc, char** argv)
   watch.reset();
 
   // create Dummy Preconditioner
-  typedef Dune::IdentityPrec<BCRSMat,Vector,BS> DummyPreconditioner;
+  typedef Dune::Richardson<Vector,Vector> DummyPreconditioner;
 
   typedef Dune::SeqJac<BCRSMat,Vector,Vector> JacobiPreconditioner;
   typedef Dune::SeqGS<BCRSMat,Vector,Vector> GaussSeidelPreconditioner;
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 
   SolverTest<Operator,Vector> solverTest(fop,b0,x0,maxError);
 
-  DummyPreconditioner dummyPrec;
+  DummyPreconditioner dummyPrec(1.);
 
   const FIELD_TYPE relaxFactor(1.);
   JacobiPreconditioner jacobiPrec1(mat,1,relaxFactor);
