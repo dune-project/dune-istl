@@ -6,7 +6,7 @@
 #include <dune/istl/paamg/kamg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/common/parallel/indexset.hh>
-#include <dune/common/collectivecommunication.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 #include <cstdlib>
 #include <ctime>
 

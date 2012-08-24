@@ -4,13 +4,13 @@
 #ifndef DUNE_AMG_PINFO_HH
 #define DUNE_AMG_PINFO_HH
 
-#include <dune/common/collectivecommunication.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/enumset.hh>
 
 #if HAVE_MPI
 
-#include <dune/common/mpicollectivecommunication.hh>
-#include <dune/common/mpitraits.hh>
+#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpitraits.hh>
 #include <dune/common/parallel/remoteindices.hh>
 #include <dune/common/parallel/interface.hh>
 #include <dune/common/parallel/communicator.hh>

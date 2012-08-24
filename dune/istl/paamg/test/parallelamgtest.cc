@@ -11,7 +11,7 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/owneroverlapcopy.hh>
-#include <dune/common/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <string>
 
 template<class T, class C>

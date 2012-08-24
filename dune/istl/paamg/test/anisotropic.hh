@@ -8,7 +8,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/common/parallel/plocalindex.hh>
-#include <dune/common/collectivecommunication.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 
 typedef Dune::OwnerOverlapCopyAttributeSet GridAttributes;
 typedef GridAttributes::AttributeSet GridFlag;
