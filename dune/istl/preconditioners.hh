@@ -132,7 +132,7 @@ namespace Dune {
   /*!
      \brief Sequential SSOR preconditioner.
 
-     Wraps the naked ISTL generic SOR preconditioner into the
+     Wraps the naked ISTL generic SSOR preconditioner into the
       solver framework.
 
      \tparam M The matrix type to operate on

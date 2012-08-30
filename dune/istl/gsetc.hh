@@ -418,7 +418,7 @@ namespace Dune {
         algmeta_itsteps<I-1>::dbgs(*diag,x[i.index()],rhs,w);
       }
       x *= w;
-      x.axpy(1-w,xold);
+      x.axpy(K(1)-w,xold);
     }
 
 #if HAVE_BOOST

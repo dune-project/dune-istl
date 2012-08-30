@@ -17,7 +17,8 @@ if(HAVE_PARDISO)
 endif(HAVE_PARDISO)
 
 if(SUPERLU_FOUND)
-  set(SUPERLUTESTS superlutest superluztest superluctest superlustest
+  set(SUPERLUTESTS
+  complexrhstest superlutest superluztest superluctest superlustest
     overlappingschwarztest)
 endif(SUPERLU_FOUND)
 
@@ -26,8 +27,8 @@ if(HAVE_MPI)
 endif(HAVE_MPI)
 
 set(ALLTESTS ${MPITESTS} ${NORMALTEST} ${PARDISOTEST} ${SUPERLUTESTS})
-message("ALLTESTS=${ALLTESTS}")
-message("MPITESTS=${MPITESTS}")
+
+
 # We do not want want to build the tests during make all,
 # but just build them on demand
 add_directory_test_target(_test_target)
@@ -59,16 +60,19 @@ if(HAVE_PARDISO)
 endif(HAVE_PARDISO)
 
 if(SUPERLU_FOUND)
+  add_executable(complexrhstest complexrhstest.cc)
+  set_property(TARGET complexrhstest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=3")
+
   add_executable(superlutest "superlutest.cc")
 
   add_executable(superlustest "superlutest.cc")
-  set_target_properties(superlustest PROPERTIES COMPILE_FLAGS "-DSUPERLU_NTYPE=0")
+  set_property(TARGET superlustest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=0")
 
   add_executable(superluctest "superlutest.cc")
-  set_target_properties(superlustest PROPERTIES COMPILE_FLAGS "-DSUPERLU_NTYPE=2")
+  set_property(TARGET superluctest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=2")
 
   add_executable(superluztest "superlutest.cc")
-  set_target_properties(superlustest PROPERTIES COMPILE_FLAGS "-DSUPERLU_NTYPE=3")
+  set_property(TARGET superluztest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=3")
 
   add_executable(overlappingschwarztest "overlappingschwarztest.cc")
 
