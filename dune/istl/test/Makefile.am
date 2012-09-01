@@ -55,10 +55,6 @@ if SUPERLU
   overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
   overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
   overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
-
-  complexrhstest_LDADD= $(SUPERLU_LIBS)
-  complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
-  complexrhstest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
 endif
 
 
@@ -75,6 +71,9 @@ bcrsbuildtest_SOURCES = bcrsbuild.cc
 bvectortest_SOURCES = bvectortest.cc
 
 complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
+complexrhstest_LDADD= $(SUPERLU_LIBS)
+complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+complexrhstest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
 
 dotproducttest_SOURCES = dotproducttest.cc
 
