@@ -182,7 +182,7 @@ int main(int argc, char** argv)
 
   typedef  Dune::LoopSolver<Vector> GaussSeidelSolver;
   GaussSeidelSolver solverGaussSeidel1(fop,gsPrec1,reduction,maxIter,1);
-  std::cout << "LoopSolver with a single GaussSeidel iteration as preconditione converged: " << solverTest(solverGaussSeidel1)  << std::endl <<  std::endl;
+  std::cout << "LoopSolver with a single GaussSeidel iteration as preconditioner converged: " << solverTest(solverGaussSeidel1)  << std::endl <<  std::endl;
 
   // typedef  Dune::LoopSolver<Vector> GaussSeidelSolver;
   // GaussSeidelSolver solverGaussSeidel2(fop,gsPrec2,reduction,maxIter,1);
