@@ -412,7 +412,7 @@ namespace Dune {
         coliterator j=(*i).begin();
         for (; j.index()<i.index(); ++j)
           (*j).mmv(x[j.index()],rhs);
-        coliterator diag=j;
+        coliterator diag=j++;
         for (; j != endj; ++j)
           (*j).mmv(x[j.index()],rhs);
         algmeta_itsteps<I-1>::dbgs(*diag,x[i.index()],rhs,w);
