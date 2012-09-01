@@ -5,13 +5,8 @@ Makefile.in
 semantic.cache
 complexrhstest
 dotproducttest
-indicestest
-selectiontest
-indexsettest
-syncertest
 bvectortest
 matrixutilstest
-gmon.out
 vectorcommtest
 matrixtest
 matrixiteratortest
