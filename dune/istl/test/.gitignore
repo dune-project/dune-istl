@@ -3,6 +3,8 @@ Makefile.in
 .deps
 .libs
 semantic.cache
+complexrhstest
+dotproducttest
 indicestest
 selectiontest
 indexsettest
