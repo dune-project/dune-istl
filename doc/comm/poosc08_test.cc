@@ -45,6 +45,7 @@ struct CopyData {
 template<class T>
 void doCalculations(T& t){}
 
+#if HAVE_MPI
 void test()
 {
   int rank;
@@ -128,21 +129,22 @@ void test()
   doCalculations(t);
   //bCommRedist.backward<AddData<Container> >(s,t);
 }
+#endif // HAVE_MPI
 
 int main(int argc, char** argv)
 {
   try{
     using namespace Dune;
-
+#if HAVE_MPI
     //Maybe initialize Mpi
     MPIHelper& helper = MPIHelper::instance(argc, argv);
     std::cout << "Hello World! This is poosc08. rank=" <<helper.rank()<< std::endl;
-    if(Dune::MPIHelper::isFake)
-      std::cout<< "This is a sequential program." << std::endl;
-    else{
-      test();
-    }
+    test();
     return 0;
+#else
+    std::cout<< "Test poosc08_test disabled because MPI is not available." << std::endl;
+    return 77;
+#endif // HAVE_MPI
   }
   catch (Dune::Exception &e) {
     std::cerr << "Dune reported error: " << e << std::endl;
