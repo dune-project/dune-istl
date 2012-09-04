@@ -753,6 +753,10 @@ namespace Dune
                           bool verbose=false);
 #if HAVE_PARMETIS
   extern "C" {
+    // backwards compatibility to parmetis < 4.0.0
+#if PARMETIS_MAJOR_VERSION > 3
+    typedef idx_t idxtype;
+#endif
     void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
                              idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                              int *options, int *edgecut, idxtype *part);
@@ -761,6 +765,8 @@ namespace Dune
                                   idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                                   int *options, int *edgecut, idxtype *part);
   }
+#else
+  typedef std::size_t idxtype;
 #endif
 
   template<class S, class T>
@@ -769,9 +775,6 @@ namespace Dune
     for(T *cur=array, *end=array+l; cur!=end; ++cur)
       os<<*cur<<" ";
   }
-#if !HAVE_PARMETIS
-  typedef std::size_t idxtype;
-#endif
 
   inline bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, idxtype noEdges, idxtype* xadj,
                            idxtype* adjncy, bool checkSymmetry)
