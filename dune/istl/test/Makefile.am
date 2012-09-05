@@ -17,7 +17,7 @@ if PARDISO
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = basearraytest matrixutilstest matrixtest bvectortest complexrhstest dotproducttest vbvectortest \
+NORMALTESTS = basearraytest matrixutilstest matrixtest mmtest bvectortest complexrhstest dotproducttest vbvectortest \
 	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest seqmatrixmarkettest
 
 # list of tests to run (indicestest is special case)
@@ -55,10 +55,6 @@ if SUPERLU
   overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
   overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
   overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
-
-  complexrhstest_LDADD= $(SUPERLU_LIBS)
-  complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
-  complexrhstest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
 endif
 
 
@@ -75,6 +71,9 @@ bcrsbuildtest_SOURCES = bcrsbuild.cc
 bvectortest_SOURCES = bvectortest.cc
 
 complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
+complexrhstest_LDADD= $(SUPERLU_LIBS)
+complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+complexrhstest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
 
 dotproducttest_SOURCES = dotproducttest.cc
 
@@ -85,6 +84,8 @@ matrixutilstest_SOURCES = matrixutilstest.cc laplacian.hh
 matrixiteratortest_SOURCES = matrixiteratortest.cc
 
 matrixtest_SOURCES = matrixtest.cc
+
+mmtest_SOURCES = mmtest.cc
 
 mv_SOURCES = mv.cc
 

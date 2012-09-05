@@ -7,6 +7,7 @@ set(NORMALTEST
   matrixiteratortest
   matrixtest
   matrixutilstest
+  mmtest
   mv
   scaledidmatrixtest
   seqmatrixmarkettest
@@ -46,6 +47,7 @@ add_executable(bvectortest "bvectortest.cc")
 add_executable(vbvectortest "vbvectortest.cc")
 add_executable(bcrsbuildtest "bcrsbuild.cc")
 add_executable(matrixiteratortest "matrixiteratortest.cc")
+add_executable(mmtest mmtest.cc)
 add_executable(mv "mv.cc")
 add_executable(iotest "iotest.cc")
 add_executable(scaledidmatrixtest "scaledidmatrixtest.cc")

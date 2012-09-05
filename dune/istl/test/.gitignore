@@ -3,13 +3,10 @@ Makefile.in
 .deps
 .libs
 semantic.cache
-indicestest
-selectiontest
-indexsettest
-syncertest
+complexrhstest
+dotproducttest
 bvectortest
 matrixutilstest
-gmon.out
 vectorcommtest
 matrixtest
 matrixiteratortest
@@ -19,6 +16,7 @@ superlctest
 superlustest
 superlutest
 superlztest
+mmtest
 mv
 iotest
 scaledidmatrixtest
