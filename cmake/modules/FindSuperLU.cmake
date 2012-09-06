@@ -30,15 +30,23 @@ find_path(SUPERLU_INCLUDE_DIR
   PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
 )
 
-# look for library
+# look for library, only at positions given by the user
 find_library(SUPERLU_LIBRARY
   NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
-  HINTS ${SUPERLU_DIR}
+  PATHS ${SUPERLU_DIR}
+  PATH_SUFFIXES "lib" "lib32" "lib64"
+  NO_DEFAULT_PATH
+)
+
+# look for library files, including default paths
+find_library(SUPERLU_LIBRARY
+  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
   PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
 # check version specific macros
 include(CheckCSourceCompiles)
+include(CMakePushCheckState)
 cmake_push_check_state()
 set(CMAKE_REQUIRED_INCLUDES ${SUPERLU_INCLUDE_DIR})
 set(CMAKE_REQUIRED_LIBRARIES ${SUPERLU_LIBRARY})
