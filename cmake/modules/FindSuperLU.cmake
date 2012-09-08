@@ -11,10 +11,10 @@
 # SUPERLU_LIBRARIES       Name to the SuperLU library.
 #
 find_package(BLAS QUIET REQUIRED)
-if(NOT BLAS_FOUND AND REQUIRED)
-  message("BLAS not found but required for SuperLU")
+if(NOT BLAS_FOUND)
+  message("SuperLU requires BLAS which was not found, skipping the test.")
   return()
-endif(NOT BLAS_FOUND AND REQUIRED)
+endif(NOT BLAS_FOUND)
 
 # look for header files, only at positions given by the user
 find_path(SUPERLU_INCLUDE_DIR
