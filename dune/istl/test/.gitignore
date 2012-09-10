@@ -4,6 +4,7 @@ Makefile.in
 .libs
 semantic.cache
 complexrhstest
+diagonalmatrixtest
 dotproducttest
 bvectortest
 matrixutilstest
