@@ -17,8 +17,20 @@ if PARDISO
 endif
 
 # which tests where program to build and run are equal
-NORMALTESTS = basearraytest matrixutilstest matrixtest mmtest bvectortest complexrhstest dotproducttest vbvectortest \
-	bcrsbuildtest matrixiteratortest mv iotest scaledidmatrixtest seqmatrixmarkettest
+NORMALTESTS = basearraytest \
+              bcrsbuildtest \
+              bvectortest \
+              complexrhstest \
+              dotproducttest \
+              iotest \
+              matrixiteratortest \
+              matrixtest \
+              matrixutilstest \
+              mmtest \
+              mv \
+              scaledidmatrixtest \
+              seqmatrixmarkettest \
+              vbvectortest
 
 # list of tests to run (indicestest is special case)
 TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
