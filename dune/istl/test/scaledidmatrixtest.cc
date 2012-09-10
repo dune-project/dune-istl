@@ -46,6 +46,9 @@ void test_matrix()
   std::cout << A << std::endl;
   // print vector
   std::cout << f << std::endl;
+
+  // Construction of FieldMatrix from ScaledIdentityMatrix
+  FieldMatrix<K,n,n> AFM = FieldMatrix<K,n,n>(A);
 }
 
 int main()
