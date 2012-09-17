@@ -48,7 +48,7 @@ void test_matrix()
   std::cout << f << std::endl;
 
   // Construction of FieldMatrix from ScaledIdentityMatrix
-  FieldMatrix<K,n,n> AFM = FieldMatrix<K,n,n>(A);
+  FieldMatrix<K,n,n> AFM DUNE_UNUSED = FieldMatrix<K,n,n>(A);
 }
 
 int main()
