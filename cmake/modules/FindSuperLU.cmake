@@ -64,7 +64,7 @@ include(CheckCSourceCompiles)
 include(CMakePushCheckState)
 cmake_push_check_state()
 set(CMAKE_REQUIRED_INCLUDES ${SUPERLU_INCLUDE_DIR})
-set(CMAKE_REQUIRED_LIBRARIES ${SUPERLU_LIBRARY})
+set(CMAKE_REQUIRED_LIBRARIES ${SUPERLU_LIBRARY} ${BLAS_LIBRARIES})
 
 # check whether "mem_usage_t.expansions" was found in "slu_ddefs.h"
 CHECK_C_SOURCE_COMPILES("
