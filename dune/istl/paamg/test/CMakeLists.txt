@@ -26,10 +26,6 @@ set_target_properties(pamg_comm_repart_test PROPERTIES COMPILE_FLAGS "-DAMG_REPA
 add_executable(pamgtest "parallelamgtest.cc")
 add_executable(transfertest "transfertest.cc")
 
-message("MPITESTS=${MPITESTS}")
-
-message("ALLTESTS=${ALLTESTS}")
-
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")
   add_test(${_exe} ${_exe})

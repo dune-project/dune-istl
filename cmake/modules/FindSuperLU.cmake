@@ -27,7 +27,7 @@ endfunction(add_dune_superlu_flags)
 # look for BLAS
 find_package(BLAS QUIET REQUIRED)
 if(NOT BLAS_FOUND)
-  message("SuperLU requires BLAS which was not found, skipping the test.")
+  message(WARNING "SuperLU requires BLAS which was not found, skipping the test.")
   return()
 endif(NOT BLAS_FOUND)
 
