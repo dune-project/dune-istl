@@ -1,3 +1,3 @@
 file(GLOB modules *.cmake)
 install(FILES ${modules} DESTINATION
-  ${CMAKE_INSTALL_PREFIX}/share/cmake/modules)
+  ${CMAKE_INSTALL_DATAROOTDIR}/cmake/modules)

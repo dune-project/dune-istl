@@ -39,4 +39,4 @@ install(FILES
    superlu.hh
    supermatrix.hh
    vbvector.hh
-   DESTINATION include/dune/istl)
+   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl)

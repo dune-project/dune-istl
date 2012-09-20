@@ -6,4 +6,4 @@ install(FILES aggregates.hh dependency.hh galerkin.hh graph.hh
           hierarchy.hh construction.hh
           transfer.hh smoother.hh amg.hh kamg.hh combinedfunctor.hh
           graphcreator.hh parameters.hh renumberer.hh pinfo.hh
-	DESTINATION include/dune/istl/paamg)
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/paamg)
