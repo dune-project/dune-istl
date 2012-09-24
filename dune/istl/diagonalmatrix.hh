@@ -1060,8 +1060,8 @@ namespace Dune {
 
 
 
-  template<class K, int n>
-  void istl_assign_to_fmatrix(FieldMatrix<K,n,n>& fm, const DiagonalMatrix<K,n>& s)
+  template<class M, class K, int n>
+  void istl_assign_to_fmatrix(DenseMatrix<M>& fm, const DiagonalMatrix<K,n>& s)
   {
     fm = K();
     for(int i=0; i<n; ++i)

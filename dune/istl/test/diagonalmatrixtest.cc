@@ -2,8 +2,7 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
 
-// include this first to see whether it includes all necessary headers itself
-#include <dune/istl/scaledidmatrix.hh>
+#include <dune/istl/diagonalmatrix.hh>
 
 #include <iostream>
 #include <algorithm>
@@ -17,9 +16,9 @@ using namespace Dune;
 template<class K, int n>
 void test_matrix()
 {
-  typedef typename ScaledIdentityMatrix<K,n>::size_type size_type;
+  typedef typename DiagonalMatrix<K,n>::size_type size_type;
 
-  ScaledIdentityMatrix<K,n> A(1);
+  DiagonalMatrix<K,n> A(1);
   FieldVector<K,n> f;
   FieldVector<K,n> v;
 
@@ -47,8 +46,8 @@ void test_matrix()
   // print vector
   std::cout << f << std::endl;
 
-  // Construction of FieldMatrix from ScaledIdentityMatrix
-  FieldMatrix<K,n,n> AFM DUNE_UNUSED = FieldMatrix<K,n,n>(A);
+  // assign to FieldMatrix
+  FieldMatrix<K,n,n> AFM = FieldMatrix<K,n,n>(A);
 }
 
 int main()
@@ -56,7 +55,6 @@ int main()
   try {
     test_matrix<float, 1>();
     test_matrix<double, 1>();
-    //test_matrix<int, 10>(); Does not compile with icc because there is no std::sqrt(int)  std::fabs(int)
     test_matrix<double, 5>();
   }
   catch (Dune::Exception & e)
