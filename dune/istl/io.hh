@@ -15,9 +15,9 @@
 #include "istlexception.hh"
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/diagonalmatrix.hh>
 
 #include <dune/istl/matrix.hh>
-#include <dune/istl/diagonalmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "bcrsmatrix.hh"
 
