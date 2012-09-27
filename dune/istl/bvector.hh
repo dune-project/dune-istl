@@ -126,7 +126,7 @@ namespace Dune {
      * @param y other (compatible)  vector
      * @return
      */
-    template<class OtherB, class OtherA=std::allocator<OtherB> >
+    template<class OtherB, class OtherA>
     typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
       typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
@@ -147,7 +147,7 @@ namespace Dune {
      * @param y other (compatible) vector
      * @return
      */
-    template<class OtherB, class OtherA=std::allocator<OtherB> >
+    template<class OtherB, class OtherA>
     typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
       typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
@@ -879,7 +879,7 @@ namespace Dune {
     {
       typename V::ConstIterator e=this->end();
       for (size_type i=0; i<y.n; i++)
-        if (find(y.j[i])==e)
+        if (this->find(y.j[i])==e)
           return false;
       return true;
     }
