@@ -2,7 +2,7 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
 #include <dune/common/fmatrix.hh>
-#include <dune/istl/diagonalmatrix.hh>
+#include <dune/common/diagonalmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/io.hh>

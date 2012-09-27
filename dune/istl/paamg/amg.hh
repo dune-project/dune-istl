@@ -397,13 +397,13 @@ namespace Dune
       typedef typename Matrix::ConstColIterator ColIter;
       typedef typename Matrix::block_type Block;
       Block zero;
-      Block diagonal;
       zero=typename Matrix::field_type();
 
       const Matrix& mat=matrices_->matrices().finest()->getmat();
       for(RowIter row=mat.begin(); row!=mat.end(); ++row) {
         bool isDirichlet = true;
         bool hasDiagonal = false;
+        Block diagonal;
         for(ColIter col=row->begin(); col!=row->end(); ++col) {
           if(row.index()==col.index()) {
             diagonal = *col;
@@ -413,7 +413,7 @@ namespace Dune
               isDirichlet = false;
           }
         }
-        if(isDirichlet)
+        if(isDirichlet && hasDiagonal)
           diagonal.solve(x[row.index()], b[row.index()]);
       }
 

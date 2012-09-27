@@ -9,7 +9,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/static_assert.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/istl/diagonalmatrix.hh>
+#include <dune/common/diagonalmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include "istlexception.hh"

@@ -15,7 +15,7 @@
 #include <iostream>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/istl/diagonalmatrix.hh>
+#include <dune/common/diagonalmatrix.hh>
 
 namespace Dune {
 

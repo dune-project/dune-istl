@@ -21,7 +21,6 @@ NORMALTESTS = basearraytest \
               bcrsbuildtest \
               bvectortest \
               complexrhstest \
-              diagonalmatrixtest \
               dotproducttest \
               iotest \
               matrixiteratortest \
@@ -87,8 +86,6 @@ complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
 complexrhstest_LDADD= $(SUPERLU_LIBS)
 complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
 complexrhstest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
-
-diagonalmatrixtest_SOURCES = diagonalmatrixtest.cc
 
 dotproducttest_SOURCES = dotproducttest.cc
 
