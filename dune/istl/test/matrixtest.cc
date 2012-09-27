@@ -8,12 +8,12 @@
 #include <fenv.h>
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/diagonalmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
 #include <dune/istl/bdmatrix.hh>
 #include <dune/istl/btdmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
-#include <dune/istl/diagonalmatrix.hh>
 
 
 using namespace Dune;
