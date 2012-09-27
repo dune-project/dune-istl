@@ -63,9 +63,22 @@ find_library(SUPERLU_LIBRARY
 include(CheckCSourceCompiles)
 include(CMakePushCheckState)
 cmake_push_check_state()
-set(CMAKE_REQUIRED_INCLUDES ${SUPERLU_INCLUDE_DIR})
-set(CMAKE_REQUIRED_LIBRARIES ${SUPERLU_LIBRARY} ${BLAS_LIBRARIES})
 
+# we need if clauses here because variable is set variable-NOTFOUND
+# if the searches above were not successful
+# Without them CMake print errors like:
+# "CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
+# Please set them or make sure they are set and tested correctly in the CMake files:"
+#
+if(SUPERLU_INCLUDE_DIR)
+  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SUPERLU_INCLUDE_DIR})
+endif(SUPERLU_INCLUDE_DIR)
+if(SUPERLU_LIBRARY)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${SUPERLU_LIBRARY})
+endif(SUPERLU_LIBRARY)
+if(BLAS_LIBRARIES)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
+endif(BLAS_LIBRARIES)
 # check whether "mem_usage_t.expansions" was found in "slu_ddefs.h"
 CHECK_C_SOURCE_COMPILES("
 #include <slu_ddefs.h>
