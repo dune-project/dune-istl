@@ -197,7 +197,7 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   matrix = 0;
 
   // The copy constructor
-  MatrixType thirdMatrix(matrix);
+  DUNE_UNUSED MatrixType thirdMatrix(matrix);
 
   // ///////////////////////////////////////////////////////
   //   Test component-wise operations
