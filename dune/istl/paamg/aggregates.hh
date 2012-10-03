@@ -2216,7 +2216,6 @@ namespace Dune
             // isolated vertices are not aggregated but skipped on the coarser levels.
             aggregates[seed]=AggregatesMap<Vertex>::ISOLATED;
             ++skippedAggregates;
-            throw "huch";
             // skip rest as no agglomeration is done.
             continue;
           }else
