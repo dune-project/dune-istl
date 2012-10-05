@@ -4,6 +4,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
+#include <dune/common/debugallocator.hh>
 
 template<typename T, int BS>
 void assign(Dune::FieldVector<T,BS>& b, const T& i)
@@ -115,8 +116,10 @@ int main()
 
   ret += testVector<1>();
   //  ret += testVector<1, Dune::PoolAllocator<void,1000000> >();
+  ret += testVector<1, Dune::DebugAllocator<void> >();
   ret += testVector<3>();
   //  ret += testVector<3, Dune::PoolAllocator<void,1000000> >();
+  ret += testVector<3, Dune::DebugAllocator<void> >();
 
   return ret;
 }
