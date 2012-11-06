@@ -6,12 +6,12 @@
 #endif
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
-#include <dune/common/parallel/indexset.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/owneroverlapcopy.hh>
-#include <dune/common/mpicollectivecommunication.hh>
 #include <string>
 
 template<class T, class C>

@@ -3,12 +3,12 @@
 #include <config.h>
 
 #include "mpi.h"
+#include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/istl/paamg/hierarchy.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/schwarz.hh>
-#include <dune/common/mpicollectivecommunication.hh>
 #include "anisotropic.hh"
 
 int main(int argc, char** argv)

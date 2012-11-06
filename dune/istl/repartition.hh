@@ -13,8 +13,8 @@
 
 #include <dune/common/timer.hh>
 #include <dune/common/enumset.hh>
-#include <dune/common/mpitraits.hh>
 #include <dune/common/stdstreams.hh>
+#include <dune/common/parallel/mpitraits.hh>
 #include <dune/common/parallel/communicator.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/indicessyncer.hh>

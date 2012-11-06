@@ -4,8 +4,8 @@
 # include "config.h"
 #endif
 #include <iostream>
-#include <dune/common/mpihelper.hh> // An initializer of MPI
 #include <dune/common/exceptions.hh> // We use exceptions
+#include <dune/common/parallel/mpihelper.hh> // An initializer of MPI
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/remoteindices.hh>
 #include <dune/common/parallel/communicator.hh>

@@ -17,11 +17,11 @@
 
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
-#include <dune/common/parallel/indexset.hh>
 #include <dune/istl/solvers.hh>
-#include <dune/common/collectivecommunication.hh>
 #include <cstdlib>
 #include <ctime>
 
