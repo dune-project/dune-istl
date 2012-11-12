@@ -1260,9 +1260,7 @@ namespace Dune {
       }
       else
       {
-        // norm_0 = norm(M^-1 b)
-        w = 0.0; _M.apply(w,b); // w = M^-1 b
-        // r = _M.solve(b - A * x);
+        // norm_0 = norm(b-Ax)
         _A_.applyscaleadd(-1,x, /* => */ b); // b = b - Ax;
         norm_0 = _sp.norm(b);
         v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
