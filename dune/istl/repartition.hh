@@ -1297,7 +1297,10 @@ namespace Dune
       //
       //
       int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
-      float *tpwgts = NULL;
+      //float *tpwgts = NULL;
+      float *tpwgts = new float[nparts];
+      for(int i=0; i<nparts; ++i)
+        tpwgts[i]=1.0/nparts;
       float ubvec[1];
       options[0] = 0; // 0=default, 1=options are defined in [1]+[2]
 #ifdef DEBUG_REPART
