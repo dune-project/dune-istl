@@ -1347,6 +1347,8 @@ namespace Dune
 
       delete[] xadj;
       delete[] adjncy;
+      delete[] tpwgts;
+
       ef.free();
 
 #ifdef DEBUG_REPART
