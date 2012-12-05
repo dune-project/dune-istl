@@ -37,8 +37,8 @@ int main()
 
   SequentialInformation info;
 
-  Dune::Amg::Transfer<int,Vector,SequentialInformation>::restrict (amap, c, b, info);
+  Dune::Amg::Transfer<int,Vector,SequentialInformation>::restrictVector(amap, c, b, info);
 
-  Dune::Amg::Transfer<int,Vector,SequentialInformation>::prolongate(amap, c, b, 1);
+  Dune::Amg::Transfer<int,Vector,SequentialInformation>::prolongateVector(amap, c, b, 1);
   return 0;
 }

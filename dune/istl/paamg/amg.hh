@@ -584,14 +584,14 @@ namespace Dune
           typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
           ++pinfo;
           Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-          ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(fineRhs.getRedistributed()), *pinfo);
+          ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(fineRhs.getRedistributed()), *pinfo);
         }
       }else{
         //restrict defect to coarse level right hand side.
         typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
         ++pinfo;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
+        ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
       }
 
       if(processNextLevel) {
@@ -633,16 +633,16 @@ namespace Dune
         --pinfo;
       }
       if(redist->isSetup()) {
-        // Need to redistribute during prolongate
+        // Need to redistribute during prolongateVector
         lhs.getRedistributed()=0;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongate(*(*aggregates), *update, *lhs, lhs.getRedistributed(), matrices_->getProlongationDampingFactor(),
-                     *pinfo, *redist);
+        ::prolongateVector(*(*aggregates), *update, *lhs, lhs.getRedistributed(), matrices_->getProlongationDampingFactor(),
+                           *pinfo, *redist);
       }else{
         *lhs=0;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongate(*(*aggregates), *update, *lhs,
-                     matrices_->getProlongationDampingFactor(), *pinfo);
+        ::prolongateVector(*(*aggregates), *update, *lhs,
+                           matrices_->getProlongationDampingFactor(), *pinfo);
       }
 
 
@@ -758,7 +758,7 @@ namespace Dune
       for(typename Hierarchy<Range,A>::Iterator fineRhs=rhs++; fineRhs != rhs_->coarsest(); fineRhs=rhs++, ++aggregates) {
         ++pinfo;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::restrict (*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
+        ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
       }
 
       // pinfo is invalid, set to coarsest level
@@ -790,7 +790,7 @@ namespace Dune
 
       for(typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--; coarseLhs != lhs_->finest(); coarseLhs = lhs--, --aggregates, --pinfo) {
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongate(*(*aggregates), *coarseLhs, *lhs, 1, *pinfo);
+        ::prolongateVector(*(*aggregates), *coarseLhs, *lhs, 1, *pinfo);
       }
     }
 
