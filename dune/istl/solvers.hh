@@ -1311,7 +1311,7 @@ namespace Dune {
           H[i+1][i] = _sp.norm(w);
           if (H[i+1][i] == 0.0)
             DUNE_THROW(ISTLError,"breakdown in GMRes - |w| "
-                       << w << " == 0.0 after " << j << " iterations");
+                       << " == 0.0 after " << j << " iterations");
           // v[i+1] = w * (1.0 / H[i+1][i]);
           v[i+1] = w; v[i+1] *= (1.0 / H[i+1][i]);
 
