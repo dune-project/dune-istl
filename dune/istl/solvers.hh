@@ -1559,7 +1559,7 @@ namespace Dune {
 
       if (_verbose>0)                 // printing
       {
-        std::cout << "=== NonlinearPCGSolver" << std::endl;
+        std::cout << "=== GeneralizedPCGSolver" << std::endl;
         if (_verbose>1) {
           this->printHeader(std::cout);
           this->printOutput(std::cout,0,def0);
