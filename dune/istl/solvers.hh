@@ -1463,6 +1463,228 @@ namespace Dune {
     bool _recalc_defect;
   };
 
+
+  /**
+   * @brief Generalized preconditioned conjugate gradient solver.
+   *
+   * A preconditioned conjugate gradient that allows
+   * the preconditioner to change between iterations.
+   *
+   * One example for such preconditioner is AMG when used without
+   * a direct coarse solver. In this case the number of iterations
+   * performed on the coarsest level might change between applications.
+   *
+   * In contrast to CGSolver the search directions are stored and
+   * the orthogonalization is done explicitly.
+   */
+  template<class X>
+  class GeneralizedPCGSolver : public InverseOperator<X,X>
+  {
+  public:
+    //! \brief The domain type of the operator to be inverted.
+    typedef X domain_type;
+    //! \brief The range type of the operator to be inverted.
+    typedef X range_type;
+    //! \brief The field type of the operator to be inverted.
+    typedef typename X::field_type field_type;
+
+    /*!
+       \brief Set up nonlinear preconditioned conjugate gradient solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \param restart When to restart the construction of
+       the Krylov search space.
+     */
+    template<class L, class P>
+    GeneralizedPCGSolver (L& op, P& prec, double reduction, int maxit, int verbose,
+                          int restart=10) :
+      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit),
+      _verbose(verbose), _restart(std::min(maxit,restart))
+    {
+      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                         "L and P have to have the same category!");
+      dune_static_assert(static_cast<int>(L::category) ==
+                         static_cast<int>(SolverCategory::sequential),
+                         "L has to be sequential!");
+    }
+    /*!
+       \brief Set up nonlinear preconditioned conjugate gradient solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,S&P&,double,int,int)
+     */
+    template<class L, class P, class S>
+    GeneralizedPCGSolver (L& op, S& sp, P& prec,
+                          double reduction, int maxit, int verbose, int restart=10) :
+      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose),
+      _restart(std::min(maxit,restart))
+    {
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
+                          "L and P must have the same category!");
+      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
+                          "L and S must have the same category!");
+    }
+    /*!
+       \brief Apply inverse operator.
+
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    {
+      res.clear();                      // clear solver statistics
+      Timer watch;                    // start a timer
+      _prec.pre(x,b);                 // prepare preconditioner
+      _op.applyscaleadd(-1,x,b);      // overwrite b with defect
+
+      std::vector<shared_ptr<X> > p(_restart);
+      std::vector<typename X::field_type> pp(_restart);
+      X q(x);                  // a temporary vector
+      X prec_res(x);           // a temporary vector for preconditioner output
+
+      p[0].reset(new X(x));
+
+      double def0 = _sp.norm(b);    // compute norm
+      if (def0<1E-30)        // convergence check
+      {
+        res.converged  = true;
+        res.iterations = 0;                     // fill statistics
+        res.reduction = 0;
+        res.conv_rate  = 0;
+        res.elapsed=0;
+        if (_verbose>0)                       // final print
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed << ", TIT=" << res.elapsed
+                    << ", IT=0" << std::endl;
+        return;
+      }
+
+      if (_verbose>0)                 // printing
+      {
+        std::cout << "=== NonlinearPCGSolver" << std::endl;
+        if (_verbose>1) {
+          this->printHeader(std::cout);
+          this->printOutput(std::cout,0,def0);
+        }
+      }
+      // some local variables
+      double def=def0;       // loop variables
+      field_type rho,lambda,alpha;
+
+      int i=0;
+      int ii=0;
+      // determine initial search direction
+      *(p[0]) = 0;                              // clear correction
+      _prec.apply(*(p[0]),b);                   // apply preconditioner
+      rho = _sp.dot(*(p[0]),b);             // orthogonalization
+      _op.apply(*(p[0]),q);                 // q=Ap
+      pp[0] = _sp.dot(*(p[0]),q);           // scalar product
+      lambda = rho/pp[0];         // minimization
+      x.axpy(lambda,*(p[0]));               // update solution
+      b.axpy(-lambda,q);              // update defect
+
+      // convergence test
+      double defnew=_sp.norm(b);    // comp defect norm
+      if (_verbose>1)                 // print
+        this->printOutput(std::cout,++i,defnew,def);
+      def = defnew;                   // update norm
+      if (def<def0*_reduction || def<1E-30)        // convergence check
+      {
+        res.converged  = true;
+        if (_verbose>0)                       // final print
+        {
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed
+                    << ", TIT=" << res.elapsed
+                    << ", IT=" << 1 << std::endl;
+        }
+        return;
+      }
+
+      while(i<_maxit) {
+        // the loop
+        int end=std::min(_restart, _maxit-i);
+        for (ii=1; ii<end; ++ii )
+        {
+          //std::cout<<" ii="<<ii<<" i="<<i<<std::endl;
+          // compute next conjugate direction
+          prec_res = 0;                                  // clear correction
+          _prec.apply(prec_res,b);                       // apply preconditioner
+
+          p[ii].reset(new X(prec_res));
+          _op.apply(prec_res, q);
+
+          for(int j=0; j<ii; ++j) {
+            rho =_sp.dot(q,*(p[j]))/pp[j];
+            p[ii]->axpy(-rho, *(p[j]));
+          }
+
+          // minimize in given search direction
+          _op.apply(*(p[ii]),q);                     // q=Ap
+          pp[ii] = _sp.dot(*(p[ii]),q);               // scalar product
+          rho = _sp.dot(*(p[ii]),b);                 // orthogonalization
+          lambda = rho/pp[ii];             // minimization
+          x.axpy(lambda,*(p[ii]));                   // update solution
+          b.axpy(-lambda,q);                  // update defect
+
+          // convergence test
+          double defnew=_sp.norm(b);        // comp defect norm
+
+          if (_verbose>1)                     // print
+            this->printOutput(std::cout,++i,defnew,def);
+
+          def = defnew;                       // update norm
+          if (def<def0*_reduction || def<1E-30)            // convergence check
+          {
+            res.converged  = true;
+            break;
+          }
+        }
+        if(res.converged)
+          break;
+        *(p[0])=*(p[_restart-1]);
+        pp[0]=pp[_restart-1];
+      }
+
+      // postprocess preconditioner
+      _prec.post(x);
+
+      // fill statistics
+      res.iterations = i;
+      res.reduction = def/def0;
+      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.elapsed = watch.elapsed();
+
+      if (_verbose>0)                     // final print
+      {
+        std::cout << "=== rate=" << res.conv_rate
+                  << ", T=" << res.elapsed
+                  << ", TIT=" << res.elapsed/i
+                  << ", IT=" << i+1 << std::endl;
+      }
+    }
+
+    /*!
+       \brief Apply inverse operator with given reduction factor.
+
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, X& b, double reduction,
+                        InverseOperatorResult& res)
+    {
+      std::swap(_reduction,reduction);
+      (*this).apply(x,b,res);
+      std::swap(_reduction,reduction);
+    }
+  private:
+    SeqScalarProduct<X> ssp;
+    LinearOperator<X,X>& _op;
+    Preconditioner<X,X>& _prec;
+    ScalarProduct<X>& _sp;
+    double _reduction;
+    int _maxit;
+    int _verbose;
+    int _restart;
+  };
+
   /** @} end documentation */
 
 } // end namespace
