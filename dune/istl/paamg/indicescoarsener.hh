@@ -90,7 +90,8 @@ namespace Dune
               Graph& fineGraph,
               VM& visitedMap,
               AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-              ParallelInformation& coarseInfo);
+              ParallelInformation& coarseInfo,
+              typename Graph::VertexDescriptor noAggregates);
 
     private:
       template<typename G, typename I>
@@ -212,11 +213,12 @@ namespace Dune
     public:
       template<typename Graph, typename VM>
       static typename Graph::VertexDescriptor
-      coarsen(const SequentialInformation& fineInfo,
+      coarsen(const SequentialInformation & fineInfo,
               Graph& fineGraph,
               VM& visitedMap,
               AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-              SequentialInformation& coarseInfo);
+              SequentialInformation& coarseInfo,
+              typename Graph::VertexDescriptor noAggregates);
     };
 
 #if HAVE_MPI
@@ -227,7 +229,8 @@ namespace Dune
                                            Graph& fineGraph,
                                            VM& visitedMap,
                                            AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-                                           ParallelInformation& coarseInfo)
+                                           ParallelInformation& coarseInfo,
+                                           typename Graph::VertexDescriptor noAggregates)
     {
       ParallelAggregateRenumberer<Graph,typename ParallelInformation::GlobalLookupIndexSet> renumberer(aggregates, fineInfo.globalLookup());
       buildCoarseIndexSet(fineInfo, fineGraph, visitedMap, aggregates,
@@ -388,28 +391,10 @@ namespace Dune
                                                        Graph& fineGraph,
                                                        VM& visitedMap,
                                                        AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
-                                                       SequentialInformation& coarseInfo)
+                                                       SequentialInformation& coarseInfo,
+                                                       typename Graph::VertexDescriptor noAggregates)
     {
-      typedef typename Graph::VertexDescriptor Vertex;
-      AggregateRenumberer<Graph> renumberer(aggregates);
-      typedef typename Graph::VertexIterator Iterator;
-
-      for(Iterator vertex=fineGraph.begin(), endVertex=fineGraph.end();
-          vertex != endVertex; ++vertex)
-        if(aggregates[*vertex]!=AggregatesMap<Vertex>::ISOLATED &&
-           !get(visitedMap, *vertex)) {
-
-          aggregates.template breadthFirstSearch<false>(*vertex, aggregates[*vertex],
-                                                        fineGraph, renumberer, visitedMap);
-          aggregates[*vertex] = renumberer;
-          ++renumberer;
-        }
-
-      for(Iterator vertex=fineGraph.begin(), endVertex=fineGraph.end();
-          vertex != endVertex; ++vertex)
-        put(visitedMap, *vertex, false);
-
-      return renumberer;
+      return noAggregates;
     }
 
   } //namespace Amg
