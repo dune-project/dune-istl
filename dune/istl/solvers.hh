@@ -1602,7 +1602,7 @@ namespace Dune {
       while(i<_maxit) {
         // the loop
         int end=std::min(_restart, _maxit-i);
-        for (ii=1; ii<_restart; ++ii )
+        for (ii=1; ii<end; ++ii )
         {
           //std::cout<<" ii="<<ii<<" i="<<i<<std::endl;
           // compute next conjugate direction
