@@ -1601,7 +1601,7 @@ namespace Dune {
 
       while(i<_maxit) {
         // the loop
-        int end=std::min(_restart, _maxit-i);
+        int end=std::min(_restart, _maxit-i+1);
         for (ii=1; ii<end; ++ii )
         {
           //std::cout<<" ii="<<ii<<" i="<<i<<std::endl;
@@ -1640,8 +1640,10 @@ namespace Dune {
         }
         if(res.converged)
           break;
-        *(p[0])=*(p[_restart-1]);
-        pp[0]=pp[_restart-1];
+        if(end==_restart) {
+          *(p[0])=*(p[_restart-1]);
+          pp[0]=pp[_restart-1];
+        }
       }
 
       // postprocess preconditioner
