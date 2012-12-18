@@ -94,7 +94,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   criterion.setSkipIsolated(false);
 
   Dune::SeqScalarProduct<Vector> sp;
-  typedef Dune::Amg::KAMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation,Dune::CGSolver<Vector> > AMG;
+  typedef Dune::Amg::KAMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation> AMG;
 
   AMG amg(fop, criterion, smootherArgs, 1, 1, 1);
 
