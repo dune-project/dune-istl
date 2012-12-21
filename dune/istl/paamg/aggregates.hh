@@ -116,6 +116,129 @@ namespace Dune
 
     /**
      * @brief Dependency policy for symmetric matrices.
+     *
+     * We assume that not only the sparsity pattern is symmetric
+     * but also the entries (a_ij=aji). If that is not the case
+     * the resulting dependency graph might be unsymmetric.
+     *
+     * \tparam M The type of the matrix
+     * \tparam N The type of the metric that turns matrix blocks into
+     * field values
+     */
+    template<class M, class N>
+    class SymmetricMatrixDependency : public Dune::Amg::Parameters
+    {
+    public:
+      /**
+       * @brief The matrix type we build the dependency of.
+       */
+      typedef M Matrix;
+
+      /**
+       * @brief The norm to use for examining the matrix entries.
+       */
+      typedef N Norm;
+
+      /**
+       * @brief Constant Row iterator of the matrix.
+       */
+      typedef typename Matrix::row_type Row;
+
+      /**
+       * @brief Constant column iterator of the matrix.
+       */
+      typedef typename Matrix::ConstColIterator ColIter;
+
+      void init(const Matrix* matrix);
+
+      void initRow(const Row& row, int index);
+
+      void examine(const ColIter& col);
+
+      template<class G>
+      void examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col);
+
+      bool isIsolated();
+
+
+      SymmetricMatrixDependency(const Parameters& parms)
+        : Parameters(parms)
+      {}
+      SymmetricMatrixDependency()
+        : Parameters()
+      {}
+
+    protected:
+      /** @brief The matrix we work on. */
+      const Matrix* matrix_;
+      /** @brief The current max value.*/
+      typename Matrix::field_type maxValue_;
+      /** @brief The functor for calculating the norm. */
+      Norm norm_;
+      /** @brief index of the currently evaluated row. */
+      int row_;
+      /** @brief The norm of the current diagonal. */
+      typename Matrix::field_type diagonal_;
+      std::vector<typename Matrix::field_type> vals_;
+      typename std::vector<typename Matrix::field_type>::iterator valIter_;
+
+    };
+
+
+    template<class M, class N>
+    inline void SymmetricMatrixDependency<M,N>::init(const Matrix* matrix)
+    {
+      matrix_ = matrix;
+    }
+
+    template<class M, class N>
+    inline void SymmetricMatrixDependency<M,N>::initRow(const Row& row, int index)
+    {
+      vals_.assign(row.size(), 0.0);
+      assert(vals_.size()==row.size());
+      valIter_=vals_.begin();
+
+      maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
+      diagonal_=norm_(row[index]);
+      row_ = index;
+    }
+
+    template<class M, class N>
+    inline void SymmetricMatrixDependency<M,N>::examine(const ColIter& col)
+    {
+      // skip positive offdiagonals if norm preserves sign of them.
+      typename Matrix::field_type eij = norm_(*col);
+      if(!N::is_sign_preserving || eij<0)  // || eji<0)
+      {
+        *valIter_ = eij/diagonal_*eij/norm_(matrix_->operator[](col.index())[col.index()]);
+        maxValue_ = std::max(maxValue_, *valIter_);
+      }else
+        *valIter_ =0;
+      ++valIter_;
+    }
+
+    template<class M, class N>
+    template<class G>
+    inline void SymmetricMatrixDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
+    {
+      if(*valIter_ > alpha() * maxValue_) {
+        edge.properties().setDepends();
+        edge.properties().setInfluences();
+      }
+      ++valIter_;
+    }
+
+    template<class M, class N>
+    inline bool SymmetricMatrixDependency<M,N>::isIsolated()
+    {
+      if(diagonal_==0)
+        DUNE_THROW(Dune::ISTLError, "No diagonal entry for row "<<row_<<".");
+      valIter_=vals_.begin();
+      return maxValue_  < beta();
+    }
+
+    /**
+     * @brief Dependency policy for symmetric matrices.
      */
     template<class M, class N>
     class Dependency : public Parameters
