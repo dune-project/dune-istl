@@ -2173,6 +2173,8 @@ namespace Dune
         if(!candidates.size())
           break; // No more candidates found
         distance_=distance(seed, aggregates);
+        candidates.resize(std::min(candidates.size(), c.maxAggregateSize()-
+                                   aggregate_->size()));
         aggregate_->add(candidates);
       }
     }
@@ -2245,7 +2247,8 @@ namespace Dune
         /* The rounding step. */
         while(!(graph.getVertexProperties(seed).isolated()) && aggregate_->size() < c.maxAggregateSize()) {
 
-          Vertex candidate = AggregatesMap<Vertex>::UNAGGREGATED;
+          std::vector<Vertex> candidates;
+          candidates.reserve(30);
 
           typedef typename std::vector<Vertex>::const_iterator Iterator;
 
@@ -2270,13 +2273,15 @@ namespace Dune
 
             if(distance(*vertex, aggregates) > c.maxDistance())
               continue; // Distance too far
-            candidate = *vertex;
+            candidates.push_back(*vertex);
             break;
           }
 
-          if(candidate == AggregatesMap<Vertex>::UNAGGREGATED) break; // no more candidates found.
+          if(!candidates.size()) break; // no more candidates found.
 
-          aggregate_->add(candidate);
+          candidates.resize(std::min(candidates.size(), c.maxAggregateSize()-
+                                     aggregate_->size()));
+          aggregate_->add(candidates);
 
         }
 
