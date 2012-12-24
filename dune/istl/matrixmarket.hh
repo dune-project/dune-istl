@@ -846,7 +846,7 @@ namespace Dune
     if(header.type==array_type)
       DUNE_THROW(Dune::NotImplemented, "Array format currently not supported for matrices!");
 
-    readSparseEntries(matrix, istr, entries, header, NumericWrapper<double>());
+    readSparseEntries(matrix, istr, entries, header, NumericWrapper<T>());
   }
 
   template<typename M>

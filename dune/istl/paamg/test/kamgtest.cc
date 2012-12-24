@@ -3,10 +3,10 @@
 #include "config.h"
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/istl/paamg/kamg.hh>
 #include <dune/istl/paamg/pinfo.hh>
-#include <dune/common/parallel/indexset.hh>
-#include <dune/common/collectivecommunication.hh>
 #include <cstdlib>
 #include <ctime>
 
@@ -94,7 +94,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   criterion.setSkipIsolated(false);
 
   Dune::SeqScalarProduct<Vector> sp;
-  typedef Dune::Amg::KAMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation,Dune::CGSolver<Vector> > AMG;
+  typedef Dune::Amg::KAMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation> AMG;
 
   AMG amg(fop, criterion, smootherArgs, 1, 1, 1);
 

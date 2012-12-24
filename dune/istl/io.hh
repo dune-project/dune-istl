@@ -40,10 +40,11 @@ namespace Dune {
   // pretty printing of vectors
   //
 
-  // recursively print all the blocks
   /**
+   * \brief Recursively print all the blocks
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template<class V>
@@ -55,10 +56,11 @@ namespace Dune {
       recursive_printvector(s,*i,rowtext,counter,columns,width,precision);
   }
 
-  // recursively print all the blocks -- specialization for FieldVector
   /**
+   * \brief Recursively print all the blocks -- specialization for FieldVector
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template<class K, int n>
@@ -86,10 +88,11 @@ namespace Dune {
   }
 
 
-  //! print an ISTL vector
   /**
+   * \brief Print an ISTL vector
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template<class V>
@@ -130,10 +133,11 @@ namespace Dune {
   // pretty printing of matrices
   //
 
-  //! print a row of zeros for a non-existing block
   /**
+   * \brief Print a row of zeros for a non-existing block
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   inline void fill_row (std::ostream& s, int m, int width, int precision)
@@ -146,10 +150,11 @@ namespace Dune {
     }
   }
 
-  //! print one row of a matrix
   /**
+   * \brief Print one row of a matrix
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template<class M>
@@ -184,10 +189,11 @@ namespace Dune {
     }
   }
 
-  //! print one row of a matrix, specialization for FieldMatrix
   /**
+   * \brief Print one row of a matrix, specialization for FieldMatrix
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template<class K, int n, int m>
@@ -209,10 +215,11 @@ namespace Dune {
         }
   }
 
-  //! print one row of a matrix, specialization for FieldMatrix<K,1,1>
   /**
+   * \brief Print one row of a matrix, specialization for FieldMatrix<K,1,1>
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template<class K>
@@ -230,10 +237,11 @@ namespace Dune {
     }
   }
 
-  //! Prints a generic block matrix
   /**
+   * \brief Print a generic block matrix
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    * \bug Empty rows and columns are omitted by this method.  (FlySpray #7)
    */
@@ -274,10 +282,11 @@ namespace Dune {
     s.precision(oldprec);
   }
 
-  //! Prints a BCRSMatrix with fixed sized blocks.
   /**
+   * \brief Prints a BCRSMatrix with fixed sized blocks.
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    *
    * Only the nonzero entries will be printed as matrix blocks
@@ -393,10 +402,11 @@ namespace Dune {
     };
   } // anonymous namespace
 
-  //! Helper method for the writeMatrixToMatlab routine.
   /**
+   * \brief Helper method for the writeMatrixToMatlab routine.
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    *
    * This specialization for DiagonalMatrices ends the recursion
@@ -412,10 +422,11 @@ namespace Dune {
     }
   }
 
-  //! Helper method for the writeMatrixToMatlab routine.
   /**
+   * \brief Helper method for the writeMatrixToMatlab routine.
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    *
    * This specialization for DiagonalMatrices ends the recursion
@@ -431,10 +442,11 @@ namespace Dune {
     }
   }
 
-  //! Helper method for the writeMatrixToMatlab routine.
   /**
+   * \brief Helper method for the writeMatrixToMatlab routine.
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    *
    * This specialization for FieldMatrices ends the recursion
@@ -452,10 +464,11 @@ namespace Dune {
       }
   }
 
-  //! Helper method for the writeMatrixToMatlab routine.
   /**
+   * \brief Helper method for the writeMatrixToMatlab routine.
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    */
   template <class MatrixType>
@@ -495,10 +508,11 @@ namespace Dune {
 
   }
 
-  //! Writes sparse matrix in a Matlab-readable format
   /**
+   * \brief Writes sparse matrix in a Matlab-readable format
+   *
    * \code
-   *#include <dune/istl/io.hh>
+   * #include <dune/istl/io.hh>
    * \endcode
    * This routine writes the argument BCRSMatrix to a file with the name given
    * by the filename argument.  The file format is ASCII, with no header, and
@@ -507,7 +521,7 @@ namespace Dune {
    * 1), and the matrix entry.  Such a file can be read from Matlab using the
    * command
    * \code
-     new_mat = spconvert(load('filename'));
+   * new_mat = spconvert(load('filename'));
    * \endcode
    * @param matrix reference to matrix
    * @param filename

@@ -26,12 +26,12 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/communicator.hh>
 #include <dune/common/parallel/remoteindices.hh>
-#include <dune/common/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpicollectivecommunication.hh>
 #endif
 
 #include "solvercategory.hh"
 #include "istlexception.hh"
-#include <dune/common/collectivecommunication.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 
 template<int dim, template<class,class> class Comm>
 void testRedistributed(int s);

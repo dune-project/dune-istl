@@ -118,7 +118,7 @@ namespace Dune
      * @tparam A The type of the allocator to use.
      */
     template<class M, class X, class S, class PI=SequentialInformation,
-        class K=BiCGSTABSolver<X>, class A=std::allocator<X> >
+        class K=GeneralizedPCGSolver<X>, class A=std::allocator<X> >
     class KAMG : public Preconditioner<X,X>
     {
     public:

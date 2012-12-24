@@ -1059,7 +1059,7 @@ namespace Dune
         fine->resize((*aggregates)->noVertices());
         fine->assign(fine->size(), 0);
         Transfer<typename AggregatesMap::AggregateDescriptor, std::vector<std::size_t>, ParallelInformation>
-        ::prolongate(*(*aggregates), *coarse, *fine, static_cast<std::size_t>(1), *pinfo);
+        ::prolongateVector(*(*aggregates), *coarse, *fine, static_cast<std::size_t>(1), *pinfo);
         --pinfo;
         std::swap(coarse, fine);
       }

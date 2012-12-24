@@ -4,8 +4,8 @@
 # include "config.h"
 #endif
 #include <iostream>
-#include <dune/common/mpihelper.hh> // An initializer of MPI
 #include <dune/common/exceptions.hh> // We use exceptions
+#include <dune/common/parallel/mpihelper.hh> // An initializer of MPI
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/remoteindices.hh>
 #include <dune/common/parallel/communicator.hh>
@@ -19,11 +19,11 @@ template<typename T>
 struct AddData {
   typedef typename T::value_type IndexedType;
 
-  static double gather(const T& v, int i){
+  static const IndexedType& gather(const T& v, int i){
     return v[i];
   }
 
-  static void scatter(T& v, double item, int i){
+  static void scatter(T& v, const IndexedType& item, int i){
     v[i]+=item;
   }
 };
@@ -32,11 +32,11 @@ template<typename T>
 struct CopyData {
   typedef typename T::value_type IndexedType;
 
-  static double gather(const T& v, int i){
+  static const IndexedType& gather(const T& v, int i){
     return v[i];
   }
 
-  static void scatter(T& v, double item, int i){
+  static void scatter(T& v, const IndexedType& item, int i){
     v[i]=item;
   }
 };
@@ -127,7 +127,7 @@ void test()
   //bCommRedist.forward<CopyData<Container> >(s,t);
   // calculate on the redistributed array
   doCalculations(t);
-  //bCommRedist.backward<AddData<Container> >(s,t);
+  bCommRedist.backward<AddData<Container> >(s,t);
 }
 #endif // HAVE_MPI
 

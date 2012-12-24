@@ -24,6 +24,7 @@ add_dune_superlu_flags(kamgtest)
 add_executable(pamg_comm_repart_test "parallelamgtest.cc")
 set_target_properties(pamg_comm_repart_test PROPERTIES COMPILE_FLAGS "-DAMG_REPART_ON_COMM_GRAPH")
 add_executable(pamgtest "parallelamgtest.cc")
+add_dune_superlu_flags(pamgtest)
 add_executable(transfertest "transfertest.cc")
 
 foreach(_exe ${ALLTESTS})
