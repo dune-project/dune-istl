@@ -317,6 +317,7 @@ namespace Dune
      * @brief Empty default constructor.
      *
      * Use setMatrix to tell SuperLU for what matrix it solves.
+     * Using this constructor no vectors will be reused.
      */
     SuperLU();
 
