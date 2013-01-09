@@ -480,6 +480,26 @@ namespace Dune
       value = true
     };
   };
+  //! \brief TMP telling whether a matrix type hase a trivial constructor.
+  //!
+  //! We call a constructor trivial if we can already a assign value
+  //! to a matrix once memory for it is allocated. That is, the
+  //! constructor may not allocate any additional memory.
+  //! \tparam The type of the matrix
+  template<typename M>
+  struct MatrixHasTrivialConstructor
+  {
+    enum {
+      //! \brief Whether this matrix has a trivial constructor
+      value=0
+    };
+  };
 
+  template<typename B, int n, int m>
+  struct MatrixHasTrivialConstructor<FieldMatrix<B,n,m> >
+  {
+    enum {value=1};
+
+  };
 }
 #endif

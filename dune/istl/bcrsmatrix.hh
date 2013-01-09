@@ -14,6 +14,7 @@
 
 #include "istlexception.hh"
 #include "bvector.hh"
+#include "matrixutils.hh"
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
@@ -633,9 +634,11 @@ namespace Dune {
             // memory is allocated individually per row
             // allocate and set row i
             B*   a = Mat.allocator_.allocate(s);
-            new (a) B[s];
+            if(!MatrixHasTrivialConstructor<B>::value)
+              // use placement new to call constructor that allocates
+              // additional memory.
+              new (a) B[s];
             size_type* j = Mat.sizeAllocator_.allocate(s);
-            new (j) size_type[s];
             Mat.r[i].set(s,a,j);
           }
         }else
@@ -1414,7 +1417,6 @@ namespace Dune {
       if(allocateRows) {
         if (n>0) {
           r = rowAllocator_.allocate(rows);
-          new (r) row_type[rows];
         }else{
           r = 0;
         }
@@ -1424,6 +1426,11 @@ namespace Dune {
       // allocate a and j array
       if (nnz>0) {
         a = allocator_.allocate(nnz);
+        if(!MatrixHasTrivialConstructor<B>::value)
+          // use placement new to call constructor that allocates
+          // additional memory.
+          new (a) B[nnz];
+
         // allocate column indices only if not yet present (enable sharing)
         if (!j.get())
           j.reset(sizeAllocator_.allocate(nnz),Deallocator(sizeAllocator_));
