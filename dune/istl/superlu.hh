@@ -305,8 +305,14 @@ namespace Dune
      * substitutions take place (and no decomposition).
      * @param mat The matrix of the system to solve.
      * @param verbose If true some statistics are printed.
+     * @param reusevector Default value is true. If true the two vectors are allocate in
+     * the first call to apply. These get resused in subsequent calls to apply
+     * and are deallocated in the destructor. If false these vectors are allocated
+     * at the beginning and deallocated at the end of each apply method. This allows
+     * using the same instance of superlu from different threads.
      */
-    explicit SuperLU(const Matrix& mat, bool verbose=false);
+    explicit SuperLU(const Matrix& mat, bool verbose=false,
+                     bool reusevector=true);
     /**
      * @brief Empty default constructor.
      *
@@ -370,7 +376,7 @@ namespace Dune
     char equed;
     void *work;
     int lwork;
-    bool first, verbose;
+    bool first, verbose, reusevector;
   };
 
   template<typename T, typename A, int n, int m>
@@ -394,7 +400,7 @@ namespace Dune
       Destroy_CompCol_Matrix(&U);
     }
     lwork=0;
-    if(!first) {
+    if(!first && reusevector) {
       SUPERLU_FREE(B.Store);
       SUPERLU_FREE(X.Store);
     }
@@ -403,15 +409,17 @@ namespace Dune
 
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
-  ::SuperLU(const Matrix& mat_, bool verbose_)
-    : work(0), lwork(0), first(true), verbose(verbose_)
+  ::SuperLU(const Matrix& mat_, bool verbose_, bool reusevector_)
+    : work(0), lwork(0), first(true), verbose(verbose_),
+      reusevector(reusevector_)
   {
     setMatrix(mat_);
 
   }
   template<typename T, typename A, int n, int m>
   SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::SuperLU()
-    :    work(0), lwork(0),verbose(false)
+    :    work(0), lwork(0),verbose(false),
+      reusevector(false)
   {}
   template<typename T, typename A, int n, int m>
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setVerbosity(bool v)
@@ -547,13 +555,23 @@ namespace Dune
     if(mat.M()+mat.N()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
-    if(first) {
-      SuperLUDenseMatChooser<T>::create(&B, (int)mat.N(), 1,  reinterpret_cast<T*>(&b[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
-      SuperLUDenseMatChooser<T>::create(&X, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
-      first=false;
-    }else{
-      ((DNformat*) B.Store)->nzval=&b[0];
-      ((DNformat*)X.Store)->nzval=&x[0];
+    SuperMatrix& mB = B;
+    SuperMatrix& mX = X;
+    SuperMatrix rB, rX;
+    if (reusevector) {
+      if(first) {
+        SuperLUDenseMatChooser<T>::create(&B, (int)mat.N(), 1,  reinterpret_cast<T*>(&b[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+        SuperLUDenseMatChooser<T>::create(&X, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+        first=false;
+      }else{
+        ((DNformat*) B.Store)->nzval=&b[0];
+        ((DNformat*)X.Store)->nzval=&x[0];
+      }
+    } else {
+      SuperLUDenseMatChooser<T>::create(&rB, (int)mat.N(), 1,  reinterpret_cast<T*>(&b[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+      SuperLUDenseMatChooser<T>::create(&rX, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+      mB = rB;
+      mX = rX;
     }
     typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
     int info;
@@ -574,7 +592,7 @@ namespace Dune
 #endif
 
     SuperLUSolveChooser<T>::solve(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
-                                  &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
+                                  &L, &U, work, lwork, &mB, &mX, &rpg, &rcond, &ferr, &berr,
                                   &memusage, &stat, &info);
 
     res.iterations=1;
@@ -611,6 +629,10 @@ namespace Dune
       if ( options.PrintStat ) StatPrint(&stat);
     }
     StatFree(&stat);
+    if (!reusevector) {
+      SUPERLU_FREE(rB.Store);
+      SUPERLU_FREE(rX.Store);
+    }
   }
 
   template<typename T, typename A, int n, int m>
@@ -620,13 +642,23 @@ namespace Dune
     if(mat.N()+mat.M()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
-    if(first) {
-      SuperLUDenseMatChooser<T>::create(&B, mat.N(), 1,  b, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
-      SuperLUDenseMatChooser<T>::create(&X, mat.N(), 1,  x, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
-      first=false;
-    }else{
-      ((DNformat*) B.Store)->nzval=b;
-      ((DNformat*)X.Store)->nzval=x;
+    SuperMatrix& mB = B;
+    SuperMatrix& mX = X;
+    SuperMatrix rB, rX;
+    if (reusevector) {
+      if(first) {
+        SuperLUDenseMatChooser<T>::create(&B, mat.N(), 1,  b, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+        SuperLUDenseMatChooser<T>::create(&X, mat.N(), 1,  x, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+        first=false;
+      }else{
+        ((DNformat*) B.Store)->nzval=b;
+        ((DNformat*)X.Store)->nzval=x;
+      }
+    } else {
+      SuperLUDenseMatChooser<T>::create(&rB, mat.N(), 1,  b, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+      SuperLUDenseMatChooser<T>::create(&rX, mat.N(), 1,  x, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+      mB = rB;
+      mX = rX;
     }
 
     typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
@@ -643,7 +675,7 @@ namespace Dune
 #endif
 
     SuperLUSolveChooser<T>::solve(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
-                                  &L, &U, work, lwork, &B, &X, &rpg, &rcond, &ferr, &berr,
+                                  &L, &U, work, lwork, &mB, &mX, &rpg, &rcond, &ferr, &berr,
                                   &memusage, &stat, &info);
 
     if(verbose) {
@@ -663,6 +695,10 @@ namespace Dune
     }
 
     StatFree(&stat);
+    if (!reusevector) {
+      SUPERLU_FREE(rB.Store);
+      SUPERLU_FREE(rX.Store);
+    }
   }
   /** @} */
 
