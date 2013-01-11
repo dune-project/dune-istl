@@ -254,7 +254,7 @@ namespace Dune {
     /**
      * number of elements
      */
-    const int count() {return mpl::size<type>::value;}
+    int count() {return mpl::size<type>::value;}
 
     /**
      * assignment operator
