@@ -808,7 +808,6 @@ namespace Dune
 
       // Postprocess all smoothers
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
-      typedef typename Hierarchy<Range,A>::Iterator RIterator;
       typedef typename Hierarchy<Domain,A>::Iterator DIterator;
       Iterator coarsest = smoothers_.coarsest();
       Iterator smoother = smoothers_.finest();

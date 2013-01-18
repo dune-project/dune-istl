@@ -399,7 +399,6 @@ namespace Dune {
       typedef typename M::ConstRowIterator rowiterator;
       typedef typename M::ConstColIterator coliterator;
       typedef typename Y::block_type bblock;
-      typedef typename X::block_type xblock;
       bblock rhs;
 
       X xold(x);     // remember old x
@@ -548,7 +547,6 @@ namespace Dune {
       typedef typename M::ConstRowIterator rowiterator;
       typedef typename M::ConstColIterator coliterator;
       typedef typename Y::block_type bblock;
-      typedef typename X::block_type xblock;
       bblock rhs;
 
       X v(x);     // allocate with same size

@@ -748,7 +748,6 @@ namespace Dune
 
         typedef PropertiesGraphCreator<MatrixOperator> GraphCreator;
         typedef typename GraphCreator::PropertiesGraph PropertiesGraph;
-        typedef typename GraphCreator::MatrixGraph MatrixGraph;
         typedef typename GraphCreator::GraphTuple GraphTuple;
 
         typedef typename PropertiesGraph::VertexDescriptor Vertex;

@@ -70,7 +70,6 @@ namespace Dune
       static GraphTuple create(const M& matrix, T& excluded,
                                PI& pinfo, const OF& of)
       {
-        typedef OF OverlapFlags;
         MatrixGraph* mg = new MatrixGraph(matrix.getmat());
         typedef typename PI::ParallelIndexSet ParallelIndexSet;
         typedef typename ParallelIndexSet::const_iterator IndexIterator;
@@ -111,7 +110,6 @@ namespace Dune
       static GraphTuple create(const M& matrix, T& excluded,
                                PI& pinfo, const OF& of)
       {
-        typedef OF OverlapFlags;
         MatrixGraph* mg = new MatrixGraph(matrix.getmat());
         typedef typename PI::ParallelIndexSet ParallelIndexSet;
         typedef typename ParallelIndexSet::const_iterator IndexIterator;
