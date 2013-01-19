@@ -388,6 +388,35 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::pre(Domain& x, Range& b)
     {
+      // Detect Matrix rows where all offdiagonal entries are
+      // zero and set x such that  A_dd*x_d=b_d
+      // Thus users can be more careless when setting up their linear
+      // systems.
+      typedef typename M::matrix_type Matrix;
+      typedef typename Matrix::ConstRowIterator RowIter;
+      typedef typename Matrix::ConstColIterator ColIter;
+      typedef typename Matrix::block_type Block;
+      Block zero;
+      zero=typename Matrix::field_type();
+
+      const Matrix& mat=matrices_->matrices().finest()->getmat();
+      for(RowIter row=mat.begin(); row!=mat.end(); ++row) {
+        bool isDirichlet = true;
+        bool hasDiagonal = false;
+        Block diagonal;
+        for(ColIter col=row->begin(); col!=row->end(); ++col) {
+          if(row.index()==col.index()) {
+            diagonal = *col;
+            hasDiagonal = false;
+          }else{
+            if(*col!=zero)
+              isDirichlet = false;
+          }
+        }
+        if(isDirichlet && hasDiagonal)
+          diagonal.solve(x[row.index()], b[row.index()]);
+      }
+
       if(smoothers_.levels()>0)
         smoothers_.finest()->pre(x,b);
       else

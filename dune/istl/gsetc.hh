@@ -407,18 +407,19 @@ namespace Dune {
       rowiterator endi=A.end();
       for (rowiterator i=A.begin(); i!=endi; ++i)
       {
-        rhs = b[i.index()];
+        rhs = b[i.index()];           // rhs = b_i
         coliterator endj=(*i).end();
         coliterator j=(*i).begin();
-        for (; j.index()<i.index(); ++j)
-          (*j).mmv(x[j.index()],rhs);
-        coliterator diag=j;
-        for (; j != endj; ++j)
-          (*j).mmv(x[j.index()],rhs);
-        algmeta_itsteps<I-1>::dbgs(*diag,x[i.index()],rhs,w);
+        for (; j.index()<i.index(); ++j)           // iterate over a_ij with j < i
+          (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
+        coliterator diag=j++;           // *diag = a_ii and increment coliterator j from a_ii to a_i+1,i to skip diagonal
+        for (; j != endj; ++j)           // iterate over a_ij with j > i
+          (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j>i} a_ij * xold_j
+        algmeta_itsteps<I-1>::dbgs(*diag,x[i.index()],rhs,w);           // if I==1: xnew_i = rhs/a_ii
       }
+      // next two lines: xnew_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j) + (1-w)*xold;
       x *= w;
-      x.axpy(1-w,xold);
+      x.axpy(K(1)-w,xold);
     }
 
 #if HAVE_BOOST
@@ -458,16 +459,16 @@ namespace Dune {
       rowiterator endi=A.end();
       for (rowiterator i=A.begin(); i!=endi; ++i)
       {
-        rhs = b[i.index()];
-        coliterator endj=(*i).end();
+        rhs = b[i.index()];           // rhs = b_i
+        coliterator endj=(*i).end();           // iterate over a_ij with j < i
         coliterator j=(*i).begin();
         for (; j.index()<i.index(); ++j)
-          (*j).mmv(x[j.index()],rhs);
-        coliterator diag=j;
+          (*j).mmv(x[j.index()],rhs);               //  rhs -= sum_{j<i} a_ij * xnew_j
+        coliterator diag=j;           // *diag = a_ii
         for (; j!=endj; ++j)
-          (*j).mmv(x[j.index()],rhs);
-        algmeta_itsteps<I-1>::bsorf(*diag,v,rhs,w);
-        x[i.index()].axpy(w,v);
+          (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
+        algmeta_itsteps<I-1>::bsorf(*diag,v,rhs,w);           // if blocksize I==1: v = rhs/a_ii
+        x[i.index()].axpy(w,v);           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
       }
     }
 

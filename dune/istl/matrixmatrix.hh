@@ -117,11 +117,11 @@ namespace Dune
           // search the row of the transposed matrix for an entry with the same index
           // as the mcol iterator
 
-          for(row_iterator_t mtcol=matt.begin(); mtcol != matt.end(); ++mtcol, func.nextCol()) {
+          for(row_iterator_t mtcol=matt.begin(); mtcol != matt.end(); ++mtcol) {
             //Search for col entries in mat that have a corrsponding row index in matt
             // (i.e. corresponding col index in the as this is the transposed matrix
             col_iterator_t mtrow=mtcol->begin();
-
+            bool funcCalled = false;
             for(col_iterator mcol=mrow->begin(); mcol != mrow->end(); ++mcol) {
               // search
               // TODO: This should probably be substituted by a binary search
@@ -130,12 +130,17 @@ namespace Dune
                   break;
               if(mtrow != mtcol->end() && mtrow.index()==mcol.index()) {
                 func(*mcol, *mtrow, mtcol.index());
+                funcCalled = true;
                 // In some cases we only search for one pair, then we break here
                 // and continue with the next column.
                 if(F::do_break)
                   break;
               }
             }
+            // move on with func only if func was called, otherwise they might
+            // get out of sync
+            if (funcCalled)
+              func.nextCol();
           }
           func.nextRow();
         }

@@ -327,7 +327,7 @@ namespace Dune
 
   /**
    * @brief Utility class for converting an ISTL Matrix
-   * into a SsuperLU Matrix.
+   * into a SuperLU Matrix.
    */
   template<class M>
   struct SuperLUMatrix
@@ -342,13 +342,13 @@ namespace Dune
 
 
   template<class T>
-  class SeqOverlappingSchwarzAssembler;
+  struct SeqOverlappingSchwarzAssembler;
 
   template<class T>
   class SuperLU;
 
   /**
-   * @brief Coverter for BCRSMatrix to SuperLU Matrix.
+   * @brief Converter for BCRSMatrix to SuperLU Matrix.
    */
   template<class B, class TA, int n, int m>
   class SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
@@ -361,7 +361,7 @@ namespace Dune
     /** @brief The type of the matrix to convert. */
     typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
 
-    friend class SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
 
     typedef typename Matrix::size_type size_type;
 

@@ -56,9 +56,9 @@ namespace Dune
 
       typedef int GlobalLookupIndexSet;
 
-      void buildGlobalLookup(std::size_t){};
+      void buildGlobalLookup(std::size_t){}
 
-      void freeGlobalLookup(){};
+      void freeGlobalLookup(){}
 
       const GlobalLookupIndexSet& globalLookup() const
       {

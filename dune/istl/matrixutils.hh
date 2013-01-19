@@ -248,7 +248,7 @@ namespace Dune
 
     static size_type coldim (const Matrix& A, size_type c)
     {
-      // find an entry in column j
+      // find an entry in column c
       if (A.nnz>0)
       {
         for (size_type k=0; k<A.nnz; k++) {

@@ -2,10 +2,8 @@
 
 SUBDIRS = figures
 
-# only build these programs if an MPI-implementation was found
-if MPI
-  MPIPROGRAMS = indexset poosc08 poosc08_test
-endif
+MPIPROGRAMS = indexset poosc08 poosc08_test
+
 # programs just to build when "make check" is used
 check_PROGRAMS = $(MPIPROGRAMS)
 # list of tests to run (indicestest is special case)
@@ -13,8 +11,8 @@ TESTS = $(MPIPROGRAMS)
 
 if BUILD_DOCS
   DOCFILES = communication.pdf
-  EXTRA_DIST = communication.pdf
-  EXTRAINSTALL = communication.pdf
+  EXTRA_DIST = $(DOCFILES)
+  EXTRAINSTALL = $(DOCFILES)
 endif
 
 # setting like in dune-web
