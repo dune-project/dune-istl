@@ -374,7 +374,7 @@ namespace Dune
      * @param domainMapping[] the array of output domain mapping
      */
     template<typename T>
-    void getDomain(const MPI_Comm& comm, T *part, int numOfOwnVtx, int nparts, int *myDomain, int domainMapping[]) {
+    void getDomain(const MPI_Comm& comm, T *part, int numOfOwnVtx, int nparts, int *myDomain, std::vector<int> &domainMapping) {
       int npes, mype;
       MPI_Comm_size(comm, &npes);
       MPI_Comm_rank(comm, &mype);
@@ -384,8 +384,8 @@ namespace Dune
       int i=0;
       int j=0;
 
-      int domain[nparts];
-      int assigned[npes];
+      std::vector<int> domain(nparts);
+      std::vector<int> assigned(npes);
       // init
       for (i=0; i<nparts; i++) {
         domainMapping[i] = -1;
@@ -1391,7 +1391,7 @@ namespace Dune
     //    result
     //
 
-    int domainMapping[nparts];
+    std::vector<int> domainMapping(nparts);
     if(nparts>1)
       getDomain(comm, part, indexMap.numOfOwnVtx(), nparts, &myDomain, domainMapping);
     else
