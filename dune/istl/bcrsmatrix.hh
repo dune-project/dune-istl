@@ -549,9 +549,8 @@ namespace Dune {
       // reallocate the rows if required
       if (n>0 && n!=Mat.n) {
         // free rows
-        int i=n;
-        while (i)
-          r[--i].~row_type();
+        for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
+          rowAllocator_.destroy(riter);
         rowAllocator_.deallocate(r,n);
       }
 
@@ -1342,8 +1341,8 @@ namespace Dune {
         // a,j have been allocated as one long vector
         j.reset();
         int i=nnz;
-        while (i)
-          a[--i].~B();
+        for(B *aiter=a+(nnz-1), *aend=a-1; aiter!=aend; --aiter)
+          allocator_.destroy(aiter);
         allocator_.deallocate(a,n);
       }
       else
@@ -1353,9 +1352,9 @@ namespace Dune {
           if (r[i].getsize()>0)
           {
             int j=r[i].getsize();
-            while (j) {
-              r[i].getindexptr()[--j].~size_type();
-              r[i].getptr()[j].~B();
+            for (B *col=r[i].getptr()+(r[i].getsize()-1),
+                 *colend = r[i].getptr()-1; col!=colend; --col) {
+              allocator_.destroy(col);
             }
             sizeAllocator_.deallocate(r[i].getindexptr(),1);
             allocator_.deallocate(r[i].getptr(),1);
@@ -1365,8 +1364,8 @@ namespace Dune {
       // deallocate the rows
       if (n>0 && deallocateRows) {
         int i=n;
-        while (i)
-          r[--i].~row_type();
+        for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
+          rowAllocator_.destroy(riter);
         rowAllocator_.deallocate(r,n);
       }
 
@@ -1437,7 +1436,10 @@ namespace Dune {
       }else{
         a = 0;
         j.reset();
+        for(row_type* ri=r; ri!=r+rows; ++ri)
+          rowAllocator_.construct(ri, row_type());
       }
+
       // Mark the matrix as not built.
       ready = notbuilt;
     }
