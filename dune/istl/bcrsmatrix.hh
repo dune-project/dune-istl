@@ -1340,7 +1340,6 @@ namespace Dune {
       {
         // a,j have been allocated as one long vector
         j.reset();
-        int i=nnz;
         for(B *aiter=a+(nnz-1), *aend=a-1; aiter!=aend; --aiter)
           allocator_.destroy(aiter);
         allocator_.deallocate(a,n);
@@ -1351,7 +1350,6 @@ namespace Dune {
         for (size_type i=0; i<n; i++)
           if (r[i].getsize()>0)
           {
-            int j=r[i].getsize();
             for (B *col=r[i].getptr()+(r[i].getsize()-1),
                  *colend = r[i].getptr()-1; col!=colend; --col) {
               allocator_.destroy(col);
@@ -1363,7 +1361,6 @@ namespace Dune {
 
       // deallocate the rows
       if (n>0 && deallocateRows) {
-        int i=n;
         for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
           rowAllocator_.destroy(riter);
         rowAllocator_.deallocate(r,n);
