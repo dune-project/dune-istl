@@ -79,6 +79,7 @@ struct Builder<Dune::BCRSMatrix<B,A> >
   }
 };
 
+// This code used to trigger a valgrind 'uninitialized memory' warning; see FS 1041
 void testDoubleSetSize()
 {
   Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > foo;
