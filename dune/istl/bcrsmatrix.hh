@@ -633,10 +633,9 @@ namespace Dune {
             // memory is allocated individually per row
             // allocate and set row i
             B*   a = Mat.allocator_.allocate(s);
-            if(!MatrixHasTrivialConstructor<B>::value)
-              // use placement new to call constructor that allocates
-              // additional memory.
-              new (a) B[s];
+            // use placement new to call constructor that allocates
+            // additional memory.
+            new (a) B[s];
             size_type* j = Mat.sizeAllocator_.allocate(s);
             Mat.r[i].set(s,a,j);
           }
@@ -1422,10 +1421,9 @@ namespace Dune {
       // allocate a and j array
       if (nnz>0) {
         a = allocator_.allocate(nnz);
-        if(!MatrixHasTrivialConstructor<B>::value)
-          // use placement new to call constructor that allocates
-          // additional memory.
-          new (a) B[nnz];
+        // use placement new to call constructor that allocates
+        // additional memory.
+        new (a) B[nnz];
 
         // allocate column indices only if not yet present (enable sharing)
         if (!j.get())
