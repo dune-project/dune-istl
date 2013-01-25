@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 
   setupLaplacian(mat,N);
 
-  typedef typename Vector::Iterator VectorIterator;
+  typename Vector::Iterator VectorIterator;
 
   FIELD_TYPE count(0);
 
