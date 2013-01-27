@@ -1567,7 +1567,7 @@ namespace Dune {
       }
       // some local variables
       double def=def0;       // loop variables
-      field_type rho,lambda,alpha;
+      field_type rho, lambda;
 
       int i=0;
       int ii=0;
