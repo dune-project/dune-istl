@@ -152,12 +152,12 @@ AC_DEFUN([DUNE_PATH_SUPERLU],[
         [AC_HELP_STRING([--with-superlu],[user defined path to SuperLU library])],
         [dnl
             if test x"$withval" != xno ; then
-                # get absolute path
-                with_superlu=`eval cd $withval 2>&1 && pwd`
                 if test x"$withval" = xyes; then
                     # Search in default locations
                     _slu_search_default
                 else
+                    # get absolute path
+                    with_superlu=`eval cd $withval 2>&1 && pwd`
                     # Search for the headers in the specified location
                     _slu_search_versions(["$with_superlu"])
                 fi
