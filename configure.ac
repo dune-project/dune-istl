@@ -4,7 +4,7 @@
 DUNE_AC_INIT # gets module version from dune.module file
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([dune/istl/istlexception.hh])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # check all dune-module stuff
 DUNE_CHECK_ALL
@@ -18,8 +18,6 @@ AC_SUBST([AM_LDFLAGS], '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
 
 # write output
 AC_CONFIG_FILES([Makefile
-    doc/comm/Makefile
-    doc/comm/figures/Makefile
     doc/doxygen/Makefile
     doc/doxygen/Doxyfile
     doc/Makefile

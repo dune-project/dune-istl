@@ -57,12 +57,12 @@ AC_DEFUN([DUNE_PATH_SUPERLU_DIST],[
 	    [AC_HELP_STRING([--with-superlu-dist],[user defined path to SuperLUDist library])],
 	    [dnl
 		if test "$withval" != no ; then
-		    # get absolute path
-		    with_superlu_dist=`eval cd $withval 2>&1 && pwd`
 		    if test "$withval" = yes; then
 		        # Search in default locations
 			_slu_dist_search_default
 		    else
+                # get absolute path
+                with_superlu_dist=`eval cd $withval 2>&1 && pwd`
 		        # Search for the headers in the specified location
 			_slu_dist_lib_path("$with_superlu_dist", "superlu_ddefs.h")
 		    fi

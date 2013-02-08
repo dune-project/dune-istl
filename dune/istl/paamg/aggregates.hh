@@ -1570,9 +1570,6 @@ namespace Dune
                          const typename C::Matrix& matrix,
                          C criterion, bool firstlevel)
     {
-      // The Criterion we use for building the dependency.
-      typedef C Criterion;
-
       //      assert(graph.isBuilt());
       typedef typename C::Matrix Matrix;
       typedef typename G::VertexIterator VertexIterator;

@@ -1565,7 +1565,7 @@ namespace Dune
 
     template<class M>
     template<class C>
-    inline MatrixGraph<M>::EdgeIteratorT<C>& MatrixGraph<M>::EdgeIteratorT<C>::operator++()
+    inline typename MatrixGraph<M>::template EdgeIteratorT<C>& MatrixGraph<M>::EdgeIteratorT<C>::operator++()
     {
       ++block_;
       ++edge_;
@@ -1580,28 +1580,28 @@ namespace Dune
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const MatrixGraph<M>::EdgeIteratorT<typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const typename MatrixGraph<M>::template EdgeIteratorT<typename remove_const<C>::type>& other) const
     {
       return block_!=other.block_;
     }
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const MatrixGraph<M>::EdgeIteratorT<const typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const typename MatrixGraph<M>::template EdgeIteratorT<const typename remove_const<C>::type>& other) const
     {
       return block_!=other.block_;
     }
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const MatrixGraph<M>::EdgeIteratorT<typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const typename MatrixGraph<M>::template EdgeIteratorT<typename remove_const<C>::type>& other) const
     {
       return block_==other.block_;
     }
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const MatrixGraph<M>::EdgeIteratorT<const typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const typename MatrixGraph<M>::template EdgeIteratorT<const typename remove_const<C>::type>& other) const
     {
       return block_==other.block_;
     }
@@ -1685,7 +1685,7 @@ namespace Dune
 
     template<class M>
     template<class C>
-    inline MatrixGraph<M>::VertexIteratorT<C>& MatrixGraph<M>::VertexIteratorT<C>::operator++()
+    inline typename MatrixGraph<M>::template VertexIteratorT<C>& MatrixGraph<M>::VertexIteratorT<C>::operator++()
     {
       ++current_;
       return *this;
@@ -1709,7 +1709,7 @@ namespace Dune
 
     template<class M>
     template<class C>
-    inline MatrixGraph<M>::EdgeIteratorT<C>
+    inline typename MatrixGraph<M>::template EdgeIteratorT<C>
     MatrixGraph<M>::VertexIteratorT<C>::begin() const
     {
       return graph_->beginEdges(current_);
@@ -1717,21 +1717,21 @@ namespace Dune
 
     template<class M>
     template<class C>
-    inline MatrixGraph<M>::EdgeIteratorT<C>
+    inline typename MatrixGraph<M>::template EdgeIteratorT<C>
     MatrixGraph<M>::VertexIteratorT<C>::end() const
     {
       return graph_->endEdges(current_);
     }
 
     template<class M>
-    inline MatrixGraph<M>::VertexIteratorT<MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template VertexIteratorT<MatrixGraph<M> >
     MatrixGraph<M>::begin()
     {
       return VertexIterator(this,0);
     }
 
     template<class M>
-    inline MatrixGraph<M>::VertexIteratorT<MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template VertexIteratorT<MatrixGraph<M> >
     MatrixGraph<M>::end()
     {
       return VertexIterator(matrix_.N());
@@ -1739,21 +1739,21 @@ namespace Dune
 
 
     template<class M>
-    inline MatrixGraph<M>::VertexIteratorT<const MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template VertexIteratorT<const MatrixGraph<M> >
     MatrixGraph<M>::begin() const
     {
       return ConstVertexIterator(this, 0);
     }
 
     template<class M>
-    inline MatrixGraph<M>::VertexIteratorT<const MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template VertexIteratorT<const MatrixGraph<M> >
     MatrixGraph<M>::end() const
     {
       return ConstVertexIterator(matrix_.N());
     }
 
     template<class M>
-    inline MatrixGraph<M>::EdgeIteratorT<MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template EdgeIteratorT<MatrixGraph<M> >
     MatrixGraph<M>::beginEdges(const VertexDescriptor& source)
     {
       return EdgeIterator(source, matrix_.operator[](source).begin(),
@@ -1761,7 +1761,7 @@ namespace Dune
     }
 
     template<class M>
-    inline MatrixGraph<M>::EdgeIteratorT<MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template EdgeIteratorT<MatrixGraph<M> >
     MatrixGraph<M>::endEdges(const VertexDescriptor& source)
     {
       return EdgeIterator(matrix_.operator[](source).end());
@@ -1769,7 +1769,7 @@ namespace Dune
 
 
     template<class M>
-    inline MatrixGraph<M>::EdgeIteratorT<const MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template EdgeIteratorT<const MatrixGraph<M> >
     MatrixGraph<M>::beginEdges(const VertexDescriptor& source) const
     {
       return ConstEdgeIterator(source, matrix_.operator[](source).begin(),
@@ -1777,7 +1777,7 @@ namespace Dune
     }
 
     template<class M>
-    inline MatrixGraph<M>::EdgeIteratorT<const MatrixGraph<M> >
+    inline typename MatrixGraph<M>::template EdgeIteratorT<const MatrixGraph<M> >
     MatrixGraph<M>::endEdges(const VertexDescriptor& source) const
     {
       return ConstEdgeIterator(matrix_.operator[](source).end());
@@ -2259,7 +2259,7 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     template<class C>
-    inline PropertiesGraph<G,V,E,VM,EM>::EdgeIteratorT<C>
+    inline typename PropertiesGraph<G,V,E,VM,EM>::template EdgeIteratorT<C>
     PropertiesGraph<G,V,E,VM,EM>::VertexIteratorT<C>::begin() const
     {
       return graph_->beginEdges(Father::operator*());
@@ -2267,7 +2267,7 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     template<class C>
-    inline PropertiesGraph<G,V,E,VM,EM>::EdgeIteratorT<C>
+    inline typename PropertiesGraph<G,V,E,VM,EM>::template EdgeIteratorT<C>
     PropertiesGraph<G,V,E,VM,EM>::VertexIteratorT<C>::end() const
     {
       return graph_->endEdges(Father::operator*());

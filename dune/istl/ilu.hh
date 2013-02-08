@@ -156,12 +156,10 @@ namespace Dune {
   void bilu_decomposition (const M& A, int n, M& ILU)
   {
     // iterator types
-    typedef typename M::RowIterator rowiterator;
     typedef typename M::ColIterator coliterator;
     typedef typename M::ConstRowIterator crowiterator;
     typedef typename M::ConstColIterator ccoliterator;
     typedef typename M::CreateIterator createiterator;
-    typedef typename M::block_type block;
     typedef typename M::field_type K;
     typedef std::map<size_t, int> map;
     typedef typename map::iterator mapiterator;

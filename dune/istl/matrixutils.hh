@@ -11,7 +11,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
-#include <dune/istl/bcrsmatrix.hh>
 #include "istlexception.hh"
 
 namespace Dune

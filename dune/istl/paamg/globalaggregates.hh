@@ -3,6 +3,16 @@
 #ifndef DUNE_GLOBALAGGREGATES_HH
 #define DUNE_GLOBALAGGREGATES_HH
 
+/**
+ * @addtogroup ISTL_PAAMG
+ *
+ * @{
+ */
+/** @file
+ * @author Markus Blatt
+ * @brief Provdes class for identifying aggregates globally.
+ */
+
 #include "aggregates.hh"
 #include "pinfo.hh"
 #include <dune/common/parallel/indexset.hh>
@@ -236,5 +246,5 @@ namespace Dune
 #endif
 
 } // end Dune namespace
-
+  /* @} */
 #endif
