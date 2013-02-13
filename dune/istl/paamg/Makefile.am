@@ -8,3 +8,5 @@ paamg_HEADERS = aggregates.hh dependency.hh galerkin.hh graph.hh \
 	graphcreator.hh parameters.hh renumberer.hh pinfo.hh
 
 include $(top_srcdir)/am/global-rules
+
+EXTRA_DIST = CMakeLists.txt

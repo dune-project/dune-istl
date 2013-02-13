@@ -88,3 +88,5 @@ pamg_comm_repart_test_LDADD =				\
 
 
 include $(top_srcdir)/am/global-rules
+
+EXTRA_DIST = CMakeLists.txt
