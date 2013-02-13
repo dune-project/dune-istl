@@ -7,7 +7,7 @@ EXTRA_DIST=dune.module
 # we need automake 1.9 or newer
 AUTOMAKE_OPTIONS = foreign 1.9
 
-SUBDIRS = dune doc m4
+SUBDIRS = cmake dune doc m4
 
 # use configured compiler for "make distcheck"
 # doxygen is difficult to convince to build in a special directory...

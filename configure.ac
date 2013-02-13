@@ -18,6 +18,9 @@ AC_SUBST([AM_LDFLAGS], '$(DUNE_LDFLAGS) $(DUNE_LIBS)')
 
 # write output
 AC_CONFIG_FILES([Makefile
+    cmake/Makefile
+    cmake/modules/Makefile
+    cmake/pkg/Makefile
     doc/doxygen/Makefile
     doc/doxygen/Doxyfile
     doc/Makefile
