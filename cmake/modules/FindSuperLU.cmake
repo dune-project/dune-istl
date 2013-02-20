@@ -30,10 +30,22 @@ find_library(SUPERLU_LIBRARY
   PATH_SUFFIXES "lib" "lib64"
 )
 
-# check if version is 4.3
+# check version specific macros
 include(CheckCSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES ${SUPERLU_INCLUDE_DIR})
 set(CMAKE_REQUIRED_LIBRARIES ${SUPERLU_LIBRARY})
+
+# check whether "mem_usage_t.expansions" was found in "slu_ddefs.h"
+CHECK_C_SOURCE_COMPILES("
+#include <slu_ddefs.h>
+int main(void)
+{
+  mem_usage_t mem;
+  return mem.expansions;
+}"
+HAVE_MEM_USAGE_T_EXPANSIONS)
+
+# check whether version is at least 4.3
 CHECK_C_SOURCE_COMPILES("
 #include <slu_ddefs.h>
 int main(void)
