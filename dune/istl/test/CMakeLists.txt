@@ -61,7 +61,7 @@ if(HAVE_SUPERLU)
 
   add_executable(overlappingschwarztest "overlappingschwarztest.cc")
 
-  # TODO add superlu flags
+  add_dune_superlu_flags("${SUPERLUTESTS}")
 endif(HAVE_SUPERLU)
 
 if(HAVE_MPI)

@@ -45,9 +45,11 @@ set(CMAKE_REQUIRED_INCLUDES "")
 set(CMAKE_REQUIRED_LIBRARIES "")
 
 if(SUPERLU_MIN_VERSION_4_3)
-  set(SUPERLU_WITH_VERSION "SuperLU >= 4.3")
+  set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
+    "Human readable string containing SuperLU version information.")
 else()
-  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2, post 2005")
+  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2, post 2005" CACHE STRING
+    "Human readable string containing SuperLU version information.")
 endif(SUPERLU_MIN_VERSION_4_3)
 
 # behave like a CMake module is supposed to behave
@@ -68,14 +70,29 @@ if(SUPERLU_FOUND)
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determing location of ${SUPERLU_WITH_VERSION} succeded:\n"
-    "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
-    "Library directory: ${SUPERLU_LIBRARY}\n\n")
-  set(SUPERLU_CPPFLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU")
-  set(SUPERLU_LIBS "-L. ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}")
+    "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
+    "Library directory: ${SUPERLU_LIBRARIES}\n\n")
+  set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU" CACHE STRING
+    "Compile flags used by DUNE when compiling SuperLU programs")
+  set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES} CACHE STRING
+    "Libraries used by DUNE when linking SuperLU programs")
 else(SUPERLU_FOUND)
   # log errornous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determing location of SuperLU failed:\n"
-    "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
-    "Library directory: ${SUPERLU_LIBRARY}\n\n")
+    "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
+    "Library directory: ${SUPERLU_LIBRARIES}\n\n")
 endif(SUPERLU_FOUND)
+
+# adds SuperLU flags to the targets
+function(add_dune_superlu_flags _targets)
+  if(SUPERLU_FOUND)
+    foreach(_target ${_targets})
+      target_link_libraries(${_target} ${SUPERLU_DUNE_LIBRARIES})
+      GET_TARGET_PROPERTY(_props ${_target} COMPILE_FLAGS)
+      string(REPLACE "_props-NOTFOUND" "" _props "${_props}")
+      SET_TARGET_PROPERTIES(${_target} PROPERTIES COMPILE_FLAGS
+        "${_props} ${PARMETIS_COMPILE_FLAGS} -DENABLE_SUPERLU=1")
+    endforeach(_target ${_targets})
+  endif(SUPERLU_FOUND)
+endfunction(add_dune_superlu_flags)
