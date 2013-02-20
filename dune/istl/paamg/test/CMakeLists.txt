@@ -5,7 +5,8 @@ set(ALLTESTS ${MPITESTS} ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
-add_dependencies(build_tests ${ALLTESTS})
+add_directory_test_target(_test_target)
+add_dependencies(${_test_target} ${ALLTESTS})
 
 add_executable(amgtest "amgtest.cc")
 add_executable(galerkintest "galerkintest.cc")
