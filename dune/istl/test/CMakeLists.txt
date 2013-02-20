@@ -1,4 +1,3 @@
-set(MPITESTS vectorcommtest matrixmarkettest matrixredisttest )
 set(NORMALTEST basearraytest matrixutilstest matrixtest
   bvectortest vbvectortest bcrsbuildtest matrixiteratortest mv
   iotest scaledidmatrixtest seqmatrixmarkettest)
@@ -11,6 +10,10 @@ if(HAVE_SUPERLU)
   set(SUPERLUTESTS superlutest superluztest superluctest superlustest
     overlappingschwarztest)
 endif(HAVE_SUPERLU)
+
+if(HAVE_MPI)
+  set(MPITESTS vectorcommtest matrixmarkettest matrixredisttest)
+endif(HAVE_MPI)
 
 set(ALLTESTS ${MPITESTS} ${NORMALTEST} ${PARDISOTEST} ${SUPERLUTESTS})
 message("ALLTESTS=${ALLTESTS}")
