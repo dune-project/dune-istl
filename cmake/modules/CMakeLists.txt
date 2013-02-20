@@ -1,3 +1,5 @@
-file(GLOB modules *.cmake)
+set(modules DuneIstlMacros.cmake
+  FindSuperLU.cmake)
+
 install(FILES ${modules} DESTINATION
-  ${CMAKE_INSTALL_DATAROOTDIR}/cmake/modules)
+  ${DUNE_INSTALL_MODULEDIR})
