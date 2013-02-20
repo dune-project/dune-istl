@@ -1,7 +1,7 @@
-set(MPITESTS  galerkintest hierarchytest pamgtest
-  pamg_comm_repart_test transfertest)
+set(MPITESTS  galerkintest hierarchytest transfertest)
+set(PARMETISTESTS pamgtest pamg_comm_repart_test)
 set(NORMALTESTS amgtest graphtest kamgtest)
-set(ALLTESTS ${MPITESTS} ${NORMALTESTS})
+set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
@@ -27,5 +27,5 @@ foreach(_exe ${ALLTESTS})
   add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
 
-include(DuneMPI)
 add_dune_mpi_flags("${MPITESTS}")
+add_parmetis_flags("${PARMETISTESTS}")
