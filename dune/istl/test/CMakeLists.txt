@@ -69,4 +69,5 @@ endif(HAVE_MPI)
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")
+  add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
