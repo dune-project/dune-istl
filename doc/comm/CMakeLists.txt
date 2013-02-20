@@ -9,5 +9,5 @@ if(LATEX_USABLE)
   ADD_LATEX_DOCUMENT(communication.tex FATHER_TARGET doc
     BIBFILES communication.bib DEFAULT_SAFEPDF INPUTS poosc08_test.cc
     IMAGE_DIRS figures)
-  create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/communication.pdf share/doc/dune-istl/comm)
+  create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/communication.pdf share/doc/dune-istl/comm communication_safepdf)
 endif(LATEX_USABLE)
