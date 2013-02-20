@@ -16,10 +16,17 @@ if(NOT BLAS_FOUND AND REQUIRED)
   return()
 endif(NOT BLAS_FOUND AND REQUIRED)
 
-# look for header files
+# look for header files, only at positions given by the user
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
-  HINTS ${SUPERLU_DIR}
+  PATHS ${SUPERLU_DIR}
+  PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
+  NO_DEFAULT_PATH
+)
+
+# look for header files, including default paths
+find_path(SUPERLU_INCLUDE_DIR
+  NAMES supermatrix.h
   PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
 )
 
@@ -27,11 +34,12 @@ find_path(SUPERLU_INCLUDE_DIR
 find_library(SUPERLU_LIBRARY
   NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
   HINTS ${SUPERLU_DIR}
-  PATH_SUFFIXES "lib" "lib64"
+  PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
 # check version specific macros
 include(CheckCSourceCompiles)
+cmake_push_check_state()
 set(CMAKE_REQUIRED_INCLUDES ${SUPERLU_INCLUDE_DIR})
 set(CMAKE_REQUIRED_LIBRARIES ${SUPERLU_LIBRARY})
 
@@ -53,8 +61,7 @@ int main(void)
   return SLU_DOUBLE;
 }"
 SUPERLU_MIN_VERSION_4_3)
-set(CMAKE_REQUIRED_INCLUDES "")
-set(CMAKE_REQUIRED_LIBRARIES "")
+cmake_pop_check_state()
 
 if(SUPERLU_MIN_VERSION_4_3)
   set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
