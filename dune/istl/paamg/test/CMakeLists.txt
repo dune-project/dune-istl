@@ -28,4 +28,4 @@ foreach(_exe ${ALLTESTS})
 endforeach(_exe ${ALLTESTS})
 
 add_dune_mpi_flags("${MPITESTS}")
-add_parmetis_flags("${PARMETISTESTS}")
+add_dune_parmetis_flags("${PARMETISTESTS}")
