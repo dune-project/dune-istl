@@ -10,6 +10,21 @@
 # SUPERLU_INCLUDE_DIRS    Path to the SuperLU include dirs.
 # SUPERLU_LIBRARIES       Name to the SuperLU library.
 #
+
+# adds SuperLU flags to the targets
+function(add_dune_superlu_flags _targets)
+  if(SUPERLU_FOUND)
+    foreach(_target ${_targets})
+      target_link_libraries(${_target} ${SUPERLU_DUNE_LIBRARIES})
+      GET_TARGET_PROPERTY(_props ${_target} COMPILE_FLAGS)
+      string(REPLACE "_props-NOTFOUND" "" _props "${_props}")
+      SET_TARGET_PROPERTIES(${_target} PROPERTIES COMPILE_FLAGS
+        "${_props} ${SUPERLU_DUNE_COMPILE_FLAGS} -DENABLE_SUPERLU=1")
+    endforeach(_target ${_targets})
+  endif(SUPERLU_FOUND)
+endfunction(add_dune_superlu_flags)
+
+# look for BLAS
 find_package(BLAS QUIET REQUIRED)
 if(NOT BLAS_FOUND)
   message("SuperLU requires BLAS which was not found, skipping the test.")
@@ -113,16 +128,3 @@ endif(SUPERLU_FOUND)
 
 # set HAVE_SUPERLU for config.h
 set(HAVE_SUPERLU SUPERLU_FOUND)
-
-# adds SuperLU flags to the targets
-function(add_dune_superlu_flags _targets)
-  if(SUPERLU_FOUND)
-    foreach(_target ${_targets})
-      target_link_libraries(${_target} ${SUPERLU_DUNE_LIBRARIES})
-      GET_TARGET_PROPERTY(_props ${_target} COMPILE_FLAGS)
-      string(REPLACE "_props-NOTFOUND" "" _props "${_props}")
-      SET_TARGET_PROPERTIES(${_target} PROPERTIES COMPILE_FLAGS
-        "${_props} ${SUPERLU_DUNE_COMPILE_FLAGS} -DENABLE_SUPERLU=1")
-    endforeach(_target ${_targets})
-  endif(SUPERLU_FOUND)
-endfunction(add_dune_superlu_flags)
