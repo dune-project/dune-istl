@@ -2,6 +2,8 @@
 
 SUBDIRS = figures
 
+EXTRA_DIST = CMakeLists.txt
+
 MPIPROGRAMS = indexset poosc08 poosc08_test
 
 # programs just to build when "make check" is used
