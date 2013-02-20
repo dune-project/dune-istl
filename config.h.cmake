@@ -51,6 +51,18 @@
 /* define to 1 if SuperLU header slu_ddefs.h contains SLU_DOUBLE */
 #cmakedefine SUPERLU_MIN_VERSION_4_3 @SUPERLU_MIN_VERSION_4_3@
 
+/* Define to the version of dune-istl */
+#define DUNE_ISTL_VERSION "${DUNE_ISTL_VERSION}"
+
+/* Define to the major version of dune-istl */
+#define DUNE_ISTL_VERSION_MAJOR ${DUNE_ISTL_VERSION_MAJOR}
+
+/* Define to the minor version of dune-istl */
+#define DUNE_ISTL_VERSION_MINOR ${DUNE_ISTL_VERSION_MINOR}
+
+/* Define to the revision of dune-istl */
+#define DUNE_ISTL_VERSION_REVISION ${DUNE_ISTL_VERSION_REVISION}
+
 /* end dune-istl
    Everything below here will be overwritten
 */
