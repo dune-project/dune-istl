@@ -32,12 +32,12 @@
 #cmakedefine HAVE_BOOST_FUSION
 
 /* Define to ENABLE_BOOST if the Boost library is available */
-#define HAVE_BOOST ENABLE_BOOST
+#cmakedefine HAVE_BOOST ENABLE_BOOST
 
 /* Define to ENABLE_PARMETIS if you have the Parmetis library.
    This is only true if MPI was found
    by configure _and_ if the application uses the PARMETIS_CPPFLAGS */
-#define HAVE_PARMETIS ENABLE_PARMETIS
+#cmakedefine HAVE_PARMETIS ENABLE_PARMETIS
 
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
