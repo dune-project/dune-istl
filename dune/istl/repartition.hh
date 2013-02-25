@@ -242,7 +242,6 @@ namespace Dune
     template<class Flags,class IS>
     void buildSendInterface(const std::vector<int>& toPart, const IS& idxset)
     {
-      typedef std::vector<int>::const_iterator Iter;
       std::map<int,int> sizes;
 
       typedef typename IS::const_iterator IIter;
@@ -1241,8 +1240,6 @@ namespace Dune
 
     assert(nparts<=oocomm.communicator().size());
 
-    typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet::GlobalIndex GI;
-    typedef std::vector<GI> GlobalVector;
     int myDomain;
 
     //
@@ -1281,7 +1278,6 @@ namespace Dune
       std::cerr<<"ParMETIS not activated. Will repartition to 1 domain instead of requested "
                <<nparts<<" domains."<<std::endl;
     nparts=1; // No parmetis available, fallback to agglomerating to 1 process
-    typedef std::size_t idxtype;
 
 #else
 
