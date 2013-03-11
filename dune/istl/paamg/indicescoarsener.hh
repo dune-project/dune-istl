@@ -249,7 +249,6 @@ namespace Dune
     {
       // fineGraph is the local subgraph corresponding to the vertices the process owns.
       // i.e. no overlap/copy vertices can be visited traversing the graph
-      typedef typename Graph::VertexDescriptor Vertex;
       typedef typename Graph::ConstVertexIterator Iterator;
       typedef typename ParallelInformation::GlobalLookupIndexSet GlobalLookupIndexSet;
 

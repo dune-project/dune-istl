@@ -339,7 +339,6 @@ namespace Dune
      */
     void completeSparsityPattern(std::vector<std::set<size_type> > add_sparsity)
     {
-      typedef typename std::vector<std::set<size_type> >::const_iterator Iter;
       for (unsigned int i = 0; i != sparsity.size(); ++i) {
         if (add_sparsity[i].size() != 0) {
           typedef std::set<size_type> Set;
@@ -757,7 +756,6 @@ namespace Dune
                                  RedistributeInformation<C>& ri)
   {
     typedef typename C::ParallelIndexSet IndexSet;
-    typedef RedistributeInformation<C> RI;
     typename C::OwnerSet ownerflags;
     std::vector<typename M::size_type> rowsize(newComm.indexSet().size(), 0);
     std::vector<typename M::size_type> copyrowsize(newComm.indexSet().size(), 0);
