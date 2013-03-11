@@ -138,7 +138,7 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
 
-  Dune::CGSolver<Vector> amgCG(fop,amg,1e-6,80,2);
+  Dune::GeneralizedPCGSolver<Vector> amgCG(fop,amg,1e-6,80,2);
   //Dune::LoopSolver<Vector> amgCG(fop, amg, 1e-4, 10000, 2);
   watch.reset();
   Dune::InverseOperatorResult r;
