@@ -2346,7 +2346,6 @@ namespace Dune
         if((noAggregates+1)%10000 == 0)
           Dune::dverb<<"c";
         unmarkFront();
-        aggregate_->seed(seed);
 
         if(graph.getVertexProperties(seed).excludedBorder()) {
           aggregates[seed]=AggregatesMap<Vertex>::ISOLATED;
@@ -2361,11 +2360,14 @@ namespace Dune
             ++skippedAggregates;
             // skip rest as no agglomeration is done.
             continue;
-          }else
+          }else{
+            aggregate_->seed(seed);
             growIsolatedAggregate(seed, aggregates, c);
-        }else
+          }
+        }else{
+          aggregate_->seed(seed);
           growAggregate(seed, aggregates, c);
-
+        }
 
         /* The rounding step. */
         while(!(graph.getVertexProperties(seed).isolated()) && aggregate_->size() < c.maxAggregateSize()) {
