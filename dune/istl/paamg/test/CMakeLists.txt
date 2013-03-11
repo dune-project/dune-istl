@@ -6,7 +6,7 @@ if(ParMETIS_FOUND)
   set(PARMETISTESTS pamg_comm_repart_test)
 endif(ParMETIS_FOUND)
 
-set(NORMALTESTS amgtest graphtest kamgtest)
+set(NORMALTESTS amgtest fastamg graphtest kamgtest)
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
@@ -15,6 +15,8 @@ add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
 
 add_executable(amgtest "amgtest.cc")
+add_dune_superlu_flags(amgtest)
+add_executable(fastamg "fastamg.cc")
 add_dune_superlu_flags(amgtest)
 add_executable(galerkintest "galerkintest.cc")
 add_executable(graphtest "graphtest.cc")
