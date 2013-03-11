@@ -5,7 +5,7 @@ if MPI
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest pamg_comm_repart_test
 endif
 
-NORMALTESTS = kamgtest amgtest graphtest $(MPITESTS)
+NORMALTESTS = kamgtest amgtest fastamg graphtest $(MPITESTS)
 
 # which tests to run
 TESTS = $(NORMALTESTS) $(TESTPROGS)
@@ -50,6 +50,14 @@ amgtest_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
 amgtest_LDADD =					\
 	$(SUPERLU_LIBS)				\
 	$(LDADD)
+
+fastamg_SOURCES = fastamg.cc
+fastamg_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+fastamg_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+fastamg_LDADD =					\
+	$(SUPERLU_LIBS)				\
+	$(LDADD)
+
 
 kamgtest_SOURCES = kamgtest.cc
 kamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)

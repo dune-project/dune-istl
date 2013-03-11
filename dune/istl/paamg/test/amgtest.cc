@@ -99,10 +99,12 @@ void testAMG(int N, int coarsenTarget, int ml)
   watch.reset();
   Operator fop(mat);
 
-  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
-  Criterion;
-  typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
-  //typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
+  //  Criterion;
+  typedef Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricMatrixDependency<BCRSMat,Dune::Amg::FirstDiagonal> > CriterionBase;
+  typedef Dune::Amg::CoarsenCriterion<CriterionBase> Criterion;
+  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::SymmetricMultiplicativeSchwarzMode> Smoother;
