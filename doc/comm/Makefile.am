@@ -2,8 +2,6 @@
 
 SUBDIRS = figures
 
-EXTRA_DIST = CMakeLists.txt
-
 MPIPROGRAMS = indexset poosc08 poosc08_test
 
 # programs just to build when "make check" is used
@@ -13,8 +11,10 @@ TESTS = $(MPIPROGRAMS)
 
 if BUILD_DOCS
   DOCFILES = communication.pdf
-  EXTRA_DIST = ${EXTRA_DIST} $(DOCFILES)
+  EXTRA_DIST = CMakeLists.txt $(DOCFILES)
   EXTRAINSTALL = $(DOCFILES)
+else
+  EXTRA_DIST = CMakeLists.txt
 endif
 
 # setting like in dune-web

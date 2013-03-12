@@ -8,6 +8,8 @@ if BUILD_DOCS
   DOCFILES = istl.pdf
   EXTRA_DIST = CMakeLists.txt $(DOCFILES)
   EXTRAINSTALL = $(DOCFILES)
+else
+  EXTRA_DIST = CMakeLists.txt
 endif
 
 # setting like in dune-web
