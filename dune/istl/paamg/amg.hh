@@ -16,6 +16,9 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/exceptions.hh>
 
+#define HAS_DUNE_FAST_AMG
+#include <dune/istl/paamg/fastamg.hh>
+
 namespace Dune
 {
   namespace Amg
