@@ -30,6 +30,7 @@ NORMALTESTS = basearraytest \
               mv \
               scaledidmatrixtest \
               seqmatrixmarkettest \
+              solvertest \
               vbvectortest
 
 # list of tests to run (indicestest is special case)
@@ -104,6 +105,8 @@ mv_SOURCES = mv.cc
 iotest_SOURCES = iotest.cc
 
 scaledidmatrixtest_SOURCES = scaledidmatrixtest.cc
+
+solvertest_SOURCES = solvertest.cc
 
 if MPI
   vectorcommtest_SOURCES = vectorcommtest.cc

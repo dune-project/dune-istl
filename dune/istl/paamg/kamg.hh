@@ -47,8 +47,9 @@ namespace Dune
        * @param coarseSolver The solver used for the coarse grid correction.
        */
 
-      KAmgTwoGrid(AMG& amg, InverseOperator<Domain,Range>* coarseSolver)
-        : amg_(amg), coarseSolver_(coarseSolver)
+      KAmgTwoGrid(AMG& amg, InverseOperator<Domain,Range>* coarseSolver, bool
+                  isCoarsest)
+        : amg_(amg), coarseSolver_(coarseSolver), isCoarsest_(isCoarsest)
       {}
 
       /**  \copydoc Preconditioner::pre(X&,Y&) */
@@ -62,27 +63,29 @@ namespace Dune
       /** \copydoc Preconditioner::apply(X&,const Y&) */
       void apply(typename AMG::Domain& v, const typename AMG::Range& d)
       {
-        *amg_.rhs = d;
+        Range rhs(d);
         *amg_.lhs = v;
         // Copy data
-        *amg_.update=0;
 
-        amg_.presmooth();
         bool processFineLevel =
-          amg_.moveToCoarseLevel();
+          amg_.moveToCoarseLevel(rhs);
 
         if(processFineLevel) {
-          typename AMG::Range b=*amg_.rhs;
-          typename AMG::Domain x=*amg_.update;
+          typename AMG::Domain x(*amg_.update=0); // update is zero
+          if(!isCoarsest_)
+            amg_.presmooth();
+          typename AMG::Range b(*amg_.rhs); // b might get overridden
           InverseOperatorResult res;
           coarseSolver_->apply(x, b, res);
-          *amg_.update=x;
+          *amg_.update+=x; // coarse level correction has to be in lhs
+
+          if(!isCoarsest_) {
+            *amg_.lhs=x;
+            amg_.postsmooth();
+          }
         }
 
-        amg_.moveToFineLevel(processFineLevel);
-
-        amg_.postsmooth();
-        v=*amg_.update;
+        amg_.moveToFineLevel(v, processFineLevel);
       }
 
       /**
@@ -103,6 +106,7 @@ namespace Dune
       AMG& amg_;
       /** @brief The coarse grid solver.*/
       InverseOperator<Domain,Range>* coarseSolver_;
+      bool isCoarsest_;
     };
 
 
@@ -163,9 +167,9 @@ namespace Dune
        * @param minDefectReduction The minimal defect reduction to achieve on each Krylov level.
        */
       KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-           const SmootherArgs& smootherArgs, std::size_t gamma,
+           const SmootherArgs& smootherArgs, std::size_t maxLevelKrylovSteps = 3 ,
            std::size_t preSmoothingSteps =1, std::size_t postSmoothingSteps = 1,
-           std::size_t maxLevelKrylovSteps = 3 , double minDefectReduction =1e-1);
+           double minDefectReduction =1e-1);
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -185,9 +189,9 @@ namespace Dune
        */
       template<class C>
       KAMG(const Operator& fineOperator, const C& criterion,
-           const SmootherArgs& smootherArgs, std::size_t gamma=1,
+           const SmootherArgs& smootherArgs, std::size_t maxLevelKrylovSteps=3,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
-           std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
+           double minDefectReduction=1e-1,
            const ParallelInformation& pinfo=ParallelInformation());
 
       /**  \copydoc Preconditioner::pre(X&,Y&) */
@@ -213,27 +217,30 @@ namespace Dune
       std::vector<typename Amg::ScalarProduct*> scalarproducts;
 
       /** @brief pointers to the allocated krylov solvers. */
-      std::vector<KAmgTwoGrid<Amg>*> ksolvers;
+      std::vector<KrylovSolver*> ksolvers;
+
+      /** @brief pointers to the allocated krylov solvers. */
+      std::vector<KAmgTwoGrid<Amg>*> twogridMethods;
     };
 
     template<class M, class X, class S, class P, class K, class A>
     KAMG<M,X,S,P,K,A>::KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                             const SmootherArgs& smootherArgs,
-                            std::size_t gamma, std::size_t preSmoothingSteps,
+                            std::size_t ksteps, std::size_t preSmoothingSteps,
                             std::size_t postSmoothingSteps,
-                            std::size_t ksteps, double reduction)
-      : amg(matrices, coarseSolver, smootherArgs, gamma, preSmoothingSteps,
+                            double reduction)
+      : amg(matrices, coarseSolver, smootherArgs, 1, preSmoothingSteps,
             postSmoothingSteps), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
     template<class M, class X, class S, class P, class K, class A>
     template<class C>
     KAMG<M,X,S,P,K,A>::KAMG(const Operator& fineOperator, const C& criterion,
-                            const SmootherArgs& smootherArgs, std::size_t gamma,
+                            const SmootherArgs& smootherArgs, std::size_t ksteps,
                             std::size_t preSmoothingSteps, std::size_t postSmoothingSteps,
-                            std::size_t ksteps, double reduction,
+                            double reduction,
                             const ParallelInformation& pinfo)
-      : amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
+      : amg(fineOperator, criterion, smootherArgs, 1, preSmoothingSteps,
             postSmoothingSteps, false, pinfo), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
@@ -250,31 +257,43 @@ namespace Dune
       typename ParallelInformationHierarchy::Iterator
       pinfo = amg.matrices_->parallelInformation().coarsest();
       bool hasCoarsest=(amg.levels()==amg.maxlevels());
-      KrylovSolver* ks=0;
 
-      if(hasCoarsest) {
-        if(matrix==amg.matrices_->matrices().finest())
-          return;
-        --matrix;
-        --pinfo;
-        ksolvers.push_back(new KAmgTwoGrid<Amg>(amg, amg.solver_));
-      }else
-        ksolvers.push_back(new KAmgTwoGrid<Amg>(amg, ks));
+      if(hasCoarsest && matrix==amg.matrices_->matrices().finest())
+        return;
 
-      std::ostringstream s;
-
+      --matrix;
+      --pinfo;
+      twogridMethods.push_back(new KAmgTwoGrid<Amg>(amg, amg.solver_,true));
+      ksolvers.push_back(new KrylovSolver(*matrix, *twogridMethods.back(),
+                                          levelDefectReduction,maxLevelKrylovSteps,1));
+      std::cout<<"push back true"<<std::endl;
       if(matrix!=amg.matrices_->matrices().finest())
-        while(true) {
-          scalarproducts.push_back(Amg::ScalarProductChooser::construct(*pinfo));
-          ks = new KrylovSolver(*matrix, *(scalarproducts.back()),
-                                *(ksolvers.back()), levelDefectReduction,
-                                maxLevelKrylovSteps, 0);
-          ksolvers.push_back(new KAmgTwoGrid<Amg>(amg, ks));
-          --matrix;
-          --pinfo;
+        for(--matrix, --pinfo; true; --matrix, --pinfo) {
+          twogridMethods.push_back(new KAmgTwoGrid<Amg>(amg, ksolvers.back(),false));
+          ksolvers.push_back(new KrylovSolver(*matrix, *twogridMethods.back(),
+                                              levelDefectReduction,maxLevelKrylovSteps,1));
+          std::cout<<"push back false"<<std::endl;
           if(matrix==amg.matrices_->matrices().finest())
             break;
         }
+
+      /*
+         std::ostringstream s;
+
+         while(true){
+          scalarproducts.push_back(Amg::ScalarProductChooser::construct(*pinfo));
+          ks = new KrylovSolver(*matrix, *(scalarproducts.back()),
+         *(ksolvers.back()), levelDefectReduction,
+                                maxLevelKrylovSteps, 0);
+          if(matrix==amg.matrices_->matrices().finest())
+            break;
+          else{
+            --matrix;
+            --pinfo;
+            ksolvers.push_front(new KAmgTwoGrid<Amg>(amg, ks));
+            std::cout<<"push back false 2"<<std::endl;
+          }
+          }*/
     }
 
 
@@ -283,7 +302,7 @@ namespace Dune
     {
       typedef typename std::vector<KAmgTwoGrid<Amg>*>::reverse_iterator KIterator;
       typedef typename std::vector<ScalarProduct*>::iterator SIterator;
-      for(KIterator kiter = ksolvers.rbegin(); kiter != ksolvers.rend();
+      for(KIterator kiter = twogridMethods.rbegin(); kiter != twogridMethods.rend();
           ++kiter)
       {
         if((*kiter)->coarseSolver()!=amg.solver_)
@@ -301,13 +320,26 @@ namespace Dune
     void KAMG<M,X,S,P,K,A>::apply(Domain& v, const Range& d)
     {
       amg.initIteratorsWithFineLevel();
+      *amg.lhs =v;
+      *amg.rhs = d;
+      *amg.update = 0;
       if(ksolvers.size()==0)
       {
         Range td=d;
         InverseOperatorResult res;
         amg.solver_->apply(v,td,res);
-      }else
-        ksolvers.back()->apply(v,d);
+      }else{
+        amg.presmooth();
+        *amg.lhs=0;
+#ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
+        Range td=*amg.rhs;
+        InverseOperatorResult res;
+        ksolvers.back()->apply(*amg.lhs,td, res);
+        *amg.update+=*amg.lhs;
+#endif
+        amg.postsmooth();
+        v=*amg.update;
+      }
     }
 
     template<class M, class X, class S, class P, class K, class A>
