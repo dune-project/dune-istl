@@ -3,7 +3,7 @@
 #ifndef DUNE_MULTITYPEVECTOR_HH
 #define DUNE_MULTITYPEVECTOR_HH
 
-#if HAVE_BOOST
+#if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
 #include <cmath>
@@ -311,6 +311,6 @@ namespace Dune {
 } // end namespace
 
 #endif // end HAVE_BOOST_FUSION
-#endif // end HAVE_BOOST
+#endif // end HAVE_DUNE_BOOST
 
 #endif
