@@ -105,7 +105,7 @@ void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int 
 
     ColIterator endi = (*i).end();
 
-    if(x<start || x >= end || x==0 || x==N-1 || y==0 || y==N-1) {
+    if(x<start || x >= end) { // || x==0 || x==N-1 || y==0 || y==N-1){
       // overlap node is dirichlet border
       ColIterator j = (*i).begin();
 
@@ -140,7 +140,7 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<T,BS> >& lhs,
 
     if(x==0 || y ==0 || x==n-1 || y==n-1) {
       //double h = 1.0 / ((double) (n-1));
-      lhs[i->local()]=rhs[i->local()]; //((double)x)*((double)y)*h*h;
+      lhs[i->local()]=rhs[i->local()]=0; //((double)x)*((double)y)*h*h;
     }
   }
 }
@@ -164,7 +164,7 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<T,BS> >& lhs,
         else
           y = ((T) j)*h;
 
-        lhs[j*N+i]=rhs[j*N+i]; //=0;//x*y;
+        lhs[j*N+i]=rhs[j*N+i]=0; //x*y;
       }
 }
 

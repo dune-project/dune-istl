@@ -7,7 +7,6 @@
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/istl/paamg/kamg.hh>
 #include <dune/istl/paamg/pinfo.hh>
-#include <dune/istl/matrixmarket.hh>
 #include <cstdlib>
 #include <ctime>
 
@@ -45,7 +44,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<BS,double>(N, indices, c, &n, 1);
+  BCRSMat mat = setupAnisotropic2d<BS>(N, indices, c, &n, .001);
 
   Vector b(mat.N()), x(mat.M());
 
@@ -56,16 +55,10 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   x=0;
   randomize(mat, b);
-  x=1;
-  mat.mv(x, b);
-  x=0;
 
   if(N<6) {
     Dune::printmatrix(std::cout, mat, "A", "row");
     Dune::printvector(std::cout, x, "x", "row");
-  }else{
-    Dune::storeMatrixMarket(mat, "Mat.mm");
-    Dune::storeMatrixMarket(b, "b.mm");
   }
 
   Dune::Timer watch;
@@ -94,7 +87,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   smootherArgs.relaxationFactor = 1;
 
   Criterion criterion(15,coarsenTarget);
-  criterion.setDefaultValuesIsotropic(2,2);
+  criterion.setDefaultValuesIsotropic(2);
   criterion.setAlpha(.67);
   criterion.setBeta(1.0e-4);
   criterion.setMaxLevel(ml);
@@ -150,6 +143,6 @@ int main(int argc, char** argv)
     ml = atoi(argv[3]);
 
   testAMG<1>(N, coarsenTarget, ml);
-  //testAMG<2>(N, coarsenTarget, ml);
+  testAMG<2>(N, coarsenTarget, ml);
 
 }

@@ -373,7 +373,7 @@ namespace Dune {
   template<int I>
   struct algmeta_itsteps {
 
-#if HAVE_DUNE_BOOST
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
     template<typename T11, typename T12, typename T13, typename T14,
@@ -421,7 +421,7 @@ namespace Dune {
       x.axpy(K(1)-w,xold);
     }
 
-#if HAVE_DUNE_BOOST
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
     template<typename T11, typename T12, typename T13, typename T14,
@@ -471,7 +471,7 @@ namespace Dune {
       }
     }
 
-#if HAVE_DUNE_BOOST
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
     template<typename T11, typename T12, typename T13, typename T14,
@@ -521,7 +521,7 @@ namespace Dune {
       }
     }
 
-#if HAVE_DUNE_BOOST
+#if HAVE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
     template<typename T11, typename T12, typename T13, typename T14,

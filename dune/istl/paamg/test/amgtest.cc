@@ -77,9 +77,14 @@ void testAMG(int N, int coarsenTarget, int ml)
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<BS,XREAL>(N, indices, c, &n, 1000);
+  BCRSMat mat = setupAnisotropic2d<BS,XREAL>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
+
+  b=0;
+  x=100;
+
+  setBoundary(x, b, N);
 
   x=0;
   randomize(mat, b);
@@ -94,12 +99,10 @@ void testAMG(int N, int coarsenTarget, int ml)
   watch.reset();
   Operator fop(mat);
 
-  //typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
-  //  Criterion;
-  typedef Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricMatrixDependency<BCRSMat,Dune::Amg::FirstDiagonal> > CriterionBase;
-  typedef Dune::Amg::CoarsenCriterion<CriterionBase> Criterion;
-  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
-  typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
+  Criterion;
+  typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  //typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::SymmetricMultiplicativeSchwarzMode> Smoother;
@@ -116,12 +119,11 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   smootherArgs.relaxationFactor = 1;
 
-  Criterion criterion(Dune::Amg::Parameters(15,coarsenTarget));
-  criterion.setDefaultValuesIsotropic(2, 2);
+  Criterion criterion(15,coarsenTarget);
+  criterion.setDefaultValuesIsotropic(2);
   criterion.setAlpha(.67);
   criterion.setBeta(1.0e-4);
   criterion.setMaxLevel(ml);
-  criterion.setProlongationDampingFactor(1.6);
   criterion.setSkipIsolated(false);
 
   Dune::SeqScalarProduct<Vector> sp;

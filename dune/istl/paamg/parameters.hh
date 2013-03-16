@@ -106,7 +106,7 @@ namespace Dune
        */
       void setDefaultValuesIsotropic(std::size_t dim, std::size_t diameter=2)
       {
-        maxDistance_=0;
+        maxDistance_=diameter-1;
         std::size_t csize=1;
 
         for(; dim>0; dim--) {
