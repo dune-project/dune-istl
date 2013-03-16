@@ -222,7 +222,7 @@ namespace Dune
     template<class M, class X, class PI, class A>
     FastAMG<M,X,PI,A>::FastAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                                const Dune::Amg::Parameters& parms, bool symmetric_)
-      : matrices_(&matrices), solver_(&coarseSolver), scalarProduct_(0),
+      : matrices_(&matrices), solver_(&coarseSolver), scalarProduct_(),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         symmetric(symmetric_), coarsesolverconverged(true),
@@ -243,7 +243,7 @@ namespace Dune
                                const Dune::Amg::Parameters& parms,
                                bool symmetric_,
                                const PI& pinfo)
-      : solver_(), scalarProduct_(0), gamma_(parms.getGamma()),
+      : solver_(), scalarProduct_(), gamma_(parms.getGamma()),
         preSteps_(parms.getNoPreSmoothSteps()), postSteps_(parms.getNoPostSmoothSteps()),
         buildHierarchy_(true),
         symmetric(symmetric_), coarsesolverconverged(true),
