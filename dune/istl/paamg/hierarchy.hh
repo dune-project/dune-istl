@@ -869,8 +869,8 @@ namespace Dune
                                    *(get<1>(graphs)),
                                    visitedMap,
                                    *aggregatesMap,
-                                   *infoLevel);
-
+                                   *infoLevel,
+                                   noAggregates);
         GraphCreator::free(graphs);
 
         if(criterion.debugLevel()>2) {
@@ -909,7 +909,8 @@ namespace Dune
                                             *aggregatesMap,
                                             aggregates,
                                             OverlapFlags());
-
+        dverb<<"Building of sparsity pattern took "<<watch.elapsed()<<std::endl;
+        watch.reset();
         info->freeGlobalLookup();
 
         delete get<0>(graphs);
@@ -917,7 +918,7 @@ namespace Dune
 
         if(criterion.debugLevel()>2) {
           if(rank==0)
-            std::cout<<"Calculation of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
+            std::cout<<"Calculation entries of Galerkin product took "<<watch.elapsed()<<" seconds."<<std::endl;
         }
 
         BIGINT nonzeros = countNonZeros(*coarseMatrix);

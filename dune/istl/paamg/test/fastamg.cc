@@ -2,46 +2,15 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
 
-/*#include"xreal.h"
-
-   namespace std
-   {
-
-   HPA::xreal abs(const HPA::xreal& t)
-   {
-    return t>=0?t:-t;
-   }
-
-   };
- */
-
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
-#include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/fastamg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 #include <cstdlib>
 #include <ctime>
-
-typedef double XREAL;
-
-/*
-   typedef HPA::xreal XREAL;
-
-   namespace Dune
-   {
-   template<>
-   struct DoubleConverter<HPA::xreal>
-   {
-   static double toDouble(const HPA::xreal& t)
-   {
-     return t._2double();
-   }
-   };
-   }
- */
 
 template<class M, class V>
 void randomize(const M& mat, V& b)
@@ -57,7 +26,6 @@ void randomize(const M& mat, V& b)
   mat.mv(static_cast<const V&>(x), b);
 }
 
-
 template <int BS>
 void testAMG(int N, int coarsenTarget, int ml)
 {
@@ -68,18 +36,23 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
   ParallelIndexSet indices;
-  typedef Dune::FieldMatrix<XREAL,BS,BS> MatrixBlock;
+  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<XREAL,BS> VectorBlock;
+  typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
   typedef Dune::CollectiveCommunication<void*> Comm;
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<BS,XREAL>(N, indices, c, &n, 1000);
+  BCRSMat mat = setupAnisotropic2d<BS,double>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
+
+  b=0;
+  x=100;
+
+  setBoundary(x, b, N);
 
   x=0;
   randomize(mat, b);
@@ -94,43 +67,21 @@ void testAMG(int N, int coarsenTarget, int ml)
   watch.reset();
   Operator fop(mat);
 
-  //typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
-  //  Criterion;
   typedef Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricMatrixDependency<BCRSMat,Dune::Amg::FirstDiagonal> > CriterionBase;
   typedef Dune::Amg::CoarsenCriterion<CriterionBase> Criterion;
-  //typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
-  typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
-  //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
-  //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
-  //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::SymmetricMultiplicativeSchwarzMode> Smoother;
-  //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector> Smoother;
-  typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 
-  SmootherArgs smootherArgs;
-
-  smootherArgs.iterations = 1;
-
-  //smootherArgs.overlap=SmootherArgs::vertex;
-  //smootherArgs.overlap=SmootherArgs::none;
-  //smootherArgs.overlap=SmootherArgs::aggregate;
-
-  smootherArgs.relaxationFactor = 1;
-
-  Criterion criterion(Dune::Amg::Parameters(15,coarsenTarget));
-  criterion.setDefaultValuesIsotropic(2, 2);
+  Criterion criterion(15,coarsenTarget);
+  criterion.setDefaultValuesIsotropic(2);
   criterion.setAlpha(.67);
   criterion.setBeta(1.0e-4);
   criterion.setMaxLevel(ml);
-  criterion.setProlongationDampingFactor(1.6);
   criterion.setSkipIsolated(false);
 
   Dune::SeqScalarProduct<Vector> sp;
-  typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
+  typedef Dune::Amg::FastAMG<Operator,Vector> AMG;
+  Dune::Amg::Parameters parms;
 
-  Smoother smoother(mat,1,1);
-
-  AMG amg(fop, criterion, smootherArgs, 1, 1, 1, false);
-
+  AMG amg(fop, criterion, parms);
 
   double buildtime = watch.elapsed();
 
@@ -142,7 +93,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::InverseOperatorResult r;
   amgCG.apply(x,b,r);
 
-  XREAL solvetime = watch.elapsed();
+  double solvetime = watch.elapsed();
 
   std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
 
