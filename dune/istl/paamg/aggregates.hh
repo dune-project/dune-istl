@@ -1452,9 +1452,9 @@ namespace Dune
          iterator end   = vertices_.end();*/
       throw "Not yet implemented";
 
-      while(begin!=end) {
-        //for();
-      }
+      //      while(begin!=end){
+      //for();
+      //      }
 
     }
 

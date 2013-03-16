@@ -3,6 +3,8 @@
 #ifndef DUNE_ISTL_FASTAMGSMOOTHER_HH
 #define DUNE_ISTL_FASTAMGSMOOTHER_HH
 
+#include <cstddef>
+
 namespace Dune
 {
   namespace Amg
