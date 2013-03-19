@@ -16,6 +16,7 @@
 #include "scalarproducts.hh"
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/common/static_assert.hh>
 
 namespace Dune {

@@ -12,7 +12,6 @@
 #include "solvercategory.hh"
 #include "istlexception.hh"
 #include "matrixutils.hh"
-#include "io.hh"
 #include "gsetc.hh"
 #include "ilu.hh"
 
