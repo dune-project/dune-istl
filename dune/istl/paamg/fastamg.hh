@@ -103,11 +103,12 @@ namespace Dune
        * @param fineOperator The operator on the fine level.
        * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
        * or UnsymmetricCriterion, and providing the parameters.
+       * @param parms The parameters for the AMG.
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
       FastAMG(const Operator& fineOperator, const C& criterion,
-              const Parameters& params,
+              const Parameters& parms,
               bool symmetric=true,
               const ParallelInformation& pinfo=ParallelInformation());
 

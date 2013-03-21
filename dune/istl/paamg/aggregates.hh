@@ -761,6 +761,7 @@ namespace Dune
        * @param aggregates The mapping of vertices onto aggregates.
        * @param connectivity The set of vertices connected to the aggregate.
        * distance spheres.
+       * @param front_ The vertices of the current aggregate front.
        */
       Aggregate(MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
                 VertexSet& connectivity, std::vector<Vertex>& front_);
@@ -841,6 +842,9 @@ namespace Dune
        */
       VertexSet& connected_;
 
+      /**
+       * @brief The vertices of the current aggregate front.
+       */
       std::vector<Vertex>& front_;
     };
 

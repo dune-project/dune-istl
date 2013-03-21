@@ -401,7 +401,7 @@ namespace Dune
 
       /**
        * @brief Whether the hierarchy was built.
-       * @return true if the ::coarsen method was called.
+       * @return true if the MatrixHierarchy::build method was called.
        */
       bool isBuilt() const;
 

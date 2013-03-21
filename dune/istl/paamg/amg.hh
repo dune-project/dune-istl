@@ -105,6 +105,7 @@ namespace Dune
        * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
        * @param preSmoothingSteps The number of smoothing steps for premoothing.
        * @param postSmoothingSteps The number of smoothing steps for postmoothing.
+       * @param additive Whether to use additive multigrid.
        * @deprecated Use constructor
        * AMG(const OperatorHierarchy&, CoarseSolver&, const SmootherArgs, const Parameters&)
        * instead.
@@ -140,6 +141,7 @@ namespace Dune
        * @param gamma 1 for V-cycle, 2 for W-cycle
        * @param preSmoothingSteps The number of smoothing steps for premoothing.
        * @param postSmoothingSteps The number of smoothing steps for postmoothing.
+       * @param additive Whether to use additive multigrid.
        * @param pinfo The information about the parallel distribution of the data.
        * @deprecated Use
        * AMG(const Operator&, const C&, const SmootherArgs, const ParallelInformation)
