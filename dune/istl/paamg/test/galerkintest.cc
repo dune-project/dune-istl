@@ -90,7 +90,8 @@ void testCoarsenIndices(int N)
                                                                                                                                   pg,
                                                                                                                                   visitedMap,
                                                                                                                                   aggregatesMap,
-                                                                                                                                  coarseInfo);
+                                                                                                                                  coarseInfo,
+                                                                                                                                  noAggregates);
 
   coarseInfo.buildGlobalLookup(noCoarseVertices);
   std::cout << rank <<": coarse indices: " <<coarseIndices << std::endl;

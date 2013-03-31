@@ -1240,7 +1240,7 @@ namespace Dune
 
     assert(nparts<=oocomm.communicator().size());
 
-    int myDomain;
+    int myDomain = -1;
 
     //
     // 1) Prepare the required parameters for using ParMETIS
