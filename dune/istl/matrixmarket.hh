@@ -26,7 +26,7 @@ namespace Dune
    * in various formats.
    *
    *
-   * Routine printmatix prints a (sparse matrix with all entries (even zeroes).
+   * Routine printmatrix prints a (sparse matrix with all entries (even zeroes).
    * Function printvector prints a vector to a stream.
    * PrintSparseMatrix prints a sparse matrix omitting all nonzeroes.
    * With writeMatrixToMatlab one can write a matrix in a Matlab readable format.
@@ -59,7 +59,7 @@ namespace Dune
     struct mm_numeric_type {
       enum {
         /**
-         * @brief Whethe T is a supported numeric type.
+         * @brief Whether T is a supported numeric type.
          */
         is_numeric=false
       };
@@ -70,7 +70,7 @@ namespace Dune
     {
       enum {
         /**
-         * @brief Whethe T is a supported numeric type.
+         * @brief Whether T is a supported numeric type.
          */
         is_numeric=true
       };
@@ -86,7 +86,7 @@ namespace Dune
     {
       enum {
         /**
-         * @brief Whethe T is a supported numeric type.
+         * @brief Whether T is a supported numeric type.
          */
         is_numeric=true
       };
@@ -102,7 +102,7 @@ namespace Dune
     {
       enum {
         /**
-         * @brief Whethe T is a supported numeric type.
+         * @brief Whether T is a supported numeric type.
          */
         is_numeric=true
       };
@@ -118,7 +118,7 @@ namespace Dune
     {
       enum {
         /**
-         * @brief Whethe T is a supported numeric type.
+         * @brief Whether T is a supported numeric type.
          */
         is_numeric=true
       };
@@ -134,7 +134,7 @@ namespace Dune
     {
       enum {
         /**
-         * @brief Whethe T is a supported numeric type.
+         * @brief Whether T is a supported numeric type.
          */
         is_numeric=true
       };
