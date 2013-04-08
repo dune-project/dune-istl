@@ -11,8 +11,8 @@
 #include <set>
 #include <map>
 
+#include <dune/common/fmatrix.hh>
 #include "istlexception.hh"
-#include "io.hh"
 
 /** \file
  * \brief  ???

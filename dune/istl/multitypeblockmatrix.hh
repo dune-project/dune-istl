@@ -8,7 +8,7 @@
 
 #include "istlexception.hh"
 
-#if HAVE_BOOST
+#if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
 #include <boost/fusion/sequence.hpp>
@@ -463,5 +463,5 @@ namespace Dune {
 } // end namespace
 
 #endif // HAVE_BOOST_FUSION
-#endif // HAVE_BOOST
+#endif // HAVE_DUNE_BOOST
 #endif

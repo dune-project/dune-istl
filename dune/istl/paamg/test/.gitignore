@@ -11,3 +11,4 @@ pamgtest
 pamg_comm_repart_test
 transfertest
 kamgtest
+fastamg

@@ -171,14 +171,14 @@ namespace Dune {
       return *this;
     }
 
-    //! vector space multiplication with scalar
+    //! addition to the diagonal
     ScaledIdentityMatrix& operator+= (const K& k)
     {
       p_ += k;
       return *this;
     }
 
-    //! vector space division by scalar
+    //! subtraction from the diagonal
     ScaledIdentityMatrix& operator-= (const K& k)
     {
       p_ -= k;

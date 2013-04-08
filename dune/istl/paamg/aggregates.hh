@@ -116,6 +116,129 @@ namespace Dune
 
     /**
      * @brief Dependency policy for symmetric matrices.
+     *
+     * We assume that not only the sparsity pattern is symmetric
+     * but also the entries (a_ij=aji). If that is not the case
+     * the resulting dependency graph might be unsymmetric.
+     *
+     * \tparam M The type of the matrix
+     * \tparam N The type of the metric that turns matrix blocks into
+     * field values
+     */
+    template<class M, class N>
+    class SymmetricMatrixDependency : public Dune::Amg::Parameters
+    {
+    public:
+      /**
+       * @brief The matrix type we build the dependency of.
+       */
+      typedef M Matrix;
+
+      /**
+       * @brief The norm to use for examining the matrix entries.
+       */
+      typedef N Norm;
+
+      /**
+       * @brief Constant Row iterator of the matrix.
+       */
+      typedef typename Matrix::row_type Row;
+
+      /**
+       * @brief Constant column iterator of the matrix.
+       */
+      typedef typename Matrix::ConstColIterator ColIter;
+
+      void init(const Matrix* matrix);
+
+      void initRow(const Row& row, int index);
+
+      void examine(const ColIter& col);
+
+      template<class G>
+      void examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col);
+
+      bool isIsolated();
+
+
+      SymmetricMatrixDependency(const Parameters& parms)
+        : Parameters(parms)
+      {}
+      SymmetricMatrixDependency()
+        : Parameters()
+      {}
+
+    protected:
+      /** @brief The matrix we work on. */
+      const Matrix* matrix_;
+      /** @brief The current max value.*/
+      typename Matrix::field_type maxValue_;
+      /** @brief The functor for calculating the norm. */
+      Norm norm_;
+      /** @brief index of the currently evaluated row. */
+      int row_;
+      /** @brief The norm of the current diagonal. */
+      typename Matrix::field_type diagonal_;
+      std::vector<typename Matrix::field_type> vals_;
+      typename std::vector<typename Matrix::field_type>::iterator valIter_;
+
+    };
+
+
+    template<class M, class N>
+    inline void SymmetricMatrixDependency<M,N>::init(const Matrix* matrix)
+    {
+      matrix_ = matrix;
+    }
+
+    template<class M, class N>
+    inline void SymmetricMatrixDependency<M,N>::initRow(const Row& row, int index)
+    {
+      vals_.assign(row.size(), 0.0);
+      assert(vals_.size()==row.size());
+      valIter_=vals_.begin();
+
+      maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
+      diagonal_=norm_(row[index]);
+      row_ = index;
+    }
+
+    template<class M, class N>
+    inline void SymmetricMatrixDependency<M,N>::examine(const ColIter& col)
+    {
+      // skip positive offdiagonals if norm preserves sign of them.
+      typename Matrix::field_type eij = norm_(*col);
+      if(!N::is_sign_preserving || eij<0)  // || eji<0)
+      {
+        *valIter_ = eij/diagonal_*eij/norm_(matrix_->operator[](col.index())[col.index()]);
+        maxValue_ = std::max(maxValue_, *valIter_);
+      }else
+        *valIter_ =0;
+      ++valIter_;
+    }
+
+    template<class M, class N>
+    template<class G>
+    inline void SymmetricMatrixDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
+    {
+      if(*valIter_ > alpha() * maxValue_) {
+        edge.properties().setDepends();
+        edge.properties().setInfluences();
+      }
+      ++valIter_;
+    }
+
+    template<class M, class N>
+    inline bool SymmetricMatrixDependency<M,N>::isIsolated()
+    {
+      if(diagonal_==0)
+        DUNE_THROW(Dune::ISTLError, "No diagonal entry for row "<<row_<<".");
+      valIter_=vals_.begin();
+      return maxValue_  < beta();
+    }
+
+    /**
+     * @brief Dependency policy for symmetric matrices.
      */
     template<class M, class N>
     class Dependency : public Parameters
@@ -622,17 +745,10 @@ namespace Dune
        * @brief The type of a single linked list of vertex
        * descriptors.
        */
-      typedef SLList<Vertex,Allocator> VertexList;
-
-
-      /**
-       * @brief The type of a single linked list of vertex
-       * descriptors.
-       */
       typedef S VertexSet;
 
       /** @brief Const iterator over a vertex list. */
-      typedef typename VertexList::const_iterator const_iterator;
+      typedef typename VertexSet::const_iterator const_iterator;
 
       /**
        * @brief Type of the mapping of aggregate members onto distance spheres.
@@ -645,9 +761,15 @@ namespace Dune
        * @param aggregates The mapping of vertices onto aggregates.
        * @param connectivity The set of vertices connected to the aggregate.
        * distance spheres.
+       * @param front_ The vertices of the current aggregate front.
        */
-      Aggregate(const MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
-                VertexSet& connectivity);
+      Aggregate(MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
+                VertexSet& connectivity, std::vector<Vertex>& front_);
+
+      void invalidate()
+      {
+        --id_;
+      }
 
       /**
        * @brief Reconstruct the aggregat from an seed node.
@@ -667,6 +789,7 @@ namespace Dune
        */
       void add(const Vertex& vertex);
 
+      void add(std::vector<Vertex>& vertex);
       /**
        * @brief Clear the aggregate.
        */
@@ -675,11 +798,11 @@ namespace Dune
       /**
        * @brief Get the size of the aggregate.
        */
-      typename VertexList::size_type size();
+      typename VertexSet::size_type size();
       /**
        * @brief Get tne number of connections to other aggregates.
        */
-      typename VertexList::size_type connectSize();
+      typename VertexSet::size_type connectSize();
 
       /**
        * @brief Get the id identifying the aggregate.
@@ -696,7 +819,7 @@ namespace Dune
       /**
        * @brief The vertices of the aggregate.
        */
-      VertexList vertices_;
+      VertexSet vertices_;
 
       /**
        * @brief The number of the currently referenced
@@ -707,7 +830,7 @@ namespace Dune
       /**
        * @brief The matrix graph the aggregates live on.
        */
-      const MatrixGraph& graph_;
+      MatrixGraph& graph_;
 
       /**
        * @brief The aggregate mapping we build.
@@ -718,6 +841,11 @@ namespace Dune
        * @brief The connections to other aggregates.
        */
       VertexSet& connected_;
+
+      /**
+       * @brief The vertices of the current aggregate front.
+       */
+      std::vector<Vertex>& front_;
     };
 
     /**
@@ -806,7 +934,7 @@ namespace Dune
       /**
        * @brief The vertices of the current aggregate front.
        */
-      VertexList front_;
+      std::vector<Vertex> front_;
 
       /**
        * @brief The set of connected vertices.
@@ -830,11 +958,9 @@ namespace Dune
               const Aggregator<G>& aggregatesBuilder,
               const AggregatesMap<Vertex>& aggregates);
         ~Stack();
-        bool push(const Vertex& v);
-        void fill();
         Vertex pop();
       private:
-        enum { N = 256000 };
+        enum { N = 1300000 };
 
         /** @brief The graph we work on. */
         const MatrixGraph& graph_;
@@ -844,15 +970,14 @@ namespace Dune
         const AggregatesMap<Vertex>& aggregates_;
         /** @brief The current size. */
         int size_;
-        int maxSize_;
+        Vertex maxSize_;
         /** @brief The index of the top element. */
-        int head_;
-        int filled_;
+        typename MatrixGraph::ConstVertexIterator begin_;
+        typename MatrixGraph::ConstVertexIterator end_;
 
         /** @brief The values on the stack. */
         Vertex* vals_;
 
-        void localPush(const Vertex& v);
       };
 
       friend class Stack;
@@ -1096,24 +1221,16 @@ namespace Dune
          * @param front The list to store the front vertices in.
          * @param graph The matrix graph we work on.
          */
-        FrontMarker(VertexList& front, MatrixGraph& graph);
+        FrontMarker(std::vector<Vertex>& front, MatrixGraph& graph);
 
         void operator()(const typename MatrixGraph::ConstEdgeIterator& edge);
 
       private:
         /** @brief The list of front vertices. */
-        VertexList& front_;
+        std::vector<Vertex>& front_;
         /** @brief The matrix graph we work on. */
         MatrixGraph& graph_;
       };
-
-      /**
-       * @brief Mark the front of the current aggregate.
-       *
-       * The front are the direct (unaggregated) neighbours of
-       * the aggregate vertices.
-       */
-      void markFront(const AggregatesMap<Vertex>& aggregates);
 
       /**
        * @brief Unmarks all front vertices.
@@ -1178,14 +1295,6 @@ namespace Dune
        * @param aggregates The mapping of the vertices onto aggregates.
        */
       bool admissible(const Vertex& vertex, const AggregateDescriptor& aggregate, const AggregatesMap<Vertex>& aggregates) const;
-
-      /**
-       * @brief Push the neighbours of the current aggregate on the stack.
-       *
-       * @param stack The stack to push them on.
-       * @param isolated If true only isolated vertices are push onto the stack.
-       */
-      void seedFromFront(Stack& stack,  bool isolated);
 
       /**
        * @brief The maximum distance of the vertex to any vertex in the
@@ -1331,24 +1440,25 @@ namespace Dune
     }
 
     template<class G,class S>
-    Aggregate<G,S>::Aggregate(const MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
-                              VertexSet& connected)
+    Aggregate<G,S>::Aggregate(MatrixGraph& graph, AggregatesMap<Vertex>& aggregates,
+                              VertexSet& connected, std::vector<Vertex>& front)
       : vertices_(), id_(-1), graph_(graph), aggregates_(aggregates),
-        connected_(connected)
+        connected_(connected), front_(front)
     {}
 
     template<class G,class S>
     void Aggregate<G,S>::reconstruct(const Vertex& vertex)
     {
-      vertices_.push_back(vertex);
-      typedef typename VertexList::const_iterator iterator;
-      iterator begin = vertices_.begin();
-      iterator end   = vertices_.end();
+      /*
+         vertices_.push_back(vertex);
+         typedef typename VertexList::const_iterator iterator;
+         iterator begin = vertices_.begin();
+         iterator end   = vertices_.end();*/
       throw "Not yet implemented";
 
-      while(begin!=end) {
-        //for();
-      }
+      //      while(begin!=end){
+      //for();
+      //      }
 
     }
 
@@ -1360,7 +1470,7 @@ namespace Dune
       vertices_.clear();
       connected_.insert(vertex);
       dvverb << " Inserting "<<vertex<<" size="<<connected_.size();
-      id_ = vertex;
+      ++id_ ;
       add(vertex);
     }
 
@@ -1368,8 +1478,11 @@ namespace Dune
     template<class G,class S>
     inline void Aggregate<G,S>::add(const Vertex& vertex)
     {
-      vertices_.push_back(vertex);
+      vertices_.insert(vertex);
       aggregates_[vertex]=id_;
+      if(front_.size())
+        front_.erase(std::lower_bound(front_.begin(), front_.end(), vertex));
+
 
       typedef typename MatrixGraph::ConstEdgeIterator iterator;
       const iterator end = graph_.endEdges(vertex);
@@ -1377,8 +1490,58 @@ namespace Dune
         dvverb << " Inserting "<<aggregates_[edge.target()];
         connected_.insert(aggregates_[edge.target()]);
         dvverb <<" size="<<connected_.size();
+        if(aggregates_[edge.target()]==AggregatesMap<Vertex>::UNAGGREGATED &&
+           !graph_.getVertexProperties(edge.target()).front())
+        {
+          front_.push_back(edge.target());
+          graph_.getVertexProperties(edge.target()).setFront();
+        }
       }
       dvverb <<std::endl;
+      std::sort(front_.begin(), front_.end());
+    }
+
+    template<class G,class S>
+    inline void Aggregate<G,S>::add(std::vector<Vertex>& vertices)
+    {
+      std::size_t oldsize = vertices_.size();
+
+      typedef typename std::vector<Vertex>::iterator Iterator;
+
+      typedef typename VertexSet::iterator SIterator;
+
+      SIterator pos=vertices_.begin();
+      std::vector<Vertex> newFront;
+      newFront.reserve(front_.capacity());
+
+      std::set_difference(front_.begin(), front_.end(), vertices.begin(), vertices.end(),
+                          std::back_inserter(newFront));
+      front_=newFront;
+
+      for(Iterator vertex=vertices.begin(); vertex != vertices.end(); ++vertex)
+      {
+        pos=vertices_.insert(pos,*vertex);
+        vertices_.insert(*vertex);
+        graph_.getVertexProperties(*vertex).resetFront(); // Not a front node any more.
+        aggregates_[*vertex]=id_;
+
+        typedef typename MatrixGraph::ConstEdgeIterator iterator;
+        const iterator end = graph_.endEdges(*vertex);
+        for(iterator edge = graph_.beginEdges(*vertex); edge != end; ++edge) {
+          dvverb << " Inserting "<<aggregates_[edge.target()];
+          connected_.insert(aggregates_[edge.target()]);
+          if(aggregates_[edge.target()]==AggregatesMap<Vertex>::UNAGGREGATED &&
+             !graph_.getVertexProperties(edge.target()).front())
+          {
+            front_.push_back(edge.target());
+            graph_.getVertexProperties(edge.target()).setFront();
+          }
+          dvverb <<" size="<<connected_.size();
+        }
+        dvverb <<std::endl;
+      }
+      std::sort(front_.begin(), front_.end());
+      assert(oldsize+vertices.size()==vertices_.size());
     }
     template<class G,class S>
     inline void Aggregate<G,S>::clear()
@@ -1389,14 +1552,14 @@ namespace Dune
     }
 
     template<class G,class S>
-    inline typename Aggregate<G,S>::VertexList::size_type
+    inline typename Aggregate<G,S>::VertexSet::size_type
     Aggregate<G,S>::size()
     {
       return vertices_.size();
     }
 
     template<class G,class S>
-    inline typename Aggregate<G,S>::VertexList::size_type
+    inline typename Aggregate<G,S>::VertexSet::size_type
     Aggregate<G,S>::connectSize()
     {
       return connected_.size();
@@ -1787,6 +1950,7 @@ namespace Dune
     template<class G>
     std::size_t Aggregator<G>::distance(const Vertex& vertex, const AggregatesMap<Vertex>& aggregates)
     {
+      return 0;
       typename PropertyMapTypeSelector<VertexVisitedTag,G>::Type visitedMap = get(VertexVisitedTag(), *graph_);
       VertexList vlist;
       typename AggregatesMap<Vertex>::DummyEdgeVisitor dummy;
@@ -1796,7 +1960,7 @@ namespace Dune
     }
 
     template<class G>
-    inline Aggregator<G>::FrontMarker::FrontMarker(VertexList& front, MatrixGraph& graph)
+    inline Aggregator<G>::FrontMarker::FrontMarker(std::vector<Vertex>& front, MatrixGraph& graph)
       : front_(front), graph_(graph)
     {}
 
@@ -1809,19 +1973,6 @@ namespace Dune
         front_.push_back(target);
         graph_.getVertexProperties(target).setFront();
       }
-    }
-
-
-    template<class G>
-    void Aggregator<G>::markFront(const AggregatesMap<Vertex>& aggregates)
-    {
-      assert(front_.size()==0);
-      FrontMarker frontBuilder(front_, *graph_);
-      typedef typename Aggregate<G,VertexSet>::const_iterator Iterator;
-
-      for(Iterator vertex=aggregate_->begin(); vertex != aggregate_->end(); ++vertex)
-        visitAggregateNeighbours(*vertex, AggregatesMap<Vertex>::UNAGGREGATED, aggregates, frontBuilder);
-
     }
 
     template<class G>
@@ -1860,7 +2011,9 @@ namespace Dune
                 }
               }
               if(found)
+              {
                 return true;
+              }
             }
           }
         }
@@ -1893,7 +2046,9 @@ namespace Dune
                 }
               }
               if(found)
+              {
                 return true;
+              }
             }
           }
         }
@@ -1904,7 +2059,7 @@ namespace Dune
     template<class G>
     void Aggregator<G>::unmarkFront()
     {
-      typedef typename VertexList::const_iterator Iterator;
+      typedef typename std::vector<Vertex>::const_iterator Iterator;
 
       for(Iterator vertex=front_.begin(); vertex != front_.end(); ++vertex)
         graph_->getVertexProperties(*vertex).resetFront();
@@ -2002,9 +2157,8 @@ namespace Dune
         std::size_t maxFrontNeighbours=0;
 
         Vertex candidate=AggregatesMap<Vertex>::UNAGGREGATED;
-        unmarkFront();
-        markFront(aggregates);
-        typedef typename VertexList::const_iterator Iterator;
+
+        typedef typename std::vector<Vertex>::const_iterator Iterator;
 
         for(Iterator vertex = front_.begin(); vertex != front_.end(); ++vertex) {
           if(distance(*vertex, aggregates)>c.maxDistance())
@@ -2045,16 +2199,16 @@ namespace Dune
     template<class C>
     void Aggregator<G>::growAggregate(const Vertex& seed, const AggregatesMap<Vertex>& aggregates, const C& c)
     {
-      while(aggregate_->size() < c.minAggregateSize()) {
+
+      std::size_t distance_ =0;
+      while(aggregate_->size() < c.minAggregateSize()&& distance_<c.maxDistance()) {
         int maxTwoCons=0, maxOneCons=0, maxNeighbours=-1;
         double maxCon=-1;
 
-        Vertex candidate = AggregatesMap<Vertex>::UNAGGREGATED;
+        std::vector<Vertex> candidates;
+        candidates.reserve(30);
 
-        unmarkFront();
-        markFront(aggregates);
-
-        typedef typename VertexList::const_iterator Iterator;
+        typedef typename std::vector<Vertex>::const_iterator Iterator;
 
         for(Iterator vertex = front_.begin(); vertex != front_.end(); ++vertex) {
           // Only nonisolated nodes are considered
@@ -2072,38 +2226,32 @@ namespace Dune
 
               if(neighbours > maxNeighbours) {
                 maxNeighbours = neighbours;
-
-                std::size_t distance_ = distance(*vertex, aggregates);
-
-                if(c.maxDistance() >= distance_) {
-                  candidate = *vertex;
-                }
+                candidates.clear();
+                candidates.push_back(*vertex);
+              }else{
+                candidates.push_back(*vertex);
               }
             }else if( con > maxCon) {
               maxCon = con;
               maxNeighbours = noFrontNeighbours(*vertex);
-              std::size_t distance_ = distance(*vertex, aggregates);
-
-              if(c.maxDistance() >= distance_) {
-                candidate = *vertex;
-              }
+              candidates.clear();
+              candidates.push_back(*vertex);
             }
           }else if(twoWayCons > maxTwoCons) {
             maxTwoCons = twoWayCons;
             maxCon = connectivity(*vertex, aggregates);
             maxNeighbours = noFrontNeighbours(*vertex);
-            std::size_t distance_ = distance(*vertex, aggregates);
-
-            if(c.maxDistance() >= distance_) {
-              candidate = *vertex;
-            }
+            candidates.clear();
+            candidates.push_back(*vertex);
 
             // two way connections preceed
             maxOneCons = std::numeric_limits<int>::max();
           }
 
           if(twoWayCons > 0)
+          {
             continue; // THis is a two-way node, skip tests for one way nodes
+          }
 
           /* The one way case */
           int oneWayCons = oneWayConnections(*vertex, aggregate_->id(), aggregates);
@@ -2122,37 +2270,36 @@ namespace Dune
 
               if(neighbours > maxNeighbours) {
                 maxNeighbours = neighbours;
-                std::size_t distance_ = distance(*vertex, aggregates);
-
-                if(c.maxDistance() >= distance_) {
-                  candidate = *vertex;
+                candidates.clear();
+                candidates.push_back(*vertex);
+              }else{
+                if(neighbours==maxNeighbours)
+                {
+                  candidates.push_back(*vertex);
                 }
               }
             }else if( con > maxCon) {
               maxCon = con;
               maxNeighbours = noFrontNeighbours(*vertex);
-              std::size_t distance_ = distance(*vertex, aggregates);
-              if(c.maxDistance() >= distance_) {
-                candidate = *vertex;
-              }
+              candidates.clear();
+              candidates.push_back(*vertex);
             }
           }else if(oneWayCons > maxOneCons) {
             maxOneCons = oneWayCons;
             maxCon = connectivity(*vertex, aggregates);
             maxNeighbours = noFrontNeighbours(*vertex);
-            std::size_t distance_ = distance(*vertex, aggregates);
-
-            if(c.maxDistance() >= distance_) {
-              candidate = *vertex;
-            }
+            candidates.clear();
+            candidates.push_back(*vertex);
           }
         }
 
 
-        if(candidate == AggregatesMap<Vertex>::UNAGGREGATED)
+        if(!candidates.size())
           break; // No more candidates found
-
-        aggregate_->add(candidate);
+        distance_=distance(seed, aggregates);
+        candidates.resize(std::min(candidates.size(), c.maxAggregateSize()-
+                                   aggregate_->size()));
+        aggregate_->add(candidates);
       }
     }
 
@@ -2175,7 +2322,7 @@ namespace Dune
 
       graph_ = &graph;
 
-      aggregate_ = new Aggregate<G,VertexSet>(graph, aggregates, connected_);
+      aggregate_ = new Aggregate<G,VertexSet>(graph, aggregates, connected_, front_);
 
       Timer watch;
       watch.reset();
@@ -2199,8 +2346,7 @@ namespace Dune
         // Debugging output
         if((noAggregates+1)%10000 == 0)
           Dune::dverb<<"c";
-
-        aggregate_->seed(seed);
+        unmarkFront();
 
         if(graph.getVertexProperties(seed).excludedBorder()) {
           aggregates[seed]=AggregatesMap<Vertex>::ISOLATED;
@@ -2215,21 +2361,22 @@ namespace Dune
             ++skippedAggregates;
             // skip rest as no agglomeration is done.
             continue;
-          }else
+          }else{
+            aggregate_->seed(seed);
             growIsolatedAggregate(seed, aggregates, c);
-        }else
+          }
+        }else{
+          aggregate_->seed(seed);
           growAggregate(seed, aggregates, c);
-
+        }
 
         /* The rounding step. */
         while(!(graph.getVertexProperties(seed).isolated()) && aggregate_->size() < c.maxAggregateSize()) {
 
-          unmarkFront();
-          markFront(aggregates);
+          std::vector<Vertex> candidates;
+          candidates.reserve(30);
 
-          Vertex candidate = AggregatesMap<Vertex>::UNAGGREGATED;
-
-          typedef typename VertexList::const_iterator Iterator;
+          typedef typename std::vector<Vertex>::const_iterator Iterator;
 
           for(Iterator vertex = front_.begin(); vertex != front_.end(); ++vertex) {
 
@@ -2252,13 +2399,15 @@ namespace Dune
 
             if(distance(*vertex, aggregates) > c.maxDistance())
               continue; // Distance too far
-            candidate = *vertex;
+            candidates.push_back(*vertex);
             break;
           }
 
-          if(candidate == AggregatesMap<Vertex>::UNAGGREGATED) break; // no more candidates found.
+          if(!candidates.size()) break; // no more candidates found.
 
-          aggregate_->add(candidate);
+          candidates.resize(std::min(candidates.size(), c.maxAggregateSize()-
+                                     aggregate_->size()));
+          aggregate_->add(candidates);
 
         }
 
@@ -2270,7 +2419,9 @@ namespace Dune
             if(mergedNeighbour != AggregatesMap<Vertex>::UNAGGREGATED) {
               // assign vertex to the neighbouring cluster
               aggregates[seed] = aggregates[mergedNeighbour];
+              aggregate_->invalidate();
             }else{
+              ++avg;
               minA=std::min(minA,static_cast<std::size_t>(1));
               maxA=std::max(maxA,static_cast<std::size_t>(1));
               ++oneAggregates;
@@ -2293,10 +2444,7 @@ namespace Dune
           else
             ++conAggregates;
         }
-        unmarkFront();
-        markFront(aggregates);
-        seedFromFront(stack_, graph.getVertexProperties(seed).isolated());
-        unmarkFront();
+
       }
 
       Dune::dinfo<<"connected aggregates: "<<conAggregates;
@@ -2311,35 +2459,20 @@ namespace Dune
                         oneAggregates,skippedAggregates);
     }
 
-    template<class G>
-    inline void Aggregator<G>::seedFromFront(Stack& stack_, bool isolated)
-    {
-      typedef typename VertexList::const_iterator Iterator;
-
-      Iterator end= front_.end();
-      int count=0;
-      for(Iterator vertex=front_.begin(); vertex != end; ++vertex,++count)
-        if(graph_->getVertexProperties(*vertex).isolated()==isolated)
-          stack_.push(*vertex);
-      /*
-         if(MINIMAL_DEBUG_LEVEL<=2 && count==0 && !isolated)
-         Dune::dverb<< " no vertices pushed for nonisolated aggregate!"<<std::endl;
-       */
-    }
 
     template<class G>
     Aggregator<G>::Stack::Stack(const MatrixGraph& graph, const Aggregator<G>& aggregatesBuilder,
                                 const AggregatesMap<Vertex>& aggregates)
-      : graph_(graph), aggregatesBuilder_(aggregatesBuilder), aggregates_(aggregates), size_(0), maxSize_(0), head_(0), filled_(0)
+      : graph_(graph), aggregatesBuilder_(aggregatesBuilder), aggregates_(aggregates), begin_(graph.begin()), end_(graph.end())
     {
-      vals_ = new  Vertex[N];
+      //vals_ = new  Vertex[N];
     }
 
     template<class G>
     Aggregator<G>::Stack::~Stack()
     {
-      Dune::dverb << "Max stack size was "<<maxSize_<<" filled="<<filled_<<std::endl;
-      delete[] vals_;
+      //Dune::dverb << "Max stack size was "<<maxSize_<<" filled="<<filled_<<std::endl;
+      //delete[] vals_;
     }
 
     template<class G>
@@ -2347,92 +2480,17 @@ namespace Dune
       = std::numeric_limits<typename G::VertexDescriptor>::max();
 
     template<class G>
-    inline bool Aggregator<G>::Stack::push(const Vertex & v)
-    {
-      if(aggregates_[v] == AggregatesMap<Vertex>::UNAGGREGATED) {
-        localPush(v);
-        return true;
-      }else
-        return false;
-    }
-
-    template<class G>
-    inline void Aggregator<G>::Stack::localPush(const Vertex & v)
-    {
-      vals_[head_] = v;
-      size_ = std::min<int>(size_+1, N);
-      head_ = (head_+N+1)%N;
-    }
-
-    template<class G>
-    void Aggregator<G>::Stack::fill()
-    {
-      int isolated = 0, connected=0;
-      int isoumin, umin;
-      filled_++;
-
-      head_ = size_ = 0;
-      isoumin = umin = std::numeric_limits<int>::max();
-
-      typedef typename MatrixGraph::ConstVertexIterator Iterator;
-
-      const Iterator end = graph_.end();
-
-      for(Iterator vertex = graph_.begin(); vertex != end; ++vertex) {
-        // Skip already aggregated vertices
-        if(aggregates_[*vertex] != AggregatesMap<Vertex>::UNAGGREGATED)
-          continue;
-
-        if(vertex.properties().isolated()) {
-          isoumin = std::min(isoumin, aggregatesBuilder_.unusedNeighbours(*vertex, aggregates_));
-          isolated++;
-        }else{
-          umin = std::min(umin, aggregatesBuilder_.unusedNeighbours(*vertex, aggregates_));
-          connected++;
-        }
-      }
-
-      if(connected + isolated == 0)
-        // No unaggregated vertices.
-        return;
-
-      if(connected > 0) {
-        // Connected vertices have higher priority.
-        for(Iterator vertex = graph_.begin(); vertex != end; ++vertex)
-          if(aggregates_[*vertex] == AggregatesMap<Vertex>::UNAGGREGATED && !vertex.properties().isolated()
-             && aggregatesBuilder_.unusedNeighbours(*vertex, aggregates_) == umin)
-            localPush(*vertex);
-      }else{
-        for(Iterator vertex = graph_.begin(); vertex != end; ++vertex)
-          if(aggregates_[*vertex] == AggregatesMap<Vertex>::UNAGGREGATED && vertex.properties().isolated()
-             && aggregatesBuilder_.unusedNeighbours(*vertex, aggregates_) == isoumin)
-            localPush(*vertex);
-      }
-      maxSize_ = std::max(size_, maxSize_);
-    }
-
-    template<class G>
     inline typename G::VertexDescriptor Aggregator<G>::Stack::pop()
     {
-      while(size_>0) {
-        head_ = (head_ + N -1) % N;
-        size_--;
-        Vertex v = vals_[head_];
-        if(aggregates_[v]==AggregatesMap<Vertex>::UNAGGREGATED)
-          return v;
-      }
-      // Stack is empty try to fill it
-      fill();
+      for(; begin_!=end_ && aggregates_[*begin_] != AggregatesMap<Vertex>::UNAGGREGATED; ++begin_) ;
 
-      // try again
-      while(size_>0) {
-        head_ = (head_ + N -1) % N;
-        size_--;
-        Vertex v = vals_[head_];
-        if(aggregates_[v]==AggregatesMap<Vertex>::UNAGGREGATED)
-          return v;
-      }
-      return NullEntry;
+      if(begin_!=end_)
+      {
+        typename G::VertexDescriptor current=*begin_;
+        ++begin_;
+        return current;
+      }else
+        return NullEntry;
     }
 
 #endif // DOXYGEN

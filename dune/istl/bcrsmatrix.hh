@@ -105,7 +105,7 @@ namespace Dune {
      typedef FieldMatrix<double,2,2> M;
      // third parameter is an optional upper bound for the number
      // of nonzeros. If given the matrix will use one array for all values
-     // as opossed to one for each row.
+     // as opposed to one for each row.
      BCRSMatrix<M> B(4,4,12,BCRSMatrix<M>::row_wise);
 
      typedef BCRSMatrix<M>::CreateIterator Iter;

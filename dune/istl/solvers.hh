@@ -16,6 +16,7 @@
 #include "scalarproducts.hh"
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/common/static_assert.hh>
 
 namespace Dune {
@@ -1510,7 +1511,9 @@ namespace Dune {
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&P&,double,int,int)
+       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \param restart When to restart the construction of
+       the Krylov search space.
      */
     template<class L, class P, class S>
     GeneralizedPCGSolver (L& op, S& sp, P& prec,

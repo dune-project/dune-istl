@@ -11,7 +11,7 @@ template <class RealBlockVector, class ComplexBlockVector>
 int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   typedef typename RealBlockVector::field_type rt;
   typedef typename ComplexBlockVector::field_type ct;
-  const rt myEps(1e-6);
+  const rt myEps((rt)1e-6);
 
   dune_static_assert(
     ( Dune::is_same< typename Dune::FieldTraits<rt>::real_type, rt>::value ),

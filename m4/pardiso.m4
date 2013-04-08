@@ -22,11 +22,13 @@ if test $acx_pardiso_ok = no; then
 if test "x$PARDISO_LIBS" != x; then
     save_LIBS="$LIBS"; LIBS="$PARDISO_LIBS $LIBS"
     AC_MSG_CHECKING([for $pardisoinit in $PARDISO_LIBS])
-    AC_TRY_LINK_FUNC($pardisoinit, [dnl
-	# add to global list
-	DUNE_PKG_LIBS="$DUNE_PKG_LIBS $PARDISO_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS $FLIBS"
-	acx_pardiso_ok=yes], 
-	[PARDISO_LIBS=""])
+    AC_LINK_IFELSE(
+        [AC_LANG_CALL([], $pardisoinit)],
+        [dnl
+            # add to global list
+            DUNE_PKG_LIBS="$DUNE_PKG_LIBS $PARDISO_LIBS $LAPACK_LIBS $BLAS_LIBS $LIBS $FLIBS"
+            acx_pardiso_ok=yes],
+        [PARDISO_LIBS=""])
     AC_MSG_RESULT($acx_pardiso_ok)
     LIBS="$save_LIBS"
 fi
