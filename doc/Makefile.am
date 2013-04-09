@@ -6,7 +6,7 @@ TEXSOURCES = istl.tex istl.bib
 EPSFILES = blockstructure.eps
 if BUILD_DOCS
   DOCFILES = istl.pdf
-  EXTRA_DIST = $(DOCFILES)
+  EXTRA_DIST = CMakeLists.txt $(DOCFILES)
   EXTRAINSTALL = $(DOCFILES)
 endif
 

@@ -1,6 +1,12 @@
 Makefile
 Makefile.in
-config.*
+config.guess  
+config.h.in   
+config.log  
+config.status
+config.h      
+config.lt   
+config.sub
 configure
 dependencies.m4
 aclocal.m4
@@ -19,3 +25,5 @@ dune-istl-?.?
 ltmain.sh
 am
 .libs
+config.guess
+config.h.in
