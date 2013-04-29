@@ -2,9 +2,9 @@ if(MPI_FOUND)
   set(MPITESTS  galerkintest hierarchytest transfertest)
 endif(MPI_FOUND)
 
-if(ParMETIS_FOUND)
+if(PARMETIS_FOUND)
   set(PARMETISTESTS pamgtest pamg_comm_repart_test)
-endif(ParMETIS_FOUND)
+endif(PARMETIS_FOUND)
 
 set(NORMALTESTS amgtest fastamg graphtest kamgtest)
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
