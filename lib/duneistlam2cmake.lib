@@ -1,0 +1,20 @@
+# -*-sh-*-
+
+##########################################
+###
+### Function for converting configure options
+### to CMake options for dune-common
+###
+##########################################
+
+# CMake Packages are case sensitive
+# This is a list of packages whose names converted
+# to lower case are used for configures
+# --with-<package> or without-<package> options
+#
+
+dune_istl_options_am2cmake(){
+    local CMAKE_PACKAGES="ParMETIS SuperLU METIS"
+    default_am2cmake_options $CMAKE_PACKAGES
+    default_am2cmake_libraries $CMAKE_PACKAGES
+}
