@@ -1,5 +1,3 @@
-include(FindBoostFusion)
-include(FindParMETIS)
-message("PARMETIS_FOUND=${PARMETIS_FOUND}")
-message("ParMETIS_FOUND=${ParMETIS_FOUND}")
-include(FindSuperLU)
+find_package(BoostFusion)
+find_package(ParMETIS)
+find_package(SuperLU)
