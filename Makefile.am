@@ -7,7 +7,7 @@ EXTRA_DIST= CMakeLists.txt dune.module dune-istl-config.cmake.in  dune-istl-vers
 # we need automake 1.9 or newer
 AUTOMAKE_OPTIONS = foreign 1.9
 
-SUBDIRS = cmake dune doc m4
+SUBDIRS = cmake dune doc lib m4
 
 # use configured compiler for "make distcheck"
 # doxygen is difficult to convince to build in a special directory...
