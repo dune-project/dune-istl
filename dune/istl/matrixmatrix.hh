@@ -482,18 +482,19 @@ namespace Dune
       res.setSize(rows, cols, patternInit.nonzeros());
       res.setBuildMode(BCRSMatrix<FieldMatrix<T,n1,m1>,A>::row_wise);
 
-      std::cout<<"Counting nonzeros took "<<timer.elapsed()<<std::endl;
+      //std::cout<<"Counting nonzeros took "<<timer.elapsed()<<std::endl;
       timer.reset();
 
       // Second step is to allocate the storage for the result and initialize the nonzero pattern
       patternInit.initPattern(mat1, mat2);
 
-      std::cout<<"Setting up sparsity pattern took "<<timer.elapsed()<<std::endl;
+      //std::cout<<"Setting up sparsity pattern took "<<timer.elapsed()<<std::endl;
       timer.reset();
       // As a last step calculate the entries
+      res = 0.0;
       EntryAccumulator<T,A,n1,m1, transpose> entriesAccu(res);
       NonzeroPatternTraverser<transpose>::traverse(mat1,mat2,entriesAccu);
-      std::cout<<"Calculating entries took "<<timer.elapsed()<<std::endl;
+      //std::cout<<"Calculating entries took "<<timer.elapsed()<<std::endl;
     }
 
   }
@@ -518,9 +519,35 @@ namespace Dune
   template<typename T, typename A, typename A1, int n, int k, int m>
   struct MatMultMatResult<BCRSMatrix<FieldMatrix<T,n,k>,A >,BCRSMatrix<FieldMatrix<T,k,m>,A1 > >
   {
-    typedef BCRSMatrix<typename MatMultMatResult<FieldMatrix<T,n,k>,
-            FieldMatrix<T,k,m> >::type,A> type;
+    typedef BCRSMatrix<typename MatMultMatResult<FieldMatrix<T,n,k>,FieldMatrix<T,k,m> >::type,
+        std::allocator<typename MatMultMatResult<FieldMatrix<T,n,k>,FieldMatrix<T,k,m> >::type> > type;
   };
+
+
+  /**
+   * @brief Helper TMP to get the result type of a sparse matrix matrix multiplication (\f$C=A*B\f$)
+   *
+   * The type of matrix C will be stored as the associated type MatMultMatResult::type.
+   * @tparam M1 The type of matrix A.
+   * @tparam M2 The type of matrix B.
+   */
+  template<typename M1, typename M2>
+  struct TransposedMatMultMatResult
+  {};
+
+  template<typename T, int n, int k, int m>
+  struct TransposedMatMultMatResult<FieldMatrix<T,k,n>,FieldMatrix<T,k,m> >
+  {
+    typedef FieldMatrix<T,n,m> type;
+  };
+
+  template<typename T, typename A, typename A1, int n, int k, int m>
+  struct TransposedMatMultMatResult<BCRSMatrix<FieldMatrix<T,k,n>,A >,BCRSMatrix<FieldMatrix<T,k,m>,A1 > >
+  {
+    typedef BCRSMatrix<typename MatMultMatResult<FieldMatrix<T,n,k>,FieldMatrix<T,k,m> >::type,
+        std::allocator<typename MatMultMatResult<FieldMatrix<T,n,k>,FieldMatrix<T,k,m> >::type> > type;
+  };
+
 
   /**
    * @brief Calculate product of a sparse matrix with a transposed sparse matrices (\f$C=A*B^T\f$).
