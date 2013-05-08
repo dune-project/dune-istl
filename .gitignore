@@ -24,4 +24,7 @@ dune-istl-*.tar.gz
 dune-istl-?.?
 ltmain.sh
 am
-.libs
+.libs/
+.deps/
+*.o
+test-driver
