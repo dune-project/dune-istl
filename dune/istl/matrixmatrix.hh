@@ -103,7 +103,7 @@ namespace Dune
                            F& func)
       {
         if(mat.M()!=matt.M())
-          DUNE_THROW(ISTLError, "The sizes of the matrices do not match: "<<mat.N()<<"!="<<matt.N());
+          DUNE_THROW(ISTLError, "The sizes of the matrices do not match: "<<mat.M()<<"!="<<matt.M());
 
         typedef typename BCRSMatrix<FieldMatrix<T,n,m>,A1>::ConstRowIterator row_iterator;
         typedef typename BCRSMatrix<FieldMatrix<T,n,m>,A1>::ConstColIterator col_iterator;
