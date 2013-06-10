@@ -11,20 +11,9 @@
 #include <dune/istl/schwarz.hh>
 #include "anisotropic.hh"
 
-int main(int argc, char** argv)
+template<int BS>
+void testHierarchy(int N)
 {
-  MPI_Init(&argc, &argv);
-
-  const int BS=1;
-  int N=10;
-
-  if(argc>1)
-    N = atoi(argv[1]);
-
-  int procs, rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &procs);
-
   typedef int LocalId;
   typedef int GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<LocalId,GlobalId> Communication;
@@ -63,7 +52,7 @@ int main(int argc, char** argv)
   Criterion criterion(100,4);
   Dune::Timer timer;
 
-  hierarchy.build<OverlapFlags>(criterion);
+  hierarchy.template build<OverlapFlags>(criterion);
   hierarchy.coarsenVector(vh);
 
   std::cout<<"Building hierarchy took "<<timer.elapsed()<<std::endl;
@@ -77,6 +66,24 @@ int main(int argc, char** argv)
   std::vector<std::size_t> data;
 
   hierarchy.getCoarsestAggregatesOnFinest(data);
+}
+
+
+int main(int argc, char** argv)
+{
+  MPI_Init(&argc, &argv);
+
+  const int BS=1;
+  int N=10;
+
+  if(argc>1)
+    N = atoi(argv[1]);
+
+  int procs, rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &procs);
+
+  testHierarchy<BS>(N);
 
   MPI_Finalize();
 
