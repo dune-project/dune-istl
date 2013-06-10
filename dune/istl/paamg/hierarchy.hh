@@ -282,6 +282,9 @@ namespace Dune
       ~Hierarchy();
 
     private:
+      /** @brief Deactivate copying */
+      Hierarchy(const Hierarchy&)
+      {}
       /** @brief The finest element in the hierarchy. */
       Element* finest_;
       /** @brief The coarsest element in the hierarchy. */

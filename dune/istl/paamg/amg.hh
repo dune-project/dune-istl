@@ -214,6 +214,16 @@ namespace Dune
       bool usesDirectCoarseLevelSolver() const;
 
     private:
+      /**
+       * @brief Create matrix and smoother hierarchies.
+       * @param criterion The coarsening criterion.
+       * @param matrix The fine level matrix operator.
+       * @param pinfo The fine level parallel information.
+       */
+      template<class C>
+      void createHierarchies(C& criterion, Operator& matrix,
+                             const PI& pinfo);
+
       /** @brief Multigrid cycle on a level. */
       void mgc();
 
@@ -246,13 +256,13 @@ namespace Dune
       void initIteratorsWithFineLevel();
 
       /**  @brief The matrix we solve. */
-      OperatorHierarchy* matrices_;
+      Dune::shared_ptr<OperatorHierarchy> matrices_;
       /** @brief The arguments to construct the smoother */
       SmootherArgs smootherArgs_;
       /** @brief The hierarchy of the smoothers. */
-      Hierarchy<Smoother,A> smoothers_;
+      Dune::shared_ptr<Hierarchy<Smoother,A> > smoothers_;
       /** @brief The solver of the coarsest level. */
-      CoarseSolver* solver_;
+      Dune::shared_ptr<CoarseSolver> solver_;
       /** @brief The right hand side of our problem. */
       Hierarchy<Range,A>* rhs_;
       /** @brief The left approximate solution of our problem. */
@@ -263,8 +273,9 @@ namespace Dune
       typedef Dune::ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
       /** @brief The type of the scalar product for the coarse solver. */
       typedef typename ScalarProductChooser::ScalarProduct ScalarProduct;
+      typedef Dune::shared_ptr<ScalarProduct> ScalarProductPointer;
       /** @brief Scalar product on the coarse level. */
-      ScalarProduct* scalarProduct_;
+      ScalarProductPointer scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -275,7 +286,7 @@ namespace Dune
       bool buildHierarchy_;
       bool additive;
       bool coarsesolverconverged;
-      Smoother *coarseSmoother_;
+      Dune::shared_ptr<Smoother> coarseSmoother_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
     };
@@ -286,7 +297,7 @@ namespace Dune
                          std::size_t gamma, std::size_t preSmoothingSteps,
                          std::size_t postSmoothingSteps, bool additive_)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(2)
@@ -294,7 +305,7 @@ namespace Dune
       assert(matrices_->isBuilt());
 
       // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
+      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -302,7 +313,7 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
@@ -311,7 +322,7 @@ namespace Dune
       assert(matrices_->isBuilt());
 
       // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
+      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -324,7 +335,7 @@ namespace Dune
                          bool additive_,
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
-        smoothers_(), solver_(), scalarProduct_(0), gamma_(gamma),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(), scalarProduct_(0), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(criterion.debugLevel())
@@ -334,16 +345,7 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //			 "Matrix and Solver must match in terms of category!");
-      Timer watch;
-      matrices_ = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
-
-      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
-
-      // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
-
-      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
-        std::cout<<"Building Hierarchy of "<<matrices_->maxlevels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
+      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -353,7 +355,7 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
-        smoothers_(), solver_(), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(), scalarProduct_(0),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
@@ -364,26 +366,91 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //			 "Matrix and Solver must match in terms of category!");
-      Timer watch;
-      matrices_ = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
-
-      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
-
-      // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
-
-      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
-        std::cout<<"Building Hierarchy of "<<matrices_->maxlevels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
+      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::~AMG()
     {
       if(buildHierarchy_) {
-        delete matrices_;
+        if(solver_)
+          solver_.reset();
+        if(coarseSmoother_)
+          coarseSmoother_.reset();
       }
-      if(scalarProduct_)
-        delete scalarProduct_;
+    }
+
+    template<class M, class X, class S, class PI, class A>
+    template<class C>
+    void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, Operator& matrix,
+                                            const PI& pinfo)
+    {
+      Timer watch;
+      matrices_.reset(new OperatorHierarchy(matrix, pinfo));
+
+      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
+
+      // build the necessary smoother hierarchies
+      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
+
+      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
+        std::cout<<"Building Hierarchy of "<<matrices_->maxlevels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
+
+            if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
+        // We have the carsest level. Create the coarse Solver
+        SmootherArgs sargs(smootherArgs_);
+        sargs.iterations = 1;
+
+        typename ConstructionTraits<Smoother>::Arguments cargs;
+        cargs.setArgs(sargs);
+        if(matrices_->redistributeInformation().back().isSetup()) {
+          // Solve on the redistributed partitioning
+          cargs.setMatrix(matrices_->matrices().coarsest().getRedistributed().getmat());
+          cargs.setComm(matrices_->parallelInformation().coarsest().getRedistributed());
+        }else{
+          cargs.setMatrix(matrices_->matrices().coarsest()->getmat());
+          cargs.setComm(*matrices_->parallelInformation().coarsest());
+        }
+
+        coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
+        scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
+
+#if HAVE_SUPERLU
+        // Use superlu if we are purely sequential or with only one processor on the coarsest level.
+        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+           || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
+           || (matrices_->parallelInformation().coarsest().isRedistributed()
+               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
+               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
+          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
+            std::cout<<"Using superlu"<<std::endl;
+          if(matrices_->parallelInformation().coarsest().isRedistributed())
+          {
+            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
+              // We are still participating on this level
+              solver_.reset(new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+            else
+              solver_.reset();
+          }else
+            solver_.reset(new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
+        }else
+#endif
+        {
+          if(matrices_->parallelInformation().coarsest().isRedistributed())
+          {
+            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
+              // We are still participating on this level
+              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
+                                                  *scalarProduct_,
+                                                  *coarseSmoother_, 1E-2, 1000, 0));
+            else
+              solver_.reset();
+          }else
+            solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
+                                                *scalarProduct_,
+                                                *coarseSmoother_, 1E-2, 1000, 0));
+        }
+      }
     }
 
 
@@ -419,8 +486,8 @@ namespace Dune
           diagonal.solve(x[row.index()], b[row.index()]);
       }
 
-      if(smoothers_.levels()>0)
-        smoothers_.finest()->pre(x,b);
+      if(smoothers_->levels()>0)
+        smoothers_->finest()->pre(x,b);
       else
         // No smoother to make x consistent! Do it by hand
         matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
@@ -438,15 +505,15 @@ namespace Dune
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
       typedef typename Hierarchy<Range,A>::Iterator RIterator;
       typedef typename Hierarchy<Domain,A>::Iterator DIterator;
-      Iterator coarsest = smoothers_.coarsest();
-      Iterator smoother = smoothers_.finest();
+      Iterator coarsest = smoothers_->coarsest();
+      Iterator smoother = smoothers_->finest();
       RIterator rhs = rhs_->finest();
       DIterator lhs = lhs_->finest();
-      if(smoothers_.levels()>0) {
+      if(smoothers_->levels()>0) {
 
         assert(lhs_->levels()==rhs_->levels());
-        assert(smoothers_.levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
-        assert(smoothers_.levels()+1==lhs_->levels() || matrices_->levels()<matrices_->maxlevels());
+        assert(smoothers_->levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
+        assert(smoothers_->levels()+1==lhs_->levels() || matrices_->levels()<matrices_->maxlevels());
 
         if(smoother!=coarsest)
           for(++smoother, ++lhs, ++rhs; smoother != coarsest; ++smoother, ++lhs, ++rhs)
@@ -460,63 +527,6 @@ namespace Dune
       x = *lhs_->finest();
       b = *rhs_->finest();
 
-      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
-        // We have the carsest level. Create the coarse Solver
-        SmootherArgs sargs(smootherArgs_);
-        sargs.iterations = 1;
-
-        typename ConstructionTraits<Smoother>::Arguments cargs;
-        cargs.setArgs(sargs);
-        if(matrices_->redistributeInformation().back().isSetup()) {
-          // Solve on the redistributed partitioning
-          cargs.setMatrix(matrices_->matrices().coarsest().getRedistributed().getmat());
-          cargs.setComm(matrices_->parallelInformation().coarsest().getRedistributed());
-
-          coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
-          scalarProduct_ = ScalarProductChooser::construct(matrices_->parallelInformation().coarsest().getRedistributed());
-        }else{
-          cargs.setMatrix(matrices_->matrices().coarsest()->getmat());
-          cargs.setComm(*matrices_->parallelInformation().coarsest());
-
-          coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
-          scalarProduct_ = ScalarProductChooser::construct(*matrices_->parallelInformation().coarsest());
-        }
-#if HAVE_SUPERLU
-        // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
-           || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
-           || (matrices_->parallelInformation().coarsest().isRedistributed()
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
-          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<<"Using superlu"<<std::endl;
-          if(matrices_->parallelInformation().coarsest().isRedistributed())
-          {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
-              // We are still participating on this level
-              solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat());
-            else
-              solver_ = 0;
-          }else
-            solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat());
-        }else
-#endif
-        {
-          if(matrices_->parallelInformation().coarsest().isRedistributed())
-          {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
-              // We are still participating on this level
-              solver_ = new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
-                                              *scalarProduct_,
-                                              *coarseSmoother_, 1E-2, 10000, 0);
-            else
-              solver_ = 0;
-          }else
-            solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
-                                            *scalarProduct_,
-                                            *coarseSmoother_, 1E-2, 1000, 0);
-        }
-      }
     }
     template<class M, class X, class S, class PI, class A>
     std::size_t AMG<M,X,S,PI,A>::levels()
@@ -560,7 +570,7 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::initIteratorsWithFineLevel()
     {
-      smoother = smoothers_.finest();
+      smoother = smoothers_->finest();
       matrix = matrices_->matrices().finest();
       pinfo = matrices_->parallelInformation().finest();
       redist =
@@ -767,7 +777,7 @@ namespace Dune
       //pinfo = matrices_->parallelInformation().coarsest
       // calculate correction for all levels
       lhs = lhs_->finest();
-      typename Hierarchy<Smoother,A>::Iterator smoother = smoothers_.finest();
+      typename Hierarchy<Smoother,A>::Iterator smoother = smoothers_->finest();
 
       for(rhs=rhs_->finest(); rhs != rhs_->coarsest(); ++lhs, ++rhs, ++smoother) {
         // presmoothing
@@ -801,20 +811,14 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::post(Domain& x)
     {
-      if(buildHierarchy_) {
-        if(solver_)
-          delete solver_;
-        if(coarseSmoother_)
-          ConstructionTraits<Smoother>::deconstruct(coarseSmoother_);
-      }
 
       // Postprocess all smoothers
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
       typedef typename Hierarchy<Domain,A>::Iterator DIterator;
-      Iterator coarsest = smoothers_.coarsest();
-      Iterator smoother = smoothers_.finest();
+      Iterator coarsest = smoothers_->coarsest();
+      Iterator smoother = smoothers_->finest();
       DIterator lhs = lhs_->finest();
-      if(smoothers_.levels()>0) {
+      if(smoothers_->levels()>0) {
         if(smoother != coarsest  || matrices_->levels()<matrices_->maxlevels())
           smoother->post(*lhs);
         if(smoother!=coarsest)
@@ -822,13 +826,15 @@ namespace Dune
             smoother->post(*lhs);
         smoother->post(*lhs);
       }
-
       delete &(*lhs_->finest());
       delete lhs_;
+      lhs_=nullptr;
       delete &(*update_->finest());
       delete update_;
+      update_=nullptr;
       delete &(*rhs_->finest());
       delete rhs_;
+      rhs_=nullptr;
     }
 
     template<class M, class X, class S, class PI, class A>

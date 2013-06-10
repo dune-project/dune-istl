@@ -6,13 +6,19 @@ if(PARMETIS_FOUND)
   set(PARMETISTESTS pamgtest pamg_comm_repart_test)
 endif(PARMETIS_FOUND)
 
-set(NORMALTESTS amgtest fastamg graphtest kamgtest)
+set(NORMALTESTS amgtest fastamg graphtest kamgtest pthreadamgtest)
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
 add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
+
+find_package(Threads)
+if(CMAKE_USE_PTHREADS_INIT)
+  add_executable(pthreadamgtest pthreadamgtest.cc)
+  target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+endif(CMAKE_USE_PTHREADS_INIT)
 
 add_executable(amgtest "amgtest.cc")
 add_dune_superlu_flags(amgtest)
