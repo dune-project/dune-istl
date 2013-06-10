@@ -662,7 +662,17 @@ namespace Dune {
       if (globalLookup_) delete globalLookup_;
       if (freecomm==true)
         if(comm!=MPI_COMM_NULL)
+        {
+#ifdef MPI_2
+          // If it is possible to query whether MPI_Finalize
+          // was called, only free the communicator before
+          // calling MPI_Finalize.
+          int wasFinalized = 0;
+          MPI_Finalized( &wasFinalized );
+          if(!wasFinalized)
+#endif
           MPI_Comm_free(&comm);
+        }
     }
 
   private:
