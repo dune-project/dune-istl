@@ -302,6 +302,9 @@ namespace Dune {
         }
       }
 
+      //correct i which is wrong if convergence was not achieved.
+      i=std::min(_maxit,i);
+
       // print
       if (_verbose==1)
         this->printOutput(std::cout,i,def);
@@ -436,6 +439,9 @@ namespace Dune {
           break;
         }
       }
+
+      //correct i which is wrong if convergence was not achieved.
+      i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
         this->printOutput(std::cout,i,def);
@@ -597,6 +603,9 @@ namespace Dune {
         p += q;                     // orthogonalization with correction
         rholast = rho;              // remember rho for recurrence
       }
+
+      //correct i which is wrong if convergence was not achieved.
+      i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
         this->printOutput(std::cout,i,def);
@@ -864,6 +873,9 @@ namespace Dune {
         norm_old = norm;
       } // end for
 
+      //correct i which is wrong if convergence was not achieved.
+      it=std::min((double)_maxit,it);
+
       if (_verbose==1)                // printing for non verbose
         this->printOutput(std::cout,it,norm);
 
@@ -1109,6 +1121,9 @@ namespace Dune {
           break;
         }
       }
+
+      //correct i which is wrong if convergence was not achieved.
+      i=std::min(_maxit,i);
 
       if (_verbose==1)                  // printing for non verbose
         this->printOutput(std::cout,i,def);
@@ -1368,6 +1383,9 @@ namespace Dune {
 
           res.converged = false;
         }
+
+        //correct i which is wrong if convergence was not achieved.
+        j=std::min(_maxit,j);
 
         if (_verbose > 1)             // print
         {
