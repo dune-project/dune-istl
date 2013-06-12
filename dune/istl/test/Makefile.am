@@ -23,6 +23,7 @@ NORMALTESTS = basearraytest \
               complexrhstest \
               dotproducttest \
               iotest \
+              inverseoperator2prectest \
               matrixiteratortest \
               matrixtest \
               matrixutilstest \
@@ -102,6 +103,8 @@ mmtest_SOURCES = mmtest.cc
 mv_SOURCES = mv.cc
 
 iotest_SOURCES = iotest.cc
+
+inverseoperator2prectest_SOURCES = inverseoperator2prectest.cc
 
 scaledidmatrixtest_SOURCES = scaledidmatrixtest.cc
 

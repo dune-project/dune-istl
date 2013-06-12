@@ -122,6 +122,57 @@ namespace Dune {
     virtual ~Preconditioner () {}
   };
 
+  template<class X, class Y> class InverseOperator;
+
+  class InverseOperatorResult;
+
+  /**
+   * @brief Turns an InverseOperator into a Preconditioner.
+   * @tparam O The type of the inverse operator to wrap.
+   */
+  template<class O, int c>
+  class InverseOperator2Preconditioner :
+    public Preconditioner<typename O::domain_type, typename O::range_type>
+  {
+  public:
+    //! \brief The domain type of the preconditioner.
+    typedef typename O::domain_type domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef typename O::range_type range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename range_type::field_type field_type;
+    typedef O InverseOperator;
+
+    // define the category
+    enum {
+      //! \brief The category the preconditioner is part of.
+      category=c
+    };
+
+    /**
+     * @brief Construct the preconditioner from the solver
+     * @param inverse_operator The inverse operator to wrap.
+     */
+    InverseOperator2Preconditioner(InverseOperator& inverse_operator)
+    : inverse_operator_(inverse_operator)
+    {}
+
+    void pre(domain_type&,range_type&)
+    {}
+
+    void apply(domain_type& v, const range_type& d)
+    {
+      InverseOperatorResult res;
+      range_type copy(d);
+      inverse_operator_.apply(v, copy, res);
+    }
+
+    void post(domain_type&)
+    {}
+
+  private:
+    InverseOperator& inverse_operator_;
+  };
 
   //=====================================================================
   // Implementation of this interface for sequential ISTL-preconditioners
