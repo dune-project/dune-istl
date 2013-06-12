@@ -27,12 +27,14 @@ istl_HEADERS = basearray.hh \
 	overlappingschwarz.hh \
 	owneroverlapcopy.hh \
 	pardiso.hh \
+        preconditioner.hh \
 	preconditioners.hh \
 	repartition.hh \
 	scalarproducts.hh \
 	scaledidmatrix.hh \
 	schwarz.hh \
 	solvercategory.hh \
+	solver.hh \
 	solvers.hh \
 	solvertype.hh \
 	superlu.hh \
