@@ -3,6 +3,10 @@
 
 #ifndef DUNE_SOLVER_HH
 #define DUNE_SOLVER_HH
+
+#include <iomanip>
+#include <ostream>
+
 namespace Dune
 {
 /**
