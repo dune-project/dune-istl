@@ -172,6 +172,11 @@ namespace Dune
           const SmootherArgs& smootherArgs,
           const ParallelInformation& pinfo=ParallelInformation());
 
+      /**
+       * @brief Copy constructor.
+       */
+      AMG(const AMG& amg);
+
       ~AMG();
 
       /** \copydoc Preconditioner::pre */
@@ -292,12 +297,32 @@ namespace Dune
     };
 
     template<class M, class X, class S, class PI, class A>
+    inline AMG<M,X,S,PI,A>::AMG(const AMG& amg)
+    : matrices_(amg.matrices_), smootherArgs_(amg.smootherArgs_),
+      smoothers_(amg.smoothers_), solver_(amg.solver_),
+      rhs_(), lhs_(), update_(),
+      scalarProduct_(amg.scalarProduct_), gamma_(amg.gamma_),
+      preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
+      level(amg.level), buildHierarchy_(amg.buildHierarchy_),
+      additive(amg.additive), coarsesolverconverged(amg.coarsesolverconverged),
+      coarseSmoother_(amg.coarseSmoother_), verbosity_(amg.verbosity_)
+    {
+      if(amg.rhs_)
+        rhs_=new Hierarchy<Range,A>(*amg.rhs_);
+      if(amg.lhs_)
+        lhs_=new Hierarchy<Domain,A>(*amg.lhs_);
+      if(amg.update_)
+        update_=new Hierarchy<Domain,A>(*amg.update_);
+    }
+
+    template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          std::size_t gamma, std::size_t preSmoothingSteps,
                          std::size_t postSmoothingSteps, bool additive_)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
+        rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(2)
@@ -313,7 +338,8 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
+        rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
@@ -335,7 +361,8 @@ namespace Dune
                          bool additive_,
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(), scalarProduct_(0), gamma_(gamma),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(),
+        rhs_(), lhs_(), update_(), scalarProduct_(0), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(criterion.debugLevel())
@@ -355,7 +382,8 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(),
+        rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
@@ -378,6 +406,15 @@ namespace Dune
         if(coarseSmoother_)
           coarseSmoother_.reset();
       }
+      if(lhs_)
+        delete lhs_;
+      lhs_=nullptr;
+      if(update_)
+        delete update_;
+      update_=nullptr;
+      if(rhs_)
+        delete rhs_;
+      rhs_=nullptr;
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -492,11 +529,17 @@ namespace Dune
         // No smoother to make x consistent! Do it by hand
         matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
       Range* copy = new Range(b);
-      rhs_ = new Hierarchy<Range,A>(*copy);
+      if(rhs_)
+        delete rhs_;
+      rhs_ = new Hierarchy<Range,A>(copy);
       Domain* dcopy = new Domain(x);
-      lhs_ = new Hierarchy<Domain,A>(*dcopy);
+      if(lhs_)
+        delete lhs_;
+      lhs_ = new Hierarchy<Domain,A>(dcopy);
       dcopy = new Domain(x);
-      update_ = new Hierarchy<Domain,A>(*dcopy);
+      if(update_)
+        delete update_;
+      update_ = new Hierarchy<Domain,A>(dcopy);
       matrices_->coarsenVector(*rhs_);
       matrices_->coarsenVector(*lhs_);
       matrices_->coarsenVector(*update_);
@@ -826,13 +869,13 @@ namespace Dune
             smoother->post(*lhs);
         smoother->post(*lhs);
       }
-      delete &(*lhs_->finest());
+      //delete &(*lhs_->finest());
       delete lhs_;
       lhs_=nullptr;
-      delete &(*update_->finest());
+      //delete &(*update_->finest());
       delete update_;
       update_=nullptr;
-      delete &(*rhs_->finest());
+      //delete &(*rhs_->finest());
       delete rhs_;
       rhs_=nullptr;
     }

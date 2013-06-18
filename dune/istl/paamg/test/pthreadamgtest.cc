@@ -25,7 +25,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <pthread.h>
-#define NUM_THREADS 5
+#define NUM_THREADS 1
 
 typedef double XREAL;
 
@@ -96,6 +96,21 @@ void *solve(void* arg)
   pthread_exit(NULL);
 }
 
+void *solve1(void* arg)
+{
+  thread_arg *amgarg=(thread_arg*) arg;
+  (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
+  (*amgarg->amg).post(*amgarg->x);
+
+}
+
+void *solve2(void* arg)
+{
+  thread_arg *amgarg=(thread_arg*) arg;
+  (*amgarg->amg).pre(*amgarg->x,*amgarg->b);
+  (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
+  (*amgarg->amg).post(*amgarg->x);
+}
 
 template <int BS>
 void testAMG(int N, int coarsenTarget, int ml)
@@ -184,6 +199,37 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   for(int i=0; i < NUM_THREADS; ++i)
     pthread_join(threads[i], &retval);
+
+  amgs.clear();
+  args.clear();
+  amg.pre(x, b);
+  amgs.resize(NUM_THREADS, amg);
+  for(int i=0; i < NUM_THREADS; ++i)
+  {
+    args[i].amg=&amgs[i];
+    args[i].b=&bs[i];
+    args[i].x=&xs[i];
+    args[i].fop=&fop;
+    pthread_create(&threads[i], NULL, solve1, (void*) &args[i]);
+  }
+  for(int i=0; i < NUM_THREADS; ++i)
+    pthread_join(threads[i], &retval);
+
+  amgs.clear();
+  args.clear();
+  amg.pre(x, b);
+  amgs.resize(NUM_THREADS, amg);
+  for(int i=0; i < NUM_THREADS; ++i)
+  {
+    args[i].amg=&amgs[i];
+    args[i].b=&bs[i];
+    args[i].x=&xs[i];
+    args[i].fop=&fop;
+    pthread_create(&threads[i], NULL, solve2, (void*) &args[i]);
+  }
+  for(int i=0; i < NUM_THREADS; ++i)
+    pthread_join(threads[i], &retval);
+
 }
 
 
