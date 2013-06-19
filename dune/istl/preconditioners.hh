@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <string>
 
+#include "preconditioner.hh"
+#include "solver.hh"
 #include "solvercategory.hh"
 #include "istlexception.hh"
 #include "matrixutils.hh"
@@ -54,74 +56,54 @@ namespace Dune {
    */
 
 
-  //=====================================================================
-  /*! \brief Base class for matrix free definition of preconditioners.
 
-          Note that the operator, which is the basis for the preconditioning,
-      is supplied to the preconditioner from the outside in the
-      constructor or some other method.
-
-          This interface allows the encapsulation of all parallelization
-          aspects into the preconditioners.
-
-     \tparam X Type of the update
-     \tparam Y Type of the defect
-
+  /**
+   * @brief Turns an InverseOperator into a Preconditioner.
+   * @tparam O The type of the inverse operator to wrap.
    */
-  //=====================================================================
-  template<class X, class Y>
-  class Preconditioner {
+  template<class O, int c>
+  class InverseOperator2Preconditioner :
+    public Preconditioner<typename O::domain_type, typename O::range_type>
+  {
   public:
     //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
+    typedef typename O::domain_type domain_type;
     //! \brief The range type of the preconditioner.
-    typedef Y range_type;
+    typedef typename O::range_type range_type;
     //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
+    typedef typename range_type::field_type field_type;
+    typedef O InverseOperator;
 
-    /*! \brief Prepare the preconditioner.
+    // define the category
+    enum {
+      //! \brief The category the preconditioner is part of.
+      category=c
+    };
 
-       A solver solves a linear operator equation A(x)=b by applying
-       one or several steps of the preconditioner. The method pre()
-       is called before the first apply operation.
-       b and x are right hand side and solution vector of the linear
-       system respectively. It may. e.g., scale the system, allocate memory or
-       compute a (I)LU decomposition.
-       Note: The ILU decomposition could also be computed in the constructor
-       or with a separate method of the derived method if several
-       linear systems with the same matrix are to be solved.
-
-       \param x The left hand side of the equation.
-       \param b The right hand side of the equation.
+    /**
+     * @brief Construct the preconditioner from the solver
+     * @param inverse_operator The inverse operator to wrap.
      */
-    virtual void pre (X& x, Y& b) = 0;
+    InverseOperator2Preconditioner(InverseOperator& inverse_operator)
+    : inverse_operator_(inverse_operator)
+    {}
 
-    /*! \brief Apply one step of the preconditioner to the system A(v)=d.
+    void pre(domain_type&,range_type&)
+    {}
 
-       On entry v=0 and d=b-A(x) (although this might not be
-       computed in that way. On exit v contains the update, i.e
-       one step computes \f$ v = M^{-1} d \f$ where \f$ M \f$ is the
-       approximate inverse of the operator \f$ A \f$ characterizing
-       the preconditioner.
-       \param[out] v The update to be computed
-       \param d The current defect.
-     */
-    virtual void apply (X& v, const Y& d) = 0;
+    void apply(domain_type& v, const range_type& d)
+    {
+      InverseOperatorResult res;
+      range_type copy(d);
+      inverse_operator_.apply(v, copy, res);
+    }
 
-    /*! \brief Clean up.
+    void post(domain_type&)
+    {}
 
-       This method is called after the last apply call for the
-       linear system to be solved. Memory may be deallocated safely
-       here. x is the solution of the linear equation.
-
-       \param x The right hand side of the equation.
-     */
-    virtual void post (X& x) = 0;
-
-    // every abstract base class has a virtual destructor
-    virtual ~Preconditioner () {}
+  private:
+    InverseOperator& inverse_operator_;
   };
-
 
   //=====================================================================
   // Implementation of this interface for sequential ISTL-preconditioners

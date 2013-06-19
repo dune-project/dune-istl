@@ -4,6 +4,7 @@ set(NORMALTEST
   bcrsbuildtest
   dotproducttest
   iotest
+  inverseoperator2prectest
   matrixiteratortest
   matrixtest
   matrixutilstest
@@ -50,6 +51,7 @@ add_executable(matrixiteratortest "matrixiteratortest.cc")
 add_executable(mmtest mmtest.cc)
 add_executable(mv "mv.cc")
 add_executable(iotest "iotest.cc")
+add_executable(inverseoperator2prectest "inverseoperator2prectest.cc")
 add_executable(scaledidmatrixtest "scaledidmatrixtest.cc")
 add_executable(seqmatrixmarkettest "matrixmarkettest.cc")
 #set_target_properties(seqmatrixmarkettest PROPERTIES COMPILE_FLAGS

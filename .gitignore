@@ -26,6 +26,7 @@ ltmain.sh
 am
 .libs/
 .deps/
+*~
 *.o
 test-driver
 build-cmake/

@@ -29,6 +29,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
 #include "laplacian.hh"
 
 #if HAVE_SUPERLU
