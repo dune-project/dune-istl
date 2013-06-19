@@ -20,12 +20,13 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/fastamg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 #include <cstdlib>
 #include <ctime>
 #include <pthread.h>
-#define NUM_THREADS 1
+#define NUM_THREADS 3
 
 typedef double XREAL;
 
@@ -68,11 +69,10 @@ typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
 typedef Dune::CollectiveCommunication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
 typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
-typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
 
 struct thread_arg
 {
-  AMG *amg;
+  MYAMG *amg;
   Vector *b;
   Vector *x;
   Operator *fop;
@@ -99,6 +99,7 @@ void *solve(void* arg)
 void *solve1(void* arg)
 {
   thread_arg *amgarg=(thread_arg*) arg;
+  *amgarg->x=0;
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
 
@@ -107,12 +108,13 @@ void *solve1(void* arg)
 void *solve2(void* arg)
 {
   thread_arg *amgarg=(thread_arg*) arg;
+  *amgarg->x=0;
   (*amgarg->amg).pre(*amgarg->x,*amgarg->b);
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
 }
 
-template <int BS>
+template <int BS, typename AMG>
 void testAMG(int N, int coarsenTarget, int ml)
 {
 
@@ -177,8 +179,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::SeqScalarProduct<Vector> sp;
 
   Smoother smoother(mat,1,1);
-
-  AMG amg(fop, criterion, smootherArgs, 1, 1, 1, false);
+  AMG amg(fop, criterion);
 
 
   double buildtime = watch.elapsed();
@@ -249,7 +250,8 @@ int main(int argc, char** argv)
   if(argc>3)
     ml = atoi(argv[3]);
 
-  testAMG<1>(N, coarsenTarget, ml);
+  testAMG<1,MYAMG>(N, coarsenTarget, ml);
+
   //testAMG<2>(N, coarsenTarget, ml);
 
 }

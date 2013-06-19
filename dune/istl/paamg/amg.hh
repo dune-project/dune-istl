@@ -169,7 +169,7 @@ namespace Dune
        */
       template<class C>
       AMG(const Operator& fineOperator, const C& criterion,
-          const SmootherArgs& smootherArgs,
+          const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation());
 
       /**
