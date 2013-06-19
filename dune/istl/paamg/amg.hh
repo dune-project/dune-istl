@@ -397,6 +397,7 @@ namespace Dune
       createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
+
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::~AMG()
     {
@@ -429,9 +430,6 @@ namespace Dune
 
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
-
-      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
-        std::cout<<"Building Hierarchy of "<<matrices_->maxlevels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
 
             if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
         // We have the carsest level. Create the coarse Solver
@@ -488,6 +486,10 @@ namespace Dune
                                                 *coarseSmoother_, 1E-2, 1000, 0));
         }
       }
+
+      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
+        std::cout<<"Building hierarchy of "<<matrices_->maxlevels()<<" levels "
+                 <<"(inclusive coarse solver) took "<<watch.elapsed()<<" seconds."<<std::endl;
     }
 
 
