@@ -1500,8 +1500,9 @@ namespace Dune
     template<class G,class S>
     inline void Aggregate<G,S>::add(std::vector<Vertex>& vertices)
     {
+#ifndef NDEBUG
       std::size_t oldsize = vertices_.size();
-
+#endif
       typedef typename std::vector<Vertex>::iterator Iterator;
 
       typedef typename VertexSet::iterator SIterator;
