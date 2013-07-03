@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <algorithm>
 
 #include "istlexception.hh"
 #include <dune/common/iteratorfacades.hh>
