@@ -727,10 +727,9 @@ namespace Dune {
         else l = q+1;
       }
 
-      if (i==j[l])
-        return iterator(p,j,l);
-      else
-        return iterator(p,j,n);
+      return (i==j[l])
+        ? iterator(p,j,l)
+        : end();
     }
 
     //! const_iterator class for sequential access
@@ -776,10 +775,9 @@ namespace Dune {
         else l = q+1;
       }
 
-      if (i==j[l])
-        return const_iterator(p,j,l);
-      else
-        return const_iterator(p,j,n);
+      return (i==j[l])
+        ? const_iterator(p,j,l)
+        : end();
     }
 
     //===== sizes
