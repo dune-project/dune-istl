@@ -716,6 +716,9 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     iterator find (size_type i)
     {
+      if (n==0)
+        return end();
+
       size_type l=0, r=n-1;
       while (l<r)
       {
@@ -724,7 +727,7 @@ namespace Dune {
         else l = q+1;
       }
 
-      if (n && i==j[l])
+      if (i==j[l])
         return iterator(p,j,l);
       else
         return iterator(p,j,n);
@@ -762,6 +765,9 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     const_iterator find (size_type i) const
     {
+      if (n==0)
+        return end();
+
       size_type l=0, r=n-1;
       while (l<r)
       {
@@ -770,7 +776,7 @@ namespace Dune {
         else l = q+1;
       }
 
-      if (n && i==j[l])
+      if (i==j[l])
         return const_iterator(p,j,l);
       else
         return const_iterator(p,j,n);
