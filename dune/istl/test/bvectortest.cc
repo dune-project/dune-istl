@@ -26,6 +26,9 @@ int testVector()
 
   // empty vector
   Vector v, w, v1(20), v2(20,100);
+#ifdef FAIL
+  Vector v3(20,100.0);
+#endif
   v.reserve(100);
   assert(100==v.capacity());
   assert(20==v1.capacity());

@@ -7,7 +7,9 @@
 #include <cmath>
 #include <complex>
 #include <memory>
+#include <limits>
 
+#include <dune/common/static_assert.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
 
@@ -313,8 +315,12 @@ namespace Dune {
        expecting to obtain a vector of 100 doubles initialized with zero.
        However, the code calls this constructor which tacitly does something else!
      */
-    BlockVector (size_type _n, size_type capacity)
+    template<typename S>
+    BlockVector (size_type _n, S _capacity)
     {
+      dune_static_assert( (std::numeric_limits<S>::is_integer),
+        "capacity must be an unsigned integral type (be aware, that this constructor does not set the default value!)" );
+      size_type capacity = _capacity;
       this->n = _n;
       if(this->n > capacity)
         capacity_ = _n;
