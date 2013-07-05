@@ -414,7 +414,12 @@ namespace Dune
          pinfo->copyOwnerToAll(*lhs, *lhs);
          v=*lhs;
          }else{*/
-      mgc(v, d);
+      if(matrices_->maxlevels()==1){
+        // The coarse solver might modify the d!
+        Range b(d);
+        mgc(v, b);
+      }else
+        mgc(v, d);
       if(postSteps_==0||matrices_->maxlevels()==1)
         pinfo->copyOwnerToAll(v, v);
       //}
