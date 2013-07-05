@@ -5,9 +5,9 @@
 
 #include "assert.h"
 #include <cmath>
-#include <complex>
 #include <cstddef>
 #include <memory>
+#include <algorithm>
 
 #include "istlexception.hh"
 #include <dune/common/iteratorfacades.hh>
@@ -716,18 +716,10 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     iterator find (size_type i)
     {
-      size_type l=0, r=n-1;
-      while (l<r)
-      {
-        size_type q = (l+r)/2;
-        if (i <= j[q]) r=q;
-        else l = q+1;
-      }
-
-      if (n && i==j[l])
-        return iterator(p,j,l);
-      else
-        return iterator(p,j,n);
+      const size_type* lb = std::lower_bound(j, j+n, i);
+      return (lb != j+n and *lb == i)
+        ? iterator(p,j,lb-j)
+        : end();
     }
 
     //! const_iterator class for sequential access
@@ -762,18 +754,10 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     const_iterator find (size_type i) const
     {
-      size_type l=0, r=n-1;
-      while (l<r)
-      {
-        size_type q = (l+r)/2;
-        if (i <= j[q]) r=q;
-        else l = q+1;
-      }
-
-      if (n && i==j[l])
-        return const_iterator(p,j,l);
-      else
-        return const_iterator(p,j,n);
+      const size_type* lb = std::lower_bound(j, j+n, i);
+      return (lb != j+n and *lb == i)
+        ? const_iterator(p,j,lb-j)
+        : end();
     }
 
     //===== sizes
