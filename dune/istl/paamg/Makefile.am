@@ -6,7 +6,7 @@ paamg_HEADERS = aggregates.hh dependency.hh galerkin.hh graph.hh \
 	hierarchy.hh construction.hh \
 	transfer.hh smoother.hh amg.hh kamg.hh combinedfunctor.hh \
 	graphcreator.hh parameters.hh renumberer.hh pinfo.hh \
-	fastamg.hh fastamgsmoother.hh anisotropic.hh laplacian.hh
+	fastamg.hh fastamgsmoother.hh
 
 include $(top_srcdir)/am/global-rules
 
