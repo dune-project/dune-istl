@@ -28,7 +28,7 @@ install(FILES
    overlappingschwarz.hh
    owneroverlapcopy.hh
    pardiso.hh
-   preconditoner.hh
+   preconditioner.hh
    preconditioners.hh
    repartition.hh
    scalarproducts.hh
