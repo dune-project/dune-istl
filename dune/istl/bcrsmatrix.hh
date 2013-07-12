@@ -212,7 +212,7 @@ namespace Dune {
      Construct the matrix via
       - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       - void setSize(size_type rows, size_type columns, size_type nnz=0) after setting
-        the buildmode to mymode and the compression parameter via setmymodeparameters(size_type _avg, double _overflow)
+        the buildmode to mymode and the compression parameter via setMymodeParameters(size_type _avg, double _overflow)
 
      Start filling your matrix with entry(size_type row, size_type col).
      Full access is possible also during buildstage, although not as fast
@@ -646,7 +646,7 @@ namespace Dune {
       if (build_mode == mymode)
       {
         if (nnz>0)
-          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in mymode mode, use setmymodeparameters() instead");
+          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in mymode mode, use setMymodeParameters() instead");
 
         // mymode allocates differently
         mymode_allocate(rows,columns);
@@ -666,7 +666,7 @@ namespace Dune {
      * @param _overflowsize fraction of _n*_avg which is expected to be
      *   needed for elements that exceed _avg entries per row.
      */
-    void setmymodeparameters(size_type _avg, double _overflow)
+    void setmMymodeParameters(size_type _avg, double _overflow)
     {
       avg = _avg;
       overflow = _overflow;
@@ -1031,6 +1031,7 @@ namespace Dune {
      */
     B& entry(size_type row, size_type col)
     {
+#ifdef DUNE_ISTL_WITH_CHECKING
       if (build_mode!=mymode)
         DUNE_THROW(ISTLError,"requires mymode build mode");
       if (ready==built)
@@ -1040,6 +1041,7 @@ namespace Dune {
         DUNE_THROW(ISTLError,"row index exceeds matrix size");
       if (col >= m)
         DUNE_THROW(ISTLError,"column index exceeds matrix size");
+#endif
 
       size_type* begin = r[row].getindexptr();
       size_type* end = begin + r[row].getsize();
@@ -1555,6 +1557,10 @@ namespace Dune {
       return nnz;
     }
 
+    BuildStage buildStage() const
+    {
+      return ready;
+    }
 
     //===== query
 
