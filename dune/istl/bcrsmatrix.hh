@@ -342,6 +342,17 @@ namespace Dune {
       unknown
     };
 
+    void print_entries()
+    {
+      std::cout << "Ausgabe des Patterns:" << std::endl;
+      for (int i=0; i<n; ++i)
+      {
+        for (size_type* it = r[i].getindexptr() ; it != r[i].getindexptr()+r[i].getsize(); ++it)
+          std::cout << *it << " ";
+        std::cout << std::endl;
+      }
+    }
+
 
     //===== random access interface to rows of the matrix
 
@@ -1103,6 +1114,9 @@ namespace Dune {
       //get iterator to the smallest overflow element
       typename OverflowType::iterator oit = overflow.begin();
 
+      //store a copy of index pointers on which to perform sortation
+      std::vector<size_type*> perm;
+
       //iterate over all rows and copy elements into their position in the compressed array
       for (size_type i=0; i<n; i++)
       {
@@ -1111,8 +1125,7 @@ namespace Dune {
         //B* apos = r[i].getptr();
         size_type size = r[i].getsize();
 
-        //store a copy of index pointers on which to perform sortation
-        std::vector<size_type*> perm;
+        perm.resize(size);
 
         for (size_type* it = begin; it < begin + size; ++it)
           perm.push_back(it);
@@ -1129,8 +1142,8 @@ namespace Dune {
           //check whether there are elements in the overflow area which take precedence
           while ((oit!=overflow.end()) && (oit->first < std::make_pair(i,**it)))
           {
-            //check whether allocated size is reached
-            if (jiit == j.get() + allocationSize)
+            //check whether there is enough memory to write to
+            if (jiit >= begin)
               DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
             //copy and element from the overflow area to the insertion position in a and j
             *(++jiit) = oit->first.second;
@@ -1139,8 +1152,8 @@ namespace Dune {
             r[i].setsize(r[i].getsize()+1);
           }
 
-          //check whether allocated size is reached
-          if (jiit == j.get() + allocationSize)
+          //check whether there is enough memory to write to
+          if (jiit >= begin)
             DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
 
           //copy element from array
@@ -1152,8 +1165,8 @@ namespace Dune {
         //copy remaining elements from the overflow area
         while ((oit!=overflow.end()) && (oit->first.first == i))
         {
-          //check whether allocated size is reached
-          if (jiit == j.get() + allocationSize)
+          //check whether there is enough memory to write to
+          if (jiit >= begin)
             DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
 
           //copy and element from the overflow area to the insertion position in a and j
@@ -1770,8 +1783,8 @@ namespace Dune {
      */
     void mymode_allocate(size_type _n, size_type _m)
     {
-      //calculate size of overflow region
-      size_type osize = (size_type) (_n*avg)*overflowsize;
+      //calculate size of overflow region, add buffer for row sort!
+      size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
       allocationSize = _n*avg + osize;
 
       allocate(_n, _m, allocationSize);
