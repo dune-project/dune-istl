@@ -269,8 +269,7 @@ namespace Dune {
   class BCRSMatrix
   {
     friend struct MatrixDimension<BCRSMatrix>;
-
-  private:
+  public:
     enum BuildStage {
       /** @brief Matrix is not built at all. */
       notbuilt=0,
@@ -282,8 +281,6 @@ namespace Dune {
       /** @brief The matrix structure is built fully.*/
       built=2
     };
-
-  public:
 
     //===== type definitions and constants
 
@@ -1069,9 +1066,6 @@ namespace Dune {
         //do simulatenous operations on data array a
         std::ptrdiff_t offset = end - r[row].getindexptr();
         B* apos = r[row].getptr() + offset;
-
-        //placement new to call constructor of B
-        new (apos) B;
 
         //increase rowsize
         r[row].setsize(r[row].getsize()+1);
