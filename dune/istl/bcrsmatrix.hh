@@ -1089,7 +1089,7 @@ namespace Dune {
      *  performs compression of index and data arrays with linear
      *  complexity
      *
-     *  An object with some statistics about the compression form
+     *  An object with some statistics about the compression for
      *  future optimization is returned.
      */
     CompressionStatistics<size_type> compress()
@@ -1136,12 +1136,19 @@ namespace Dune {
           //check whether there are elements in the overflow area which take precedence
           while ((oit!=overflow.end()) && (oit->first < std::make_pair(i,**it)))
           {
+            //check whether allocated size is reached
+            if (jiit == j.get() + allocationSize)
+              DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
             //copy and element from the overflow area to the insertion position in a and j
             *(++jiit) = oit->first.second;
             *(++aiit) = oit->second;
             ++oit;
             r[i].setsize(r[i].getsize()+1);
           }
+
+          //check whether allocated size is reached
+          if (jiit == j.get() + allocationSize)
+            DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
 
           //copy element from array
           *(++jiit) = **it;
@@ -1152,6 +1159,10 @@ namespace Dune {
         //copy remaining elements from the overflow area
         while ((oit!=overflow.end()) && (oit->first.first == i))
         {
+          //check whether allocated size is reached
+          if (jiit == j.get() + allocationSize)
+            DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+
           //copy and element from the overflow area to the insertion position in a and j
           *(++jiit) = oit->first.second;
           *(++aiit) = oit->second;
