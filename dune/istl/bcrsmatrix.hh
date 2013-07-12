@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include <map>
 
 #include "istlexception.hh"
 #include "bvector.hh"
@@ -70,6 +71,27 @@ namespace Dune {
   struct MatrixDimension;
 
   /**
+   * \brief export statistic about compression achieved in mymode mode
+   *
+   * To enable the user to tune parameters of mymode buildmode of a
+   * Dune::BCRSMatrix manually, some statistics are exported upon
+   * compression.
+   *
+   */
+  template<typename size_type>
+  struct CompressionStatistics
+  {
+    //! average number of non-zeroes per row
+    double avg;
+    //! maximum number of non-zeroes in a row_type
+    size_type maximum;
+    //! total number of elements written to the overflow area
+    size_type overflow_total;
+    //! percentage of wasted memory resulting from non-used overflow area
+    double mem_ratio;
+  };
+
+  /**
      \brief A sparse block matrix with compressed row storage
 
      Implements a block compressed row storage scheme. The block
@@ -80,6 +102,7 @@ namespace Dune {
 
      1. Row-wise scheme
      2. Random scheme
+     3. mymode scheme
 
      Error checking: no error checking is provided normally.
      Setting the compile time switch DUNE_ISTL_WITH_CHECKING
@@ -175,13 +198,78 @@ namespace Dune {
      B[3][0] = 7;
      B[3][3] = 8;
      \endcode
+
+     3. mymode scheme
+     With the above Random Scheme, the sparsity pattern often has to be determined
+     and stored before the matrix is assembled. This leads to an increase of
+     needs in memory and computation time. Often, one has good a priori
+     knowledge about the number of entries a row contains on average. mymode
+     mode tries to make use of that knowledge by allocating memory based on
+     that average. Entries in rows with more non-zeroes are written to an overflow
+     area. After all indices are added a compression procedure is used.
+     To use this mode use the following methods:
+
+     Construct the matrix via
+      - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
+      - void setSize(size_type rows, size_type columns, size_type nnz=0) after setting
+        the buildmode to mymode and the compression parameter via setMymodeParameters(size_type _avg, double _overflow)
+
+     Start filling your matrix with entry(size_type row, size_type col).
+     Full access is possible also during buildstage, although not as fast
+     as after buildstage via the operator[] due to the necessity of searching
+     the overflow area for some matrix elements.
+
+     After the entry-method has been called for each matrix at least once,
+     a call to compress() reorganizes the data into one array for further use.
+     This sets the matrixs state to built. No matrix entries may be added after
+     this step. The return type Dune::CompressionStatistics allows for some parameter optimization.
+
+     Use of copy constructor, assignment operator and matrix vector arithmetics
+     are not supported until the matrix is fully built.
+
+     In the following sample code, an array with 28 entries will be reserved
+     \code
+     #include<dune/common/fmatrix.hh>
+     #include<dune/istl/bcrsmatrix.hh>
+
+     typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > M;
+     M m(10, 10, 2, 0.4, M::mymode);
+
+     //fill in some arbitrary entries, even operations on these would be possible,
+     //you get a reference to the entry! the order of these statements is irrelevant!
+     m.entry(0,0) = 0.;
+     m.entry(8,0) = 0.;
+     m.entry(1,8) = 0.; m.entry(1,0) = 0.; m.entry(1,5) = 0.;
+     m.entry(2,0) = 0.;
+     m.entry(3,5) = 0.; m.entry(3,0) = 0.;  m.entry(3,8) = 0.;
+     m.entry(4,0) = 0.;
+     m.entry(9,0) = 0.; m.entry(9,5) = 0.; m.entry(9,8) = 0.;
+     m.entry(5,0) = 0.; m.entry(5,5) = 0.; m.entry(5,8) = 0.;
+     m.entry(6,0) = 0.;
+     m.entry(7,0) = 0.; m.entry(7,5) = 0.; m.entry(7,8) = 0.;
+
+
+
+     // internally the index array now looks like this (second row are the row pointers):
+     // xxxxxxxx0x800x500x050x050x05
+     // ........|.|.|.|.|.|.|.|.|.|.
+     // and the overflow area contains (1,5,0.0), (3,8,0.0), (5,8,0.0), (7,8,0.0), (9,8,0.0)
+     // the data array has similar structure.
+
+     //finish building by compressing the array
+     Dune::CompressionStatistics<M::size_type> stats = m.compress();
+
+     // internally the index array now looks like this:
+     // 00580058005800580058xxxxxxxx
+     // ||..||..||..||..||..........
+
+     \endcode
    */
   template<class B, class A=std::allocator<B> >
   class BCRSMatrix
   {
     friend struct MatrixDimension<BCRSMatrix>;
-
-  private:
+  public:
     enum BuildStage {
       /** @brief Matrix is not built at all. */
       notbuilt=0,
@@ -193,8 +281,6 @@ namespace Dune {
       /** @brief The matrix structure is built fully.*/
       built=2
     };
-
-  public:
 
     //===== type definitions and constants
 
@@ -242,10 +328,30 @@ namespace Dune {
        */
       random,
       /**
+       * @brief Build entries randomly with an educated guess on entries per row_type
+       *
+       * Allows random order generation as in random mode, but rowsizes do not need
+       * to be given first. Instead an average number of non-zeroes per row is passed
+       * to the constructor. Matrix setup is finished with compress(), full data access
+       * during buidstage is possible.
+       */
+      mymode,
+      /**
        * @brief Build mode not set!
        */
       unknown
     };
+
+    void print_entries()
+    {
+      std::cout << "Ausgabe des Patterns:" << std::endl;
+      for (int i=0; i<n; ++i)
+      {
+        for (size_type* it = r[i].getindexptr() ; it != r[i].getindexptr()+r[i].getsize(); ++it)
+          std::cout << *it << " ";
+        std::cout << std::endl;
+      }
+    }
 
 
     //===== random access interface to rows of the matrix
@@ -464,6 +570,23 @@ namespace Dune {
       allocate(_n, _m);
     }
 
+    //! \brief construct matrix with a known average number of entries per row
+    /**
+     * Constructs a matrix in mymode buildmode.
+     *
+     * @param _n number of rows of the matrix
+     * @param _m number of columns of the matrix
+     * @param _avg expected average number of entries per row
+     * @param _overflowsize fraction of _n*_avg which is expected to be
+     *   needed for elements that exceed _avg entries per row.
+     *
+     */
+    BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
+      : build_mode(bm), ready(notbuilt), avg(_avg), overflowsize(_overflowsize)
+    {
+      mymode_allocate(_n,_m);
+    }
+
     /**
      * @brief copy constructor
      *
@@ -521,15 +644,40 @@ namespace Dune {
      * @param rows The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
      * @param nnz The number of nonzero entries the matrix should hold (if omitted
-     * defaults to 0).
+     * defaults to 0). Must be omitted in mymode mode.
      */
     void setSize(size_type rows, size_type columns, size_type nnz=0)
     {
       // deallocate already setup memory
       deallocate();
 
-      // allocate matrix memory
-      allocate(rows, columns, nnz);
+      if (build_mode == mymode)
+      {
+        if (nnz>0)
+          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in mymode mode, use setMymodeParameters() instead");
+
+        // mymode allocates differently
+        mymode_allocate(rows,columns);
+      }
+      else
+      {
+        // allocate matrix memory
+        allocate(rows, columns, nnz);
+      }
+    }
+
+    /** @brief Set parameters needed for creation in mymode.
+     *
+     * Use this method before setSize() to define storage behaviour of a matrix
+     * in mymode mode
+     * @param _avg expected average number of entries per row
+     * @param _overflowsize fraction of _n*_avg which is expected to be
+     *   needed for elements that exceed _avg entries per row.
+     */
+    void setmMymodeParameters(size_type _avg, double _overflow)
+    {
+      avg = _avg;
+      overflow = _overflow;
     }
 
     /**
@@ -658,9 +806,12 @@ namespace Dune {
         {
           Mat.ready = built;
           if(Mat.nnz>0)
+          {
             // Set nnz to the exact number of nonzero blocks inserted
             // as some methods rely on it
             Mat.nnz=nnz;
+            Mat.allocationSize = nnz;
+          }
         }
         // done
         return *this;
@@ -870,6 +1021,182 @@ namespace Dune {
 
       // if not, set matrix to built
       ready = built;
+    }
+
+    //===== mymode creation interface
+
+    //! \brief get reference to entry (row,col) of the matrix
+    /*!
+     * This method can only be used when the matrix is in mymode
+     * building mode.
+     *
+     * A reference to entry (row, col) of the matrix is returned.
+     * If this is the first call for (row, col) the matrix element
+     * is created.
+     *
+     * This method can only be used while building the matrix,
+     * after compression operator[] gives a much better performance.
+     */
+    B& entry(size_type row, size_type col)
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (build_mode!=mymode)
+        DUNE_THROW(ISTLError,"requires mymode build mode");
+      if (ready==built)
+        DUNE_THROW(ISTLError,"matrix already built up, use operator[] for entry access now");
+
+      if (row >= n)
+        DUNE_THROW(ISTLError,"row index exceeds matrix size");
+      if (col >= m)
+        DUNE_THROW(ISTLError,"column index exceeds matrix size");
+#endif
+
+      size_type* begin = r[row].getindexptr();
+      size_type* end = begin + r[row].getsize();
+
+      size_type* pos = std::find(begin, end, col);
+
+      //treat the case that there was a match in the array
+      if (pos != end)
+        if (*pos == col)
+        {
+          std::ptrdiff_t offset = pos - r[row].getindexptr();
+          B* aptr = r[row].getptr() + offset;
+
+          return *aptr;
+        }
+
+      //determine whether overflow has to be taken into account or not
+      if (r[row].getsize() == avg)
+        return overflow[std::make_pair(row,col)];
+      else
+      {
+        //modify index array
+        *end = col;
+
+        //do simulatenous operations on data array a
+        std::ptrdiff_t offset = end - r[row].getindexptr();
+        B* apos = r[row].getptr() + offset;
+
+        //increase rowsize
+        r[row].setsize(r[row].getsize()+1);
+
+        //return reference to the newly created entry
+        return *apos;
+      }
+    }
+
+    //! @brief finishes the buildstage in mymode mode
+    /*! once called, matrix is going to built state and no indices
+     *  can be added to a matrix that is built in mymode mode.
+     *
+     *  performs compression of index and data arrays with linear
+     *  complexity
+     *
+     *  An object with some statistics about the compression for
+     *  future optimization is returned.
+     */
+    CompressionStatistics<size_type> compress()
+    {
+      if (build_mode!=mymode)
+        DUNE_THROW(ISTLError,"requires mymode build mode");
+      if (ready==built)
+        DUNE_THROW(ISTLError,"matrix already built up, no more need for compression");
+
+      //calculate statistics
+      CompressionStatistics<size_type> stats;
+      stats.overflow_total = overflow.size();
+
+      //get insertion iterators pointing to one before start (for later use of ++it)
+      size_type* jiit = j.get()-1;
+      B* aiit = a-1;
+
+      //get iterator to the smallest overflow element
+      typename OverflowType::iterator oit = overflow.begin();
+
+      //store a copy of index pointers on which to perform sortation
+      std::vector<size_type*> perm;
+
+      //iterate over all rows and copy elements into their position in the compressed array
+      for (size_type i=0; i<n; i++)
+      {
+        //get old pointers into a and j and size without overflow changes
+        size_type* begin = r[i].getindexptr();
+        //B* apos = r[i].getptr();
+        size_type size = r[i].getsize();
+
+        perm.resize(size);
+
+        typename std::vector<size_type*>::iterator it = perm.begin();
+        for (size_type* iit = begin; iit < begin + size; ++iit, ++it)
+          *it = iit;
+
+        //sort permutation array
+        std::sort(perm.begin(),perm.end(),PointerCompare<size_type>());
+
+        //change row window pointer to their new positions
+        r[i].setindexptr(jiit+1);
+        r[i].setptr(aiit+1);
+
+        for (it = perm.begin(); it != perm.end(); ++it)
+        {
+          //check whether there are elements in the overflow area which take precedence
+          while ((oit!=overflow.end()) && (oit->first < std::make_pair(i,**it)))
+          {
+            //check whether there is enough memory to write to
+            if (jiit >= begin)
+              DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+            //copy and element from the overflow area to the insertion position in a and j
+            *(++jiit) = oit->first.second;
+            *(++aiit) = oit->second;
+            ++oit;
+            r[i].setsize(r[i].getsize()+1);
+          }
+
+          //check whether there is enough memory to write to
+          if (jiit >= begin)
+            DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+
+          //copy element from array
+          *(++jiit) = **it;
+          B* apos = *it-j.get()+a;
+          *(++aiit) = *apos;
+        }
+
+        //copy remaining elements from the overflow area
+        while ((oit!=overflow.end()) && (oit->first.first == i))
+        {
+          //check whether there is enough memory to write to
+          if (jiit >= begin)
+            DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+
+          //copy and element from the overflow area to the insertion position in a and j
+          *(++jiit) = oit->first.second;
+          *(++aiit) = oit->second;
+          ++oit;
+          r[i].setsize(r[i].getsize()+1);
+        }
+      }
+
+      // overflow area may be cleared
+      overflow.clear();
+
+      //determine average number of entries and memory usage
+      std::ptrdiff_t diff = (r[n-1].getindexptr() + r[n-1].getsize() - j.get());
+      nnz = diff;
+      stats.avg = (double) (nnz) / (double) n;
+      stats.mem_ratio = (double) (nnz)/(double) allocationSize;
+
+      //determine maximum number of entries in a row
+      stats.maximum = 0;
+      for (size_type i=0; i<n; i++)
+        if (r[i].getsize()>stats.maximum)
+          stats.maximum = r[i].getsize();
+
+      //matrix is now built
+      ready = built;
+
+      return stats;
     }
 
     //===== vector space arithmetic
@@ -1249,6 +1576,10 @@ namespace Dune {
       return nnz;
     }
 
+    BuildStage buildStage() const
+    {
+      return ready;
+    }
 
     //===== query
 
@@ -1281,18 +1612,25 @@ namespace Dune {
     // size of the matrix
     size_type n;       // number of rows
     size_type m;       // number of columns
-    size_type nnz;     // number of nonzeros allocated in the a and j array below
+    size_type nnz;     // number of nonzeroes contained in the matrix
+    size_type allocationSize; //allocated size of a and j arrays, except in mymode mode: nnz==allocationsSize
     // zero means that memory is allocated separately for each row.
 
     // the rows are dynamically allocated
     row_type* r;     // [n] the individual rows having pointers into a,j arrays
 
     // dynamically allocated memory
-    B*   a;      // [nnz] non-zero entries of the matrix in row-wise ordering
+    B*   a;      // [allocationSize] non-zero entries of the matrix in row-wise ordering
     // If a single array of column indices is used, it can be shared
     // between different matrices with the same sparsity pattern
-    Dune::shared_ptr<size_type> j;  // [nnz] column indices of entries
+    Dune::shared_ptr<size_type> j;  // [allocationSize] column indices of entries
 
+    // additional data is needed in mymode buildmode
+    size_type avg;
+    double overflowsize;
+
+    typedef std::map<std::pair<size_type,size_type>, B> OverflowType;
+    OverflowType overflow;
 
     void setWindowPointers(ConstRowIterator row)
     {
@@ -1335,13 +1673,13 @@ namespace Dune {
     void deallocate(bool deallocateRows=true)
     {
 
-      if (nnz>0)
+      if (allocationSize>0)
       {
         // a,j have been allocated as one long vector
         j.reset();
-        for(B *aiter=a+(nnz-1), *aend=a-1; aiter!=aend; --aiter)
+        for(B *aiter=a+(allocationSize-1), *aend=a-1; aiter!=aend; --aiter)
           allocator_.destroy(aiter);
-        allocator_.deallocate(a,n);
+        allocator_.deallocate(a,allocationSize);
       }
       else
       {
@@ -1396,17 +1734,18 @@ namespace Dune {
      *
      * @param row The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
-     * @param nnz The number of nonzero entries the matrix should hold (if omitted
+     * @param allocationSize_ The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
      * @param allocateRow Whether we have to allocate the row pointers, too. (Defaults to
      * true)
      */
-    void allocate(size_type rows, size_type columns, size_type nnz_=0, bool allocateRows=true)
+    void allocate(size_type rows, size_type columns, size_type allocationSize_=0, bool allocateRows=true)
     {
       // Store size
       n = rows;
       m = columns;
-      nnz = nnz_;
+      nnz = allocationSize_;
+      allocationSize = allocationSize_;
 
       // allocate rows
       if(allocateRows) {
@@ -1417,17 +1756,16 @@ namespace Dune {
         }
       }
 
-
       // allocate a and j array
-      if (nnz>0) {
-        a = allocator_.allocate(nnz);
+      if (allocationSize>0) {
+        a = allocator_.allocate(allocationSize);
         // use placement new to call constructor that allocates
         // additional memory.
-        new (a) B[nnz];
+        new (a) B[allocationSize];
 
         // allocate column indices only if not yet present (enable sharing)
         if (!j.get())
-          j.reset(sizeAllocator_.allocate(nnz),Deallocator(sizeAllocator_));
+          j.reset(sizeAllocator_.allocate(allocationSize),Deallocator(sizeAllocator_));
       }else{
         a = 0;
         j.reset();
@@ -1439,6 +1777,29 @@ namespace Dune {
       ready = notbuilt;
     }
 
+    /** @brief organizes allocation mymode mode
+     * calculates correct array size to be allocated and sets the
+     * the window pointers to their correct positions for insertion.
+     * internally uses allocate() for the real allocation.
+     */
+    void mymode_allocate(size_type _n, size_type _m)
+    {
+      //calculate size of overflow region, add buffer for row sort!
+      size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
+      allocationSize = _n*avg + osize;
+
+      allocate(_n, _m, allocationSize);
+
+      //set row pointers correctly
+      size_type* jptr = j.get() + osize;
+      B* aptr = a + osize;
+      for (size_type i=0; i<n; i++)
+      {
+        r[i].set(0,aptr,jptr);
+        jptr = jptr + avg;
+        aptr = aptr + avg;
+      }
+    }
   };
 
 
