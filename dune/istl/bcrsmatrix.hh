@@ -1128,8 +1128,9 @@ namespace Dune {
 
         perm.resize(size);
 
-        for (size_type* it = begin; it < begin + size; ++it)
-          perm.push_back(it);
+        typename std::vector<size_type*>::iterator it = perm.begin();
+        for (size_type* iit = begin; iit < begin + size; ++iit, ++it)
+          *it = iit;
 
         //sort permutation array
         std::sort(perm.begin(),perm.end(),PointerCompare<size_type>());
@@ -1138,7 +1139,7 @@ namespace Dune {
         r[i].setindexptr(jiit+1);
         r[i].setptr(aiit+1);
 
-        for (typename std::vector<size_type*>::iterator it = perm.begin(); it != perm.end(); ++it)
+        for (it = perm.begin(); it != perm.end(); ++it)
         {
           //check whether there are elements in the overflow area which take precedence
           while ((oit!=overflow.end()) && (oit->first < std::make_pair(i,**it)))
