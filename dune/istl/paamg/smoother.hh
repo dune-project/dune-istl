@@ -452,7 +452,7 @@ namespace Dune
   template<class M, class X, class MO, class MS, class A>
   class SeqOverlappingSchwarz;
 
-  class MultiplicativeSchwarzMode;
+  struct MultiplicativeSchwarzMode;
 
   namespace Amg
   {

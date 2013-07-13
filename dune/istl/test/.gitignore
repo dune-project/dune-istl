@@ -19,6 +19,7 @@ superlztest
 mmtest
 mv
 iotest
+inverseoperator2prectest
 scaledidmatrixtest
 basearraytest
 vbvectortest
