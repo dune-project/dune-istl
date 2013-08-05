@@ -169,34 +169,87 @@ namespace Dune
       void createHierarchies(C& criterion, Operator& matrix,
                              const PI& pinfo);
 
+      /**
+       * @brief A struct that holds the context of the current level.
+       *
+       * These are the iterators to the smoother, matrix, parallel information,
+       * and so on needed for the computations on the current level.
+       */
+      struct LevelContext
+      {
+        /**
+         * @brief The iterator over the matrices.
+         */
+        typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix;
+        /**
+         * @brief The iterator over the parallel information.
+         */
+        typename ParallelInformationHierarchy::Iterator pinfo;
+        /**
+         * @brief The iterator over the redistribution information.
+         */
+        typename OperatorHierarchy::RedistributeInfoList::const_iterator redist;
+        /**
+         * @brief The iterator over the aggregates maps.
+         */
+        typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates;
+        /**
+         * @brief The iterator over the left hand side.
+         */
+        typename Hierarchy<Domain,A>::Iterator lhs;
+        /**
+         * @brief The iterator over the residuals.
+         */
+        typename Hierarchy<Domain,A>::Iterator residual;
+        /**
+         * @brief The iterator over the right hand sided.
+         */
+        typename Hierarchy<Range,A>::Iterator rhs;
+        /**
+         * @brief The level index.
+         */
+        std::size_t level;
+      };
+
       /** @brief Multigrid cycle on a level. */
-      void mgc(Domain& x, const Range& b);
+      void mgc(LevelContext& levelContext, Domain& x, const Range& b);
 
-      typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix;
-      typename ParallelInformationHierarchy::Iterator pinfo;
-      typename OperatorHierarchy::RedistributeInfoList::const_iterator redist;
-      typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates;
-      typename Hierarchy<Domain,A>::Iterator lhs;
-      typename Hierarchy<Domain,A>::Iterator residual;
-      typename Hierarchy<Range,A>::Iterator rhs;
+      /**
+       * @brief Apply pre smoothing on the current level.
+       * @param levelContext The context with the iterators for the level.
+       * @param x The left hand side at the current level.
+       * @param b The rightt hand side at the current level.
+       */
+      void presmooth(LevelContext& levelContext, Domain& x, const Range& b);
 
-
-      /** @brief Apply pre smoothing on the current level. */
-      void presmooth(Domain& x, const Range& b);
-
-      /** @brief Apply post smoothing on the current level. */
-      void postsmooth(Domain& x, const Range& b);
+      /**
+       * @brief Apply post smoothing on the current level.
+       * @param levelContext The context with the iterators for the level.
+       * @param x The left hand side at the current level.
+       * @param b The rightt hand side at the current level.
+       */
+      void postsmooth(LevelContext& levelContext, Domain& x, const Range& b);
 
       /**
        * @brief Move the iterators to the finer level
-       * @*/
-      void moveToFineLevel(bool processedFineLevel, Domain& coarseX);
+       * @param levelContext The context with the iterators for the level.
+       * @param processedFineLevel whether the process did compute on the finer level
+       * @param fineX The vector to add the coarse level correction to.
+       */
+      void moveToFineLevel(LevelContext& levelContext, bool processedFineLevel,
+                           Domain& fineX);
 
-      /** @brief Move the iterators to the coarser level */
-      bool moveToCoarseLevel();
+      /**
+       * @brief Move the iterators to the coarser level.
+       * @param levelContext The context with the iterators for the level.
+       */
+      bool moveToCoarseLevel(LevelContext& levelContext);
 
-      /** @brief Initialize iterators over levels with fine level */
-      void initIteratorsWithFineLevel();
+      /**
+       * @brief Initialize iterators over levels with fine level.
+       * @param levelContext The context with the iterators for the level.
+       */
+      void initIteratorsWithFineLevel(LevelContext& levelContext);
 
       /**  @brief The matrix we solve. */
       Dune::shared_ptr<OperatorHierarchy> matrices_;
@@ -288,7 +341,7 @@ namespace Dune
       dune_static_assert((is_same<PI,SequentialInformation>::value), "Currently only sequential runs are supported");
       // TODO: reestablish compile time checks.
       //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
-      //			 "Matrix and Solver must match in terms of category!");
+      //             "Matrix and Solver must match in terms of category!");
       createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
@@ -457,8 +510,9 @@ namespace Dune
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>::apply(Domain& v, const Range& d)
     {
+      LevelContext levelContext;
       // Init all iterators for the current level
-      initIteratorsWithFineLevel();
+      initIteratorsWithFineLevel(levelContext);
 
       assert(v.two_norm()==0);
 
@@ -466,104 +520,111 @@ namespace Dune
       if(matrices_->maxlevels()==1){
         // The coarse solver might modify the d!
         Range b(d);
-        mgc(v, b);
+        mgc(levelContext, v, b);
       }else
-        mgc(v, d);
+        mgc(levelContext, v, d);
       if(postSteps_==0||matrices_->maxlevels()==1)
-        pinfo->copyOwnerToAll(v, v);
+        levelContext.pinfo->copyOwnerToAll(v, v);
     }
 
     template<class M, class X, class PI, class A>
-    void FastAMG<M,X,PI,A>::initIteratorsWithFineLevel()
+    void FastAMG<M,X,PI,A>::initIteratorsWithFineLevel(LevelContext& levelContext)
     {
-      matrix = matrices_->matrices().finest();
-      pinfo = matrices_->parallelInformation().finest();
-      redist =
+      levelContext.matrix = matrices_->matrices().finest();
+      levelContext.pinfo = matrices_->parallelInformation().finest();
+      levelContext.redist =
         matrices_->redistributeInformation().begin();
-      aggregates = matrices_->aggregatesMaps().begin();
-      lhs = lhs_->finest();
-      residual = residual_->finest();
-      rhs = rhs_->finest();
+      levelContext.aggregates = matrices_->aggregatesMaps().begin();
+      levelContext.lhs = lhs_->finest();
+      levelContext.residual = residual_->finest();
+      levelContext.rhs = rhs_->finest();
+      levelContext.level=0;
     }
 
     template<class M, class X, class PI, class A>
     bool FastAMG<M,X,PI,A>
-    ::moveToCoarseLevel()
+    ::moveToCoarseLevel(LevelContext& levelContext)
     {
       bool processNextLevel=true;
 
-      if(redist->isSetup()) {
+      if(levelContext.redist->isSetup()) {
         throw "bla";
-        redist->redistribute(static_cast<const Range&>(*residual), residual.getRedistributed());
-        processNextLevel =residual.getRedistributed().size()>0;
+        levelContext.redist->redistribute(static_cast<const Range&>(*levelContext.residual),
+                                          levelContext.residual.getRedistributed());
+        processNextLevel = levelContext.residual.getRedistributed().size()>0;
         if(processNextLevel) {
           //restrict defect to coarse level right hand side.
-          ++pinfo;
+          ++levelContext.pinfo;
           Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-          ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(residual.getRedistributed()), *pinfo);
+          ::restrictVector(*(*levelContext.aggregates), *levelContext.rhs,
+                           static_cast<const Range&>(levelContext.residual.getRedistributed()),
+                           *levelContext.pinfo);
         }
       }else{
         //restrict defect to coarse level right hand side.
-        typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
-        ++pinfo;
+        typename Hierarchy<Range,A>::Iterator fineRhs = levelContext.rhs++;
+        ++levelContext.pinfo;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(*residual), *pinfo);
+        ::restrictVector(*(*levelContext.aggregates), *levelContext.rhs,
+                         static_cast<const Range&>(*levelContext.residual), *levelContext.pinfo);
       }
 
       if(processNextLevel) {
         // prepare coarse system
-        ++residual;
-        ++lhs;
-        ++matrix;
-        ++level;
-        ++redist;
+        ++levelContext.residual;
+        ++levelContext.lhs;
+        ++levelContext.matrix;
+        ++levelContext.level;
+        ++levelContext.redist;
 
-        if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
+        if(levelContext.matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
           // next level is not the globally coarsest one
-          ++aggregates;
+          ++levelContext.aggregates;
         }
         // prepare the lhs on the next level
-        *lhs=0;
-        *residual=0;
+        *levelContext.lhs=0;
+        *levelContext.residual=0;
       }
       return processNextLevel;
     }
 
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>
-    ::moveToFineLevel(bool processNextLevel, Domain& x)
+    ::moveToFineLevel(LevelContext& levelContext, bool processNextLevel, Domain& x)
     {
       if(processNextLevel) {
-        if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
+        if(levelContext.matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
           // previous level is not the globally coarsest one
-          --aggregates;
+          --levelContext.aggregates;
         }
-        --redist;
-        --level;
+        --levelContext.redist;
+        --levelContext.level;
         //prolongate and add the correction (update is in coarse left hand side)
-        --matrix;
-        --residual;
+        --levelContext.matrix;
+        --levelContext.residual;
 
       }
 
-      typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--;
-      if(redist->isSetup()) {
+      typename Hierarchy<Domain,A>::Iterator coarseLhs = levelContext.lhs--;
+      if(levelContext.redist->isSetup()) {
 
         // Need to redistribute during prolongate
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongateVector(*(*aggregates), *coarseLhs, x, lhs.getRedistributed(), matrices_->getProlongationDampingFactor(),
-                           *pinfo, *redist);
+        ::prolongateVector(*(*levelContext.aggregates), *coarseLhs, x,
+                           levelContext.lhs.getRedistributed(),
+                           matrices_->getProlongationDampingFactor(),
+                           *levelContext.pinfo, *levelContext.redist);
       }else{
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongateVector(*(*aggregates), *coarseLhs, x,
-                           matrices_->getProlongationDampingFactor(), *pinfo);
+        ::prolongateVector(*(*levelContext.aggregates), *coarseLhs, x,
+                           matrices_->getProlongationDampingFactor(), *levelContext.pinfo);
 
         // printvector(std::cout, *lhs, "prolongated coarse grid correction", "lhs", 10, 10, 10);
       }
 
 
       if(processNextLevel) {
-        --rhs;
+        --levelContext.rhs;
       }
 
     }
@@ -571,20 +632,20 @@ namespace Dune
 
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>
-    ::presmooth(Domain& x, const Range& b)
+    ::presmooth(LevelContext& levelContext, Domain& x, const Range& b)
     {
-      GaussSeidelPresmoothDefect<M::matrix_type::blocklevel>::apply(matrix->getmat(),
+      GaussSeidelPresmoothDefect<M::matrix_type::blocklevel>::apply(levelContext.matrix->getmat(),
                                                                     x,
-                                                                    *residual,
+                                                                    *levelContext.residual,
                                                                     b);
     }
 
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>
-    ::postsmooth(Domain& x, const Range& b)
+    ::postsmooth(LevelContext& levelContext, Domain& x, const Range& b)
     {
       GaussSeidelPostsmoothDefect<M::matrix_type::blocklevel>
-      ::apply(matrix->getmat(), x, *residual, b);
+      ::apply(levelContext.matrix->getmat(), x, *levelContext.residual, b);
     }
 
 
@@ -595,23 +656,24 @@ namespace Dune
     }
 
     template<class M, class X, class PI, class A>
-    void FastAMG<M,X,PI,A>::mgc(Domain& v, const Range& b){
+    void FastAMG<M,X,PI,A>::mgc(LevelContext& levelContext, Domain& v, const Range& b){
 
-      if(matrix == matrices_->matrices().coarsest() && levels()==maxlevels()) {
+      if(levelContext.matrix == matrices_->matrices().coarsest() && levels()==maxlevels()) {
         // Solve directly
         InverseOperatorResult res;
         res.converged=true; // If we do not compute this flag will not get updated
-        if(redist->isSetup()) {
-          redist->redistribute(b, rhs.getRedistributed());
-          if(rhs.getRedistributed().size()>0) {
+        if(levelContext.redist->isSetup()) {
+          levelContext.redist->redistribute(b, levelContext.rhs.getRedistributed());
+          if(levelContext.rhs.getRedistributed().size()>0) {
             // We are still participating in the computation
-            pinfo.getRedistributed().copyOwnerToAll(rhs.getRedistributed(), rhs.getRedistributed());
-            solver_->apply(lhs.getRedistributed(), rhs.getRedistributed(), res);
+            levelContext.pinfo.getRedistributed().copyOwnerToAll(levelContext.rhs.getRedistributed(),
+                                                                 levelContext.rhs.getRedistributed());
+            solver_->apply(levelContext.lhs.getRedistributed(), levelContext.rhs.getRedistributed(), res);
           }
-          redist->redistributeBackward(v, lhs.getRedistributed());
-          pinfo->copyOwnerToAll(v, v);
+          levelContext.redist->redistributeBackward(v, levelContext.lhs.getRedistributed());
+          levelContext.pinfo->copyOwnerToAll(v, v);
         }else{
-          pinfo->copyOwnerToAll(b, b);
+          levelContext.pinfo->copyOwnerToAll(b, b);
           solver_->apply(v, const_cast<Range&>(b), res);
         }
 
@@ -621,24 +683,24 @@ namespace Dune
           coarsesolverconverged = false;
       }else{
         // presmoothing
-        presmooth(v, b);
+        presmooth(levelContext, v, b);
         // printvector(std::cout, *lhs, "update", "u", 10, 10, 10);
         // printvector(std::cout, *residual, "post presmooth residual", "r", 10);
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
-        bool processNextLevel = moveToCoarseLevel();
+        bool processNextLevel = moveToCoarseLevel(levelContext);
 
         if(processNextLevel) {
           // next level
           for(std::size_t i=0; i<gamma_; i++)
-            mgc(*lhs, *rhs);
+            mgc(levelContext, *levelContext.lhs, *levelContext.rhs);
         }
 
-        moveToFineLevel(processNextLevel, v);
+        moveToFineLevel(levelContext, processNextLevel, v);
 #else
         *lhs=0;
 #endif
 
-        if(matrix == matrices_->matrices().finest()) {
+        if(levelContext.matrix == matrices_->matrices().finest()) {
           coarsesolverconverged = matrices_->parallelInformation().finest()->communicator().prod(coarsesolverconverged);
           if(!coarsesolverconverged)
             DUNE_THROW(MathError, "Coarse solver did not converge");
@@ -646,7 +708,7 @@ namespace Dune
 
         // printvector(std::cout, *lhs, "update corrected", "u", 10, 10, 10);
         // postsmoothing
-        postsmooth(v, b);
+        postsmooth(levelContext, v, b);
         // printvector(std::cout, *lhs, "update postsmoothed", "u", 10, 10, 10);
 
       }
