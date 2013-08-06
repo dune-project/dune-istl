@@ -30,3 +30,4 @@ am
 *.o
 test-driver
 build-cmake/
+/compile
