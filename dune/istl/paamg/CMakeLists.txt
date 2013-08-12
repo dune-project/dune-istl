@@ -1,9 +1,23 @@
 add_subdirectory("test" EXCLUDE_FROM_ALL)
 
 #install headers
-install(FILES aggregates.hh dependency.hh galerkin.hh graph.hh
-          indicescoarsener.hh properties.hh globalaggregates.hh
-          hierarchy.hh construction.hh
-          transfer.hh smoother.hh amg.hh kamg.hh combinedfunctor.hh
-          graphcreator.hh parameters.hh renumberer.hh pinfo.hh
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/paamg)
+install(FILES
+  aggregates.hh
+  amg.hh
+  combinedfunctor.hh
+  construction.hh
+  dependency.hh
+  galerkin.hh
+  globalaggregates.hh
+  graph.hh
+  graphcreator.hh
+  hierarchy.hh
+  indicescoarsener.hh
+  kamg.hh
+  parameters.hh
+  pinfo.hh
+  properties.hh
+  renumberer.hh
+  smoother.hh
+  transfer.hh
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/paamg)
