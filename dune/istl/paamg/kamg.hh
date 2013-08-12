@@ -47,7 +47,7 @@ namespace Dune
        * @param coarseSolver The solver used for the coarse grid correction.
        */
 
-      KAmgTwoGrid(AMG& amg, InverseOperator<Domain,Range>* coarseSolver)
+      KAmgTwoGrid(AMG& amg, shared_ptr<InverseOperator<Domain,Range> > coarseSolver)
         : amg_(amg), coarseSolver_(coarseSolver)
       {}
 
@@ -62,27 +62,27 @@ namespace Dune
       /** \copydoc Preconditioner::apply(X&,const Y&) */
       void apply(typename AMG::Domain& v, const typename AMG::Range& d)
       {
-        *amg_.rhs = d;
-        *amg_.lhs = v;
         // Copy data
-        *amg_.update=0;
+        *levelContext_->update=0;
+        *levelContext_->rhs = d;
+        *levelContext_->lhs = v;
 
-        amg_.presmooth();
+        amg_.presmooth(*levelContext_);
         bool processFineLevel =
-          amg_.moveToCoarseLevel();
+          amg_.moveToCoarseLevel(*levelContext_);
 
         if(processFineLevel) {
-          typename AMG::Range b=*amg_.rhs;
-          typename AMG::Domain x=*amg_.update;
+          typename AMG::Range b=*levelContext_->rhs;
+          typename AMG::Domain x=*levelContext_->update;
           InverseOperatorResult res;
           coarseSolver_->apply(x, b, res);
-          *amg_.update=x;
+          *levelContext_->update=x;
         }
 
-        amg_.moveToFineLevel(processFineLevel);
+        amg_.moveToFineLevel(*levelContext_, processFineLevel);
 
-        amg_.postsmooth();
-        v=*amg_.update;
+        amg_.postsmooth(*levelContext_);
+        v=*levelContext_->update;
       }
 
       /**
@@ -94,6 +94,15 @@ namespace Dune
         return coarseSolver_;
       }
 
+      /**
+       * @brief Set the level context pointer.
+       * @param p The pointer to set it to.
+       */
+      void setLevelContext(Dune::shared_ptr<typename AMG::LevelContext> p)
+      {
+        levelContext_=p;
+      }
+
       /** @brief Destructor. */
       ~KAmgTwoGrid()
       {}
@@ -102,7 +111,9 @@ namespace Dune
       /** @brief Underlying AMG used as storage and engine. */
       AMG& amg_;
       /** @brief The coarse grid solver.*/
-      InverseOperator<Domain,Range>* coarseSolver_;
+      Dune::shared_ptr<InverseOperator<Domain,Range> > coarseSolver_;
+      /** @brief A shared pointer to the level context of AMG. */
+      Dune::shared_ptr<typename AMG::LevelContext> levelContext_;
     };
 
 
@@ -210,10 +221,10 @@ namespace Dune
       double levelDefectReduction;
 
       /** @brief pointers to the allocated scalar products. */
-      std::vector<typename Amg::ScalarProduct*> scalarproducts;
+      std::vector<shared_ptr<typename Amg::ScalarProduct> > scalarproducts;
 
       /** @brief pointers to the allocated krylov solvers. */
-      std::vector<KAmgTwoGrid<Amg>*> ksolvers;
+      std::vector<shared_ptr<KAmgTwoGrid<Amg> > > ksolvers;
     };
 
     template<class M, class X, class S, class P, class K, class A>
@@ -250,26 +261,26 @@ namespace Dune
       typename ParallelInformationHierarchy::Iterator
       pinfo = amg.matrices_->parallelInformation().coarsest();
       bool hasCoarsest=(amg.levels()==amg.maxlevels());
-      KrylovSolver* ks=0;
 
       if(hasCoarsest) {
         if(matrix==amg.matrices_->matrices().finest())
           return;
         --matrix;
         --pinfo;
-        ksolvers.push_back(new KAmgTwoGrid<Amg>(amg, amg.solver_));
+        ksolvers.push_back(shared_ptr<KAmgTwoGrid<Amg> >(new KAmgTwoGrid<Amg>(amg, amg.solver_)));
       }else
-        ksolvers.push_back(new KAmgTwoGrid<Amg>(amg, ks));
+        ksolvers.push_back(shared_ptr<KAmgTwoGrid<Amg> >(new KAmgTwoGrid<Amg>(amg, shared_ptr<InverseOperator<Domain,Range> >())));
 
       std::ostringstream s;
 
       if(matrix!=amg.matrices_->matrices().finest())
         while(true) {
-          scalarproducts.push_back(Amg::ScalarProductChooser::construct(*pinfo));
-          ks = new KrylovSolver(*matrix, *(scalarproducts.back()),
-                                *(ksolvers.back()), levelDefectReduction,
-                                maxLevelKrylovSteps, 0);
-          ksolvers.push_back(new KAmgTwoGrid<Amg>(amg, ks));
+          scalarproducts.push_back(shared_ptr<typename Amg::ScalarProduct>(Amg::ScalarProductChooser::construct(*pinfo)));
+          shared_ptr<InverseOperator<Domain,Range> > ks =
+            shared_ptr<InverseOperator<Domain,Range> >(new KrylovSolver(*matrix, *(scalarproducts.back()),
+                                                                        *(ksolvers.back()), levelDefectReduction,
+                                                                        maxLevelKrylovSteps, 0));
+          ksolvers.push_back(shared_ptr<KAmgTwoGrid<Amg> >(new KAmgTwoGrid<Amg>(amg, ks)));
           --matrix;
           --pinfo;
           if(matrix==amg.matrices_->matrices().finest())
@@ -281,18 +292,6 @@ namespace Dune
     template<class M, class X, class S, class P, class K, class A>
     void KAMG<M,X,S,P,K,A>::post(Domain& x)
     {
-      typedef typename std::vector<KAmgTwoGrid<Amg>*>::reverse_iterator KIterator;
-      typedef typename std::vector<ScalarProduct*>::iterator SIterator;
-      for(KIterator kiter = ksolvers.rbegin(); kiter != ksolvers.rend();
-          ++kiter)
-      {
-        if((*kiter)->coarseSolver()!=amg.solver_)
-          delete (*kiter)->coarseSolver();
-        delete *kiter;
-      }
-      for(SIterator siter = scalarproducts.begin(); siter!=scalarproducts.end();
-          ++siter)
-        delete *siter;
       amg.post(x);
 
     }
@@ -300,14 +299,21 @@ namespace Dune
     template<class M, class X, class S, class P, class K, class A>
     void KAMG<M,X,S,P,K,A>::apply(Domain& v, const Range& d)
     {
-      amg.initIteratorsWithFineLevel();
       if(ksolvers.size()==0)
       {
         Range td=d;
         InverseOperatorResult res;
         amg.solver_->apply(v,td,res);
       }else
+      {
+        typedef typename Amg::LevelContext LevelContext;
+        Dune::shared_ptr<LevelContext> levelContext(new LevelContext);
+        amg.initIteratorsWithFineLevel(*levelContext);
+        typedef typename std::vector<shared_ptr<KAmgTwoGrid<Amg> > >::iterator Iter;
+        for(Iter solver=ksolvers.begin(); solver!=ksolvers.end(); ++solver)
+          (*solver)->setLevelContext(levelContext);
         ksolvers.back()->apply(v,d);
+      }
     }
 
     template<class M, class X, class S, class P, class K, class A>
