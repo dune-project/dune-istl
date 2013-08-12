@@ -416,7 +416,7 @@ namespace Dune
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(),
-        rhs_(), lhs_(), update_(), scalarProduct_(0), gamma_(gamma),
+        rhs_(), lhs_(), update_(), scalarProduct_(), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(criterion.debugLevel())
