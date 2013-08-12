@@ -1,8 +1,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_SOLVER_HH
-#define DUNE_SOLVER_HH
+#ifndef DUNE_ISTL_SOLVER_HH
+#define DUNE_ISTL_SOLVER_HH
 
 #include <iomanip>
 #include <ostream>
