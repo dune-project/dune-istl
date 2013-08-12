@@ -7,6 +7,8 @@ install(FILES
   combinedfunctor.hh
   construction.hh
   dependency.hh
+  fastamg.hh
+  fastamgsmoother.hh
   galerkin.hh
   globalaggregates.hh
   graph.hh
