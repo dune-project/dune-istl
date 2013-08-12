@@ -29,7 +29,6 @@ namespace Dune
         for(RowIterator row=A.begin(), end=A.end(); row != end;
             ++row, ++dIter, ++xIter, ++bIter)
         {
-          ColIterator endCol=(*row).end();
           ColIterator col=(*row).begin();
           *dIter = *bIter;
 

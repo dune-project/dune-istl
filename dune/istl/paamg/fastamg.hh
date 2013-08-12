@@ -562,7 +562,7 @@ namespace Dune
         }
       }else{
         //restrict defect to coarse level right hand side.
-        typename Hierarchy<Range,A>::Iterator fineRhs = levelContext.rhs++;
+        ++levelContext.rhs;
         ++levelContext.pinfo;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
         ::restrictVector(*(*levelContext.aggregates), *levelContext.rhs,
