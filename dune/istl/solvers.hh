@@ -1140,7 +1140,7 @@ namespace Dune {
       {
         // norm_0 = norm(M^-1 b)
         w = 0.0; _M.apply(w,b); // w = M^-1 b
-        norm_0 = _sp.norm(w);
+        norm_0 = _sp.norm(w); // use defect of preconditioned residual
         // r = _M.solve(b - A * x);
         w = b;
         _A_.applyscaleadd(-1,x, /* => */ w); // w = b - Ax;
@@ -1151,15 +1151,15 @@ namespace Dune {
       {
         // norm_0 = norm(b-Ax)
         _A_.applyscaleadd(-1,x, /* => */ b); // b = b - Ax;
-        norm_0 = _sp.norm(b);
         v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
         beta = _sp.norm(v[0]);
+        norm_0 = beta; // use defect of preconditioned residual
       }
 
       // avoid division by zero
       if (norm_0 == 0.0)
         norm_0 = 1.0;
-      norm = norm_old = _sp.norm(v[0]);
+      norm = norm_old = beta;
 
       // print header
       if (_verbose > 0)
