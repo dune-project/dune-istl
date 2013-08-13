@@ -373,14 +373,13 @@ namespace Dune {
 
             for(size_type i=0; i < block_vector_unmanaged<B,A>::N(); ++i, ++from, ++to)
               *to = *from;
-
-            if(capacity_ > 0) {
-              // Destruct old objects and free memory
-              int i=capacity_;
-              while (i)
-                pold[--i].~B();
-              this->allocator_.deallocate(pold,capacity_);
-            }
+          }
+          if(capacity_ > 0) {
+            // Destruct old objects and free memory
+            int i=capacity_;
+            while (i)
+              pold[--i].~B();
+            this->allocator_.deallocate(pold,capacity_);
           }
         }else{
           if(capacity_ > 0)
