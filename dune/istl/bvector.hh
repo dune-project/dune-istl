@@ -235,10 +235,9 @@ namespace Dune {
   };
 
   /**
-              @addtogroup ISTL_SPMV
-              @{
+     @addtogroup ISTL_SPMV
+     @{
    */
-
   /**
       \brief A vector of blocks with memory management.
 
@@ -538,6 +537,20 @@ namespace Dune {
   };
 
   /** @} */
+
+  /** @addtogroup DenseMatVec
+      @{
+   */
+  template<class B, class A>
+  struct FieldTraits< BlockVector<B, A> >
+  {
+    typedef typename FieldTraits<B>::field_type field_type;
+    typedef typename FieldTraits<B>::real_type real_type;
+  };
+  /**
+      @}
+   */
+
   //! Send BlockVector to an output stream
   template<class K, class A>
   std::ostream& operator<< (std::ostream& s, const BlockVector<K, A>& v)
