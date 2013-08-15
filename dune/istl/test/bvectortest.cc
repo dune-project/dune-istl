@@ -127,10 +127,13 @@ int main()
   //typedef double value_type;
   typedef Dune::FieldVector<value_type,1> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
+  typedef Dune::BlockVector<Vector> VectorOfVector;
   Vector v;
   v=0;
   Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
   v1=0;
+  VectorOfVector vv;
+  vv.two_norm();
 
   int ret = 0;
 
