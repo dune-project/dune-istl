@@ -12,6 +12,7 @@
 #include <dune/common/static_assert.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
+#include <dune/common/ftraits.hh>
 
 #include "istlexception.hh"
 #include "basearray.hh"
