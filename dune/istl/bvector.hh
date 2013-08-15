@@ -164,49 +164,49 @@ namespace Dune {
     //===== norms
 
     //! one norm (sum over absolute values of entries)
-    typename FieldTraits<value_type>::real_type one_norm () const
+    typename FieldTraits<field_type>::real_type one_norm () const
     {
-      typename FieldTraits<value_type>::real_type sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].one_norm();
       return sum;
     }
 
     //! simplified one norm (uses Manhattan norm for complex values)
-    typename FieldTraits<value_type>::real_type one_norm_real () const
+    typename FieldTraits<field_type>::real_type one_norm_real () const
     {
-      typename FieldTraits<value_type>::real_type sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].one_norm_real();
       return sum;
     }
 
     //! two norm sqrt(sum over squared values of entries)
-    typename FieldTraits<value_type>::real_type two_norm () const
+    typename FieldTraits<field_type>::real_type two_norm () const
     {
-      typename FieldTraits<value_type>::real_type sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
       return sqrt(sum);
     }
 
     //! sqare of two norm (sum over squared values of entries), need for block recursion
-    typename FieldTraits<value_type>::real_type two_norm2 () const
+    typename FieldTraits<field_type>::real_type two_norm2 () const
     {
-      typename FieldTraits<value_type>::real_type sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
       return sum;
     }
 
     //! infinity norm (maximum of absolute values of entries)
-    typename FieldTraits<value_type>::real_type infinity_norm () const
+    typename FieldTraits<field_type>::real_type infinity_norm () const
     {
-      typename FieldTraits<value_type>::real_type max=0;
+      typename FieldTraits<field_type>::real_type max=0;
       for (size_type i=0; i<this->n; ++i) max = std::max(max,(*this)[i].infinity_norm());
       return max;
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<value_type>::real_type infinity_norm_real () const
+    typename FieldTraits<field_type>::real_type infinity_norm_real () const
     {
-      typename FieldTraits<value_type>::real_type max=0;
+      typename FieldTraits<field_type>::real_type max=0;
       for (size_type i=0; i<this->n; ++i) max = std::max(max,(*this)[i].infinity_norm_real());
       return max;
     }
