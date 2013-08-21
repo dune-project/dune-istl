@@ -78,5 +78,5 @@ int main(int argc, char** argv)
 
   std::cout<<"Defect reduction is "<<res.reduction<<std::endl;
   solver1.apply(x,b, res);
-  solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x[0]), reinterpret_cast<double*>(&b[0]));
+  solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x[0]), reinterpret_cast<FIELD_TYPE*>(&b[0]));
 }
