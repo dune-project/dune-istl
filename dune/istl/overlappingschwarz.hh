@@ -928,8 +928,7 @@ namespace Dune
   template<class I, class S, class D>
   void OverlappingSchwarzInitializer<I,S,D>::createMatrix() const
   {
-    indexMaps.clear();
-    indexMaps.swap(std::vector<IndexMap>(indexMaps));
+    std::vector<IndexMap>().swap(indexMaps);
     std::for_each(initializers->begin(), initializers->end(),
                   std::mem_fun_ref(&AtomInitializer::createMatrix));
   }
