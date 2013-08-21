@@ -643,8 +643,8 @@ namespace Dune
     if(mat.N()+mat.M()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
-    SuperMatrix* mB = B;
-    SuperMatrix* mX = X;
+    SuperMatrix* mB = &B;
+    SuperMatrix* mX = &X;
     SuperMatrix rB, rX;
     if (reusevector) {
       if(first) {
