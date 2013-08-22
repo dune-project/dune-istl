@@ -24,10 +24,12 @@ AC_CONFIG_FILES([Makefile
     doc/doxygen/Makefile
     doc/doxygen/Doxyfile
     doc/Makefile
+    dune/istl/ellmatrix/Makefile
     dune/istl/paamg/test/Makefile
     dune/istl/paamg/Makefile
     dune/istl/tutorial/Makefile
     dune/istl/test/Makefile
+    dune/istl/vector/Makefile
     dune/istl/Makefile
     dune/Makefile
     lib/Makefile

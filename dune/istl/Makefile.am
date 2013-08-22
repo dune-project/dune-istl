@@ -1,6 +1,6 @@
 # $Id$
 
-SUBDIRS = . tutorial test paamg
+SUBDIRS = . tutorial test paamg ellmatrix vector
 
 istldir = $(includedir)/dune/istl
 istl_HEADERS = basearray.hh \
@@ -9,6 +9,7 @@ istl_HEADERS = basearray.hh \
 	btdmatrix.hh \
 	bvector.hh \
 	diagonalmatrix.hh \
+	ellmatrix.hh \
 	gsetc.hh \
 	ilu.hh \
 	ilusubdomainsolver.hh \
@@ -39,7 +40,8 @@ istl_HEADERS = basearray.hh \
 	solvertype.hh \
 	superlu.hh \
 	supermatrix.hh \
-	vbvector.hh
+	vbvector.hh \
+	vector.hh
 
 
 include $(top_srcdir)/am/global-rules
