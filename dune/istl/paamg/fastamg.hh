@@ -115,7 +115,7 @@ namespace Dune
       /**
        * @brief Copy constructor.
        */
-      FastAMG(const FastAMG& amg),
+      FastAMG(const FastAMG& amg);
 
       ~FastAMG();
 
