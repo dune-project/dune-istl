@@ -16,6 +16,8 @@ if PARDISO
   PARDISOTEST = test_pardiso
 endif
 
+CUDATESTS = cudatest
+
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest \
               bcrsbuildtest \
@@ -34,10 +36,10 @@ NORMALTESTS = basearraytest \
               vbvectortest
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
+TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS)
+check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS)
 
 # define the programs
 
@@ -76,6 +78,12 @@ if PARDISO
   test_pardiso_SOURCES = test_pardiso.cc
   test_pardiso_LDADD = $(PARDISO_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS)
 endif
+
+cudatest_SOURCES = cudatest.cc
+cudatest_LDFLAGS = $(AM_LDFLAGS)	\
+		   -lcudart -L/sfw/cuda/5.5/lib64 \
+		   $(top_builddir)/dune/istl/vector/libcuda_backend.a
+
 
 basearraytest_SOURCES = basearraytest.cc
 
