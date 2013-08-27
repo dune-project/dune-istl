@@ -5,7 +5,7 @@ if MPI
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest pamg_comm_repart_test
 endif
 
-NORMALTESTS = kamgtest amgtest fastamg graphtest $(MPITESTS)
+NORMALTESTS = amgtest fastamg graphtest kamgtest twolevelmethodtest $(MPITESTS)
 
 # which tests to run
 TESTS = $(NORMALTESTS) $(TESTPROGS)
@@ -92,6 +92,14 @@ pamg_comm_repart_test_LDADD =				\
 	$(PARMETIS_LIBS)			\
 	$(SUPERLU_LIBS)				\
 	$(DUNEMPILIBS)				\
+	$(LDADD)
+
+
+twolevelmethodtest_SOURCES = twolevelmethodtest.cc
+twolevelmethodtest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+twolevelmethodtest_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
+twolevelmethodtest_LDADD =					\
+	$(SUPERLU_LIBS)				\
 	$(LDADD)
 
 
