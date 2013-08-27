@@ -131,7 +131,7 @@ namespace Dune {
     enum {category=SolverCategory::sequential};
 
     //! constructor: just store a reference to a matrix
-    MatrixAdapter (const M& A) : _A_(A) {}
+    explicit MatrixAdapter (const M& A) : _A_(A) {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply (const X& x, Y& y) const
