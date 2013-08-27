@@ -237,6 +237,7 @@ namespace Dune
        */
       struct LevelContext
       {
+        typedef Smoother SmootherType;
         /**
          * @brief The iterator over the smoothers.
          */
@@ -283,18 +284,6 @@ namespace Dune
       void mgc(LevelContext& levelContext);
 
       void additiveMgc();
-
-      /**
-       * @brief Apply pre smoothing on the current level.
-       * @param levelContext the iterators of the current level.
-       */
-      void presmooth(LevelContext& levelContext);
-
-      /**
-       * @brief Apply post smoothing on the current level.
-       * @param levelContext the iterators of the current level.
-       */
-      void postsmooth(LevelContext& levelContext);
 
       /**
        * @brief Move the iterators to the finer level
@@ -782,42 +771,6 @@ namespace Dune
       *levelContext.update += *levelContext.lhs;
     }
 
-
-    template<class M, class X, class S, class PI, class A>
-    void AMG<M,X,S,PI,A>
-    ::presmooth(LevelContext& levelContext)
-    {
-
-      for(std::size_t i=0; i < preSteps_; ++i) {
-        *levelContext.lhs=0;
-        SmootherApplier<S>::preSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
-        // Accumulate update
-        *levelContext.update += *levelContext.lhs;
-
-        // update defect
-        levelContext.matrix->applyscaleadd(-1,static_cast<const Domain&>(*levelContext.lhs), *levelContext.rhs);
-        levelContext.pinfo->project(*levelContext.rhs);
-      }
-    }
-
-    template<class M, class X, class S, class PI, class A>
-    void AMG<M,X,S,PI,A>
-    ::postsmooth(LevelContext& levelContext)
-    {
-
-      for(std::size_t i=0; i < postSteps_; ++i) {
-        // update defect
-        levelContext.matrix->applyscaleadd(-1,static_cast<const Domain&>(*levelContext.lhs),
-                              *levelContext.rhs);
-        *levelContext.lhs=0;
-        levelContext.pinfo->project(*levelContext.rhs);
-        SmootherApplier<S>::postSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
-        // Accumulate update
-        *levelContext.update += *levelContext.lhs;
-      }
-    }
-
-
     template<class M, class X, class S, class PI, class A>
     bool AMG<M,X,S,PI,A>::usesDirectCoarseLevelSolver() const
     {
@@ -850,7 +803,7 @@ namespace Dune
           coarsesolverconverged = false;
       }else{
         // presmoothing
-        presmooth(levelContext);
+        presmooth(levelContext, preSteps_);
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
         bool processNextLevel = moveToCoarseLevel(levelContext);
@@ -872,7 +825,7 @@ namespace Dune
             DUNE_THROW(MathError, "Coarse solver did not converge");
         }
         // postsmoothing
-        postsmooth(levelContext);
+        postsmooth(levelContext, postSteps_);
 
       }
     }
