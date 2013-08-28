@@ -38,20 +38,23 @@ void testTwoLevelMethod()
     int n;
     BCRSMat mat = setupAnisotropic2d<BS,double>(N, indices, c, &n, 1);
     Vector b(mat.N()), x(mat.M());
+    x=0;
     randomize(mat, b);
 #ifndef USE_OVERLAPPINGSCHWARZ
     typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
     FSmoother fineSmoother(mat,1,1.0);
 #else
-    typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector> FSmoother;
+    typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,
+                                        Dune::SymmetricMultiplicativeSchwarzMode> FSmoother;
     typedef FSmoother::subdomain_vector SubdomainVector;
-    SubdomainVector subdomains(N);
+    std::size_t stride=2;
+    SubdomainVector subdomains((((N-1)/stride)+1)*(((N-1)/stride)+1));
 
     for(int i=0; i<N; ++i)
         for(int j=0; j<N; ++j)
         {
-            int index=i*N+j;
-            subdomains[j].insert(index);
+            int index=i/stride*(((N-1)/stride)+1)+j/stride;
+            subdomains[index].insert(i*N+j);
         }
     FSmoother fineSmoother(mat,subdomains, 1.0, false);
 #endif
@@ -69,10 +72,10 @@ void testTwoLevelMethod()
     TransferPolicy transferPolicy(crit);
     Operator fop(mat);
     Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> preconditioner(fop,
-                                                                       Dune::stackobject_to_shared_ptr(fineSmoother),
-                                                                       Dune::stackobject_to_shared_ptr<Dune::Amg::LevelTransferPolicy<Operator,Operator> >(transferPolicy),
-                                                                       coarsePolicy);
-    Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,1e-2,80,2);
+                                                                          Dune::stackobject_to_shared_ptr(fineSmoother),
+                                                                          Dune::stackobject_to_shared_ptr<Dune::Amg::LevelTransferPolicy<Operator,Operator> >(transferPolicy),
+                                                                          coarsePolicy, 1,0);
+    Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,1e-8,80,2);
     Dune::InverseOperatorResult res;
     amgCG.apply(x,b,res);
 }

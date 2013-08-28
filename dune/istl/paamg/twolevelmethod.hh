@@ -377,7 +377,9 @@ public:
   }
 
   void pre(FineDomainType& x, FineRangeType& b)
-  {}
+  {
+    smoother_->pre(x,b);
+  }
 
   void post(FineDomainType& x)
   {}
@@ -401,10 +403,10 @@ public:
     policy_->moveToCoarseLevel(*context.rhs);
     InverseOperatorResult res;
     coarseSolver_->apply(policy_->getCoarseLevelLhs(), policy_->getCoarseLevelRhs(), res);
-    policy_->moveToFineLevel(*context.lhs);
+    policy_->moveToFineLevel(*context.update);
 
     // Postsmoothing
-    presmooth(context, postSteps_);
+    postsmooth(context, postSteps_);
 
   }
 
@@ -414,12 +416,31 @@ private:
    */
   struct LevelContext
   {
+    /** @brief The type of the smoother used. */
     typedef S SmootherType;
+    /** @brief A pointer to the smoother. */
     shared_ptr<SmootherType> smoother;
+    /** @brief The left hand side passed to the and returned by the smoother. */
     FineDomainType* lhs;
+    /*
+     * @brief The right hand side holding the current residual.
+     *
+     * This is passed to the smoother as the right hand side.
+     */
     FineRangeType* rhs;
+    /**
+     * @brief The total update calculated by the preconditioner.
+     *
+     * I.e. all update from smoothing and coarse grid correction summed up.
+     */
     FineDomainType* update;
+    /** @parallel information */
     SequentialInformation* pinfo;
+    /**
+     * @brief The matrix that we are solving.
+     *
+     * Needed to update the residual.
+     */
     const FineOperatorType* matrix;
   };
   const FineOperatorType& operator_;
