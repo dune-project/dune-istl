@@ -14,7 +14,7 @@ endif(PARMETIS_FOUND)
 if(CMAKE_USE_PTHREADS_INIT)
   set(PTHREADTESTS pthreadamgtest pthreadfastamgtest)
 endif(CMAKE_USE_PTHREADS_INIT)
-set(NORMALTESTS amgtest fastamg graphtest kamgtest twolevelmethodtest ${PTHREADTESTS})
+set(NORMALTESTS amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest ${PTHREADTESTS})
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS} ${UMFPACKTESTS} ${SUPERLUTESTS})
 
 # We do not want want to build the tests during make all,
@@ -62,6 +62,10 @@ set_target_properties(pamg_comm_repart_test PROPERTIES COMPILE_FLAGS "-DAMG_REPA
 add_executable(pamgtest "parallelamgtest.cc")
 add_dune_superlu_flags(pamgtest)
 add_executable(transfertest "transfertest.cc")
+add_executable(twolevelmethodschwarztest "twolevelmethodtest.cc")
+add_dune_superlu_flags(twolevelmethodschwarztest)
+set_target_properties(twolevelmethodschwarztest PROPERTIES COMPILE_FLAGS "-DUSE_OVERLAPPINGSCHWARZ")
+add_executable(twolevelmethodtest "twolevelmethodtest.cc")
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")

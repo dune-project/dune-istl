@@ -3,7 +3,8 @@
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
-#include<dune/istl/paamg/twolevelmethod.hh>
+#include <dune/istl/paamg/twolevelmethod.hh>
+#include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
@@ -38,12 +39,26 @@ void testTwoLevelMethod()
     BCRSMat mat = setupAnisotropic2d<BS,double>(N, indices, c, &n, 1);
     Vector b(mat.N()), x(mat.M());
     randomize(mat, b);
+#ifndef USE_OVERLAPPINGSCHWARZ
     typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
-    typedef Dune::SeqSOR<BCRSMat,Vector,Vector> CSmoother;
+    FSmoother fineSmoother(mat,1,1.0);
+#else
+    typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector> FSmoother;
+    typedef FSmoother::subdomain_vector SubdomainVector;
+    SubdomainVector subdomains(N);
+
+    for(int i=0; i<N; ++i)
+        for(int j=0; j<N; ++j)
+        {
+            int index=i*N+j;
+            subdomains[j].insert(index);
+        }
+    FSmoother fineSmoother(mat,subdomains, 1.0, false);
+#endif
+    typedef Dune::SeqJac<BCRSMat,Vector,Vector> CSmoother;
     typedef Dune::Amg::CoarsenCriterion<
         Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
         Criterion;
-    FSmoother fineSmoother(mat,1,1.0);
     typedef Dune::Amg::AggregationLevelTransferPolicy<Operator,Criterion>
         TransferPolicy;
     typedef Dune::Amg::OneStepAMGCoarseSolverPolicy<Operator,CSmoother, Criterion>
