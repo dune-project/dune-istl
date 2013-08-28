@@ -67,7 +67,7 @@ namespace Dune
         *levelContext_->rhs = d;
         *levelContext_->lhs = v;
 
-        amg_.presmooth(*levelContext_);
+        presmooth(*levelContext_, amg_.preSteps_);
         bool processFineLevel =
           amg_.moveToCoarseLevel(*levelContext_);
 
@@ -81,7 +81,7 @@ namespace Dune
 
         amg_.moveToFineLevel(*levelContext_, processFineLevel);
 
-        amg_.postsmooth(*levelContext_);
+        postsmooth(*levelContext_, amg_.postSteps_);
         v=*levelContext_->update;
       }
 
