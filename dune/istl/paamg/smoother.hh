@@ -119,6 +119,11 @@ namespace Dune
       void setComm(T1& comm)
       {}
 
+      const SequentialInformation& getComm()
+      {
+        return comm_;
+      }
+
       const SmootherArgs getArgs() const
       {
         return *args_;
@@ -128,6 +133,7 @@ namespace Dune
       const Matrix* matrix_;
     private:
       const SmootherArgs* args_;
+      SequentialInformation comm_;
     };
 
     template<class T>

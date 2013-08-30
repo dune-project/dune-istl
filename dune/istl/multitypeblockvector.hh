@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include <dune/common/dotproduct.hh>
+#include <dune/common/ftraits.hh>
 
 #include "istlexception.hh"
 
@@ -215,11 +216,13 @@ namespace Dune {
   template<int count, typename T>
   class MultiTypeBlockVector_Norm {
   public:
+    typedef typename T::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /**
      * sum up all elements' 2-norms
      */
-    static double result (const T& a) {             //result = sum of all elements' 2-norms
+    static real_type result (const T& a) {             //result = sum of all elements' 2-norms
       return fusion::at_c<count-1>(a).two_norm2() + MultiTypeBlockVector_Norm<count-1,T>::result(a);
     }
   };
@@ -227,7 +230,9 @@ namespace Dune {
   template<typename T>                                    //recursion end: no more vector elements to add...
   class MultiTypeBlockVector_Norm<0,T> {
   public:
-    static double result (const T& a) {return 0.0;}
+    typedef typename T::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
+    static real_type result (const T& a) {return 0.0;}
   };
 
   /**
@@ -282,12 +287,12 @@ namespace Dune {
     /**
      * two-norm^2
      */
-    double two_norm2() const {return MultiTypeBlockVector_Norm<mpl::size<type>::value,type>::result(*this);}
+    typename FieldTraits<field_type>::real_type two_norm2() const {return MultiTypeBlockVector_Norm<mpl::size<type>::value,type>::result(*this);}
 
     /**
      * the real two-norm
      */
-    double two_norm() const {return sqrt(this->two_norm2());}
+    typename FieldTraits<field_type>::real_type two_norm() const {return sqrt(this->two_norm2());}
 
     /**
      * axpy operation on this vector (*this += a * y)

@@ -556,8 +556,8 @@ namespace Dune
     if(mat.M()+mat.N()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
-    SuperMatrix& mB = B;
-    SuperMatrix& mX = X;
+    SuperMatrix* mB = &B;
+    SuperMatrix* mX = &X;
     SuperMatrix rB, rX;
     if (reusevector) {
       if(first) {
@@ -571,8 +571,8 @@ namespace Dune
     } else {
       SuperLUDenseMatChooser<T>::create(&rB, (int)mat.N(), 1,  reinterpret_cast<T*>(&b[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
       SuperLUDenseMatChooser<T>::create(&rX, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
-      mB = rB;
-      mX = rX;
+      mB = &rB;
+      mX = &rX;
     }
     typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
     int info;
@@ -593,7 +593,7 @@ namespace Dune
 #endif
 
     SuperLUSolveChooser<T>::solve(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
-                                  &L, &U, work, lwork, &mB, &mX, &rpg, &rcond, &ferr, &berr,
+                                  &L, &U, work, lwork, mB, mX, &rpg, &rcond, &ferr, &berr,
                                   &memusage, &stat, &info);
 
     res.iterations=1;
@@ -643,8 +643,8 @@ namespace Dune
     if(mat.N()+mat.M()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
-    SuperMatrix& mB = B;
-    SuperMatrix& mX = X;
+    SuperMatrix* mB = &B;
+    SuperMatrix* mX = &X;
     SuperMatrix rB, rX;
     if (reusevector) {
       if(first) {
@@ -658,8 +658,8 @@ namespace Dune
     } else {
       SuperLUDenseMatChooser<T>::create(&rB, mat.N(), 1,  b, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
       SuperLUDenseMatChooser<T>::create(&rX, mat.N(), 1,  x, mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
-      mB = rB;
-      mX = rX;
+      mB = &rB;
+      mX = &rX;
     }
 
     typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
@@ -676,7 +676,7 @@ namespace Dune
 #endif
 
     SuperLUSolveChooser<T>::solve(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
-                                  &L, &U, work, lwork, &mB, &mX, &rpg, &rcond, &ferr, &berr,
+                                  &L, &U, work, lwork, mB, mX, &rpg, &rcond, &ferr, &berr,
                                   &memusage, &stat, &info);
 
     if(verbose) {
