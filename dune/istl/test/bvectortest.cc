@@ -103,6 +103,23 @@ int testVector()
   return 0;
 }
 
+void testCapacity()
+{
+  typedef Dune::FieldVector<double,2> SmallVector;
+  typedef Dune::BlockVector<Dune::BlockVector<SmallVector> > ThreeLevelVector;
+  ThreeLevelVector vec;
+  vec.reserve(10);
+  vec.resize(10);
+  for(int i=0; i<10; ++i)
+    vec[i]=Dune::BlockVector<SmallVector>(10);
+  ThreeLevelVector vec1=vec;
+  vec.reserve(20, true);
+  vec.reserve(10, true);
+  vec.reserve(5, false);
+  vec.reserve(20, false);
+  vec.reserve(0, true);
+  vec1.reserve(0, false);
+}
 
 int main()
 {
@@ -110,10 +127,13 @@ int main()
   //typedef double value_type;
   typedef Dune::FieldVector<value_type,1> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
+  typedef Dune::BlockVector<Vector> VectorOfVector;
   Vector v;
   v=0;
   Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
   v1=0;
+  VectorOfVector vv;
+  vv.two_norm();
 
   int ret = 0;
 
@@ -123,6 +143,8 @@ int main()
   ret += testVector<3>();
   //  ret += testVector<3, Dune::PoolAllocator<void,1000000> >();
   ret += testVector<3, Dune::DebugAllocator<void> >();
+
+  testCapacity();
 
   return ret;
 }

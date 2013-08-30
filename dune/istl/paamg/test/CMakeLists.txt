@@ -5,14 +5,28 @@ endif(MPI_FOUND)
 if(PARMETIS_FOUND)
   set(PARMETISTESTS pamgtest pamg_comm_repart_test)
 endif(PARMETIS_FOUND)
-
-set(NORMALTESTS amgtest fastamg graphtest kamgtest)
+if(CMAKE_USE_PTHREADS_INIT)
+  set(PTHREADTESTS pthreadamgtest pthreadfastamgtest)
+endif(CMAKE_USE_PTHREADS_INIT)
+set(NORMALTESTS amgtest fastamg graphtest kamgtest ${PTHREADTESTS})
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
 add_directory_test_target(_test_target)
 add_dependencies(${_test_target} ${ALLTESTS})
+
+find_package(Threads)
+if(CMAKE_USE_PTHREADS_INIT)
+  add_executable(pthreadamgtest pthreadamgtest.cc)
+  set_property(TARGET pthreadamgtest APPEND PROPERTY
+    COMPILE_DEFINITIONS "MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>")
+  target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  add_executable(pthreadfastamgtest pthreadamgtest.cc)
+  set_property(TARGET pthreadfastamgtest APPEND PROPERTY
+    COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
+  target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+endif(CMAKE_USE_PTHREADS_INIT)
 
 add_executable(amgtest "amgtest.cc")
 add_dune_superlu_flags(amgtest)

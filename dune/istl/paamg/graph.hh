@@ -109,15 +109,15 @@ namespace Dune
         /**
          * @brief The column iterator of the matrix we use.
          */
-        typedef typename SelectType<isMutable && C::mutableMatrix,typename Matrix::row_type::Iterator,
-            typename Matrix::row_type::ConstIterator>::Type
+        typedef typename conditional<isMutable && C::mutableMatrix,typename Matrix::row_type::Iterator,
+            typename Matrix::row_type::ConstIterator>::type
         ColIterator;
 
         /**
          * @brief The matrix block type we use as weights.
          */
-        typedef typename SelectType<isMutable && C::mutableMatrix,typename M::block_type,
-            const typename M::block_type>::Type
+        typedef typename conditional<isMutable && C::mutableMatrix,typename M::block_type,
+            const typename M::block_type>::type
         Weight;
 
         /**
@@ -145,8 +145,8 @@ namespace Dune
         template<class C1>
         EdgeIteratorT(const EdgeIteratorT<C1>& other);
 
-        typedef typename SelectType<is_same<C, typename remove_const<C>::type>::value && C::mutableMatrix,
-            typename M::block_type, const typename M::block_type>::Type
+        typedef typename conditional<is_same<C, typename remove_const<C>::type>::value && C::mutableMatrix,
+            typename M::block_type, const typename M::block_type>::type
         WeightType;
 
         /**
@@ -255,8 +255,8 @@ namespace Dune
         /** @brief Equality operator. */
         bool operator==(const VertexIteratorT<MutableContainer>& other) const;
 
-        typedef typename SelectType<is_same<C, typename remove_const<C>::type>::value && C::mutableMatrix,
-            typename M::block_type, const typename M::block_type>::Type
+        typedef typename conditional<is_same<C, typename remove_const<C>::type>::value && C::mutableMatrix,
+            typename M::block_type, const typename M::block_type>::type
         WeightType;
         /** @brief Access the weight of the vertex. */
         WeightType& weight() const;
@@ -790,10 +790,10 @@ namespace Dune
 
       template<class C>
       class VertexIteratorT
-        : public SelectType<is_same<typename remove_const<C>::type,
+        : public conditional<is_same<typename remove_const<C>::type,
                   C>::value,
               typename Graph::VertexIterator,
-              typename Graph::ConstVertexIterator>::Type
+              typename Graph::ConstVertexIterator>::type
       {
         friend class VertexIteratorT<const typename remove_const<C>::type>;
         friend class VertexIteratorT<typename remove_const<C>::type>;
@@ -801,19 +801,19 @@ namespace Dune
         /**
          * @brief The father class.
          */
-        typedef typename SelectType<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename remove_const<C>::type,
                 C>::value,
             typename Graph::VertexIterator,
-            typename Graph::ConstVertexIterator>::Type
+            typename Graph::ConstVertexIterator>::type
         Father;
 
         /**
          * @brief The class of the edge iterator.
          */
-        typedef typename SelectType<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename remove_const<C>::type,
                 C>::value,
             typename Graph::EdgeIterator,
-            typename Graph::ConstEdgeIterator>::Type
+            typename Graph::ConstEdgeIterator>::type
         EdgeIterator;
 
         /**
@@ -844,9 +844,9 @@ namespace Dune
         /**
          * @brief Get the properties of the current Vertex.
          */
-        typename SelectType<is_same<C,typename remove_const<C>::type>::value,
+        typename conditional<is_same<C,typename remove_const<C>::type>::value,
             VertexProperties&,
-            const VertexProperties&>::Type
+            const VertexProperties&>::type
         properties() const;
 
         /**
@@ -1025,10 +1025,10 @@ namespace Dune
 
       template<class C>
       class EdgeIteratorT
-        :  public SelectType<is_same<typename remove_const<C>::type,
+        :  public conditional<is_same<typename remove_const<C>::type,
                   C>::value,
               typename Graph::EdgeIterator,
-              typename Graph::ConstEdgeIterator>::Type
+              typename Graph::ConstEdgeIterator>::type
       {
 
         friend class EdgeIteratorT<const typename remove_const<C>::type>;
@@ -1037,10 +1037,10 @@ namespace Dune
         /**
          * @brief The father class.
          */
-        typedef typename SelectType<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename remove_const<C>::type,
                 C>::value,
             typename Graph::EdgeIterator,
-            typename Graph::ConstEdgeIterator>::Type
+            typename Graph::ConstEdgeIterator>::type
         Father;
 
         /**
@@ -1070,9 +1070,9 @@ namespace Dune
         /**
          * @brief Get the properties of the current edge.
          */
-        typename SelectType<is_same<C,typename remove_const<C>::type>::value,
+        typename conditional<is_same<C,typename remove_const<C>::type>::value,
             EdgeProperties&,
-            const EdgeProperties&>::Type
+            const EdgeProperties&>::type
         properties() const;
 
       private:
@@ -1127,10 +1127,10 @@ namespace Dune
 
       template<class C>
       class VertexIteratorT
-        : public SelectType<is_same<typename remove_const<C>::type,
+        : public conditional<is_same<typename remove_const<C>::type,
                   C>::value,
               typename Graph::VertexIterator,
-              typename Graph::ConstVertexIterator>::Type
+              typename Graph::ConstVertexIterator>::type
       {
         friend class VertexIteratorT<const typename remove_const<C>::type>;
         friend class VertexIteratorT<typename remove_const<C>::type>;
@@ -1138,10 +1138,10 @@ namespace Dune
         /**
          * @brief The father class.
          */
-        typedef typename SelectType<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename remove_const<C>::type,
                 C>::value,
             typename Graph::VertexIterator,
-            typename Graph::ConstVertexIterator>::Type
+            typename Graph::ConstVertexIterator>::type
         Father;
 
         /**
@@ -1172,9 +1172,9 @@ namespace Dune
         /**
          * @brief Get the properties of the current Vertex.
          */
-        typename SelectType<is_same<C,typename remove_const<C>::type>::value,
+        typename conditional<is_same<C,typename remove_const<C>::type>::value,
             VertexProperties&,
-            const VertexProperties&>::Type
+            const VertexProperties&>::type
         properties() const;
 
         /**
@@ -2072,8 +2072,8 @@ namespace Dune
 
     template<class G, class V, class VM>
     template<class C>
-    typename SelectType<is_same<C,typename remove_const<C>::type>::value,
-        V&, const V&>::Type
+    typename conditional<is_same<C,typename remove_const<C>::type>::value,
+        V&, const V&>::type
     inline VertexPropertiesGraph<G,V,VM>::VertexIteratorT<C>::properties() const
     {
       return graph_->getVertexProperties(Father::operator*());
@@ -2081,10 +2081,10 @@ namespace Dune
 
     template<class G, class V, class VM>
     template<class C>
-    typename SelectType<is_same<typename remove_const<C>::type,
+    typename conditional<is_same<typename remove_const<C>::type,
             C>::value,
         typename G::EdgeIterator,
-        typename G::ConstEdgeIterator>::Type
+        typename G::ConstEdgeIterator>::type
     inline VertexPropertiesGraph<G,V,VM>::VertexIteratorT<C>::begin() const
     {
       return graph_->beginEdges(Father::operator*());
@@ -2092,10 +2092,10 @@ namespace Dune
 
     template<class G, class V, class VM>
     template<class C>
-    typename SelectType<is_same<typename remove_const<C>::type,
+    typename conditional<is_same<typename remove_const<C>::type,
             C>::value,
         typename G::EdgeIterator,
-        typename G::ConstEdgeIterator>::Type
+        typename G::ConstEdgeIterator>::type
     inline VertexPropertiesGraph<G,V,VM>::VertexIteratorT<C>::end() const
     {
       return graph_->endEdges(Father::operator*());
@@ -2191,7 +2191,7 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     template<class C>
-    inline typename SelectType<is_same<C,typename remove_const<C>::type>::value,E&,const E&>::Type
+    inline typename conditional<is_same<C,typename remove_const<C>::type>::value,E&,const E&>::type
     PropertiesGraph<G,V,E,VM,EM>::EdgeIteratorT<C>::properties() const
     {
       return graph_->getEdgeProperties(Father::operator*());
@@ -2250,8 +2250,8 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     template<class C>
-    inline typename SelectType<is_same<C,typename remove_const<C>::type>::value,
-        V&, const V&>::Type
+    inline typename conditional<is_same<C,typename remove_const<C>::type>::value,
+        V&, const V&>::type
     PropertiesGraph<G,V,E,VM,EM>::VertexIteratorT<C>::properties() const
     {
       return graph_->getVertexProperties(Father::operator*());
