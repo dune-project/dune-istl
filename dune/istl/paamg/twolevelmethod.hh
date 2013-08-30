@@ -398,14 +398,13 @@ public:
     context.matrix=&operator_;
     // Presmoothing
     presmooth(context, preSteps_);
-
     //Coarse grid correction
     policy_->moveToCoarseLevel(*context.rhs);
     InverseOperatorResult res;
     coarseSolver_->apply(policy_->getCoarseLevelLhs(), policy_->getCoarseLevelRhs(), res);
     policy_->moveToFineLevel(*context.update);
-
     // Postsmoothing
+    *context.lhs=0;
     postsmooth(context, postSteps_);
 
   }
