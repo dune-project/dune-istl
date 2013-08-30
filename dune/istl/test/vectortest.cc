@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include <dune/common/kernel/allocator.hh>
+#include <dune/common/memory/blocked_allocator.hh>
 #include <dune/istl/vector/host.hh>
 
 #include <tbb/tbb.h>
@@ -18,6 +18,10 @@ int testVector()
   typedef Dune::ISTL::Vector<F,A> V;
 
   V v(2000000);
+
+  //v.setChunkSize(40000);
+
+  std::cout << v.chunkSize() << std::endl;
 
   //V v2;
   //v2.setSize(2000);
@@ -64,5 +68,5 @@ int testVector()
 int main(int argc, char** argv)
 {
   tbb::task_scheduler_init(argc > 1 ? atoi(argv[1]) : tbb::task_scheduler_init::automatic);
-  return testVector<double,Dune::Kernel::blocked_cache_aligned_allocator<double,std::size_t,16> >();
+  return testVector<double,Dune::Memory::blocked_cache_aligned_allocator<double,std::size_t,16> >();
 }

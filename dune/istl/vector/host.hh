@@ -19,6 +19,9 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
+#include <dune/common/memory/domain.hh>
+#include <dune/common/memory/alignment.hh>
+#include <dune/common/memory/traits.hh>
 #include <dune/common/kernel/vec.hh>
 
 #include <dune/common/threads/range.hh>
@@ -26,14 +29,20 @@
 namespace Dune {
   namespace ISTL {
 
+    template<typename F_, typename A_, typename D_ = typename Memory::allocator_domain<A_>::type>
+    class Vector;
+
+
     template<typename F_, typename A_>
-    class Vector
+    class Vector<F_,A_,Memory::Domain::Host>
     {
 
     public:
       typedef F_& Field;
       typedef F_ DataType;
       typedef F_ value_type;
+
+      typedef Memory::Domain::Host Domain;
 
       // F_::DataType DataType;
       typedef F_ DF;
@@ -45,7 +54,8 @@ namespace Dune {
       typedef const value_type* const_iterator;
 
       static const size_type block_size = Allocator::block_size;
-      static const size_type alignment = Allocator::alignment;;
+      static const size_type alignment = Allocator::alignment;
+      static const size_type minimum_chunk_size = Allocator::minimum_chunk_size;
 
     private:
 
@@ -57,14 +67,14 @@ namespace Dune {
         : _size(0)
         , _allocation_size(0)
         , _data(nullptr)
-        , _grain_size(Allocator::block_size)
+        , _chunk_size(minimum_chunk_size)
       {}
 
       Vector(size_type size)
         : _size(0)
         , _allocation_size(0)
         , _data(nullptr)
-        , _grain_size(Allocator::block_size)
+        , _chunk_size(minimum_chunk_size)
       {
         allocate(size);
       }
@@ -73,7 +83,7 @@ namespace Dune {
         : _size(0)
         , _allocation_size(0)
         , _data(nullptr)
-        , _grain_size(other._grain_size)
+        , _chunk_size(other._chunk_size)
       {
         allocate(other._size,false);
         // TODO: check whether compiler optimizes to memcpy for trivially_copyable types
@@ -85,7 +95,7 @@ namespace Dune {
         , _allocation_size(other._allocation_size)
         , _allocator(std::move(other._allocator))
         , _data(other._data)
-        , _grain_size(other._grain_size)
+        , _chunk_size(other._chunk_size)
       {
         other._data = nullptr;
         other._size = 0;
@@ -97,13 +107,25 @@ namespace Dune {
         return _size;
       }
 
+      void setChunkSize(size_type chunk_size)
+      {
+        if (chunk_size < minimum_chunk_size)
+          DUNE_THROW(Exception,"chunk size too small (" << chunk_size << " < " << minimum_chunk_size << ")");
+        _chunk_size = chunk_size;
+      }
+
+      size_type chunkSize() const
+      {
+        return _chunk_size;
+      }
+
       Vector & operator= (const Vector & other)
       {
         if (_size == other._size)
           {
             std::copy(other._data,other._data+_size,_data);
             // don't copy allocator because we keep the old memory!
-            _grain_size = other._grain_size;
+            _chunk_size = other._chunk_size;
             return *this;
           }
         else
@@ -115,7 +137,7 @@ namespace Dune {
               return *this;
             allocate(other._size,false);
             std::uninitialized_copy(other._data,other._data+_size,_data);
-            _grain_size = other._grain_size;
+            _chunk_size = other._chunk_size;
           }
         return *this;
       }
@@ -128,7 +150,7 @@ namespace Dune {
         _allocation_size = other._allocation_size;
         _allocator = std::move(other._allocator);
         _data = other._data;
-        _grain_size = other._grain_size;
+        _chunk_size = other._chunk_size;
         other._data = nullptr;
         other._size = 0;
         other._allocation_size = 0;
@@ -208,13 +230,13 @@ namespace Dune {
 
       template<typename OF, typename OA>
       typename enable_if<
-        Kernel::allocators_are_interoperable<
+        Memory::allocators_are_interoperable<
           allocator_type,
           OA
           >::value,
         Vector
         >::type&
-      operator+=(const Vector<OF,OA>& other)
+      operator+=(const Vector<OF,OA,Domain>& other)
       {
         tbb::parallel_for(
           iteration_range(),
@@ -235,20 +257,20 @@ namespace Dune {
 
       template<typename OF, typename OA>
       typename enable_if<
-        Kernel::allocators_are_interoperable<
+        Memory::allocators_are_interoperable<
           allocator_type,
           OA
           >::value,
         Vector
         >::type&
-      operator-=(const Vector<OF,OA>& other)
+      operator-=(const Vector<OF,OA,Domain>& other)
       {
         tbb::parallel_for(
           iteration_range(),
           [&](const range_type& r)
           {
             value_type* __restrict__  a = _data;
-            typename Vector<OF,OA>::value_type* __restrict__  b = other._data;
+            typename Vector<OF,OA,Domain>::value_type* __restrict__  b = other._data;
             for (size_type i = r.begin(), end = r.end(); i != end; ++i)
               a[i] -= b[i];
           });
@@ -257,13 +279,13 @@ namespace Dune {
 
       template<typename OF, typename OA>
       typename enable_if<
-        Kernel::allocators_are_interoperable<
+        Memory::allocators_are_interoperable<
           allocator_type,
           OA
           >::value,
         Vector
         >::type&
-      operator*=(const Vector<OF,OA>& other)
+      operator*=(const Vector<OF,OA,Domain>& other)
       {
         tbb::parallel_for(
           iteration_range(),
@@ -333,13 +355,13 @@ namespace Dune {
 
       template<typename OF, typename OA>
       typename enable_if<
-        Kernel::allocators_are_interoperable<
+        Memory::allocators_are_interoperable<
           allocator_type,
           OA
           >::value,
         Vector
         >::type&
-      axpy(value_type a, const Vector<OF,OA>& other)
+      axpy(value_type a, const Vector<OF,OA,Domain>& other)
       {
         tbb::parallel_for(
           iteration_range(),
@@ -362,13 +384,13 @@ namespace Dune {
 
       template<typename OF, typename OA>
       typename enable_if<
-        Kernel::allocators_are_interoperable<
+        Memory::allocators_are_interoperable<
           allocator_type,
           OA
           >::value,
         typename PromotionTraits<value_type,OF>::PromotedType
         >::type
-      dot(const Vector<OF,OA>& other) const
+      dot(const Vector<OF,OA,Domain>& other) const
       {
         typedef typename PromotionTraits<value_type,OF>::PromotedType result_type;
         return tbb::parallel_reduce(
@@ -469,7 +491,7 @@ namespace Dune {
 
       range_type iteration_range() const
       {
-        return range_type(0,_size,block_size,_grain_size);
+        return range_type(0,_size,minimum_chunk_size,_chunk_size);
       }
 
       void deallocate()
@@ -498,8 +520,8 @@ namespace Dune {
       {
         if (_data)
           DUNE_THROW(NotImplemented,"do not do this");
-        // add padding to block size for matrix operations
-        size_type allocation_size = size + block_size - 1 - ((size-1) % block_size);
+        // add padding to minimum chunk size
+        size_type allocation_size = size + minimum_chunk_size - 1 - ((size-1) % minimum_chunk_size);
         _data = _allocator.allocate(allocation_size);
         if (!_data)
           DUNE_THROW(Exception,"could not allocate memory");
@@ -525,7 +547,7 @@ namespace Dune {
       size_type _allocation_size;
       Allocator _allocator;
       value_type* _data;
-      size_type _grain_size;
+      size_type _chunk_size;
 
     };
 
