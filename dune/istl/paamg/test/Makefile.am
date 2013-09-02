@@ -95,7 +95,7 @@ pamg_comm_repart_test_LDADD =				\
 	$(LDADD)
 
 twolevelmethodschwarztest_SOURCES = twolevelmethodtest.cc
-twolevelmethodschwarztest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+twolevelmethodschwarztest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DUSE_OVERLAPPINGSCHWARZ
 twolevelmethodschwarztest_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
 twolevelmethodschwarztest_LDADD =					\
 	$(SUPERLU_LIBS)				\
