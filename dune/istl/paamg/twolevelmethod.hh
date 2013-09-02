@@ -402,9 +402,10 @@ public:
     policy_->moveToCoarseLevel(*context.rhs);
     InverseOperatorResult res;
     coarseSolver_->apply(policy_->getCoarseLevelLhs(), policy_->getCoarseLevelRhs(), res);
-    policy_->moveToFineLevel(*context.update);
-    // Postsmoothing
     *context.lhs=0;
+    policy_->moveToFineLevel(*context.lhs);
+    *context.update += *context.lhs;
+    // Postsmoothing
     postsmooth(context, postSteps_);
 
   }
