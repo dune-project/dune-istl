@@ -262,13 +262,17 @@ private:
     : amg_(amg), first_(true)
     {}
 
+    AMGInverseOperator(const AMGInverseOperator& other)
+    : x_(other.x_), amg_(new AMGType(*other.amg_)), first_(other.first_)
+    {}
+
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       if(first_)
       {
         amg_->pre(x,b);
         first_=false;
-        x_.reset(new X(x));
+        x_=&x;
       }
       amg_->apply(x,b);
     }
@@ -284,8 +288,8 @@ private:
         amg_->post(*x_);
     }
   private:
-    shared_ptr<X> x_;
-    shared_ptr<AMGType> amg_;
+    X* x_;
+    AMGType* amg_;
     bool first_;
   };
 
@@ -387,7 +391,7 @@ public:
 
   TwoLevelMethod(const TwoLevelMethod& other)
   : operator_(other.operator_), coarseSolver_(other.coarseSolver_),
-    smoother_(other.smoother_), policy_(other.policy_.clone()),
+    smoother_(other.smoother_), policy_(other.policy_->clone()),
     preSteps_(preSteps_), postSteps_(postSteps_)
   {}
 

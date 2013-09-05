@@ -83,6 +83,7 @@ void testTwoLevelMethod()
                                                                           transferPolicy,
                                                                           coarsePolicy);
     Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,1e-8,80,2);
+    Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> preconditioner1(preconditioner);
     Dune::InverseOperatorResult res;
     amgCG.apply(x,b,res);
 }
