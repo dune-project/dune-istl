@@ -114,6 +114,9 @@ public:
    */
   virtual void createCoarseLevelSystem(const FineOperatorType& fineOperator)=0;
 
+  /** @brief Clone the current object. */
+  virtual LevelTransferPolicy* clone() const =0;
+
   protected:
   /** @brief The coarse level rhs. */
   CoarseRangeType rhs_;
@@ -201,6 +204,11 @@ public:
     Transfer<std::size_t,typename FatherType::FineRangeType,ParallelInformation>
       ::prolongateVector(*aggregatesMap_, this->lhs_, fineLhs,
                          prolongDamp_, ParallelInformation());
+  }
+
+  AggregationLevelTransferPolicy* clone() const
+  {
+    return new AggregationLevelTransferPolicy(*this);
   }
 
 private:
@@ -365,15 +373,28 @@ public:
   template<class CoarseSolverPolicy>
   TwoLevelMethod(const FineOperatorType& op,
                  shared_ptr<SmootherType> smoother,
-                 shared_ptr<LevelTransferPolicy<FineOperatorType,
-                                                CoarseOperatorType> > policy,
+                 const LevelTransferPolicy<FineOperatorType,
+                                           CoarseOperatorType>& policy,
                  CoarseSolverPolicy& coarsePolicy,
                  std::size_t preSteps=1, std::size_t postSteps=1)
-    : operator_(op), smoother_(smoother), policy_(policy),
+    : operator_(&op), smoother_(smoother),
       preSteps_(preSteps), postSteps_(postSteps)
   {
-    policy_->createCoarseLevelSystem(operator_);
+    policy_ = policy.clone();
+    policy_->createCoarseLevelSystem(*operator_);
     coarseSolver_.reset(coarsePolicy.createCoarseLevelSolver(*policy_));
+  }
+
+  TwoLevelMethod(const TwoLevelMethod& other)
+  : operator_(other.operator_), coarseSolver_(other.coarseSolver_),
+    smoother_(other.smoother_), policy_(other.policy_.clone()),
+    preSteps_(preSteps_), postSteps_(postSteps_)
+  {}
+
+  ~TwoLevelMethod()
+  {
+    // Each instance has its own policy.
+    delete policy_;
   }
 
   void pre(FineDomainType& x, FineRangeType& b)
@@ -395,7 +416,7 @@ public:
     context.update=&v;
     context.smoother=smoother_;
     context.rhs=&rhs;
-    context.matrix=&operator_;
+    context.matrix=operator_;
     // Presmoothing
     presmooth(context, preSteps_);
     //Coarse grid correction
@@ -443,14 +464,14 @@ private:
      */
     const FineOperatorType* matrix;
   };
-  const FineOperatorType& operator_;
+  const FineOperatorType* operator_;
   /** @brief The coarse level solver. */
   shared_ptr<InverseOperator<typename CO::domain_type,
                              typename CO::range_type> > coarseSolver_;
   /** @brief The fine level smoother. */
   shared_ptr<S> smoother_;
   /** @brief Policy for prolongation, restriction, and coarse level system creation. */
-  shared_ptr<LevelTransferPolicy<FO,CO> > policy_;
+  LevelTransferPolicy<FO,CO>* policy_;
   /** @brief The number of presmoothing steps to apply. */
   std::size_t preSteps_;
   /** @brief The number of postsmoothing steps to apply. */

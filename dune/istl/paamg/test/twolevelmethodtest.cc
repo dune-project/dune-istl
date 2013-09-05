@@ -73,14 +73,14 @@ void testTwoLevelMethod()
         TransferPolicy; // Policy for coarse linear system creation
     typedef Dune::Amg::OneStepAMGCoarseSolverPolicy<Operator,CSmoother, Criterion>
         CoarsePolicy; // Policy for coarse solver creation
-    typedef typename Dune::Amg::SmootherTraits<CSmoother>::Arguments SmootherArgs;
+    typedef Dune::Amg::SmootherTraits<CSmoother>::Arguments SmootherArgs;
     Criterion crit;
     CoarsePolicy coarsePolicy=CoarsePolicy(SmootherArgs(), crit);
     TransferPolicy transferPolicy(crit);
     Operator fop(mat);
     Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> preconditioner(fop,
                                                                           Dune::stackobject_to_shared_ptr(fineSmoother),
-                                                                          Dune::stackobject_to_shared_ptr<Dune::Amg::LevelTransferPolicy<Operator,Operator> >(transferPolicy),
+                                                                          transferPolicy,
                                                                           coarsePolicy);
     Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,1e-8,80,2);
     Dune::InverseOperatorResult res;
