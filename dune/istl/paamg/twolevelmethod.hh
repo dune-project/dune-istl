@@ -262,11 +262,11 @@ private:
   struct AMGInverseOperator : public InverseOperator<X,X>
   {
     AMGInverseOperator(AMGType* amg)
-    : amg_(amg), first_(true)
+    : amg_(amg), first_(true), isCopied_(false)
     {}
 
     AMGInverseOperator(const AMGInverseOperator& other)
-    : x_(other.x_), amg_(new AMGType(*other.amg_)), first_(other.first_)
+    : x_(other.x_), amg_(new AMGType(*other.amg_)), first_(other.first_), isCopied_(true)
     {}
 
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
@@ -289,11 +289,14 @@ private:
     {
       if(!first_)
         amg_->post(*x_);
+      if(isCopied_)
+        delete amg_;
     }
   private:
     X* x_;
     AMGType* amg_;
     bool first_;
+    bool isCopied_;
   };
 
 public:
