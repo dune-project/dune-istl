@@ -398,7 +398,7 @@ public:
   TwoLevelMethod(const TwoLevelMethod& other)
   : operator_(other.operator_), coarseSolver_(other.coarseSolver_),
     smoother_(other.smoother_), policy_(other.policy_->clone()),
-    preSteps_(preSteps_), postSteps_(postSteps_)
+    preSteps_(other.preSteps_), postSteps_(other.postSteps_)
   {}
 
   ~TwoLevelMethod()
