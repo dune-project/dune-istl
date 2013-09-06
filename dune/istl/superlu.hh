@@ -482,7 +482,7 @@ namespace Dune
     X.ncol=0;
     X.Store=&fakeFormat;
 
-    typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
+    typename GetSuperLUType<T>::float_type rpg, rcond, ferr=1e10, berr=1e10;
     int info;
     mem_usage_t memusage;
     SuperLUStat_t stat;
@@ -574,7 +574,7 @@ namespace Dune
       mB = &rB;
       mX = &rX;
     }
-    typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
+    typename GetSuperLUType<T>::float_type rpg, rcond, ferr=1e10, berr;
     int info;
     mem_usage_t memusage;
     SuperLUStat_t stat;
@@ -662,7 +662,7 @@ namespace Dune
       mX = &rX;
     }
 
-    typename GetSuperLUType<T>::float_type rpg, rcond, ferr, berr;
+    typename GetSuperLUType<T>::float_type rpg, rcond, ferr=1e10, berr;
     int info;
     mem_usage_t memusage;
     SuperLUStat_t stat;
