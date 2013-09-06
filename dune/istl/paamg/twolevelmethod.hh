@@ -117,6 +117,9 @@ public:
   /** @brief Clone the current object. */
   virtual LevelTransferPolicy* clone() const =0;
 
+  /** @brief Destructor. */
+  virtual ~LevelTransferPolicy(){}
+
   protected:
   /** @brief The coarse level rhs. */
   CoarseRangeType rhs_;
