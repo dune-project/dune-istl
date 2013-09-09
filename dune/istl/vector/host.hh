@@ -70,7 +70,7 @@ namespace Dune {
         , _chunk_size(minimum_chunk_size)
       {}
 
-      Vector(size_type size)
+      explicit Vector(size_type size)
         : _size(0)
         , _allocation_size(0)
         , _data(nullptr)
