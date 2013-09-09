@@ -277,6 +277,26 @@ namespace Dune {
         return *this;
       }
 
+      Vector& operator=(value_type b)
+      {
+        tbb::parallel_for(
+          iteration_range(),
+          [&](const range_type& r)
+          {
+            Kernel::vec::blocked::assign_scalar<
+              value_type,
+              value_type,
+              size_type,
+              alignment,
+              block_size>(
+                _data+r.begin(),
+                b,
+                r.block_count());
+          });
+        return *this;
+      }
+
+
       template<typename OF, typename OA>
       typename enable_if<
         Memory::allocators_are_interoperable<
