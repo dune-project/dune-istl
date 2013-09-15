@@ -511,11 +511,16 @@ namespace Dune {
       }
 
 
+      value_type* data() const
+      {
+        return _data;
+      }
+
     private:
 
       range_type iteration_range() const
       {
-        return range_type(0,_size,minimum_chunk_size,_chunk_size);
+        return range_type(0,_size,block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/block_size);
       }
 
       void deallocate()
