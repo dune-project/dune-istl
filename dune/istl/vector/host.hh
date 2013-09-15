@@ -154,6 +154,7 @@ namespace Dune {
         other._data = nullptr;
         other._size = 0;
         other._allocation_size = 0;
+        return *this;
       }
 
       Field operator[] (size_type i)
