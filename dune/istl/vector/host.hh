@@ -38,7 +38,7 @@ namespace Dune {
     {
 
     public:
-      typedef F_& Field;
+      typedef F_ Field;
       typedef F_ DataType;
       typedef F_ value_type;
 
@@ -47,7 +47,7 @@ namespace Dune {
       // F_::DataType DataType;
       typedef F_ DF;
 
-      typedef typename A_::template rebind<F_>::other Allocator;
+      typedef typename A_::template rebind<Field>::other Allocator;
       typedef Allocator allocator_type;
       typedef typename A_::size_type size_type;
       typedef value_type* iterator;
@@ -119,7 +119,7 @@ namespace Dune {
         return _chunk_size;
       }
 
-      Vector & operator= (const Vector & other)
+      Vector & operator= (const Vector& other)
       {
         if (_size == other._size)
           {
@@ -142,7 +142,7 @@ namespace Dune {
         return *this;
       }
 
-      Vector & operator= (Vector && other)
+      Vector & operator= (Vector&& other)
       {
         if (_data)
           deallocate();
@@ -157,12 +157,12 @@ namespace Dune {
         return *this;
       }
 
-      Field operator[] (size_type i)
+      Field& operator[] (size_type i)
       {
         return _data[i];
       }
 
-      const Field operator[] (size_type i) const
+      const Field& operator[] (size_type i) const
       {
         return _data[i];
       }
