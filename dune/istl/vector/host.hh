@@ -418,7 +418,7 @@ namespace Dune {
           result_type(0),
           [&](const range_type& r, result_type result) -> result_type
           {
-            return Dune::Kernel::vec::blocked::dot<
+            return result + Dune::Kernel::vec::blocked::dot<
               value_type,
               OF,
               size_type,
@@ -438,7 +438,7 @@ namespace Dune {
           DF(0),
           [&](const range_type& r, DF result) -> DF
           {
-            return Dune::Kernel::vec::blocked::two_norm2<
+            return result + Dune::Kernel::vec::blocked::two_norm2<
               value_type,
               size_type,
               alignment,
@@ -461,7 +461,7 @@ namespace Dune {
           DF(0),
           [&](const range_type& r, DF result) -> DF
           {
-            return Dune::Kernel::vec::blocked::one_norm<
+            return result + Dune::Kernel::vec::blocked::one_norm<
               value_type,
               size_type,
               alignment,
@@ -479,13 +479,16 @@ namespace Dune {
           DF(0),
           [&](const range_type& r, DF result) -> DF
           {
-            return Dune::Kernel::vec::blocked::infinity_norm<
-              value_type,
-              size_type,
-              alignment,
-              block_size>(
-                _data+r.begin(),
-                r.block_count());
+            return std::max(
+              result,
+              Dune::Kernel::vec::blocked::infinity_norm<
+                value_type,
+                size_type,
+                alignment,
+                block_size>(
+                  _data+r.begin(),
+                  r.block_count())
+              );
           },
           [](const value_type& a, const value_type& b) -> DF
           {
