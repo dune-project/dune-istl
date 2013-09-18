@@ -316,12 +316,12 @@ namespace Dune
     typedef BCRSMatrix<FieldMatrix<B,n,m> ,TA> Matrix;
     typedef typename Matrix::size_type size_type;
 
-    static size_type rowdim (const Matrix& A, size_type i)
+    static size_type rowdim (const Matrix& /*A*/, size_type /*i*/)
     {
       return n;
     }
 
-    static size_type coldim (const Matrix& A, size_type c)
+    static size_type coldim (const Matrix& /*A*/, size_type /*c*/)
     {
       return m;
     }
@@ -341,22 +341,22 @@ namespace Dune
     typedef FieldMatrix<K,n,m> Matrix;
     typedef typename Matrix::size_type size_type;
 
-    static size_type rowdim(const Matrix& A, size_type r)
+    static size_type rowdim(const Matrix& /*A*/, size_type /*r*/)
     {
       return 1;
     }
 
-    static size_type coldim(const Matrix& A, size_type r)
+    static size_type coldim(const Matrix& /*A*/, size_type /*r*/)
     {
       return 1;
     }
 
-    static size_type rowdim(const Matrix& A)
+    static size_type rowdim(const Matrix& /*A*/)
     {
       return n;
     }
 
-    static size_type coldim(const Matrix& A)
+    static size_type coldim(const Matrix& /*A*/)
     {
       return m;
     }
@@ -368,12 +368,12 @@ namespace Dune
     typedef Matrix<FieldMatrix<K,n,m>, TA> ThisMatrix;
     typedef typename ThisMatrix::size_type size_type;
 
-    static size_type rowdim(const ThisMatrix& A, size_type r)
+    static size_type rowdim(const ThisMatrix& /*A*/, size_type /*r*/)
     {
       return n;
     }
 
-    static size_type coldim(const ThisMatrix& A, size_type r)
+    static size_type coldim(const ThisMatrix& /*A*/, size_type /*r*/)
     {
       return m;
     }
@@ -395,22 +395,22 @@ namespace Dune
     typedef DiagonalMatrix<K,n> Matrix;
     typedef typename Matrix::size_type size_type;
 
-    static size_type rowdim(const Matrix& A, size_type r)
+    static size_type rowdim(const Matrix& /*A*/, size_type /*r*/)
     {
       return 1;
     }
 
-    static size_type coldim(const Matrix& A, size_type r)
+    static size_type coldim(const Matrix& /*A*/, size_type /*r*/)
     {
       return 1;
     }
 
-    static size_type rowdim(const Matrix& A)
+    static size_type rowdim(const Matrix& /*A*/)
     {
       return n;
     }
 
-    static size_type coldim(const Matrix& A)
+    static size_type coldim(const Matrix& /*A*/)
     {
       return n;
     }
@@ -422,22 +422,22 @@ namespace Dune
     typedef ScaledIdentityMatrix<K,n> Matrix;
     typedef typename Matrix::size_type size_type;
 
-    static size_type rowdim(const Matrix& A, size_type r)
+    static size_type rowdim(const Matrix& /*A*/, size_type /*r*/)
     {
       return 1;
     }
 
-    static size_type coldim(const Matrix& A, size_type r)
+    static size_type coldim(const Matrix& /*A*/, size_type /*r*/)
     {
       return 1;
     }
 
-    static size_type rowdim(const Matrix& A)
+    static size_type rowdim(const Matrix& /*A*/)
     {
       return n;
     }
 
-    static size_type coldim(const Matrix& A)
+    static size_type coldim(const Matrix& /*A*/)
     {
       return n;
     }
