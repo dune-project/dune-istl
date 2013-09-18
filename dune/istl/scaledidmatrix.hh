@@ -443,13 +443,13 @@ namespace Dune {
     }
 
     //! Get const reference to diagonal entry
-    const K& diagonal(size_type i) const
+    const K& diagonal(size_type /*i*/) const
     {
       return p_;
     }
 
     //! Get reference to diagonal entry
-    K& diagonal(size_type i)
+    K& diagonal(size_type /*i*/)
     {
       return p_;
     }

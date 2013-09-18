@@ -121,12 +121,12 @@ namespace Dune {
   template<>
   struct algmeta_btsolve<0,withdiag,norelax> {
     template<class M, class X, class Y, class K>
-    static void bltsolve (const M& A, X& v, const Y& d, const K& w)
+    static void bltsolve (const M& A, X& v, const Y& d, const K& /*w*/)
     {
       A.solve(v,d);
     }
     template<class M, class X, class Y, class K>
-    static void butsolve (const M& A, X& v, const Y& d, const K& w)
+    static void butsolve (const M& A, X& v, const Y& d, const K& /*w*/)
     {
       A.solve(v,d);
     }
@@ -134,13 +134,13 @@ namespace Dune {
   template<>
   struct algmeta_btsolve<0,nodiag,withrelax> {
     template<class M, class X, class Y, class K>
-    static void bltsolve (const M& A, X& v, const Y& d, const K& w)
+    static void bltsolve (const M& /*A*/, X& v, const Y& d, const K& w)
     {
       v = d;
       v *= w;
     }
     template<class M, class X, class Y, class K>
-    static void butsolve (const M& A, X& v, const Y& d, const K& w)
+    static void butsolve (const M& /*A*/, X& v, const Y& d, const K& w)
     {
       v = d;
       v *= w;
@@ -149,12 +149,12 @@ namespace Dune {
   template<>
   struct algmeta_btsolve<0,nodiag,norelax> {
     template<class M, class X, class Y, class K>
-    static void bltsolve (const M& A, X& v, const Y& d, const K& w)
+    static void bltsolve (const M& /*A*/, X& v, const Y& d, const K& /*w*/)
     {
       v = d;
     }
     template<class M, class X, class Y, class K>
-    static void butsolve (const M& A, X& v, const Y& d, const K& w)
+    static void butsolve (const M& /*A*/, X& v, const Y& d, const K& /*w*/)
     {
       v = d;
     }
@@ -223,27 +223,27 @@ namespace Dune {
 
   //! block lower triangular solve
   template<class M, class X, class Y, int l>
-  void bltsolve (const M& A, X& v, const Y& d, BL<l> bl)
+  void bltsolve (const M& A, X& v, const Y& d, BL<l> /*bl*/)
   {
     typename X::field_type w=1;
     algmeta_btsolve<l,withdiag,norelax>::bltsolve(A,v,d,w);
   }
   //! relaxed block lower triangular solve
   template<class M, class X, class Y, class K, int l>
-  void bltsolve (const M& A, X& v, const Y& d, const K& w, BL<l> bl)
+  void bltsolve (const M& A, X& v, const Y& d, const K& w, BL<l> /*bl*/)
   {
     algmeta_btsolve<l,withdiag,withrelax>::bltsolve(A,v,d,w);
   }
   //! unit block lower triangular solve
   template<class M, class X, class Y, int l>
-  void ubltsolve (const M& A, X& v, const Y& d, BL<l> bl)
+  void ubltsolve (const M& A, X& v, const Y& d, BL<l> /*bl*/)
   {
     typename X::field_type w=1;
     algmeta_btsolve<l,nodiag,norelax>::bltsolve(A,v,d,w);
   }
   //! relaxed unit block lower triangular solve
   template<class M, class X, class Y, class K, int l>
-  void ubltsolve (const M& A, X& v, const Y& d, const K& w, BL<l> bl)
+  void ubltsolve (const M& A, X& v, const Y& d, const K& w, BL<l> /*bl*/)
   {
     algmeta_btsolve<l,nodiag,withrelax>::bltsolve(A,v,d,w);
   }
@@ -317,7 +317,7 @@ namespace Dune {
   template<>
   struct algmeta_bdsolve<0,norelax> {
     template<class M, class X, class Y, class K>
-    static void bdsolve (const M& A, X& v, const Y& d, const K& w)
+    static void bdsolve (const M& A, X& v, const Y& d, const K& /*w*/)
     {
       A.solve(v,d);
     }
@@ -345,14 +345,14 @@ namespace Dune {
 
   //! block diagonal solve, no relaxation
   template<class M, class X, class Y, int l>
-  void bdsolve (const M& A, X& v, const Y& d, BL<l> bl)
+  void bdsolve (const M& A, X& v, const Y& d, BL<l> /*bl*/)
   {
     typename X::field_type w=1;
     algmeta_bdsolve<l,norelax>::bdsolve(A,v,d,w);
   }
   //! block diagonal solve, with relaxation
   template<class M, class X, class Y, class K, int l>
-  void bdsolve (const M& A, X& v, const Y& d, const K& w, BL<l> bl)
+  void bdsolve (const M& A, X& v, const Y& d, const K& w, BL<l> /*bl*/)
   {
     algmeta_bdsolve<l,withrelax>::bdsolve(A,v,d,w);
   }
@@ -571,22 +571,22 @@ namespace Dune {
   template<>
   struct algmeta_itsteps<0> {
     template<class M, class X, class Y, class K>
-    static void dbgs (const M& A, X& x, const Y& b, const K& w)
+    static void dbgs (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
     template<class M, class X, class Y, class K>
-    static void bsorf (const M& A, X& x, const Y& b, const K& w)
+    static void bsorf (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
     template<class M, class X, class Y, class K>
-    static void bsorb (const M& A, X& x, const Y& b, const K& w)
+    static void bsorb (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
     template<class M, class X, class Y, class K>
-    static void dbjac (const M& A, X& x, const Y& b, const K& w)
+    static void dbjac (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
@@ -603,7 +603,7 @@ namespace Dune {
   }
   //! GS step
   template<class M, class X, class Y, class K, int l>
-  void dbgs (const M& A, X& x, const Y& b, const K& w, BL<l> bl)
+  void dbgs (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
     algmeta_itsteps<l>::dbgs(A,x,b,w);
   }
@@ -615,7 +615,7 @@ namespace Dune {
   }
   //! SOR step
   template<class M, class X, class Y, class K, int l>
-  void bsorf (const M& A, X& x, const Y& b, const K& w, BL<l> bl)
+  void bsorf (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
     algmeta_itsteps<l>::bsorf(A,x,b,w);
   }
@@ -627,7 +627,7 @@ namespace Dune {
   }
   //! SSOR step
   template<class M, class X, class Y, class K, int l>
-  void bsorb (const M& A, X& x, const Y& b, const K& w, BL<l> bl)
+  void bsorb (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
     algmeta_itsteps<l>::bsorb(A,x,b,w);
   }
@@ -639,7 +639,7 @@ namespace Dune {
   }
   //! Jacobi step
   template<class M, class X, class Y, class K, int l>
-  void dbjac (const M& A, X& x, const Y& b, const K& w, BL<l> bl)
+  void dbjac (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
     algmeta_itsteps<l>::dbjac(A,x,b,w);
   }
