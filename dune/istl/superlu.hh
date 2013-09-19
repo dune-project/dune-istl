@@ -83,8 +83,8 @@ namespace Dune
   template<class M, class T, class TM, class TD, class TA>
   class SeqOverlappingSchwarz;
 
-  template<class T>
-  struct SeqOverlappingSchwarzAssembler;
+  template<class T, bool tag>
+  struct SeqOverlappingSchwarzAssemblerHelper;
 
   template<class T>
   struct SuperLUSolveChooser
@@ -285,10 +285,13 @@ namespace Dune
               typename A::template rebind<FieldVector<T,n> >::other> >
   {
   public:
-    /* @brief The matrix type. */
+    /** @brief The matrix type. */
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    /* @brief The corresponding SuperLU Matrix type.*/
+    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
+    /** @brief The corresponding SuperLU Matrix type.*/
     typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
+    /** @brief Type of an associated initializer class. */
+    typedef SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     typedef Dune::BlockVector<
         FieldVector<T,m>,
@@ -363,7 +366,7 @@ namespace Dune
     friend class std::mem_fun_ref_t<void,SuperLU>;
     template<class M,class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
-    friend struct SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>,true>;
 
     /** @brief computes the LU Decomposition */
     void decompose();
@@ -707,6 +710,12 @@ namespace Dune
   struct IsDirectSolver<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
   {
     enum { value=true};
+  };
+
+  template<typename T, typename A, int n, int m>
+  struct StoresColumnCompressed<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  {
+    enum { value = true };
   };
 }
 

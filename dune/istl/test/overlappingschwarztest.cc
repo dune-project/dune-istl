@@ -11,6 +11,8 @@
 #include <dune/common/sllist.hh>
 #include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/solvers.hh>
+#include<dune/istl/superlu.hh>
+#include<dune/istl/umfpack.hh>
 
 #include <iterator>
 
@@ -137,11 +139,20 @@ int main(int argc, char** argv)
   //  b=0;
   //  x=100;
   //  setBoundary(x,b,N);
-  //Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-  //    Dune::SuperLU<BCRSMat> > prec0(mat, domains, 1);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector> prec0(mat, domains, 1);
+#if HAVE_UMFPACK
+  std::cout << "Do testing with UMFPack" << std::endl;
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+      Dune::UMFPack<BCRSMat> > prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-2,100,2);
   solver0.apply(x,b, res);
+#endif
+#if HAVE_SUPERLU
+  std::cout << "Do testing with SuperLU" << std::endl;
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+      Dune::SuperLU<BCRSMat> > slu_prec0(mat, domains, 1);
+  Dune::LoopSolver<BVector> slu_solver(fop, slu_prec0, 1e-2,100,2);
+  slu_solver.apply(x,b, res);
+#endif
   return 0;
 
   std::cout<<"Additive Schwarz not on the fly (domains vector)"<<std::endl;
