@@ -270,10 +270,15 @@ namespace Dune {
           iteration_range(),
           [&](const range_type& r)
           {
-            value_type* __restrict__  a = _data;
-            typename Vector<OF,OA,Domain>::value_type* __restrict__  b = other._data;
-            for (size_type i = r.begin(), end = r.end(); i != end; ++i)
-              a[i] -= b[i];
+            Kernel::vec::blocked::subtract<
+              value_type,
+              OF,
+              size_type,
+              alignment,
+              block_size>(
+                _data+r.begin(),
+                other._data+r.begin(),
+                r.block_count());
           });
         return *this;
       }
