@@ -14,7 +14,6 @@
 #include "owneroverlapcopy.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/tuples.hh>
-#include <dune/common/misc.hh>
 
 namespace Dune
 {
