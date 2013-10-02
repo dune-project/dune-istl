@@ -136,8 +136,8 @@ int main(int argc, char** argv)
 
   std::cout<<"Additive Schwarz (domains vector)"<<std::endl;
 
-  //  b=0;
-  //  x=100;
+  b=0;
+  x=100;
   //  setBoundary(x,b,N);
 #if HAVE_UMFPACK
   std::cout << "Do testing with UMFPack" << std::endl;
@@ -153,8 +153,14 @@ int main(int argc, char** argv)
   Dune::LoopSolver<BVector> slu_solver(fop, slu_prec0, 1e-2,100,2);
   slu_solver.apply(x,b, res);
 #endif
-  return 0;
+  x=100;
+  b=0;
 
+  std::cout << "Do testing with DynamicMatrixSubdomainSolver" << std::endl;
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> > dyn_prec0(mat, domains, 1);
+  Dune::LoopSolver<BVector> dyn_solver(fop, dyn_prec0, 1e-2,100,2);
+  dyn_solver.apply(x,b, res);
   std::cout<<"Additive Schwarz not on the fly (domains vector)"<<std::endl;
 
   b=0;
