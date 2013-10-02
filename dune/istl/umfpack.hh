@@ -199,8 +199,9 @@ namespace Dune {
     /** @brief construct a solver object from a BCRSMatrix
      *  @param mat_ the matrix to solve for
      *  @param verbose [0..2] set the verbosity level, defaults to 0
+     *  third param for compatibility with SuperLU constructor calls.
      */
-    UMFPack(const Matrix& mat_, int verbose=0)
+    UMFPack(const Matrix& mat_, int verbose=0, bool)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
