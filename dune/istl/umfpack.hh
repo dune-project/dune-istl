@@ -210,6 +210,15 @@ namespace Dune {
       setMatrix(mat_);
     }
 
+    /** @brief Constructor for compatibility with SuperLU standard constructor
+     * @param mat_ the matrix to solve for
+     * @param verbose [0..2] set the verbosity level, defaults to 0
+     */
+    UMFPack(const Matrix& mat_, int verbose, bool)
+    {
+      UMFPack(mat_,verbose);
+    }
+
     /** @brief default constructor
      */
     UMFPack() : verbose(0)
