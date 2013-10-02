@@ -18,14 +18,16 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
+  # test: pthreadamgtest
   add_executable(pthreadamgtest pthreadamgtest.cc)
   set_property(TARGET pthreadamgtest APPEND PROPERTY
     COMPILE_DEFINITIONS "MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>")
   target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  # test: pthreadfastamgtest
   add_executable(pthreadfastamgtest pthreadamgtest.cc)
   set_property(TARGET pthreadfastamgtest APPEND PROPERTY
     COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
-  target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  target_link_libraries(pthreadfastamgtest "${CMAKE_THREAD_LIBS_INIT}")
 endif(CMAKE_USE_PTHREADS_INIT)
 
 add_executable(amgtest "amgtest.cc")
