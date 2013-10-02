@@ -6,11 +6,10 @@
 #include <dune/istl/operators.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <laplacian.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/sllist.hh>
 #include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/solvers.hh>
+#include "laplacian.hh"
 
 #include <iterator>
 
