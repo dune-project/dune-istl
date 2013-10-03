@@ -216,7 +216,12 @@ namespace Dune {
      */
     UMFPack(const Matrix& mat_, int verbose, bool)
     {
-      UMFPack(mat_,verbose);
+      //check whether T is a supported type
+      static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
+                    "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
+      Caller::defaults(UMF_Control);
+      setVerbosity(verbose);
+      setMatrix(mat_);
     }
 
     /** @brief default constructor
