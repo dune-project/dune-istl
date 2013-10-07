@@ -24,6 +24,8 @@ AC_CONFIG_FILES([Makefile
     doc/doxygen/Makefile
     doc/doxygen/Doxyfile
     doc/Makefile
+    dune/istl/blockvector/Makefile
+    dune/istl/blockvector/host/Makefile
     dune/istl/ellmatrix/Makefile
     dune/istl/paamg/test/Makefile
     dune/istl/paamg/Makefile

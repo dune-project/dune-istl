@@ -1,6 +1,12 @@
 # $Id$
 
-SUBDIRS = . tutorial test paamg ellmatrix vector
+SUBDIRS =					\
+  blockvector					\
+  ellmatrix					\
+  paamg						\
+  vector					\
+  test						\
+  tutorial
 
 istldir = $(includedir)/dune/istl
 istl_HEADERS = basearray.hh \
