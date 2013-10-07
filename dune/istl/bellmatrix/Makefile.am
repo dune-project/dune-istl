@@ -1,6 +1,3 @@
-SUBDIRS =					\
-  host
-
 bellmatrixdir = $(includedir)/dune/istl/bellmatrix
 bellmatrix_HEADERS =				\
   host.hh
