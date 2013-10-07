@@ -50,7 +50,7 @@ namespace Dune {
       typedef value_type* iterator;
       typedef const value_type* const_iterator;
 
-      static const size_type block_size = Allocator::block_size;
+      static const size_type kernel_block_size = Allocator::block_size;
       static const size_type alignment = Allocator::alignment;
       static const size_type minimum_chunk_size = Allocator::minimum_chunk_size;
 
@@ -245,7 +245,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -272,7 +272,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -291,7 +291,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 b,
                 r.block_count());
@@ -319,7 +319,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -338,7 +338,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 b,
                 r.block_count());
@@ -362,7 +362,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 b,
                 r.block_count());
@@ -396,7 +396,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 a,
                 other._data+r.begin(),
@@ -426,7 +426,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -445,7 +445,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 r.block_count());
           },
@@ -468,7 +468,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 r.block_count());
           },
@@ -488,7 +488,7 @@ namespace Dune {
                 value_type,
                 size_type,
                 alignment,
-                block_size>(
+                kernel_block_size>(
                   _data+r.begin(),
                   r.block_count())
               );
@@ -522,7 +522,7 @@ namespace Dune {
 
       range_type iteration_range() const
       {
-        return range_type(0,_size,block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/block_size);
+        return range_type(0,_size,kernel_block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/kernel_block_size);
       }
 
       void deallocate()
