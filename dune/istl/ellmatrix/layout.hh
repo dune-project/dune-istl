@@ -220,6 +220,11 @@ namespace Dune {
       Layout()
       {}
 
+      Allocator& allocator() const
+      {
+        return _data->_allocator;
+      }
+
     private:
 
       Layout(shared_ptr<Data> data)
