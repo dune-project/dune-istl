@@ -1,5 +1,5 @@
-blockvectorhostdir = $(includedir)/dune/istl/blockvector/host
-blockvector_HEADERS =				\
+hostdir = $(includedir)/dune/istl/blockvector/host
+host_HEADERS =				\
   block.hh
 
 include $(top_srcdir)/am/global-rules
