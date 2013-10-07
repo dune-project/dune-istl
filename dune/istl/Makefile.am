@@ -1,6 +1,7 @@
 # $Id$
 
 SUBDIRS =					\
+  bellmatrix					\
   blockvector					\
   ellmatrix					\
   paamg						\

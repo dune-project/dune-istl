@@ -1,3 +1,4 @@
+add_subdirectory("bellmatrix")
 add_subdirectory("blockvector")
 add_subdirectory("ellmatrix")
 add_subdirectory("paamg")
