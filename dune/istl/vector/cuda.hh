@@ -4,19 +4,19 @@
 #ifndef DUNE_ISTL_VECTOR_CUDA_HH
 #define DUNE_ISTL_VECTOR_CUDA_HH
 
-#if 0
-
 #include <cmath>
-#include <complex>
 #include <memory>
 #include <limits>
+#include <type_traits>
+#include <algorithm>
+#include <functional>
 
 #include <dune/common/static_assert.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
-
-#include "istlexception.hh"
-#include "basearray.hh"
+#include <dune/istl/vector/cuda_backend.hh>
+#include <dune/istl/vector/cuda_kernels.hh>
 
 namespace Dune {
   namespace ISTL {
@@ -24,103 +24,339 @@ namespace Dune {
     template<typename F_, typename A_>
     class Vector
     {
+      public:
+      typedef F_& Field;
+      typedef F_ DataType;
+      typedef F_ value_type;
+
+      // typedef F_::DataType DataType;
+      typedef F_ DT_;
+
+      typedef typename A_::template rebind<F_>::other Allocator;
+      typedef Allocator allocator_type;
+      typedef typename A_::size_type size_type;
+      typedef value_type* iterator;
+      typedef const value_type* const_iterator;
+
       private:
-        size_type _size;
+      size_type _size;
+      Allocator _allocator;
+      value_type* _data;
 
       public:
-        typedef F_ Field;
-        typedef F_::DataType DataType;
-        typedef A_ Allocator;
-        typedef A_ allocator_type;
-        typedef A_::size_type size_type;
-        typedef ... iterator;
-        typedef ... const_iterator;
 
-        Vector() :
-          _size(0)
+      Vector()
+        : _size(0)
+        , _data(nullptr)
+      {}
+
+       explicit Vector(size_type size)
+        : _size(0)
+        , _data(nullptr)
+      {
+        allocate(size);
+      }
+
+      Vector(const Vector & other)
+        : _size(0)
+        , _data(nullptr)
+      {
+        allocate(other._size, false);
+        Cuda::copy(_data, other._data, _size);
+      }
+
+      Vector(Vector && other)
+        : _size(other._size)
+        , _allocator(std::move(other._allocator))
+        , _data(other._data)
+      {
+        other._data = nullptr;
+        other._size = 0;
+      }
+
+      size_type size() const
+      {
+        return _size;
+      }
+
+      Vector & operator= (const Vector & other)
+      {
+        if (_size == other._size)
         {
-          //TODO
+          Cuda::copy(_data, other._data, _size);
         }
-
-        Vector(size_type size) :
-          _size(size)
+        else
         {
-          //TODO
+          if (_data)
+            deallocate();
+          _allocator = other._allocator;
+          if (other._size == 0)
+            return *this;
+          allocate(other._size ,false);
+          Cuda::copy(_data, other._data, _size);
         }
+        return *this;
+      }
 
-        Vector(const Vector & other) :
-          _size(other._size)
+      Vector & operator= (Vector && other)
+      {
+        if (_data)
+          deallocate();
+        _size = other._size;
+        _allocator = std::move(other._allocator);
+        _data = other._data;
+        other._data = nullptr;
+        other._size = 0;
+      }
+
+      template <typename B_>
+      Vector & operator= (const Vector & other)
+      {
+        if (_size == other._size)
         {
-          //TODO
+          Cuda::copy(_data, other._data, _size);
         }
-
-        Vector(Vector && other) :
-          _size(other._size)
+        else
         {
-          //TODO
+          if (_data)
+            deallocate();
+          _allocator = other._allocator;
+          if (other._size == 0)
+            return *this;
+          allocate(other._size ,false);
+          Cuda::copy(_data, other._data, _size);
         }
+        return *this;
+      }
 
-        size_type size() const
+      /*Field operator[] (size_type i)
+      {
+        DUNE_THROW(Exception,"not implemented");
+        return _data[i];
+      }*/
+
+      const DataType operator[] (size_type i) const
+      {
+        return Cuda::get(_data + i);
+      }
+
+      const DataType operator() (size_type i) const
+      {
+        return Cuda::get(_data + i);
+      }
+
+      void operator() (size_type i, DataType val)
+      {
+        Cuda::set(_data + i, val);
+      }
+
+      template<typename Indices>
+      void read(const Indices& indices, DT_ * values) const
+      {
+        DT_ * temp = new DT_[_size];
+        Cuda::download(temp, _data, _size * sizeof(DT_));
+        for (size_type i = 0, end = indices.size(); i != end; ++i)
+           values[i] = temp[indices[i]];
+        delete[] temp;
+      }
+
+      template<typename Indices, typename Values>
+      void write(const Indices& indices, const Values& values)
+      {
+        DT_ * temp = new DT_[_size];
+        Cuda::download(temp, _data, _size * sizeof(DT_));
+        for (size_type i = 0, end = indices.size(); i != end; ++i)
+          temp[indices[i]] = values[i];
+        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        delete[] temp;
+      }
+
+      template<typename Indices, typename Values>
+      void accumulate(const Indices& indices, const Values& values)
+      {
+        DT_ * temp = new DT_[_size];
+        Cuda::download(temp, _data, _size * sizeof(DT_));
+        for (size_type i = 0, end = indices.size(); i != end; ++i)
+          temp[indices[i]] += values[i];
+        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        delete[] temp;
+      }
+
+      template<typename Values>
+      void read(size_type offset, size_type count, Values& values) const
+      {
+        DT_ * temp = new DT_[_size];
+        Cuda::download(temp, _data, _size * sizeof(DT_));
+        for (size_type i = 0, o = offset; i != count; ++i, ++o)
+          values[i] = temp[o];
+        delete[] temp;
+      }
+
+      template<typename Values>
+      void write(size_type offset, size_type count, const Values& values)
+      {
+        DT_ * temp = new DT_[_size];
+        Cuda::download(temp, _data, _size * sizeof(DT_));
+        for (size_type i = 0, o = offset; i != count; ++i, ++o)
+          temp[o] = values[i];
+        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        delete[] temp;
+      }
+
+      template<typename Values>
+      void accumulate(size_type offset, size_type count, const Values& values)
+      {
+        DT_ * temp = new DT_[_size];
+        Cuda::download(temp, _data, _size * sizeof(DT_));
+        for (size_type i = 0, o = offset; i != count; ++i, ++o)
+          temp[o] += values[i];
+        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        delete[] temp;
+      }
+
+      iterator begin()
+      {
+        return _data;
+      }
+
+      iterator end()
+      {
+        return _data + _size;
+      }
+
+      const_iterator begin() const
+      {
+        return _data;
+      }
+
+      const_iterator end() const
+      {
+        return _data + _size;
+      }
+
+      //TODO size checks
+      Vector & operator+=(const Vector & b)
+      {
+        Cuda::sum(_data, _data, b.begin(), _size);
+        return *this;
+      }
+
+      Vector & operator-=(const Vector & b)
+      {
+        Cuda::difference(_data, _data, b.begin(), _size);
+        return *this;
+      }
+
+      Vector & operator*=(const Vector & b)
+      {
+        Cuda::element_product(_data, _data, b.begin(), _size);
+        return *this;
+      }
+
+      Vector & operator/=(const Vector & b)
+      {
+        Cuda::element_division(_data, _data, b.begin(), _size);
+        return *this;
+      }
+
+      Vector & operator+=(value_type b)
+      {
+        Cuda::sum_scalar(_data, _data, b, _size);
+        return *this;
+      }
+
+      Vector & operator-=(value_type b)
+      {
+        Cuda::difference_scalar(_data, _data, b, _size);
+        return *this;
+      }
+
+      Vector & operator*=(value_type b)
+      {
+        Cuda::product_scalar(_data, _data, b, _size);
+        return *this;
+      }
+
+      Vector & operator/=(value_type b)
+      {
+        Cuda::division_scalar(_data, _data, b, _size);
+        return *this;
+      }
+
+      Vector & axpy(value_type a, const Vector & b)
+      {
+        Cuda::axpy(_data, _data, a, b.begin(), _size);
+        return *this;
+      }
+
+      value_type dot(const Vector & b) const
+      {
+        return Cuda::dot(_data, b.begin(), _size);
+      }
+
+      value_type two_norm2() const
+      {
+        DT_ r(Cuda::two_norm2(_data, _size));
+        return r*r;
+      }
+
+      value_type two_norm() const
+      {
+        return Cuda::two_norm2(_data, _size);
+      }
+
+      value_type one_norm() const
+      {
+        return Cuda::one_norm(_data, _size);
+      }
+
+      value_type infinity_norm() const
+      {
+        return Cuda::infinity_norm(_data, _size);
+      }
+
+      void setSize(size_type size)
+      {
+        if (_data)
+          DUNE_THROW(NotImplemented,"not allowed");
+        allocate(size);
+      }
+
+      ~Vector()
+      {
+        deallocate();
+      }
+
+      private:
+      void deallocate()
+      {
+        if (_data)
         {
-          return _size;
+          if (!std::is_trivial<value_type>::value)
+          {
+            DUNE_THROW(NotImplemented, "do not use non trivial types with cuda!");
+          }
+          _allocator.deallocate(_data,_size);
+          _data = nullptr;
+          _size = 0;
         }
+      }
 
-        Vector & operator= (const Vector & other)
+      void allocate(size_type size, bool init = true)
+      {
+        if (_data)
+          DUNE_THROW(NotImplemented,"do not reallocate memory");
+        _data = _allocator.allocate(size);
+        if (!_data)
+          DUNE_THROW(Exception,"could not allocate memory");
+        _size = size;
+        if (init && !std::is_trivial<value_type>::value)
         {
+          DUNE_THROW(NotImplemented, "do not use non trivial types with cuda!");
         }
-
-        Vector & operator= (Vector && other)
-        {
-        }
-
-        Field operator[] (size_type i)
-        {
-          return _data[i]
-        }
-
-        const Field operator[] (size_type i) const
-        {
-          return _data[i]
-        }
-
-        write(indices, values)
-        {
-        }
-
-        read(indices, values)
-        {
-        }
-
-        accumulate(indices, values)
-        {
-        }
-
-        write(offset, count, values);
-        read(offset, count, values);
-        accumulate(offset, count, values);
-
-        iterator begin()
-        const_iterator begin() const
-        iterator end()
-        const_iterator end() const
-
-        scale
-        axpy
-        dot
-        normen
-
-        setSize(size_type size)
-        {
-          if _size != 0 throw exception
-          alloc(size)
-        }
-
+      }
     };
-
-
-  } // end namespace istl
-} // end namespace dune
-
-#endif // 0
+  } // end namespace ISTL
+} // end namespace Dune
 
 #endif // DUNE_ISTL_VECTOR_CUDA_HH
