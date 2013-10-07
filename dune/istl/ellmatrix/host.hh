@@ -27,17 +27,12 @@
 
 #include <dune/common/threads/range.hh>
 
+#include <dune/istl/forwarddeclarations.hh>
 #include <dune/istl/ellmatrix/layout.hh>
 #include <dune/istl/ellmatrix/iterator.hh>
 
 namespace Dune {
   namespace ISTL {
-
-#if !defined DUNE_ISTL_ELLMATRIX_DECLARED
-    template<typename F_, typename A_, typename D_ = typename Memory::allocator_domain<A_>::type>
-    class ELLMatrix;
-#define DUNE_ISTL_ELLMATRIX_DECLARED 1
-#endif
 
     template<typename F_, typename A_>
     class ELLMatrix<F_,A_,Memory::Domain::Host>
@@ -775,4 +770,4 @@ namespace Dune {
   } // end namespace ISTL
 } // end namespace Dune
 
-#endif // DUNE_ISTL_VECTOR_HOST_HH
+#endif // DUNE_ISTL_ELLMATRIX_HOST_HH

@@ -10,6 +10,7 @@ istl_HEADERS = basearray.hh \
 	bvector.hh \
 	diagonalmatrix.hh \
 	ellmatrix.hh \
+	forwarddeclarations.hh \
 	gsetc.hh \
 	ilu.hh \
 	ilusubdomainsolver.hh \

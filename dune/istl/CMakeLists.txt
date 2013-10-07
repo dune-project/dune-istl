@@ -13,6 +13,7 @@ install(FILES
    bvector.hh
    diagonalmatrix.hh
    ellmatrix.hh
+   forwarddeclarations.hh
    gsetc.hh
    ilu.hh
    ilusubdomainsolver.hh

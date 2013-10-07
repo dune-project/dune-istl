@@ -19,19 +19,16 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
-#include <dune/common/memory/domain.hh>
 #include <dune/common/memory/alignment.hh>
 #include <dune/common/memory/traits.hh>
 #include <dune/common/kernel/vec.hh>
 
 #include <dune/common/threads/range.hh>
 
+#include <dune/istl/forwarddeclarations.hh>
+
 namespace Dune {
   namespace ISTL {
-
-    template<typename F_, typename A_, typename D_ = typename Memory::allocator_domain<A_>::type>
-    class Vector;
-
 
     template<typename F_, typename A_>
     class Vector<F_,A_,Memory::Domain::Host>
