@@ -30,6 +30,7 @@ AC_CONFIG_FILES([Makefile
     dune/istl/ellmatrix/Makefile
     dune/istl/paamg/test/Makefile
     dune/istl/paamg/Makefile
+    dune/istl/preconditioners/Makefile
     dune/istl/tutorial/Makefile
     dune/istl/test/Makefile
     dune/istl/vector/Makefile

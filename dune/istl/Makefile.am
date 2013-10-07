@@ -5,6 +5,7 @@ SUBDIRS =					\
   blockvector					\
   ellmatrix					\
   paamg						\
+  preconditioners				\
   vector					\
   test						\
   tutorial
