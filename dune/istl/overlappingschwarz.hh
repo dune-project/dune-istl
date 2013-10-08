@@ -11,6 +11,7 @@
 #include <dune/common/sllist.hh>
 #include "preconditioners.hh"
 #include "superlu.hh"
+#include "umfpack.hh"
 #include "bvector.hh"
 #include "bcrsmatrix.hh"
 #include "ilusubdomainsolver.hh"
@@ -308,7 +309,7 @@ namespace Dune
     std::size_t maxlength_;
   };
 
-#if HAVE_SUPERLU
+#if HAVE_SUPERLU || HAVE_UMFPACK
   template<template<class> class S, int n, int m, typename T, typename A>
   struct OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>, A> >, true>
   {
@@ -1131,7 +1132,7 @@ namespace Dune
     return maxlength;
   }
 
-#if HAVE_SUPERLU
+#if HAVE_SUPERLU || HAVE_UMFPACK
   template<template<class> class S, typename T, typename A, int m, int n>
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t SeqOverlappingSchwarzAssemblerHelper<S<BCRSMatrix<FieldMatrix<T,m,n>,A> >,true>::assembleLocalProblems(const RowToDomain& rowToDomain,
@@ -1382,7 +1383,7 @@ namespace Dune
     }
   }
 
-#if HAVE_SUPERLU
+#if HAVE_SUPERLU || HAVE_UMFPACK
 
   template<template<class> class S, int n, int m, typename T, typename A>
   OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>
