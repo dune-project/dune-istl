@@ -281,7 +281,7 @@ namespace Dune {
       setVerbosity(verbose);
     }
 
-    ~UMFPack()
+    virtual ~UMFPack()
     {
       if (mat.N() + mat.M() > 0)
       free();
@@ -290,7 +290,7 @@ namespace Dune {
     /**
      *  \copydoc InverseOperator::apply(X&, Y&, InverserOperatorResult&)
      */
-    void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
+    virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
       double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
@@ -313,7 +313,7 @@ namespace Dune {
     /**
      *  \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
       apply(x,b,res);
     }
