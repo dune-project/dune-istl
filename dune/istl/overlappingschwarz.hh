@@ -857,15 +857,6 @@ namespace Dune
     template<bool forward>
     void apply(X& v, const X& d);
 
-    /*!
-       \brief Clean up.
-
-       \copydoc Preconditioner::post(X&)
-     */
-    virtual void post (X& x) {
-      Dune::dverb<<" avg nnz over subdomain is "<<nnz<<std::endl;
-    }
-
   private:
     const M& mat;
     slu_vector solvers;
@@ -873,7 +864,6 @@ namespace Dune
     field_type relax;
 
     typename M::size_type maxlength;
-    std::size_t nnz;
 
     bool onTheFly;
   };
@@ -1242,8 +1232,6 @@ namespace Dune
     typedef typename AdderSelector<TM,X,TD >::Adder Adder;
     Adder adder(v, x, assigner, relax);
 
-    nnz=0;
-    std::size_t no=0;
     for(; domain != IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::end(subDomains); ++domain) {
       //Copy rhs to C-array for SuperLU
       std::for_each(domain->begin(), domain->end(), assigner);
@@ -1254,19 +1242,16 @@ namespace Dune
         sdsolver.setSubMatrix(mat, *domain);
         // Apply
         sdsolver.apply(assigner.lhs(), assigner.rhs());
-        //nnz+=sdsolver.nnz();
       }else{
         solver->apply(assigner.lhs(), assigner.rhs());
-        //nnz+=solver->nnz();
         ++solver;
       }
-      ++no;
+
       //Add relaxed correction to from SuperLU to v
       std::for_each(domain->begin(), domain->end(), adder);
       assigner.resetIndexForNextDomain();
 
     }
-    nnz/=no;
 
     adder.axpy();
     assigner.deallocate();
