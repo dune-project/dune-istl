@@ -292,6 +292,7 @@ namespace Dune {
      */
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
+      double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
                     mat.getColStart(),
                     mat.getRowIndex(),
@@ -300,13 +301,13 @@ namespace Dune {
                     reinterpret_cast<double*>(&b[0]),
                     UMF_Numeric,
                     UMF_Control,
-                    UMF_Info);
+                    UMF_Apply_Info);
 
       //this is a direct solver
       res.iterations = 1;
       res.converged = true;
 
-      printOnApply();
+      printOnApply(UMF_Apply_Info);
     }
 
     /**
@@ -324,6 +325,7 @@ namespace Dune {
      */
     void apply(T* x, T* b)
     {
+      double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
                     mat.getColStart(),
                     mat.getRowIndex(),
@@ -332,8 +334,8 @@ namespace Dune {
                     b,
                     UMF_Numeric,
                     UMF_Control,
-                    UMF_Info);
-      printOnApply();
+                    UMF_Apply_Info);
+      printOnApply(UMF_Apply_Info);
     }
 
     /** @brief saves a decomposition to a file
@@ -404,6 +406,7 @@ namespace Dune {
     /** @brief computes the LU Decomposition */
     void decompose()
     {
+      double UMF_Decomposition_Info[UMFPACK_INFO];
       Caller::symbolic(static_cast<int>(mat.N()),
                        static_cast<int>(mat.N()),
                        mat.getColStart(),
@@ -411,31 +414,31 @@ namespace Dune {
                        reinterpret_cast<double*>(mat.getValues()),
                        &UMF_Symbolic,
                        UMF_Control,
-                       UMF_Info);
+                       UMF_Decomposition_Info);
       Caller::numeric(mat.getColStart(),
                       mat.getRowIndex(),
                       reinterpret_cast<double*>(mat.getValues()),
                       UMF_Symbolic,
                       &UMF_Numeric,
                       UMF_Control,
-                      UMF_Info);
-      Caller::report_status(UMF_Control,UMF_Info[UMFPACK_STATUS]);
+                      UMF_Decomposition_Info);
+      Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
       if (verbose == 1)
       {
         std::cout << "[UMFPack Decomposition]" << std::endl;
-        std::cout << "Wallclock Time taken: " << UMF_Info[UMFPACK_NUMERIC_WALLTIME] << " (CPU Time: " << UMF_Info[UMFPACK_NUMERIC_TIME] << ")" << std::endl;
-        std::cout << "Flops taken: " << UMF_Info[UMFPACK_FLOPS] << std::endl;
-        std::cout << "Peak Memory Usage: " << UMF_Info[UMFPACK_PEAK_MEMORY]*UMF_Info[UMFPACK_SIZE_OF_UNIT] << " bytes" << std::endl;
-        std::cout << "Condition number estimate: " << 1./UMF_Info[UMFPACK_RCOND] << std::endl;
-        std::cout << "Numbers of non-zeroes in decomposition: L: " << UMF_Info[UMFPACK_LNZ] << " U: " << UMF_Info[UMFPACK_UNZ] << std::endl;
+        std::cout << "Wallclock Time taken: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_WALLTIME] << " (CPU Time: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_TIME] << ")" << std::endl;
+        std::cout << "Flops taken: " << UMF_Decomposition_Info[UMFPACK_FLOPS] << std::endl;
+        std::cout << "Peak Memory Usage: " << UMF_Decomposition_Info[UMFPACK_PEAK_MEMORY]*UMF_Decomposition_Info[UMFPACK_SIZE_OF_UNIT] << " bytes" << std::endl;
+        std::cout << "Condition number estimate: " << 1./UMF_Decomposition_Info[UMFPACK_RCOND] << std::endl;
+        std::cout << "Numbers of non-zeroes in decomposition: L: " << UMF_Decomposition_Info[UMFPACK_LNZ] << " U: " << UMF_Decomposition_Info[UMFPACK_UNZ] << std::endl;
       }
       if (verbose == 2)
       {
-        Caller::report_info(UMF_Control,UMF_Info);
+        Caller::report_info(UMF_Control,UMF_Decomposition_Info);
       }
     }
 
-    void printOnApply()
+    void printOnApply(double* UMF_Info)
     {
       Caller::report_status(UMF_Control,UMF_Info[UMFPACK_STATUS]);
       if (verbose > 0)
@@ -452,7 +455,6 @@ namespace Dune {
     int verbose;
     void *UMF_Symbolic;
     void *UMF_Numeric;
-    double UMF_Info[UMFPACK_INFO];
     double UMF_Control[UMFPACK_CONTROL];
   };
 
