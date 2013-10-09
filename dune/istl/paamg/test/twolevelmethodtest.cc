@@ -8,6 +8,8 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
+#define NUM_THREADS 3
+
 template<class M, class V>
 void randomize(const M& mat, V& b)
 {
@@ -20,6 +22,70 @@ void randomize(const M& mat, V& b)
     *i=(rand() / (RAND_MAX + 1.0));
 
   mat.mv(static_cast<const V&>(x), b);
+}
+
+typedef double XREAL;
+typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
+typedef Dune::FieldMatrix<XREAL,1,1> MatrixBlock;
+typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
+typedef Dune::FieldVector<XREAL,1> VectorBlock;
+typedef Dune::BlockVector<VectorBlock> Vector;
+typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+typedef Dune::CollectiveCommunication<void*> Comm;
+typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+#ifndef USE_OVERLAPPINGSCHWARZ
+typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
+#else
+typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,
+                                        Dune::SymmetricMultiplicativeSchwarzMode> FSmoother;
+#endif
+typedef Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> AMG;
+
+
+
+struct thread_arg
+{
+  AMG *amg;
+  Vector *b;
+  Vector *x;
+  Operator *fop;
+};
+
+
+void *solve(void* arg)
+{
+  thread_arg *amgarg=(thread_arg*) arg;
+
+  Dune::GeneralizedPCGSolver<Vector> amgCG(*amgarg->fop,*amgarg->amg,1e-6,80,2);
+  //Dune::LoopSolver<Vector> amgCG(fop, amg, 1e-4, 10000, 2);
+  Dune::Timer watch;
+  Dune::InverseOperatorResult r;
+  amgCG.apply(*amgarg->x,*amgarg->b,r);
+
+  double solvetime = watch.elapsed();
+
+  std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
+
+  pthread_exit(NULL);
+}
+
+void *solve1(void* arg)
+{
+  thread_arg *amgarg=(thread_arg*) arg;
+  *amgarg->x=0;
+  (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
+  (*amgarg->amg).post(*amgarg->x);
+
+}
+
+void *solve2(void* arg)
+{
+  thread_arg *amgarg=(thread_arg*) arg;
+  *amgarg->x=0;
+  (*amgarg->amg).pre(*amgarg->x,*amgarg->b);
+  (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
+  (*amgarg->amg).post(*amgarg->x);
 }
 
 void testTwoLevelMethod()
@@ -42,13 +108,11 @@ void testTwoLevelMethod()
     randomize(mat, b);
 #ifndef USE_OVERLAPPINGSCHWARZ
     // Smoother used for the finest level
-    typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
     FSmoother fineSmoother(mat,1,1.0);
 #else
+    std::cout << "Use ovlps" << std::endl;
     // Smoother used for the finest level. There is an additional
     // template parameter to provide the subdomain solver.
-    typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,
-                                        Dune::SymmetricMultiplicativeSchwarzMode> FSmoother;
     // Type of the subdomain vector
     typedef FSmoother::subdomain_vector SubdomainVector;
     // Create subdomain.
@@ -85,7 +149,56 @@ void testTwoLevelMethod()
     Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,1e-8,80,2);
     Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> preconditioner1(preconditioner);
     Dune::InverseOperatorResult res;
-    amgCG.apply(x,b,res);
+
+  std::vector<AMG> amgs(NUM_THREADS, preconditioner1);
+  std::vector<thread_arg> args(NUM_THREADS);
+  std::vector<pthread_t> threads(NUM_THREADS);
+    std::vector<Vector> xs(NUM_THREADS, x);
+  std::vector<Vector> bs(NUM_THREADS, b);
+  for(int i=0; i < NUM_THREADS; ++i)
+  {
+    args[i].amg=&amgs[i];
+    args[i].b=&bs[i];
+    args[i].x=&xs[i];
+    args[i].fop=&fop;
+    pthread_create(&threads[i], NULL, solve, (void*) &args[i]);
+  }
+  void* retval;
+
+  for(int i=0; i < NUM_THREADS; ++i)
+    pthread_join(threads[i], &retval);
+
+  amgs.clear();
+  args.clear();
+  preconditioner.pre(x, b);
+  amgs.resize(NUM_THREADS, preconditioner);
+  for(int i=0; i < NUM_THREADS; ++i)
+  {
+    args[i].amg=&amgs[i];
+    args[i].b=&bs[i];
+    args[i].x=&xs[i];
+    args[i].fop=&fop;
+    pthread_create(&threads[i], NULL, solve1, (void*) &args[i]);
+  }
+  for(int i=0; i < NUM_THREADS; ++i)
+    pthread_join(threads[i], &retval);
+
+  amgs.clear();
+  args.clear();
+  preconditioner.pre(x, b);
+  amgs.resize(NUM_THREADS, preconditioner);
+  for(int i=0; i < NUM_THREADS; ++i)
+  {
+    args[i].amg=&amgs[i];
+    args[i].b=&bs[i];
+    args[i].x=&xs[i];
+    args[i].fop=&fop;
+    pthread_create(&threads[i], NULL, solve2, (void*) &args[i]);
+  }
+  for(int i=0; i < NUM_THREADS; ++i)
+    pthread_join(threads[i], &retval);
+
+//    amgCG.apply(x,b,res);
 }
 
 int main()
