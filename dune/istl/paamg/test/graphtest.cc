@@ -351,16 +351,16 @@ void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 {
   using Dune::remove_const;
   using Dune::is_same;
-  using Dune::SelectType;
+  using Dune::conditional;
 
   typedef typename remove_const<G>::type Mutable;
-  typedef typename SelectType<is_same<G,Mutable>::value,
+  typedef typename conditional<is_same<G,Mutable>::value,
       typename G::VertexIterator,
-      typename G::ConstVertexIterator>::Type VertexIterator;
+      typename G::ConstVertexIterator>::type VertexIterator;
 
-  typedef typename SelectType<is_same<G,Mutable>::value,
+  typedef typename conditional<is_same<G,Mutable>::value,
       typename G::EdgeIterator,
-      typename G::ConstEdgeIterator>::Type EdgeIterator;
+      typename G::ConstEdgeIterator>::type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
     const EdgeIterator endEdge = vertex.end();
     os<<"Edges starting from Vertex "<<*vertex<<" (weight="<<norm(vertex.weight());
@@ -377,16 +377,16 @@ void printPropertiesGraph(G& graph, std::ostream& os)
 {
   using Dune::remove_const;
   using Dune::is_same;
-  using Dune::SelectType;
+  using Dune::conditional;
 
   typedef typename remove_const<G>::type Mutable;
-  typedef typename SelectType<is_same<G,Mutable>::value,
+  typedef typename conditional<is_same<G,Mutable>::value,
       typename G::VertexIterator,
-      typename G::ConstVertexIterator>::Type VertexIterator;
+      typename G::ConstVertexIterator>::type VertexIterator;
 
-  typedef typename SelectType<is_same<G,Mutable>::value,
+  typedef typename conditional<is_same<G,Mutable>::value,
       typename G::EdgeIterator,
-      typename G::ConstEdgeIterator>::Type EdgeIterator;
+      typename G::ConstEdgeIterator>::type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
     const EdgeIterator endEdge = vertex.end();
     os<<"Edges starting from Vertex "<<*vertex<<" to vertices (";
@@ -403,16 +403,16 @@ void printGraph(G& graph, std::ostream& os)
 {
   using Dune::remove_const;
   using Dune::is_same;
-  using Dune::SelectType;
+  using Dune::conditional;
 
   typedef typename remove_const<G>::type Mutable;
-  typedef typename SelectType<is_same<G,Mutable>::value,
+  typedef typename conditional<is_same<G,Mutable>::value,
       typename G::VertexIterator,
-      typename G::ConstVertexIterator>::Type VertexIterator;
+      typename G::ConstVertexIterator>::type VertexIterator;
 
-  typedef typename SelectType<is_same<G,Mutable>::value,
+  typedef typename conditional<is_same<G,Mutable>::value,
       typename G::EdgeIterator,
-      typename G::ConstEdgeIterator>::Type EdgeIterator;
+      typename G::ConstEdgeIterator>::type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
     const EdgeIterator endEdge = vertex.end();
     os<<"Edges starting from Vertex "<<*vertex<<" to vertices ";

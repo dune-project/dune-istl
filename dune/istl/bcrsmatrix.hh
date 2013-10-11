@@ -19,6 +19,7 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/ftraits.hh>
 #include <dune/common/static_assert.hh>
 
 /*! \file
@@ -1175,7 +1176,7 @@ namespace Dune {
     //===== norms
 
     //! square of frobenius norm, need for block recursion
-    double frobenius_norm2 () const
+    typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
       double sum=0;
 
@@ -1191,13 +1192,13 @@ namespace Dune {
     }
 
     //! frobenius norm: sqrt(sum over squared values of entries)
-    double frobenius_norm () const
+    typename FieldTraits<field_type>::real_type frobenius_norm () const
     {
       return sqrt(frobenius_norm2());
     }
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
-    double infinity_norm () const
+    typename FieldTraits<field_type>::real_type infinity_norm () const
     {
       double max=0;
       ConstRowIterator endi=end();
@@ -1213,7 +1214,7 @@ namespace Dune {
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    double infinity_norm_real () const
+    typename FieldTraits<field_type>::real_type infinity_norm_real () const
     {
       double max=0;
       ConstRowIterator endi=end();

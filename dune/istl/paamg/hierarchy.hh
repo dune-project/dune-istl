@@ -118,10 +118,22 @@ namespace Dune
       Hierarchy(MemberType& first);
 
       /**
+       * @brief Construct a new hierarchy.
+       * @param first Pointer to the first element in the hierarchy.
+       * @warning Hierarchy will be responsible for the memory
+       * management of the pointer.
+       */
+      Hierarchy(MemberType* first);
+
+      /**
        * @brief Construct a new empty hierarchy.
        */
       Hierarchy();
 
+      /**
+       * @brief Copy constructor.
+       */
+      Hierarchy(const Hierarchy& other);
       /**
        * @brief Add an element on a coarser level.
        * @param args The arguments needed for the construction.
@@ -234,7 +246,7 @@ namespace Dune
 
         void deleteRedistributed()
         {
-          element_->redistributed_ = 0;
+          element_->redistributed_ = nullptr;
         }
 
       private:
@@ -1230,13 +1242,25 @@ namespace Dune
     {
       finest_ = allocator_.allocate(1,0);
       finest_->element_ = &first;
-      finest_->redistributed_ = 0;
+      finest_->redistributed_ = nullptr;
       nonAllocated_ = finest_;
       coarsest_ = finest_;
-      coarsest_->coarser_ = coarsest_->finer_ = 0;
+      coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       levels_ = 1;
     }
 
+    template<class T, class A>
+    Hierarchy<T,A>::Hierarchy(MemberType* first)
+      : allocator_()
+    {
+      finest_ = allocator_.allocate(1,0);
+      finest_->element_ = first;
+      finest_->redistributed_ = nullptr;
+      nonAllocated_ = nullptr;
+      coarsest_ = finest_;
+      coarsest_->coarser_ = coarsest_->finer_ = nullptr;
+      levels_ = 1;
+    }
     template<class T, class A>
     Hierarchy<T,A>::~Hierarchy()
     {
@@ -1249,8 +1273,45 @@ namespace Dune
           ConstructionTraits<T>::deconstruct(current->element_);
         }
         allocator_.deallocate(current, 1);
-        //coarsest_->coarser_ = 0;
+        current=nullptr;
+        //coarsest_->coarser_ = nullptr;
       }
+    }
+
+    template<class T, class A>
+    Hierarchy<T,A>::Hierarchy(const Hierarchy& other)
+    : nonAllocated_(), allocator_(other.allocator_),
+      levels_(other.levels_)
+    {
+      if(!other.finest_)
+      {
+        finest_=coarsest_=nonAllocated_=nullptr;
+        return;
+      }
+      finest_=allocator_.allocate(1,0);
+      Element* finer_         = nullptr;
+      Element* current_      = finest_;
+      Element* otherCurrent_ = other.finest_;
+
+      while(otherCurrent_)
+      {
+        T* t=new T(*(otherCurrent_->element_));
+        current_->element_=t;
+        current_->finer_=finer_;
+        if(otherCurrent_->redistributed_)
+          current_->redistributed_ = new T(*otherCurrent_->redistributed_);
+        else
+          current_->redistributed_= nullptr;
+        finer_=current_;
+        if(otherCurrent_->coarser_)
+        {
+          current_->coarser_=allocator_.allocate(1,0);
+          current_=current_->coarser_;
+        }else
+          current_->coarser_=nullptr;
+        otherCurrent_=otherCurrent_->coarser_;
+      }
+      coarsest_=current_;
     }
 
     template<class T, class A>
@@ -1273,15 +1334,15 @@ namespace Dune
         coarsest_ = allocator_.allocate(1,0);
         coarsest_->element_ = ConstructionTraits<MemberType>::construct(args);
         finest_ = coarsest_;
-        coarsest_->finer_ = 0;
+        coarsest_->finer_ = nullptr;
       }else{
         coarsest_->coarser_ = allocator_.allocate(1,0);
         coarsest_->coarser_->finer_ = coarsest_;
         coarsest_ = coarsest_->coarser_;
         coarsest_->element_ = ConstructionTraits<MemberType>::construct(args);
       }
-      coarsest_->redistributed_ = 0;
-      coarsest_->coarser_=0;
+      coarsest_->redistributed_ = nullptr;
+      coarsest_->coarser_=nullptr;
       ++levels_;
     }
 
@@ -1294,12 +1355,12 @@ namespace Dune
         finest_ = allocator_.allocate(1,0);
         finest_->element = ConstructionTraits<T>::construct(args);
         coarsest_ = finest_;
-        coarsest_->coarser_ = coarsest_->finer_ = 0;
+        coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       }else{
         finest_->finer_ = allocator_.allocate(1,0);
         finest_->finer_->coarser_ = finest_;
         finest_ = finest_->finer_;
-        finest_->finer = 0;
+        finest_->finer = nullptr;
         finest_->element = ConstructionTraits<T>::construct(args);
       }
       ++levels_;

@@ -169,8 +169,13 @@ namespace Dune
        */
       template<class C>
       AMG(const Operator& fineOperator, const C& criterion,
-          const SmootherArgs& smootherArgs,
+          const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation());
+
+      /**
+       * @brief Copy constructor.
+       */
+      AMG(const AMG& amg);
 
       ~AMG();
 
@@ -214,45 +219,110 @@ namespace Dune
       bool usesDirectCoarseLevelSolver() const;
 
     private:
-      /** @brief Multigrid cycle on a level. */
-      void mgc();
+      /**
+       * @brief Create matrix and smoother hierarchies.
+       * @param criterion The coarsening criterion.
+       * @param matrix The fine level matrix operator.
+       * @param pinfo The fine level parallel information.
+       */
+      template<class C>
+      void createHierarchies(C& criterion, Operator& matrix,
+                             const PI& pinfo);
+      /**
+       * @brief A struct that holds the context of the current level.
+       *
+       * These are the iterators to the smoother, matrix, parallel information,
+       * and so on needed for the computations on the current level.
+       */
+      struct LevelContext
+      {
+        /**
+         * @brief The iterator over the smoothers.
+         */
+        typename Hierarchy<Smoother,A>::Iterator smoother;
+        /**
+         * @brief The iterator over the matrices.
+         */
+        typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix;
+        /**
+         * @brief The iterator over the parallel information.
+         */
+        typename ParallelInformationHierarchy::Iterator pinfo;
+        /**
+         * @brief The iterator over the redistribution information.
+         */
+        typename OperatorHierarchy::RedistributeInfoList::const_iterator redist;
+        /**
+         * @brief The iterator over the aggregates maps.
+         */
+        typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates;
+        /**
+         * @brief The iterator over the left hand side.
+         */
+        typename Hierarchy<Domain,A>::Iterator lhs;
+        /**
+         * @brief The iterator over the updates.
+         */
+        typename Hierarchy<Domain,A>::Iterator update;
+        /**
+         * @brief The iterator over the right hand sided.
+         */
+        typename Hierarchy<Range,A>::Iterator rhs;
+        /**
+         * @brief The level index.
+         */
+        std::size_t level;
+      };
 
-      typename Hierarchy<Smoother,A>::Iterator smoother;
-      typename OperatorHierarchy::ParallelMatrixHierarchy::ConstIterator matrix;
-      typename ParallelInformationHierarchy::Iterator pinfo;
-      typename OperatorHierarchy::RedistributeInfoList::const_iterator redist;
-      typename OperatorHierarchy::AggregatesMapList::const_iterator aggregates;
-      typename Hierarchy<Domain,A>::Iterator lhs;
-      typename Hierarchy<Domain,A>::Iterator update;
-      typename Hierarchy<Range,A>::Iterator rhs;
+
+      /**
+       * @brief Multigrid cycle on a level.
+       * @param levelContext the iterators of the current level.
+       */
+      void mgc(LevelContext& levelContext);
 
       void additiveMgc();
 
-      /** @brief Apply pre smoothing on the current level. */
-      void presmooth();
+      /**
+       * @brief Apply pre smoothing on the current level.
+       * @param levelContext the iterators of the current level.
+       */
+      void presmooth(LevelContext& levelContext);
 
-      /** @brief Apply post smoothing on the current level. */
-      void postsmooth();
+      /**
+       * @brief Apply post smoothing on the current level.
+       * @param levelContext the iterators of the current level.
+       */
+      void postsmooth(LevelContext& levelContext);
 
       /**
        * @brief Move the iterators to the finer level
-       * @*/
-      void moveToFineLevel(bool processedFineLevel);
+       * @param levelContext the iterators of the current level.
+       * @param processedFineLevel Whether the process computed on
+       *         fine level or not.
+       */
+      void moveToFineLevel(LevelContext& levelContext,bool processedFineLevel);
 
-      /** @brief Move the iterators to the coarser level */
-      bool moveToCoarseLevel();
+      /**
+       * @brief Move the iterators to the coarser level.
+       * @param levelContext the iterators of the current level
+       */
+      bool moveToCoarseLevel(LevelContext& levelContext);
 
-      /** @brief Initialize iterators over levels with fine level */
-      void initIteratorsWithFineLevel();
+      /**
+       * @brief Initialize iterators over levels with fine level.
+       * @param levelContext the iterators of the current level
+       */
+      void initIteratorsWithFineLevel(LevelContext& levelContext);
 
       /**  @brief The matrix we solve. */
-      OperatorHierarchy* matrices_;
+      Dune::shared_ptr<OperatorHierarchy> matrices_;
       /** @brief The arguments to construct the smoother */
       SmootherArgs smootherArgs_;
       /** @brief The hierarchy of the smoothers. */
-      Hierarchy<Smoother,A> smoothers_;
+      Dune::shared_ptr<Hierarchy<Smoother,A> > smoothers_;
       /** @brief The solver of the coarsest level. */
-      CoarseSolver* solver_;
+      Dune::shared_ptr<CoarseSolver> solver_;
       /** @brief The right hand side of our problem. */
       Hierarchy<Range,A>* rhs_;
       /** @brief The left approximate solution of our problem. */
@@ -263,22 +333,41 @@ namespace Dune
       typedef Dune::ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
       /** @brief The type of the scalar product for the coarse solver. */
       typedef typename ScalarProductChooser::ScalarProduct ScalarProduct;
+      typedef Dune::shared_ptr<ScalarProduct> ScalarProductPointer;
       /** @brief Scalar product on the coarse level. */
-      ScalarProduct* scalarProduct_;
+      ScalarProductPointer scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
       std::size_t preSteps_;
       /** @brief The number of postsmoothing steps. */
       std::size_t postSteps_;
-      std::size_t level;
       bool buildHierarchy_;
       bool additive;
       bool coarsesolverconverged;
-      Smoother *coarseSmoother_;
+      Dune::shared_ptr<Smoother> coarseSmoother_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
     };
+
+    template<class M, class X, class S, class PI, class A>
+    inline AMG<M,X,S,PI,A>::AMG(const AMG& amg)
+    : matrices_(amg.matrices_), smootherArgs_(amg.smootherArgs_),
+      smoothers_(amg.smoothers_), solver_(amg.solver_),
+      rhs_(), lhs_(), update_(),
+      scalarProduct_(amg.scalarProduct_), gamma_(amg.gamma_),
+      preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
+      buildHierarchy_(amg.buildHierarchy_),
+      additive(amg.additive), coarsesolverconverged(amg.coarsesolverconverged),
+      coarseSmoother_(amg.coarseSmoother_), verbosity_(amg.verbosity_)
+    {
+      if(amg.rhs_)
+        rhs_=new Hierarchy<Range,A>(*amg.rhs_);
+      if(amg.lhs_)
+        lhs_=new Hierarchy<Domain,A>(*amg.lhs_);
+      if(amg.update_)
+        update_=new Hierarchy<Domain,A>(*amg.update_);
+    }
 
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
@@ -286,7 +375,8 @@ namespace Dune
                          std::size_t gamma, std::size_t preSmoothingSteps,
                          std::size_t postSmoothingSteps, bool additive_)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
+        rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(2)
@@ -294,7 +384,7 @@ namespace Dune
       assert(matrices_->isBuilt());
 
       // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
+      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -302,7 +392,8 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(), solver_(&coarseSolver), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
+        rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
@@ -311,7 +402,7 @@ namespace Dune
       assert(matrices_->isBuilt());
 
       // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
+      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -324,7 +415,8 @@ namespace Dune
                          bool additive_,
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
-        smoothers_(), solver_(), scalarProduct_(0), gamma_(gamma),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(),
+        rhs_(), lhs_(), update_(), scalarProduct_(), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(criterion.debugLevel())
@@ -333,17 +425,8 @@ namespace Dune
                          "Matrix and Solver must match in terms of category!");
       // TODO: reestablish compile time checks.
       //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
-      //			 "Matrix and Solver must match in terms of category!");
-      Timer watch;
-      matrices_ = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
-
-      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
-
-      // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
-
-      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
-        std::cout<<"Building Hierarchy of "<<matrices_->maxlevels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
+      //             "Matrix and Solver must match in terms of category!");
+      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -353,7 +436,8 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
-        smoothers_(), solver_(), scalarProduct_(0),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(),
+        rhs_(), lhs_(), update_(), scalarProduct_(),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
@@ -363,27 +447,103 @@ namespace Dune
                          "Matrix and Solver must match in terms of category!");
       // TODO: reestablish compile time checks.
       //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
-      //			 "Matrix and Solver must match in terms of category!");
-      Timer watch;
-      matrices_ = new OperatorHierarchy(const_cast<Operator&>(matrix), pinfo);
-
-      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
-
-      // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(smoothers_, smootherArgs_);
-
-      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
-        std::cout<<"Building Hierarchy of "<<matrices_->maxlevels()<<" levels took "<<watch.elapsed()<<" seconds."<<std::endl;
+      //             "Matrix and Solver must match in terms of category!");
+      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
+
 
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::~AMG()
     {
       if(buildHierarchy_) {
-        delete matrices_;
+        if(solver_)
+          solver_.reset();
+        if(coarseSmoother_)
+          coarseSmoother_.reset();
       }
-      if(scalarProduct_)
-        delete scalarProduct_;
+      if(lhs_)
+        delete lhs_;
+      lhs_=nullptr;
+      if(update_)
+        delete update_;
+      update_=nullptr;
+      if(rhs_)
+        delete rhs_;
+      rhs_=nullptr;
+    }
+
+    template<class M, class X, class S, class PI, class A>
+    template<class C>
+    void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, Operator& matrix,
+                                            const PI& pinfo)
+    {
+      Timer watch;
+      matrices_.reset(new OperatorHierarchy(matrix, pinfo));
+
+      matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
+
+      // build the necessary smoother hierarchies
+      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
+
+            if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
+        // We have the carsest level. Create the coarse Solver
+        SmootherArgs sargs(smootherArgs_);
+        sargs.iterations = 1;
+
+        typename ConstructionTraits<Smoother>::Arguments cargs;
+        cargs.setArgs(sargs);
+        if(matrices_->redistributeInformation().back().isSetup()) {
+          // Solve on the redistributed partitioning
+          cargs.setMatrix(matrices_->matrices().coarsest().getRedistributed().getmat());
+          cargs.setComm(matrices_->parallelInformation().coarsest().getRedistributed());
+        }else{
+          cargs.setMatrix(matrices_->matrices().coarsest()->getmat());
+          cargs.setComm(*matrices_->parallelInformation().coarsest());
+        }
+
+        coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
+        scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
+
+#if HAVE_SUPERLU
+        // Use superlu if we are purely sequential or with only one processor on the coarsest level.
+        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+           || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
+           || (matrices_->parallelInformation().coarsest().isRedistributed()
+               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
+               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
+          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
+            std::cout<<"Using superlu"<<std::endl;
+          if(matrices_->parallelInformation().coarsest().isRedistributed())
+          {
+            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
+              // We are still participating on this level
+              solver_.reset(new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+            else
+              solver_.reset();
+          }else
+            solver_.reset(new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
+        }else
+#endif
+        {
+          if(matrices_->parallelInformation().coarsest().isRedistributed())
+          {
+            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
+              // We are still participating on this level
+              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
+                                                  *scalarProduct_,
+                                                  *coarseSmoother_, 1E-2, 1000, 0));
+            else
+              solver_.reset();
+          }else
+            solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
+                                                *scalarProduct_,
+                                                *coarseSmoother_, 1E-2, 1000, 0));
+        }
+      }
+
+      if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
+        std::cout<<"Building hierarchy of "<<matrices_->maxlevels()<<" levels "
+                 <<"(inclusive coarse solver) took "<<watch.elapsed()<<" seconds."<<std::endl;
     }
 
 
@@ -419,17 +579,23 @@ namespace Dune
           diagonal.solve(x[row.index()], b[row.index()]);
       }
 
-      if(smoothers_.levels()>0)
-        smoothers_.finest()->pre(x,b);
+      if(smoothers_->levels()>0)
+        smoothers_->finest()->pre(x,b);
       else
         // No smoother to make x consistent! Do it by hand
         matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
       Range* copy = new Range(b);
-      rhs_ = new Hierarchy<Range,A>(*copy);
+      if(rhs_)
+        delete rhs_;
+      rhs_ = new Hierarchy<Range,A>(copy);
       Domain* dcopy = new Domain(x);
-      lhs_ = new Hierarchy<Domain,A>(*dcopy);
+      if(lhs_)
+        delete lhs_;
+      lhs_ = new Hierarchy<Domain,A>(dcopy);
       dcopy = new Domain(x);
-      update_ = new Hierarchy<Domain,A>(*dcopy);
+      if(update_)
+        delete update_;
+      update_ = new Hierarchy<Domain,A>(dcopy);
       matrices_->coarsenVector(*rhs_);
       matrices_->coarsenVector(*lhs_);
       matrices_->coarsenVector(*update_);
@@ -438,15 +604,15 @@ namespace Dune
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
       typedef typename Hierarchy<Range,A>::Iterator RIterator;
       typedef typename Hierarchy<Domain,A>::Iterator DIterator;
-      Iterator coarsest = smoothers_.coarsest();
-      Iterator smoother = smoothers_.finest();
+      Iterator coarsest = smoothers_->coarsest();
+      Iterator smoother = smoothers_->finest();
       RIterator rhs = rhs_->finest();
       DIterator lhs = lhs_->finest();
-      if(smoothers_.levels()>0) {
+      if(smoothers_->levels()>0) {
 
         assert(lhs_->levels()==rhs_->levels());
-        assert(smoothers_.levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
-        assert(smoothers_.levels()+1==lhs_->levels() || matrices_->levels()<matrices_->maxlevels());
+        assert(smoothers_->levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
+        assert(smoothers_->levels()+1==lhs_->levels() || matrices_->levels()<matrices_->maxlevels());
 
         if(smoother!=coarsest)
           for(++smoother, ++lhs, ++rhs; smoother != coarsest; ++smoother, ++lhs, ++rhs)
@@ -460,63 +626,6 @@ namespace Dune
       x = *lhs_->finest();
       b = *rhs_->finest();
 
-      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
-        // We have the carsest level. Create the coarse Solver
-        SmootherArgs sargs(smootherArgs_);
-        sargs.iterations = 1;
-
-        typename ConstructionTraits<Smoother>::Arguments cargs;
-        cargs.setArgs(sargs);
-        if(matrices_->redistributeInformation().back().isSetup()) {
-          // Solve on the redistributed partitioning
-          cargs.setMatrix(matrices_->matrices().coarsest().getRedistributed().getmat());
-          cargs.setComm(matrices_->parallelInformation().coarsest().getRedistributed());
-
-          coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
-          scalarProduct_ = ScalarProductChooser::construct(matrices_->parallelInformation().coarsest().getRedistributed());
-        }else{
-          cargs.setMatrix(matrices_->matrices().coarsest()->getmat());
-          cargs.setComm(*matrices_->parallelInformation().coarsest());
-
-          coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
-          scalarProduct_ = ScalarProductChooser::construct(*matrices_->parallelInformation().coarsest());
-        }
-#if HAVE_SUPERLU
-        // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
-           || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
-           || (matrices_->parallelInformation().coarsest().isRedistributed()
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
-          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<<"Using superlu"<<std::endl;
-          if(matrices_->parallelInformation().coarsest().isRedistributed())
-          {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
-              // We are still participating on this level
-              solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat());
-            else
-              solver_ = 0;
-          }else
-            solver_  = new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat());
-        }else
-#endif
-        {
-          if(matrices_->parallelInformation().coarsest().isRedistributed())
-          {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
-              // We are still participating on this level
-              solver_ = new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
-                                              *scalarProduct_,
-                                              *coarseSmoother_, 1E-2, 10000, 0);
-            else
-              solver_ = 0;
-          }else
-            solver_ = new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
-                                            *scalarProduct_,
-                                            *coarseSmoother_, 1E-2, 1000, 0);
-        }
-      }
     }
     template<class M, class X, class S, class PI, class A>
     std::size_t AMG<M,X,S,PI,A>::levels()
@@ -533,160 +642,171 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::apply(Domain& v, const Range& d)
     {
+      LevelContext levelContext;
+
       if(additive) {
         *(rhs_->finest())=d;
         additiveMgc();
         v=*lhs_->finest();
       }else{
         // Init all iterators for the current level
-        initIteratorsWithFineLevel();
+        initIteratorsWithFineLevel(levelContext);
 
 
-        *lhs = v;
-        *rhs = d;
-        *update=0;
-        level=0;
+        *levelContext.lhs = v;
+        *levelContext.rhs = d;
+        *levelContext.update=0;
+        levelContext.level=0;
 
-        mgc();
+        mgc(levelContext);
 
         if(postSteps_==0||matrices_->maxlevels()==1)
-          pinfo->copyOwnerToAll(*update, *update);
+          levelContext.pinfo->copyOwnerToAll(*levelContext.update, *levelContext.update);
 
-        v=*update;
+        v=*levelContext.update;
       }
 
     }
 
     template<class M, class X, class S, class PI, class A>
-    void AMG<M,X,S,PI,A>::initIteratorsWithFineLevel()
+    void AMG<M,X,S,PI,A>::initIteratorsWithFineLevel(LevelContext& levelContext)
     {
-      smoother = smoothers_.finest();
-      matrix = matrices_->matrices().finest();
-      pinfo = matrices_->parallelInformation().finest();
-      redist =
+      levelContext.smoother = smoothers_->finest();
+      levelContext.matrix = matrices_->matrices().finest();
+      levelContext.pinfo = matrices_->parallelInformation().finest();
+      levelContext.redist =
         matrices_->redistributeInformation().begin();
-      aggregates = matrices_->aggregatesMaps().begin();
-      lhs = lhs_->finest();
-      update = update_->finest();
-      rhs = rhs_->finest();
+      levelContext.aggregates = matrices_->aggregatesMaps().begin();
+      levelContext.lhs = lhs_->finest();
+      levelContext.update = update_->finest();
+      levelContext.rhs = rhs_->finest();
     }
 
     template<class M, class X, class S, class PI, class A>
     bool AMG<M,X,S,PI,A>
-    ::moveToCoarseLevel()
+    ::moveToCoarseLevel(LevelContext& levelContext)
     {
 
       bool processNextLevel=true;
 
-      if(redist->isSetup()) {
-        redist->redistribute(static_cast<const Range&>(*rhs), rhs.getRedistributed());
-        processNextLevel =rhs.getRedistributed().size()>0;
+      if(levelContext.redist->isSetup()) {
+        levelContext.redist->redistribute(static_cast<const Range&>(*levelContext.rhs),
+                             levelContext.rhs.getRedistributed());
+        processNextLevel = levelContext.rhs.getRedistributed().size()>0;
         if(processNextLevel) {
           //restrict defect to coarse level right hand side.
-          typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
-          ++pinfo;
+          typename Hierarchy<Range,A>::Iterator fineRhs = levelContext.rhs++;
+          ++levelContext.pinfo;
           Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-          ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(fineRhs.getRedistributed()), *pinfo);
+          ::restrictVector(*(*levelContext.aggregates), *levelContext.rhs,
+                           static_cast<const Range&>(fineRhs.getRedistributed()),
+                           *levelContext.pinfo);
         }
       }else{
         //restrict defect to coarse level right hand side.
-        typename Hierarchy<Range,A>::Iterator fineRhs = rhs++;
-        ++pinfo;
+        typename Hierarchy<Range,A>::Iterator fineRhs = levelContext.rhs++;
+        ++levelContext.pinfo;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::restrictVector(*(*aggregates), *rhs, static_cast<const Range&>(*fineRhs), *pinfo);
+        ::restrictVector(*(*levelContext.aggregates),
+                         *levelContext.rhs, static_cast<const Range&>(*fineRhs),
+                         *levelContext.pinfo);
       }
 
       if(processNextLevel) {
         // prepare coarse system
-        ++lhs;
-        ++update;
-        ++matrix;
-        ++level;
-        ++redist;
+        ++levelContext.lhs;
+        ++levelContext.update;
+        ++levelContext.matrix;
+        ++levelContext.level;
+        ++levelContext.redist;
 
-        if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
+        if(levelContext.matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
           // next level is not the globally coarsest one
-          ++smoother;
-          ++aggregates;
+          ++levelContext.smoother;
+          ++levelContext.aggregates;
         }
         // prepare the update on the next level
-        *update=0;
+        *levelContext.update=0;
       }
       return processNextLevel;
     }
 
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>
-    ::moveToFineLevel(bool processNextLevel)
+    ::moveToFineLevel(LevelContext& levelContext, bool processNextLevel)
     {
       if(processNextLevel) {
-        if(matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
+        if(levelContext.matrix != matrices_->matrices().coarsest() || matrices_->levels()<matrices_->maxlevels()) {
           // previous level is not the globally coarsest one
-          --smoother;
-          --aggregates;
+          --levelContext.smoother;
+          --levelContext.aggregates;
         }
-        --redist;
-        --level;
+        --levelContext.redist;
+        --levelContext.level;
         //prolongate and add the correction (update is in coarse left hand side)
-        --matrix;
+        --levelContext.matrix;
 
         //typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--;
-        --lhs;
-        --pinfo;
+        --levelContext.lhs;
+        --levelContext.pinfo;
       }
-      if(redist->isSetup()) {
+      if(levelContext.redist->isSetup()) {
         // Need to redistribute during prolongateVector
-        lhs.getRedistributed()=0;
+        levelContext.lhs.getRedistributed()=0;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongateVector(*(*aggregates), *update, *lhs, lhs.getRedistributed(), matrices_->getProlongationDampingFactor(),
-                           *pinfo, *redist);
+        ::prolongateVector(*(*levelContext.aggregates), *levelContext.update, *levelContext.lhs,
+                           levelContext.lhs.getRedistributed(),
+                           matrices_->getProlongationDampingFactor(),
+                           *levelContext.pinfo, *levelContext.redist);
       }else{
-        *lhs=0;
+        *levelContext.lhs=0;
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongateVector(*(*aggregates), *update, *lhs,
-                           matrices_->getProlongationDampingFactor(), *pinfo);
+        ::prolongateVector(*(*levelContext.aggregates), *levelContext.update, *levelContext.lhs,
+                           matrices_->getProlongationDampingFactor(),
+                           *levelContext.pinfo);
       }
 
 
       if(processNextLevel) {
-        --update;
-        --rhs;
+        --levelContext.update;
+        --levelContext.rhs;
       }
 
-      *update += *lhs;
+      *levelContext.update += *levelContext.lhs;
     }
 
 
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>
-    ::presmooth()
+    ::presmooth(LevelContext& levelContext)
     {
 
       for(std::size_t i=0; i < preSteps_; ++i) {
-        *lhs=0;
-        SmootherApplier<S>::preSmooth(*smoother, *lhs, *rhs);
+        *levelContext.lhs=0;
+        SmootherApplier<S>::preSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
         // Accumulate update
-        *update += *lhs;
+        *levelContext.update += *levelContext.lhs;
 
         // update defect
-        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-        pinfo->project(*rhs);
+        levelContext.matrix->applyscaleadd(-1,static_cast<const Domain&>(*levelContext.lhs), *levelContext.rhs);
+        levelContext.pinfo->project(*levelContext.rhs);
       }
     }
 
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>
-    ::postsmooth()
+    ::postsmooth(LevelContext& levelContext)
     {
 
       for(std::size_t i=0; i < postSteps_; ++i) {
         // update defect
-        matrix->applyscaleadd(-1,static_cast<const Domain&>(*lhs), *rhs);
-        *lhs=0;
-        pinfo->project(*rhs);
-        SmootherApplier<S>::postSmooth(*smoother, *lhs, *rhs);
+        levelContext.matrix->applyscaleadd(-1,static_cast<const Domain&>(*levelContext.lhs),
+                              *levelContext.rhs);
+        *levelContext.lhs=0;
+        levelContext.pinfo->project(*levelContext.rhs);
+        SmootherApplier<S>::postSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
         // Accumulate update
-        *update += *lhs;
+        *levelContext.update += *levelContext.lhs;
       }
     }
 
@@ -698,52 +818,54 @@ namespace Dune
     }
 
     template<class M, class X, class S, class PI, class A>
-    void AMG<M,X,S,PI,A>::mgc(){
-      if(matrix == matrices_->matrices().coarsest() && levels()==maxlevels()) {
+    void AMG<M,X,S,PI,A>::mgc(LevelContext& levelContext){
+      if(levelContext.matrix == matrices_->matrices().coarsest() && levels()==maxlevels()) {
         // Solve directly
         InverseOperatorResult res;
         res.converged=true; // If we do not compute this flag will not get updated
-        if(redist->isSetup()) {
-          redist->redistribute(*rhs, rhs.getRedistributed());
-          if(rhs.getRedistributed().size()>0) {
+        if(levelContext.redist->isSetup()) {
+          levelContext.redist->redistribute(*levelContext.rhs, levelContext.rhs.getRedistributed());
+          if(levelContext.rhs.getRedistributed().size()>0) {
             // We are still participating in the computation
-            pinfo.getRedistributed().copyOwnerToAll(rhs.getRedistributed(), rhs.getRedistributed());
-            solver_->apply(update.getRedistributed(), rhs.getRedistributed(), res);
+            levelContext.pinfo.getRedistributed().copyOwnerToAll(levelContext.rhs.getRedistributed(),
+                                                    levelContext.rhs.getRedistributed());
+            solver_->apply(levelContext.update.getRedistributed(),
+                           levelContext.rhs.getRedistributed(), res);
           }
-          redist->redistributeBackward(*update, update.getRedistributed());
-          pinfo->copyOwnerToAll(*update, *update);
+          levelContext.redist->redistributeBackward(*levelContext.update, levelContext.update.getRedistributed());
+          levelContext.pinfo->copyOwnerToAll(*levelContext.update, *levelContext.update);
         }else{
-          pinfo->copyOwnerToAll(*rhs, *rhs);
-          solver_->apply(*update, *rhs, res);
+          levelContext.pinfo->copyOwnerToAll(*levelContext.rhs, *levelContext.rhs);
+          solver_->apply(*levelContext.update, *levelContext.rhs, res);
         }
 
         if (!res.converged)
           coarsesolverconverged = false;
       }else{
         // presmoothing
-        presmooth();
+        presmooth(levelContext);
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
-        bool processNextLevel = moveToCoarseLevel();
+        bool processNextLevel = moveToCoarseLevel(levelContext);
 
         if(processNextLevel) {
           // next level
           for(std::size_t i=0; i<gamma_; i++)
-            mgc();
+            mgc(levelContext);
         }
 
-        moveToFineLevel(processNextLevel);
+        moveToFineLevel(levelContext, processNextLevel);
 #else
         *lhs=0;
 #endif
 
-        if(matrix == matrices_->matrices().finest()) {
+        if(levelContext.matrix == matrices_->matrices().finest()) {
           coarsesolverconverged = matrices_->parallelInformation().finest()->communicator().prod(coarsesolverconverged);
           if(!coarsesolverconverged)
             DUNE_THROW(MathError, "Coarse solver did not converge");
         }
         // postsmoothing
-        postsmooth();
+        postsmooth(levelContext);
 
       }
     }
@@ -767,7 +889,7 @@ namespace Dune
       //pinfo = matrices_->parallelInformation().coarsest
       // calculate correction for all levels
       lhs = lhs_->finest();
-      typename Hierarchy<Smoother,A>::Iterator smoother = smoothers_.finest();
+      typename Hierarchy<Smoother,A>::Iterator smoother = smoothers_->finest();
 
       for(rhs=rhs_->finest(); rhs != rhs_->coarsest(); ++lhs, ++rhs, ++smoother) {
         // presmoothing
@@ -801,20 +923,14 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::post(Domain& x)
     {
-      if(buildHierarchy_) {
-        if(solver_)
-          delete solver_;
-        if(coarseSmoother_)
-          ConstructionTraits<Smoother>::deconstruct(coarseSmoother_);
-      }
 
       // Postprocess all smoothers
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
       typedef typename Hierarchy<Domain,A>::Iterator DIterator;
-      Iterator coarsest = smoothers_.coarsest();
-      Iterator smoother = smoothers_.finest();
+      Iterator coarsest = smoothers_->coarsest();
+      Iterator smoother = smoothers_->finest();
       DIterator lhs = lhs_->finest();
-      if(smoothers_.levels()>0) {
+      if(smoothers_->levels()>0) {
         if(smoother != coarsest  || matrices_->levels()<matrices_->maxlevels())
           smoother->post(*lhs);
         if(smoother!=coarsest)
@@ -822,13 +938,15 @@ namespace Dune
             smoother->post(*lhs);
         smoother->post(*lhs);
       }
-
-      delete &(*lhs_->finest());
+      //delete &(*lhs_->finest());
       delete lhs_;
-      delete &(*update_->finest());
+      lhs_=nullptr;
+      //delete &(*update_->finest());
       delete update_;
-      delete &(*rhs_->finest());
+      update_=nullptr;
+      //delete &(*rhs_->finest());
       delete rhs_;
+      rhs_=nullptr;
     }
 
     template<class M, class X, class S, class PI, class A>

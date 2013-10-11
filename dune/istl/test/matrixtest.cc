@@ -60,6 +60,8 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
   typedef typename MatrixType::field_type field_type;
 
+  typedef typename FieldTraits<field_type>::real_type real_type;
+
   typedef typename MatrixType::block_type block_type;
 
   typedef typename MatrixType::row_type row_type;
@@ -241,7 +243,7 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   //   Test the matrix norms
   // //////////////////////////////////////////////////////////////
 
-  double frobenius_norm = matrix.frobenius_norm();
+  real_type frobenius_norm = matrix.frobenius_norm();
 
   frobenius_norm += matrix.frobenius_norm2();
 
