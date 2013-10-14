@@ -251,7 +251,11 @@ public:
   OneStepAMGCoarseSolverPolicy(const SmootherArgs& args, const Criterion& c)
     : smootherArgs_(args), criterion_(c)
   {}
-
+  /** @brief Copy constructor. */
+  OneStepAMGCoarseSolverPolicy(const OneStepAMGCoarseSolverPolicy& other)
+  : coarseOperator_(other.coarseOperator_), smootherArgs_(other.smootherArgs_),
+    criterion_(other.criterion_)
+  {}
 private:
   /**
    * @brief A wrapper that makes an inverse operator out of AMG.
@@ -262,11 +266,7 @@ private:
   struct AMGInverseOperator : public InverseOperator<X,X>
   {
     AMGInverseOperator(AMGType* amg)
-    : amg_(amg), first_(true), isCopied_(false)
-    {}
-
-    AMGInverseOperator(const AMGInverseOperator& other)
-    : x_(other.x_), amg_(new AMGType(*other.amg_)), first_(other.first_), isCopied_(true)
+    : amg_(amg), first_(true)
     {}
 
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
@@ -275,7 +275,7 @@ private:
       {
         amg_->pre(x,b);
         first_=false;
-        x_=&x;
+        x_=x;
       }
       amg_->apply(x,b);
     }
@@ -288,20 +288,31 @@ private:
     ~AMGInverseOperator()
     {
       if(!first_)
-        amg_->post(*x_);
-      if(isCopied_)
-        delete amg_;
+        amg_->post(x_);
+    }
+    AMGInverseOperator(const AMGInverseOperator& other)
+    : x_(other.x_), amg_(new AMGType(*other.amg_)), first_(other.first_)
+    {
     }
   private:
-    X* x_;
+    X x_;
     AMGType* amg_;
     bool first_;
-    bool isCopied_;
   };
 
 public:
+  /** @brief The type of solver constructed for the coarse level. */
+  typedef AMGInverseOperator CoarseLevelSolver;
+
+  /**
+    * @brief Constructs a coarse level solver.
+    *
+    * @param transferPolicy The policy describing the transfer between levels.
+    * @return A pointer to the constructed coarse level solver.
+    * @tparam P The type of the level transfer policy.
+    */
   template<class P>
-  InverseOperator<X,X>* createCoarseLevelSolver(P& transferPolicy)
+  CoarseLevelSolver* createCoarseLevelSolver(P& transferPolicy)
   {
     coarseOperator_=transferPolicy.getCoarseLevelOperator();
     typedef AMG<O,X,S> AMGType;
@@ -315,21 +326,28 @@ public:
   }
 
 private:
+  /** @brief The coarse level operator. */
   shared_ptr<Operator> coarseOperator_;
+  /** @brief The arguments used to construct the smoother. */
   SmootherArgs smootherArgs_;
+  /** @brief The coarsening criterion. */
   Criterion criterion_;
 };
 
 /**
  * @tparam FO The type of the fine level linear operator.
- * @tparam CO The type of the coarse level linear operator.
+ * @tparam CSP The type of the coarse level solver policy.
  * @tparam S The type of the fine level smoother used.
  */
-template<class FO, class CO, class S>
+template<class FO, class CSP, class S>
 class TwoLevelMethod :
     public Preconditioner<typename FO::domain_type, typename FO::range_type>
 {
 public:
+  /** @brief The type of the policy for constructing the coarse level solver. */
+  typedef CSP CoarseLevelSolverPolicy;
+  /** @brief The type of the coarse level solver. */
+  typedef typename CoarseLevelSolverPolicy::CoarseLevelSolver CoarseLevelSolver;
   /**
    * @brief The linear operator of the finel level system. Has to be
    * derived from AssembledLinearOperator.
@@ -347,7 +365,7 @@ public:
    * @brief The linear operator of the finel level system. Has to be
    * derived from AssembledLinearOperator.
    */
-  typedef CO CoarseOperatorType;
+  typedef typename CSP::Operator CoarseOperatorType;
   /**
    * @brief The type of the range of the coarse level operator.
    */
@@ -380,23 +398,22 @@ public:
    * @param preSteps The number of smoothing steps to apply after the coarse
    * level correction.
    */
-  template<class CoarseSolverPolicy>
   TwoLevelMethod(const FineOperatorType& op,
                  shared_ptr<SmootherType> smoother,
                  const LevelTransferPolicy<FineOperatorType,
                                            CoarseOperatorType>& policy,
-                 CoarseSolverPolicy& coarsePolicy,
+                 CoarseLevelSolverPolicy& coarsePolicy,
                  std::size_t preSteps=1, std::size_t postSteps=1)
     : operator_(&op), smoother_(smoother),
       preSteps_(preSteps), postSteps_(postSteps)
   {
     policy_ = policy.clone();
     policy_->createCoarseLevelSystem(*operator_);
-    coarseSolver_.reset(coarsePolicy.createCoarseLevelSolver(*policy_));
+    coarseSolver_=coarsePolicy.createCoarseLevelSolver(*policy_);
   }
 
   TwoLevelMethod(const TwoLevelMethod& other)
-  : operator_(other.operator_), coarseSolver_(other.coarseSolver_),
+  : operator_(other.operator_), coarseSolver_(new CoarseLevelSolver(*other.coarseSolver_)),
     smoother_(other.smoother_), policy_(other.policy_->clone()),
     preSteps_(other.preSteps_), postSteps_(other.postSteps_)
   {}
@@ -405,6 +422,7 @@ public:
   {
     // Each instance has its own policy.
     delete policy_;
+    delete coarseSolver_;
   }
 
   void pre(FineDomainType& x, FineRangeType& b)
@@ -476,12 +494,11 @@ private:
   };
   const FineOperatorType* operator_;
   /** @brief The coarse level solver. */
-  shared_ptr<InverseOperator<typename CO::domain_type,
-                             typename CO::range_type> > coarseSolver_;
+  CoarseLevelSolver* coarseSolver_;
   /** @brief The fine level smoother. */
   shared_ptr<S> smoother_;
   /** @brief Policy for prolongation, restriction, and coarse level system creation. */
-  LevelTransferPolicy<FO,CO>* policy_;
+  LevelTransferPolicy<FO,typename CSP::Operator>* policy_;
   /** @brief The number of presmoothing steps to apply. */
   std::size_t preSteps_;
   /** @brief The number of postsmoothing steps to apply. */

@@ -40,7 +40,13 @@ typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
 typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,
                                         Dune::SymmetricMultiplicativeSchwarzMode> FSmoother;
 #endif
-typedef Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> AMG;
+typedef Dune::SeqJac<BCRSMat,Vector,Vector> CSmoother;
+typedef Dune::Amg::CoarsenCriterion<
+        Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
+        Criterion;
+typedef Dune::Amg::OneStepAMGCoarseSolverPolicy<Operator,CSmoother, Criterion>
+        CoarsePolicy; // Policy for coarse solver creation
+typedef Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> AMG;
 
 
 
@@ -57,7 +63,7 @@ void *solve(void* arg)
 {
   thread_arg *amgarg=(thread_arg*) arg;
 
-  Dune::GeneralizedPCGSolver<Vector> amgCG(*amgarg->fop,*amgarg->amg,1e-6,80,2);
+  Dune::GeneralizedPCGSolver<Vector> amgCG(*amgarg->fop,*amgarg->amg,1e-4,80,2);
   //Dune::LoopSolver<Vector> amgCG(fop, amg, 1e-4, 10000, 2);
   Dune::Timer watch;
   Dune::InverseOperatorResult r;
@@ -76,7 +82,7 @@ void *solve1(void* arg)
   *amgarg->x=0;
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
-
+  return 0;
 }
 
 void *solve2(void* arg)
@@ -86,6 +92,7 @@ void *solve2(void* arg)
   (*amgarg->amg).pre(*amgarg->x,*amgarg->b);
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
+  return 0;
 }
 
 void testTwoLevelMethod()
@@ -142,12 +149,12 @@ void testTwoLevelMethod()
     CoarsePolicy coarsePolicy=CoarsePolicy(SmootherArgs(), crit);
     TransferPolicy transferPolicy(crit);
     Operator fop(mat);
-    Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> preconditioner(fop,
+    Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner(fop,
                                                                           Dune::stackobject_to_shared_ptr(fineSmoother),
                                                                           transferPolicy,
                                                                           coarsePolicy);
-    Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,1e-8,80,2);
-    Dune::Amg::TwoLevelMethod<Operator,Operator,FSmoother> preconditioner1(preconditioner);
+    Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,.8,80,2);
+    Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner1(preconditioner);
     Dune::InverseOperatorResult res;
 
   std::vector<AMG> amgs(NUM_THREADS, preconditioner1);
