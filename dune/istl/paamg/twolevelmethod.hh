@@ -265,19 +265,21 @@ private:
    */
   struct AMGInverseOperator : public InverseOperator<X,X>
   {
-    AMGInverseOperator(AMGType* amg)
-    : amg_(amg), first_(true)
+    AMGInverseOperator(const typename AMGType::Operator& op,
+                       const Criterion& crit,
+                       const typename AMGType::SmootherArgs& args)
+      : amg_(op, crit,args), first_(true)
     {}
 
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       if(first_)
       {
-        amg_->pre(x,b);
+        amg_.pre(x,b);
         first_=false;
         x_=x;
       }
-      amg_->apply(x,b);
+      amg_.apply(x,b);
     }
 
     void apply(X& x, X& b, InverseOperatorResult& res)
@@ -288,15 +290,15 @@ private:
     ~AMGInverseOperator()
     {
       if(!first_)
-        amg_->post(x_);
+        amg_.post(x_);
     }
     AMGInverseOperator(const AMGInverseOperator& other)
-    : x_(other.x_), amg_(new AMGType(*other.amg_)), first_(other.first_)
+    : x_(other.x_), amg_(other.amg_), first_(other.first_)
     {
     }
   private:
     X x_;
-    AMGType* amg_;
+    AMGType amg_;
     bool first_;
   };
 
@@ -315,11 +317,9 @@ public:
   CoarseLevelSolver* createCoarseLevelSolver(P& transferPolicy)
   {
     coarseOperator_=transferPolicy.getCoarseLevelOperator();
-    typedef AMG<O,X,S> AMGType;
-    AMGType* amg= new  AMGType(*coarseOperator_,
-                           criterion_,
-                           smootherArgs_);
-    AMGInverseOperator* inv = new AMGInverseOperator(amg);
+    AMGInverseOperator* inv = new AMGInverseOperator(*coarseOperator_,
+                                                     criterion_,
+                                                     smootherArgs_);
 
     return inv; //shared_ptr<InverseOperator<X,X> >(inv);
 
