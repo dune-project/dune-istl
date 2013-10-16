@@ -30,7 +30,7 @@ namespace Dune {
     //! \brief The range type of the preconditioner.
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
+    typedef typename X::value_type field_type;
 
     /*! \brief Prepare the preconditioner.
 
