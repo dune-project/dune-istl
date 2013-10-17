@@ -253,9 +253,9 @@ namespace Dune {
       int errcode = Caller::load_numeric(&UMF_Numeric, const_cast<char*>(file));
       if ((errcode == UMFPACK_ERROR_out_of_memory) || (errcode == UMFPACK_ERROR_file_IO))
       {
+        mat_is_loaded = false;
         setMatrix(mat_);
         saveDecomposition(file);
-        mat_is_loaded = false;
       }
       else
       {
