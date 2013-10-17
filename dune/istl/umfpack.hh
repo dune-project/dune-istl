@@ -226,7 +226,7 @@ namespace Dune {
 
     /** @brief default constructor
      */
-    UMFPack() : verbose(0), mat_is_loaded(false)
+    UMFPack() : mat_is_loaded(false), verbose(0)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),

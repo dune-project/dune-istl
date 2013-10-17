@@ -19,7 +19,6 @@ int main(int argc, char** argv)
 {
   try
   {
-    typedef int I;
     typedef double FIELD_TYPE;
     //typedef std::complex<double> FIELD_TYPE;
 
