@@ -80,7 +80,6 @@ if PARDISO
 endif
 
 cudatest_SOURCES = cudatest.cc
-#cudatest_LDADD = $(top_builddir)/dune/istl/vector/libcuda_backend.a
 cudatest_LDFLAGS = $(AM_LDFLAGS)	\
 		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
 		   $(top_builddir)/dune/istl/vector/libcuda_backend.a

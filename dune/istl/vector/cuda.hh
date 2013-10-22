@@ -17,17 +17,22 @@
 #include <dune/common/dotproduct.hh>
 #include <dune/istl/vector/cuda_backend.hh>
 #include <dune/istl/vector/cuda_kernels.hh>
+#include <dune/istl/vector/cuda_allocator.hh>
+#include <dune/istl/forwarddeclarations.hh>
+
 
 namespace Dune {
   namespace ISTL {
 
     template<typename F_, typename A_>
-    class Vector
+    class Vector<F_,A_,Memory::Domain::CUDA>
     {
       public:
-      typedef F_& Field;
+      typedef F_ Field;
       typedef F_ DataType;
       typedef F_ value_type;
+
+      typedef Memory::Domain::CUDA Domain;
 
       // typedef F_::DataType DataType;
       typedef F_ DT_;

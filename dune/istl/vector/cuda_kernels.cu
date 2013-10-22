@@ -304,12 +304,12 @@ namespace Dune
     //-------------- infinity_norm ---------------
     int device_infinity_norm(const float * x, const unsigned long size)
     {
-        return cublasIsamax(size, x, 1);
+        return cublasIsamax(size, x, 1) - 1;
     }
 
     int device_infinity_norm(const double * x, const unsigned long size)
     {
-        return cublasIdamax(size, x, 1);
+        return cublasIdamax(size, x, 1) - 1;
     }
 
     template <typename DT_>

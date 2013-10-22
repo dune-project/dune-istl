@@ -10,19 +10,6 @@ namespace Dune
 {
   namespace Cuda
   {
-    template <typename DT_> class CudaAllocator : public std::allocator<DT_>
-    {
-      public:
-      template <class Type> struct rebind
-      {
-          typedef CudaAllocator<Type> other;
-      };
-
-      typename std::allocator<DT_>::pointer allocate (size_t n, std::allocator<void>::const_pointer hint=0);
-      void deallocate (typename std::allocator<DT_>::pointer p, size_t n = 0);
-
-    };
-
     template <typename DT_>
     void upload(DT_ * dst, const DT_ * src, size_t count);
 

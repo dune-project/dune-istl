@@ -13,7 +13,7 @@ int backend_test()
   int result(EXIT_SUCCESS);
 
   size_t size(4711);
-  Cuda::CudaAllocator<DT_> alloc;
+  Memory::CudaAllocator<DT_> alloc;
   DT_ * device(alloc.allocate(size));
   DT_ * host(new DT_[size]);
   for (size_t i(0) ; i < size ; ++i)
@@ -35,17 +35,17 @@ int backend_test()
   return result;
 }
 
-template <typename DT_>
+template <typename DT_, typename A_>
 int vector_test()
 {
   int result(EXIT_SUCCESS);
 
-  size_t size(4711);
-  ISTL::Vector<DT_, Cuda::CudaAllocator<DT_> > v1;
+  size_t size(47);
+  ISTL::Vector<DT_, A_> v1;
   if (v1.size() != 0)
     return EXIT_FAILURE;
 
-  ISTL::Vector<DT_, Cuda::CudaAllocator<DT_> > v2(size);
+  ISTL::Vector<DT_, A_> v2(size);
   for (size_t i(0) ; i < size ; ++i)
     v2(i, i);
   if (v2.size() != size)
@@ -54,7 +54,7 @@ int vector_test()
     if (v2[i] != i)
       return EXIT_FAILURE;
 
-  ISTL::Vector<DT_, Cuda::CudaAllocator<DT_> > v3(v2);
+  ISTL::Vector<DT_, A_> v3(v2);
   if (v3.size() != v2.size())
     return EXIT_FAILURE;
   for (size_t i(0) ; i < size ; ++i)
@@ -69,8 +69,8 @@ int vector_test()
     if (v2[i] != i)
       return EXIT_FAILURE;
 
-  ISTL::Vector<DT_, Cuda::CudaAllocator<DT_> > v4(size);
-  ISTL::Vector<DT_, Cuda::CudaAllocator<DT_> > v5(size);
+  ISTL::Vector<DT_, A_> v4(size);
+  ISTL::Vector<DT_, A_> v5(size);
   for (size_t i(0) ; i < size ; ++i)
   {
     v4(i, i+1);
@@ -149,8 +149,7 @@ int vector_test()
 
   v4(42, 4711);
   norm = v4.infinity_norm();
-  std::cout<<norm<<" "<<4711<<std::endl;
-  if (norm != 42)
+  if (norm != 4711)
     return EXIT_FAILURE;
 
   return result;
@@ -168,12 +167,12 @@ int main()
     std::cout<<"backend test failed!"<<std::endl;
     return EXIT_FAILURE;
   }
-  if (vector_test<float>() == EXIT_FAILURE)
+  if (vector_test<float, Memory::CudaAllocator<float> >() == EXIT_FAILURE)
   {
     std::cout<<"vector test failed!"<<std::endl;
     return EXIT_FAILURE;
   }
-  if (vector_test<double>() == EXIT_FAILURE)
+  if (vector_test<double, Memory::CudaAllocator<double> >() == EXIT_FAILURE)
   {
     std::cout<<"vector test failed!"<<std::endl;
     return EXIT_FAILURE;
