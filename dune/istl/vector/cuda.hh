@@ -15,9 +15,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
-#include <dune/istl/vector/cuda_backend.hh>
-#include <dune/istl/vector/cuda_kernels.hh>
-#include <dune/istl/vector/cuda_allocator.hh>
+#include <dune/common/memory/cuda_allocator.hh>
+#include <dune/common/kernel/vec/cuda_kernels.hh>
 #include <dune/istl/forwarddeclarations.hh>
 
 

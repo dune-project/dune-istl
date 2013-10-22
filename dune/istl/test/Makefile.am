@@ -82,7 +82,9 @@ endif
 cudatest_SOURCES = cudatest.cc
 cudatest_LDFLAGS = $(AM_LDFLAGS)	\
 		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
-		   $(top_builddir)/dune/istl/vector/libcuda_backend.a
+		   $(top_builddir)/dune/istl/vector/libcuda_backend.a \
+		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
+		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a
 
 
 basearraytest_SOURCES = basearraytest.cc
