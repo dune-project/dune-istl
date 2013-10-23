@@ -65,7 +65,6 @@ add_executable(transfertest "transfertest.cc")
 add_executable(twolevelmethodschwarztest "twolevelmethodtest.cc")
 set_target_properties(twolevelmethodschwarztest PROPERTIES COMPILE_FLAGS "-DUSE_OVERLAPPINGSCHWARZ")
 add_dune_superlu_flags(twolevelmethodschwarztest)
-add_executable(twolevelmethodtest "twolevelmethodtest.cc")
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")
