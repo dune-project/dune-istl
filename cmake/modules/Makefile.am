@@ -1,8 +1,6 @@
 MODULES = AddSuperLUFlags.cmake \
- AddUMFPackFlags.cmake \
  DuneIstlMacros.cmake \
- FindSuperLU.cmake \
- FindUMFPack.cmake
+ FindSuperLU.cmake
 
 modulesdir= $(datadir)/cmake/modules
 dist_modules_DATA = ${MODULES}
