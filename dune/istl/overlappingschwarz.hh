@@ -854,6 +854,13 @@ namespace Dune
      */
     virtual void apply (X& v, const X& d);
 
+    /*!
+       \brief Postprocess the preconditioner.
+
+       \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (X& x) {}
+
     template<bool forward>
     void apply(X& v, const X& d);
 
