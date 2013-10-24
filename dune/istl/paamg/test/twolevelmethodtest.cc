@@ -33,7 +33,7 @@ typedef Dune::BlockVector<VectorBlock> Vector;
 typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
 typedef Dune::CollectiveCommunication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
-typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 #ifndef USE_OVERLAPPINGSCHWARZ
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
 #else
