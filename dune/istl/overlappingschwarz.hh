@@ -15,6 +15,7 @@
 #include "bvector.hh"
 #include "bcrsmatrix.hh"
 #include "ilusubdomainsolver.hh"
+#include <dune/istl/solvertype.hh>
 
 namespace Dune
 {
