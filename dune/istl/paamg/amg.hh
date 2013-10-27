@@ -12,6 +12,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/superlu.hh>
+#include <dune/istl/umfpack.hh>
 #include <dune/istl/solvertype.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/exceptions.hh>
@@ -236,6 +237,7 @@ namespace Dune
        */
       struct LevelContext
       {
+        typedef Smoother SmootherType;
         /**
          * @brief The iterator over the smoothers.
          */
@@ -282,18 +284,6 @@ namespace Dune
       void mgc(LevelContext& levelContext);
 
       void additiveMgc();
-
-      /**
-       * @brief Apply pre smoothing on the current level.
-       * @param levelContext the iterators of the current level.
-       */
-      void presmooth(LevelContext& levelContext);
-
-      /**
-       * @brief Apply post smoothing on the current level.
-       * @param levelContext the iterators of the current level.
-       */
-      void postsmooth(LevelContext& levelContext);
 
       /**
        * @brief Move the iterators to the finer level
@@ -504,7 +494,12 @@ namespace Dune
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
         scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
 
-#if HAVE_SUPERLU
+#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_UMFPACK
+#define DIRECTSOLVER UMFPack
+#else
+#define DIRECTSOLVER SuperLU
+#endif
         // Use superlu if we are purely sequential or with only one processor on the coarsest level.
         if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
            || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
@@ -512,17 +507,18 @@ namespace Dune
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
           if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<<"Using superlu"<<std::endl;
+            std::cout<<"Using DIRECTSOLVER"<<std::endl;
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
               // We are still participating on this level
-              solver_.reset(new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+              solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
             else
               solver_.reset();
           }else
-            solver_.reset(new SuperLU<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
+            solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
         }else
+#undef DIRECTSOLVER
 #endif
         {
           if(matrices_->parallelInformation().coarsest().isRedistributed())
@@ -775,42 +771,6 @@ namespace Dune
       *levelContext.update += *levelContext.lhs;
     }
 
-
-    template<class M, class X, class S, class PI, class A>
-    void AMG<M,X,S,PI,A>
-    ::presmooth(LevelContext& levelContext)
-    {
-
-      for(std::size_t i=0; i < preSteps_; ++i) {
-        *levelContext.lhs=0;
-        SmootherApplier<S>::preSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
-        // Accumulate update
-        *levelContext.update += *levelContext.lhs;
-
-        // update defect
-        levelContext.matrix->applyscaleadd(-1,static_cast<const Domain&>(*levelContext.lhs), *levelContext.rhs);
-        levelContext.pinfo->project(*levelContext.rhs);
-      }
-    }
-
-    template<class M, class X, class S, class PI, class A>
-    void AMG<M,X,S,PI,A>
-    ::postsmooth(LevelContext& levelContext)
-    {
-
-      for(std::size_t i=0; i < postSteps_; ++i) {
-        // update defect
-        levelContext.matrix->applyscaleadd(-1,static_cast<const Domain&>(*levelContext.lhs),
-                              *levelContext.rhs);
-        *levelContext.lhs=0;
-        levelContext.pinfo->project(*levelContext.rhs);
-        SmootherApplier<S>::postSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
-        // Accumulate update
-        *levelContext.update += *levelContext.lhs;
-      }
-    }
-
-
     template<class M, class X, class S, class PI, class A>
     bool AMG<M,X,S,PI,A>::usesDirectCoarseLevelSolver() const
     {
@@ -843,7 +803,7 @@ namespace Dune
           coarsesolverconverged = false;
       }else{
         // presmoothing
-        presmooth(levelContext);
+        presmooth(levelContext, preSteps_);
 
 #ifndef DUNE_AMG_NO_COARSEGRIDCORRECTION
         bool processNextLevel = moveToCoarseLevel(levelContext);
@@ -865,7 +825,7 @@ namespace Dune
             DUNE_THROW(MathError, "Coarse solver did not converge");
         }
         // postsmoothing
-        postsmooth(levelContext);
+        postsmooth(levelContext, postSteps_);
 
       }
     }

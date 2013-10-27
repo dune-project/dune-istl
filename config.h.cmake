@@ -42,6 +42,9 @@
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 
+/* Define to if the UMFPack library is available */
+#cmakedefine HAVE_UMFPACK ENABLE_UMFPACK
+
 /* define to 1 because older versions of SuperLU are no longer supported*/
 #define SUPERLU_POST_2005_VERSION 1
 

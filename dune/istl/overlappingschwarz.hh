@@ -11,9 +11,11 @@
 #include <dune/common/sllist.hh>
 #include "preconditioners.hh"
 #include "superlu.hh"
+#include "umfpack.hh"
 #include "bvector.hh"
 #include "bcrsmatrix.hh"
 #include "ilusubdomainsolver.hh"
+#include <dune/istl/solvertype.hh>
 
 namespace Dune
 {
@@ -203,13 +205,24 @@ namespace Dune
     DynamicMatrix<K> A;
   };
 
-  template<typename T>
-  struct OverlappingAssigner
+  template<typename T, bool tag>
+  class OverlappingAssignerHelper
   {};
+
+  template<typename T>
+  struct OverlappingAssigner : public OverlappingAssignerHelper<T,Dune::StoresColumnCompressed<T>::value >
+  {
+    public:
+    OverlappingAssigner(std::size_t maxlength, const typename T::matrix_type& mat,
+                        const typename T::range_type& b, typename T::range_type& x)
+      : OverlappingAssignerHelper<T,Dune::StoresColumnCompressed<T>::value >
+      (maxlength,mat,b,x)
+      {}
+  };
 
   // specialization for DynamicMatrix
   template<class K, int n, class Al, class X, class Y>
-  class OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  class OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   {
   public:
     typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> matrix_type;
@@ -225,7 +238,7 @@ namespace Dune
      * @param b_ the global right hand side.
      * @param x_ the global left hand side.
      */
-    OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_, const X& b_, Y& x_);
+    OverlappingAssignerHelper(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_, const X& b_, Y& x_);
 
     /**
      * @brief Deallocates memory of the local vector.
@@ -297,12 +310,12 @@ namespace Dune
     std::size_t maxlength_;
   };
 
-#if HAVE_SUPERLU
-  template<typename T, typename A, int n, int m>
-  struct OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+#if HAVE_SUPERLU || HAVE_UMFPACK
+  template<template<class> class S, int n, int m, typename T, typename A>
+  struct OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>, A> >, true>
   {
-    typedef BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
-    typedef typename SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::range_type range_type;
+    typedef BCRSMatrix<FieldMatrix<T,n,m>, A> matrix_type;
+    typedef typename S<BCRSMatrix<FieldMatrix<T,n,m>, A> >::range_type range_type;
     typedef typename range_type::field_type field_type;
     typedef typename range_type::block_type block_type;
 
@@ -315,7 +328,7 @@ namespace Dune
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
-    OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<T,n,m>,A>& mat,
+    OverlappingAssignerHelper(std::size_t maxlength, const matrix_type& mat,
                         const range_type& b, range_type& x);
     /**
      * @brief Deallocates memory of the local vector.
@@ -467,7 +480,7 @@ namespace Dune
 
   // specialization for ILU0
   template<class M, class X, class Y>
-  class OverlappingAssigner<ILU0SubdomainSolver<M,X,Y> >
+  class OverlappingAssignerHelper<ILU0SubdomainSolver<M,X,Y>, false>
     : public OverlappingAssignerILUBase<M,X,Y>
   {
   public:
@@ -478,7 +491,7 @@ namespace Dune
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
-    OverlappingAssigner(std::size_t maxlength, const M& mat,
+    OverlappingAssignerHelper(std::size_t maxlength, const M& mat,
                         const Y& b, X& x)
       : OverlappingAssignerILUBase<M,X,Y>(maxlength, mat,b,x)
     {}
@@ -486,7 +499,7 @@ namespace Dune
 
   // specialization for ILUN
   template<class M, class X, class Y>
-  class OverlappingAssigner<ILUNSubdomainSolver<M,X,Y> >
+  class OverlappingAssignerHelper<ILUNSubdomainSolver<M,X,Y>,false>
     : public OverlappingAssignerILUBase<M,X,Y>
   {
   public:
@@ -497,7 +510,7 @@ namespace Dune
      * @param b the global right hand side.
      * @param x the global left hand side.
      */
-    OverlappingAssigner(std::size_t maxlength, const M& mat,
+    OverlappingAssignerHelper(std::size_t maxlength, const M& mat,
                         const Y& b, X& x)
       : OverlappingAssignerILUBase<M,X,Y>(maxlength, mat,b,x)
     {}
@@ -673,13 +686,18 @@ namespace Dune
     }
   };
 
+  template<class T, bool tag>
+  struct SeqOverlappingSchwarzAssemblerHelper
+  {};
+
   template<class T>
   struct SeqOverlappingSchwarzAssembler
+    : public SeqOverlappingSchwarzAssemblerHelper<T,Dune::StoresColumnCompressed<T>::value>
   {};
 
 
   template<class K, int n, class Al, class X, class Y>
-  struct SeqOverlappingSchwarzAssembler< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  struct SeqOverlappingSchwarzAssemblerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   {
     typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> matrix_type;
     template<class RowToDomain, class Solvers, class SubDomains>
@@ -688,17 +706,15 @@ namespace Dune
                                              bool onTheFly);
   };
 
-#if HAVE_SUPERLU
-  template<class T>
-  struct SeqOverlappingSchwarzAssembler<SuperLU<T> >
+  template<template<class> class S, typename T, typename A, int m, int n>
+  struct SeqOverlappingSchwarzAssemblerHelper<S<BCRSMatrix<FieldMatrix<T,m,n>,A> >,true>
   {
-    typedef T matrix_type;
+    typedef BCRSMatrix<FieldMatrix<T,m,n>,A> matrix_type;
     template<class RowToDomain, class Solvers, class SubDomains>
     static std::size_t assembleLocalProblems(const RowToDomain& rowToDomain, const matrix_type& mat,
                                              Solvers& solvers, const SubDomains& domains,
                                              bool onTheFly);
   };
-#endif
 
   template<class M,class X, class Y>
   struct SeqOverlappingSchwarzAssemblerILUBase
@@ -711,12 +727,12 @@ namespace Dune
   };
 
   template<class M,class X, class Y>
-  struct SeqOverlappingSchwarzAssembler<ILU0SubdomainSolver<M,X,Y> >
+  struct SeqOverlappingSchwarzAssemblerHelper<ILU0SubdomainSolver<M,X,Y>,false>
     : public SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>
   {};
 
   template<class M,class X, class Y>
-  struct SeqOverlappingSchwarzAssembler<ILUNSubdomainSolver<M,X,Y> >
+  struct SeqOverlappingSchwarzAssemblerHelper<ILUNSubdomainSolver<M,X,Y>,false>
     : public SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>
   {};
 
@@ -839,17 +855,15 @@ namespace Dune
      */
     virtual void apply (X& v, const X& d);
 
-    template<bool forward>
-    void apply(X& v, const X& d);
-
     /*!
-       \brief Clean up.
+       \brief Postprocess the preconditioner.
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x) {
-      Dune::dverb<<" avg nnz over subdomain is "<<nnz<<std::endl;
-    }
+    virtual void post (X& x) {}
+
+    template<bool forward>
+    void apply(X& v, const X& d);
 
   private:
     const M& mat;
@@ -858,7 +872,6 @@ namespace Dune
     field_type relax;
 
     typename M::size_type maxlength;
-    std::size_t nnz;
 
     bool onTheFly;
   };
@@ -1098,7 +1111,7 @@ namespace Dune
   template<class K, int n, class Al, class X, class Y>
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t
-  SeqOverlappingSchwarzAssembler< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >::
+  SeqOverlappingSchwarzAssemblerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>::
   assembleLocalProblems(const RowToDomain& rowToDomain,
                         const matrix_type& mat,
                         Solvers& solvers,
@@ -1117,16 +1130,17 @@ namespace Dune
     return maxlength;
   }
 
-#if HAVE_SUPERLU
-  template<class T>
+#if HAVE_SUPERLU || HAVE_UMFPACK
+  template<template<class> class S, typename T, typename A, int m, int n>
   template<class RowToDomain, class Solvers, class SubDomains>
-  std::size_t SeqOverlappingSchwarzAssembler<SuperLU<T> >::assembleLocalProblems(const RowToDomain& rowToDomain,
+  std::size_t SeqOverlappingSchwarzAssemblerHelper<S<BCRSMatrix<FieldMatrix<T,m,n>,A> >,true>::assembleLocalProblems(const RowToDomain& rowToDomain,
                                                                                  const matrix_type& mat,
                                                                                  Solvers& solvers,
                                                                                  const SubDomains& subDomains,
                                                                                  bool onTheFly)
   {
-    typedef typename std::vector<SuperMatrixInitializer<matrix_type> >::iterator InitializerIterator;
+    typedef typename S<BCRSMatrix<FieldMatrix<T,m,n>,A> >::MatrixInitializer MatrixInitializer;
+    typedef typename std::vector<MatrixInitializer>::iterator InitializerIterator;
     typedef typename SubDomains::const_iterator DomainIterator;
     typedef typename Solvers::iterator SolverIterator;
     std::size_t maxlength = 0;
@@ -1140,7 +1154,7 @@ namespace Dune
       DomainIterator domain=subDomains.begin();
 
       // Create the initializers list.
-      std::vector<SuperMatrixInitializer<matrix_type> > initializers(subDomains.size());
+      std::vector<MatrixInitializer> initializers(subDomains.size());
 
       SolverIterator solver=solvers.begin();
       for(InitializerIterator initializer=initializers.begin(); initializer!=initializers.end();
@@ -1148,27 +1162,21 @@ namespace Dune
         solver->mat.N_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
         solver->mat.M_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
         //solver->setVerbosity(true);
-        *initializer=SuperMatrixInitializer<matrix_type>(solver->mat);
+        *initializer=MatrixInitializer(solver->mat);
       }
 
       // Set up the supermatrices according to the subdomains
-      typedef OverlappingSchwarzInitializer<std::vector<SuperMatrixInitializer<matrix_type> >,
+      typedef OverlappingSchwarzInitializer<std::vector<MatrixInitializer>,
           RowToDomain, SubDomains> Initializer;
 
       Initializer initializer(initializers, rowToDomain, subDomains);
-      copyToSuperMatrix(initializer, mat);
-      if(solvers.size()==1)
-        assert(solvers[0].mat==mat);
-
-      /*    for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver)
-            dPrint_CompCol_Matrix("superlu", &static_cast<SuperMatrix&>(solver->mat)); */
+      copyToColCompMatrix(initializer, mat);
 
       // Calculate the LU decompositions
-      std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&SuperLU<matrix_type>::decompose));
+      std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&S<BCRSMatrix<FieldMatrix<T,m,n>,A> >::decompose));
       for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
         assert(solver->mat.N()==solver->mat.M());
         maxlength=std::max(maxlength, solver->mat.N());
-        //writeCompColMatrixToMatlab(static_cast<SuperLUMatrix<M>&>(solver->mat), std::cout);
       }
     }
     return maxlength;
@@ -1232,8 +1240,6 @@ namespace Dune
     typedef typename AdderSelector<TM,X,TD >::Adder Adder;
     Adder adder(v, x, assigner, relax);
 
-    nnz=0;
-    std::size_t no=0;
     for(; domain != IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::end(subDomains); ++domain) {
       //Copy rhs to C-array for SuperLU
       std::for_each(domain->begin(), domain->end(), assigner);
@@ -1244,27 +1250,24 @@ namespace Dune
         sdsolver.setSubMatrix(mat, *domain);
         // Apply
         sdsolver.apply(assigner.lhs(), assigner.rhs());
-        //nnz+=sdsolver.nnz();
       }else{
         solver->apply(assigner.lhs(), assigner.rhs());
-        //nnz+=solver->nnz();
         ++solver;
       }
-      ++no;
+
       //Add relaxed correction to from SuperLU to v
       std::for_each(domain->begin(), domain->end(), adder);
       assigner.resetIndexForNextDomain();
 
     }
-    nnz/=no;
 
     adder.axpy();
     assigner.deallocate();
   }
 
   template<class K, int n, class Al, class X, class Y>
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
-  ::OverlappingAssigner(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_,
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
+  ::OverlappingAssignerHelper(std::size_t maxlength, const BCRSMatrix<FieldMatrix<K,n,n>, Al>& mat_,
                         const X& b_, Y& x_) :
     mat(&mat_),
     rhs_( new DynamicVector<field_type>(maxlength, 42) ),
@@ -1277,7 +1280,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   void
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::deallocate()
   {
     delete rhs_;
@@ -1286,7 +1289,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   void
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::resetIndexForNextDomain()
   {
     i=0;
@@ -1294,7 +1297,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   DynamicVector<K> &
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::lhs()
   {
     return *lhs_;
@@ -1302,7 +1305,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   DynamicVector<K> &
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::rhs()
   {
     return *rhs_;
@@ -1310,7 +1313,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   void
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::relaxResult(field_type relax)
   {
     lhs() *= relax;
@@ -1318,7 +1321,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   void
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::operator()(const size_type& domainIndex)
   {
     lhs() = 0.0;
@@ -1363,7 +1366,7 @@ namespace Dune
 
   template<class K, int n, class Al, class X, class Y>
   void
-  OverlappingAssigner< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y > >
+  OverlappingAssignerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
   ::assignResult(block_type& res)
   {
     // assign the result of the local solve to the global vector
@@ -1373,11 +1376,11 @@ namespace Dune
     }
   }
 
-#if HAVE_SUPERLU
+#if HAVE_SUPERLU || HAVE_UMFPACK
 
-  template<typename T, typename A, int n, int m>
-  OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
-  ::OverlappingAssigner(std::size_t maxlength,
+  template<template<class> class S, int n, int m, typename T, typename A>
+  OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>
+  ::OverlappingAssignerHelper(std::size_t maxlength,
                         const BCRSMatrix<FieldMatrix<T,n,m>,A>& mat_,
                         const range_type& b_,
                         range_type& x_)
@@ -1390,15 +1393,15 @@ namespace Dune
 
   }
 
-  template<typename T, typename A, int n, int m>
-  void OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::deallocate()
+  template<template<class> class S, int n, int m, typename T, typename A>
+  void OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::deallocate()
   {
     delete[] rhs_;
     delete[] lhs_;
   }
 
-  template<typename T, typename A, int n, int m>
-  void OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::operator()(const size_type& domainIndex)
+  template<template<class> class S, int n, int m, typename T, typename A>
+  void OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::operator()(const size_type& domainIndex)
   {
     //assign right hand side of current domainindex block
     // rhs is an array of doubles!
@@ -1425,8 +1428,9 @@ namespace Dune
     }
 
   }
-  template<typename T, typename A, int n, int m>
-  void OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::relaxResult(field_type relax)
+
+  template<template<class> class S, int n, int m, typename T, typename A>
+  void OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::relaxResult(field_type relax)
   {
     for(size_type j=i+n; i<j; ++i) {
       assert(i<maxlength_);
@@ -1435,8 +1439,8 @@ namespace Dune
     i-=n;
   }
 
-  template<typename T, typename A, int n, int m>
-  void OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::assignResult(block_type& res)
+  template<template<class> class S, int n, int m, typename T, typename A>
+  void OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::assignResult(block_type& res)
   {
     // assign the result of the local solve to the global vector
     for(size_type j=0; j<n; ++j, ++i) {
@@ -1445,22 +1449,22 @@ namespace Dune
     }
   }
 
-  template<typename T, typename A, int n, int m>
-  void OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::resetIndexForNextDomain()
+  template<template<class> class S, int n, int m, typename T, typename A>
+  void OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::resetIndexForNextDomain()
   {
     i=0;
   }
 
-  template<typename T, typename A, int n, int m>
-  typename OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::field_type*
-  OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::lhs()
+  template<template<class> class S, int n, int m, typename T, typename A>
+  typename OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::field_type*
+  OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::lhs()
   {
     return lhs_;
   }
 
-  template<typename T, typename A, int n, int m>
-  typename OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::field_type*
-  OverlappingAssigner<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >::rhs()
+  template<template<class> class S, int n, int m, typename T, typename A>
+  typename OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::field_type*
+  OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>::rhs()
   {
     return rhs_;
   }

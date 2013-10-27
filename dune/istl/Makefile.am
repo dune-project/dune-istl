@@ -8,6 +8,7 @@ istl_HEADERS = basearray.hh \
 	bdmatrix.hh \
 	btdmatrix.hh \
 	bvector.hh \
+	colcompmatrix.hh \
 	diagonalmatrix.hh \
 	gsetc.hh \
 	ilu.hh \
@@ -39,8 +40,8 @@ istl_HEADERS = basearray.hh \
 	solvertype.hh \
 	superlu.hh \
 	supermatrix.hh \
-	vbvector.hh
-
+	vbvector.hh \
+	umfpack.hh
 
 include $(top_srcdir)/am/global-rules
 
