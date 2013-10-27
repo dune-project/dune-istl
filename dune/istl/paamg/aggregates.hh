@@ -1782,10 +1782,10 @@ namespace Dune
           // Examine all the edges beginning at this vertex.
           typedef typename G::EdgeIterator EdgeIterator;
           typedef typename Matrix::ConstColIterator ColIterator;
-          EdgeIterator end = vertex.end();
+          EdgeIterator eEnd = vertex.end();
           ColIterator col = matrix[*vertex].begin();
 
-          for(EdgeIterator edge = vertex.begin(); edge!= end; ++edge, ++col) {
+          for(EdgeIterator edge = vertex.begin(); edge!= eEnd; ++edge, ++col) {
             // Move to the right column.
             while(col.index()!=edge.target())
               ++col;
