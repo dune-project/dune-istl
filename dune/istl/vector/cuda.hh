@@ -19,6 +19,9 @@
 #include <dune/common/kernel/vec/cuda_kernels.hh>
 #include <dune/istl/forwarddeclarations.hh>
 
+#include <dune/common/memory/blocked_allocator.hh>
+#include <dune/istl/vector/host.hh>
+
 
 namespace Dune {
   namespace ISTL {
@@ -61,6 +64,14 @@ namespace Dune {
         allocate(size);
       }
 
+      explicit Vector(size_type size, value_type val)
+        : _size(0)
+        , _data(nullptr)
+      {
+        allocate(size, false);
+        Cuda::set(_data, val, size);
+      }
+
       Vector(const Vector & other)
         : _size(0)
         , _data(nullptr)
@@ -76,6 +87,15 @@ namespace Dune {
       {
         other._data = nullptr;
         other._size = 0;
+      }
+
+      Vector(const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & other)
+        : _size(0)
+        , _data(nullptr)
+      {
+        allocate(other.size(), false);
+        for (size_t i(0) ; i < _size ; ++i)
+          Cuda::set(_data + i, other[i]);
       }
 
       size_type size() const
@@ -113,22 +133,22 @@ namespace Dune {
         other._size = 0;
       }
 
-      template <typename B_>
-      Vector & operator= (const Vector & other)
+      Vector & operator= (const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & other)
       {
-        if (_size == other._size)
+        if (_size == other.size())
         {
-          Cuda::copy(_data, other._data, _size);
+          for (size_t i(0) ; i < _size ; ++i)
+            Cuda::set(_data + i, other[i]);
         }
         else
         {
           if (_data)
             deallocate();
-          _allocator = other._allocator;
-          if (other._size == 0)
+          if (other.size() == 0)
             return *this;
-          allocate(other._size ,false);
-          Cuda::copy(_data, other._data, _size);
+          allocate(other.size() ,false);
+          for (size_t i(0) ; i < _size ; ++i)
+            Cuda::set(_data + i, other[i]);
         }
         return *this;
       }

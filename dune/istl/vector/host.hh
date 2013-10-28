@@ -74,6 +74,16 @@ namespace Dune {
         allocate(size);
       }
 
+      explicit Vector(size_type size, value_type val)
+        : _size(0)
+        , _allocation_size(0)
+        , _data(nullptr)
+        , _chunk_size(minimum_chunk_size)
+      {
+        allocate(size,false);
+        std::fill(begin(),end(),val);
+      }
+
       Vector(const Vector & other)
         : _size(0)
         , _allocation_size(0)

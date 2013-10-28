@@ -80,11 +80,13 @@ if PARDISO
 endif
 
 cudatest_SOURCES = cudatest.cc
+cudatest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
 cudatest_LDFLAGS = $(AM_LDFLAGS)	\
+		   $(TBB_CPPFLAGS) \
 		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
-		   $(top_builddir)/dune/istl/vector/libcuda_backend.a \
 		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
 		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a
+cudatest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
 
 
 basearraytest_SOURCES = basearraytest.cc
