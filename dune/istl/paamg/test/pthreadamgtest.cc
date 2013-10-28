@@ -126,7 +126,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<1,XREAL>(N, indices, c, &n, 1);
+  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
 

@@ -43,7 +43,7 @@ void testCoarsenIndices(int N)
   typedef Dune::CollectiveCommunication<MPI_Comm> Comm;
   Comm cc(MPI_COMM_WORLD);
 
-  BCRSMat mat = setupAnisotropic2d<BS,double>(N, indices, cc, &n);
+  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, indices, cc, &n);
 
   pinfo.remoteIndices().template rebuild<false>();
 

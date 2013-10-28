@@ -22,9 +22,9 @@ template<class M>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end);
 
 
-template<int BS, class T, class G, class L, class C, int n>
-Dune::BCRSMatrix<Dune::FieldMatrix<T,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices,
-                                                                 const Dune::CollectiveCommunication<C>& p, int *nout, T eps=1.0);
+template<class M, class G, class L, class C, int n>
+M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices,
+                     const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps=1.0);
 
 
 template<class M, class G, class L, int s>
@@ -95,8 +95,8 @@ void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int 
     b->operator[](b.index())=-eps;
 
   int n = overlapEnd-overlapStart;
-  typedef typename Dune::BCRSMatrix<Block>::ColIterator ColIterator;
-  typedef typename Dune::BCRSMatrix<Block>::RowIterator RowIterator;
+  typedef typename M::ColIterator ColIterator;
+  typedef typename M::RowIterator RowIterator;
 
   for (RowIterator i = mat.begin(); i != mat.end(); ++i) {
     // calculate coordinate
@@ -128,10 +128,8 @@ void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int 
   }
 }
 
-template<int BS, class T, class G, class L, int s>
-void setBoundary(Dune::BlockVector<Dune::FieldVector<T,BS> >& lhs,
-                 Dune::BlockVector<Dune::FieldVector<T,BS> >& rhs,
-                 const G& n, Dune::ParallelIndexSet<G,L,s>& indices)
+template<class V, class G, class L, int s>
+void setBoundary(V& lhs, V& rhs, const G& n, Dune::ParallelIndexSet<G,L,s>& indices)
 {
   typedef typename Dune::ParallelIndexSet<G,L,s>::const_iterator Iter;
   for(Iter i=indices.begin(); i != indices.end(); ++i) {
@@ -145,11 +143,11 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<T,BS> >& lhs,
   }
 }
 
-template<int BS, class T, class G>
-void setBoundary(Dune::BlockVector<Dune::FieldVector<T,BS> >& lhs,
-                 Dune::BlockVector<Dune::FieldVector<T,BS> >& rhs,
-                 const G& N)
+template<class V, class G>
+void setBoundary(V& lhs, V& rhs, const G& N)
 {
+  typedef typename V::block_type Block;
+  typedef typename Block::value_type T;
   for(int j=0; j < N; ++j)
     for(int i=0; i < N; i++)
       if(i==0 || j ==0 || i==N-1 || j==N-1) {
@@ -168,14 +166,12 @@ void setBoundary(Dune::BlockVector<Dune::FieldVector<T,BS> >& lhs,
       }
 }
 
-template<int BS, class T, class G, class L, class C, int s>
-Dune::BCRSMatrix<Dune::FieldMatrix<T,BS,BS> > setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices,
-                                                                 const Dune::CollectiveCommunication<C>& p, int *nout, T eps)
+template<class M, class G, class L, class C, int s>
+M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps)
 {
   int procs=p.size(), rank=p.rank();
 
-  typedef Dune::FieldMatrix<T,BS,BS> Block;
-  typedef Dune::BCRSMatrix<Block> BCRSMat;
+  typedef M BCRSMat;
 
   // calculate size of local matrix in the distributed direction
   int start, end, overlapStart, overlapEnd;
