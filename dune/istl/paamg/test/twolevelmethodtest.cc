@@ -65,7 +65,7 @@ void testTwoLevelMethod()
     FSmoother fineSmoother(mat,subdomains, 1.0, false);
 #endif
     typedef Dune::SeqJac<BCRSMat,Vector,Vector> CSmoother;
-    typedef typename Dune::Amg::SmootherTraits<CSmoother>::Arguments SmootherArgs;
+    typedef Dune::Amg::SmootherTraits<CSmoother>::Arguments SmootherArgs;
     typedef Dune::Amg::CoarsenCriterion<
       Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> > Criterion;
     typedef Dune::Amg::AggregationLevelTransferPolicy<Operator,Criterion> TransferPolicy;
