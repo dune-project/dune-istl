@@ -5,13 +5,17 @@ if MPI
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest pamg_comm_repart_test
 endif
 
+if DUNE_PTHREAD
+  PTHREADTESTS = pthreadamgtest pthreadfastamgtest pthreadtwoleveltest
+endif
+
 NORMALTESTS = amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest $(MPITESTS)
 
 # which tests to run
-TESTS = $(NORMALTESTS) $(TESTPROGS)
+TESTS = $(NORMALTESTS) $(TESTPROGS) $(PTHREADTESTS)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(TESTPROGS) $(NORMALTESTS)
+check_PROGRAMS = $(TESTPROGS) $(NORMALTESTS) $(PTHREADTESTS)
 
 # define the programs
 
@@ -108,6 +112,20 @@ twolevelmethodtest_LDADD =					\
 	$(SUPERLU_LIBS)				\
 	$(LDADD)
 
+pthreadamgtest_SOURCES = pthreadamgtest.cc
+pthreadamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREADCFLAGS) -DMYAMG="Dune::Amg::AMG<Operator,Vector,Smoother>"
+pthreadamgtest_LDFLAGS = $(AM_LDFLAGS) $(PTHREADCFLAGS)
+pthreadamgtest_LDADD = $(PTHREAD_LIBS) $(LDADD)
+
+pthreadfastamgtest_SOURCES = pthreadamgtest.cc
+pthreadfastamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREADCFLAGS) -DMYAMG="Dune::Amg::FastAMG<Operator,Vector>"
+pthreadfastamgtest_LDFLAGS = $(AM_LDFLAGS) $(PTHREADCFLAGS)
+pthreadfastamgtest_LDADD = $(PTHREAD_LIBS) $(LDADD)
+
+pthreadtwoleveltest_SOURCES = pthreadtwoleveltest.cc
+pthreadtwoleveltest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREADCFLAGS)
+pthreadtwoleveltest_LDFLAGS = $(AM_LDFLAGS) $(PTHREADCFLAGS)
+pthreadtwoleveltest_LDADD = $(PTHREAD_LIBS) $(LDADD)
 
 include $(top_srcdir)/am/global-rules
 

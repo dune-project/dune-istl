@@ -12,7 +12,10 @@ if(PARMETIS_FOUND)
   set(PARMETISTESTS pamgtest pamg_comm_repart_test)
 endif(PARMETIS_FOUND)
 if(CMAKE_USE_PTHREADS_INIT)
-  set(PTHREADTESTS pthreadamgtest pthreadfastamgtest)
+  set(PTHREADTESTS pthreadamgtest pthreadfastamgtest pthreadtwoleveltest)
+  if(SUPERLU_FOUND OR UMFPACK_FOUND)
+    set(PTHREADTESTS ${PTHREADTESTS}  pthreaddirectamgtest pthreaddirectfastamgtest pthreaddirecttwoleveltest)
+  endif(SUPERLU_FOUND OR UMFPACK_FOUND)
 endif(CMAKE_USE_PTHREADS_INIT)
 set(NORMALTESTS amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest ${PTHREADTESTS})
 set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS} ${UMFPACKTESTS} ${SUPERLUTESTS})
@@ -34,6 +37,31 @@ if(CMAKE_USE_PTHREADS_INIT)
   set_property(TARGET pthreadfastamgtest APPEND PROPERTY
     COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
   target_link_libraries(pthreadfastamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  # test: pthreadtwoleveltest
+  add_executable(pthreadtwoleveltest pthreadtwoleveltest.cc)
+  target_link_libraries(pthreadtwoleveltest "${CMAKE_THREAD_LIBS_INIT}")
+  if(SUPERLU_FOUND OR UMFPACK_FOUND)
+    # test: pthreaddirectamgtest
+    add_executable(pthreaddirectamgtest pthreadamgtest.cc)
+    set_property(TARGET pthreadamgtest APPEND PROPERTY
+      COMPILE_DEFINITIONS "MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>")
+    target_link_libraries(pthreaddirectamgtest "${CMAKE_THREAD_LIBS_INIT}")
+    # test: pthreaddirectfastamgtest
+    add_executable(pthreadfastamgtest pthreadamgtest.cc)
+    set_property(TARGET pthreaddirectfastamgtest APPEND PROPERTY
+      COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
+    target_link_libraries(pthreaddirectfastamgtest "${CMAKE_THREAD_LIBS_INIT}")
+    #test: pthreaddirecttwoleveltest
+    add_executable(pthreaddirecttwoleveltest pthreadtwoleveltest.cc)
+    target_link_libraries(pthreaddirecttwoleveltest "${CMAKE_THREAD_LIBS_INIT}")
+    # add direct solver flags
+    if(HAVE_SUPERLU)
+      add_dune_superlu_flags(pthreaddirectamgtest pthreadfastamgtest pthreaddirecttwoleveltest)
+    endif(HAVE_SUPERLU)
+    if(HAVE_UMFPACK)
+      add_dune_umfpack_flags(pthreaddirectamgtest pthreadfastamgtest pthreaddirecttwoleveltest)
+    endif(HAVE_UMFPACK)
+  endif(SUPERLU_FOUND OR UMFPACK_FOUND)
 endif(CMAKE_USE_PTHREADS_INIT)
 
 add_executable(amgtest "amgtest.cc")
