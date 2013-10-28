@@ -14,7 +14,7 @@ endif(PARMETIS_FOUND)
 if(CMAKE_USE_PTHREADS_INIT)
   set(PTHREADTESTS pthreadamgtest pthreadfastamgtest pthreadtwoleveltest)
   if(SUPERLU_FOUND OR UMFPACK_FOUND)
-    set(PTHREADTESTS ${PTHREADTESTS}  pthreaddirectamgtest pthreaddirectfastamgtest pthreaddirecttwoleveltest)
+    set(PTHREADTESTS ${PTHREADTESTS} pthreaddirectamgtest pthreaddirectfastamgtest pthreaddirecttwoleveltest)
   endif(SUPERLU_FOUND OR UMFPACK_FOUND)
 endif(CMAKE_USE_PTHREADS_INIT)
 set(NORMALTESTS amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest ${PTHREADTESTS})
@@ -43,11 +43,11 @@ if(CMAKE_USE_PTHREADS_INIT)
   if(SUPERLU_FOUND OR UMFPACK_FOUND)
     # test: pthreaddirectamgtest
     add_executable(pthreaddirectamgtest pthreadamgtest.cc)
-    set_property(TARGET pthreadamgtest APPEND PROPERTY
+    set_property(TARGET pthreaddirectamgtest APPEND PROPERTY
       COMPILE_DEFINITIONS "MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>")
     target_link_libraries(pthreaddirectamgtest "${CMAKE_THREAD_LIBS_INIT}")
     # test: pthreaddirectfastamgtest
-    add_executable(pthreadfastamgtest pthreadamgtest.cc)
+    add_executable(pthreaddirectfastamgtest pthreadamgtest.cc)
     set_property(TARGET pthreaddirectfastamgtest APPEND PROPERTY
       COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
     target_link_libraries(pthreaddirectfastamgtest "${CMAKE_THREAD_LIBS_INIT}")
