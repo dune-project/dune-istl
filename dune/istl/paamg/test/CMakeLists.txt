@@ -1,5 +1,5 @@
 if(MPI_FOUND)
-  set(MPITESTS  galerkintest hierarchytest transfertest)
+  set(MPITESTS  galerkintest hierarchytest transfertest pamgtest)
 endif(MPI_FOUND)
 
 if(UMFPACK_FOUND)
