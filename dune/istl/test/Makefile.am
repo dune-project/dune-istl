@@ -16,7 +16,7 @@ if PARDISO
   PARDISOTEST = test_pardiso
 endif
 
-CUDATESTS = cudatest
+CUDATESTS = cuda_vectortest cuda_ellmatrixtest cudatest
 
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest \
@@ -84,9 +84,26 @@ cudatest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
 cudatest_LDFLAGS = $(AM_LDFLAGS)	\
 		   $(TBB_CPPFLAGS) \
 		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
+		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a
+cudatest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
+cuda_vectortest_SOURCES = cuda_vectortest.cc
+cuda_vectortest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
+cuda_vectortest_LDFLAGS = $(AM_LDFLAGS)	\
+		   $(TBB_CPPFLAGS) \
+		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
 		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
 		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a
-cudatest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+cuda_vectortest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
+cuda_ellmatrixtest_SOURCES = cuda_ellmatrixtest.cc
+cuda_ellmatrixtest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
+cuda_ellmatrixtest_LDFLAGS = $(AM_LDFLAGS)	\
+		   $(TBB_CPPFLAGS) \
+		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
+		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
+		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a
+cuda_ellmatrixtest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
 
 
 basearraytest_SOURCES = basearraytest.cc

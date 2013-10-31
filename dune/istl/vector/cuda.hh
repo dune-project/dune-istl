@@ -178,7 +178,7 @@ namespace Dune {
       void read(const Indices& indices, DT_ * values) const
       {
         DT_ * temp = new DT_[_size];
-        Cuda::download(temp, _data, _size * sizeof(DT_));
+        Cuda::download(temp, _data, _size);
         for (size_type i = 0, end = indices.size(); i != end; ++i)
            values[i] = temp[indices[i]];
         delete[] temp;
@@ -188,10 +188,10 @@ namespace Dune {
       void write(const Indices& indices, const Values& values)
       {
         DT_ * temp = new DT_[_size];
-        Cuda::download(temp, _data, _size * sizeof(DT_));
+        Cuda::download(temp, _data, _size);
         for (size_type i = 0, end = indices.size(); i != end; ++i)
           temp[indices[i]] = values[i];
-        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        Cuda::upload(_data, temp, _size);
         delete[] temp;
       }
 
@@ -199,10 +199,10 @@ namespace Dune {
       void accumulate(const Indices& indices, const Values& values)
       {
         DT_ * temp = new DT_[_size];
-        Cuda::download(temp, _data, _size * sizeof(DT_));
+        Cuda::download(temp, _data, _size);
         for (size_type i = 0, end = indices.size(); i != end; ++i)
           temp[indices[i]] += values[i];
-        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        Cuda::upload(_data, temp, _size);
         delete[] temp;
       }
 
@@ -210,7 +210,7 @@ namespace Dune {
       void read(size_type offset, size_type count, Values& values) const
       {
         DT_ * temp = new DT_[_size];
-        Cuda::download(temp, _data, _size * sizeof(DT_));
+        Cuda::download(temp, _data, _size);
         for (size_type i = 0, o = offset; i != count; ++i, ++o)
           values[i] = temp[o];
         delete[] temp;
@@ -220,10 +220,10 @@ namespace Dune {
       void write(size_type offset, size_type count, const Values& values)
       {
         DT_ * temp = new DT_[_size];
-        Cuda::download(temp, _data, _size * sizeof(DT_));
+        Cuda::download(temp, _data, _size);
         for (size_type i = 0, o = offset; i != count; ++i, ++o)
           temp[o] = values[i];
-        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        Cuda::upload(_data, temp, _size);
         delete[] temp;
       }
 
@@ -231,10 +231,10 @@ namespace Dune {
       void accumulate(size_type offset, size_type count, const Values& values)
       {
         DT_ * temp = new DT_[_size];
-        Cuda::download(temp, _data, _size * sizeof(DT_));
+        Cuda::download(temp, _data, _size);
         for (size_type i = 0, o = offset; i != count; ++i, ++o)
           temp[o] += values[i];
-        Cuda::upload(_data, temp, _size * sizeof(DT_));
+        Cuda::upload(_data, temp, _size);
         delete[] temp;
       }
 
