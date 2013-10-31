@@ -5,11 +5,15 @@ if MPI
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest pamg_comm_repart_test
 endif
 
+if UMFPACK
+  UMFPACKAMG = umfpackamgtest umfpackfastamg
+endif
+
 if DUNE_PTHREAD
   PTHREADTESTS = pthreadamgtest pthreadfastamgtest pthreadtwoleveltest
 endif
 
-NORMALTESTS = amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest $(MPITESTS)
+NORMALTESTS = amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest $(MPITESTS) $(UMFPACKAMG)
 
 # which tests to run
 TESTS = $(NORMALTESTS) $(TESTPROGS) $(PTHREADTESTS)
@@ -55,6 +59,11 @@ amgtest_LDADD =					\
 	$(SUPERLU_LIBS)				\
 	$(LDADD)
 
+umfpackamgtest_SOURCES = amgtest.cc
+umfpackamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(UMFPACK_CPPFLAGS)
+umfpackamgtest_LDFLAGS = $(AM_LDFLAGS) $(UMFPACK_LDFLAGS)
+umfpackamgtest_LDADD = $(UMFPACK_LIBS)
+
 fastamg_SOURCES = fastamg.cc
 fastamg_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
 fastamg_LDFLAGS = $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
@@ -62,6 +71,10 @@ fastamg_LDADD =					\
 	$(SUPERLU_LIBS)				\
 	$(LDADD)
 
+umfpackfastamg_SOURCES = fastamg.cc
+umfpackfastamg_CPPFLAGS = $(AM_CPPFLAGS) $(UMFPACK_CPPFLAGS)
+umfpackfastamg_LDFLAGS = $(AM_LDFLAGS) $(UMFPACK_LDFLAGS)
+umfpackfastamg_LDADD = $(UMFPACK_LIBS)
 
 kamgtest_SOURCES = kamgtest.cc
 kamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
