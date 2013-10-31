@@ -343,18 +343,6 @@ namespace Dune {
       unknown
     };
 
-    void print_entries()
-    {
-      std::cout << "Ausgabe des Patterns:" << std::endl;
-      for (int i=0; i<n; ++i)
-      {
-        for (size_type* it = r[i].getindexptr() ; it != r[i].getindexptr()+r[i].getsize(); ++it)
-          std::cout << *it << " ";
-        std::cout << std::endl;
-      }
-    }
-
-
     //===== random access interface to rows of the matrix
 
     //! random access to the rows
