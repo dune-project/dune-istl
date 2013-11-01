@@ -161,11 +161,11 @@ namespace Dune {
       }
 
       ELLMatrix(const ELLMatrix& other)
-        : _data(nullptr)
+        : _layout(other._layout)
+        , _data(nullptr)
         , _zero_element(other._zero_element)
       {
-        // TODO cudafizieren
-        allocate(other.nonzeros(),false);
+        allocate();
         Cuda::copy(_data, other._data, _layout.allocated_size());
       }
 
@@ -175,6 +175,38 @@ namespace Dune {
         , _data(other._data)
         , _zero_element(other._zero_element)
       {
+        other._data = nullptr;
+      }
+
+      ELLMatrix & operator= (const ELLMatrix & other)
+      {
+        if (_layout.allocated_size() == other._layout.allocated_size())
+        {
+          _layout = other._layout;
+          Cuda::copy(_data, other._data, other._layout.allocated_size());
+        }
+        else
+        {
+          _layout = other._layout;
+          if (_data)
+            deallocate();
+          _allocator = other._allocator;
+          allocate();
+          Cuda::copy(_data, other._data, other._layout.allocated_size());
+        }
+        _zero_element = other._zero_element;
+
+        return *this;
+      }
+
+      ELLMatrix & operator= (ELLMatrix && other)
+      {
+        if (_data)
+          deallocate();
+        _layout = other._layout;
+        _zero_element = other._zero_element;
+        _allocator = std::move(other._allocator);
+        _data = other._data;
         other._data = nullptr;
       }
 

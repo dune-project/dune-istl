@@ -55,6 +55,11 @@ int ell_test()
   if (m1.size() != rows*cols)
     return EXIT_FAILURE;
 
+  ISTL::ELLMatrix<DT_, A_> m2(m1);
+  m2 = m1;
+  if (m2.size() != rows*cols)
+    return EXIT_FAILURE;
+
 
   ISTL::Vector<DT_, A_> x(size, DT_(1));
   ISTL::Vector<DT_, A_> y(size, DT_(0));
