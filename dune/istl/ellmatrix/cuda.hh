@@ -22,6 +22,7 @@
 #include <dune/common/memory/traits.hh>
 #include <dune/common/memory/cuda_allocator.hh>
 #include <dune/common/kernel/vec/cuda_kernels.hh>
+#include <dune/common/kernel/ell/cuda_kernels.hh>
 
 #include <dune/istl/forwarddeclarations.hh>
 #include <dune/istl/ellmatrix/cuda_layout.hh>
@@ -72,7 +73,6 @@ namespace Dune {
         , _data(nullptr)
         , _zero_element(0)
       {
-        _layout.print();
         allocate();
         DT_ * tdata = new DT_[_layout.allocated_size()];
         memset(tdata, 0, _layout.allocated_size() * sizeof(DT_));
@@ -232,6 +232,26 @@ namespace Dune {
       size_type nonzeros() const
       {
         return _layout.nonzeros();
+      }
+
+      void mv(Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      {
+        Cuda::mv(y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+      }
+
+      void umv(Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      {
+        Cuda::umv(y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+      }
+
+      void mmv(Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      {
+        Cuda::mmv(y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+      }
+
+      void usmv(const DT_ alpha, Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      {
+        Cuda::usmv(alpha, y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
       }
 
       ~ELLMatrix()

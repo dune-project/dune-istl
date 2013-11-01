@@ -102,7 +102,8 @@ cuda_ellmatrixtest_LDFLAGS = $(AM_LDFLAGS)	\
 		   $(TBB_CPPFLAGS) \
 		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
 		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
-		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a
+		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a \
+		   $(top_builddir)/../dune-common/dune/common/kernel/ell/libell_cuda.a
 cuda_ellmatrixtest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
 
 
