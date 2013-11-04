@@ -100,11 +100,18 @@ namespace Dune {
     * forwards any calls to operator[][] to the entry() method.The assembly code
     * does not even necessarily need to know that the underlying matrix is sparse.
     * Dune::AMG uses this to reassemble an existing matrix without code duplication.
+    * The compress() method of Dune::BCRSMatrix still has to be called from outside
+    * this wrapper after the pattern assembly is finished.
     */
   template<class M>
   class BuildModeWrapper
+  {};
+
+  template<class B, class A>
+  class BuildModeWrapper<Dune::BCRSMatrix<B, A> >
   {
     public:
+    typedef typename Dune:BCRSMatrix<B,A> M;
     typedef typename M::block_type block_type;
     typedef typename M::size_type size_type;
 
