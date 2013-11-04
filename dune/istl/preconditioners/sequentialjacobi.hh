@@ -97,8 +97,6 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      assert(_factorized);
-
       //int iterations = _iterations > 10 ? _iterations : 1;
 
       for (int i = 0; i < _iterations; ++i)
