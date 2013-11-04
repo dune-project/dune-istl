@@ -135,7 +135,7 @@ namespace Dune {
       typedef typename std::add_lvalue_reference<T>::type reference;
       typedef typename M::Allocator::difference_type difference_type;
 
-      static const size_type block_size = M::block_size;
+      static const size_type kernel_block_size = M::kernel_block_size;
       static const size_type block_shift = M::block_shift;
       static const size_type block_mask = M::block_mask;
 
@@ -160,20 +160,20 @@ namespace Dune {
 
       void increment()
       {
-        _val += block_size;
-        _col += block_size;
+        _val += kernel_block_size;
+        _col += kernel_block_size;
       }
 
       void decrement()
       {
-        _val -= block_size;
-        _col -= block_size;
+        _val -= kernel_block_size;
+        _col -= kernel_block_size;
       }
 
       void advance(difference_type n)
       {
-        _val += n * block_size;
-        _col += n * block_size;
+        _val += n * kernel_block_size;
+        _col += n * kernel_block_size;
       }
 
       difference_type distanceTo(const ColIterator& other) const
@@ -213,7 +213,7 @@ namespace Dune {
       typedef ColIterator<M,T> iterator;
       typedef ColIterator<M,typename std::add_const<T>::type> const_iterator;
 
-      static const size_type block_size = M::block_size;
+      static const size_type kernel_block_size = M::kernel_block_size;
       static const size_type block_shift = M::block_shift;
       static const size_type block_mask = M::block_mask;
 
@@ -302,7 +302,7 @@ namespace Dune {
       typedef value_type reference;
       typedef typename M::Allocator::difference_type difference_type;
 
-      static const size_type block_size = M::block_size;
+      static const size_type kernel_block_size = M::kernel_block_size;
       static const size_type block_shift = M::block_shift;
       static const size_type block_mask = M::block_mask;
 

@@ -75,21 +75,17 @@ namespace Dune {
       typedef ellmatrix::Layout<IndexAllocator> Layout;
       typedef ellmatrix::LayoutBuilder<IndexAllocator> LayoutBuilder;
 
-      static const size_type block_size = Allocator::block_size;
+      static const size_type kernel_block_size = Allocator::block_size;
       static const size_type alignment = Allocator::alignment;
       static const size_type minimum_chunk_size =
         (Allocator::minimum_chunk_size < IndexAllocator::minimum_chunk_size
          ? IndexAllocator::minimum_chunk_size
          : Allocator::minimum_chunk_size);
 
-      static const size_type block_shift = Memory::block_size_log2<block_size,5>::value;
+      static const size_type block_shift = Memory::block_size_log2<kernel_block_size,5>::value;
       static const size_type block_mask = (size_type(1) << block_shift) - 1;
 
-    private:
-
       typedef Threads::fixed_block_size_range<size_type> range_type;
-
-    public:
 
       ELLMatrix()
         : _data(nullptr)
@@ -217,12 +213,12 @@ namespace Dune {
         while (l<r)
           {
             size_type q = (l+r)/2;
-            if (j <= col_index[row_start + q * block_size])
+            if (j <= col_index[row_start + q * kernel_block_size])
               r = q;
             else
               l = q+1;
           }
-        return {row_start + l * block_size,col_index[row_start + l * block_size] == j};
+        return {row_start + l * kernel_block_size,col_index[row_start + l * kernel_block_size] == j};
       }
 
       size_type getEntry(size_type i, size_type j) const
@@ -276,10 +272,10 @@ namespace Dune {
             for (; j < cs && gj < row_length; ++j)
               {
                 size_type ci = col_indices[j];
-                while (col_index[row_start + gj * block_size] < ci)
+                while (col_index[row_start + gj * kernel_block_size] < ci)
                   ++gj;
-                assert(col_index[row_start + gj * block_size] == ci);
-                values(i,j) = _data[row_start + gj * block_size];
+                assert(col_index[row_start + gj * kernel_block_size] == ci);
+                values(i,j) = _data[row_start + gj * kernel_block_size];
               }
             assert(j == cs);
           }
@@ -302,10 +298,10 @@ namespace Dune {
             for (; j < cs && gj < row_length; ++j)
               {
                 size_type ci = col_indices[j];
-                while (col_index[row_start + gj * block_size] < ci)
+                while (col_index[row_start + gj * kernel_block_size] < ci)
                   ++gj;
-                assert(col_index[row_start + gj * block_size] == ci);
-                _data[row_start + gj * block_size] = values(i,j);
+                assert(col_index[row_start + gj * kernel_block_size] == ci);
+                _data[row_start + gj * kernel_block_size] = values(i,j);
               }
             assert(j == cs);
           }
@@ -328,10 +324,10 @@ namespace Dune {
             for (; j < cs && gj < row_length; ++j)
               {
                 size_type ci = col_indices[j];
-                while (col_index[row_start + gj * block_size] < ci)
+                while (col_index[row_start + gj * kernel_block_size] < ci)
                   ++gj;
-                assert(col_index[row_start + gj * block_size] == ci);
-                _data[row_start + gj * block_size] += values(i,j);
+                assert(col_index[row_start + gj * kernel_block_size] == ci);
+                _data[row_start + gj * kernel_block_size] += values(i,j);
               }
             assert(j == cs);
           }
@@ -351,10 +347,10 @@ namespace Dune {
             size_type j = col_offset;
             for (; j < col_offset + col_size && gj < row_length; ++j)
               {
-                while (col_index[row_start + gj * block_size] < j)
+                while (col_index[row_start + gj * kernel_block_size] < j)
                   ++gj;
-                assert(col_index[row_start + gj * block_size] == j);
-                _data[row_start + gj * block_size] += values(i,j);
+                assert(col_index[row_start + gj * kernel_block_size] == j);
+                _data[row_start + gj * kernel_block_size] += values(i,j);
               }
             assert(j == col_offset + col_size);
           }
@@ -371,25 +367,25 @@ namespace Dune {
 
         // look for start column
         size_type start_col = 0;
-        while (col_index[row_start + start_col * block_size] < col)
+        while (col_index[row_start + start_col * kernel_block_size] < col)
           ++start_col;
-        assert(col_index[row_start + start_col * block_size] == col);
+        assert(col_index[row_start + start_col * kernel_block_size] == col);
 
         // (partial) copy of lower part of first block
         for (size_type j = 0; j < col_size; ++j)
-          for (size_type i = 0; i < block_size - start_local_index; ++i)
-            _data[row_start + i + (start_col + j) * block_size] = values(i,j);
+          for (size_type i = 0; i < kernel_block_size - start_local_index; ++i)
+            _data[row_start + i + (start_col + j) * kernel_block_size] = values(i,j);
 
         // copy remaining blocks
-        size_type row_offset = block_size - start_local_index;
-        for (size_type b = start_block + 1; b < end_block; ++b, row_offset += block_size)
+        size_type row_offset = kernel_block_size - start_local_index;
+        for (size_type b = start_block + 1; b < end_block; ++b, row_offset += kernel_block_size)
           {
             row_start = _layout.blockOffset(b);
             // special-case last block
-            size_type end_row = (b < end_block - 1 ? block_size : row_size - row_offset);
+            size_type end_row = (b < end_block - 1 ? kernel_block_size : row_size - row_offset);
             for (size_type j = 0; j < col_size; ++j)
               for (size_type i = row_offset; i < end_row; ++i)
-                _data[row_start + i + (start_col + j) * block_size] = values(i,j);
+                _data[row_start + i + (start_col + j) * kernel_block_size] = values(i,j);
           }
       }
 
@@ -439,7 +435,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 b,
                 r.block_count());
@@ -467,7 +463,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -516,7 +512,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -535,7 +531,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 b,
                 r.block_count());
@@ -559,7 +555,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 b,
                 r.block_count());
@@ -572,16 +568,15 @@ namespace Dune {
         return this->operator+=(-b);
       }
 
-      template<typename YF, typename YA, typename XF, typename XA>
+      template<typename XF, typename XA, typename YF, typename YA>
       typename enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
-          YA,
-          XA
-          >::value,
-        ELLMatrix
-        >::type&
-      umv(const Vector<YF,YA,Domain>& y, const Vector<XF,XA,Domain>& x)
+          XA,
+          YA
+          >::value
+        >::type
+      umv(const Vector<XF,XA,Domain>& x, Vector<YF,YA,Domain>& y) const
       {
         tbb::parallel_for(
           iteration_range(),
@@ -593,7 +588,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 y.data()+r.begin(),
                 x.data(),
                 _data+_layout.blockOffset(r.begin_block()),
@@ -601,8 +596,99 @@ namespace Dune {
                 _layout.blockOffset()+r.begin_block(),
                 r.block_count());
           });
-        return *this;
       }
+
+      template<typename XF, typename XA, typename YF, typename YA>
+      typename enable_if<
+        Memory::allocators_are_interoperable<
+          allocator_type,
+          XA,
+          YA
+          >::value
+        >::type
+      mv(const Vector<XF,XA,Domain>& x, Vector<YF,YA,Domain>& y) const
+      {
+        tbb::parallel_for(
+          iteration_range(),
+          [&](const range_type& r)
+          {
+            Dune::Kernel::ell::blocked::mv<
+              YF,
+              XF,
+              value_type,
+              size_type,
+              alignment,
+              kernel_block_size>(
+                y.data()+r.begin(),
+                x.data(),
+                _data+_layout.blockOffset(r.begin_block()),
+                _layout.colIndex()+_layout.blockOffset(r.begin_block()),
+                _layout.blockOffset()+r.begin_block(),
+                r.block_count());
+          });
+      }
+
+      template<typename XF, typename XA, typename YF, typename YA>
+      typename enable_if<
+        Memory::allocators_are_interoperable<
+          allocator_type,
+          XA,
+          YA
+          >::value
+        >::type
+      mmv(const Vector<XF,XA,Domain>& x, Vector<YF,YA,Domain>& y) const
+      {
+        tbb::parallel_for(
+          iteration_range(),
+          [&](const range_type& r)
+          {
+            Dune::Kernel::ell::blocked::mmv<
+              YF,
+              XF,
+              value_type,
+              size_type,
+              alignment,
+              kernel_block_size>(
+                y.data()+r.begin(),
+                x.data(),
+                _data+_layout.blockOffset(r.begin_block()),
+                _layout.colIndex()+_layout.blockOffset(r.begin_block()),
+                _layout.blockOffset()+r.begin_block(),
+                r.block_count());
+          });
+      }
+
+      template<typename AF, typename XF, typename XA, typename YF, typename YA>
+      typename enable_if<
+        Memory::allocators_are_interoperable<
+          allocator_type,
+          XA,
+          YA
+          >::value
+        >::type
+      usmv(const AF& alpha, const Vector<XF,XA,Domain>& x, Vector<YF,YA,Domain>& y) const
+      {
+        tbb::parallel_for(
+          iteration_range(),
+          [&](const range_type& r)
+          {
+            Dune::Kernel::ell::blocked::usmv<
+              YF,
+              XF,
+              value_type,
+              size_type,
+              alignment,
+              kernel_block_size>(
+                y.data()+r.begin(),
+                x.data(),
+                _data+_layout.blockOffset(r.begin_block()),
+                _layout.colIndex()+_layout.blockOffset(r.begin_block()),
+                _layout.blockOffset()+r.begin_block(),
+                r.block_count(),
+                alpha);
+          });
+      }
+
 
       /*
       template<typename OF, typename OA>
@@ -626,7 +712,7 @@ namespace Dune {
               OF,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 other._data+r.begin(),
                 r.block_count());
@@ -645,7 +731,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 r.block_count());
           },
@@ -668,7 +754,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 r.block_count());
           },
@@ -686,7 +772,7 @@ namespace Dune {
               value_type,
               size_type,
               alignment,
-              block_size>(
+              kernel_block_size>(
                 _data+r.begin(),
                 r.block_count());
           },
@@ -711,17 +797,27 @@ namespace Dune {
       }
 
 
-    private:
-
       range_type iteration_range() const
       {
-        return range_type(0,_layout.rows(),block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/block_size);
+        return range_type(0,_layout.rows(),kernel_block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/kernel_block_size);
       }
 
       range_type nonzeros_iteration_range() const
       {
-        return range_type(0,_layout.nonzeros(),block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/block_size);
+        return range_type(0,_layout.nonzeros(),kernel_block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/kernel_block_size);
       }
+
+      Allocator& allocator() const
+      {
+        return _allocator;
+      }
+
+      value_type* data() const
+      {
+        return _data;
+      }
+
+    private:
 
       void deallocate()
       {
