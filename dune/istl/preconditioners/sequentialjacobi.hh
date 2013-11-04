@@ -127,6 +127,7 @@ namespace Dune {
                   rhs,
                   r.block_count(),
                   r.begin(),
+                  v.size(),
                   _w);
 
 
