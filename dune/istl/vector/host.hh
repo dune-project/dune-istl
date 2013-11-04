@@ -54,8 +54,6 @@ namespace Dune {
       static const size_type alignment = Allocator::alignment;
       static const size_type minimum_chunk_size = Allocator::minimum_chunk_size;
 
-    private:
-
       typedef Threads::fixed_block_size_range<size_type> range_type;
 
     public:
@@ -518,12 +516,23 @@ namespace Dune {
         return _data;
       }
 
-    private:
+      Allocator& allocator()
+      {
+        return _allocator;
+      }
 
       range_type iteration_range() const
       {
         return range_type(0,_size,kernel_block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/kernel_block_size);
       }
+
+      size_type blockSize() const
+      {
+        return 1;
+      }
+
+
+    private:
 
       void deallocate()
       {
