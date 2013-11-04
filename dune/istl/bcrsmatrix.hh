@@ -111,25 +111,25 @@ namespace Dune {
   class BuildModeWrapper<Dune::BCRSMatrix<B, A> >
   {
     public:
-    typedef typename Dune:BCRSMatrix<B,A> M;
-    typedef typename M::block_type block_type;
-    typedef typename M::size_type size_type;
+    typedef BCRSMatrix<B,A> Matrix;
+    typedef typename Matrix::block_type block_type;
+    typedef typename Matrix::size_type size_type;
 
     class row_object
     {
       public:
-      row_object(M& m, size_type i) : _m(m), _i(i) {}
+      row_object(Matrix& m, size_type i) : _m(m), _i(i) {}
 
       block_type& operator[](size_type j) const
       {
         return _m.entry(_i,j);
       }
       private:
-      M& _m;
+      Matrix& _m;
       size_type _i;
     };
 
-    BuildModeWrapper(M& m) : _m(m) {}
+    BuildModeWrapper(Matrix& m) : _m(m) {}
 
     row_object operator[](size_type i) const
     {
@@ -147,7 +147,7 @@ namespace Dune {
     }
 
     private:
-    M& _m;
+    Matrix& _m;
   };
 
   /**
