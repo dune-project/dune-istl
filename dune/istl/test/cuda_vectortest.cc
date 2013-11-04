@@ -168,6 +168,16 @@ int vector_regression()
   ISTL::Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<DT_,std::size_t,16> > v2_cpu(size, DT_(-2.234));
   ISTL::Vector<DT_, Memory::CudaAllocator<DT_> > v2_gpu(v2_cpu);
 
+  ISTL::Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<DT_,std::size_t,16> > v1_1_cpu(size, DT_(4711));
+  v1_gpu.download_to(v1_1_cpu);
+  for (size_t i(0) ; i < size ; ++i)
+  {
+    if (fabs(v1_1_cpu[i] - v1_cpu[i]) > 1e7)
+    {
+      return EXIT_FAILURE;
+    }
+  }
+
   v2_cpu += v1_cpu;
   v2_gpu += v1_gpu;
   for (size_t i(0) ; i < size ; ++i)
@@ -210,27 +220,27 @@ int vector_regression()
 
   DT_ dot_cpu = v1_cpu.dot(v2_cpu);
   DT_ dot_gpu = v1_gpu.dot(v2_gpu);
-  if (fabs(dot_cpu - dot_gpu) > 1e-4)
+  if (fabs(dot_cpu - dot_gpu) > 1e-2)
     return EXIT_FAILURE;
 
-  DT_ norm_cpu = v1_cpu.two_norm2();
-  DT_ norm_gpu = v1_gpu.two_norm2();
-  if (fabs(norm_cpu - norm_gpu) > 1e-5)
+  DT_ norm_cpu = v2_cpu.two_norm2();
+  DT_ norm_gpu = v2_gpu.two_norm2();
+  if (fabs(norm_cpu - norm_gpu) > 1e-2)
     return EXIT_FAILURE;
 
-  norm_cpu = v1_cpu.two_norm();
-  norm_gpu = v1_gpu.two_norm();
-  if (fabs(norm_cpu - norm_gpu) > 1e-5)
+  norm_cpu = v2_cpu.two_norm();
+  norm_gpu = v2_gpu.two_norm();
+  if (fabs(norm_cpu - norm_gpu) > 1e-2)
     return EXIT_FAILURE;
 
-  norm_cpu = v1_cpu.one_norm();
-  norm_gpu = v1_gpu.one_norm();
-  if (fabs(norm_cpu - norm_gpu) > 1e-5)
+  norm_cpu = v2_cpu.one_norm();
+  norm_gpu = v2_gpu.one_norm();
+  if (fabs(norm_cpu - norm_gpu) > 1e-2)
     return EXIT_FAILURE;
 
-  norm_cpu = v1_cpu.infinity_norm();
-  norm_gpu = v1_gpu.infinity_norm();
-  if (fabs(norm_cpu - norm_gpu) > 1e-5)
+  norm_cpu = v2_cpu.infinity_norm();
+  norm_gpu = v2_gpu.infinity_norm();
+  if (fabs(norm_cpu - norm_gpu) > 1e-2)
     return EXIT_FAILURE;
 
   return result;

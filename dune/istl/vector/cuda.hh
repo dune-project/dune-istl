@@ -153,6 +153,20 @@ namespace Dune {
         return *this;
       }
 
+       Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & download_to(Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & other)
+       {
+         if (_size != other.size())
+           DUNE_THROW(Exception,"download: vector size missmatch!");
+
+         DT_ * temp = new DT_[_size];
+         Cuda::download(temp, _data, _size);
+         for (size_type i(0) ; i != _size ; ++i)
+           other[i] = temp[i];
+         delete[] temp;
+
+         return other;
+       }
+
       /*Field operator[] (size_type i)
       {
         DUNE_THROW(Exception,"not implemented");

@@ -210,6 +210,12 @@ namespace Dune {
         other._data = nullptr;
       }
 
+      template<typename A2_>
+      ELLMatrix(ELLMatrix<F_, A2_, Memory::Domain::Host> & other)
+      {
+        //TODO blabla
+      }
+
       DT_ operator() (size_t row, size_t col) const
       {
         size_t * tcs = new size_t[_layout.chunks()];
