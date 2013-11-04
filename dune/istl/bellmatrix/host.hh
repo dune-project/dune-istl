@@ -706,7 +706,7 @@ namespace Dune {
               alignment,
               kernel_block_size>(
                 y.data()+r.begin() * _block_rows,
-                  x.data(),
+                x.data(),
                 _data+_layout.blockOffset(r.begin_block()) * block_size,
                 _layout.colIndex()+_layout.blockOffset(r.begin_block()),
                 _layout.blockOffset()+r.begin_block(),
