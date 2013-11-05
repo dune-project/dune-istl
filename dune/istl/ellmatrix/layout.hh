@@ -418,7 +418,7 @@ namespace Dune {
       }
 
       LayoutBuilder()
-        : _data(make_shared<Data>())
+        : _data(std::make_shared<Data>())
         , _rows_allocated(false)
         , _cols_allocated(false)
       {}
