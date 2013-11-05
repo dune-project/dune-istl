@@ -209,7 +209,7 @@ namespace Dune {
 
         size_type * tcol = new size_type[_data->_allocated_size];
         for (size_type i(0) ; i < _data->_allocated_size ; ++i)
-          tcs[i] = host_layout.colIndex()[i];
+          tcol[i] = host_layout.colIndex()[i];
 
         //upload data
         Cuda::upload(_data->_cs, tcs, _data->_chunks);
