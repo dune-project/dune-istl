@@ -90,7 +90,8 @@ namespace Dune {
         other._size = 0;
       }
 
-      Vector(const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & other)
+      template <size_t blocksize_>
+      Vector(const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t, blocksize_> > & other)
         : _size(0)
         , _data(nullptr)
       {
@@ -134,7 +135,8 @@ namespace Dune {
         other._size = 0;
       }
 
-      Vector & operator= (const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & other)
+      template <size_t blocksize_>
+      Vector & operator= (const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t, blocksize_> > & other)
       {
         if (_size == other.size())
         {
@@ -154,7 +156,8 @@ namespace Dune {
         return *this;
       }
 
-       Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & download_to(Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t,16> > & other)
+      template <size_t blocksize_>
+      Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t, blocksize_> > & download_to(Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t, blocksize_> > & other)
        {
          if (_size != other.size())
            DUNE_THROW(Exception,"download: vector size missmatch!");
