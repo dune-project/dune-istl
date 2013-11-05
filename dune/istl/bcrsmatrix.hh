@@ -72,9 +72,9 @@ namespace Dune {
   struct MatrixDimension;
 
   /**
-   * \brief export statistic about compression achieved in mymode mode
+   * \brief export statistic about compression achieved in implicit mode
    *
-   * To enable the user to tune parameters of mymode buildmode of a
+   * To enable the user to tune parameters of implicit buildmode of a
    * Dune::BCRSMatrix manually, some statistics are exported upon
    * compression.
    *
@@ -92,9 +92,9 @@ namespace Dune {
     double mem_ratio;
   };
 
-  /** @brief A wrapper to treat with the BCRSMatrix build mode during mymode build mode
+  /** @brief A wrapper to treat with the BCRSMatrix build mode during implicit build mode
     * @tparam M the matrix type
-    * The mymode build mode of Dune::BCRSMatrix handles matrices different during
+    * The implicit build mode of Dune::BCRSMatrix handles matrices different during
     * assembly and afterwards. Using this class, one can wrap a BCRSMatrix to allow
     * use with code that is not written for BCRSMatrix specifically. The wrapper
     * forwards any calls to operator[][] to the entry() method.The assembly code
@@ -161,7 +161,7 @@ namespace Dune {
 
      1. Row-wise scheme
      2. Random scheme
-     3. mymode scheme
+     3. implicit scheme
 
      Error checking: no error checking is provided normally.
      Setting the compile time switch DUNE_ISTL_WITH_CHECKING
@@ -258,11 +258,11 @@ namespace Dune {
      B[3][3] = 8;
      \endcode
 
-     3. mymode scheme
+     3. implicit scheme
      With the above Random Scheme, the sparsity pattern often has to be determined
      and stored before the matrix is assembled. This leads to an increase of
      needs in memory and computation time. Often, one has good a priori
-     knowledge about the number of entries a row contains on average. mymode
+     knowledge about the number of entries a row contains on average. implicit
      mode tries to make use of that knowledge by allocating memory based on
      that average. Entries in rows with more non-zeroes are written to an overflow
      area. After all indices are added a compression procedure is used.
@@ -271,12 +271,13 @@ namespace Dune {
      Construct the matrix via
       - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       - void setSize(size_type rows, size_type columns, size_type nnz=0) after setting
-        the buildmode to mymode and the compression parameter via setMymodeParameters(size_type _avg, double _overflow)
+        the buildmode to implicit and the compression parameter via setMymodeParameters(size_type _avg, double _overflow)
 
      Start filling your matrix with entry(size_type row, size_type col).
      Full access is possible also during buildstage, although not as fast
      as after buildstage via the operator[] due to the necessity of searching
-     the overflow area for some matrix elements.
+     the overflow area for some matrix elements. Thus, the matrix pattern is
+     setup implicitly while assembling the matrix.
 
      After the entry-method has been called for each matrix at least once,
      a call to compress() reorganizes the data into one array for further use.
@@ -292,7 +293,7 @@ namespace Dune {
      #include<dune/istl/bcrsmatrix.hh>
 
      typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > M;
-     M m(10, 10, 2, 0.4, M::mymode);
+     M m(10, 10, 2, 0.4, M::implicit);
 
      //fill in some arbitrary entries, even operations on these would be possible,
      //you get a reference to the entry! the order of these statements is irrelevant!
@@ -394,7 +395,7 @@ namespace Dune {
        * to the constructor. Matrix setup is finished with compress(), full data access
        * during buidstage is possible.
        */
-      mymode,
+      implicit,
       /**
        * @brief Build mode not set!
        */
@@ -619,7 +620,7 @@ namespace Dune {
 
     //! \brief construct matrix with a known average number of entries per row
     /**
-     * Constructs a matrix in mymode buildmode.
+     * Constructs a matrix in implicit buildmode.
      *
      * @param _n number of rows of the matrix
      * @param _m number of columns of the matrix
@@ -631,7 +632,7 @@ namespace Dune {
     BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       : build_mode(bm), ready(notbuilt), avg(_avg), overflowsize(_overflowsize)
     {
-      mymode_allocate(_n,_m);
+      implicit_allocate(_n,_m);
     }
 
     /**
@@ -691,20 +692,20 @@ namespace Dune {
      * @param rows The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
      * @param nnz The number of nonzero entries the matrix should hold (if omitted
-     * defaults to 0). Must be omitted in mymode mode.
+     * defaults to 0). Must be omitted in implicit mode.
      */
     void setSize(size_type rows, size_type columns, size_type nnz=0)
     {
       // deallocate already setup memory
       deallocate();
 
-      if (build_mode == mymode)
+      if (build_mode == implicit)
       {
         if (nnz>0)
-          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in mymode mode, use setMymodeParameters() instead");
+          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in implicit mode, use setMymodeParameters() instead");
 
-        // mymode allocates differently
-        mymode_allocate(rows,columns);
+        // implicit allocates differently
+        implicit_allocate(rows,columns);
       }
       else
       {
@@ -713,10 +714,10 @@ namespace Dune {
       }
     }
 
-    /** @brief Set parameters needed for creation in mymode.
+    /** @brief Set parameters needed for creation in implicit.
      *
      * Use this method before setSize() to define storage behaviour of a matrix
-     * in mymode mode
+     * in implicit mode
      * @param _avg expected average number of entries per row
      * @param _overflowsize fraction of _n*_avg which is expected to be
      *   needed for elements that exceed _avg entries per row.
@@ -1070,11 +1071,11 @@ namespace Dune {
       ready = built;
     }
 
-    //===== mymode creation interface
+    //===== implicit creation interface
 
     //! \brief get reference to entry (row,col) of the matrix
     /*!
-     * This method can only be used when the matrix is in mymode
+     * This method can only be used when the matrix is in implicit
      * building mode.
      *
      * A reference to entry (row, col) of the matrix is returned.
@@ -1087,8 +1088,8 @@ namespace Dune {
     B& entry(size_type row, size_type col)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (build_mode!=mymode)
-        DUNE_THROW(ISTLError,"requires mymode build mode");
+      if (build_mode!=implicit)
+        DUNE_THROW(ISTLError,"requires implicit build mode");
       if (ready==built)
         DUNE_THROW(ISTLError,"matrix already built up, use operator[] for entry access now");
 
@@ -1133,9 +1134,9 @@ namespace Dune {
       }
     }
 
-    //! @brief finishes the buildstage in mymode mode
+    //! @brief finishes the buildstage in implicit mode
     /*! once called, matrix is going to built state and no indices
-     *  can be added to a matrix that is built in mymode mode.
+     *  can be added to a matrix that is built in implicit mode.
      *
      *  performs compression of index and data arrays with linear
      *  complexity
@@ -1145,8 +1146,8 @@ namespace Dune {
      */
     CompressionStatistics<size_type> compress()
     {
-      if (build_mode!=mymode)
-        DUNE_THROW(ISTLError,"requires mymode build mode");
+      if (build_mode!=implicit)
+        DUNE_THROW(ISTLError,"requires implicit build mode");
       if (ready==built)
         DUNE_THROW(ISTLError,"matrix already built up, no more need for compression");
 
@@ -1660,7 +1661,7 @@ namespace Dune {
     size_type n;       // number of rows
     size_type m;       // number of columns
     size_type nnz;     // number of nonzeroes contained in the matrix
-    size_type allocationSize; //allocated size of a and j arrays, except in mymode mode: nnz==allocationsSize
+    size_type allocationSize; //allocated size of a and j arrays, except in implicit mode: nnz==allocationsSize
     // zero means that memory is allocated separately for each row.
 
     // the rows are dynamically allocated
@@ -1672,7 +1673,7 @@ namespace Dune {
     // between different matrices with the same sparsity pattern
     Dune::shared_ptr<size_type> j;  // [allocationSize] column indices of entries
 
-    // additional data is needed in mymode buildmode
+    // additional data is needed in implicit buildmode
     size_type avg;
     double overflowsize;
 
@@ -1824,12 +1825,12 @@ namespace Dune {
       ready = notbuilt;
     }
 
-    /** @brief organizes allocation mymode mode
+    /** @brief organizes allocation implicit mode
      * calculates correct array size to be allocated and sets the
      * the window pointers to their correct positions for insertion.
      * internally uses allocate() for the real allocation.
      */
-    void mymode_allocate(size_type _n, size_type _m)
+    void implicit_allocate(size_type _n, size_type _m)
     {
       //calculate size of overflow region, add buffer for row sort!
       size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
