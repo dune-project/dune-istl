@@ -9,34 +9,6 @@
 
 using namespace Dune;
 
-template <typename DT_>
-int backend_test()
-{
-  int result(EXIT_SUCCESS);
-
-  size_t size(4711);
-  Memory::CudaAllocator<DT_> alloc;
-  DT_ * device(alloc.allocate(size));
-  DT_ * host(new DT_[size]);
-  for (size_t i(0) ; i < size ; ++i)
-    host[i] = i;
-
-  Cuda::upload(device, host, size);
-  for (size_t i(0) ; i < size ; ++i)
-    host[i] = -1;
-  Cuda::download(host, device, size);
-
-  for (size_t i(0) ; i < size ; ++i)
-  {
-    if (host[i] != i)
-      result = EXIT_FAILURE;
-  }
-
-  delete[] host;
-  alloc.deallocate(device);
-  return result;
-}
-
 template <typename DT_, typename A_>
 int vector_test()
 {
@@ -248,16 +220,6 @@ int vector_regression()
 
 int main()
 {
-  if (backend_test<float>() == EXIT_FAILURE)
-  {
-    std::cout<<"backend test failed!"<<std::endl;
-    return EXIT_FAILURE;
-  }
-  if (backend_test<double>() == EXIT_FAILURE)
-  {
-    std::cout<<"backend test failed!"<<std::endl;
-    return EXIT_FAILURE;
-  }
   if (vector_test<float, Memory::CudaAllocator<float> >() == EXIT_FAILURE)
   {
     std::cout<<"vector test failed!"<<std::endl;
