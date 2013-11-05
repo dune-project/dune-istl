@@ -17,7 +17,7 @@
 //#include <dune/common/kernel/ell.hh>
 
 #include <dune/istl/istlexception.hh>
-//#include <dune/istl/ellmatrix/layout.hh>
+#include <dune/istl/ellmatrix/layout.hh>
 #include <dune/common/memory/cuda_allocator.hh>
 
 namespace Dune {
@@ -105,30 +105,30 @@ namespace Dune {
         _data->_cs = _data->_allocator.allocate(_data->_chunks);
         _data->_cl = _data->_allocator.allocate(_data->_chunks);
 
-        size_t * tcs = new size_t[_data->_chunks];
-        size_t * tcl = new size_t[_data->_chunks];
+        size_type * tcs = new size_type[_data->_chunks];
+        size_type * tcl = new size_type[_data->_chunks];
 
         // hold all column indices, sorted for each row (including padded rows)
         std::vector<std::set<size_t> > row_idx;
-        for (size_t i(0) ; i < rows_per_chunk * _data->_chunks ; ++i)
+        for (size_type i(0) ; i < rows_per_chunk * _data->_chunks ; ++i)
         {
           std::set<size_t> t;
           row_idx.push_back(t);
         }
-        for (size_t i(0) ; i < nonzeros ; ++i)
+        for (size_type i(0) ; i < nonzeros ; ++i)
         {
           row_idx.at(row[i]).insert(col[i]);
         }
 
         // calculate max chunk size and chunk starting offsets
         tcs[0] = 0;
-        for (size_t chunk(0) ; chunk < _data->_chunks ; ++chunk)
+        for (size_type chunk(0) ; chunk < _data->_chunks ; ++chunk)
         {
-          size_t row_start(chunk * rows_per_chunk);
-          size_t row_end(row_start + rows_per_chunk);
+          size_type row_start(chunk * rows_per_chunk);
+          size_type row_end(row_start + rows_per_chunk);
 
-          size_t max_cl(0);
-          for (size_t i(row_start) ; i < row_end ; ++i)
+          size_type max_cl(0);
+          for (size_type i(row_start) ; i < row_end ; ++i)
             max_cl=std::max(max_cl, row_idx.at(i).size());
           tcl[chunk] = max_cl;
           if (chunk != _data->_chunks - 1)
@@ -138,32 +138,32 @@ namespace Dune {
 
         // calculate column and nonzero-value array size
         _data->_allocated_size = 0;
-        for (size_t i(0) ; i < _data->_chunks ; ++i)
+        for (size_type i(0) ; i < _data->_chunks ; ++i)
           _data->_allocated_size += tcl[i] * rows_per_chunk;
 
-        size_t * tcol = new size_t[_data->_allocated_size];
+        size_type * tcol = new size_type[_data->_allocated_size];
         memset(tcol, 0, _data->_allocated_size * sizeof(size_t));
 
         //fill column index array
-        for (size_t chunk(0) ; chunk < _data->_chunks ; ++chunk)
+        for (size_type chunk(0) ; chunk < _data->_chunks ; ++chunk)
         {
           // starting global row in chunk
-          size_t row_start(chunk * rows_per_chunk);
+          size_type row_start(chunk * rows_per_chunk);
 
           // the column to be filled in chunk
-          for (size_t col_insert(0) ; col_insert < tcl[chunk] ; ++col_insert)
+          for (size_type col_insert(0) ; col_insert < tcl[chunk] ; ++col_insert)
           {
             // the current row (relative to row_start) to be filled
-            for (size_t row_insert(0) ; row_insert < rows_per_chunk ; ++row_insert)
+            for (size_type row_insert(0) ; row_insert < rows_per_chunk ; ++row_insert)
             {
               // search for col_insert'th column index in current row
               auto it(row_idx.at(row_start + row_insert).begin());
-              for (size_t i(0) ; i < col_insert && it != row_idx.at(row_start + row_insert).end() ; ++i, ++it) ;
+              for (size_type i(0) ; i < col_insert && it != row_idx.at(row_start + row_insert).end() ; ++i, ++it) ;
               // if not reached end of row, insert column index
               if (it != row_idx.at(row_start + row_insert).end())
               {
                 // index in global column array
-                size_t idx (tcs[chunk] + col_insert * rows_per_chunk + row_insert);
+                size_type idx (tcs[chunk] + col_insert * rows_per_chunk + row_insert);
                 tcol[idx] = *it;
               }
             }
@@ -182,6 +182,44 @@ namespace Dune {
 
       }
 
+      CudaLayout(Layout<Dune::Memory::blocked_cache_aligned_allocator<typename Allocator::value_type,std::size_t,16> > & host_layout)
+        : _data(new CudaData<A_>())
+      {
+        _data->_rows = host_layout.rows();
+        _data->_cols = host_layout.cols();
+        _data->_nonzeros = host_layout.nonzeros();
+        _data->_rows_per_chunk = host_layout.chunkSize();
+        /// \todo remove hardcoded numbers
+        _data->_sorting_scope = 1;
+        _data->_chunks = host_layout.blocks();
+        _data->_allocated_size = host_layout.nonzeros();
+
+        _data->_cs = _data->_allocator.allocate(_data->_chunks);
+        _data->_cl = _data->_allocator.allocate(_data->_chunks);
+        _data->_col = _data->_allocator.allocate(_data->_allocated_size);
+
+        size_type * tcs = new size_type[_data->_chunks];
+        for (size_type i(0) ; i < _data->_chunks ; ++i)
+          tcs[i] = host_layout.blockOffset()[i];
+
+        size_type * tcl = new size_type[_data->_chunks];
+        for (size_type i(0), j(0) ; i < _data->_chunks ; ++i, j+=_data->_rows_per_chunk)
+          tcl[i] = host_layout.rowLength()[j];
+
+        size_type * tcol = new size_type[_data->_allocated_size];
+        for (size_type i(0) ; i < _data->_allocated_size ; ++i)
+          tcs[i] = host_layout.colIndex()[i];
+
+        //upload data
+        Cuda::upload(_data->_cs, tcs, _data->_chunks);
+        Cuda::upload(_data->_cl, tcl, _data->_chunks);
+        Cuda::upload(_data->_col, tcol, _data->_allocated_size);
+
+        delete[] tcs;
+        delete[] tcl;
+        delete[] tcol;
+      }
+
       void print() const
       {
         std::cout<<"Rows: "<<_data->_rows<<std::endl;
@@ -195,7 +233,7 @@ namespace Dune {
         size_type * temp = new size_type[_data->_allocated_size];
         Cuda::download(temp, _data->_col, _data->_allocated_size);
         std::cout<<"Col: ";
-        for (size_t i(0) ; i < _data->_allocated_size ; ++i)
+        for (size_type i(0) ; i < _data->_allocated_size ; ++i)
           std::cout<<temp[i]<<" ";
         std::cout<<std::endl;
         delete[] temp;
@@ -203,7 +241,7 @@ namespace Dune {
         temp = new size_type[_data->_chunks];
         Cuda::download(temp, _data->_cs, _data->_chunks);
         std::cout<<"cs: ";
-        for (size_t i(0) ; i < _data->_chunks ; ++i)
+        for (size_type i(0) ; i < _data->_chunks ; ++i)
           std::cout<<temp[i]<<" ";
         std::cout<<std::endl;
         delete[] temp;
@@ -211,7 +249,7 @@ namespace Dune {
         temp = new size_type[_data->_chunks];
         Cuda::download(temp, _data->_cl, _data->_chunks);
         std::cout<<"cl: ";
-        for (size_t i(0) ; i < _data->_chunks ; ++i)
+        for (size_type i(0) ; i < _data->_chunks ; ++i)
           std::cout<<temp[i]<<" ";
         std::cout<<std::endl;
         delete[] temp;

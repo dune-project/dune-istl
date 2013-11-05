@@ -212,8 +212,17 @@ namespace Dune {
 
       template<typename A2_>
       ELLMatrix(ELLMatrix<F_, A2_, Memory::Domain::Host> & other)
+        : _layout(other.layout())
+        , _data(nullptr)
+        , _zero_element(0)
       {
-        //TODO blabla
+        DT_ * tdata = new DT_[_layout.allocated_size()];
+        for (size_type i(0) ; i < _layout.allocated_size() ; ++i)
+          tdata[i] = other.data()[i];
+
+        Cuda::upload(_data, tdata, _layout.allocated_size());
+
+        delete[] tdata;
       }
 
       DT_ operator() (size_t row, size_t col) const
