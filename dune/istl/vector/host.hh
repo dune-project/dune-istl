@@ -38,6 +38,7 @@ namespace Dune {
       typedef F_ Field;
       typedef F_ DataType;
       typedef F_ value_type;
+      typedef F_ field_type;
 
       typedef Memory::Domain::Host Domain;
 

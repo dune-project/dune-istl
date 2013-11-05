@@ -35,8 +35,20 @@ namespace Dune {
    */
 
 
+
+  // forward declaration that takes care of automatically extracting the memory domain
+  template<
+    typename M, // matrix
+    typename X, // domain
+    typename Y, // range
+    typename D_ = typename Memory::allocator_domain<typename M::Allocator>::type // memory domain
+    >
+  class SequentialJacobi;
+
+
   template<typename M, typename X, typename Y>
-  class SequentialJacobi : public Preconditioner<X,Y> {
+  class SequentialJacobi<M,X,Y,Memory::Domain::Host>
+    : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
     typedef M Matrix;
@@ -161,78 +173,6 @@ namespace Dune {
     size_type _iterations;
 
   };
-
-
-
-
-
-#if 0
-
-  /*!
-     \brief Richardson preconditioner.
-
-        Multiply simply by a constant.
-
-     \tparam X Type of the update
-     \tparam Y Type of the defect
-   */
-  template<class X, class Y>
-  class Richardson : public Preconditioner<X,Y> {
-  public:
-    //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
-    //! \brief The range type of the preconditioner.
-    typedef Y range_type;
-    //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
-
-    /*! \brief Constructor.
-
-       Constructor gets all parameters to operate the prec.
-       \param w The relaxation factor.
-     */
-    Richardson (field_type w=1.0)
-    {
-      _w = w;
-    }
-
-    /*!
-       \brief Prepare the preconditioner.
-
-       \copydoc Preconditioner::pre(X&,Y&)
-     */
-    virtual void pre (X& x, Y& b) {}
-
-    /*!
-       \brief Apply the precondioner.
-
-       \copydoc Preconditioner::apply(X&,const Y&)
-     */
-    virtual void apply (X& v, const Y& d)
-    {
-      v = d;
-      v *= _w;
-    }
-
-    /*!
-       \brief Clean up.
-
-       \copydoc Preconditioner::post(X&)
-     */
-    virtual void post (X& x) {}
-
-  private:
-    //! \brief The relaxation factor to use.
-    field_type _w;
-  };
-
-#endif
 
   /** @} end documentation */
 
