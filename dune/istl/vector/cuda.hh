@@ -289,6 +289,12 @@ namespace Dune {
         return *this;
       }
 
+      Vector & operator=(value_type b)
+      {
+        Cuda::set(_data, b, _size);
+        return *this;
+      }
+
       Vector & operator*=(const Vector & b)
       {
         Cuda::element_product(_data, _data, b.begin(), _size);
