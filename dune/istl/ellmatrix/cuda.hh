@@ -37,6 +37,7 @@ namespace Dune {
       typedef F_ Field;
       typedef F_ DataType;
       typedef F_ DT_;
+      typedef F_ value_type;
 
       typedef Memory::Domain::CUDA Domain;
 

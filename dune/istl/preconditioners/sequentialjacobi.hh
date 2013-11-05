@@ -193,7 +193,6 @@ namespace Dune {
     typedef typename Y::value_type range_value_type;
     typedef typename Matrix::value_type matrix_value_type;
     typedef typename Matrix::Allocator::size_type size_type;
-    typedef typename Matrix::range_type range_type;
 
     // define the category
     enum {
