@@ -64,13 +64,13 @@ int ell_test()
   ISTL::Vector<DT_, A_> x(size, DT_(1));
   ISTL::Vector<DT_, A_> y(size, DT_(0));
 
-  m1.mv(y, x);
+  m1.mv(x, y);
 
   for (size_t i(0) ; i < size ; ++i)
     if (y[i] != i+1)
       return EXIT_FAILURE;
 
-  m1.mmv(y, x);
+  m1.mmv(x, y);
 
   for (size_t i(0) ; i < size ; ++i)
     if (y[i] != 0)
@@ -79,7 +79,7 @@ int ell_test()
   for (size_t i(0) ; i < size ; ++i)
     y(i, DT_(1));
 
-  m1.umv(y, x);
+  m1.umv(x, y);
   for (size_t i(0) ; i < size ; ++i)
     if (y[i] != i+2)
       return EXIT_FAILURE;
@@ -87,7 +87,7 @@ int ell_test()
   for (size_t i(0) ; i < size ; ++i)
     y(i, DT_(0));
 
-  m1.usmv(2, y, x);
+  m1.usmv(2, x, y);
   for (size_t i(0) ; i < size ; ++i)
     if (y[i] != 2*(i+1))
       return EXIT_FAILURE;
