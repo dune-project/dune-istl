@@ -35,8 +35,20 @@ namespace Dune {
    */
 
 
+
+  // forward declaration that takes care of automatically extracting the memory domain
+  template<
+    typename M, // matrix
+    typename X, // domain
+    typename Y, // range
+    typename D_ = typename Memory::allocator_domain<typename M::Allocator>::type // memory domain
+    >
+  class SequentialJacobi;
+
+
   template<typename M, typename X, typename Y>
-  class SequentialJacobi : public Preconditioner<X,Y> {
+  class SequentialJacobi<M,X,Y,Memory::Domain::Host>
+    : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
     typedef M Matrix;
