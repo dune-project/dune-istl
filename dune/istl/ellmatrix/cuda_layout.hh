@@ -182,7 +182,7 @@ namespace Dune {
 
       }
 
-      CudaLayout(Layout<Dune::Memory::blocked_cache_aligned_allocator<typename Allocator::value_type,std::size_t,16> > & host_layout)
+      CudaLayout(const Layout<Dune::Memory::blocked_cache_aligned_allocator<typename Allocator::value_type,std::size_t,16> > & host_layout)
         : _data(new CudaData<A_>())
       {
         _data->_rows = host_layout.rows();

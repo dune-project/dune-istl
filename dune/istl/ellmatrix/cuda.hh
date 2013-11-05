@@ -281,24 +281,24 @@ namespace Dune {
         return _layout.nonzeros();
       }
 
-      void mv(Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      void mv(const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::mv(y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::mv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
       }
 
-      void umv(Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      void umv(const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::umv(y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::umv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
       }
 
-      void mmv(Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      void mmv(const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::mmv(y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::mmv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
       }
 
-      void usmv(const DT_ alpha, Vector<F_, A_, Memory::Domain::CUDA> & y, const Vector<F_, A_, Memory::Domain::CUDA> & x) const
+      void usmv(const DT_ alpha, const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::usmv(alpha, y.begin(), x.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::usmv(alpha, x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
       }
 
       ~ELLMatrix()
