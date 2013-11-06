@@ -19,6 +19,8 @@
 #include <dune/istl/bellmatrix/host.hh>
 #include <dune/istl/blockvector/host.hh>
 
+#include <dune/common/kernel/ell/cuda_kernels.hh>
+
 namespace Dune {
   namespace ISTL {
 
@@ -233,11 +235,12 @@ namespace Dune {
       //int iterations = _iterations > 10 ? _iterations : 1;
 
       for (size_type i (0) ; i < _iterations; ++i)
-        {
-          for (size_type j(0) ; j < d.size () ; ++j)
-            _v_new(i, value_type(1) / _A(j, j));
-          v.axpy(_w,_v_new);
-        }
+      {
+        Cuda::sequential_jacobi(v.begin(), d.begin(), _v_new.begin(), _A.data(), _A.layout().cs(), _A.layout().col(), _A.layout().rows(), _A.layout().rows_per_chunk(), _A.layout().chunks(), _A.layout().allocated_size());
+
+        v.axpy(_w,_v_new);
+      }
+
     }
 
     /*!

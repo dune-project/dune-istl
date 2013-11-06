@@ -160,6 +160,16 @@ namespace Dune {
         return _layout;
       }
 
+      DT_ * data ()
+      {
+        return _data;
+      }
+
+      DT_ * data () const
+      {
+        return _data;
+      }
+
       ELLMatrix(const ELLMatrix& other)
         : _layout(other._layout)
         , _data(nullptr)
