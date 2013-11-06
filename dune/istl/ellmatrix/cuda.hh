@@ -143,7 +143,7 @@ namespace Dune {
         {
           for (size_t col(0) ; col < _layout.cols() ; ++col)
           {
-            std::cout<<(*this)(row, col)<<" ";
+            std::cout<<this->element(row, col)<<" ";
           }
           std::cout<<std::endl;
         }
@@ -267,6 +267,11 @@ namespace Dune {
         delete[] tcs;
         delete[] tcol;
         return result;
+      }
+
+      DT_ element(size_t row, size_t col) const
+      {
+        return (*this)(row, col);
       }
 
       size_type rows() const
