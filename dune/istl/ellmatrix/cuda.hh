@@ -78,8 +78,8 @@ namespace Dune {
         DT_ * tdata = new DT_[_layout.allocated_size()];
         memset(tdata, 0, _layout.allocated_size() * sizeof(DT_));
 
-        size_t * tcs = new size_t[_layout.chunks()];
-        Cuda::download(tcs, _layout.cs(), _layout.chunks());
+        size_t * tcs = new size_t[_layout.chunks() + 1];
+        Cuda::download(tcs, _layout.cs(), _layout.chunks() + 1);
         size_t * tcl = new size_t[_layout.chunks()];
         Cuda::download(tcl, _layout.cl(), _layout.chunks());
 
@@ -232,8 +232,8 @@ namespace Dune {
 
       DT_ operator() (size_t row, size_t col) const
       {
-        size_t * tcs = new size_t[_layout.chunks()];
-        Cuda::download(tcs, _layout.cs(), _layout.chunks());
+        size_t * tcs = new size_t[_layout.chunks() + 1];
+        Cuda::download(tcs, _layout.cs(), _layout.chunks() + 1);
         size_t * tcol = new size_t[_layout.allocated_size()];
         Cuda::download(tcol, _layout.col(), _layout.allocated_size());
 
@@ -244,7 +244,7 @@ namespace Dune {
         // starting index of our row, leftmost column
         size_t pcol(tcs[chunk] + local_row);
         // end index (into global array) of our chunk
-        size_t chunk_end( (chunk ==_layout.chunks() - 1) ? _layout.allocated_size() : tcs[chunk+1]);
+        size_t chunk_end(tcs[chunk+1]);
         DT_ result(0);
         // walk down the current row until we find the searched col or are behind it
         for ( ; pcol < chunk_end ; pcol += _layout.rows_per_chunk() )

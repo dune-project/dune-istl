@@ -102,10 +102,10 @@ namespace Dune {
         _data->_sorting_scope = sorting_scope;
         _data->_chunks = (size_t)ceil(float(rows) / float(rows_per_chunk));
 
-        _data->_cs = _data->_allocator.allocate(_data->_chunks);
+        _data->_cs = _data->_allocator.allocate(_data->_chunks + 1);
         _data->_cl = _data->_allocator.allocate(_data->_chunks);
 
-        size_type * tcs = new size_type[_data->_chunks];
+        size_type * tcs = new size_type[_data->_chunks + 1];
         size_type * tcl = new size_type[_data->_chunks];
 
         // hold all column indices, sorted for each row (including padded rows)
@@ -131,8 +131,7 @@ namespace Dune {
           for (size_type i(row_start) ; i < row_end ; ++i)
             max_cl=std::max(max_cl, row_idx.at(i).size());
           tcl[chunk] = max_cl;
-          if (chunk != _data->_chunks - 1)
-            tcs[chunk+1] = tcs[chunk] + (max_cl * rows_per_chunk);
+            tcs[chunk + 1] = tcs[chunk] + (max_cl * rows_per_chunk);
         }
 
 
@@ -172,7 +171,7 @@ namespace Dune {
 
         _data->_col = _data->_allocator.allocate(_data->_allocated_size);
         //upload data
-        Cuda::upload(_data->_cs, tcs, _data->_chunks);
+        Cuda::upload(_data->_cs, tcs, _data->_chunks + 1);
         Cuda::upload(_data->_cl, tcl, _data->_chunks);
         Cuda::upload(_data->_col, tcol, _data->_allocated_size);
 
@@ -195,7 +194,7 @@ namespace Dune {
         _data->_chunks = host_layout.blocks();
         _data->_allocated_size = host_layout.nonzeros();
 
-        _data->_cs = _data->_allocator.allocate(_data->_chunks);
+        _data->_cs = _data->_allocator.allocate(_data->_chunks + 1);
         _data->_cl = _data->_allocator.allocate(_data->_chunks);
         _data->_col = _data->_allocator.allocate(_data->_allocated_size);
 
@@ -204,7 +203,7 @@ namespace Dune {
           tcl[i] = host_layout.blockLength(i);
 
         //upload data
-        Cuda::upload(_data->_cs, host_layout.blockOffset(), _data->_chunks);
+        Cuda::upload(_data->_cs, host_layout.blockOffset(), _data->_chunks + 1);
         Cuda::upload(_data->_cl, tcl, _data->_chunks);
         Cuda::upload(_data->_col, host_layout.colIndex(), _data->_allocated_size);
 
@@ -229,10 +228,10 @@ namespace Dune {
         std::cout<<std::endl;
         delete[] temp;
 
-        temp = new size_type[_data->_chunks];
-        Cuda::download(temp, _data->_cs, _data->_chunks);
+        temp = new size_type[_data->_chunks + 1];
+        Cuda::download(temp, _data->_cs, _data->_chunks + 1);
         std::cout<<"cs: ";
-        for (size_type i(0) ; i < _data->_chunks ; ++i)
+        for (size_type i(0) ; i < _data->_chunks + 1; ++i)
           std::cout<<temp[i]<<" ";
         std::cout<<std::endl;
         delete[] temp;
