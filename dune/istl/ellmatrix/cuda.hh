@@ -147,7 +147,6 @@ namespace Dune {
           }
           std::cout<<std::endl;
         }
-
       }
 
       void setLayout(Layout layout)
@@ -217,13 +216,8 @@ namespace Dune {
         , _data(nullptr)
         , _zero_element(0)
       {
-        DT_ * tdata = new DT_[_layout.allocated_size()];
-        for (size_type i(0) ; i < _layout.allocated_size() ; ++i)
-          tdata[i] = other.data()[i];
-
-        Cuda::upload(_data, tdata, _layout.allocated_size());
-
-        delete[] tdata;
+        allocate();
+        Cuda::upload(_data, other.data(), _layout.allocated_size());
       }
 
       DT_ operator() (size_t row, size_t col) const
@@ -249,12 +243,15 @@ namespace Dune {
             continue;
           else if (tcol[pcol] == col)
           {
-            result =  Cuda::get(_data + pcol);
+            result = Cuda::get(_data + pcol);
+            if (fabs(result - _zero_element) < 1e-10)
+              result = _zero_element;
             break;
-        }
+          }
           else if (tcol[pcol] > col)
           {
             result = _zero_element;
+            break;
           }
         }
         delete[] tcs;

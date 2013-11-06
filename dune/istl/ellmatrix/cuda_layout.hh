@@ -199,26 +199,16 @@ namespace Dune {
         _data->_cl = _data->_allocator.allocate(_data->_chunks);
         _data->_col = _data->_allocator.allocate(_data->_allocated_size);
 
-        size_type * tcs = new size_type[_data->_chunks];
-        for (size_type i(0) ; i < _data->_chunks ; ++i)
-          tcs[i] = host_layout.blockOffset()[i];
-
         size_type * tcl = new size_type[_data->_chunks];
-        for (size_type i(0), j(0) ; i < _data->_chunks ; ++i, j+=_data->_rows_per_chunk)
-          tcl[i] = host_layout.rowLength()[j];
-
-        size_type * tcol = new size_type[_data->_allocated_size];
-        for (size_type i(0) ; i < _data->_allocated_size ; ++i)
-          tcol[i] = host_layout.colIndex()[i];
+        for (size_type i(0) ; i < _data->_chunks ; ++i)
+          tcl[i] = host_layout.blockLength(i);
 
         //upload data
-        Cuda::upload(_data->_cs, tcs, _data->_chunks);
+        Cuda::upload(_data->_cs, host_layout.blockOffset(), _data->_chunks);
         Cuda::upload(_data->_cl, tcl, _data->_chunks);
-        Cuda::upload(_data->_col, tcol, _data->_allocated_size);
+        Cuda::upload(_data->_col, host_layout.colIndex(), _data->_allocated_size);
 
-        delete[] tcs;
         delete[] tcl;
-        delete[] tcol;
       }
 
       void print() const
