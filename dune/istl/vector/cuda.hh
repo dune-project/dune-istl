@@ -50,17 +50,20 @@ namespace Dune {
       size_type _size;
       Allocator _allocator;
       value_type* _data;
+      size_type _cuda_blocksize;
 
       public:
 
       Vector()
         : _size(0)
         , _data(nullptr)
+        , _cuda_blocksize(128)
       {}
 
        explicit Vector(size_type size)
         : _size(0)
         , _data(nullptr)
+        , _cuda_blocksize(128)
       {
         allocate(size);
       }
@@ -68,6 +71,7 @@ namespace Dune {
       explicit Vector(size_type size, value_type val)
         : _size(0)
         , _data(nullptr)
+        , _cuda_blocksize(128)
       {
         allocate(size, false);
         Cuda::set(_data, val, size);
@@ -76,6 +80,7 @@ namespace Dune {
       Vector(const Vector & other)
         : _size(0)
         , _data(nullptr)
+        , _cuda_blocksize(other._cuda_blocksize)
       {
         allocate(other._size, false);
         Cuda::copy(_data, other._data, _size);
@@ -85,6 +90,7 @@ namespace Dune {
         : _size(other._size)
         , _allocator(std::move(other._allocator))
         , _data(other._data)
+        , _cuda_blocksize(other._cuda_blocksize)
       {
         other._data = nullptr;
         other._size = 0;
@@ -94,6 +100,7 @@ namespace Dune {
       Vector(const Vector<DT_, Dune::Memory::blocked_cache_aligned_allocator<F_,std::size_t, blocksize_> > & other)
         : _size(0)
         , _data(nullptr)
+        , _cuda_blocksize(128)
       {
         allocate(other.size(), false);
         for (size_t i(0) ; i < _size ; ++i)
@@ -276,16 +283,26 @@ namespace Dune {
         return _data + _size;
       }
 
+      size_t cuda_blocksize() const
+      {
+        return _cuda_blocksize;
+      }
+
+      void set_cuda_blocksize(size_t cbs)
+      {
+        _cuda_blocksize = cbs;
+      }
+
       //TODO size checks
       Vector & operator+=(const Vector & b)
       {
-        Cuda::sum(_data, _data, b.begin(), _size);
+        Cuda::sum(_data, _data, b.begin(), _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & operator-=(const Vector & b)
       {
-        Cuda::difference(_data, _data, b.begin(), _size);
+        Cuda::difference(_data, _data, b.begin(), _size, _cuda_blocksize);
         return *this;
       }
 
@@ -297,43 +314,43 @@ namespace Dune {
 
       Vector & operator*=(const Vector & b)
       {
-        Cuda::element_product(_data, _data, b.begin(), _size);
+        Cuda::element_product(_data, _data, b.begin(), _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & operator/=(const Vector & b)
       {
-        Cuda::element_division(_data, _data, b.begin(), _size);
+        Cuda::element_division(_data, _data, b.begin(), _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & operator+=(value_type b)
       {
-        Cuda::sum_scalar(_data, _data, b, _size);
+        Cuda::sum_scalar(_data, _data, b, _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & operator-=(value_type b)
       {
-        Cuda::difference_scalar(_data, _data, b, _size);
+        Cuda::difference_scalar(_data, _data, b, _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & operator*=(value_type b)
       {
-        Cuda::product_scalar(_data, _data, b, _size);
+        Cuda::product_scalar(_data, _data, b, _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & operator/=(value_type b)
       {
-        Cuda::division_scalar(_data, _data, b, _size);
+        Cuda::division_scalar(_data, _data, b, _size, _cuda_blocksize);
         return *this;
       }
 
       Vector & axpy(value_type a, const Vector & b)
       {
-        Cuda::axpy(_data, _data, a, b.begin(), _size);
+        Cuda::axpy(_data, _data, a, b.begin(), _size, _cuda_blocksize);
         return *this;
       }
 

@@ -236,7 +236,7 @@ namespace Dune {
 
       for (size_type i (0) ; i < _iterations; ++i)
       {
-        Cuda::sequential_jacobi(v.begin(), d.begin(), _v_new.begin(), _A.data(), _A.layout().cs(), _A.layout().col(), _A.layout().rows(), _A.layout().rows_per_chunk(), _A.layout().chunks(), _A.layout().allocated_size());
+        Cuda::sequential_jacobi(v.begin(), d.begin(), _v_new.begin(), _A.data(), _A.layout().cs(), _A.layout().col(), _A.layout().rows(), _A.layout().rows_per_chunk(), _A.layout().chunks(), _A.layout().allocated_size(), _A.cuda_blocksize());
 
         v.axpy(_w,_v_new);
       }

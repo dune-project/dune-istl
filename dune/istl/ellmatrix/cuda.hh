@@ -52,6 +52,13 @@ namespace Dune {
 
       typedef ellmatrix::CudaLayout<IndexAllocator> Layout;
 
+    private:
+      Layout _layout;
+      DT_* _data;
+      DT_ _zero_element;
+      Allocator _allocator;
+      size_t _cuda_blocksize;
+
 
 
     public:
@@ -65,6 +72,7 @@ namespace Dune {
         : _layout(layout)
         , _data(nullptr)
         , _zero_element(0)
+        , _cuda_blocksize(128)
       {
         allocate();
       }
@@ -73,6 +81,7 @@ namespace Dune {
         : _layout(row, col, rows, cols, nonzeros, rows_per_chunk, sorting_scope)
         , _data(nullptr)
         , _zero_element(0)
+        , _cuda_blocksize(128)
       {
         allocate();
         DT_ * tdata = new DT_[_layout.allocated_size()];
@@ -174,6 +183,7 @@ namespace Dune {
         : _layout(other._layout)
         , _data(nullptr)
         , _zero_element(other._zero_element)
+        , _cuda_blocksize(other._cuda_blocksize)
       {
         allocate();
         Cuda::copy(_data, other._data, _layout.allocated_size());
@@ -184,6 +194,7 @@ namespace Dune {
         , _layout(other.layout)
         , _data(other._data)
         , _zero_element(other._zero_element)
+        , _cuda_blocksize(other._cuda_blocksize)
       {
         other._data = nullptr;
       }
@@ -225,6 +236,7 @@ namespace Dune {
         : _layout(other.layout())
         , _data(nullptr)
         , _zero_element(0)
+        , _cuda_blocksize(128)
       {
         allocate();
         Cuda::upload(_data, other.data(), _layout.allocated_size());
@@ -294,24 +306,34 @@ namespace Dune {
         return _layout.nonzeros();
       }
 
+      size_t cuda_blocksize() const
+      {
+        return _cuda_blocksize;
+      }
+
+      void set_cuda_blocksize(size_t cbs)
+      {
+        _cuda_blocksize = cbs;
+      }
+
       void mv(const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::mv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::mv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size(), _cuda_blocksize);
       }
 
       void umv(const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::umv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::umv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size(), _cuda_blocksize);
       }
 
       void mmv(const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::mmv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::mmv(x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size(), _cuda_blocksize);
       }
 
       void usmv(const DT_ alpha, const Vector<F_, A_, Memory::Domain::CUDA> & x, Vector<F_, A_, Memory::Domain::CUDA> & y) const
       {
-        Cuda::usmv(alpha, x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size());
+        Cuda::usmv(alpha, x.begin(), y.begin(), _data, _layout.cs(), _layout.col(), _layout.rows(), _layout.rows_per_chunk(), _layout.chunks(), _layout.allocated_size(), _cuda_blocksize);
       }
 
       ~ELLMatrix()
@@ -343,11 +365,6 @@ namespace Dune {
         if (!_data)
           DUNE_THROW(Exception,"could not allocate memory");
       }
-
-      Layout _layout;
-      DT_* _data;
-      DT_ _zero_element;
-      Allocator _allocator;
 
     };
 
