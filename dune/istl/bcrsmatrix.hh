@@ -271,7 +271,7 @@ namespace Dune {
      Construct the matrix via
       - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       - void setSize(size_type rows, size_type columns, size_type nnz=0) after setting
-        the buildmode to implicit and the compression parameter via setMymodeParameters(size_type _avg, double _overflow)
+        the buildmode to implicit and the compression parameter via setImplicitBuildModeParameters(size_type _avg, double _overflow)
 
      Start filling your matrix with entry(size_type row, size_type col).
      Full access is possible also during buildstage, although not as fast
@@ -702,7 +702,7 @@ namespace Dune {
       if (build_mode == implicit)
       {
         if (nnz>0)
-          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in implicit mode, use setMymodeParameters() instead");
+          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in implicit mode, use setImplicitBuildModeParameters() instead");
 
         // implicit allocates differently
         implicit_allocate(rows,columns);
@@ -714,15 +714,15 @@ namespace Dune {
       }
     }
 
-    /** @brief Set parameters needed for creation in implicit.
+    /** @brief Set parameters needed for creation in implicit build mode.
      *
      * Use this method before setSize() to define storage behaviour of a matrix
-     * in implicit mode
+     * in implicit build mode
      * @param _avg expected average number of entries per row
      * @param _overflowsize fraction of _n*_avg which is expected to be
      *   needed for elements that exceed _avg entries per row.
      */
-    void setmMymodeParameters(size_type _avg, double _overflow)
+    void setImplicitBuildModeParameters(size_type _avg, double _overflow)
     {
       avg = _avg;
       overflow = _overflow;
