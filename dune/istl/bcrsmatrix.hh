@@ -1241,8 +1241,8 @@ namespace Dune {
       stats.overflow_total = overflow.size();
 
       //get insertion iterators pointing to one before start (for later use of ++it)
-      size_type* jiit = j.get()-1;
-      B* aiit = a-1;
+      size_type* jiit = j.get();
+      B* aiit = a;
 
       //get iterator to the smallest overflow element
       typename OverflowType::iterator oit = overflow.begin();
@@ -1268,8 +1268,8 @@ namespace Dune {
         std::sort(perm.begin(),perm.end(),PointerCompare<size_type>());
 
         //change row window pointer to their new positions
-        r[i].setindexptr(jiit+1);
-        r[i].setptr(aiit+1);
+        r[i].setindexptr(jiit);
+        r[i].setptr(aiit);
 
         for (it = perm.begin(); it != perm.end(); ++it)
         {
@@ -1277,35 +1277,41 @@ namespace Dune {
           while ((oit!=overflow.end()) && (oit->first < std::make_pair(i,**it)))
           {
             //check whether there is enough memory to write to
-            if (jiit >= begin)
+            if (jiit > begin)
               DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
             //copy and element from the overflow area to the insertion position in a and j
-            *(++jiit) = oit->first.second;
-            *(++aiit) = oit->second;
+            *jiit = oit->first.second;
+            ++jiit;
+            *aiit = oit->second;
+            ++aiit;
             ++oit;
             r[i].setsize(r[i].getsize()+1);
           }
 
           //check whether there is enough memory to write to
-          if (jiit >= begin)
+          if (jiit > begin)
             DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
 
           //copy element from array
-          *(++jiit) = **it;
+          *jiit = **it;
+          ++jiit;
           B* apos = *it-j.get()+a;
-          *(++aiit) = *apos;
+          *aiit = *apos;
+          ++aiit;
         }
 
         //copy remaining elements from the overflow area
         while ((oit!=overflow.end()) && (oit->first.first == i))
         {
           //check whether there is enough memory to write to
-          if (jiit >= begin)
+          if (jiit > begin)
             DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
 
           //copy and element from the overflow area to the insertion position in a and j
-          *(++jiit) = oit->first.second;
-          *(++aiit) = oit->second;
+          *jiit = oit->first.second;
+          ++jiit;
+          *aiit = oit->second;
+          ++aiit;
           ++oit;
           r[i].setsize(r[i].getsize()+1);
         }
