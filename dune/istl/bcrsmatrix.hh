@@ -92,6 +92,57 @@ namespace Dune {
     double mem_ratio;
   };
 
+  /** @brief A wrapper to treat with the BCRSMatrix build mode during mymode build mode
+    * @tparam M the matrix type
+    * The mymode build mode of Dune::BCRSMatrix handles matrices different during
+    * assembly and afterwards. Using this class, one can wrap a BCRSMatrix to allow
+    * use with code that is not written for BCRSMatrix specifically. The wrapper
+    * forwards any calls to operator[][] to the entry() method.The assembly code
+    * does not even necessarily need to know that the underlying matrix is sparse.
+    * Dune::AMG uses this to reassemble an existing matrix without code duplication.
+    */
+  template<class M>
+  class BuildModeWrapper
+  {
+    public:
+    typedef typename M::block_type block_type;
+    typedef typename M::size_type size_type;
+
+    class row_object
+    {
+      public:
+      row_object(M& m, size_type i) : _m(m), _i(i) {}
+
+      block_type& operator[](size_type j) const
+      {
+        return _m.entry(_i,j);
+      }
+      private:
+      M& _m;
+      size_type _i;
+    };
+
+    BuildModeWrapper(M& m) : _m(m) {}
+
+    row_object operator[](size_type i) const
+    {
+      return row_object(_m,i);
+    }
+
+    size_type N() const
+    {
+      return _m.N();
+    }
+
+    size_type M() const
+    {
+      return _m.M();
+    }
+
+    private:
+    M& _m;
+  };
+
   /**
      \brief A sparse block matrix with compressed row storage
 
