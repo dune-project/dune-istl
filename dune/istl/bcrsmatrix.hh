@@ -493,10 +493,10 @@ namespace Dune {
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (build_mode == implicit && ready != built)
-        DUNE_THROW(ISTLError,"You cannot use operator[] in implicit build mode before calling compress()");
-      if (r==0) DUNE_THROW(ISTLError,"row not initialized yet");
-      if (i>=n) DUNE_THROW(ISTLError,"index out of range");
-      if (r[i].getptr()==0) DUNE_THROW(ISTLError,"row not initialized yet");
+        DUNE_THROW(BCRSMatrixError,"You cannot use operator[] in implicit build mode before calling compress()");
+      if (r==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
+      if (i>=n) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (r[i].getptr()==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
 #endif
       return r[i];
     }
@@ -506,9 +506,9 @@ namespace Dune {
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (build_mode == implicit && ready != built)
-        DUNE_THROW(ISTLError,"You cannot use operator[] in implicit build mode before calling compress()");
-      if (built!=ready) DUNE_THROW(ISTLError,"row not initialized yet");
-      if (i>=n) DUNE_THROW(ISTLError,"index out of range");
+        DUNE_THROW(BCRSMatrixError,"You cannot use operator[] in implicit build mode before calling compress()");
+      if (built!=ready) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
+      if (i>=n) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       return r[i];
     }
@@ -805,7 +805,7 @@ namespace Dune {
       if (build_mode == implicit)
       {
         if (nnz>0)
-          DUNE_THROW(Dune::ISTLError,"number of non-zeroes may not be set in implicit mode, use setImplicitBuildModeParameters() instead");
+          DUNE_THROW(Dune::BCRSMatrixError,"number of non-zeroes may not be set in implicit mode, use setImplicitBuildModeParameters() instead");
 
         // implicit allocates differently
         implicit_allocate(rows,columns);
@@ -893,13 +893,13 @@ namespace Dune {
         : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j.get(), 0)
       {
         if (i==0 && Mat.ready)
-          DUNE_THROW(ISTLError,"creation only allowed for uninitialized matrix");
+          DUNE_THROW(BCRSMatrixError,"creation only allowed for uninitialized matrix");
         if(Mat.build_mode!=row_wise)
         {
           if(Mat.build_mode==unknown)
             Mat.build_mode=row_wise;
           else
-            DUNE_THROW(ISTLError,"creation only allowed if row wise allocation was requested in the constructor");
+            DUNE_THROW(BCRSMatrixError,"creation only allowed if row wise allocation was requested in the constructor");
         }
       }
 
@@ -908,7 +908,7 @@ namespace Dune {
       {
         // this should only be called if matrix is in creation
         if (Mat.ready)
-          DUNE_THROW(ISTLError,"matrix already built up");
+          DUNE_THROW(BCRSMatrixError,"matrix already built up");
 
         // row i is defined through the pattern
         // get memory for the row and initialize the j array
@@ -928,7 +928,7 @@ namespace Dune {
 
             // check if that memory is sufficient
             if (nnz>Mat.nnz)
-              DUNE_THROW(ISTLError,"allocated nnz too small");
+              DUNE_THROW(BCRSMatrixError,"allocated nnz too small");
 
             // set row i
             Mat.r[i].set(s,current_row.getptr(),current_row.getindexptr());
@@ -1047,9 +1047,9 @@ namespace Dune {
     void setrowsize (size_type i, size_type s)
     {
       if (build_mode!=random)
-        DUNE_THROW(ISTLError,"requires random build mode");
+        DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready)
-        DUNE_THROW(ISTLError,"matrix row sizes already built up");
+        DUNE_THROW(BCRSMatrixError,"matrix row sizes already built up");
 
       r[i].setsize(s);
     }
@@ -1058,8 +1058,8 @@ namespace Dune {
     size_type getrowsize (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (r==0) DUNE_THROW(ISTLError,"row not initialized yet");
-      if (i>=n) DUNE_THROW(ISTLError,"index out of range");
+      if (r==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
+      if (i>=n) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       return r[i].getsize();
     }
@@ -1068,9 +1068,9 @@ namespace Dune {
     void incrementrowsize (size_type i, size_type s = 1)
     {
       if (build_mode!=random)
-        DUNE_THROW(ISTLError,"requires random build mode");
+        DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready)
-        DUNE_THROW(ISTLError,"matrix row sizes already built up");
+        DUNE_THROW(BCRSMatrixError,"matrix row sizes already built up");
 
       r[i].setsize(r[i].getsize()+s);
     }
@@ -1079,9 +1079,9 @@ namespace Dune {
     void endrowsizes ()
     {
       if (build_mode!=random)
-        DUNE_THROW(ISTLError,"requires random build mode");
+        DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready)
-        DUNE_THROW(ISTLError,"matrix row sizes already built up");
+        DUNE_THROW(BCRSMatrixError,"matrix row sizes already built up");
 
       // compute total size, check positivity
       size_type total=0;
@@ -1094,7 +1094,7 @@ namespace Dune {
         // allocate/check memory
         allocate(n,m,total,false);
       else if(nnz<total)
-        DUNE_THROW(ISTLError,"Specified number of nonzeros ("<<nnz<<") not "
+        DUNE_THROW(BCRSMatrixError,"Specified number of nonzeros ("<<nnz<<") not "
                                                              <<"sufficient for calculated nonzeros ("<<total<<"! ");
 
       // set the window pointers correctly
@@ -1121,14 +1121,14 @@ namespace Dune {
     void addindex (size_type row, size_type col)
     {
       if (build_mode!=random)
-        DUNE_THROW(ISTLError,"requires random build mode");
+        DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready==built)
-        DUNE_THROW(ISTLError,"matrix already built up");
+        DUNE_THROW(BCRSMatrixError,"matrix already built up");
       if (ready==notbuilt)
-        DUNE_THROW(ISTLError,"matrix row sizes not built up yet");
+        DUNE_THROW(BCRSMatrixError,"matrix row sizes not built up yet");
 
       if (col >= m)
-        DUNE_THROW(ISTLError,"column index exceeds matrix size");
+        DUNE_THROW(BCRSMatrixError,"column index exceeds matrix size");
 
       // get row range
       size_type* const first = r[row].getindexptr();
@@ -1143,7 +1143,7 @@ namespace Dune {
       // find end of already inserted column indices
       size_type* end = std::lower_bound(pos,last,m);
       if (end==last)
-        DUNE_THROW(ISTLError,"row is too small");
+        DUNE_THROW(BCRSMatrixError,"row is too small");
 
       // insert new column index at correct position
       std::copy_backward(pos,end,end+1);
@@ -1155,11 +1155,11 @@ namespace Dune {
     void endindices ()
     {
       if (build_mode!=random)
-        DUNE_THROW(ISTLError,"requires random build mode");
+        DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready==built)
-        DUNE_THROW(ISTLError,"matrix already built up");
+        DUNE_THROW(BCRSMatrixError,"matrix already built up");
       if (ready==notbuilt)
-        DUNE_THROW(ISTLError,"row sizes are not built up yet");
+        DUNE_THROW(BCRSMatrixError,"row sizes are not built up yet");
 
       // check if there are undefined indices
       RowIterator endi=end();
@@ -1198,14 +1198,14 @@ namespace Dune {
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (build_mode!=implicit)
-        DUNE_THROW(ISTLError,"requires implicit build mode");
+        DUNE_THROW(BCRSMatrixError,"requires implicit build mode");
       if (ready==built)
-        DUNE_THROW(ISTLError,"matrix already built up, use operator[] for entry access now");
+        DUNE_THROW(BCRSMatrixError,"matrix already built up, use operator[] for entry access now");
 
       if (row >= n)
-        DUNE_THROW(ISTLError,"row index exceeds matrix size");
+        DUNE_THROW(BCRSMatrixError,"row index exceeds matrix size");
       if (col >= m)
-        DUNE_THROW(ISTLError,"column index exceeds matrix size");
+        DUNE_THROW(BCRSMatrixError,"column index exceeds matrix size");
 #endif
 
       size_type* begin = r[row].getindexptr();
@@ -1257,9 +1257,9 @@ namespace Dune {
     CompressionStatistics<size_type> compress()
     {
       if (build_mode!=implicit)
-        DUNE_THROW(ISTLError,"requires implicit build mode");
+        DUNE_THROW(BCRSMatrixError,"requires implicit build mode");
       if (ready==built)
-        DUNE_THROW(ISTLError,"matrix already built up, no more need for compression");
+        DUNE_THROW(BCRSMatrixError,"matrix already built up, no more need for compression");
 
       //calculate statistics
       CompressionStatistics<size_type> stats;
@@ -1304,7 +1304,10 @@ namespace Dune {
           {
             //check whether there is enough memory to write to
             if (jiit > begin)
-              DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+              DUNE_THROW(Dune::ImplicitModeOverflowExhausted,
+                         "Allocated memory for BCRSMatrix exhausted during compress()!"
+                         "Please increase either the average number of entries per row or the overflow fraction."
+                         );
             //copy and element from the overflow area to the insertion position in a and j
             *jiit = oit->first.second;
             ++jiit;
@@ -1316,7 +1319,10 @@ namespace Dune {
 
           //check whether there is enough memory to write to
           if (jiit > begin)
-            DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+              DUNE_THROW(Dune::ImplicitModeOverflowExhausted,
+                         "Allocated memory for BCRSMatrix exhausted during compress()!"
+                         "Please increase either the average number of entries per row or the overflow fraction."
+                         );
 
           //copy element from array
           *jiit = **it;
@@ -1331,7 +1337,10 @@ namespace Dune {
         {
           //check whether there is enough memory to write to
           if (jiit > begin)
-            DUNE_THROW(Dune::ISTLError,"Allocated Size for BCRSMatrix was not sufficient!");
+              DUNE_THROW(Dune::ImplicitModeOverflowExhausted,
+                         "Allocated memory for BCRSMatrix exhausted during compress()!"
+                         "Please increase either the average number of entries per row or the overflow fraction."
+                         );
 
           //copy and element from the overflow area to the insertion position in a and j
           *jiit = oit->first.second;
@@ -1480,9 +1489,9 @@ namespace Dune {
     void mv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=M()) DUNE_THROW(ISTLError,
+      if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,
                                  "Size mismatch: M: " << N() << "x" << M() << " x: " << x.N());
-      if (y.N()!=N()) DUNE_THROW(ISTLError,
+      if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,
                                  "Size mismatch: M: " << N() << "x" << M() << " y: " << y.N());
 #endif
       ConstRowIterator endi=end();
@@ -1500,8 +1509,8 @@ namespace Dune {
     void umv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1517,8 +1526,8 @@ namespace Dune {
     void mmv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1534,8 +1543,8 @@ namespace Dune {
     void usmv (const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1551,8 +1560,8 @@ namespace Dune {
     void mtv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       for(size_type i=0; i<y.N(); ++i)
         y[i]=0;
@@ -1564,8 +1573,8 @@ namespace Dune {
     void umtv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1581,8 +1590,8 @@ namespace Dune {
     void mmtv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1598,8 +1607,8 @@ namespace Dune {
     void usmtv (const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1615,8 +1624,8 @@ namespace Dune {
     void umhv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1632,8 +1641,8 @@ namespace Dune {
     void mmhv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1649,8 +1658,8 @@ namespace Dune {
     void usmhv (const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
-      if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
+      if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
+      if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1751,8 +1760,8 @@ namespace Dune {
     bool exists (size_type i, size_type j) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i<0 || i>=n) DUNE_THROW(ISTLError,"row index out of range");
-      if (j<0 || j>=m) DUNE_THROW(ISTLError,"column index out of range");
+      if (i<0 || i>=n) DUNE_THROW(BCRSMatrixError,"row index out of range");
+      if (j<0 || j>=m) DUNE_THROW(BCRSMatrixError,"column index out of range");
 #endif
       if (r[i].size() && r[i].find(j)!=r[i].end())
         return true;
