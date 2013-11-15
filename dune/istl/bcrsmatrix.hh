@@ -1239,6 +1239,7 @@ namespace Dune {
       //calculate statistics
       CompressionStatistics<size_type> stats;
       stats.overflow_total = overflow.size();
+      stats.maximum = 0;
 
       //get insertion iterators pointing to one before start (for later use of ++it)
       size_type* jiit = j.get();
@@ -1315,6 +1316,10 @@ namespace Dune {
           ++oit;
           r[i].setsize(r[i].getsize()+1);
         }
+
+        // update maximum row size
+        if (r[i].getsize()>stats.maximum)
+          stats.maximum = r[i].getsize();
       }
 
       // overflow area may be cleared
@@ -1325,12 +1330,6 @@ namespace Dune {
       nnz = diff;
       stats.avg = (double) (nnz) / (double) n;
       stats.mem_ratio = (double) (nnz)/(double) allocationSize;
-
-      //determine maximum number of entries in a row
-      stats.maximum = 0;
-      for (size_type i=0; i<n; i++)
-        if (r[i].getsize()>stats.maximum)
-          stats.maximum = r[i].getsize();
 
       //matrix is now built
       ready = built;
