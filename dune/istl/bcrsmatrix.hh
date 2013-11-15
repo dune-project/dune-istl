@@ -105,53 +105,83 @@ namespace Dune {
    * The compress() method of Dune::BCRSMatrix still has to be called from outside
    * this wrapper after the pattern assembly is finished.
    *
-   * \tparam M the matrix type
+   * \tparam M_ the matrix type
    */
-  template<class M>
+  template<class M_>
   class BuildModeWrapper
-  {};
-
-  template<class B, class A>
-  class BuildModeWrapper<Dune::BCRSMatrix<B, A> >
   {
-    public:
-    typedef BCRSMatrix<B,A> Matrix;
+
+  public:
+
+    //! The underlying matrix.
+    typedef M_ Matrix;
+
+    //! The block_type of the underlying matrix.
     typedef typename Matrix::block_type block_type;
+
+    //! The size_type of the underlying matrix.
     typedef typename Matrix::size_type size_type;
 
+    //! Proxy row object for entry access.
+    /**
+     * During matrix construction, there are no fully functional rows available
+     * yet, so we instead hand out a simple proxy which only allows accessing
+     * individual entries using operator[].
+     */
     class row_object
     {
-      public:
-      row_object(Matrix& m, size_type i) : _m(m), _i(i) {}
 
+    public:
+
+      //! Returns entry in column j.
       block_type& operator[](size_type j) const
       {
         return _m.entry(_i,j);
       }
-      private:
+
+#ifndef DOXYGEN
+
+      row_object(Matrix& m, size_type i)
+        : _m(m)
+        , _i(i)
+      {}
+
+#endif
+
+    private:
+
       Matrix& _m;
       size_type _i;
+
     };
 
-    BuildModeWrapper(Matrix& m) : _m(m) {}
+    //! Creates a build mode wrapper for matrix m.
+    BuildModeWrapper(Matrix& m)
+      : _m(m)
+    {}
 
+    //! Returns a proxy for entries in row i.
     row_object operator[](size_type i) const
     {
       return row_object(_m,i);
     }
 
+    //! The number of rows in the matrix.
     size_type N() const
     {
       return _m.N();
     }
 
+    //! The number of columns in the matrix.
     size_type M() const
     {
       return _m.M();
     }
 
-    private:
+  private:
+
     Matrix& _m;
+
   };
 
   /**
