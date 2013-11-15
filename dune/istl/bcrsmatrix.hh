@@ -71,38 +71,42 @@ namespace Dune {
   template<typename M>
   struct MatrixDimension;
 
+  //! Statistics about compression achieved in implicit mode.
   /**
-   * \brief export statistic about compression achieved in implicit mode
-   *
-   * To enable the user to tune parameters of implicit buildmode of a
-   * Dune::BCRSMatrix manually, some statistics are exported upon
-   * compression.
+   * To enable the user to tune parameters of the implicit build mode of a
+   * Dune::BCRSMatrix manually, some statistics are exported upon during
+   * the compression step.
    *
    */
   template<typename size_type>
   struct CompressionStatistics
   {
-    //! average number of non-zeroes per row
+    //! average number of non-zeroes per row.
     double avg;
-    //! maximum number of non-zeroes in a row_type
+    //! maximum number of non-zeroes per row.
     size_type maximum;
-    //! total number of elements written to the overflow area
+    //! total number of elements written to the overflow area during construction.
     size_type overflow_total;
-    //! percentage of wasted memory resulting from non-used overflow area
+    //! fraction of wasted memory resulting from non-used overflow area.
+    /**
+     * mem_ratio is equal to `nonzeros()/(# allocated matrix entries)`.
+     */
     double mem_ratio;
   };
 
-  /** @brief A wrapper to treat with the BCRSMatrix build mode during implicit build mode
-    * @tparam M the matrix type
-    * The implicit build mode of Dune::BCRSMatrix handles matrices different during
-    * assembly and afterwards. Using this class, one can wrap a BCRSMatrix to allow
-    * use with code that is not written for BCRSMatrix specifically. The wrapper
-    * forwards any calls to operator[][] to the entry() method.The assembly code
-    * does not even necessarily need to know that the underlying matrix is sparse.
-    * Dune::AMG uses this to reassemble an existing matrix without code duplication.
-    * The compress() method of Dune::BCRSMatrix still has to be called from outside
-    * this wrapper after the pattern assembly is finished.
-    */
+  //! A wrapper for uniform access to the BCRSMatrix during and after the build stage in implicit build mode.
+  /**
+   * The implicit build mode of Dune::BCRSMatrix handles matrices differently during
+   * assembly and afterwards. Using this class, one can wrap a BCRSMatrix to allow
+   * use with code that is not written for the new build mode specifically. The wrapper
+   * forwards any calls to operator[][] to the entry() method.The assembly code
+   * does not even necessarily need to know that the underlying matrix is sparse.
+   * Dune::AMG uses this to reassemble an existing matrix without code duplication.
+   * The compress() method of Dune::BCRSMatrix still has to be called from outside
+   * this wrapper after the pattern assembly is finished.
+   *
+   * \tparam M the matrix type
+   */
   template<class M>
   class BuildModeWrapper
   {};
@@ -259,30 +263,44 @@ namespace Dune {
      \endcode
 
      3. implicit scheme
-     With the above Random Scheme, the sparsity pattern often has to be determined
-     and stored before the matrix is assembled. This leads to an increase of
-     needs in memory and computation time. Often, one has good a priori
-     knowledge about the number of entries a row contains on average. implicit
+     With the above Random Scheme, the sparsity pattern has to be determined
+     and stored before the matrix is assembled. This leads to increased memory
+     usage and computation time. Often, one has good a priori
+     knowledge about the number of entries a row contains on average. `implicit`
      mode tries to make use of that knowledge by allocating memory based on
-     that average. Entries in rows with more non-zeroes are written to an overflow
-     area. After all indices are added a compression procedure is used.
+     that average. Entries in rows with more non-zeroes than the average value
+     are written to an overflow area during the initial assembly phase, up to a
+     specified maximum number of overflow entries that must not be exceeded.
+     After all indices are added a compression step optimizes the matrix and
+     integrates any entries from the overflow area into the standard BCRS storage
+     scheme.
+
      To use this mode use the following methods:
 
      Construct the matrix via
       - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       - void setSize(size_type rows, size_type columns, size_type nnz=0) after setting
-        the buildmode to implicit and the compression parameter via setImplicitBuildModeParameters(size_type _avg, double _overflow)
+        the buildmode to implicit and the compression parameters via setImplicitBuildModeParameters(size_type _avg, double _overflow)
 
-     Start filling your matrix with entry(size_type row, size_type col).
-     Full access is possible also during buildstage, although not as fast
-     as after buildstage via the operator[] due to the necessity of searching
-     the overflow area for some matrix elements. Thus, the matrix pattern is
-     setup implicitly while assembling the matrix.
+     Here, the parameter `_avg` denotes the average number of matrix entries per row, while
+     `_overflowsize` reserves `_n * _overflowsize * _avg` entries in the overflow area.
 
-     After the entry-method has been called for each matrix at least once,
-     a call to compress() reorganizes the data into one array for further use.
-     This sets the matrixs state to built. No matrix entries may be added after
-     this step. The return type Dune::CompressionStatistics allows for some parameter optimization.
+     \warning If you exceed this number of overflow entries during the assembly phase, matrix
+              construction fails and an exception will be thrown!
+
+     Start filling your matrix by calling entry(size_type row, size_type col),
+     which returns the corresponding matrix entry, creating it on the fly if
+     it did not exist yet. Please note that this method may be slightly slower than
+     accessing entries via `matrix[row][col]` after the initial assembly because
+     of the additional overhead of searching the overflow area.
+     The matrix pattern is created by implicitly by simply accessing nonzero entries
+     during the initial matrix assembly.
+
+     After the entry-method has been called for each nonzero matrix entry at least once,
+     you can call compress() to reorganize the data into the standard BCRS data layout,
+     which sets the matrix state to `built`. No matrix entries may be added after
+     this step. compress() returns a value of type Dune::CompressionStatistics, which
+     you can inspect to tune the construction parameters `_avg` and `_overflowsize`.
 
      Use of copy constructor, assignment operator and matrix vector arithmetics
      are not supported until the matrix is fully built.
@@ -338,7 +356,7 @@ namespace Dune {
        * Only used in random mode.
        */
       rowSizesBuilt=1,
-      /** @brief The matrix structure is built fully.*/
+      /** @brief The matrix structure is fully built.*/
       built=2
     };
 
@@ -388,12 +406,12 @@ namespace Dune {
        */
       random,
       /**
-       * @brief Build entries randomly with an educated guess on entries per row_type
+       * @brief Build entries randomly with an educated guess on entries per row.
        *
-       * Allows random order generation as in random mode, but rowsizes do not need
+       * Allows random order generation as in random mode, but row sizes do not need
        * to be given first. Instead an average number of non-zeroes per row is passed
        * to the constructor. Matrix setup is finished with compress(), full data access
-       * during buidstage is possible.
+       * during build stage is possible.
        */
       implicit,
       /**
@@ -1073,14 +1091,14 @@ namespace Dune {
 
     //===== implicit creation interface
 
-    //! \brief get reference to entry (row,col) of the matrix
-    /*!
+    //! Returns reference to entry (row,col) of the matrix.
+    /**
      * This method can only be used when the matrix is in implicit
      * building mode.
      *
      * A reference to entry (row, col) of the matrix is returned.
-     * If this is the first call for (row, col) the matrix element
-     * is created.
+     * If entry (row, col) is accessed for the first time, it is created
+     * on the fly.
      *
      * This method can only be used while building the matrix,
      * after compression operator[] gives a much better performance.
@@ -1134,15 +1152,16 @@ namespace Dune {
       }
     }
 
-    //! @brief finishes the buildstage in implicit mode
-    /*! once called, matrix is going to built state and no indices
-     *  can be added to a matrix that is built in implicit mode.
+    //! Finishes the buildstage in implicit mode.
+    /**
+     * Performs compression of index and data arrays with linear
+     * complexity in the number of nonzeroes.
      *
-     *  performs compression of index and data arrays with linear
-     *  complexity
+     * After calling this method, the matrix is in the built state
+     * and no more entries can be added.
      *
-     *  An object with some statistics about the compression for
-     *  future optimization is returned.
+     * \returns An object with some statistics about the compression for
+     *          future optimization.
      */
     CompressionStatistics<size_type> compress()
     {
@@ -1624,6 +1643,7 @@ namespace Dune {
       return nnz;
     }
 
+    //! The current build stage of the matrix.
     BuildStage buildStage() const
     {
       return ready;
