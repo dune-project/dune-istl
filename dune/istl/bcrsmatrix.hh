@@ -809,7 +809,7 @@ namespace Dune {
     void setImplicitBuildModeParameters(size_type _avg, double _overflow)
     {
       avg = _avg;
-      overflow = _overflow;
+      overflowsize = _overflow;
     }
 
     /**
