@@ -682,15 +682,20 @@ namespace Dune {
 
     //===== constructors & resizers
 
+    // we use a negative overflowsize to indicate that the implicit
+    // mode parameters have not been set yet
+
     //! an empty matrix
     BCRSMatrix ()
       : build_mode(unknown), ready(notbuilt), n(0), m(0), nnz(0),
-        r(0), a(0)
+        r(0), a(0),
+        avg(0), overflowsize(-1.0)
     {}
 
     //! matrix with known number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, size_type _nnz, BuildMode bm)
       : build_mode(bm), ready(notbuilt)
+      , avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m, _nnz);
     }
@@ -698,6 +703,7 @@ namespace Dune {
     //! matrix with unknown number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
       : build_mode(bm), ready(notbuilt)
+      , avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m);
     }
@@ -716,6 +722,14 @@ namespace Dune {
     BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       : build_mode(bm), ready(notbuilt), avg(_avg), overflowsize(_overflowsize)
     {
+      if (bm != implicit)
+        DUNE_THROW(BCRSMatrixError,"Only call this constructor when using the implicit build mode");
+      // Prevent user from setting a negative overflowsize:
+      // 1) It doesn't make sense
+      // 2) We use a negative overflow value to indicate that the parameters
+      //    have not been set yet
+      if (_overflowsize < 0.0)
+        DUNE_THROW(BCRSMatrixError,"You cannot set a negative overflow fraction");
       implicit_allocate(_n,_m);
     }
 
@@ -726,6 +740,7 @@ namespace Dune {
      */
     BCRSMatrix (const BCRSMatrix& Mat)
       : n(Mat.n), nnz(0)
+      , avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
       // deep copy in global array
       size_type _nnz = Mat.nnz;
@@ -808,6 +823,12 @@ namespace Dune {
      */
     void setImplicitBuildModeParameters(size_type _avg, double _overflow)
     {
+      // Prevent user from setting a negative overflowsize:
+      // 1) It doesn't make sense
+      // 2) We use a negative overflow value to indicate that the parameters
+      //    have not been set yet
+      if (_overflow < 0.0)
+        DUNE_THROW(BCRSMatrixError,"You cannot set a negative overflow fraction");
       avg = _avg;
       overflowsize = _overflow;
     }
@@ -1923,6 +1944,9 @@ namespace Dune {
      */
     void implicit_allocate(size_type _n, size_type _m)
     {
+      // check to make sure the user has actually set the parameters
+      if (overflowsize < 0)
+        DUNE_THROW(InvalidStateException,"You have to set the implicit build mode parameters before starting to build the matrix");
       //calculate size of overflow region, add buffer for row sort!
       size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
       allocationSize = _n*avg + osize;
