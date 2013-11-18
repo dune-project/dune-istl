@@ -443,6 +443,9 @@ namespace Dune {
     //! The type for the index access and the size
     typedef typename A::size_type size_type;
 
+    //! The type for the statistics object returned by compress()
+    typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;
+
     //! increment block level counter
     enum {
       //! The number of blocklevels the matrix contains.
@@ -1254,7 +1257,7 @@ namespace Dune {
      * \returns An object with some statistics about the compression for
      *          future optimization.
      */
-    CompressionStatistics<size_type> compress()
+    CompressionStatistics compress()
     {
       if (build_mode!=implicit)
         DUNE_THROW(BCRSMatrixError,"requires implicit build mode");
@@ -1262,7 +1265,7 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"matrix already built up, no more need for compression");
 
       //calculate statistics
-      CompressionStatistics<size_type> stats;
+      CompressionStatistics stats;
       stats.overflow_total = overflow.size();
       stats.maximum = 0;
 
