@@ -923,22 +923,21 @@ namespace Dune {
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
         : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j.get(), 0)
       {
-        if (i==0 && Mat.ready)
+        if (Mat.build_mode == unknown && Mat.ready == building)
+          {
+            Mat.build_mode = row_wise;
+          }
+        if (i==0 && Mat.ready != building)
           DUNE_THROW(BCRSMatrixError,"creation only allowed for uninitialized matrix");
         if(Mat.build_mode!=row_wise)
-        {
-          if(Mat.build_mode==unknown)
-            Mat.build_mode=row_wise;
-          else
-            DUNE_THROW(BCRSMatrixError,"creation only allowed if row wise allocation was requested in the constructor");
-        }
+          DUNE_THROW(BCRSMatrixError,"creation only allowed if row wise allocation was requested in the constructor");
       }
 
       //! prefix increment
       CreateIterator& operator++()
       {
         // this should only be called if matrix is in creation
-        if (Mat.ready)
+        if (Mat.ready != building)
           DUNE_THROW(BCRSMatrixError,"matrix already built up");
 
         // row i is defined through the pattern
@@ -1079,7 +1078,7 @@ namespace Dune {
     {
       if (build_mode!=random)
         DUNE_THROW(BCRSMatrixError,"requires random build mode");
-      if (ready)
+      if (ready != building)
         DUNE_THROW(BCRSMatrixError,"matrix row sizes already built up");
 
       r[i].setsize(s);
@@ -1100,7 +1099,7 @@ namespace Dune {
     {
       if (build_mode!=random)
         DUNE_THROW(BCRSMatrixError,"requires random build mode");
-      if (ready)
+      if (ready != building)
         DUNE_THROW(BCRSMatrixError,"matrix row sizes already built up");
 
       r[i].setsize(r[i].getsize()+s);
@@ -1111,7 +1110,7 @@ namespace Dune {
     {
       if (build_mode!=random)
         DUNE_THROW(BCRSMatrixError,"requires random build mode");
-      if (ready)
+      if (ready != building)
         DUNE_THROW(BCRSMatrixError,"matrix row sizes already built up");
 
       // compute total size, check positivity
@@ -1155,8 +1154,10 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready==built)
         DUNE_THROW(BCRSMatrixError,"matrix already built up");
-      if (ready==notbuilt)
+      if (ready==building)
         DUNE_THROW(BCRSMatrixError,"matrix row sizes not built up yet");
+      if (ready==notAllocated)
+        DUNE_THROW(BCRSMatrixError,"matrix size not set and no memory allocated yet");
 
       if (col >= m)
         DUNE_THROW(BCRSMatrixError,"column index exceeds matrix size");
@@ -1189,8 +1190,10 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"requires random build mode");
       if (ready==built)
         DUNE_THROW(BCRSMatrixError,"matrix already built up");
-      if (ready==notbuilt)
+      if (ready==building)
         DUNE_THROW(BCRSMatrixError,"row sizes are not built up yet");
+      if (ready==notAllocated)
+        DUNE_THROW(BCRSMatrixError,"matrix size not set and no memory allocated yet");
 
       // check if there are undefined indices
       RowIterator endi=end();
@@ -1232,6 +1235,10 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"requires implicit build mode");
       if (ready==built)
         DUNE_THROW(BCRSMatrixError,"matrix already built up, use operator[] for entry access now");
+      if (ready==notAllocated)
+        DUNE_THROW(BCRSMatrixError,"matrix size not set and no memory allocated yet");
+      if (ready!=building)
+        DUNE_THROW(InvalidStateException,"You may only use entry() during the 'building' stage");
 
       if (row >= n)
         DUNE_THROW(BCRSMatrixError,"row index exceeds matrix size");
@@ -1291,6 +1298,10 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"requires implicit build mode");
       if (ready==built)
         DUNE_THROW(BCRSMatrixError,"matrix already built up, no more need for compression");
+      if (ready==notAllocated)
+        DUNE_THROW(BCRSMatrixError,"matrix size not set and no memory allocated yet");
+      if (ready!=building)
+        DUNE_THROW(InvalidStateException,"You may only call compress() at the end of the 'building' stage");
 
       //calculate statistics
       CompressionStatistics stats;
@@ -1957,7 +1968,7 @@ namespace Dune {
       }
 
       // Mark matrix as not built at all.
-      ready=notbuilt;
+      ready=notAllocated;
 
     }
 
@@ -2027,7 +2038,7 @@ namespace Dune {
       }
 
       // Mark the matrix as not built.
-      ready = notbuilt;
+      ready = building;
     }
 
     /** @brief organizes allocation implicit mode
