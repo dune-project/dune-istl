@@ -492,6 +492,8 @@ namespace Dune {
     row_type& operator[] (size_type i)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (build_mode == implicit && ready != built)
+        DUNE_THROW(ISTLError,"You cannot use operator[] in implicit build mode before calling compress()");
       if (r==0) DUNE_THROW(ISTLError,"row not initialized yet");
       if (i>=n) DUNE_THROW(ISTLError,"index out of range");
       if (r[i].getptr()==0) DUNE_THROW(ISTLError,"row not initialized yet");
@@ -503,6 +505,8 @@ namespace Dune {
     const row_type& operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (build_mode == implicit && ready != built)
+        DUNE_THROW(ISTLError,"You cannot use operator[] in implicit build mode before calling compress()");
       if (built!=ready) DUNE_THROW(ISTLError,"row not initialized yet");
       if (i>=n) DUNE_THROW(ISTLError,"index out of range");
 #endif
