@@ -791,10 +791,15 @@ namespace Dune {
      */
     void setBuildMode(BuildMode bm)
     {
-      if(ready==notbuilt)
+      if (ready == notAllocated)
+        {
+          build_mode = bm;
+          return;
+        }
+      if (ready == building && (build_mode == unknown || build_mode == random || build_mode == row_wise) && (bm == row_wise || bm == random))
         build_mode = bm;
       else
-        DUNE_THROW(InvalidStateException, "Matrix structure is already built (ready="<<ready<<").");
+        DUNE_THROW(InvalidStateException, "Matrix structure cannot be changed at this stage anymore (ready == "<<ready<<").");
     }
 
     /**
