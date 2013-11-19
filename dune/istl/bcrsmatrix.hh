@@ -1943,6 +1943,9 @@ namespace Dune {
     void deallocate(bool deallocateRows=true)
     {
 
+      if (notAllocated)
+        return;
+
       if (allocationSize>0)
       {
         // a,j have been allocated as one long vector
@@ -1950,8 +1953,9 @@ namespace Dune {
         for(B *aiter=a+(allocationSize-1), *aend=a-1; aiter!=aend; --aiter)
           allocator_.destroy(aiter);
         allocator_.deallocate(a,allocationSize);
+        a = nullptr;
       }
-      else
+      else if (r)
       {
         // check if memory for rows have been allocated individually
         for (size_type i=0; i<n; i++)
@@ -1963,14 +1967,18 @@ namespace Dune {
             }
             sizeAllocator_.deallocate(r[i].getindexptr(),1);
             allocator_.deallocate(r[i].getptr(),1);
+            // clear out row data in case we don't want to deallocate the rows
+            // otherwise we might run into a double free problem here later
+            r[i].set(0,nullptr,nullptr);
           }
       }
 
       // deallocate the rows
-      if (n>0 && deallocateRows) {
+      if (n>0 && deallocateRows && r) {
         for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
           rowAllocator_.destroy(riter);
         rowAllocator_.deallocate(r,n);
+        r = nullptr;
       }
 
       // Mark matrix as not built at all.
