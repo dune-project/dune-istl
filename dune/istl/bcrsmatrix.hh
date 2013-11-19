@@ -853,6 +853,10 @@ namespace Dune {
       //    have not been set yet
       if (_overflow < 0.0)
         DUNE_THROW(BCRSMatrixError,"You cannot set a negative overflow fraction");
+
+      // make sure the parameters aren't changed after memory has been allocated
+      if (ready != notAllocated)
+        DUNE_THROW(InvalidStateException,"You cannot modify build mode parameters at this stage anymore");
       avg = _avg;
       overflowsize = _overflow;
     }
