@@ -2028,6 +2028,8 @@ namespace Dune {
       // allocate rows
       if(allocateRows) {
         if (n>0) {
+          if (r)
+            DUNE_THROW(InvalidStateException,"Rows have already been allocated, cannot allocate a second time");
           r = rowAllocator_.allocate(rows);
         }else{
           r = 0;
