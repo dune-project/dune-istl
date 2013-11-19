@@ -108,7 +108,7 @@ namespace Dune {
    * \tparam M_ the matrix type
    */
   template<class M_>
-  class BuildModeWrapper
+  class ImplicitMatrixBuilder
   {
 
   public:
@@ -155,10 +155,46 @@ namespace Dune {
 
     };
 
-    //! Creates a build mode wrapper for matrix m.
-    BuildModeWrapper(Matrix& m)
+    //! Creates an ImplicitMatrixBuilder for matrix m.
+    /**
+     * \note You can only pass a completely set up a matrix to this constructor:
+     *       All of setBuildMode(), setImplicitBuildModeParameters() and setSize()
+     *       must have been called with the correct values.
+     *
+     */
+    ImplicitMatrixBuilder(Matrix& m)
       : _m(m)
-    {}
+    {
+      if (m.buildMode() != Matrix::implicit)
+        DUNE_THROW(BCRSMatrixError,"You can only create an ImplicitBuilder for a matrix in implicit build mode");
+      if (m.buildStage() != Matrix::building)
+        DUNE_THROW(BCRSMatrixError,"You can only create an ImplicitBuilder for a matrix with set size that has not been compressed() yet");
+    }
+
+    //! Sets up matrix m for implicit construction using the given parameters and creates an ImplicitBmatrixuilder for it.
+    /**
+     * Using this constructor, you can perform the necessary matrix setup and the creation
+     * of the ImplicitMatrixBuilder in a single step. The matrix must still be in the build stage
+     * notAllocated, otherwise a BCRSMatrixError will be thrown. For a detailed explanation
+     * of the matrix parameters, see BCRSMatrix.
+     *
+     * \param m                 the matrix to be built
+     * \param rows              the number of matrix rows
+     * \param cols              the number of matrix columns
+     * \param avg_cols_per_row  the average number of non-zero columns per row
+     * \param overflow_fraction the amount of overflow to reserve in the matrix
+     *
+     * \sa BCRSMatrix
+     */
+    ImplicitMatrixBuilder(Matrix& m, size_type rows, size_type cols, size_type avg_cols_per_row, double overflow_fraction)
+      : _m(m)
+    {
+      if (m.buildStage() != Matrix::notAllocated)
+        DUNE_THROW(BCRSMatrixError,"You can only set up a matrix for this ImplicitBuilder if it has no memory allocated yet");
+      m.setBuildMode(Matrix::implicit);
+      m.setImplicitBuildModeParameters(avg_cols_per_row,overflow_fraction);
+      m.setSize(rows,cols);
+    }
 
     //! Returns a proxy for entries in row i.
     row_object operator[](size_type i) const
