@@ -2,6 +2,7 @@ set(NORMALTEST
   basearraytest
   bvectortest
   bcrsbuildtest
+  bcrsimplicitbuildtest
   dotproducttest
   iotest
   inverseoperator2prectest
@@ -55,6 +56,8 @@ add_executable(matrixtest "matrixtest.cc")
 add_executable(bvectortest "bvectortest.cc")
 add_executable(vbvectortest "vbvectortest.cc")
 add_executable(bcrsbuildtest "bcrsbuild.cc")
+add_executable(bcrsimplicitbuildtest "bcrsbuild.cc")
+set_property(TARGET bcrsimplicitbuildtest APPEND PROPERTY COMPILE_DEFINITIONS "DUNE_ISTL_WITH_CHECKING=1")
 add_executable(matrixiteratortest "matrixiteratortest.cc")
 add_executable(mmtest mmtest.cc)
 add_executable(mv "mv.cc")
