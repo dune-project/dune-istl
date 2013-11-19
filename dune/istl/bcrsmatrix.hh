@@ -1845,6 +1845,12 @@ namespace Dune {
       return ready;
     }
 
+    //! The currently selected build mode of the matrix.
+    BuildMode buildMode() const
+    {
+      return build_mode;
+    }
+
     //===== query
 
     //! return true if (i,j) is in pattern
