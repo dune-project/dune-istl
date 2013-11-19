@@ -415,15 +415,19 @@ namespace Dune {
     friend struct MatrixDimension<BCRSMatrix>;
   public:
     enum BuildStage {
-      /** @brief Matrix is not built at all. */
+      /** @brief Matrix is not built at all, no memory has been allocated, build mode and size can still be set. */
       notbuilt=0,
+      /** @brief Matrix is not built at all, no memory has been allocated, build mode and size can still be set. */
+      notAllocated=0,
+      /** @brief Matrix is currently being built, some memory has been allocated, build mode and size are fixed. */
+      building=1,
       /** @brief The row sizes of the matrix are known.
        *
        * Only used in random mode.
        */
-      rowSizesBuilt=1,
-      /** @brief The matrix structure is fully built.*/
-      built=2
+      rowSizesBuilt=2,
+      /** @brief The matrix structure is fully built. */
+      built=3,
     };
 
     //===== type definitions and constants
