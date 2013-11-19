@@ -698,23 +698,25 @@ namespace Dune {
 
     //! an empty matrix
     BCRSMatrix ()
-      : build_mode(unknown), ready(notbuilt), n(0), m(0), nnz(0),
-        r(0), a(0),
+      : build_mode(unknown), ready(notAllocated), n(0), m(0), nnz(0),
+        allocationSize(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {}
 
     //! matrix with known number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, size_type _nnz, BuildMode bm)
-      : build_mode(bm), ready(notbuilt)
-      , avg(0), overflowsize(-1.0)
+      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz(0),
+        allocationSize(0), r(0), a(0),
+        avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m, _nnz);
     }
 
     //! matrix with unknown number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
-      : build_mode(bm), ready(notbuilt)
-      , avg(0), overflowsize(-1.0)
+      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz(0),
+        allocationSize(0), r(0), a(0),
+        avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m);
     }
@@ -731,7 +733,9 @@ namespace Dune {
      *
      */
     BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
-      : build_mode(bm), ready(notbuilt), avg(_avg), overflowsize(_overflowsize)
+      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz(0),
+        allocationSize(0), r(0), a(0),
+        avg(_avg), overflowsize(_overflowsize)
     {
       if (bm != implicit)
         DUNE_THROW(BCRSMatrixError,"Only call this constructor when using the implicit build mode");
@@ -750,8 +754,9 @@ namespace Dune {
      * Does a deep copy as expected.
      */
     BCRSMatrix (const BCRSMatrix& Mat)
-      : n(Mat.n), nnz(0)
-      , avg(Mat.avg), overflowsize(Mat.overflowsize)
+      : build_mode(Mat.build_mode), ready(notAllocated), n(0), m(0), nnz(0),
+        allocationSize(0), r(0), a(0),
+        avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
       // deep copy in global array
       size_type _nnz = Mat.nnz;
