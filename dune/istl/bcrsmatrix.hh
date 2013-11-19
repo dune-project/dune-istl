@@ -758,6 +758,9 @@ namespace Dune {
         allocationSize(0), r(0), a(0),
         avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
+      if (!(Mat.ready == notAllocated || Mat.ready == built))
+        DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copied when both target and source are empty or fully built)");
+
       // deep copy in global array
       size_type _nnz = Mat.nnz;
 
@@ -860,6 +863,9 @@ namespace Dune {
       // return immediately when self-assignment
       if (&Mat==this) return *this;
 
+      if (!((ready == notAllocated || ready == built) && (Mat.ready == notAllocated || Mat.ready == built)))
+        DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copied when both target and source are empty or fully built)");
+
       // make it simple: ALWAYS throw away memory for a and j
       deallocate(false);
 
@@ -890,6 +896,10 @@ namespace Dune {
     //! Assignment from a scalar
     BCRSMatrix& operator= (const field_type& k)
     {
+
+      if (!(ready == notAllocated || ready == built))
+        DUNE_THROW(InvalidStateException,"Scalar assignment only works on fully built BCRSMatrix)");
+
       for (size_type i=0; i<n; i++) r[i] = k;
       return *this;
     }
