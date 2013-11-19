@@ -157,7 +157,7 @@ namespace Dune {
 
     //! Creates an ImplicitMatrixBuilder for matrix m.
     /**
-     * \note You can only pass a completely set up a matrix to this constructor:
+     * \note You can only pass a completely set up matrix to this constructor:
      *       All of setBuildMode(), setImplicitBuildModeParameters() and setSize()
      *       must have been called with the correct values.
      *
