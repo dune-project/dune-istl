@@ -2064,6 +2064,11 @@ namespace Dune {
      */
     void implicit_allocate(size_type _n, size_type _m)
     {
+      if (build_mode != implicit)
+        DUNE_THROW(InvalidStateException,"implicit_allocate() may only be called in implicit build mode");
+      if (ready != notAllocated)
+        DUNE_THROW(InvalidStateException,"memory has already been allocated");
+
       // check to make sure the user has actually set the parameters
       if (overflowsize < 0)
         DUNE_THROW(InvalidStateException,"You have to set the implicit build mode parameters before starting to build the matrix");
@@ -2082,6 +2087,8 @@ namespace Dune {
         jptr = jptr + avg;
         aptr = aptr + avg;
       }
+
+      ready = building;
     }
   };
 
