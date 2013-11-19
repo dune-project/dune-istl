@@ -1388,6 +1388,11 @@ namespace Dune {
     //! vector space multiplication with scalar
     BCRSMatrix& operator*= (const field_type& k)
     {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+#endif
+
       if (nnz>0)
       {
         // process 1D array
@@ -1411,6 +1416,11 @@ namespace Dune {
     //! vector space division by scalar
     BCRSMatrix& operator/= (const field_type& k)
     {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+#endif
+
       if (nnz>0)
       {
         // process 1D array
@@ -1440,6 +1450,8 @@ namespace Dune {
     BCRSMatrix& operator+= (const BCRSMatrix& b)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built || b.ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if(N()!=b.N() || M() != b.M())
         DUNE_THROW(RangeError, "Matrix sizes do not match!");
 #endif
@@ -1460,6 +1472,8 @@ namespace Dune {
     BCRSMatrix& operator-= (const BCRSMatrix& b)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built || b.ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if(N()!=b.N() || M() != b.M())
         DUNE_THROW(RangeError, "Matrix sizes do not match!");
 #endif
@@ -1483,6 +1497,8 @@ namespace Dune {
     BCRSMatrix& axpy(field_type alpha, const BCRSMatrix& b)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built || b.ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if(N()!=b.N() || M() != b.M())
         DUNE_THROW(RangeError, "Matrix sizes do not match!");
 #endif
@@ -1501,6 +1517,8 @@ namespace Dune {
     void mv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,
                                  "Size mismatch: M: " << N() << "x" << M() << " x: " << x.N());
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,
@@ -1521,6 +1539,8 @@ namespace Dune {
     void umv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1538,6 +1558,8 @@ namespace Dune {
     void mmv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1555,6 +1577,8 @@ namespace Dune {
     void usmv (const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1572,6 +1596,8 @@ namespace Dune {
     void mtv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1585,6 +1611,8 @@ namespace Dune {
     void umtv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1619,6 +1647,8 @@ namespace Dune {
     void usmtv (const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1636,6 +1666,8 @@ namespace Dune {
     void umhv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1653,6 +1685,8 @@ namespace Dune {
     void mmhv (const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1670,6 +1704,8 @@ namespace Dune {
     void usmhv (const field_type& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
       if (x.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
@@ -1688,6 +1724,11 @@ namespace Dune {
     //! square of frobenius norm, need for block recursion
     typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+#endif
+
       double sum=0;
 
       ConstRowIterator endi=end();
@@ -1710,6 +1751,9 @@ namespace Dune {
     //! infinity norm (row sum norm, how to generalize for blocks?)
     typename FieldTraits<field_type>::real_type infinity_norm () const
     {
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+
       double max=0;
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
@@ -1726,6 +1770,11 @@ namespace Dune {
     //! simplified infinity norm (uses Manhattan norm for complex values)
     typename FieldTraits<field_type>::real_type infinity_norm_real () const
     {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+#endif
+
       double max=0;
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
