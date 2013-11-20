@@ -23,6 +23,7 @@ endif
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest \
               bcrsbuildtest \
+              bcrsimplicitbuildtest \
               bvectortest \
               complexrhstest \
               dotproducttest \
@@ -98,6 +99,9 @@ endif
 basearraytest_SOURCES = basearraytest.cc
 
 bcrsbuildtest_SOURCES = bcrsbuild.cc
+
+bcrsimplicitbuildtest_SOURCES = bcrsimplicitbuild.cc
+bcrsimplicitbuildtest_CPPFLAGS = $(AM_CPPFLAGS) -DDUNE_ISTL_WITH_CHECKING=1
 
 bvectortest_SOURCES = bvectortest.cc
 
