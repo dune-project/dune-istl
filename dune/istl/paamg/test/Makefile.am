@@ -126,18 +126,18 @@ twolevelmethodtest_LDADD =					\
 	$(LDADD)
 
 pthreadamgtest_SOURCES = pthreadamgtest.cc
-pthreadamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREADCFLAGS) -DMYAMG="Dune::Amg::AMG<Operator,Vector,Smoother>"
-pthreadamgtest_LDFLAGS = $(AM_LDFLAGS) $(PTHREADCFLAGS)
+pthreadamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREAD_CFLAGS) -DMYAMG="Dune::Amg::AMG<Operator,Vector,Smoother>"
+pthreadamgtest_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS)
 pthreadamgtest_LDADD = $(PTHREAD_LIBS) $(LDADD)
 
 pthreadfastamgtest_SOURCES = pthreadamgtest.cc
-pthreadfastamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREADCFLAGS) -DMYAMG="Dune::Amg::FastAMG<Operator,Vector>"
-pthreadfastamgtest_LDFLAGS = $(AM_LDFLAGS) $(PTHREADCFLAGS)
+pthreadfastamgtest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREAD_CFLAGS) -DMYAMG="Dune::Amg::FastAMG<Operator,Vector>"
+pthreadfastamgtest_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS)
 pthreadfastamgtest_LDADD = $(PTHREAD_LIBS) $(LDADD)
 
 pthreadtwoleveltest_SOURCES = pthreadtwoleveltest.cc
-pthreadtwoleveltest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREADCFLAGS)
-pthreadtwoleveltest_LDFLAGS = $(AM_LDFLAGS) $(PTHREADCFLAGS)
+pthreadtwoleveltest_CPPFLAGS = $(AM_CPPFLAGS) $(PTHREAD_CFLAGS)
+pthreadtwoleveltest_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS)
 pthreadtwoleveltest_LDADD = $(PTHREAD_LIBS) $(LDADD)
 
 include $(top_srcdir)/am/global-rules
