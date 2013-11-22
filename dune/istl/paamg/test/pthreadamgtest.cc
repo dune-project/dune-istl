@@ -102,7 +102,7 @@ void *solve1(void* arg)
   *amgarg->x=0;
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
-
+  return 0;
 }
 
 void *solve2(void* arg)
@@ -112,6 +112,7 @@ void *solve2(void* arg)
   (*amgarg->amg).pre(*amgarg->x,*amgarg->b);
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
+  return 0;
 }
 
 template <int BS, typename AMG>
