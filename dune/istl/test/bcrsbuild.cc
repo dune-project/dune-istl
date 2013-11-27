@@ -80,7 +80,7 @@ struct Builder<Dune::BCRSMatrix<B,A> >
        }*/
   }
 
-  void rowWiseBuild(Dune::BCRSMatrix<B,A> matrix, int rows, int cols)
+  void rowWiseBuild(Dune::BCRSMatrix<B,A>& matrix, int rows, int cols)
   {
 
     for(typename Dune::BCRSMatrix<B,A>::CreateIterator ci=matrix.createbegin(), cend=matrix.createend();
@@ -96,8 +96,13 @@ struct Builder<Dune::BCRSMatrix<B,A> >
     }
 
     Dune::printmatrix(std::cout, matrix, "row_wise", "row");
+    // test copy ctor
     Dune::BCRSMatrix<B,A> matrix1(matrix);
-    Dune::printmatrix(std::cout, matrix, "row_wise", "row");
+    Dune::printmatrix(std::cout, matrix1, "row_wise", "row");
+    // test copy assignment
+    Dune::BCRSMatrix<B,A> matrix2;
+    matrix2 = matrix;
+    Dune::printmatrix(std::cout, matrix2, "row_wise", "row");
   }
 
   void rowWiseBuild(int rows, int cols)
@@ -128,7 +133,7 @@ int main()
   try{
     Builder<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > > builder;
     builder.randomBuild(5,4);
-    builder.rowWiseBuild(5,4,10);
+    builder.rowWiseBuild(5,4,13);
     builder.rowWiseBuild(5,4);
     testDoubleSetSize();
   }catch(Dune::Exception e) {
