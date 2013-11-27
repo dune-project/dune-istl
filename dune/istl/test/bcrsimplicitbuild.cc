@@ -211,6 +211,7 @@ int testInvalidCopyAssignment()
   // copy incomplete matrix into empty one
   try {
     ScalarMatrix m2;
+    m2 = m;
     std::cerr<<"ERROR: operator=() should have thrown an exception!"<<std::endl;
     ++ret;
   } catch (Dune::InvalidStateException& e) {
