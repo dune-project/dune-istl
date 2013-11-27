@@ -43,6 +43,8 @@ struct Builder<Dune::BCRSMatrix<B,A> >
       matrix=1;
 
       Dune::printmatrix(std::cout, matrix, "random", "row");
+      Dune::BCRSMatrix<B,A> matrix1(matrix);
+      Dune::printmatrix(std::cout, matrix, "random", "row");
     }
     /*{
 
@@ -77,6 +79,26 @@ struct Builder<Dune::BCRSMatrix<B,A> >
        Dune::printmatrix(std::cout, matrix, "random", "row");
        }*/
   }
+
+  void rowWiseBuild(int rows, int cols)
+  {
+    Dune::BCRSMatrix<B,A> matrix( rows, cols, Dune::BCRSMatrix<B,A>::row_wise );
+    for(typename Dune::BCRSMatrix<B,A>::CreateIterator ci=matrix.createbegin(), cend=matrix.createend();
+        ci!=cend; ++ci)
+    {
+      int i=ci.index();
+      if(i<cols)
+        ci.insert(i);
+      if(i-1>=0 && i-1<cols)
+        ci.insert(i-1);
+      if(i+1<cols)
+        ci.insert(i+1);
+    }
+
+    Dune::printmatrix(std::cout, matrix, "row_wise", "row");
+    Dune::BCRSMatrix<B,A> matrix1(matrix);
+    Dune::printmatrix(std::cout, matrix, "row_wise", "row");
+  }
 };
 
 // This code used to trigger a valgrind 'uninitialized memory' warning; see FS 1041
@@ -93,6 +115,7 @@ int main()
   try{
     Builder<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > > builder;
     builder.randomBuild(5,4);
+    builder.rowWiseBuild(5,4);
     testDoubleSetSize();
   }catch(Dune::Exception e) {
     std::cerr << e<<std::endl;
