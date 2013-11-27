@@ -480,5 +480,14 @@ namespace Dune
     };
   };
 
+  template<typename T>
+  struct PointerCompare
+  {
+    bool operator()(const T* l, const T* r)
+    {
+      return *l < *r;
+    }
+  };
+
 }
 #endif
