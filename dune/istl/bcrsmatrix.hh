@@ -768,7 +768,7 @@ namespace Dune {
       if (_nnz<=0)
       {
         _nnz = 0;
-        for (size_type i=0; i<n; i++)
+        for (size_type i=0; i<Mat.n; i++)
           _nnz += Mat.r[i].getsize();
       }
 
