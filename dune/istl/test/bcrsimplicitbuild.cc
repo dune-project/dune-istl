@@ -58,6 +58,7 @@ void testImplicitBuild()
   assert(stats.maximum == 4);
   assert(stats.overflow_total == 4);
   setMatrix(m);
+  ScalarMatrix m1(m);
 }
 
 void testImplicitBuildWithInsufficientOverflow()
@@ -106,39 +107,45 @@ void testDoubleSetSize()
   assert(stats.overflow_total == 4);
 }
 
-void testInvalidBuildModeConstructorCall()
+int testInvalidBuildModeConstructorCall()
 {
   try {
     ScalarMatrix m(10,10,1,-1.0,ScalarMatrix::random);
-    assert(false && "Constructor should have thrown an exception!");
+    std::cerr<< "ERROR: Constructor should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
-void testNegativeOverflowConstructorCall()
+int testNegativeOverflowConstructorCall()
 {
   try {
     ScalarMatrix m(10,10,1,-1.0,ScalarMatrix::implicit);
-    assert(false && "Constructor should have thrown an exception!");
+    std::cerr<<"ERROR: Constructor should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
-void testInvalidSetImplicitBuildModeParameters()
+int testInvalidSetImplicitBuildModeParameters()
 {
   try {
     ScalarMatrix m;
     m.setBuildMode(ScalarMatrix::implicit);
     m.setImplicitBuildModeParameters(1,-1.0);
-    assert(false && "setImplicitBuildModeParameters() should have thrown an exception!");
+    std::cerr<<"ERROR: setImplicitBuildModeParameters() should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
-void testSetImplicitBuildModeParametersAfterSetSize()
+int testSetImplicitBuildModeParametersAfterSetSize()
 {
   try {
     ScalarMatrix m;
@@ -146,22 +153,26 @@ void testSetImplicitBuildModeParametersAfterSetSize()
     m.setImplicitBuildModeParameters(3,0.1);
     m.setSize(10,10);
     m.setImplicitBuildModeParameters(4,0.1);
-    assert(false && "setImplicitBuildModeParameters() should have thrown an exception!");
+    std::cerr<<"setImplicitBuildModeParameters() should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::InvalidStateException& e) {
     // test passed
+    return 0;
   }
 }
 
-void testSetSizeWithNonzeroes()
+int testSetSizeWithNonzeroes()
 {
   try {
     ScalarMatrix m;
     m.setBuildMode(ScalarMatrix::implicit);
     m.setImplicitBuildModeParameters(3,0.1);
     m.setSize(10,10,300);
-    assert(false && "setSize() should have thrown an exception!");
+    std::cerr<<"ERROR: setSize() should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
@@ -178,22 +189,25 @@ void testCopyConstructionAndAssignment()
   m4 = m;
 }
 
-void testInvalidCopyConstruction()
+int testInvalidCopyConstruction()
 {
   try {
     ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
     buildMatrix(m);
     ScalarMatrix m2(m);
-    assert(false && "copy constructor should have thrown an exception!");
+    std::cerr<<"ERROR: copy constructor should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::InvalidStateException& e) {
     // test passed
+    return 0;
   }
 }
 
-void testInvalidCopyAssignment()
+int testInvalidCopyAssignment()
 {
   ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
   buildMatrix(m);
+  int ret=0;
   // copy incomplete matrix into empty one
   try {
     ScalarMatrix m2;
@@ -209,7 +223,8 @@ void testInvalidCopyAssignment()
     buildMatrix(m2);
     m2.compress();
     m2 = m;
-    assert(false && "operator=() should have thrown an exception!");
+    std::cerr<<"ERROR: operator=() should have thrown an exception!"<<std::endl;
+    ++ret;
   } catch (Dune::InvalidStateException& e) {
     // test passed
   }
@@ -219,62 +234,82 @@ void testInvalidCopyAssignment()
     ScalarMatrix m2(10,10,3,0.1,ScalarMatrix::implicit);
     buildMatrix(m2);
     m2 = m;
-    assert(false && "operator=() should have thrown an exception!");
+    std::cerr<<"ERROR: operator=() should have thrown an exception!"<<std::endl;
+    ++ret;
   } catch (Dune::InvalidStateException& e) {
     // test passed
   }
+  return ret;
 }
 
-void testEntryConsistency()
+int testEntryConsistency()
 {
+  int ret=0;
   ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m.entry(0,3)),0.0));
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m.entry(7,6)),0.0));
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m.entry(0,3)),0.0))
+    ret++;
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m.entry(7,6)),0.0))
+    ++ret;
   buildMatrix(m);
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m.entry(0,3)),1.0));
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m.entry(7,6)),1.0));
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m.entry(0,3)),1.0))
+    ++ret;
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m.entry(7,6)),1.0))
+    ++ret;
   m.entry(4,4) += 3.0;
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m.entry(4,4)),4.0));
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m.entry(4,4)),4.0))
+    ++ret;
   m.compress();
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m[0][3]),1.0));
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m[7][6]),1.0));
-  assert(Dune::FloatCmp::eq(static_cast<const double&>(m[4][4]),4.0));
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m[0][3]),1.0))
+    ++ret;
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m[7][6]),1.0))
+    ++ret;
+  if(!Dune::FloatCmp::eq(static_cast<const double&>(m[4][4]),4.0))
+    ++ret;
+  if(ret)
+    std::cerr<<"ERROR: Entries are not consistent"<<std::cerr;
+  return ret;
 }
 
-void testEntryAfterCompress()
+int testEntryAfterCompress()
 {
   try {
     ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
     buildMatrix(m);
     m.compress();
     m.entry(3,3);
-    assert(false && "entry() should have thrown an exception!");
+    std::cerr<<"ERROR: entry() should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
-void testBracketOperatorBeforeCompress()
+int testBracketOperatorBeforeCompress()
 {
   try {
     ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
     buildMatrix(m);
     m[3][3];
-    assert(false && "operator[]() should have thrown an exception!");
+    std::cerr<<"ERROR: operator[]() should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
-void testConstBracketOperatorBeforeCompress()
+int testConstBracketOperatorBeforeCompress()
 {
   try {
     ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
     buildMatrix(m);
     const_cast<const ScalarMatrix&>(m)[3][3];
-    assert(false && "operator[]() should have thrown an exception!");
+    std::cerr<<"ERROR: operator[]() should have thrown an exception!"<<std::endl;
+    return 1;
   } catch (Dune::BCRSMatrixError& e) {
     // test passed
+    return 0;
   }
 }
 
@@ -298,26 +333,29 @@ void testImplicitMatrixBuilderExtendedConstructor()
 
 int main()
 {
+  int ret=0;
   try{
     testImplicitBuild();
     testImplicitBuildWithInsufficientOverflow();
     testSetterInterface();
     testDoubleSetSize();
-    testInvalidBuildModeConstructorCall();
-    testNegativeOverflowConstructorCall();
-    testInvalidSetImplicitBuildModeParameters();
-    testSetImplicitBuildModeParametersAfterSetSize();
-    testSetSizeWithNonzeroes();
+    ret+=testInvalidBuildModeConstructorCall();
+    ret+=testNegativeOverflowConstructorCall();
+    ret+=testInvalidSetImplicitBuildModeParameters();
+    ret+=testSetImplicitBuildModeParametersAfterSetSize();
+    ret+=testSetSizeWithNonzeroes();
     testCopyConstructionAndAssignment();
-    testInvalidCopyConstruction();
-    testEntryConsistency();
-    testEntryAfterCompress();
-    testBracketOperatorBeforeCompress();
-    testConstBracketOperatorBeforeCompress();
+    ret+=testInvalidCopyConstruction();
+    ret+=testInvalidCopyAssignment();
+    ret+=testEntryConsistency();
+    ret+=testEntryAfterCompress();
+    ret+=testBracketOperatorBeforeCompress();
+    ret+=testConstBracketOperatorBeforeCompress();
     testImplicitMatrixBuilder();
     testImplicitMatrixBuilderExtendedConstructor();
   }catch(Dune::Exception& e) {
     std::cerr << e <<std::endl;
     return 1;
   }
+  return ret;
 }
