@@ -759,7 +759,7 @@ namespace Dune {
         avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
       if (!(Mat.ready == notAllocated || Mat.ready == built))
-        DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copied when both target and source are empty or fully built)");
+        DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copy-constructed when source matrix is completely empty (size not set) or fully built)");
 
       // deep copy in global array
       size_type _nnz = Mat.nnz;
