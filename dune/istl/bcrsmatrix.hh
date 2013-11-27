@@ -754,7 +754,7 @@ namespace Dune {
      * Does a deep copy as expected.
      */
     BCRSMatrix (const BCRSMatrix& Mat)
-      : build_mode(Mat.build_mode), ready(notAllocated), n(Mat.n), m(0), nnz(0),
+      : build_mode(Mat.build_mode), ready(notAllocated), n(0), m(0), nnz(0),
         allocationSize(0), r(0), a(0),
         avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
