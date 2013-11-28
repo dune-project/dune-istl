@@ -803,9 +803,6 @@ namespace Dune
   void readMatrixMarket(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>& matrix,
                         std::istream& istr)
   {
-
-    typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,brows,bcols> > Matrix;
-
     MMHeader header;
     if(!readMatrixMarketBanner(istr, header)) {
       std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"
