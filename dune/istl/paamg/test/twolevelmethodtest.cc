@@ -70,7 +70,6 @@ void testTwoLevelMethod()
       Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> > Criterion;
     typedef Dune::Amg::AggregationLevelTransferPolicy<Operator,Criterion> TransferPolicy;
     typedef Dune::Amg::OneStepAMGCoarseSolverPolicy<Operator,CSmoother, Criterion> CoarsePolicy; // Policy for coarse solver creation
-    typedef Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> AMG;
     Criterion crit;
     CoarsePolicy coarsePolicy=CoarsePolicy(SmootherArgs(), crit);
     TransferPolicy transferPolicy(crit);

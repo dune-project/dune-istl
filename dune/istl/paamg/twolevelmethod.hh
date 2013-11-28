@@ -157,7 +157,6 @@ public:
       Dune::Amg::EdgeProperties,Dune::IdentityMap,Dune::IdentityMap> PropertiesGraph;
     MatrixGraph mg(fineOperator.getmat());
     PropertiesGraph pg(mg,Dune::IdentityMap(),Dune::IdentityMap());
-    typedef typename PropertiesGraph::VertexDescriptor Vertex;
     typedef NegateSet<typename ParallelInformation::OwnerSet> OverlapFlags;
 
     aggregatesMap_.reset(new AggregatesMap(pg.maxVertex()+1));

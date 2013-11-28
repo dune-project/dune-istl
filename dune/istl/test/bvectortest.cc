@@ -22,7 +22,6 @@ int testVector()
   typedef Dune::FieldVector<int,BS> VectorBlock;
   typedef typename A::template rebind<VectorBlock>::other Alloc;
   typedef Dune::BlockVector<VectorBlock, Alloc> Vector;
-  typedef typename Vector::size_type size_type;
 
   // empty vector
   Vector v, w, v1(20), v2(20,100);

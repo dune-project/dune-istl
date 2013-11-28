@@ -179,7 +179,6 @@ namespace Dune
     {
       size_t sz = rowset.size();
       A.resize(sz*n,sz*n);
-      typename DynamicMatrix<K>::RowIterator rIt = A.begin();
       typedef typename S::const_iterator SIter;
       size_t r = 0, c = 0;
       for(SIter rowIdx = rowset.begin(), rowEnd=rowset.end();
@@ -1224,7 +1223,6 @@ namespace Dune
   template<bool forward>
   void SeqOverlappingSchwarz<M,X,TM,TD,TA>::apply(X& x, const X& b)
   {
-    typedef typename X::block_type block;
     typedef slu_vector solver_vector;
     typedef typename IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::solver_iterator iterator;
     typedef typename IteratorDirectionSelector<solver_vector,subdomain_vector,forward>::domain_iterator
