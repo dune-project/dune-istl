@@ -262,14 +262,14 @@ namespace Dune {
       else
       {
         mat_is_loaded = true;
-        std::cout << "UMFPack decomposition succesfully loaded from " << file << std::endl;
+        std::cout << "UMFPack decomposition successfully loaded from " << file << std::endl;
       }
     }
 
     /** @brief try loading a decomposition from file
      * @param file the decomposition file
      * @param verbose the verbosity level
-     * throws an exception when not being able to load the file. Doesnt need knowledge of the
+     * @throws Dune::Exception When not being able to load the file. Does not need knowledge of the
      * actual matrix!
      */
     UMFPack(const char* file, int verbose=0)
@@ -284,7 +284,7 @@ namespace Dune {
       if (errcode == UMFPACK_ERROR_file_IO)
         DUNE_THROW(Dune::Exception, "IO error while loading UMFPack decomposition");
       mat_is_loaded = true;
-      std::cout << "UMFPack decomposition succesfully loaded from " << file << std::endl;
+      std::cout << "UMFPack decomposition successfully loaded from " << file << std::endl;
       setVerbosity(verbose);
     }
 
@@ -295,7 +295,7 @@ namespace Dune {
     }
 
     /**
-     *  \copydoc InverseOperator::apply(X&, Y&, InverserOperatorResult&)
+     *  \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&)
      */
     virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
