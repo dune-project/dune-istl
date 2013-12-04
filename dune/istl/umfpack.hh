@@ -3,7 +3,7 @@
 #ifndef DUNE_UMFPACK_HH
 #define DUNE_UMFPACK_HH
 
-#if HAVE_UMFPACK
+#if HAVE_UMFPACK || defined DOXYGEN
 
 #include<complex>
 #include<type_traits>
@@ -39,9 +39,9 @@ namespace Dune {
   template<class T, bool tag>
   struct SeqOverlappingSchwarzAssemblerHelper;
 
-  /** @brief use the UMFPack Package to directly solve linear systems
+  /** @brief Use the %UMFPack package to directly solve linear systems -- empty default class
    * @tparam Matrix the matrix type defining the system
-   * Details on UMFPack are to be found on
+   * Details on UMFPack can be found on
    * http://www.cise.ufl.edu/research/sparse/umfpack/
    */
   template<class Matrix>
@@ -165,11 +165,13 @@ namespace Dune {
     }
   };
 
-  /** @brief use the UMFPack Package to directly solve linear systems
+  /** @brief The %UMFPack direct sparse solver for matrices of type BCRSMatrix
    *
-   * Specialization for the Dune::BCRSMatrix. UMFPack will always go double
+   * Specialization for the Dune::BCRSMatrix. %UMFPack will always go double
    * precision and supports complex numbers
    * too (use std::complex<double> for that).
+   *
+   * \note This will only work if dune-istl has been configured to use UMFPack
    */
   template<typename T, typename A, int n, int m>
   class UMFPack<BCRSMatrix<FieldMatrix<T,n,m>,A > >
@@ -234,7 +236,7 @@ namespace Dune {
       Caller::defaults(UMF_Control);
     }
 
-    /** @brief try loading a decomposition from file and do a decomposition if unsuccesful
+    /** @brief Try loading a decomposition from file and do a decomposition if unsuccessful
      * @param mat_ the matrix to decompose when no decoposition file found
      * @param file the decomposition file
      * @param verbose the verbosity level
