@@ -362,6 +362,8 @@ namespace Dune
      * @warning later calling apply will result in an error.
      */
     void free();
+
+    const char* name() { return "SuperLU"; }
   private:
     friend class std::mem_fun_ref_t<void,SuperLU>;
     template<class M,class X, class TM, class TD, class T1>
