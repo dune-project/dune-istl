@@ -506,8 +506,6 @@ namespace Dune
            || (matrices_->parallelInformation().coarsest().isRedistributed()
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
-          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<<"Using DIRECTSOLVER"<<std::endl;
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
@@ -517,6 +515,8 @@ namespace Dune
               solver_.reset();
           }else
             solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
+          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
+            std::cout<< "Using a direct coarse solver (" << static_cast< DIRECTSOLVER<typename M::matrix_type>* >(solver_.get())->name() << ")" << std::endl;
         }else
 #undef DIRECTSOLVER
 #endif

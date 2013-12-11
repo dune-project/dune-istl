@@ -407,6 +407,8 @@ namespace Dune {
       mat_is_loaded = false;
     }
 
+    const char* name() { return "UMFPACK"; }
+
     private:
     typedef typename Dune::UMFPackMethodChooser<T> Caller;
 
