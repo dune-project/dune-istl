@@ -1181,7 +1181,30 @@ namespace Dune {
       // insert new column index at correct position
       std::copy_backward(pos,end,end+1);
       *pos = col;
+    }
 
+    //! Set all column indices for row from the given iterator range.
+    /**
+     * The iterator range has to be of the same length as the previously set row size.
+     * The entries in the iterator range do not have to be in any particular order, but
+     * must not contain duplicate values.
+     *
+     * Calling this method overwrites any previously set column indices!
+     */
+    template<typename It>
+    void setIndices(size_type row, It begin, It end)
+    {
+      size_type cols = 0;
+      size_type* col_it = r[row].getindexptr();
+      for (; begin != end; ++begin, ++col_it, ++cols)
+        {
+          *col_it = *begin;
+        }
+      if (cols != r[row].size())
+        DUNE_THROW(BCRSMatrixError,"Given size of row " << row
+                   << " (" << r[row].size()
+                   << ") does not match number of passed entries (" << cols << ")");
+      std::sort(r[row].getindexptr(),r[row].getindexptr() + cols);
     }
 
     //! indicate that all indices are defined, check consistency
