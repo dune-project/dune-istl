@@ -997,7 +997,6 @@ namespace Dune {
             // Set nnz to the exact number of nonzero blocks inserted
             // as some methods rely on it
             Mat.nnz=nnz;
-            Mat.allocationSize = nnz;
           }
         }
         // done
