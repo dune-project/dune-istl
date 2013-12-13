@@ -709,7 +709,7 @@ namespace Dune {
         allocationSize(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {
-      allocate(_n, _m, _nnz);
+      allocate(_n, _m, _nnz,true,false);
     }
 
     //! matrix with unknown number of nonzeroes
@@ -718,7 +718,7 @@ namespace Dune {
         allocationSize(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {
-      allocate(_n, _m);
+      allocate(_n, _m,0,true,false);
     }
 
     //! \brief construct matrix with a known average number of entries per row
@@ -773,7 +773,7 @@ namespace Dune {
       }
 
       j = Mat.j; // enable column index sharing, release array in case of row-wise allocation
-      allocate(Mat.n, Mat.m, _nnz);
+      allocate(Mat.n, Mat.m, _nnz, true, true);
 
       // build window structure
       copyWindowStructure(Mat);
@@ -833,7 +833,7 @@ namespace Dune {
       else
       {
         // allocate matrix memory
-        allocate(rows, columns, nnz);
+        allocate(rows, columns, nnz, true, false);
       }
     }
 
@@ -895,7 +895,7 @@ namespace Dune {
 
       // allocate a, share j
       j = Mat.j;
-      allocate(Mat.n, Mat.m, nnz, n!=Mat.n);
+      allocate(Mat.n, Mat.m, nnz, n!=Mat.n, true);
 
       // build window structure
       copyWindowStructure(Mat);
@@ -921,7 +921,7 @@ namespace Dune {
     public:
       //! constructor
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
-        : Mat(_Mat), i(_i), nnz(0), current_row(Mat.a, Mat.j.get(), 0)
+        : Mat(_Mat), i(_i), nnz(0), current_row(nullptr, Mat.j.get(), 0)
       {
         if (Mat.build_mode == unknown && Mat.ready == building)
           {
@@ -961,8 +961,7 @@ namespace Dune {
               DUNE_THROW(BCRSMatrixError,"allocated nnz too small");
 
             // set row i
-            Mat.r[i].set(s,current_row.getptr(),current_row.getindexptr());
-            current_row.setptr(current_row.getptr()+s);
+            Mat.r[i].set(s,nullptr,current_row.getindexptr());
             current_row.setindexptr(current_row.getindexptr()+s);
           }else{
             // memory is allocated individually per row
@@ -997,6 +996,9 @@ namespace Dune {
             // Set nnz to the exact number of nonzero blocks inserted
             // as some methods rely on it
             Mat.nnz=nnz;
+            // allocate data array
+            Mat.allocateData();
+            Mat.setDataPointers();
           }
         }
         // done
@@ -1121,13 +1123,13 @@ namespace Dune {
 
       if(nnz==0)
         // allocate/check memory
-        allocate(n,m,total,false);
+        allocate(n,m,total,false,false);
       else if(nnz<total)
         DUNE_THROW(BCRSMatrixError,"Specified number of nonzeros ("<<nnz<<") not "
                                                              <<"sufficient for calculated nonzeros ("<<total<<"! ");
 
       // set the window pointers correctly
-      setWindowPointers(begin());
+      setColumnPointers(begin());
 
       // initialize j array with m (an invalid column index)
       // this indicates an unused entry
@@ -1208,6 +1210,9 @@ namespace Dune {
           }
         }
       }
+
+      allocateData();
+      setDataPointers();
 
       // if not, set matrix to built
       ready = built;
@@ -1921,6 +1926,55 @@ namespace Dune {
       }
     }
 
+    //! Copy row sizes from iterator range starting at row and set column index pointers for all rows.
+    /**
+     * This method does not modify the data pointers, as those are set only
+     * after building the pattern (to allow for a delayed allocation).
+     */
+    void setColumnPointers(ConstRowIterator row)
+    {
+      size_type* jptr = j.get();
+      for (size_type i=0; i<n; ++i, ++row) {
+        // set row i
+        size_type s = row->getsize();
+
+        if (s>0) {
+          // setup pointers and size
+          r[i].setsize(s);
+          r[i].setindexptr(jptr);
+        } else{
+          // empty row
+          r[i].set(0,0,0);
+        }
+
+        // advance position in global array
+        jptr += s;
+      }
+    }
+
+    //! Set data pointers for all rows.
+    /**
+     * This method assumes that column pointers and row sizes have been correctly set up
+     * by a prior call to setColumnPointers().
+     */
+    void setDataPointers()
+    {
+      B* aptr = a;
+      for (size_type i=0; i<n; ++i) {
+        // set row i
+        if (r[i].getsize() > 0) {
+          // setup pointers and size
+          r[i].setptr(aptr);
+        } else{
+          // empty row
+          r[i].set(0,0,0);
+        }
+
+        // advance position in global array
+        aptr += r[i].getsize();
+      }
+    }
+
     //! \brief Copy the window structure from another matrix
     void copyWindowStructure(const BCRSMatrix& Mat)
     {
@@ -1949,10 +2003,13 @@ namespace Dune {
       {
         // a,j have been allocated as one long vector
         j.reset();
-        for(B *aiter=a+(allocationSize-1), *aend=a-1; aiter!=aend; --aiter)
-          allocator_.destroy(aiter);
-        allocator_.deallocate(a,allocationSize);
-        a = nullptr;
+        if (a)
+          {
+            for(B *aiter=a+(allocationSize-1), *aend=a-1; aiter!=aend; --aiter)
+              allocator_.destroy(aiter);
+            allocator_.deallocate(a,allocationSize);
+            a = nullptr;
+          }
       }
       else if (r)
       {
@@ -2016,7 +2073,7 @@ namespace Dune {
      * @param allocateRow Whether we have to allocate the row pointers, too. (Defaults to
      * true)
      */
-    void allocate(size_type rows, size_type columns, size_type allocationSize_=0, bool allocateRows=true)
+    void allocate(size_type rows, size_type columns, size_type allocationSize_, bool allocateRows, bool allocate_data)
     {
       // Store size
       n = rows;
@@ -2036,17 +2093,13 @@ namespace Dune {
       }
 
       // allocate a and j array
+      if (allocate_data)
+        allocateData();
       if (allocationSize>0) {
-        a = allocator_.allocate(allocationSize);
-        // use placement new to call constructor that allocates
-        // additional memory.
-        new (a) B[allocationSize];
-
         // allocate column indices only if not yet present (enable sharing)
         if (!j.get())
           j.reset(sizeAllocator_.allocate(allocationSize),Deallocator(sizeAllocator_));
       }else{
-        a = 0;
         j.reset();
         for(row_type* ri=r; ri!=r+rows; ++ri)
           rowAllocator_.construct(ri, row_type());
@@ -2054,6 +2107,20 @@ namespace Dune {
 
       // Mark the matrix as not built.
       ready = building;
+    }
+
+    void allocateData()
+    {
+      if (a)
+        DUNE_THROW(InvalidStateException,"Cannot allocate data array (already allocated)");
+      if (allocationSize>0) {
+        a = allocator_.allocate(allocationSize);
+        // use placement new to call constructor that allocates
+        // additional memory.
+        new (a) B[allocationSize];
+      } else {
+        a = nullptr;
+      }
     }
 
     /** @brief organizes allocation implicit mode
@@ -2075,7 +2142,7 @@ namespace Dune {
       size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
       allocationSize = _n*avg + osize;
 
-      allocate(_n, _m, allocationSize);
+      allocate(_n, _m, allocationSize,true,true);
 
       //set row pointers correctly
       size_type* jptr = j.get() + osize;
