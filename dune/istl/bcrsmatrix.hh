@@ -1194,17 +1194,15 @@ namespace Dune {
     template<typename It>
     void setIndices(size_type row, It begin, It end)
     {
-      size_type cols = 0;
-      size_type* col_it = r[row].getindexptr();
-      for (; begin != end; ++begin, ++col_it, ++cols)
-        {
-          *col_it = *begin;
-        }
-      if (cols != r[row].size())
+      size_type row_size = r[row].size();
+      size_type* col_begin = r[row].getindexptr();
+      size_type* col_end;
+      // consistency check between allocated row size and number of passed column indices
+      if ((col_end = std::copy(begin,end,r[row].getindexptr())) != col_begin + row_size)
         DUNE_THROW(BCRSMatrixError,"Given size of row " << row
-                   << " (" << r[row].size()
-                   << ") does not match number of passed entries (" << cols << ")");
-      std::sort(r[row].getindexptr(),r[row].getindexptr() + cols);
+                   << " (" << row_size
+                   << ") does not match number of passed entries (" << (col_end - col_begin) << ")");
+      std::sort(col_begin,col_end);
     }
 
     //! indicate that all indices are defined, check consistency
