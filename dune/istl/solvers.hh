@@ -1046,11 +1046,9 @@ namespace Dune {
      Generalized Minimal Residual method as described the SIAM Templates
      book (http://www.netlib.org/templates/templates.pdf).
 
-     \todo construct F via rebind and an appropriate field_type
-
    */
 
-  template<class X, class Y=X, class F = Y>
+  template<class X, class Y=X>
   class RestartedGMResSolver : public InverseOperator<X,Y>
   {
   public:
@@ -1060,29 +1058,23 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    //! \brief The field type of the basis vectors
-    typedef F basis_type;
 
     /*!
        \brief Set up solver.
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
-       \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class P>
-    RestartedGMResSolver (L& op, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
-      _A_(op), _M(prec),
+    RestartedGMResSolver (L& op, P& prec, double reduction, int restart, int maxit, int verbose) :
+      _A(op), _W(prec),
       ssp(), _sp(ssp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose),
-      _recalc_defect(recalc_defect)
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
                          "P and L must be the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                          "L must be sequential!");
+      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                         "L must be sequential!");
     }
 
     /*!
@@ -1090,14 +1082,12 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
-       \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class S, class P>
-    RestartedGMResSolver (L& op, S& sp, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
-      _A_(op), _M(prec),
+    RestartedGMResSolver (L& op, S& sp, P& prec, double reduction, int restart, int maxit, int verbose) :
+      _A(op), _W(prec),
       _sp(sp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose),
-      _recalc_defect(recalc_defect)
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
                          "P and L must have the same category!");
@@ -1118,218 +1108,189 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
-      int m = _restart;
-      real_type norm;
-      real_type norm_old = 0.0;
-      real_type norm_0;
-      real_type beta;
-      int i, j = 1, k;
+      const double EPSILON = 1e-80;
+      const int m = _restart;
+      field_type norm, norm_old = 0.0, norm_0;
+      int j = 1;
       std::vector<field_type> s(m+1), cs(m), sn(m);
+      // need copy of rhs if GMRes has to be restarted
+      Y b2(b);
       // helper vector
       X w(b);
       std::vector< std::vector<field_type> > H(m+1,s);
-      std::vector<F> v(m+1,b);
+      std::vector<X> v(m+1,b);
 
       // start timer
-      Timer watch;                // start a timer
+      Dune::Timer watch;
+      watch.reset();
 
-      // clear solver statistics
+      // clear solver statistics and set res.converged to false
       res.clear();
-      _M.pre(x,b);
-      if (_recalc_defect)
-      {
-        // norm_0 = norm(M^-1 b)
-        w = 0.0; _M.apply(w,b); // w = M^-1 b
-        norm_0 = _sp.norm(w); // use defect of preconditioned residual
-        // r = _M.solve(b - A * x);
-        w = b;
-        _A_.applyscaleadd(-1,x, /* => */ w); // w = b - Ax;
-        v[0] = 0.0; _M.apply(v[0],w); // r = M^-1 w
-        beta = _sp.norm(v[0]);
-      }
-      else
-      {
-        // norm_0 = norm(b-Ax)
-        _A_.applyscaleadd(-1,x, /* => */ b); // b = b - Ax;
-        v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
-        beta = _sp.norm(v[0]);
-        norm_0 = beta; // use defect of preconditioned residual
-      }
+      _W.pre(x,b);
 
-      // avoid division by zero
-      if (norm_0 == 0.0)
-        norm_0 = 1.0;
-      norm = norm_old = beta;
+      // calculate defect and overwrite rhs with it
+      _A.applyscaleadd(-1.0,x,b); // b -= Ax
+      // calculate preconditioned defect
+      v[0] = 0.0; _W.apply(v[0],b); // r = W^-1 b
+      norm_0 = _sp.norm(v[0]);
+      norm = norm_0;
+      norm_old = norm;
 
       // print header
-      if (_verbose > 0)
-      {
-        std::cout << "=== RestartedGMResSolver" << std::endl;
-        if (_verbose > 1)
+      if(_verbose > 0)
         {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,norm_0);
-          this->printOutput(std::cout,0,norm, norm_0);
+          std::cout << "=== RestartedGMResSolver" << std::endl;
+          if(_verbose > 1) {
+            this->printHeader(std::cout);
+            this->printOutput(std::cout,0,norm_0);
+          }
         }
-      }
 
-      // check convergence
-      if (norm <= reduction * norm_0) {
-        _M.post(x);                  // postprocess preconditioner
-        res.converged  = true;
-        if (_verbose > 0)                 // final print
+      if(norm_0 < EPSILON) {
+        _W.post(x);
+        res.converged = true;
+        if(_verbose > 0) // final print
           print_result(res);
-        return;
       }
 
-      while (j <= _maxit && res.converged != true) {
-        v[0] *= (1.0 / beta);
-        for (i=1; i<=m; i++) s[i] = 0.0;
-        s[0] = beta;
+      while(j <= _maxit && res.converged != true) {
 
-        for (i = 0; i < m && j <= _maxit && res.converged != true; i++, j++) {
+        int i = 0;
+        v[0] *= 1.0/norm;
+        s[0] = norm;
+        for(i=1; i<m+1; i++)
+          s[i] = 0.0;
+
+        for(i=0; i < m && j <= _maxit && res.converged != true; i++, j++) {
           w = 0.0;
-          v[i+1] = 0.0; // use v[i+1] as temporary vector
-          _A_.apply(v[i], /* => */ v[i+1]);
-          _M.apply(w, v[i+1]);
-          for (k = 0; k <= i; k++) {
-            H[k][i] = _sp.dot(w, v[k]);
-            // w -= H[k][i] * v[k];
-            w.axpy(-H[k][i], v[k]);
+          // use v[i+1] as temporary vector
+          v[i+1] = 0.0;
+          // do Arnoldi algorithm
+          _A.apply(v[i],v[i+1]);
+          _W.apply(w,v[i+1]);
+          for(int k=0; k<i+1; k++) {
+            H[k][i] = _sp.dot(w,v[k]);
+            // w -= H[k][i] * v[k]
+            w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp.norm(w);
-          if (H[i+1][i] == 0.0)
-            DUNE_THROW(ISTLError,"breakdown in GMRes - |w| "
-                       << " == 0.0 after " << j << " iterations");
-          // v[i+1] = w * (1.0 / H[i+1][i]);
-          v[i+1] = w; v[i+1] *= (1.0 / H[i+1][i]);
+          if(std::abs(H[i+1][i]) < EPSILON)
+            DUNE_THROW(ISTLError,
+                       "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
-          for (k = 0; k < i; k++)
-            applyPlaneRotation(H[k][i], H[k+1][i], cs[k], sn[k]);
+          // normalize new vector
+          v[i+1] = w; v[i+1] *= 1.0/H[i+1][i];
 
-          generatePlaneRotation(H[i][i], H[i+1][i], cs[i], sn[i]);
-          applyPlaneRotation(H[i][i], H[i+1][i], cs[i], sn[i]);
-          applyPlaneRotation(s[i], s[i+1], cs[i], sn[i]);
+          // update QR factorization
+          for(int k=0; k<i; k++)
+            applyPlaneRotation(H[k][i],H[k+1][i],cs[k],sn[k]);
 
+          // compute new givens rotation
+          generatePlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          // finish updating QR factorization
+          applyPlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
+
+          // norm of the defect is the last component the vector s
           norm = std::abs(s[i+1]);
 
-          if (_verbose > 1)             // print
-          {
+          // print current iteration statistics
+          if(_verbose > 1) {
             this->printOutput(std::cout,j,norm,norm_old);
           }
 
           norm_old = norm;
 
-          if (norm < reduction * norm_0) {
+          // check convergence
+          if(norm < reduction * norm_0)
             res.converged = true;
-          }
+
+        } // end for
+
+        // calculate update vector
+        w = 0.0;
+        update(w,i,H,s,v);
+        // and current iterate
+        x += w;
+
+        // restart GMRes if convergence was not achieved,
+        // i.e. linear defect has not reached desired reduction
+        // and if j < _maxit
+        if( res.converged != true && j <= _maxit ) {
+
+          if(_verbose > 0)
+            std::cout << "=== GMRes::restart" << std::endl;
+          // get saved rhs
+          b = b2;
+          // calculate new defect
+          _A.applyscaleadd(-1.0,x,b); // b -= Ax;
+          // calculate preconditioned defect
+          v[0] = 0.0;
+          _W.apply(v[0],b);
+          norm = _sp.norm(v[0]);
+          norm_old = norm;
         }
 
-        if (_recalc_defect)
-        {
-          // update x
-          update(x, i - 1, H, s, v);
+      } //end while
 
-          // update residuum
-          // r = M^-1 (b - A * x);
-          w = b; _A_.applyscaleadd(-1,x, /* => */ w);
-          _M.apply(v[0], w);
-          beta = _sp.norm(v[0]);
-          norm = beta;
-        }
-        else
-        {
-          // calc update vector
-          w = 0;
-          update(w, i - 1, H, s, v);
+      // postprocess preconditioner
+      _W.post(x);
 
-          // update x
-          x += w;
-
-          // r = M^-1 (b - A * x);
-          // update defect
-          _A_.applyscaleadd(-1,w, /* => */ b);
-          // r = M^-1 (b - A * x);
-          v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
-          beta = _sp.norm(v[0]);
-          norm = beta;
-
-          res.converged = false;
-        }
-
-        //correct i which is wrong if convergence was not achieved.
-        j=std::min(_maxit,j);
-
-        if (_verbose > 1)             // print
-        {
-          this->printOutput(std::cout,j,norm,norm_old);
-        }
-
-        norm_old = norm;
-
-        if (norm < reduction * norm_0) {
-          // fill statistics
-          res.converged = true;
-        }
-
-        if (res.converged != true && _verbose > 0)
-          std::cout << "=== GMRes::restart\n";
-      }
-
-      _M.post(x);                  // postprocess preconditioner
-
-      res.iterations = j;
-      res.reduction = norm / norm_0;
-      res.conv_rate  = pow(res.reduction,1.0/j);
+      // save solver statistics
+      res.iterations = j-1; // it has to be j-1!!!
+      res.reduction = norm/norm_0;
+      res.conv_rate = pow(res.reduction,1.0/(j-1));
       res.elapsed = watch.elapsed();
 
-      if (_verbose>0)
+      if(_verbose>0)
         print_result(res);
-    }
-  private:
 
-    void
-    print_result (const InverseOperatorResult & res) const
-    {
-      int j = res.iterations>0 ? res.iterations : 1;
+    }
+
+  private :
+
+    void print_result(const InverseOperatorResult& res) const {
+      int k = res.iterations>0 ? res.iterations : 1;
       std::cout << "=== rate=" << res.conv_rate
                 << ", T=" << res.elapsed
-                << ", TIT=" << res.elapsed/j
+                << ", TIT=" << res.elapsed/k
                 << ", IT=" << res.iterations
                 << std::endl;
     }
 
-    static void
-    update(X &x, int k,
-           std::vector< std::vector<field_type> > & h,
-           std::vector<field_type> & s, std::vector<F> v)
-    {
+    void update(X& w, int i,
+                std::vector<std::vector<field_type> >& H,
+                std::vector<field_type>& s,
+                std::vector<X>& v) {
+      // solution vector of the upper triangular system
       std::vector<field_type> y(s);
 
-      // Backsolve:
-      for (int i = k; i >= 0; i--) {
-        y[i] /= h[i][i];
-        for (int j = i - 1; j >= 0; j--)
-          y[j] -= h[j][i] * y[i];
-      }
+      // backsolve
+      for(int a=i-1; a>=0; a--) {
+        field_type rhs(s[a]);
+        for(int b=a+1; b<i; b++)
+          rhs -= H[a][b]*y[b];
+        y[a] = rhs/H[a][a];
 
-      for (int j = 0; j <= k; j++)
-        // x += v[j] * y[j];
-        x.axpy(y[j],v[j]);
+        // compute update on the fly
+        // w += y[a]*v[a]
+        w.axpy(y[a],v[a]);
+      }
     }
 
     void
     generatePlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
     {
-      if (dy == 0.0) {
+      field_type temp = std::abs(dy);
+      if (std::abs(dy) < 1e-15 ) {
         cs = 1.0;
         sn = 0.0;
-      } else if (std::abs(dy) > std::abs(dx)) {
-        field_type temp = dx / dy;
+      } else if (temp > std::abs(dx)) {
+        temp = dx / dy;
         sn = 1.0 / std::sqrt( 1.0 + temp*temp );
         cs = temp * sn;
       } else {
-        field_type temp = dy / dx;
+        temp = dy / dx;
         cs = 1.0 / std::sqrt( 1.0 + temp*temp );
         sn = temp * cs;
       }
@@ -1344,15 +1305,14 @@ namespace Dune {
       dx = temp;
     }
 
-    LinearOperator<X,X>& _A_;
-    Preconditioner<X,X>& _M;
+    LinearOperator<X,X>& _A;
+    Preconditioner<X,X>& _W;
     SeqScalarProduct<X> ssp;
     ScalarProduct<X>& _sp;
     int _restart;
     double _reduction;
     int _maxit;
     int _verbose;
-    bool _recalc_defect;
   };
 
 
