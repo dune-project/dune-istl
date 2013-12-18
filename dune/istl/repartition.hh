@@ -905,7 +905,6 @@ namespace Dune
         // setup edge and weight pattern
         typedef typename  RemoteIndices::const_iterator NeighbourIterator;
         typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet IndexSet;
-        typedef typename  IndexSet::LocalIndex LocalIndex;
 
         idxtype* adjp=adjncy;
 
