@@ -171,6 +171,11 @@ namespace Dune {
    * precision and supports complex numbers
    * too (use std::complex<double> for that).
    *
+   * \tparam T Number type.  Only double and std::complex<double> is supported
+   * \tparam A STL-compatible allocator type
+   * \tparam n Number of rows in a matrix block
+   * \tparam m Number of columns in a matrix block
+   *
    * \note This will only work if dune-istl has been configured to use UMFPack
    */
   template<typename T, typename A, int n, int m>
@@ -198,7 +203,11 @@ namespace Dune {
         FieldVector<T,n>,
         typename A::template rebind<FieldVector<T,n> >::other> range_type;
 
-    /** @brief construct a solver object from a BCRSMatrix
+    /** @brief Construct a solver object from a BCRSMatrix
+     *
+     * This computes the matrix decomposition, and may take a long time
+     * (and use a lot of memory).
+     *
      *  @param mat_ the matrix to solve for
      *  @param verbose [0..2] set the verbosity level, defaults to 0
      */
@@ -213,6 +222,10 @@ namespace Dune {
     }
 
     /** @brief Constructor for compatibility with SuperLU standard constructor
+     *
+     * This computes the matrix decomposition, and may take a long time
+     * (and use a lot of memory).
+     *
      * @param mat_ the matrix to solve for
      * @param verbose [0..2] set the verbosity level, defaults to 0
      */
@@ -240,8 +253,9 @@ namespace Dune {
      * @param mat_ the matrix to decompose when no decoposition file found
      * @param file the decomposition file
      * @param verbose the verbosity level
-     * use saveDecomposition(char* file) for manually storing a decomposition. This constructor
-     * will decompose mat_ and store the result to file if no file wasnt found in the first place.
+     *
+     * Use saveDecomposition(char* file) for manually storing a decomposition. This constructor
+     * will decompose mat_ and store the result to file if no file wasn't found in the first place.
      * Thus, if you always use this you will only compute the decomposition once (and when you manually
      * deleted the decomposition file).
      */
