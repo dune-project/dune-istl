@@ -359,6 +359,25 @@ namespace Dune {
       printOnApply(UMF_Apply_Info);
     }
 
+    /** @brief Set UMFPack-specific options
+     *
+     * This method allows to set various options that control the UMFPack solver.
+     * More specifically, it allows to set values in the UMF_Control array.
+     * Please see the UMFPack documentation for a list of possible options and values.
+     *
+     * \param option Entry in the UMF_Control array, e.g., UMFPACK_IRSTEP
+     * \param value Corresponding value
+     *
+     * \throws RangeError If nonexisting option was requested
+     */
+    void setOption(unsigned int option, double value)
+    {
+      if (option >= UMFPACK_CONTROL)
+        DUNE_THROW(RangeError, "Requested non-existing UMFPack option");
+
+      UMF_Control[option] = value;
+    }
+
     /** @brief saves a decomposition to a file
      * @param file the filename to save to
      */
