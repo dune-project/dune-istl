@@ -20,7 +20,8 @@ paamg_HEADERS = aggregates.hh          \
 	properties.hh                  \
 	renumberer.hh                  \
 	smoother.hh                    \
-	transfer.hh
+	transfer.hh                    \
+	twolevelmethod.hh
 
 include $(top_srcdir)/am/global-rules
 

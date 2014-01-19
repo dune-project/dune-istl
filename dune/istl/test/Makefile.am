@@ -9,11 +9,15 @@ if MPI
 endif
 
 if SUPERLU
-  SUPERLUTESTS =  superlutest superluztest superluctest superlustest overlappingschwarztest
+  SUPERLUTESTS =  superlutest superluztest superluctest superlustest
 endif
 
 if PARDISO
   PARDISOTEST = test_pardiso
+endif
+
+if UMFPACK
+  UMFPACKTEST = umfpacktest
 endif
 
 CUDATESTS = cuda_vectortest cuda_ellmatrixtest cudatest
@@ -21,6 +25,7 @@ CUDATESTS = cuda_vectortest cuda_ellmatrixtest cudatest
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest \
               bcrsbuildtest \
+              bcrsimplicitbuildtest \
               bvectortest \
               complexrhstest \
               dotproducttest \
@@ -31,17 +36,23 @@ NORMALTESTS = basearraytest \
               matrixutilstest \
               mmtest \
               mv \
+              overlappingschwarztest \
               scaledidmatrixtest \
               seqmatrixmarkettest \
               vbvectortest
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS)
+TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS) $(UMFPACKTEST)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS)
+check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS) $(UMFPACKTEST)
 
 # define the programs
+
+overlappingschwarztest_SOURCES = overlappingschwarztest.cc
+overlappingschwarztest_LDADD =
+overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS)
+overlappingschwarztest_CPPFLAGS= $(AM_CPPFLAGS)
 
 if SUPERLU
   superlutest_SOURCES = superlutest.cc
@@ -66,13 +77,21 @@ if SUPERLU
   superluztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
   superluztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
 
-  overlappingschwarztest_SOURCES = overlappingschwarztest.cc
-  overlappingschwarztest_LDADD= $(SUPERLU_LIBS)
-  overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
-  overlappingschwarztest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS)
+  overlappingschwarztest_LDADD += $(SUPERLU_LIBS)
+  overlappingschwarztest_LDFLAGS +=  $(SUPERLU_LDFLAGS)
+  overlappingschwarztest_CPPFLAGS += $(SUPERLU_CPPFLAGS)
 endif
 
+if UMFPACK
+  umfpacktest_SOURCES= umfpacktest.cc
+  umfpacktest_LDADD= $(UMFPACK_LIBS)
+  umfpacktest_LDFLAGS= $(AM_LDFLAGS) $(UMFPACK_LDFLAGS)
+  umfpacktest_CPPFLAGS= $(AM_CPPFLAGS) $(UMFPACK_CPPFLAGS)
 
+  overlappingschwarztest_LDADD += $(UMFPACK_LIBS)
+  overlappingschwarztest_LDFLAGS += $(UMFPACK_LDFLAGS)
+  overlappingschwarztest_CPPFLAGS += $(UMFPACK_CPPFLAGS)
+endif
 
 if PARDISO
   test_pardiso_SOURCES = test_pardiso.cc
@@ -110,6 +129,9 @@ cuda_ellmatrixtest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
 basearraytest_SOURCES = basearraytest.cc
 
 bcrsbuildtest_SOURCES = bcrsbuild.cc
+
+bcrsimplicitbuildtest_SOURCES = bcrsimplicitbuild.cc
+bcrsimplicitbuildtest_CPPFLAGS = $(AM_CPPFLAGS) -DDUNE_ISTL_WITH_CHECKING=1
 
 bvectortest_SOURCES = bvectortest.cc
 
@@ -184,3 +206,5 @@ vectortest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
 include $(top_srcdir)/am/global-rules
 
 EXTRA_DIST = CMakeLists.txt
+
+CLEANFILES = umfpack_decomp

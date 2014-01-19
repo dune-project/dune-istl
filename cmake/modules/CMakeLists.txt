@@ -1,4 +1,6 @@
-set(modules DuneIstlMacros.cmake
+set(modules
+  AddSuperLUFlags.cmake
+  DuneIstlMacros.cmake
   FindSuperLU.cmake)
 
 install(FILES ${modules} DESTINATION

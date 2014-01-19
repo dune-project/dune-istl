@@ -2,6 +2,7 @@ set(NORMALTEST
   basearraytest
   bvectortest
   bcrsbuildtest
+  bcrsimplicitbuildtest
   dotproducttest
   iotest
   inverseoperator2prectest
@@ -21,14 +22,22 @@ endif(HAVE_PARDISO)
 if(SUPERLU_FOUND)
   set(SUPERLUTESTS
   complexrhstest superlutest superluztest superluctest superlustest
-    overlappingschwarztest)
+  )
 endif(SUPERLU_FOUND)
+
+if(UMFPACK_FOUND)
+  set(UMFPACKTESTS umfpacktest)
+endif()
+
+if ((SUPERLU_FOUND) OR (UMFPACK_FOUND))
+  set(OVLPSCHWARZTESTS overlappingschwarztest)
+endif()
 
 if(HAVE_MPI)
   set(MPITESTS vectorcommtest matrixmarkettest matrixredisttest)
 endif(HAVE_MPI)
 
-set(ALLTESTS ${MPITESTS} ${NORMALTEST} ${PARDISOTEST} ${SUPERLUTESTS})
+set(ALLTESTS ${MPITESTS} ${NORMALTEST} ${PARDISOTEST} ${SUPERLUTESTS} ${UMFPACKTESTS} ${OVLPSCHWARZTESTS})
 
 
 # We do not want want to build the tests during make all,
@@ -47,6 +56,8 @@ add_executable(matrixtest "matrixtest.cc")
 add_executable(bvectortest "bvectortest.cc")
 add_executable(vbvectortest "vbvectortest.cc")
 add_executable(bcrsbuildtest "bcrsbuild.cc")
+add_executable(bcrsimplicitbuildtest "bcrsimplicitbuild.cc")
+set_property(TARGET bcrsimplicitbuildtest APPEND PROPERTY COMPILE_DEFINITIONS "DUNE_ISTL_WITH_CHECKING=1")
 add_executable(matrixiteratortest "matrixiteratortest.cc")
 add_executable(mmtest mmtest.cc)
 add_executable(mv "mv.cc")
@@ -78,10 +89,24 @@ if(SUPERLU_FOUND)
   add_executable(superluztest "superlutest.cc")
   set_property(TARGET superluztest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=3")
 
-  add_executable(overlappingschwarztest "overlappingschwarztest.cc")
-
   add_dune_superlu_flags("${SUPERLUTESTS}")
 endif(SUPERLU_FOUND)
+
+if(UMFPACK_FOUND)
+  add_executable(umfpacktest umfpacktest.cc)
+  add_dune_umfpack_flags(umfpacktest)
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
+endif()
+
+if ((SUPERLU_FOUND) OR (UMFPACK_FOUND))
+  add_executable(overlappingschwarztest "overlappingschwarztest.cc")
+  if (SUPERLU_FOUND)
+    add_dune_superlu_flags(overlappingschwarztest)
+  endif()
+  if (UMFPACK_FOUND)
+    add_dune_umfpack_flags(overlappingschwarztest)
+  endif()
+endif()
 
 if(HAVE_MPI)
   add_executable(matrixredisttest "matrixredisttest.cc")

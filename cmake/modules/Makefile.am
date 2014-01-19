@@ -1,4 +1,5 @@
-MODULES = DuneIstlMacros.cmake \
+MODULES = AddSuperLUFlags.cmake \
+ DuneIstlMacros.cmake \
  FindSuperLU.cmake
 
 modulesdir= $(datadir)/cmake/modules

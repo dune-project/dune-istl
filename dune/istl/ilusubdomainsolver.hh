@@ -170,7 +170,6 @@ namespace Dune {
     // Create sparsity pattern
     typedef typename matrix_type::CreateIterator CIter;
     CIter rowCreator = ILU.createbegin();
-    typedef typename S::const_iterator RIter;
     std::size_t offset=0;
     for(SIter rowIdx = rowSet.begin(), rowEnd=rowSet.end();
         rowIdx!= rowEnd; ++rowIdx, ++rowCreator) {

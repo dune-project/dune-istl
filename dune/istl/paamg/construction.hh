@@ -65,17 +65,17 @@ namespace Dune
 
     };
 
-    template<class T>
-    class ConstructionTraits<BlockVector<T> >
+    template<class T, class A>
+    class ConstructionTraits<BlockVector<T,A> >
     {
     public:
       typedef const int Arguments;
-      static inline BlockVector<T>* construct(Arguments& n)
+      static inline BlockVector<T,A>* construct(Arguments& n)
       {
-        return new BlockVector<T>(n);
+        return new BlockVector<T,A>(n);
       }
 
-      static inline void deconstruct(BlockVector<T>* t)
+      static inline void deconstruct(BlockVector<T,A>* t)
       {
         delete t;
       }

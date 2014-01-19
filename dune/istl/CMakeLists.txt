@@ -14,6 +14,7 @@ install(FILES
    bdmatrix.hh
    btdmatrix.hh
    bvector.hh
+   colcompmatrix.hh
    diagonalmatrix.hh
    ellmatrix.hh
    forwarddeclarations.hh
@@ -47,6 +48,7 @@ install(FILES
    solvertype.hh
    superlu.hh
    supermatrix.hh
+   umfpack.hh
    vbvector.hh
    vector.hh
    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl)

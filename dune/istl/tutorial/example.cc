@@ -515,7 +515,6 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
 
   typedef Dune::FieldMatrix<double,1,1> LittleBlock;                    //matrix block type
   typedef Dune::BCRSMatrix<LittleBlock> BCRSMat;                        //matrix type
-  typedef Dune::BlockVector<Dune::FieldVector<double,1> > VecType;
 
   const int X1=3;                                                       //index bounds of all four matrices
   const int X2=2;

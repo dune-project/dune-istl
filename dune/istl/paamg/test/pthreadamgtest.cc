@@ -68,7 +68,7 @@ typedef Dune::BlockVector<VectorBlock> Vector;
 typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
 typedef Dune::CollectiveCommunication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
-typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 
 struct thread_arg
 {
@@ -102,7 +102,7 @@ void *solve1(void* arg)
   *amgarg->x=0;
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
-
+  return 0;
 }
 
 void *solve2(void* arg)
@@ -112,6 +112,7 @@ void *solve2(void* arg)
   (*amgarg->amg).pre(*amgarg->x,*amgarg->b);
   (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
   (*amgarg->amg).post(*amgarg->x);
+  return 0;
 }
 
 template <int BS, typename AMG>
@@ -126,7 +127,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<1,XREAL>(N, indices, c, &n, 1);
+  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
 

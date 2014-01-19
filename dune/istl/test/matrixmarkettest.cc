@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   std::cout<<comm.communicator().rank()<<" "<<comm.communicator().size()<<
   " "<<size<<std::endl;
   int n;
-  BCRSMat mat = setupAnisotropic2d<BS,double>(N, comm.indexSet(), comm.communicator(), &n, .011);
+  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, comm.indexSet(), comm.communicator(), &n, .011);
 #else
   BCRSMat mat;
   setupLaplacian(mat, N);
