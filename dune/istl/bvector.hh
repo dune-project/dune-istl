@@ -188,7 +188,7 @@ namespace Dune {
       return sqrt(sum);
     }
 
-    //! sqare of two norm (sum over squared values of entries), need for block recursion
+    //! Square of the two-norm (the sum over the squared values of the entries)
     typename FieldTraits<field_type>::real_type two_norm2 () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
@@ -845,7 +845,7 @@ namespace Dune {
       return sqrt(sum);
     }
 
-    //! sqare of two norm (sum over squared values of entries), need for block recursion
+    //! Square of the two-norm (the sum over the squared values of the entries)
     typename FieldTraits<field_type>::real_type two_norm2 () const
     {
       typename FieldTraits<field_type>::real_type sum=0;

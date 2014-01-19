@@ -31,8 +31,10 @@ testvec
 superluctest
 seqmatrixmarkettest
 solvertest
+umfpacktest
 *.log
 *.trs
 testmat_0.idx
 testmat_0.mm
 testvec_0.mm
+bcrsimplicitbuildtest

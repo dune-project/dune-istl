@@ -43,14 +43,11 @@ namespace Dune
                            const Dune::BCRSMatrix<Dune::FieldMatrix<T,k,m>,A2>& B,
                            F& func)
       {
-        typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,m>,A2>::size_type size_type;
-
         if(A.M()!=B.N())
           DUNE_THROW(ISTLError, "The sizes of the matrices do not match: "<<A.M()<<"!="<<B.N());
 
         typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,n,k>,A1>::ConstRowIterator Row;
         typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,n,k>,A1>::ConstColIterator Col;
-        typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,m>,A2>::ConstRowIterator BRow;
         typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,m>,A2>::ConstColIterator BCol;
         for(Row row= A.begin(); row != A.end(); ++row) {
           // Loop over all column entries
@@ -81,8 +78,6 @@ namespace Dune
         typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,n>,A1>::ConstRowIterator Row;
         typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,n>,A1>::ConstColIterator Col;
         typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,m>,A2>::ConstColIterator BCol;
-        typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,n>,A1>::size_type size_t1;
-        typedef typename Dune::BCRSMatrix<Dune::FieldMatrix<T,k,m>,A2>::size_type size_t2;
 
         for(Row row=A.begin(); row!=A.end(); ++row) {
           for(Col col=row->begin(); col!=row->end(); ++col) {

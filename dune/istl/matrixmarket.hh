@@ -14,7 +14,6 @@
 #include "owneroverlapcopy.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/tuples.hh>
-#include <dune/common/misc.hh>
 
 namespace Dune
 {
@@ -804,9 +803,6 @@ namespace Dune
   void readMatrixMarket(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>& matrix,
                         std::istream& istr)
   {
-
-    typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,brows,bcols> > Matrix;
-
     MMHeader header;
     if(!readMatrixMarketBanner(istr, header)) {
       std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"

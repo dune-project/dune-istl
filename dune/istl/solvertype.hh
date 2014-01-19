@@ -22,5 +22,17 @@ namespace Dune
       value =false
     };
   };
+
+  template<typename Solver>
+  struct StoresColumnCompressed
+  {
+    enum
+    {
+      /**
+       * @brief whether the solver internally uses column compressed storage
+       */
+      value = false
+    };
+  };
 } // end namespace Dune
 #endif

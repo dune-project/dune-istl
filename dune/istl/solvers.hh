@@ -1301,8 +1301,8 @@ namespace Dune {
 
     static void
     update(X &x, int k,
-           std::vector< std::vector<field_type> > & h,
-           std::vector<field_type> & s, std::vector<F> v)
+           const std::vector< std::vector<field_type> > & h,
+           const std::vector<field_type> & s, const std::vector<F> &v)
     {
       std::vector<field_type> y(s);
 

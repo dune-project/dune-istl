@@ -8,7 +8,7 @@
 #include<dune/istl/operators.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <laplacian.hh>
+#include "laplacian.hh"
 
 int main(int argc, char** argv)
 {

@@ -15,6 +15,24 @@ namespace Dune {
   //! derive error class from the base class in common
   class ISTLError : public Dune::MathError {};
 
+  //! Error specific to BCRSMatrix.
+  class BCRSMatrixError
+    : public ISTLError
+  {};
+
+  //! The overflow error used during implicit BCRSMatrix construction was exhausted.
+  /**
+   * This error occurs if the overflow area of the BCRSMatrix
+   * did not have room for another non-zero entry during implicit
+   * mode construction.
+   *
+   * You can fix this problem by either increasing the average row size
+   * or the overflow fraction.
+   */
+  class ImplicitModeOverflowExhausted
+    : public BCRSMatrixError
+  {};
+
   /** @} end documentation */
 
 } // end namespace

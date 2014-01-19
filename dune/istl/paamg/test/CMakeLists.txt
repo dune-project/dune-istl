@@ -1,15 +1,24 @@
 if(MPI_FOUND)
-  set(MPITESTS  galerkintest hierarchytest transfertest)
+  set(MPITESTS  galerkintest hierarchytest transfertest pamgtest)
 endif(MPI_FOUND)
 
+if(UMFPACK_FOUND)
+  set(UMFPACKTESTS umfpackfastamg umfpackamgtest)
+endif(UMFPACK_FOUND)
+if(SUPERLU_FOUND)
+  set(SUPERLUTESTS superlufastamg superluamgtest)
+endif(SUPERLU_FOUND)
 if(PARMETIS_FOUND)
   set(PARMETISTESTS pamgtest pamg_comm_repart_test)
 endif(PARMETIS_FOUND)
 if(CMAKE_USE_PTHREADS_INIT)
-  set(PTHREADTESTS pthreadamgtest pthreadfastamgtest)
+  set(PTHREADTESTS pthreadamgtest pthreadfastamgtest pthreadtwoleveltest)
+  if(SUPERLU_FOUND OR UMFPACK_FOUND)
+    set(PTHREADTESTS ${PTHREADTESTS} pthreaddirectamgtest pthreaddirectfastamgtest pthreaddirecttwoleveltest)
+  endif(SUPERLU_FOUND OR UMFPACK_FOUND)
 endif(CMAKE_USE_PTHREADS_INIT)
-set(NORMALTESTS amgtest fastamg graphtest kamgtest ${PTHREADTESTS})
-set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS})
+set(NORMALTESTS amgtest fastamg graphtest kamgtest twolevelmethodschwarztest twolevelmethodtest ${PTHREADTESTS})
+set(ALLTESTS ${MPITESTS} ${PARMETISTESTS} ${NORMALTESTS} ${UMFPACKTESTS} ${SUPERLUTESTS})
 
 # We do not want want to build the tests during make all,
 # but just build them on demand
@@ -18,20 +27,59 @@ add_dependencies(${_test_target} ${ALLTESTS})
 
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
+  # test: pthreadamgtest
   add_executable(pthreadamgtest pthreadamgtest.cc)
   set_property(TARGET pthreadamgtest APPEND PROPERTY
     COMPILE_DEFINITIONS "MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>")
   target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  # test: pthreadfastamgtest
   add_executable(pthreadfastamgtest pthreadamgtest.cc)
   set_property(TARGET pthreadfastamgtest APPEND PROPERTY
     COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
-  target_link_libraries(pthreadamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  target_link_libraries(pthreadfastamgtest "${CMAKE_THREAD_LIBS_INIT}")
+  # test: pthreadtwoleveltest
+  add_executable(pthreadtwoleveltest pthreadtwoleveltest.cc)
+  target_link_libraries(pthreadtwoleveltest "${CMAKE_THREAD_LIBS_INIT}")
+  if(SUPERLU_FOUND OR UMFPACK_FOUND)
+    # test: pthreaddirectamgtest
+    add_executable(pthreaddirectamgtest pthreadamgtest.cc)
+    set_property(TARGET pthreaddirectamgtest APPEND PROPERTY
+      COMPILE_DEFINITIONS "MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>")
+    target_link_libraries(pthreaddirectamgtest "${CMAKE_THREAD_LIBS_INIT}")
+    # test: pthreaddirectfastamgtest
+    add_executable(pthreaddirectfastamgtest pthreadamgtest.cc)
+    set_property(TARGET pthreaddirectfastamgtest APPEND PROPERTY
+      COMPILE_DEFINITIONS "MYAMG=Dune::Amg::FastAMG<Operator,Vector>")
+    target_link_libraries(pthreaddirectfastamgtest "${CMAKE_THREAD_LIBS_INIT}")
+    #test: pthreaddirecttwoleveltest
+    add_executable(pthreaddirecttwoleveltest pthreadtwoleveltest.cc)
+    target_link_libraries(pthreaddirecttwoleveltest "${CMAKE_THREAD_LIBS_INIT}")
+    # add direct solver flags
+    if(HAVE_SUPERLU)
+      add_dune_superlu_flags(pthreaddirectamgtest pthreadfastamgtest pthreaddirecttwoleveltest)
+    endif(HAVE_SUPERLU)
+    if(HAVE_UMFPACK)
+      add_dune_umfpack_flags(pthreaddirectamgtest pthreadfastamgtest pthreaddirecttwoleveltest)
+    endif(HAVE_UMFPACK)
+  endif(SUPERLU_FOUND OR UMFPACK_FOUND)
 endif(CMAKE_USE_PTHREADS_INIT)
 
 add_executable(amgtest "amgtest.cc")
-add_dune_superlu_flags(amgtest)
 add_executable(fastamg "fastamg.cc")
-add_dune_superlu_flags(fastamg)
+if(SUPERLU_FOUND)
+  add_executable(superluamgtest "amgtest.cc")
+  add_dune_superlu_flags(superluamgtest)
+  add_executable(superlufastamg "fastamg.cc")
+  add_dune_superlu_flags(superlufastamg)
+endif(SUPERLU_FOUND)
+if(UMFPACK_FOUND)
+  add_executable(umfpackamgtest "amgtest.cc")
+  add_dune_umfpack_flags(umfpackamgtest)
+  add_executable(umfpackfastamg "fastamg.cc")
+  add_dune_umfpack_flags(umfpackfastamg)
+endif(UMFPACK_FOUND)
+add_executable(twolevelmethodtest "twolevelmethodtest.cc")
+add_dune_superlu_flags(twolevelmethodtest)
 add_executable(galerkintest "galerkintest.cc")
 add_executable(graphtest "graphtest.cc")
 add_executable(hierarchytest "hierarchytest.cc")
@@ -42,6 +90,9 @@ set_target_properties(pamg_comm_repart_test PROPERTIES COMPILE_FLAGS "-DAMG_REPA
 add_executable(pamgtest "parallelamgtest.cc")
 add_dune_superlu_flags(pamgtest)
 add_executable(transfertest "transfertest.cc")
+add_executable(twolevelmethodschwarztest "twolevelmethodtest.cc")
+set_target_properties(twolevelmethodschwarztest PROPERTIES COMPILE_FLAGS "-DUSE_OVERLAPPINGSCHWARZ")
+add_dune_superlu_flags(twolevelmethodschwarztest)
 
 foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")
