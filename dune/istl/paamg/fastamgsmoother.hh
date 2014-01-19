@@ -19,8 +19,6 @@ namespace Dune
       {
         typedef typename M::ConstRowIterator RowIterator;
         typedef typename M::ConstColIterator ColIterator;
-        typedef typename Y::block_type YBlock;
-        typedef typename X::block_type XBlock;
 
         typename Y::iterator dIter=d.begin();
         typename Y::const_iterator bIter=b.begin();
@@ -58,7 +56,6 @@ namespace Dune
         typedef typename M::ConstRowIterator RowIterator;
         typedef typename M::ConstColIterator ColIterator;
         typedef typename Y::block_type YBlock;
-        typedef typename X::block_type XBlock;
 
         typename Y::iterator dIter=d.beforeEnd();
         typename X::iterator xIter=x.beforeEnd();

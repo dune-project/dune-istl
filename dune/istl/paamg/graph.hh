@@ -667,8 +667,8 @@ namespace Dune
        * @param target The target vertex of the edge we search for.
        * @return The edge we found or numeric_limits<EdgeIterator>::max() if it does not exist.
        */
-      const EdgeDescriptor findEdge(const VertexDescriptor& source,
-                                    const VertexDescriptor& target) const;
+      EdgeDescriptor findEdge(const VertexDescriptor& source,
+                              const VertexDescriptor& target) const;
       /**
        * @brief Constructor.
        *
@@ -1955,8 +1955,9 @@ namespace Dune
     }
 
     template<class G, class T>
-    inline const typename SubGraph<G,T>::EdgeDescriptor SubGraph<G,T>::findEdge(const VertexDescriptor& source,
-                                                                                const VertexDescriptor& target) const
+    inline typename SubGraph<G,T>::EdgeDescriptor
+    SubGraph<G,T>::findEdge(const VertexDescriptor& source,
+                            const VertexDescriptor& target) const
     {
       const EdgeDescriptor edge = std::lower_bound(edges_+start_[source], edges_+end_[source], target);
       if(edge==edges_+end_[source] || *edge!=target)

@@ -859,9 +859,13 @@ namespace Dune
         // The diagonal entries are the number of nodes on the process.
         // The offdiagonal entries are the number of edges leading to other processes.
 
-        idxtype *xadj=new idxtype[2], *vwgt = 0;
+        idxtype *xadj=new idxtype[2];
         idxtype *vtxdist=new idxtype[oocomm.communicator().size()+1];
-        idxtype * adjncy=new idxtype[noNeighbours], *adjwgt = 0;
+        idxtype *adjncy=new idxtype[noNeighbours];
+#ifdef USE_WEIGHTS
+        idxtype *vwgt = 0;
+        idxtype *adjwgt = 0;
+#endif
 
         // each process has exactly one vertex!
         for(int i=0; i<oocomm.communicator().size(); ++i)
@@ -900,8 +904,6 @@ namespace Dune
 
         // setup edge and weight pattern
         typedef typename  RemoteIndices::const_iterator NeighbourIterator;
-        typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::ParallelIndexSet IndexSet;
-        typedef typename  IndexSet::LocalIndex LocalIndex;
 
         idxtype* adjp=adjncy;
 
@@ -994,7 +996,9 @@ namespace Dune
         int* xdispl = 0;  // displacement for xadj
         int* novs = 0;
         int* vdispl=0; // real vertex displacement
+#ifdef USE_WEIGHTS
         std::size_t localNoVtx=vtxdist[rank+1]-vtxdist[rank];
+#endif
         std::size_t gxadjlen = vtxdist[oocomm.communicator().size()]-vtxdist[0]+oocomm.communicator().size();
 
         {

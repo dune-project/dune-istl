@@ -281,7 +281,11 @@ void testSolve(const MatrixType& matrix)
 
 int main()
 {
+
+  // feenableexcept does not exist on OS X
+#ifndef __APPLE__
   feenableexcept(FE_INVALID);
+#endif
 
   // ////////////////////////////////////////////////////////////
   //   Test the Matrix class -- a scalar dense dynamic matrix

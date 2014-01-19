@@ -16,6 +16,7 @@ istl_HEADERS = basearray.hh \
 	bdmatrix.hh \
 	btdmatrix.hh \
 	bvector.hh \
+	colcompmatrix.hh \
 	diagonalmatrix.hh \
 	ellmatrix.hh \
 	forwarddeclarations.hh \
@@ -50,8 +51,8 @@ istl_HEADERS = basearray.hh \
 	superlu.hh \
 	supermatrix.hh \
 	vbvector.hh \
-	vector.hh
-
+	vector.hh \
+	umfpack.hh
 
 include $(top_srcdir)/am/global-rules
 

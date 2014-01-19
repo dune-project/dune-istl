@@ -395,6 +395,49 @@ namespace Dune
       }
     };
 
+    /**
+     * @brief Apply pre smoothing on the current level.
+     * @param levelContext the iterators of the current level.
+     * @param steps The number of smoothing steps to apply.
+     */
+    template<typename LevelContext>
+    void presmooth(LevelContext& levelContext, size_t steps)
+    {
+        for(std::size_t i=0; i < steps; ++i) {
+          *levelContext.lhs=0;
+          SmootherApplier<typename LevelContext::SmootherType>
+            ::preSmooth(*levelContext.smoother, *levelContext.lhs,
+                        *levelContext.rhs);
+          // Accumulate update
+          *levelContext.update += *levelContext.lhs;
+
+          // update defect
+          levelContext.matrix->applyscaleadd(-1, *levelContext.lhs, *levelContext.rhs);
+          levelContext.pinfo->project(*levelContext.rhs);
+        }
+    }
+
+    /**
+     * @brief Apply post smoothing on the current level.
+     * @param levelContext the iterators of the current level.
+     * @param steps The number of smoothing steps to apply.
+     */
+    template<typename LevelContext>
+    void postsmooth(LevelContext& levelContext, size_t steps)
+    {
+        for(std::size_t i=0; i < steps; ++i) {
+          // update defect
+          levelContext.matrix->applyscaleadd(-1, *levelContext.lhs,
+                                             *levelContext.rhs);
+          *levelContext.lhs=0;
+          levelContext.pinfo->project(*levelContext.rhs);
+          SmootherApplier<typename LevelContext::SmootherType>
+            ::postSmooth(*levelContext.smoother, *levelContext.lhs, *levelContext.rhs);
+          // Accumulate update
+          *levelContext.update += *levelContext.lhs;
+        }
+    }
+
     template<class M, class X, class Y, int l>
     struct SmootherApplier<SeqSOR<M,X,Y,l> >
     {

@@ -286,10 +286,10 @@ int testEdge()
 
 }
 
-template<int N, class B>
-void setupSparsityPattern(Dune::BCRSMatrix<B>& A)
+template<int N, class M>
+void setupSparsityPattern(M& A)
 {
-  for (typename Dune::BCRSMatrix<B>::CreateIterator i = A.createbegin(); i != A.createend(); ++i) {
+  for (typename M::CreateIterator i = A.createbegin(); i != A.createend(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field
     int y = i.index()/N;  // y coordinate in the 2d field
 
@@ -312,21 +312,21 @@ void setupSparsityPattern(Dune::BCRSMatrix<B>& A)
   }
 }
 
-template<int N, class B>
-void setupAnisotropic(Dune::BCRSMatrix<B>& A, double eps)
+template<int N, class M>
+void setupAnisotropic(M& A, double eps)
 {
-  B diagonal = 0, bone=0, beps=0;
-  for(typename B::RowIterator b = diagonal.begin(); b !=  diagonal.end(); ++b)
+  typename M::block_type diagonal = 0, bone=0, beps=0;
+  for(typename M::block_type::RowIterator b = diagonal.begin(); b !=  diagonal.end(); ++b)
     b->operator[](b.index())=2.0+2.0*eps;
 
 
-  for(typename B::RowIterator b=bone.begin(); b !=  bone.end(); ++b)
+  for(typename M::block_type::RowIterator b=bone.begin(); b !=  bone.end(); ++b)
     b->operator[](b.index())=-1.0;
 
-  for(typename B::RowIterator b=beps.begin(); b !=  beps.end(); ++b)
+  for(typename M::block_type::RowIterator b=beps.begin(); b !=  beps.end(); ++b)
     b->operator[](b.index())=-eps;
 
-  for (typename Dune::BCRSMatrix<B>::RowIterator i = A.begin(); i != A.end(); ++i) {
+  for (typename M::RowIterator i = A.begin(); i != A.end(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field
     int y = i.index()/N;  // y coordinate in the 2d field
 

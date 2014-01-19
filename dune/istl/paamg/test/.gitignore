@@ -9,7 +9,12 @@ hierarchytest
 amgtest
 pamgtest
 pamg_comm_repart_test
+pthreadamgtest
+pthreadfastamgtest
+pthreadtwoleveltest
 transfertest
+twolevelmethodschwarztest
+twolevelmethodtest
 kamgtest
 fastamg
 
