@@ -20,6 +20,7 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/static_assert.hh>
+#include <dune/common/array.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
@@ -840,127 +841,126 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      res.clear();                // clear solver statistics
-      Timer watch;                // start a timer
-      _prec.pre(x,b);             // prepare preconditioner
-      _op.applyscaleadd(-1,x,b);  // overwrite b with defect/residual
+      // clear solver statistics
+      res.clear();
+      // start a timer
+      Dune::Timer watch;
+      watch.reset();
+      // prepare preconditioner
+      _prec.pre(x,b);
+      // overwrite rhs with defect
+      _op.applyscaleadd(-1,x,b);
 
-      real_type def0 = _sp.norm(b);   // compute residual norm
+      // compute residual norm
+      field_type def0 = _sp.norm(b);
 
-      if (def0<1E-30)    // convergence check
-      {
-        res.converged  = true;
-        res.iterations = 0;               // fill statistics
-        res.reduction = 0;
-        res.conv_rate  = 0;
-        res.elapsed=0;
-        if (_verbose>0)                 // final print
-          std::cout << "=== rate=" << res.conv_rate << ", T=" << res.elapsed << ", TIT=" << res.elapsed << ", IT=0" << std::endl;
-        return;
-      }
-
-      if (_verbose>0)             // printing
-      {
+      // printing
+      if(_verbose > 0) {
         std::cout << "=== MINRESSolver" << std::endl;
-        if (_verbose>1) {
+        if(_verbose > 1) {
           this->printHeader(std::cout);
           this->printOutput(std::cout,0,def0);
         }
       }
 
-      // some local variables
-      real_type def=def0;                 // the defect/residual norm
-      field_type alpha,                   // recurrence coefficients as computed in the Lanczos alg making up the matrix T
-                 c[2]={0.0, 0.0}, // diagonal entry of Givens rotation
-                 s[2]={0.0, 0.0}; // off-diagonal entries of Givens rotation
-      real_type beta;
+      // check for convergence
+      if(def0 < 1e-30 ) {
+        res.converged = true;
+        res.iterations = 0;
+        res.reduction = 0;
+        res.conv_rate = 0;
+        res.elapsed = 0.0;
+        // final print
+        if(_verbose > 0)
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed
+                    << ", TIT=" << res.elapsed
+                    << ", IT=" << res.iterations
+                    << std::endl;
+        return;
+      }
 
-      field_type T[3]={0.0, 0.0, 0.0};      // recurrence coefficients (column k of Matrix T)
+      // the defect norm
+      field_type def = def0;
+      // recurrence coefficients as computed in Lanczos algorithm
+      field_type alpha, beta;
+        // diagonal entries of givens rotation
+      Dune::array<field_type,2> c = {0.0,0.0};
+        // off-diagonal entries of givens rotation
+      Dune::array<field_type,2> s = {0.0,0.0};
 
-      X z(b.size()),        // some temporary vectors
-      dummy(b.size());
+      // recurrence coefficients (column k of tridiag matrix T_k)
+      Dune::array<field_type,3> T = {0.0,0.0,0.0};
 
-      field_type xi[2]={1.0, 0.0};
+      // the rhs vector of the min problem
+      Dune::array<field_type,2> xi = {1.0,0.0};
 
-      // initialize
-      z = 0.0;                  // clear correction
+      // some temporary vectors
+      X z(b), dummy(b);
 
-      _prec.apply(z,b);         // apply preconditioner z=M^-1*b
+      // initialize and clear correction
+      z = 0.0;
+      _prec.apply(z,b);
 
       beta = std::sqrt(std::abs(_sp.dot(z,b)));
-      real_type beta0 = beta;
+      field_type beta0 = beta;
 
-      X p[3];       // the search directions
-      X q[3];       // Orthonormal basis vectors (in unpreconditioned case)
-
-      q[0].resize(b.size());
-      q[1].resize(b.size());
-      q[2].resize(b.size());
-      q[0] = 0.0;
-      q[1] = b;
-      q[1] /= beta;
-      q[2] = 0.0;
-
-      p[0].resize(b.size());
-      p[1].resize(b.size());
-      p[2].resize(b.size());
+      // the search directions
+      Dune::array<X,3> p = {b,b,b};
       p[0] = 0.0;
       p[1] = 0.0;
       p[2] = 0.0;
 
+      // orthonormal basis vectors (in unpreconditioned case)
+      Dune::array<X,3> q = {b,b,b};
+      q[0] = 0.0;
+      q[1] *= 1.0/beta;
+      q[2] = 0.0;
 
-      z /= beta;        // this is w_current
+      z *= 1.0/beta;
 
       // the loop
-      int i=1;
-      for ( ; i<=_maxit; i++)
-      {
-        dummy = z;   // remember z_old for the computation of the search direction p in the next iteration
+      int i = 1;
+      for( ; i<=_maxit; i++) {
 
+        dummy = z;
         int i1 = i%3,
-            i0 = (i1+2)%3,
-            i2 = (i1+1)%3;
+          i0 = (i1+2)%3,
+          i2 = (i1+1)%3;
 
-        // Symmetrically Preconditioned Lanczos (Greenbaum p.121)
-        _op.apply(z,q[i2]);               // q[i2] = Az
-        q[i2].axpy(-beta, q[i0]);
+        // symmetrically preconditioned Lanczos algorithm (see Greenbaum p.121)
+        _op.apply(z,q[i2]); // q[i2] = Az
+        q[i2].axpy(-beta,q[i0]);
         alpha = _sp.dot(q[i2],z);
-        q[i2].axpy(-alpha, q[i1]);
+        q[i2].axpy(-alpha,q[i1]);
 
-        z=0.0;
+        z = 0.0;
         _prec.apply(z,q[i2]);
 
         beta = std::sqrt(std::abs(_sp.dot(q[i2],z)));
 
-        q[i2] /= beta;
-        z /= beta;
+        q[i2] *= 1.0/beta;
+        z *= 1.0/beta;
 
         // QR Factorization of recurrence coefficient matrix
-        // apply previous Givens rotations to last column of T
+        // apply previous givens rotations to last column of T
         T[1] = T[2];
-        if (i>2)
-        {
+        if(i>2) {
           T[0] = s[i%2]*T[1];
           T[1] = c[i%2]*T[1];
         }
-        if (i>1)
-        {
+        if(i>1) {
           T[2] = c[(i+1)%2]*alpha - s[(i+1)%2]*T[1];
           T[1] = c[(i+1)%2]*T[1] + s[(i+1)%2]*alpha;
         }
         else
           T[2] = alpha;
 
-        // recompute c, s -> current Givens rotation \TODO use BLAS-routine drotg instead for greater robustness
-        //          cblas_drotg (a, b, c, s);
-        c[i%2] = 1.0/std::sqrt(T[2]*T[2] + beta*beta);
-        s[i%2] = beta*c[i%2];
-        c[i%2] *= T[2];
-
-        // apply current Givens rotation to T eliminating the last entry...
+        // update QR factorization
+        generateGivensRotation(T[2],beta,c[i%2],s[i%2]);
+        // to last column of T_k
         T[2] = c[i%2]*T[2] + s[i%2]*beta;
-
-        // ...and to xi, the right hand side of the least squares problem min_y||beta*xi-T*y||
+        // and to the rhs xi of the min problem
         xi[i%2] = -s[i%2]*xi[(i+1)%2];
         xi[(i+1)%2] *= c[i%2];
 
@@ -968,53 +968,46 @@ namespace Dune {
         p[i2] = dummy;
         p[i2].axpy(-T[1],p[i1]);
         p[i2].axpy(-T[0],p[i0]);
-        p[i2] /= T[2];
+        p[i2] *= 1.0/T[2];
 
         // apply correction/update solution
-        x.axpy(beta0*xi[(i+1)%2], p[i2]);
+        x.axpy(beta0*xi[(i+1)%2],p[i2]);
 
         // remember beta_old
         T[2] = beta;
 
-        // update residual - not necessary if in the preconditioned case we are content with the residual norm of the
-        // preconditioned system as convergence test
-        //          _op.apply(p[i2],dummy);
-        //          b.axpy(-beta0*xi[(i+1)%2],dummy);
+        // check for convergence
+        // the last entry in the rhs of the min-problem is the residual
+        field_type defnew = std::abs(beta0*xi[i%2]);
 
-        //          convergence test
-        real_type defnew = std::abs(beta0*xi[i%2]);   // the last entry the QR-transformed least squares RHS is the new residual norm
+          if(_verbose > 1)
+            this->printOutput(std::cout,i,defnew,def);
 
-        if (_verbose>1)               // print
-          this->printOutput(std::cout,i,defnew,def);
+          def = defnew;
+          if(def < def0*_reduction || def < 1e-30 || i == _maxit ) {
+            res.converged = true;
+            break;
+          }
+        } // end for
 
-        def = defnew;                 // update norm
-        if (def<def0*_reduction || def<1E-30 || i==_maxit)      // convergence check
-        {
-          res.converged  = true;
-          break;
+        if(_verbose == 1)
+          this->printOutput(std::cout,i,def);
+
+        // postprocess preconditioner
+        _prec.post(x);
+        // fill statistics
+        res.iterations = i;
+        res.reduction = def/def0;
+        res.conv_rate = pow(res.reduction,1.0/i);
+        res.elapsed = watch.elapsed();
+
+        // final print
+        if(_verbose > 0) {
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed
+                    << ", TIT=" << res.elapsed/i
+                    << ", IT=" << i << std::endl;
         }
-      }
-
-      //correct i which is wrong if convergence was not achieved.
-      i=std::min(_maxit,i);
-
-      if (_verbose==1)                  // printing for non verbose
-        this->printOutput(std::cout,i,def);
-
-      _prec.post(x);                    // postprocess preconditioner
-      res.iterations = i;                 // fill statistics
-      res.reduction = def/def0;
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-
-      if (_verbose>0)                   // final print
-      {
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i << std::endl;
-      }
-
     }
 
     /*!
@@ -1030,6 +1023,25 @@ namespace Dune {
     }
 
   private:
+
+    void generateGivensRotation(field_type& dx, field_type& dy, field_type& cs, field_type& sn)
+    {
+      field_type temp = std::abs(dy);
+      if(temp < 1e-16) {
+        cs = 1.0;
+        sn = 0.0;
+      }
+      else if(temp > std::abs(dx)) {
+        temp = dx/dy;
+        sn = 1.0/std::sqrt(1.0 + temp*temp);
+        cs = temp * sn;
+      } else {
+        temp = dy/dx;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = temp * cs;
+      }
+    }
+
     SeqScalarProduct<X> ssp;
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
