@@ -46,7 +46,12 @@ namespace Dune {
      \tparam X Type of the update
      \tparam Y Type of the defect
    */
-  template<typename M, typename X, typename Y>
+  template<
+    typename M,
+    typename X,
+    typename Y,
+    typename D_ = typename Memory::allocator_domain<typename M::Allocator>::type // memory domain
+    >
   class SequentialBlockJacobi : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
