@@ -1118,7 +1118,7 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
-      int m = _restart;
+      int m =_restart;
       real_type norm;
       real_type norm_old = 0.0;
       real_type norm_0;
@@ -1169,7 +1169,6 @@ namespace Dune {
         {
           this->printHeader(std::cout);
           this->printOutput(std::cout,0,norm_0);
-          this->printOutput(std::cout,0,norm, norm_0);
         }
       }
 
@@ -1186,8 +1185,8 @@ namespace Dune {
         v[0] *= (1.0 / beta);
         for (i=1; i<=m; i++) s[i] = 0.0;
         s[0] = beta;
-
-        for (i = 0; i < m && j <= _maxit && res.converged != true; i++, j++) {
+        int end=std::min(m, _maxit-j+1);
+        for (i = 0; i < end && res.converged != true; i++, j++) {
           w = 0.0;
           v[i+1] = 0.0; // use v[i+1] as temporary vector
           _A_.apply(v[i], /* => */ v[i+1]);
@@ -1255,14 +1254,6 @@ namespace Dune {
           norm = beta;
 
           res.converged = false;
-        }
-
-        //correct i which is wrong if convergence was not achieved.
-        j=std::min(_maxit,j);
-
-        if (_verbose > 1)             // print
-        {
-          this->printOutput(std::cout,j,norm,norm_old);
         }
 
         norm_old = norm;
