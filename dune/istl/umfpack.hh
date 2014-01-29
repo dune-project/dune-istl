@@ -171,6 +171,11 @@ namespace Dune {
    * precision and supports complex numbers
    * too (use std::complex<double> for that).
    *
+   * \tparam T Number type.  Only double and std::complex<double> is supported
+   * \tparam A STL-compatible allocator type
+   * \tparam n Number of rows in a matrix block
+   * \tparam m Number of columns in a matrix block
+   *
    * \note This will only work if dune-istl has been configured to use UMFPack
    */
   template<typename T, typename A, int n, int m>
@@ -198,37 +203,45 @@ namespace Dune {
         FieldVector<T,n>,
         typename A::template rebind<FieldVector<T,n> >::other> range_type;
 
-    /** @brief construct a solver object from a BCRSMatrix
+    /** @brief Construct a solver object from a BCRSMatrix
+     *
+     * This computes the matrix decomposition, and may take a long time
+     * (and use a lot of memory).
+     *
      *  @param mat_ the matrix to solve for
      *  @param verbose [0..2] set the verbosity level, defaults to 0
      */
-    UMFPack(const Matrix& mat_, int verbose=0) : mat_is_loaded(false)
+    UMFPack(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
                     "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
       Caller::defaults(UMF_Control);
       setVerbosity(verbose);
-      setMatrix(mat_);
+      setMatrix(matrix);
     }
 
     /** @brief Constructor for compatibility with SuperLU standard constructor
+     *
+     * This computes the matrix decomposition, and may take a long time
+     * (and use a lot of memory).
+     *
      * @param mat_ the matrix to solve for
      * @param verbose [0..2] set the verbosity level, defaults to 0
      */
-    UMFPack(const Matrix& mat_, int verbose, bool) : mat_is_loaded(false)
+    UMFPack(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
                     "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
       Caller::defaults(UMF_Control);
       setVerbosity(verbose);
-      setMatrix(mat_);
+      setMatrix(matrix);
     }
 
     /** @brief default constructor
      */
-    UMFPack() : mat_is_loaded(false), verbose(0)
+    UMFPack() : matrixIsLoaded_(false), verbose(0)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
@@ -240,8 +253,9 @@ namespace Dune {
      * @param mat_ the matrix to decompose when no decoposition file found
      * @param file the decomposition file
      * @param verbose the verbosity level
-     * use saveDecomposition(char* file) for manually storing a decomposition. This constructor
-     * will decompose mat_ and store the result to file if no file wasnt found in the first place.
+     *
+     * Use saveDecomposition(char* file) for manually storing a decomposition. This constructor
+     * will decompose mat_ and store the result to file if no file wasn't found in the first place.
      * Thus, if you always use this you will only compute the decomposition once (and when you manually
      * deleted the decomposition file).
      */
@@ -255,13 +269,13 @@ namespace Dune {
       int errcode = Caller::load_numeric(&UMF_Numeric, const_cast<char*>(file));
       if ((errcode == UMFPACK_ERROR_out_of_memory) || (errcode == UMFPACK_ERROR_file_IO))
       {
-        mat_is_loaded = false;
+        matrixIsLoaded_ = false;
         setMatrix(mat_);
         saveDecomposition(file);
       }
       else
       {
-        mat_is_loaded = true;
+        matrixIsLoaded_ = true;
         std::cout << "UMFPack decomposition successfully loaded from " << file << std::endl;
       }
     }
@@ -283,14 +297,14 @@ namespace Dune {
         DUNE_THROW(Dune::Exception, "ran out of memory while loading UMFPack decomposition");
       if (errcode == UMFPACK_ERROR_file_IO)
         DUNE_THROW(Dune::Exception, "IO error while loading UMFPack decomposition");
-      mat_is_loaded = true;
+      matrixIsLoaded_ = true;
       std::cout << "UMFPack decomposition successfully loaded from " << file << std::endl;
       setVerbosity(verbose);
     }
 
     virtual ~UMFPack()
     {
-      if ((mat.N() + mat.M() > 0) || (mat_is_loaded))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
         free();
     }
 
@@ -301,9 +315,9 @@ namespace Dune {
     {
       double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
-                    mat.getColStart(),
-                    mat.getRowIndex(),
-                    mat.getValues(),
+                    umfpackMatrix_.getColStart(),
+                    umfpackMatrix_.getRowIndex(),
+                    umfpackMatrix_.getValues(),
                     reinterpret_cast<double*>(&x[0]),
                     reinterpret_cast<double*>(&b[0]),
                     UMF_Numeric,
@@ -334,15 +348,34 @@ namespace Dune {
     {
       double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
-                    mat.getColStart(),
-                    mat.getRowIndex(),
-                    mat.getValues(),
+                    umfpackMatrix_.getColStart(),
+                    umfpackMatrix_.getRowIndex(),
+                    umfpackMatrix_.getValues(),
                     x,
                     b,
                     UMF_Numeric,
                     UMF_Control,
                     UMF_Apply_Info);
       printOnApply(UMF_Apply_Info);
+    }
+
+    /** @brief Set UMFPack-specific options
+     *
+     * This method allows to set various options that control the UMFPack solver.
+     * More specifically, it allows to set values in the UMF_Control array.
+     * Please see the UMFPack documentation for a list of possible options and values.
+     *
+     * \param option Entry in the UMF_Control array, e.g., UMFPACK_IRSTEP
+     * \param value Corresponding value
+     *
+     * \throws RangeError If nonexisting option was requested
+     */
+    void setOption(unsigned int option, double value)
+    {
+      if (option >= UMFPACK_CONTROL)
+        DUNE_THROW(RangeError, "Requested non-existing UMFPack option");
+
+      UMF_Control[option] = value;
     }
 
     /** @brief saves a decomposition to a file
@@ -356,20 +389,20 @@ namespace Dune {
     }
 
     /** @brief Initialize data from given matrix. */
-    void setMatrix(const Matrix& _mat)
+    void setMatrix(const Matrix& matrix)
     {
-      if ((mat.N() + mat.M() > 0) || (mat_is_loaded))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
         free();
-      mat = _mat;
+      umfpackMatrix_ = matrix;
       decompose();
     }
 
     template<class S>
     void setSubMatrix(const Matrix& _mat, const S& rowIndexSet)
     {
-      if ((mat.N() + mat.M() > 0) || (mat_is_loaded))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
         free();
-      mat.setMatrix(_mat,rowIndexSet);
+      umfpackMatrix_.setMatrix(_mat,rowIndexSet);
       decompose();
     }
 
@@ -398,13 +431,13 @@ namespace Dune {
      */
     void free()
     {
-      if (!mat_is_loaded)
+      if (!matrixIsLoaded_)
       {
         Caller::free_symbolic(&UMF_Symbolic);
-        mat.free();
+        umfpackMatrix_.free();
       }
       Caller::free_numeric(&UMF_Numeric);
-      mat_is_loaded = false;
+      matrixIsLoaded_ = false;
     }
 
     const char* name() { return "UMFPACK"; }
@@ -420,17 +453,17 @@ namespace Dune {
     void decompose()
     {
       double UMF_Decomposition_Info[UMFPACK_INFO];
-      Caller::symbolic(static_cast<int>(mat.N()),
-                       static_cast<int>(mat.N()),
-                       mat.getColStart(),
-                       mat.getRowIndex(),
-                       reinterpret_cast<double*>(mat.getValues()),
+      Caller::symbolic(static_cast<int>(umfpackMatrix_.N()),
+                       static_cast<int>(umfpackMatrix_.N()),
+                       umfpackMatrix_.getColStart(),
+                       umfpackMatrix_.getRowIndex(),
+                       reinterpret_cast<double*>(umfpackMatrix_.getValues()),
                        &UMF_Symbolic,
                        UMF_Control,
                        UMF_Decomposition_Info);
-      Caller::numeric(mat.getColStart(),
-                      mat.getRowIndex(),
-                      reinterpret_cast<double*>(mat.getValues()),
+      Caller::numeric(umfpackMatrix_.getColStart(),
+                      umfpackMatrix_.getRowIndex(),
+                      reinterpret_cast<double*>(umfpackMatrix_.getValues()),
                       UMF_Symbolic,
                       &UMF_Numeric,
                       UMF_Control,
@@ -464,8 +497,8 @@ namespace Dune {
       }
     }
 
-    UMFPackMatrix mat;
-    bool mat_is_loaded;
+    UMFPackMatrix umfpackMatrix_;
+    bool matrixIsLoaded_;
     int verbose;
     void *UMF_Symbolic;
     void *UMF_Numeric;
