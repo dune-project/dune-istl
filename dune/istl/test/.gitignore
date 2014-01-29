@@ -32,6 +32,7 @@ superluctest
 seqmatrixmarkettest
 solvertest
 umfpacktest
+umfpack_decomp
 *.log
 *.trs
 testmat_0.idx
