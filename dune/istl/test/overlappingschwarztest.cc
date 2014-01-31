@@ -145,13 +145,30 @@ int main(int argc, char** argv)
       Dune::UMFPack<BCRSMat> > prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-2,100,2);
   solver0.apply(x,b, res);
+
+  b=0;
+  x=100;
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::UMFPack<BCRSMat> >
+    prec1(mat, domains, 1, false);
+  Dune::LoopSolver<BVector> solver1(fop, prec1, 1e-2,100,2);
+  solver1.apply(x,b, res);
 #endif
 #if HAVE_SUPERLU
   std::cout << "Do testing with SuperLU" << std::endl;
+  x=100;
+  b=0;
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
       Dune::SuperLU<BCRSMat> > slu_prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> slu_solver(fop, slu_prec0, 1e-2,100,2);
   slu_solver.apply(x,b, res);
+
+  x=100;
+  b=0;
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::SuperLU<BCRSMat> > slu_prec1(mat, domains, 1, false);
+  Dune::LoopSolver<BVector> slu_solver1(fop, slu_prec1, 1e-2,100,2);
+  slu_solver1.apply(x,b, res);
 #endif
   x=100;
   b=0;
@@ -161,6 +178,15 @@ int main(int argc, char** argv)
                               Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> > dyn_prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> dyn_solver(fop, dyn_prec0, 1e-2,100,2);
   dyn_solver.apply(x,b, res);
+
+  x=100;
+  b=0;
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> >
+    dyn_prec1(mat, domains, 1, false);
+  Dune::LoopSolver<BVector> dyn_solver1(fop, dyn_prec1, 1e-2,100,2);
+  dyn_solver1.apply(x,b, res);
+
   std::cout<<"Additive Schwarz not on the fly (domains vector)"<<std::endl;
 
   b=0;
@@ -174,9 +200,9 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //setBoundary(x,b,N);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> prec1(mat, domains, 1);
-  Dune::LoopSolver<BVector> solver1(fop, prec1, 1e-2,100,2);
-  solver1.apply(x,b, res);
+  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> prec1m(mat, domains, 1);
+  Dune::LoopSolver<BVector> solver1m(fop, prec1m, 1e-2,100,2);
+  solver1m.apply(x,b, res);
 
   std::cout<<"Additive Schwarz (rowToDomain vector)"<<std::endl;
 
