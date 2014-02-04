@@ -12,6 +12,7 @@
 #endif
 
 #include <dune/common/timer.hh>
+#include <dune/common/unused.hh>
 #include <dune/common/enumset.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/parallel/mpitraits.hh>
@@ -90,7 +91,7 @@ namespace Dune
 
     // Store the global index information for repairing the remote index information
     std::map<int,SLList<std::pair<T1,Attribute> > > globalIndices;
-    storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices(), indexSet);
+    storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices());
     indexSet.beginResize();
 
     for(VertexIterator vertex = graph.begin(), vend=graph.end(); vertex != vend; ++vertex) {
@@ -552,6 +553,7 @@ namespace Dune
     template<class T, class I>
     void my_push_back(std::vector<T>& ownerVec, const I& index, int proc)
     {
+      DUNE_UNUSED_PARAMETER(proc);
       ownerVec.push_back(index);
     }
 
@@ -591,7 +593,7 @@ namespace Dune
     void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet,
                             int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
                             RedistributeInterface& redist, std::set<int>& neighborProcs) {
-
+      DUNE_UNUSED_PARAMETER(myPe);
       //typedef typename IndexSet::const_iterator Iterator;
       typedef typename IS::const_iterator Iterator;
       for(Iterator index = indexSet.begin(); index != indexSet.end(); ++index) {

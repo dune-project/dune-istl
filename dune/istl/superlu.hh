@@ -155,7 +155,7 @@ namespace Dune
 
     }
 
-    static void destroy(SuperMatrix *mat)
+    static void destroy(SuperMatrix * /* mat */)
     {}
   };
   template<>
@@ -336,6 +336,7 @@ namespace Dune
      */
     void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
+      DUNE_UNUSED_PARAMETER(reduction);
       apply(x,b,res);
     }
 

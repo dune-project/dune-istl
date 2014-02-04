@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <dune/common/exceptions.hh>
+#include <dune/common/typetraits.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
 #include <dune/istl/paamg/hierarchy.hh>
@@ -16,8 +18,6 @@
 #include <dune/istl/solvertype.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/preconditioners.hh>
-#include <dune/common/typetraits.hh>
-#include <dune/common/exceptions.hh>
 
 #include "fastamgsmoother.hh"
 
@@ -726,6 +726,7 @@ namespace Dune
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>::post(Domain& x)
     {
+      DUNE_UNUSED_PARAMETER(x);
       delete lhs_;
       lhs_=nullptr;
       delete rhs_;

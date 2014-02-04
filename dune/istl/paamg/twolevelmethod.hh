@@ -8,6 +8,7 @@
 #include"galerkin.hh"
 #include<dune/istl/solver.hh>
 #include<dune/common/shared_ptr.hh>
+#include<dune/common/unused.hh>
 
 /**
  * @addtogroup ISTL_PAAMG
@@ -183,7 +184,7 @@ public:
     for(Iterator iter= visited.begin(), end=visited.end();
         iter != end; ++iter)
           *iter=false;
-    matrix_.reset(productBuilder.build(fineOperator.getmat(), mg, vm,
+    matrix_.reset(productBuilder.build(mg, vm,
                                        SequentialInformation(),
                                        *aggregatesMap_,
                                        aggregates,
@@ -272,6 +273,8 @@ private:
 
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
     {
+      DUNE_UNUSED_PARAMETER(reduction);
+      DUNE_UNUSED_PARAMETER(res);
       if(first_)
       {
         amg_.pre(x,b);
@@ -430,7 +433,9 @@ public:
   }
 
   void post(FineDomainType& x)
-  {}
+  {
+    DUNE_UNUSED_PARAMETER(x);
+  }
 
   void apply(FineDomainType& v, const FineRangeType& d)
   {

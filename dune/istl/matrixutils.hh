@@ -10,6 +10,7 @@
 #include <dune/common/static_assert.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "istlexception.hh"
 
@@ -86,6 +87,7 @@ namespace Dune
      */
     static void check(const Matrix& mat)
     {
+      DUNE_UNUSED_PARAMETER(mat);
 #ifdef DUNE_ISTL_WITH_CHECKING
       typedef typename Matrix::ConstRowIterator Row;
       typedef typename Matrix::ConstColIterator Entry;

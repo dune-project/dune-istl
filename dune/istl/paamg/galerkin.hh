@@ -8,6 +8,7 @@
 #include "pinfo.hh"
 #include <dune/common/poolallocator.hh>
 #include <dune/common/enumset.hh>
+#include <dune/common/unused.hh>
 #include <set>
 #include <limits>
 #include <algorithm>
@@ -120,7 +121,6 @@ namespace Dune
 
       /**
        * @brief Calculates the coarse matrix via a Galerkin product.
-       * @param fine The matrix on the fine level.
        * @param fineGraph The graph of the fine matrix.
        * @param visitedMap Map for marking vertices as visited.
        * @param pinfo Parallel information about the fine level.
@@ -128,12 +128,12 @@ namespace Dune
        * @param size The number of columns and rows of the coarse matrix.
        * @param copy The attribute set identifying the copy nodes of the graph.
        */
-      template<class M, class G, class V, class Set>
-      M* build(const M& fine, G& fineGraph, V& visitedMap,
-               const ParallelInformation& pinfo,
-               AggregatesMap<typename G::VertexDescriptor>& aggregates,
-               const typename M::size_type& size,
-               const Set& copy);
+      template<class G, class V, class Set>
+      typename G::MutableMatrix* build(G& fineGraph, V& visitedMap,
+                                       const ParallelInformation& pinfo,
+                                       AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                                       const typename G::Matrix::size_type& size,
+                                       const Set& copy);
     private:
 
       /**
@@ -166,7 +166,6 @@ namespace Dune
     public:
       /**
        * @brief Calculates the coarse matrix via a Galerkin product.
-       * @param fine The matrix on the fine level.
        * @param fineGraph The graph of the fine matrix.
        * @param visitedMap Map for marking vertices as visited.
        * @param pinfo Parallel information about the fine level.
@@ -174,12 +173,12 @@ namespace Dune
        * @param size The number of columns and rows of the coarse matrix.
        * @param copy The attribute set identifying the copy nodes of the graph.
        */
-      template<class M, class G, class V, class Set>
-      M* build(const M& fine, G& fineGraph, V& visitedMap,
-               const SequentialInformation& pinfo,
-               const AggregatesMap<typename G::VertexDescriptor>& aggregates,
-               const typename M::size_type& size,
-               const Set& copy);
+      template<class G, class V, class Set>
+      typename G::MutableMatrix* build(G& fineGraph, V& visitedMap,
+                                       const SequentialInformation& pinfo,
+                                       const AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                                       const typename G::Matrix::size_type& size,
+                                       const Set& copy);
     };
 
     struct BaseConnectivityConstructor
@@ -499,6 +498,7 @@ namespace Dune
                                                                    const AggregatesMap<Vertex>& aggregates,
                                                                    R& row)
     {
+      DUNE_UNUSED_PARAMETER(pinfo);
       typedef typename G::VertexIterator VertexIterator;
 
       VertexIterator vend=graph.end();
@@ -560,14 +560,14 @@ namespace Dune
     }
 
     template<class T>
-    template<class M, class G, class V, class Set>
-    M* GalerkinProduct<T>::build(const M& fine, G& fineGraph, V& visitedMap,
-                                 const ParallelInformation& pinfo,
-                                 AggregatesMap<typename G::VertexDescriptor>& aggregates,
-                                 const typename M::size_type& size,
-                                 const Set& overlap)
+    template<class G, class V, class Set>
+    typename G::MutableMatrix*
+    GalerkinProduct<T>::build(G& fineGraph, V& visitedMap,
+                              const ParallelInformation& pinfo,
+                              AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                              const typename G::Matrix::size_type& size,
+                              const Set& overlap)
     {
-
       typedef OverlapVertex<typename G::VertexDescriptor> OverlapVertex;
 
       std::size_t count;
@@ -577,6 +577,7 @@ namespace Dune
                                                                   aggregates,
                                                                   overlap,
                                                                   count);
+      typedef typename G::MutableMatrix M;
       M* coarseMatrix = new M(size, size, M::row_wise);
 
       // Reset the visited flags of all vertices.
@@ -589,6 +590,7 @@ namespace Dune
         put(visitedMap, *vertex, aggregates[*vertex]==AggregatesMap<typename G::VertexDescriptor>::ISOLATED);
       }
 
+      typedef typename G::MutableMatrix M;
       SparsityBuilder<M> sparsityBuilder(*coarseMatrix);
 
       ConnectivityConstructor<G,T>::examine(fineGraph, visitedMap, pinfo,
@@ -604,18 +606,19 @@ namespace Dune
 
       delete[] overlapVertices;
 
-      //calculate(fine, aggregates, *coarse, overlap);
-
       return coarseMatrix;
     }
 
-    template<class M, class G, class V, class Set>
-    M* GalerkinProduct<SequentialInformation>::build(const M& fine, G& fineGraph, V& visitedMap,
-                                                     const SequentialInformation& pinfo,
-                                                     const AggregatesMap<typename G::VertexDescriptor>& aggregates,
-                                                     const typename M::size_type& size,
-                                                     const Set& overlap)
+    template<class G, class V, class Set>
+    typename G::MutableMatrix*
+    GalerkinProduct<SequentialInformation>::build(G& fineGraph, V& visitedMap,
+                                                  const SequentialInformation& pinfo,
+                                                  const AggregatesMap<typename G::VertexDescriptor>& aggregates,
+                                                  const typename G::Matrix::size_type& size,
+                                                  const Set& overlap)
     {
+      DUNE_UNUSED_PARAMETER(overlap);
+      typedef typename G::MutableMatrix M;
       M* coarseMatrix = new M(size, size, M::row_wise);
 
       // Reset the visited flags of all vertices.
@@ -642,6 +645,7 @@ namespace Dune
     void BaseGalerkinProduct::calculate(const M& fine, const AggregatesMap<V>& aggregates, M& coarse,
                                         const P& pinfo, const O& copy)
     {
+      DUNE_UNUSED_PARAMETER(copy);
       coarse = static_cast<typename M::field_type>(0);
 
       typedef typename M::ConstIterator RowIterator;
