@@ -5,6 +5,7 @@
 #include "repartition.hh"
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/indexset.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 /**
  * @file
@@ -22,36 +23,51 @@ namespace Dune
     }
     template<class D>
     void redistribute(const D& from, D& to) const
-    {}
+    {
+      DUNE_UNUSED_PARAMETER(from);
+      DUNE_UNUSED_PARAMETER(to);
+    }
 
     template<class D>
     void redistributeBackward(D& from, const D& to) const
-    {}
+    {
+      DUNE_UNUSED_PARAMETER(from);
+      DUNE_UNUSED_PARAMETER(to);
+    }
 
     void resetSetup()
     {}
 
     void setNoRows(std::size_t size)
-    {}
+    {
+      DUNE_UNUSED_PARAMETER(size);
+    }
 
     void setNoCopyRows(std::size_t size)
-    {}
+    {
+      DUNE_UNUSED_PARAMETER(size);
+    }
 
     void setNoBackwardsCopyRows(std::size_t size)
-    {}
+    {
+      DUNE_UNUSED_PARAMETER(size);
+    }
 
     std::size_t getRowSize(std::size_t index) const
     {
+      DUNE_UNUSED_PARAMETER(index);
       return -1;
     }
 
     std::size_t getCopyRowSize(std::size_t index) const
     {
+      DUNE_UNUSED_PARAMETER(index);
       return -1;
     }
 
     std::size_t getBackwardsCopyRowSize(std::size_t index) const
     {
+      DUNE_UNUSED_PARAMETER(index);
       return -1;
     }
 
@@ -550,6 +566,7 @@ namespace Dune
     }
     static void scatter(Container& cont, const GlobalIndex& gi, std::size_t i, std::size_t j)
     {
+      DUNE_UNUSED_PARAMETER(j);
       try{
         if (gi != std::numeric_limits<GlobalIndex>::max()) {
           const typename I::IndexPair& ip=cont.aggidxset.at(gi);
@@ -635,6 +652,7 @@ namespace Dune
     }
     static void scatter(Container& cont, const Data& data, std::size_t i, std::size_t j)
     {
+      DUNE_UNUSED_PARAMETER(j);
       try{
         if (data.first != std::numeric_limits<GlobalIndex>::max()) {
           typename M::size_type column=cont.aggidxset.at(data.first).local();

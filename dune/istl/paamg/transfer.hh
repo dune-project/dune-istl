@@ -9,6 +9,7 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/aggregates.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -99,6 +100,9 @@ namespace Dune
                                                            const SequentialInformation& comm,
                                                            const Redist& redist)
     {
+      DUNE_UNUSED_PARAMETER(fineRedist);
+      DUNE_UNUSED_PARAMETER(comm);
+      DUNE_UNUSED_PARAMETER(redist);
       prolongateVector(aggregates, coarse, fine, damp);
     }
     template<class V, class V1>
@@ -109,6 +113,7 @@ namespace Dune
                                                            T damp,
                                                            const SequentialInformation& comm)
     {
+      DUNE_UNUSED_PARAMETER(comm);
       typedef typename Vector::iterator Iterator;
 
       Iterator end = coarse.end();
@@ -133,6 +138,7 @@ namespace Dune
                                                          const Vector& fine,
                                                          const SequentialInformation& comm)
     {
+      DUNE_UNUSED_PARAMETER(comm);
       // Set coarse vector to zero
       coarse=0;
 
@@ -172,6 +178,7 @@ namespace Dune
                                                                                        T3 damp,
                                                                                        OwnerOverlapCopyCommunication<T1,T2>& comm)
     {
+      DUNE_UNUSED_PARAMETER(comm);
       Transfer<V,V1,SequentialInformation>::prolongateVector(aggregates, coarse, fine, damp);
     }
     template<class V, class V1, class T1, class T2>

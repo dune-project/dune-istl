@@ -24,7 +24,10 @@ namespace Dune
     {
       template<class TT, class T>
       static void apply(TT tuple, const T& t)
-      {}
+      {
+        DUNE_UNUSED_PARAMETER(tuple);
+        DUNE_UNUSED_PARAMETER(t);
+      }
     };
 
     template<typename T>

@@ -602,7 +602,7 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
 
 
 
-int main (int argc , char ** argv)
+int main (int /*argc*/, char ** /*argv*/)
 {
   try {
     test_basearray();

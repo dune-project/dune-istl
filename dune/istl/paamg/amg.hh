@@ -883,7 +883,7 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     void AMG<M,X,S,PI,A>::post(Domain& x)
     {
-
+      DUNE_UNUSED_PARAMETER(x);
       // Postprocess all smoothers
       typedef typename Hierarchy<Smoother,A>::Iterator Iterator;
       typedef typename Hierarchy<Domain,A>::Iterator DIterator;

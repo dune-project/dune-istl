@@ -55,6 +55,11 @@ namespace Dune
       typedef M Matrix;
 
       /**
+       * @brief The mutable type of the matrix we are a graph for.
+       */
+      typedef typename remove_const<M>::type MutableMatrix;
+
+      /**
        * @brief The type of the weights
        */
       typedef typename M::block_type Weight;
