@@ -1169,10 +1169,10 @@ namespace Dune
       SolverIterator solver=solvers.begin();
       for(InitializerIterator initializer=initializers.begin(); initializer!=initializers.end();
           ++initializer, ++solver, ++domain) {
-        solver->mat.N_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
-        solver->mat.M_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
+        solver->getInternalMatrix().N_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
+        solver->getInternalMatrix().M_=SeqOverlappingSchwarzDomainSize<matrix_type>::size(*domain);
         //solver->setVerbosity(true);
-        *initializer=MatrixInitializer(solver->mat);
+        *initializer=MatrixInitializer(solver->getInternalMatrix());
       }
 
       // Set up the supermatrices according to the subdomains
@@ -1185,8 +1185,8 @@ namespace Dune
       // Calculate the LU decompositions
       std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&S<BCRSMatrix<FieldMatrix<T,m,n>,A> >::decompose));
       for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
-        assert(solver->mat.N()==solver->mat.M());
-        maxlength=std::max(maxlength, solver->mat.N());
+        assert(solver->getInternalMatrix().N()==solver->getInternalMatrix().M());
+        maxlength=std::max(maxlength, solver->getInternalMatrix().N());
       }
     }
     return maxlength;

@@ -371,6 +371,8 @@ namespace Dune
     friend class SeqOverlappingSchwarz;
     friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>,true>;
 
+    SuperLUMatrix& getInternalMatrix() { return mat; }
+
     /** @brief computes the LU Decomposition */
     void decompose();
 

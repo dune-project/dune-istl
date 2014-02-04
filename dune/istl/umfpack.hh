@@ -499,6 +499,8 @@ namespace Dune {
       }
     }
 
+    UMFPackMatrix& getInternalMatrix() { return umfpackMatrix_; }
+
     UMFPackMatrix umfpackMatrix_;
     bool matrixIsLoaded_;
     int verbose;
