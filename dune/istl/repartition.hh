@@ -1392,7 +1392,7 @@ namespace Dune
 
 
     //
-    // 3) Find a optimal domain based on the ParMETIS repatitioning
+    // 3) Find a optimal domain based on the ParMETIS repartitioning
     //    result
     //
 
