@@ -47,10 +47,6 @@ int testRepart(int N, int coarsenTarget)
 
   typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
-  typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef int LocalId;
-  //typedef int GlobalId;
   typedef Dune::bigunsignedint<56> GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<GlobalId> Communication;
   int n;
