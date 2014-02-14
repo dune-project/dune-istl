@@ -91,7 +91,7 @@ namespace Dune
 
     // Store the global index information for repairing the remote index information
     std::map<int,SLList<std::pair<T1,Attribute> > > globalIndices;
-    storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices());
+    storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices(), indexSet);
     indexSet.beginResize();
 
     for(VertexIterator vertex = graph.begin(), vend=graph.end(); vertex != vend; ++vertex) {
