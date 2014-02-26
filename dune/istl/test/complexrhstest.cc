@@ -1,25 +1,12 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 /**
-   @author: Matthias Wohlmuth
-   @file complexrhstest.cc
-     Test different solvers and preconditioners for A*x = b with A being a N^2 x N^2 Laplacian and b a complex valued rhs. the rhs and reference solutions were computed using the following matlab code:
-    N=3;
-    A = full(gallery('poisson',N)); % create poisson matrix
-
-    % find a solution consiting of complex integers
-    indVec = (0:(N*N-1))',
-    iVec = complex(0,1).^indVec + indVec,
-    x0 = iVec .* indVec,
-
-    % compute corresponding rhs
-    b = A * x0,
-
-    % solve system using different solvers
-    xcg = pcg(A,b),
-    x =A \ b,
-    xgmres = gmres(A,b)
- **/
+ * \author: Matthias Wohlmuth
+ * \file
+ * \brief Test different solvers and preconditioners for
+ *        \f$A*x = b\f$ with \f$A\f$ being a \f$N^2 \times N^2\f$
+ *        Laplacian and \f$b\f$ a complex valued rhs.
+ */
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -34,41 +21,88 @@
 
 #if HAVE_SUPERLU
 #include <dune/istl/superlu.hh>
-static_assert(SUPERLU_NTYPE==3, "If SuperLU is selected for complex rhs test, then SUPERLU_NTYPE must be set to 3 (std::complex<double>)!");
+static_assert(SUPERLU_NTYPE == 3,
+  "If SuperLU is selected for complex rhs test, then SUPERLU_NTYPE must be set to 3 (std::complex<double>)!");
 #endif
-
 
 typedef std::complex<double> FIELD_TYPE;
 
+/**
+ * \brief Test different solvers and preconditioners for
+ *        \f$A*x = b\f$ with \f$A\f$ being a \f$N^2 \times N^2\f$
+ *        Laplacian and \f$b\f$ a complex valued rhs.
+ *
+ * The rhs and reference solutions were computed using the following matlab code:
+ * \code
+    N=3;
+    A = full(gallery('poisson',N)); % create poisson matrix
+
+    % find a solution consiting of complex integers
+    indVec = (0:(N*N-1))',
+    iVec = complex(0,1).^indVec + indVec,
+    x0 = iVec .* indVec,
+
+    % compute corresponding rhs
+    b = A * x0,
+
+    % solve system using different solvers
+    xcg = pcg(A,b),
+    x = A \ b,
+    xgmres = gmres(A,b)
+ * \endcode
+ */
 template<class Operator, class Vector>
-class SolverTest {
+class SolverTest
+{
 public:
-  SolverTest(Operator & op, Vector & rhs, Vector & x0, double maxError = 1e-10) : m_op(op), m_x(rhs), m_x0(x0), m_b(rhs), m_rhs(rhs), m_maxError(maxError), m_numTests(0), m_numFailures(0){
-    std::cout << "SolverTest uses rhs: " << std::endl << m_rhs << std::endl << "and expects the solultion: " << m_x0 << std::endl << std::endl;
+  SolverTest(Operator & op, Vector & rhs, Vector & x0, double maxError = 1e-10)
+  : m_op(op),
+    m_x(rhs),
+    m_x0(x0),
+    m_b(rhs),
+    m_rhs(rhs),
+    m_maxError(maxError),
+    m_numTests(0),
+    m_numFailures(0)
+  {
+    std::cout << "SolverTest uses rhs: " << std::endl
+      << m_rhs << std::endl
+      << "and expects the solultion: " << m_x0 << std::endl << std::endl;
   }
 
   template<class Solver>
-  bool operator() (Solver & solver) {
+  bool operator() (Solver & solver)
+  {
     m_b = m_rhs;
     m_x = 0;
-    solver.apply(m_x,m_b, m_res);
-    std::cout<<"Defect reduction is "<< m_res.reduction<<std::endl;
+    solver.apply(m_x, m_b, m_res);
+    std::cout << "Defect reduction is " << m_res.reduction << std::endl;
     std::cout << "Computed solution is: " << std::endl;
     std::cout << m_x << std::endl;
-    m_b = m_x0; m_b -= m_x;
+    m_b = m_x0;
+    m_b -= m_x;
     const double errorNorm = m_b.two_norm();
     std::cout << "Error = " << errorNorm << std::endl;
     ++m_numTests;
-    if(errorNorm>m_maxError) {
-      std::cout << "SolverTest did not converge !!!" << std::endl;
+    if(errorNorm > m_maxError)
+    {
+      std::cout << "SolverTest did not converge!" << std::endl;
       ++m_numFailures;
       return false;
     }
     return true;
   }
 
-  int getNumTests() const { return m_numTests; }
-  int getNumFailures() const { return m_numFailures; }
+  int getNumTests() const
+  {
+    return m_numTests;
+  }
+
+  int getNumFailures() const
+  {
+    return m_numFailures;
+  }
+
 private:
   const Operator & m_op;
   Vector m_x, m_x0, m_b;
@@ -80,13 +114,13 @@ private:
 
 int main(int argc, char** argv)
 {
-  const int BS=1;
-  std::size_t N=3;
+  const int BS = 1;
+  std::size_t N = 3;
 
   const int maxIter = int(N*N*N*N);
   const double reduction = 1e-16;
 
-  if(argc>1)
+  if (argc > 1)
     N = atoi(argv[1]);
   std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
 
@@ -108,18 +142,18 @@ int main(int argc, char** argv)
 
   const FIELD_TYPE I(0.,1.); // complex case
 
-
-  for (VectorIterator it = x0.begin(); it != x0.end(); ++it ) {
+  for (VectorIterator it = x0.begin(); it != x0.end(); ++it)
+  {
     *it = (count + std::pow(I,count))*count;
     count = count + 1.;
   }
-  std::cout << "x0= " << x0 << std::endl;
+  std::cout << "x0 = " << x0 << std::endl;
 
   mat.mv(x0,b);
 
   std::cout << "b = " << b << std::endl;
   b0 = b;
-  x=0;
+  x = 0;
 
   Dune::Timer watch;
 
@@ -151,7 +185,6 @@ int main(int argc, char** argv)
   SSORPreconditioner ssorPrec1(mat,1,relaxFactor);
   SSORPreconditioner ssorPrec2(mat,maxIter,relaxFactor);
 
-
 #if HAVE_SUPERLU
   Dune::SuperLU<BCRSMat> solverSuperLU(mat, true);
   std::cout << "SuperLU converged:  "<< solverTest(solverSuperLU) << std::endl <<  std::endl;
@@ -161,7 +194,6 @@ int main(int argc, char** argv)
   GradientSolver solverGradient(fop,dummyPrec, reduction, maxIter, 1);
   std::cout << "GradientSolver with identity preconditioner converged: " << solverTest(solverGradient) << std::endl <<  std::endl;
 
-
   typedef  Dune::CGSolver<Vector> CG;
   CG solverCG(fop,dummyPrec, reduction, maxIter, 1);
   std::cout << "CG with identity preconditioner converged: " << solverTest(solverCG) << std::endl <<  std::endl;
@@ -170,7 +202,6 @@ int main(int argc, char** argv)
   BiCG solverBiCG(fop,dummyPrec, reduction, maxIter, 1);
   std::cout << "BiCGStab with identity preconditioner converged: " <<  solverTest(solverBiCG) << std::endl <<  std::endl;
 
-
   typedef  Dune::LoopSolver<Vector> JacobiSolver;
   JacobiSolver solverJacobi1(fop,jacobiPrec1,reduction,maxIter,1);
   std::cout << "LoopSolver with a single Jacobi iteration as preconditioner converged: " << solverTest(solverJacobi1)  << std::endl <<  std::endl;
@@ -178,7 +209,6 @@ int main(int argc, char** argv)
   typedef  Dune::LoopSolver<Vector> JacobiSolver;
   JacobiSolver solverJacobi2(fop,jacobiPrec2,reduction,maxIter,1);
   std::cout << "LoopSolver with multiple Jacobi iteration as preconditioner converged: " << solverTest(solverJacobi2)  << std::endl <<  std::endl;
-
 
   typedef  Dune::LoopSolver<Vector> GaussSeidelSolver;
   GaussSeidelSolver solverGaussSeidel1(fop,gsPrec1,reduction,maxIter,1);
@@ -192,11 +222,9 @@ int main(int argc, char** argv)
   SORSolver solverSOR1(fop,sorPrec1,reduction,maxIter,1);
   std::cout << "LoopSolver with a single SOR iteration as preconditioner converged: " << solverTest(solverSOR1)  << std::endl <<  std::endl;
 
-
   typedef  Dune::LoopSolver<Vector> SORSolver;
   SORSolver solverSOR2(fop,sorPrec2,reduction,maxIter,1);
   std::cout << "LoopSolver with multiple SOR iterations as preconditioner converged: " << solverTest(solverSOR2)  << std::endl <<  std::endl;
-
 
   typedef  Dune::LoopSolver<Vector> SSORSolver;
   SSORSolver solverSSOR1(fop,ssorPrec1,reduction,maxIter,1);
@@ -205,7 +233,6 @@ int main(int argc, char** argv)
   typedef  Dune::LoopSolver<Vector> SSORSolver;
   SSORSolver solverSSOR2(fop,ssorPrec2,reduction,maxIter,1);
   std::cout << "LoopSolver with multiple SSOR iterations as preconditioner converged: " << solverTest(solverSSOR2)  << std::endl <<  std::endl;
-
 
   typedef Dune::MINRESSolver<Vector> MINRES;
   MINRES solverMINRES(fop,dummyPrec, reduction, maxIter, 1);
