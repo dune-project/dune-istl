@@ -8,6 +8,7 @@
 #include <complex>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,6 @@
 #include "preconditioner.hh"
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/shared_ptr.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
@@ -1421,7 +1421,7 @@ namespace Dune {
       _prec.pre(x,b);                 // prepare preconditioner
       _op.applyscaleadd(-1,x,b);      // overwrite b with defect
 
-      std::vector<shared_ptr<X> > p(_restart);
+      std::vector<std::shared_ptr<X> > p(_restart);
       std::vector<typename X::field_type> pp(_restart);
       X q(x);                  // a temporary vector
       X prec_res(x);           // a temporary vector for preconditioner output

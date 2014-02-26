@@ -7,7 +7,7 @@
 #include"amg.hh"
 #include"galerkin.hh"
 #include<dune/istl/solver.hh>
-#include<dune/common/shared_ptr.hh>
+
 #include<dune/common/unused.hh>
 
 /**
@@ -65,7 +65,7 @@ public:
    * @brief Get the coarse level operator.
    * @return A shared pointer to the coarse level system.
    */
-  shared_ptr<CoarseOperatorType>& getCoarseLevelOperator()
+  std::shared_ptr<CoarseOperatorType>& getCoarseLevelOperator()
   {
     return operator_;
   }
@@ -127,7 +127,7 @@ public:
   /** @brief The coarse level lhs. */
   CoarseDomainType lhs_;
   /** @brief the coarse level linear operator. */
-  shared_ptr<CoarseOperatorType> operator_;
+  std::shared_ptr<CoarseOperatorType> operator_;
 };
 
 /**
@@ -216,9 +216,9 @@ public:
 
 private:
   typename O::matrix_type::field_type prolongDamp_;
-  shared_ptr<AggregatesMap> aggregatesMap_;
+  std::shared_ptr<AggregatesMap> aggregatesMap_;
   Criterion criterion_;
-  shared_ptr<typename O::matrix_type> matrix_;
+  std::shared_ptr<typename O::matrix_type> matrix_;
 };
 
 /**
@@ -323,13 +323,13 @@ public:
                                                      criterion_,
                                                      smootherArgs_);
 
-    return inv; //shared_ptr<InverseOperator<X,X> >(inv);
+    return inv; //std::shared_ptr<InverseOperator<X,X> >(inv);
 
   }
 
 private:
   /** @brief The coarse level operator. */
-  shared_ptr<Operator> coarseOperator_;
+  std::shared_ptr<Operator> coarseOperator_;
   /** @brief The arguments used to construct the smoother. */
   SmootherArgs smootherArgs_;
   /** @brief The coarsening criterion. */
@@ -401,7 +401,7 @@ public:
    * level correction.
    */
   TwoLevelMethod(const FineOperatorType& op,
-                 shared_ptr<SmootherType> smoother,
+                 std::shared_ptr<SmootherType> smoother,
                  const LevelTransferPolicy<FineOperatorType,
                                            CoarseOperatorType>& policy,
                  CoarseLevelSolverPolicy& coarsePolicy,
@@ -472,7 +472,7 @@ private:
     /** @brief The type of the smoother used. */
     typedef S SmootherType;
     /** @brief A pointer to the smoother. */
-    shared_ptr<SmootherType> smoother;
+    std::shared_ptr<SmootherType> smoother;
     /** @brief The left hand side passed to the and returned by the smoother. */
     FineDomainType* lhs;
     /*
@@ -500,7 +500,7 @@ private:
   /** @brief The coarse level solver. */
   CoarseLevelSolver* coarseSolver_;
   /** @brief The fine level smoother. */
-  shared_ptr<S> smoother_;
+  std::shared_ptr<S> smoother_;
   /** @brief Policy for prolongation, restriction, and coarse level system creation. */
   LevelTransferPolicy<FO,typename CSP::Operator>* policy_;
   /** @brief The number of presmoothing steps to apply. */

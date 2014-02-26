@@ -253,9 +253,9 @@ namespace Dune
       void initIteratorsWithFineLevel(LevelContext& levelContext);
 
       /**  @brief The matrix we solve. */
-      Dune::shared_ptr<OperatorHierarchy> matrices_;
+      std::shared_ptr<OperatorHierarchy> matrices_;
       /** @brief The solver of the coarsest level. */
-      Dune::shared_ptr<CoarseSolver> solver_;
+      std::shared_ptr<CoarseSolver> solver_;
       /** @brief The right hand side of our problem. */
       Hierarchy<Range,A>* rhs_;
       /** @brief The left approximate solution of our problem. */
@@ -267,7 +267,7 @@ namespace Dune
       typedef ScalarProductChooser<X,PI,M::category> ScalarProductChooserType;
       /** @brief The type of the scalar product for the coarse solver. */
       typedef typename ScalarProductChooserType::ScalarProduct ScalarProduct;
-      typedef Dune::shared_ptr<ScalarProduct> ScalarProductPointer;
+      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
       /** @brief Scalar product on the coarse level. */
       ScalarProductPointer scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
@@ -281,7 +281,7 @@ namespace Dune
       bool symmetric;
       bool coarsesolverconverged;
       typedef SeqSSOR<typename M::matrix_type,X,X> Smoother;
-      typedef Dune::shared_ptr<Smoother> SmootherPointer;
+      typedef std::shared_ptr<Smoother> SmootherPointer;
       SmootherPointer coarseSmoother_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
