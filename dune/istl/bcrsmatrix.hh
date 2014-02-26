@@ -21,7 +21,6 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/static_assert.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class

@@ -19,7 +19,6 @@
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/shared_ptr.hh>
-#include <dune/common/static_assert.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
@@ -85,10 +84,10 @@ namespace Dune {
                 double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                         "L and P have to have the same category!");
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                         "L has to be sequential!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P have to have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L has to be sequential!");
     }
 
     /**
@@ -116,10 +115,10 @@ namespace Dune {
                 double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
-                          "L and S must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
+                    "L and S must have the same category!");
     }
 
 
@@ -242,10 +241,10 @@ namespace Dune {
                     double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                         "L and P have to have the same category!");
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                         "L has to be sequential!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P have to have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L has to be sequential!");
     }
     /*!
        \brief Set up solver.
@@ -257,10 +256,10 @@ namespace Dune {
                     double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                         "L and P have to have the same category!");
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                         "L and S have to have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P have to have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
+                    "L and S have to have the same category!");
     }
 
     /*!
@@ -375,10 +374,10 @@ namespace Dune {
     CGSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                          "L must be sequential!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
     }
     /*!
        \brief Set up conjugate gradient solver.
@@ -389,10 +388,10 @@ namespace Dune {
     CGSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
-                          "L and S must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
+                    "L and S must have the same category!");
     }
 
     /*!
@@ -546,8 +545,10 @@ namespace Dune {
                     double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category), "L and P must be of the same category!");
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential), "L must be sequential!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must be of the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
     }
     /*!
        \brief Set up solver.
@@ -559,10 +560,10 @@ namespace Dune {
                     double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
-                          "L and S must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
+                    "L and S must have the same category!");
     }
 
     /*!
@@ -813,10 +814,10 @@ namespace Dune {
     MINRESSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                          "L must be sequential!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
     }
     /*!
        \brief Set up MINRES solver.
@@ -827,10 +828,10 @@ namespace Dune {
     MINRESSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
-                          "L and S must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
+                    "L and S must have the same category!");
     }
 
     /*!
@@ -1079,10 +1080,10 @@ namespace Dune {
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _recalc_defect(recalc_defect)
     {
-      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                         "P and L must be the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                          "L must be sequential!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                    "P and L must be the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
     }
 
     /*!
@@ -1099,10 +1100,10 @@ namespace Dune {
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _recalc_defect(recalc_defect)
     {
-      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                         "P and L must have the same category!");
-      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
-                         "P and S must have the same category!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                    "P and L must have the same category!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
+                    "P and S must have the same category!");
     }
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
@@ -1384,11 +1385,11 @@ namespace Dune {
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit),
       _verbose(verbose), _restart(std::min(maxit,restart))
     {
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                         "L and P have to have the same category!");
-      dune_static_assert(static_cast<int>(L::category) ==
-                         static_cast<int>(SolverCategory::sequential),
-                         "L has to be sequential!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P have to have the same category!");
+      static_assert(static_cast<int>(L::category) ==
+                    static_cast<int>(SolverCategory::sequential),
+                    "L has to be sequential!");
     }
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
@@ -1403,10 +1404,10 @@ namespace Dune {
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _restart(std::min(maxit,restart))
     {
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(P::category),
-                          "L and P must have the same category!");
-      dune_static_assert( static_cast<int>(L::category) == static_cast<int>(S::category),
-                          "L and S must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
+                    "L and P must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
+                    "L and S must have the same category!");
     }
     /*!
        \brief Apply inverse operator.

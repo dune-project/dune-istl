@@ -33,9 +33,8 @@
 #include "laplacian.hh"
 
 #if HAVE_SUPERLU
-#include <dune/common/static_assert.hh>
 #include <dune/istl/superlu.hh>
-dune_static_assert(SUPERLU_NTYPE==3,"If SuperLU is selected for complex rhs test, then SUPERLU_NTYPE must be set to 3 (std::complex<double>)!");
+static_assert(SUPERLU_NTYPE==3, "If SuperLU is selected for complex rhs test, then SUPERLU_NTYPE must be set to 3 (std::complex<double>)!");
 #endif
 
 

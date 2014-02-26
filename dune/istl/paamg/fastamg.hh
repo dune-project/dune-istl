@@ -319,7 +319,8 @@ namespace Dune
         preSteps_=postSteps_=0;
       }
       assert(matrices_->isBuilt());
-      dune_static_assert((is_same<PI,SequentialInformation>::value), "Currently only sequential runs are supported");
+      static_assert(is_same<PI,SequentialInformation>::value,
+                    "Currently only sequential runs are supported");
     }
     template<class M, class X, class PI, class A>
     template<class C>
@@ -339,9 +340,10 @@ namespace Dune
         std::cerr<<"WARNING only one step of smoothing is supported!"<<std::endl;
         preSteps_=postSteps_=1;
       }
-      dune_static_assert((is_same<PI,SequentialInformation>::value), "Currently only sequential runs are supported");
+      static_assert(is_same<PI,SequentialInformation>::value,
+                    "Currently only sequential runs are supported");
       // TODO: reestablish compile time checks.
-      //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
+      //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
       createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
