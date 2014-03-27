@@ -10,6 +10,9 @@
 #if HAVE_PARMETIS
 #include <parmetis.h>
 #endif
+#if HAVE_METIS
+#include <metis.h>
+#endif
 
 #include <dune/common/timer.hh>
 #include <dune/common/unused.hh>
@@ -752,7 +755,7 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf,
                           bool verbose=false);
-#if HAVE_PARMETIS
+#if HAVE_PARMETIS && HAVE_METIS
   extern "C" {
     // backwards compatibility to parmetis < 4.0.0
 #if PARMETIS_MAJOR_VERSION > 3
