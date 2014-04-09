@@ -885,15 +885,15 @@ namespace Dune {
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
         // diagonal entries of givens rotation
-      Dune::array<field_type,2> c = {0.0,0.0};
+      Dune::array<field_type,2> c{{0.0,0.0}};
         // off-diagonal entries of givens rotation
-      Dune::array<field_type,2> s = {0.0,0.0};
+      Dune::array<field_type,2> s{{0.0,0.0}};
 
       // recurrence coefficients (column k of tridiag matrix T_k)
-      Dune::array<field_type,3> T = {0.0,0.0,0.0};
+      Dune::array<field_type,3> T{{0.0,0.0,0.0}};
 
       // the rhs vector of the min problem
-      Dune::array<field_type,2> xi = {1.0,0.0};
+      Dune::array<field_type,2> xi{{1.0,0.0}};
 
       // some temporary vectors
       X z(b), dummy(b);
@@ -906,13 +906,13 @@ namespace Dune {
       field_type beta0 = beta;
 
       // the search directions
-      Dune::array<X,3> p = {b,b,b};
+      Dune::array<X,3> p{{b,b,b}};
       p[0] = 0.0;
       p[1] = 0.0;
       p[2] = 0.0;
 
       // orthonormal basis vectors (in unpreconditioned case)
-      Dune::array<X,3> q = {b,b,b};
+      Dune::array<X,3> q{{b,b,b}};
       q[0] = 0.0;
       q[1] *= 1.0/beta;
       q[2] = 0.0;
