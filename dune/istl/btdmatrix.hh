@@ -124,8 +124,8 @@ namespace Dune {
         c[i] = (*this)[i][i+1];
 
       /* Modify the coefficients. */
-      block_type a_00_inv;
-      FMatrixHelp::invertMatrix((*this)[0][0], a_00_inv);
+      block_type a_00_inv = (*this)[0][0];
+      a_00_inv.invert();
 
       //c[0] /= (*this)[0][0];	/* Division by zero risk. */
       block_type c_0_tmp = c[0];
@@ -133,13 +133,13 @@ namespace Dune {
 
       // d = a^{-1} d        /* Division by zero would imply a singular matrix. */
       typename V::block_type d_0_tmp = d[0];
-      (*this)[0][0].solve(d[0], d_0_tmp);
+      a_00_inv.mv(d_0_tmp,d[0]);
 
       for (unsigned int i = 1; i < this->N(); i++) {
 
         // id = ( a_ii - c_{i-1} a_{i, i-1} ) ^{-1}
         block_type tmp;
-        FMatrixHelp::multMatrix(c[i-1], (*this)[i][i-1], tmp);
+        FMatrixHelp::multMatrix((*this)[i][i-1],c[i-1], tmp);
         block_type id = (*this)[i][i];
         id -= tmp;
         id.invert();         /* Division by zero risk. */
@@ -147,7 +147,7 @@ namespace Dune {
         if (i<c.size()) {
           // c[i] *= id
           tmp = c[i];
-          FMatrixHelp::multMatrix(tmp, id, c[i]);                      /* Last value calculated is redundant. */
+          FMatrixHelp::multMatrix(id,tmp, c[i]);                      /* Last value calculated is redundant. */
         }
 
         // d[i] = (d[i] - d[i-1] * (*this)[i][i-1]) * id;

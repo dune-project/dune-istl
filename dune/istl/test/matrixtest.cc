@@ -287,6 +287,7 @@ int main()
   feenableexcept(FE_INVALID);
 #endif
 
+
   // ////////////////////////////////////////////////////////////
   //   Test the Matrix class -- a scalar dense dynamic matrix
   // ////////////////////////////////////////////////////////////
@@ -397,7 +398,42 @@ int main()
     btdMatrix[i][i] = ScaledIdentityMatrix<double,2>(1+i);
 
   for (size_type i=0; i<btdMatrix.N()-1; i++)
-    btdMatrix[i][i+1] = ScaledIdentityMatrix<double,2>(2+i);               // first off-diagonal
+    btdMatrix[i][i+1] = ScaledIdentityMatrix<double,2>(2+i);               // upper off-diagonal
+  for (size_type i=1; i<btdMatrix.N(); i++)
+    btdMatrix[i-1][i] = ScaledIdentityMatrix<double,2>(2+i);               // lower off-diagonal
+
+  // add some off diagonal stuff to the blocks in the matrix
+  // diagonals
+  btdMatrix[0][0][0][1] = 2;
+  btdMatrix[0][0][1][0] = -1;
+
+  btdMatrix[1][1][0][1] = 2;
+  btdMatrix[1][1][1][0] = 3;
+
+  btdMatrix[2][2][0][1] = 2;
+  btdMatrix[2][2][0][0] += sqrt(2.);
+  btdMatrix[2][2][1][0] = 3;
+
+  btdMatrix[3][3][0][1] = -1;
+  btdMatrix[3][3][0][0] -= 0.5;
+  btdMatrix[3][3][1][0] = 2;
+
+  // off diagonals
+  btdMatrix[0][1][0][1] = std::sqrt(2);
+  btdMatrix[1][0][0][1] = std::sqrt(2);
+
+  btdMatrix[1][0][1][0] = -13./17.;
+  btdMatrix[1][2][0][1] = -1./std::sqrt(2);
+  btdMatrix[1][2][1][0] = -13./17.;
+
+  btdMatrix[2][1][0][1] = -13./17.;
+  btdMatrix[2][1][1][0] = -13./17.;
+  btdMatrix[2][3][0][1] = -1./std::sqrt(2);
+  btdMatrix[2][3][1][0] = -17.;
+
+  btdMatrix[3][2][0][1] = 1.;
+  btdMatrix[3][2][1][0] = 1.;
+
 
   BTDMatrix<FieldMatrix<double,2,2> > btdMatrixThrowAway = btdMatrix;    // the test method overwrites the matrix
   testSuperMatrix(btdMatrixThrowAway);
@@ -460,5 +496,4 @@ int main()
   sIdMatrix = 3.1459;
 
   testMatrix(sIdMatrix, fvX, fvY);
-
 }
