@@ -1139,7 +1139,7 @@ namespace Dune {
     }
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
       apply(x,b,_reduction,res);
     }
@@ -1153,15 +1153,15 @@ namespace Dune {
     {
       const double EPSILON = 1e-80;
       const int m = _restart;
-      field_type norm, norm_old = 0.0, norm_0;
+      real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
       std::vector<field_type> s(m+1), cs(m), sn(m);
       // need copy of rhs if GMRes has to be restarted
       Y b2(b);
       // helper vector
-      X w(b);
+      Y w(b);
       std::vector< std::vector<field_type> > H(m+1,s);
-      std::vector<X> v(m+1,b);
+      std::vector<F> v(m+1,b);
 
       // start timer
       Dune::Timer watch;
@@ -1348,12 +1348,12 @@ namespace Dune {
       dx = temp;
     }
 
-    LinearOperator<X,X>& _A;
-    Preconditioner<X,X>& _W;
+    LinearOperator<X,Y>& _A;
+    Preconditioner<X,Y>& _W;
     SeqScalarProduct<X> ssp;
     ScalarProduct<X>& _sp;
     int _restart;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
   };
