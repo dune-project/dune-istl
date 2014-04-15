@@ -1058,9 +1058,13 @@ namespace Dune {
      Generalized Minimal Residual method as described the SIAM Templates
      book (http://www.netlib.org/templates/templates.pdf).
 
+     \tparam X trial vector, vector type of the solution
+     \tparam Y test vector, vector type of the RHS
+     \tparam F vector type for orthonormal basis of Krylov space
+
    */
 
-  template<class X, class Y=X>
+  template<class X, class Y=X, class F = Y>
   class RestartedGMResSolver : public InverseOperator<X,Y>
   {
   public:
@@ -1070,7 +1074,22 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
+    //! \brief The field type of the basis vectors
+    typedef F basis_type;
 
+    template<class L, class P>
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect) DUNE_DEPRECATED_MSG("recalc_defect is a unused variable! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead") :
+      _A(op), _W(prec),
+      ssp(), _sp(ssp), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                          "P and L must be the same category!");
+      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                          "L must be sequential!");
+    }
     /*!
        \brief Set up solver.
 
@@ -1078,7 +1097,7 @@ namespace Dune {
        \param restart number of GMRes cycles before restart
      */
     template<class L, class P>
-    RestartedGMResSolver (L& op, P& prec, double reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) :
       _A(op), _W(prec),
       ssp(), _sp(ssp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -1089,6 +1108,18 @@ namespace Dune {
                          "L must be sequential!");
     }
 
+    template<class L, class S, class P>
+    RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect) DUNE_DEPRECATED_MSG("recalc_defect is a unused varialbe! Use RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) instead") :
+      _A(op), _W(prec),
+      _sp(sp), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                         " P and L must have the same category!");
+      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
+                        "P and S must have the same category!");
+    }
+
     /*!
        \brief Set up solver.
 
@@ -1096,7 +1127,7 @@ namespace Dune {
        \param restart number of GMRes cycles before restart
      */
     template<class L, class S, class P>
-    RestartedGMResSolver (L& op, S& sp, P& prec, double reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) :
       _A(op), _W(prec),
       _sp(sp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
