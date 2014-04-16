@@ -874,7 +874,7 @@ namespace Dune
 
       for(typename Hierarchy<Domain,A>::Iterator coarseLhs = lhs--; coarseLhs != lhs_->finest(); coarseLhs = lhs--, --aggregates, --pinfo) {
         Transfer<typename OperatorHierarchy::AggregatesMap::AggregateDescriptor,Range,ParallelInformation>
-        ::prolongateVector(*(*aggregates), *coarseLhs, *lhs, 1, *pinfo);
+        ::prolongateVector(*(*aggregates), *coarseLhs, *lhs, 1.0, *pinfo);
       }
     }
 
