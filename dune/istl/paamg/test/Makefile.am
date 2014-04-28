@@ -87,12 +87,15 @@ pamgtest_SOURCES = parallelamgtest.cc
 pamgtest_CPPFLAGS = $(AM_CPPFLAGS)		\
 	$(DUNEMPICPPFLAGS)			\
 	$(SUPERLU_CPPFLAGS)			\
-	$(PARMETIS_CPPFLAGS)
+	$(PARMETIS_CPPFLAGS)			\
+	$(METIS_CPPFLAGS)
 pamgtest_LDFLAGS = $(AM_LDFLAGS)		\
 	$(DUNEMPILDFLAGS)			\
-	$(PARMETIS_LDFLAGS)
+	$(PARMETIS_LDFLAGS)			\
+	$(METIS_LDFLAGS)
 pamgtest_LDADD =				\
 	$(PARMETIS_LIBS)			\
+	$(METIS_LIBS)			\
 	$(SUPERLU_LIBS)				\
 	$(DUNEMPILIBS)				\
 	$(LDADD)
@@ -101,12 +104,15 @@ pamg_comm_repart_test_SOURCES = parallelamgtest.cc
 pamg_comm_repart_test_CPPFLAGS = $(AM_CPPFLAGS)		\
 	$(DUNEMPICPPFLAGS)			\
 	$(SUPERLU_CPPFLAGS)			\
-	$(PARMETIS_CPPFLAGS) -DAMG_REPART_ON_COMM_GRAPH
+	$(PARMETIS_CPPFLAGS) -DAMG_REPART_ON_COMM_GRAPH \
+	$(METIS_CPPFLAGS)
 pamg_comm_repart_test_LDFLAGS = $(AM_LDFLAGS)		\
 	$(DUNEMPILDFLAGS)			\
-	$(PARMETIS_LDFLAGS)
+	$(PARMETIS_LDFLAGS)			\
+	$(METIS_LDFLAGS)
 pamg_comm_repart_test_LDADD =				\
 	$(PARMETIS_LIBS)			\
+	$(METIS_LIBS)			\
 	$(SUPERLU_LIBS)				\
 	$(DUNEMPILIBS)				\
 	$(LDADD)
