@@ -158,12 +158,15 @@ if MPI
   matrixredisttest_SOURCES = matrixredisttest.cc
   matrixredisttest_CPPFLAGS = $(AM_CPPFLAGS)	\
 	$(DUNEMPICPPFLAGS)			\
-	${PARMETIS_CPPFLAGS}
+	${PARMETIS_CPPFLAGS}                    \
+        ${METIS_CPPFLAGS}
   matrixredisttest_LDFLAGS = $(AM_LDFLAGS)	\
 	$(DUNEMPILDFLAGS)			\
-	${PARMETIS_LDFLAGS}
+	${PARMETIS_LDFLAGS}                     \
+        ${METIS_LDFLAGS}
   matrixredisttest_LDADD =			\
 	${PARMETIS_LDFLAGS} ${PARMETIS_LIBS}	\
+	${METIS_LDFLAGS} ${METIS_LIBS}	\
 	${DUNEMPILIBS}				\
 	$(LDADD)
 endif
