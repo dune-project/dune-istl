@@ -8,12 +8,24 @@
 #include <utility>
 
 #if HAVE_PARMETIS
+// Explicitly use C linkage as scotch does not extern "C" in its headers.
+// Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
+// does not use extern "C". Therfore no nested extern "C" will be created
+extern "C"
+{
 #include <parmetis.h>
+}
 #endif
 #if defined(METISNAMEL) && defined(HAVE_METIS)
 // METISNAMEL is defined when scotch is used and according to christian
 // we have to include the metis header in this case.
+// Explicitly use C linkage as scotch does not extern "C" in its headers.
+// Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
+// does not use extern "C". Therfore no nested extern "C" will be created
+extern "C"
+{
 #include <metis.h>
+}
 #endif
 
 #include <dune/common/timer.hh>
