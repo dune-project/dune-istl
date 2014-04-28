@@ -99,5 +99,6 @@ foreach(_exe ${ALLTESTS})
   add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
 
-add_dune_mpi_flags("${MPITESTS}")
 add_dune_parmetis_flags("${PARMETISTESTS}")
+add_dune_metis_flags("${PARMETISTESTS}")
+add_dune_mpi_flags("${MPITESTS}")

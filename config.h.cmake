@@ -39,6 +39,9 @@
    by configure _and_ if the application uses the PARMETIS_CPPFLAGS */
 #cmakedefine HAVE_PARMETIS ENABLE_PARMETIS
 
+/* Define if you have METIS library */
+#cmakedefine HAVE_METIS 1
+
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 
