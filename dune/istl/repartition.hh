@@ -7,6 +7,7 @@
 #include <map>
 #include <utility>
 
+#undef HAVE_METIS
 #if HAVE_PARMETIS
 // Explicitly use C linkage as scotch does not extern "C" in its headers.
 // Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
@@ -14,17 +15,6 @@
 extern "C"
 {
 #include <parmetis.h>
-}
-#endif
-#if defined(METISNAMEL) && defined(HAVE_METIS)
-// METISNAMEL is defined when scotch is used and according to christian
-// we have to include the metis header in this case.
-// Explicitly use C linkage as scotch does not extern "C" in its headers.
-// Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
-// does not use extern "C". Therfore no nested extern "C" will be created
-extern "C"
-{
-#include <metis.h>
 }
 #endif
 
@@ -777,7 +767,7 @@ namespace Dune
 #else
     typedef std::size_t idxtype;
 #endif
-#if !defined(METISNAMEL) || !defined(HAVE_METIS)
+
   extern "C"
   {
     // backwards compatibility to parmetis < 4.0.0
@@ -789,7 +779,6 @@ namespace Dune
                                   idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                                   int *options, int *edgecut, idxtype *part);
   }
-#endif
 #endif
 
   template<class S, class T>
@@ -852,7 +841,7 @@ namespace Dune
                <<" to "<<nparts<<" parts"<<std::endl;
     Timer time;
     int rank = oocomm.communicator().rank();
-#if !HAVE_PARMETIS || (defined(METISNAMEL) && !defined(HAVE_METIS))
+#if !HAVE_PARMETIS
     int* part = new int[1];
     part[0]=0;
 #else
@@ -1293,7 +1282,7 @@ namespace Dune
     // Global communications are necessary
     // The parmetis global identifiers for the owner vertices.
     ParmetisDuneIndexMap indexMap(graph,oocomm);
-#if HAVE_PARMETIS && (!defined(METISNAMEL) || defined(HAVE_METIS))
+#if HAVE_PARMETIS
     idxtype *part = new idxtype[indexMap.numOfOwnVtx()];
 #else
     std::size_t *part = new std::size_t[indexMap.numOfOwnVtx()];
@@ -1301,7 +1290,7 @@ namespace Dune
     for(std::size_t i=0; i < indexMap.numOfOwnVtx(); ++i)
       part[i]=mype;
 
-#if !HAVE_PARMETIS || (defined(METISNAMEL) && !defined(HAVE_METIS))
+#if !HAVE_PARMETIS
     if(oocomm.communicator().rank()==0 && nparts>1)
       std::cerr<<"ParMETIS not activated. Will repartition to 1 domain instead of requested "
                <<nparts<<" domains."<<std::endl;
