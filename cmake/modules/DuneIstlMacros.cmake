@@ -1,6 +1,5 @@
 find_package(BoostFusion)
 find_package(METIS)
-include(AddMETISFlags)
 find_package(ParMETIS)
 include(AddParMETISFlags)
 find_package(SuperLU)
