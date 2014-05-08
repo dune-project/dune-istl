@@ -1080,16 +1080,24 @@ namespace Dune {
     typedef F basis_type;
 
     template<class L, class P>
-    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect) DUNE_DEPRECATED_MSG("recalc_defect is a unused variable! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead") :
-      _A(op), _W(prec),
-      ssp(), _sp(ssp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
+      : _A(op)
+      , _W(prec)
+      , ssp()
+      , _sp(ssp)
+      , _restart(restart)
+      , _reduction(reduction)
+      , _maxit(maxit)
+      , _verbose(verbose)
     {
-      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                          "P and L must be the same category!");
-      dune_static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                          "L must be sequential!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                    "P and L must be the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
     }
+
+
     /*!
        \brief Set up solver.
 
@@ -1109,15 +1117,20 @@ namespace Dune {
     }
 
     template<class L, class S, class P>
-    RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect) DUNE_DEPRECATED_MSG("recalc_defect is a unused varialbe! Use RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) instead") :
-      _A(op), _W(prec),
-      _sp(sp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
+    RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
+      : _A(op)
+      , _W(prec)
+      , _sp(sp)
+      , _restart(restart)
+      , _reduction(reduction)
+      , _maxit(maxit)
+      , _verbose(verbose)
     {
-      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                         " P and L must have the same category!");
-      dune_static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
-                        "P and S must have the same category!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                    " P and L must have the same category!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
+                    "P and S must have the same category!");
     }
 
     /*!
