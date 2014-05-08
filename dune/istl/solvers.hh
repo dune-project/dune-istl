@@ -841,127 +841,126 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      res.clear();                // clear solver statistics
-      Timer watch;                // start a timer
-      _prec.pre(x,b);             // prepare preconditioner
-      _op.applyscaleadd(-1,x,b);  // overwrite b with defect/residual
+      // clear solver statistics
+      res.clear();
+      // start a timer
+      Dune::Timer watch;
+      watch.reset();
+      // prepare preconditioner
+      _prec.pre(x,b);
+      // overwrite rhs with defect
+      _op.applyscaleadd(-1,x,b);
 
-      real_type def0 = _sp.norm(b);   // compute residual norm
+      // compute residual norm
+      field_type def0 = _sp.norm(b);
 
-      if (def0<1E-30)    // convergence check
-      {
-        res.converged  = true;
-        res.iterations = 0;               // fill statistics
-        res.reduction = 0;
-        res.conv_rate  = 0;
-        res.elapsed=0;
-        if (_verbose>0)                 // final print
-          std::cout << "=== rate=" << res.conv_rate << ", T=" << res.elapsed << ", TIT=" << res.elapsed << ", IT=0" << std::endl;
-        return;
-      }
-
-      if (_verbose>0)             // printing
-      {
+      // printing
+      if(_verbose > 0) {
         std::cout << "=== MINRESSolver" << std::endl;
-        if (_verbose>1) {
+        if(_verbose > 1) {
           this->printHeader(std::cout);
           this->printOutput(std::cout,0,def0);
         }
       }
 
-      // some local variables
-      real_type def=def0;                 // the defect/residual norm
-      field_type alpha,                   // recurrence coefficients as computed in the Lanczos alg making up the matrix T
-                 c[2]={0.0, 0.0}, // diagonal entry of Givens rotation
-                 s[2]={0.0, 0.0}; // off-diagonal entries of Givens rotation
-      real_type beta;
+      // check for convergence
+      if(def0 < 1e-30 ) {
+        res.converged = true;
+        res.iterations = 0;
+        res.reduction = 0;
+        res.conv_rate = 0;
+        res.elapsed = 0.0;
+        // final print
+        if(_verbose > 0)
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed
+                    << ", TIT=" << res.elapsed
+                    << ", IT=" << res.iterations
+                    << std::endl;
+        return;
+      }
 
-      field_type T[3]={0.0, 0.0, 0.0};      // recurrence coefficients (column k of Matrix T)
+      // the defect norm
+      field_type def = def0;
+      // recurrence coefficients as computed in Lanczos algorithm
+      field_type alpha, beta;
+        // diagonal entries of givens rotation
+      Dune::array<field_type,2> c{{0.0,0.0}};
+        // off-diagonal entries of givens rotation
+      Dune::array<field_type,2> s{{0.0,0.0}};
 
-      X z(b.size()),        // some temporary vectors
-      dummy(b.size());
+      // recurrence coefficients (column k of tridiag matrix T_k)
+      Dune::array<field_type,3> T{{0.0,0.0,0.0}};
 
-      field_type xi[2]={1.0, 0.0};
+      // the rhs vector of the min problem
+      Dune::array<field_type,2> xi{{1.0,0.0}};
 
-      // initialize
-      z = 0.0;                  // clear correction
+      // some temporary vectors
+      X z(b), dummy(b);
 
-      _prec.apply(z,b);         // apply preconditioner z=M^-1*b
+      // initialize and clear correction
+      z = 0.0;
+      _prec.apply(z,b);
 
       beta = std::sqrt(std::abs(_sp.dot(z,b)));
-      real_type beta0 = beta;
+      field_type beta0 = beta;
 
-      X p[3];       // the search directions
-      X q[3];       // Orthonormal basis vectors (in unpreconditioned case)
-
-      q[0].resize(b.size());
-      q[1].resize(b.size());
-      q[2].resize(b.size());
-      q[0] = 0.0;
-      q[1] = b;
-      q[1] /= beta;
-      q[2] = 0.0;
-
-      p[0].resize(b.size());
-      p[1].resize(b.size());
-      p[2].resize(b.size());
+      // the search directions
+      Dune::array<X,3> p{{b,b,b}};
       p[0] = 0.0;
       p[1] = 0.0;
       p[2] = 0.0;
 
+      // orthonormal basis vectors (in unpreconditioned case)
+      Dune::array<X,3> q{{b,b,b}};
+      q[0] = 0.0;
+      q[1] *= 1.0/beta;
+      q[2] = 0.0;
 
-      z /= beta;        // this is w_current
+      z *= 1.0/beta;
 
       // the loop
-      int i=1;
-      for ( ; i<=_maxit; i++)
-      {
-        dummy = z;   // remember z_old for the computation of the search direction p in the next iteration
+      int i = 1;
+      for( ; i<=_maxit; i++) {
 
+        dummy = z;
         int i1 = i%3,
-            i0 = (i1+2)%3,
-            i2 = (i1+1)%3;
+          i0 = (i1+2)%3,
+          i2 = (i1+1)%3;
 
-        // Symmetrically Preconditioned Lanczos (Greenbaum p.121)
-        _op.apply(z,q[i2]);               // q[i2] = Az
-        q[i2].axpy(-beta, q[i0]);
+        // symmetrically preconditioned Lanczos algorithm (see Greenbaum p.121)
+        _op.apply(z,q[i2]); // q[i2] = Az
+        q[i2].axpy(-beta,q[i0]);
         alpha = _sp.dot(q[i2],z);
-        q[i2].axpy(-alpha, q[i1]);
+        q[i2].axpy(-alpha,q[i1]);
 
-        z=0.0;
+        z = 0.0;
         _prec.apply(z,q[i2]);
 
         beta = std::sqrt(std::abs(_sp.dot(q[i2],z)));
 
-        q[i2] /= beta;
-        z /= beta;
+        q[i2] *= 1.0/beta;
+        z *= 1.0/beta;
 
         // QR Factorization of recurrence coefficient matrix
-        // apply previous Givens rotations to last column of T
+        // apply previous givens rotations to last column of T
         T[1] = T[2];
-        if (i>2)
-        {
+        if(i>2) {
           T[0] = s[i%2]*T[1];
           T[1] = c[i%2]*T[1];
         }
-        if (i>1)
-        {
+        if(i>1) {
           T[2] = c[(i+1)%2]*alpha - s[(i+1)%2]*T[1];
           T[1] = c[(i+1)%2]*T[1] + s[(i+1)%2]*alpha;
         }
         else
           T[2] = alpha;
 
-        // recompute c, s -> current Givens rotation \TODO use BLAS-routine drotg instead for greater robustness
-        //          cblas_drotg (a, b, c, s);
-        c[i%2] = 1.0/std::sqrt(T[2]*T[2] + beta*beta);
-        s[i%2] = beta*c[i%2];
-        c[i%2] *= T[2];
-
-        // apply current Givens rotation to T eliminating the last entry...
+        // update QR factorization
+        generateGivensRotation(T[2],beta,c[i%2],s[i%2]);
+        // to last column of T_k
         T[2] = c[i%2]*T[2] + s[i%2]*beta;
-
-        // ...and to xi, the right hand side of the least squares problem min_y||beta*xi-T*y||
+        // and to the rhs xi of the min problem
         xi[i%2] = -s[i%2]*xi[(i+1)%2];
         xi[(i+1)%2] *= c[i%2];
 
@@ -969,53 +968,46 @@ namespace Dune {
         p[i2] = dummy;
         p[i2].axpy(-T[1],p[i1]);
         p[i2].axpy(-T[0],p[i0]);
-        p[i2] /= T[2];
+        p[i2] *= 1.0/T[2];
 
         // apply correction/update solution
-        x.axpy(beta0*xi[(i+1)%2], p[i2]);
+        x.axpy(beta0*xi[(i+1)%2],p[i2]);
 
         // remember beta_old
         T[2] = beta;
 
-        // update residual - not necessary if in the preconditioned case we are content with the residual norm of the
-        // preconditioned system as convergence test
-        //          _op.apply(p[i2],dummy);
-        //          b.axpy(-beta0*xi[(i+1)%2],dummy);
+        // check for convergence
+        // the last entry in the rhs of the min-problem is the residual
+        field_type defnew = std::abs(beta0*xi[i%2]);
 
-        //          convergence test
-        real_type defnew = std::abs(beta0*xi[i%2]);   // the last entry the QR-transformed least squares RHS is the new residual norm
+          if(_verbose > 1)
+            this->printOutput(std::cout,i,defnew,def);
 
-        if (_verbose>1)               // print
-          this->printOutput(std::cout,i,defnew,def);
+          def = defnew;
+          if(def < def0*_reduction || def < 1e-30 || i == _maxit ) {
+            res.converged = true;
+            break;
+          }
+        } // end for
 
-        def = defnew;                 // update norm
-        if (def<def0*_reduction || def<1E-30 || i==_maxit)      // convergence check
-        {
-          res.converged  = true;
-          break;
+        if(_verbose == 1)
+          this->printOutput(std::cout,i,def);
+
+        // postprocess preconditioner
+        _prec.post(x);
+        // fill statistics
+        res.iterations = i;
+        res.reduction = def/def0;
+        res.conv_rate = pow(res.reduction,1.0/i);
+        res.elapsed = watch.elapsed();
+
+        // final print
+        if(_verbose > 0) {
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed
+                    << ", TIT=" << res.elapsed/i
+                    << ", IT=" << i << std::endl;
         }
-      }
-
-      //correct i which is wrong if convergence was not achieved.
-      i=std::min(_maxit,i);
-
-      if (_verbose==1)                  // printing for non verbose
-        this->printOutput(std::cout,i,def);
-
-      _prec.post(x);                    // postprocess preconditioner
-      res.iterations = i;                 // fill statistics
-      res.reduction = def/def0;
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-
-      if (_verbose>0)                   // final print
-      {
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i << std::endl;
-      }
-
     }
 
     /*!
@@ -1031,6 +1023,25 @@ namespace Dune {
     }
 
   private:
+
+    void generateGivensRotation(field_type& dx, field_type& dy, field_type& cs, field_type& sn)
+    {
+      field_type temp = std::abs(dy);
+      if(temp < 1e-16) {
+        cs = 1.0;
+        sn = 0.0;
+      }
+      else if(temp > std::abs(dx)) {
+        temp = dx/dy;
+        sn = 1.0/std::sqrt(1.0 + temp*temp);
+        cs = temp * sn;
+      } else {
+        temp = dy/dx;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = temp * cs;
+      }
+    }
+
     SeqScalarProduct<X> ssp;
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
@@ -1047,7 +1058,9 @@ namespace Dune {
      Generalized Minimal Residual method as described the SIAM Templates
      book (http://www.netlib.org/templates/templates.pdf).
 
-     \todo construct F via rebind and an appropriate field_type
+     \tparam X trial vector, vector type of the solution
+     \tparam Y test vector, vector type of the RHS
+     \tparam F vector type for orthonormal basis of Krylov space
 
    */
 
@@ -1066,19 +1079,17 @@ namespace Dune {
     //! \brief The field type of the basis vectors
     typedef F basis_type;
 
-    /*!
-       \brief Set up solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-       \param restart number of GMRes cycles before restart
-       \param recalc_defect recalculate the defect after everey restart or not [default=false]
-     */
     template<class L, class P>
-    RestartedGMResSolver (L& op, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
-      _A_(op), _M(prec),
-      ssp(), _sp(ssp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose),
-      _recalc_defect(recalc_defect)
+    DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
+      : _A(op)
+      , _W(prec)
+      , ssp()
+      , _sp(ssp)
+      , _restart(restart)
+      , _reduction(reduction)
+      , _maxit(maxit)
+      , _verbose(verbose)
     {
       static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
                     "P and L must be the same category!");
@@ -1086,19 +1097,53 @@ namespace Dune {
                     "L must be sequential!");
     }
 
+
+    /*!
+       \brief Set up solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \param restart number of GMRes cycles before restart
+     */
+    template<class L, class P>
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) :
+      _A(op), _W(prec),
+      ssp(), _sp(ssp), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                    "P and L must be the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
+    }
+
+    template<class L, class S, class P>
+    DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
+    RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
+      : _A(op)
+      , _W(prec)
+      , _sp(sp)
+      , _restart(restart)
+      , _reduction(reduction)
+      , _maxit(maxit)
+      , _verbose(verbose)
+    {
+      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
+                    " P and L must have the same category!");
+      static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
+                    "P and S must have the same category!");
+    }
+
     /*!
        \brief Set up solver.
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
-       \param recalc_defect recalculate the defect after everey restart or not [default=false]
      */
     template<class L, class S, class P>
-    RestartedGMResSolver (L& op, S& sp, P& prec, double reduction, int restart, int maxit, int verbose, bool recalc_defect = false) :
-      _A_(op), _M(prec),
+    RestartedGMResSolver (L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) :
+      _A(op), _W(prec),
       _sp(sp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose),
-      _recalc_defect(recalc_defect)
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
                     "P and L must have the same category!");
@@ -1107,7 +1152,7 @@ namespace Dune {
     }
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
       apply(x,b,_reduction,res);
     }
@@ -1119,209 +1164,189 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
-      int m =_restart;
-      real_type norm;
-      real_type norm_old = 0.0;
-      real_type norm_0;
-      real_type beta;
-      int i, j = 1, k;
+      const double EPSILON = 1e-80;
+      const int m = _restart;
+      real_type norm, norm_old = 0.0, norm_0;
+      int j = 1;
       std::vector<field_type> s(m+1), cs(m), sn(m);
+      // need copy of rhs if GMRes has to be restarted
+      Y b2(b);
       // helper vector
-      X w(b);
+      Y w(b);
       std::vector< std::vector<field_type> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
       // start timer
-      Timer watch;                // start a timer
+      Dune::Timer watch;
+      watch.reset();
 
-      // clear solver statistics
+      // clear solver statistics and set res.converged to false
       res.clear();
-      _M.pre(x,b);
-      if (_recalc_defect)
-      {
-        // norm_0 = norm(M^-1 b)
-        w = 0.0; _M.apply(w,b); // w = M^-1 b
-        norm_0 = _sp.norm(w); // use defect of preconditioned residual
-        // r = _M.solve(b - A * x);
-        w = b;
-        _A_.applyscaleadd(-1,x, /* => */ w); // w = b - Ax;
-        v[0] = 0.0; _M.apply(v[0],w); // r = M^-1 w
-        beta = _sp.norm(v[0]);
-      }
-      else
-      {
-        // norm_0 = norm(b-Ax)
-        _A_.applyscaleadd(-1,x, /* => */ b); // b = b - Ax;
-        v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
-        beta = _sp.norm(v[0]);
-        norm_0 = beta; // use defect of preconditioned residual
-      }
+      _W.pre(x,b);
 
-      // avoid division by zero
-      if (norm_0 == 0.0)
-        norm_0 = 1.0;
-      norm = norm_old = beta;
+      // calculate defect and overwrite rhs with it
+      _A.applyscaleadd(-1.0,x,b); // b -= Ax
+      // calculate preconditioned defect
+      v[0] = 0.0; _W.apply(v[0],b); // r = W^-1 b
+      norm_0 = _sp.norm(v[0]);
+      norm = norm_0;
+      norm_old = norm;
 
       // print header
-      if (_verbose > 0)
-      {
-        std::cout << "=== RestartedGMResSolver" << std::endl;
-        if (_verbose > 1)
+      if(_verbose > 0)
         {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,norm_0);
+          std::cout << "=== RestartedGMResSolver" << std::endl;
+          if(_verbose > 1) {
+            this->printHeader(std::cout);
+            this->printOutput(std::cout,0,norm_0);
+          }
         }
-      }
 
-      // check convergence
-      if (norm <= reduction * norm_0) {
-        _M.post(x);                  // postprocess preconditioner
-        res.converged  = true;
-        if (_verbose > 0)                 // final print
+      if(norm_0 < EPSILON) {
+        _W.post(x);
+        res.converged = true;
+        if(_verbose > 0) // final print
           print_result(res);
-        return;
       }
 
-      while (j <= _maxit && res.converged != true) {
-        v[0] *= (1.0 / beta);
-        for (i=1; i<=m; i++) s[i] = 0.0;
-        s[0] = beta;
-        int end=std::min(m, _maxit-j+1);
-        for (i = 0; i < end && res.converged != true; i++, j++) {
+      while(j <= _maxit && res.converged != true) {
+
+        int i = 0;
+        v[0] *= 1.0/norm;
+        s[0] = norm;
+        for(i=1; i<m+1; i++)
+          s[i] = 0.0;
+
+        for(i=0; i < m && j <= _maxit && res.converged != true; i++, j++) {
           w = 0.0;
-          v[i+1] = 0.0; // use v[i+1] as temporary vector
-          _A_.apply(v[i], /* => */ v[i+1]);
-          _M.apply(w, v[i+1]);
-          for (k = 0; k <= i; k++) {
-            H[k][i] = _sp.dot(w, v[k]);
-            // w -= H[k][i] * v[k];
-            w.axpy(-H[k][i], v[k]);
+          // use v[i+1] as temporary vector
+          v[i+1] = 0.0;
+          // do Arnoldi algorithm
+          _A.apply(v[i],v[i+1]);
+          _W.apply(w,v[i+1]);
+          for(int k=0; k<i+1; k++) {
+            H[k][i] = _sp.dot(w,v[k]);
+            // w -= H[k][i] * v[k]
+            w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp.norm(w);
-          if (H[i+1][i] == 0.0)
-            DUNE_THROW(ISTLError,"breakdown in GMRes - |w| "
-                       << " == 0.0 after " << j << " iterations");
-          // v[i+1] = w * (1.0 / H[i+1][i]);
-          v[i+1] = w; v[i+1] *= (1.0 / H[i+1][i]);
+          if(std::abs(H[i+1][i]) < EPSILON)
+            DUNE_THROW(ISTLError,
+                       "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
-          for (k = 0; k < i; k++)
-            applyPlaneRotation(H[k][i], H[k+1][i], cs[k], sn[k]);
+          // normalize new vector
+          v[i+1] = w; v[i+1] *= 1.0/H[i+1][i];
 
-          generatePlaneRotation(H[i][i], H[i+1][i], cs[i], sn[i]);
-          applyPlaneRotation(H[i][i], H[i+1][i], cs[i], sn[i]);
-          applyPlaneRotation(s[i], s[i+1], cs[i], sn[i]);
+          // update QR factorization
+          for(int k=0; k<i; k++)
+            applyPlaneRotation(H[k][i],H[k+1][i],cs[k],sn[k]);
 
+          // compute new givens rotation
+          generatePlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          // finish updating QR factorization
+          applyPlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
+
+          // norm of the defect is the last component the vector s
           norm = std::abs(s[i+1]);
 
-          if (_verbose > 1)             // print
-          {
+          // print current iteration statistics
+          if(_verbose > 1) {
             this->printOutput(std::cout,j,norm,norm_old);
           }
 
           norm_old = norm;
 
-          if (norm < reduction * norm_0) {
+          // check convergence
+          if(norm < reduction * norm_0)
             res.converged = true;
-          }
+
+        } // end for
+
+        // calculate update vector
+        w = 0.0;
+        update(w,i,H,s,v);
+        // and current iterate
+        x += w;
+
+        // restart GMRes if convergence was not achieved,
+        // i.e. linear defect has not reached desired reduction
+        // and if j < _maxit
+        if( res.converged != true && j <= _maxit ) {
+
+          if(_verbose > 0)
+            std::cout << "=== GMRes::restart" << std::endl;
+          // get saved rhs
+          b = b2;
+          // calculate new defect
+          _A.applyscaleadd(-1.0,x,b); // b -= Ax;
+          // calculate preconditioned defect
+          v[0] = 0.0;
+          _W.apply(v[0],b);
+          norm = _sp.norm(v[0]);
+          norm_old = norm;
         }
 
-        if (_recalc_defect)
-        {
-          // update x
-          update(x, i - 1, H, s, v);
+      } //end while
 
-          // update residuum
-          // r = M^-1 (b - A * x);
-          w = b; _A_.applyscaleadd(-1,x, /* => */ w);
-          _M.apply(v[0], w);
-          beta = _sp.norm(v[0]);
-          norm = beta;
-        }
-        else
-        {
-          // calc update vector
-          w = 0;
-          update(w, i - 1, H, s, v);
+      // postprocess preconditioner
+      _W.post(x);
 
-          // update x
-          x += w;
-
-          // r = M^-1 (b - A * x);
-          // update defect
-          _A_.applyscaleadd(-1,w, /* => */ b);
-          // r = M^-1 (b - A * x);
-          v[0] = 0.0; _M.apply(v[0],b); // r = M^-1 b
-          beta = _sp.norm(v[0]);
-          norm = beta;
-
-          res.converged = false;
-        }
-
-        norm_old = norm;
-
-        if (norm < reduction * norm_0) {
-          // fill statistics
-          res.converged = true;
-        }
-
-        if (res.converged != true && _verbose > 0)
-          std::cout << "=== GMRes::restart\n";
-      }
-
-      _M.post(x);                  // postprocess preconditioner
-
-      res.iterations = j;
-      res.reduction = norm / norm_0;
-      res.conv_rate  = pow(res.reduction,1.0/j);
+      // save solver statistics
+      res.iterations = j-1; // it has to be j-1!!!
+      res.reduction = norm/norm_0;
+      res.conv_rate = pow(res.reduction,1.0/(j-1));
       res.elapsed = watch.elapsed();
 
-      if (_verbose>0)
+      if(_verbose>0)
         print_result(res);
-    }
-  private:
 
-    void
-    print_result (const InverseOperatorResult & res) const
-    {
-      int j = res.iterations>0 ? res.iterations : 1;
+    }
+
+  private :
+
+    void print_result(const InverseOperatorResult& res) const {
+      int k = res.iterations>0 ? res.iterations : 1;
       std::cout << "=== rate=" << res.conv_rate
                 << ", T=" << res.elapsed
-                << ", TIT=" << res.elapsed/j
+                << ", TIT=" << res.elapsed/k
                 << ", IT=" << res.iterations
                 << std::endl;
     }
 
-    static void
-    update(X &x, int k,
-           const std::vector< std::vector<field_type> > & h,
-           const std::vector<field_type> & s, const std::vector<F> &v)
-    {
+    void update(X& w, int i,
+                const std::vector<std::vector<field_type> >& H,
+                const std::vector<field_type>& s,
+                const std::vector<X>& v) {
+      // solution vector of the upper triangular system
       std::vector<field_type> y(s);
 
-      // Backsolve:
-      for (int i = k; i >= 0; i--) {
-        y[i] /= h[i][i];
-        for (int j = i - 1; j >= 0; j--)
-          y[j] -= h[j][i] * y[i];
-      }
+      // backsolve
+      for(int a=i-1; a>=0; a--) {
+        field_type rhs(s[a]);
+        for(int b=a+1; b<i; b++)
+          rhs -= H[a][b]*y[b];
+        y[a] = rhs/H[a][a];
 
-      for (int j = 0; j <= k; j++)
-        // x += v[j] * y[j];
-        x.axpy(y[j],v[j]);
+        // compute update on the fly
+        // w += y[a]*v[a]
+        w.axpy(y[a],v[a]);
+      }
     }
 
     void
     generatePlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
     {
-      if (dy == 0.0) {
+      field_type temp = std::abs(dy);
+      if (std::abs(dy) < 1e-15 ) {
         cs = 1.0;
         sn = 0.0;
-      } else if (std::abs(dy) > std::abs(dx)) {
-        field_type temp = dx / dy;
+      } else if (temp > std::abs(dx)) {
+        temp = dx / dy;
         sn = 1.0 / std::sqrt( 1.0 + temp*temp );
         cs = temp * sn;
       } else {
-        field_type temp = dy / dx;
+        temp = dy / dx;
         cs = 1.0 / std::sqrt( 1.0 + temp*temp );
         sn = temp * cs;
       }
@@ -1336,15 +1361,14 @@ namespace Dune {
       dx = temp;
     }
 
-    LinearOperator<X,X>& _A_;
-    Preconditioner<X,X>& _M;
+    LinearOperator<X,Y>& _A;
+    Preconditioner<X,Y>& _W;
     SeqScalarProduct<X> ssp;
     ScalarProduct<X>& _sp;
     int _restart;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
-    bool _recalc_defect;
   };
 
 
