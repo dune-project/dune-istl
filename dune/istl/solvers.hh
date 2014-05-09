@@ -17,6 +17,8 @@
 #include "scalarproducts.hh"
 #include "solver.hh"
 #include "preconditioner.hh"
+#include <dune/common/array.hh>
+#include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 
