@@ -7,7 +7,6 @@
 #include <map>
 #include <utility>
 
-#undef HAVE_METIS
 #if HAVE_PARMETIS
 // Explicitly use C linkage as scotch does not extern "C" in its headers.
 // Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
