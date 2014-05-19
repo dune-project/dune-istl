@@ -778,7 +778,9 @@ namespace Dune
                                   idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                                   int *options, int *edgecut, idxtype *part);
   }
-#endif
+#else
+  typedef std::size_t idxtype;
+#endif // HAVE_PARMETIS
 
   template<class S, class T>
   inline void print_carray(S& os, T* array, std::size_t l)
