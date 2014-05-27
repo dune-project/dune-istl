@@ -167,6 +167,15 @@ if MPI
 	${DUNEMPILIBS}				\
 	$(LDADD)
 endif
+
+
+NORMALTESTS += vectortest
+
+vectortest_SOURCES = vectortest.cc
+vectortest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
+vectortest_LDFLAGS = $(AM_LDFLAGS) $(TBB_LDFLAGS)
+vectortest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
 include $(top_srcdir)/am/global-rules
 
 EXTRA_DIST = CMakeLists.txt

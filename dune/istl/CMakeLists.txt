@@ -1,5 +1,10 @@
+add_subdirectory("bellmatrix")
+add_subdirectory("blockvector")
+add_subdirectory("ellmatrix")
 add_subdirectory("paamg")
+add_subdirectory("preconditioners")
 add_subdirectory("tutorial")
+add_subdirectory("vector")
 add_subdirectory("test" EXCLUDE_FROM_ALL)
 
 #install headers
@@ -10,6 +15,9 @@ install(FILES
    btdmatrix.hh
    bvector.hh
    colcompmatrix.hh
+   diagonalmatrix.hh
+   ellmatrix.hh
+   forwarddeclarations.hh
    gsetc.hh
    ilu.hh
    ilusubdomainsolver.hh
@@ -42,4 +50,5 @@ install(FILES
    supermatrix.hh
    umfpack.hh
    vbvector.hh
+   vector.hh
    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl)
