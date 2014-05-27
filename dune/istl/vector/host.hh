@@ -543,6 +543,18 @@ namespace Dune {
         ar.bulk(_data,_allocation_size);
       }
 
+      bool operator==(const Vector& other) const
+      {
+        return
+          _size == other._size &&
+          _allocation_size == other._allocation_size &&
+          std::equal(_data,_data + _allocation_size,other._data);
+      }
+
+      bool operator!=(const Vector& other) const
+      {
+        return !operator==(other);
+      }
 
     private:
 

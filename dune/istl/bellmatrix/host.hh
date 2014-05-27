@@ -921,6 +921,20 @@ namespace Dune {
         ar.bulk(_data,_layout.nonzeros() * _block_rows * _block_cols);
       }
 
+      bool operator==(const BELLMatrix& other) const
+      {
+        return
+          _block_rows == other._block_rows &&
+          _block_cols == other._block_cols &&
+          _layout == other._layout &&
+          std::equal(_data,_data + _layout.nonzeros() * _block_rows * _block_cols, other._data);
+      }
+
+      bool operator!=(const BELLMatrix& other) const
+      {
+        return !operator==(other);
+      }
+
     private:
 
       void deallocate()

@@ -90,6 +90,24 @@ namespace Dune {
           , _allocated_rows(0)
         {}
 
+        bool operator==(const Data& other) const
+        {
+          return
+            _rows == other._rows &&
+            _cols == other._cols &&
+            _nonzeros == other._nonzeros &&
+            _blocks == other._blocks &&
+            _allocated_rows == other._allocated_rows &&
+            std::equal(_col_index,_col_index + _nonzeros,other._col_index) &&
+            std::equal(_block_offset,_block_offset + _blocks + 1,other._block_offset) &&
+            std::equal(_row_length,_row_length + _allocated_rows,other._row_length);
+        }
+
+        bool operator!=(const Data& other) const
+        {
+          return !operator==(other);
+        }
+
         // Data should never be copied
         Data(const Data&) = delete;
         Data& operator=(const Data&) = delete;
@@ -229,12 +247,12 @@ namespace Dune {
 
       bool operator==(const Layout& other) const
       {
-        return _data == other._data;
+        return _data == other._data || *_data == *(other._data);
       }
 
       bool operator!=(const Layout& other) const
       {
-        return _data != other._data;
+        return _data != other._data || *_data != *(other._data);
       }
 
       size_type chunkSize() const

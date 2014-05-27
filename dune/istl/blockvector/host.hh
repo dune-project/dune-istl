@@ -591,6 +591,21 @@ namespace Dune {
         ar.bulk(_data,_allocation_size * _block_size);
       }
 
+      bool operator==(const BlockVector& other) const
+      {
+        return
+          _block_size == other._block_size &&
+          _size == other._size &&
+          _allocation_size == other._allocation_size &&
+          std::equal(_data,_data + _allocation_size,other._data);
+      }
+
+      bool operator!=(const BlockVector& other) const
+      {
+        return !operator==(other);
+      }
+
+
     private:
 
       void deallocate()
