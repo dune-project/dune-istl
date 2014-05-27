@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <dune/common/exceptions.hh>
+#include <dune/common/typetraits.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
 #include <dune/istl/paamg/hierarchy.hh>
@@ -16,8 +18,6 @@
 #include <dune/istl/solvertype.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/preconditioners.hh>
-#include <dune/common/typetraits.hh>
-#include <dune/common/exceptions.hh>
 
 #include "fastamgsmoother.hh"
 
@@ -253,9 +253,9 @@ namespace Dune
       void initIteratorsWithFineLevel(LevelContext& levelContext);
 
       /**  @brief The matrix we solve. */
-      Dune::shared_ptr<OperatorHierarchy> matrices_;
+      std::shared_ptr<OperatorHierarchy> matrices_;
       /** @brief The solver of the coarsest level. */
-      Dune::shared_ptr<CoarseSolver> solver_;
+      std::shared_ptr<CoarseSolver> solver_;
       /** @brief The right hand side of our problem. */
       Hierarchy<Range,A>* rhs_;
       /** @brief The left approximate solution of our problem. */
@@ -267,7 +267,7 @@ namespace Dune
       typedef ScalarProductChooser<X,PI,M::category> ScalarProductChooserType;
       /** @brief The type of the scalar product for the coarse solver. */
       typedef typename ScalarProductChooserType::ScalarProduct ScalarProduct;
-      typedef Dune::shared_ptr<ScalarProduct> ScalarProductPointer;
+      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
       /** @brief Scalar product on the coarse level. */
       ScalarProductPointer scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
@@ -281,7 +281,7 @@ namespace Dune
       bool symmetric;
       bool coarsesolverconverged;
       typedef SeqSSOR<typename M::matrix_type,X,X> Smoother;
-      typedef Dune::shared_ptr<Smoother> SmootherPointer;
+      typedef std::shared_ptr<Smoother> SmootherPointer;
       SmootherPointer coarseSmoother_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
@@ -319,7 +319,8 @@ namespace Dune
         preSteps_=postSteps_=0;
       }
       assert(matrices_->isBuilt());
-      dune_static_assert((is_same<PI,SequentialInformation>::value), "Currently only sequential runs are supported");
+      static_assert(is_same<PI,SequentialInformation>::value,
+                    "Currently only sequential runs are supported");
     }
     template<class M, class X, class PI, class A>
     template<class C>
@@ -339,9 +340,10 @@ namespace Dune
         std::cerr<<"WARNING only one step of smoothing is supported!"<<std::endl;
         preSteps_=postSteps_=1;
       }
-      dune_static_assert((is_same<PI,SequentialInformation>::value), "Currently only sequential runs are supported");
+      static_assert(is_same<PI,SequentialInformation>::value,
+                    "Currently only sequential runs are supported");
       // TODO: reestablish compile time checks.
-      //dune_static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
+      //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
       createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
@@ -726,6 +728,7 @@ namespace Dune
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>::post(Domain& x)
     {
+      DUNE_UNUSED_PARAMETER(x);
       delete lhs_;
       lhs_=nullptr;
       delete rhs_;

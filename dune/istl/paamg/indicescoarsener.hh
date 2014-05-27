@@ -5,6 +5,7 @@
 #define DUNE_AMG_INDICESCOARSENER_HH
 
 #include <dune/common/parallel/indicessyncer.hh>
+#include <dune/common/unused.hh>
 #include <vector>
 #include "renumberer.hh"
 
@@ -125,6 +126,7 @@ namespace Dune
 
         Vertex operator()(const GlobalIndex& global)
         {
+          DUNE_UNUSED_PARAMETER(global);
           Vertex current = this->number_;
           this->operator++();
           return current;
@@ -232,6 +234,7 @@ namespace Dune
                                            ParallelInformation& coarseInfo,
                                            typename Graph::VertexDescriptor noAggregates)
     {
+      DUNE_UNUSED_PARAMETER(noAggregates);
       ParallelAggregateRenumberer<Graph,typename ParallelInformation::GlobalLookupIndexSet> renumberer(aggregates, fineInfo.globalLookup());
       buildCoarseIndexSet(fineInfo, fineGraph, visitedMap, aggregates,
                           coarseInfo.indexSet(), renumberer);
@@ -393,6 +396,12 @@ namespace Dune
                                                        SequentialInformation& coarseInfo,
                                                        typename Graph::VertexDescriptor noAggregates)
     {
+      DUNE_UNUSED_PARAMETER(fineInfo);
+      DUNE_UNUSED_PARAMETER(fineGraph);
+      DUNE_UNUSED_PARAMETER(visitedMap);
+      DUNE_UNUSED_PARAMETER(aggregates);
+      DUNE_UNUSED_PARAMETER(coarseInfo);
+      DUNE_UNUSED_PARAMETER(noAggregates);
       return noAggregates;
     }
 

@@ -9,6 +9,7 @@
 #include <dune/istl/operators.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -38,6 +39,8 @@ namespace Dune
                                const SequentialInformation& pinfo,
                                const OF&)
       {
+        DUNE_UNUSED_PARAMETER(excluded);
+        DUNE_UNUSED_PARAMETER(pinfo);
         MatrixGraph* mg = new MatrixGraph(matrix.getmat());
         PropertiesGraph* pg = new PropertiesGraph(*mg, IdentityMap(), IdentityMap());
         return GraphTuple(mg,pg);

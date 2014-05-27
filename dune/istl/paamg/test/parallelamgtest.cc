@@ -6,6 +6,7 @@
 #endif
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
+#include <dune/common/unused.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -60,6 +61,7 @@ public:
 };
 
 void MPI_err_handler(MPI_Comm *comm, int *err_code, ...){
+  DUNE_UNUSED_PARAMETER(comm);
   char *err_string=new char[MPI_MAX_ERROR_STRING];
   int err_length;
   MPI_Error_string(*err_code, err_string, &err_length);

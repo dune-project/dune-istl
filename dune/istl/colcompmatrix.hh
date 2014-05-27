@@ -7,6 +7,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/unused.hh>
 #include <limits>
 
 namespace Dune
@@ -373,6 +374,7 @@ namespace Dune
   template<typename Iter>
   void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::countEntries(const Iter& row, const CIter& col) const
   {
+    DUNE_UNUSED_PARAMETER(row);
     countEntries(col.index());
   }
 

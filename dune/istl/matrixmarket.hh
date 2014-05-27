@@ -14,6 +14,7 @@
 #include "owneroverlapcopy.hh"
 #include <dune/common/fmatrix.hh>
 #include <dune/common/tuples.hh>
+#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -497,8 +498,9 @@ namespace Dune
 
     }
 
-    void readNextLine(std::istream& file, std::ostringstream& line, LineType& type)
+    void readNextLine(std::istream& file, std::ostringstream&, LineType& type)
     {
+      DUNE_UNUSED_PARAMETER(type);
       char c;
       std::size_t index=0;
 
@@ -598,6 +600,7 @@ namespace Dune
 
     std::istream& operator>>(std::istream& is, NumericWrapper<PatternDummy>& num)
     {
+      DUNE_UNUSED_PARAMETER(num);
       return is;
     }
 

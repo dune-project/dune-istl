@@ -9,7 +9,6 @@
 #include <memory>
 #include <limits>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
@@ -318,7 +317,7 @@ namespace Dune {
     template<typename S>
     BlockVector (size_type _n, S _capacity)
     {
-      dune_static_assert( (std::numeric_limits<S>::is_integer),
+      static_assert(std::numeric_limits<S>::is_integer,
         "capacity must be an unsigned integral type (be aware, that this constructor does not set the default value!)" );
       size_type capacity = _capacity;
       this->n = _n;

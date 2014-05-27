@@ -289,17 +289,15 @@ namespace Dune {
     /**
      * @brief Set right Solver Category (default is overlapping).
      */
-
     void setSolverCategory (SolverCategory set) {
       category = set;
     }
 
     /**
-     * @brief Set Solver Category.
+     * @brief Get Solver Category.
      * @return The Solver Category.
      */
-
-    const SolverCategory::Category getSolverCategory () const {
+    SolverCategory::Category getSolverCategory () const {
       return category;
     }
 

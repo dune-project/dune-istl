@@ -13,10 +13,8 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   typedef typename ComplexBlockVector::field_type ct;
   const rt myEps((rt)1e-6);
 
-  dune_static_assert(
-    ( Dune::is_same< typename Dune::FieldTraits<rt>::real_type, rt>::value ),
-    "DotProductTest requires real data type for first block vector!"
-    );
+  static_assert(Dune::is_same< typename Dune::FieldTraits<rt>::real_type, rt>::value,
+                "DotProductTest requires real data type for first block vector!");
 
   const bool secondBlockIsComplex = !Dune::is_same< typename Dune::FieldTraits<ct>::real_type, ct>::value;
 

@@ -8,10 +8,17 @@
 #include <utility>
 
 #if HAVE_PARMETIS
+// Explicitly use C linkage as scotch does not extern "C" in its headers.
+// Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
+// does not use extern "C". Therfore no nested extern "C" will be created
+extern "C"
+{
 #include <parmetis.h>
+}
 #endif
 
 #include <dune/common/timer.hh>
+#include <dune/common/unused.hh>
 #include <dune/common/enumset.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/parallel/mpitraits.hh>
@@ -552,6 +559,7 @@ namespace Dune
     template<class T, class I>
     void my_push_back(std::vector<T>& ownerVec, const I& index, int proc)
     {
+      DUNE_UNUSED_PARAMETER(proc);
       ownerVec.push_back(index);
     }
 
@@ -591,7 +599,7 @@ namespace Dune
     void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet,
                             int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
                             RedistributeInterface& redist, std::set<int>& neighborProcs) {
-
+      DUNE_UNUSED_PARAMETER(myPe);
       //typedef typename IndexSet::const_iterator Iterator;
       typedef typename IS::const_iterator Iterator;
       for(Iterator index = indexSet.begin(); index != indexSet.end(); ++index) {
@@ -751,11 +759,17 @@ namespace Dune
                           RedistributeInterface& redistInf,
                           bool verbose=false);
 #if HAVE_PARMETIS
-  extern "C" {
-    // backwards compatibility to parmetis < 4.0.0
 #if PARMETIS_MAJOR_VERSION > 3
     typedef idx_t idxtype;
+#elif defined(METISNAMEL)
+    typedef int idxtype;
+#else
+    typedef std::size_t idxtype;
 #endif
+
+  extern "C"
+  {
+    // backwards compatibility to parmetis < 4.0.0
     void METIS_PartGraphKway(int *nvtxs, idxtype *xadj, idxtype *adjncy, idxtype *vwgt,
                              idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                              int *options, int *edgecut, idxtype *part);
@@ -766,7 +780,7 @@ namespace Dune
   }
 #else
   typedef std::size_t idxtype;
-#endif
+#endif // HAVE_PARMETIS
 
   template<class S, class T>
   inline void print_carray(S& os, T* array, std::size_t l)
@@ -1390,7 +1404,7 @@ namespace Dune
 
 
     //
-    // 3) Find a optimal domain based on the ParMETIS repatitioning
+    // 3) Find a optimal domain based on the ParMETIS repartitioning
     //    result
     //
 

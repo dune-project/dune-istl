@@ -14,6 +14,7 @@
 #include "renumberer.hh"
 #include "graphcreator.hh"
 #include <dune/common/stdstreams.hh>
+#include <dune/common/unused.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/bigunsignedint.hh>
@@ -491,7 +492,9 @@ namespace Dune
          * @brief Print matrix statistics.
          */
         static void stats(const Matrix& matrix)
-        {}
+        {
+          DUNE_UNUSED_PARAMETER(matrix);
+        }
       };
 
       template<class Matrix>
@@ -574,6 +577,13 @@ namespace Dune
                                         RedistributeInformation<SequentialInformation>& ri,
                                         int nparts, C1& criterion)
     {
+      DUNE_UNUSED_PARAMETER(origMatrix);
+      DUNE_UNUSED_PARAMETER(newMatrix);
+      DUNE_UNUSED_PARAMETER(origSequentialInformationomm);
+      DUNE_UNUSED_PARAMETER(newComm);
+      DUNE_UNUSED_PARAMETER(ri);
+      DUNE_UNUSED_PARAMETER(nparts);
+      DUNE_UNUSED_PARAMETER(criterion);
       DUNE_THROW(NotImplemented, "Redistribution does not make sense in sequential code!");
     }
 
@@ -653,13 +663,13 @@ namespace Dune
       : matrices_(const_cast<MatrixOperator&>(fineOperator)),
         parallelInformation_(const_cast<ParallelInformation&>(pinfo))
     {
-      dune_static_assert((static_cast<int>(MatrixOperator::category) ==
-                          static_cast<int>(SolverCategory::sequential) ||
-                          static_cast<int>(MatrixOperator::category) ==
-                          static_cast<int>(SolverCategory::overlapping) ||
-                          static_cast<int>(MatrixOperator::category) ==
-                          static_cast<int>(SolverCategory::nonoverlapping)),
-                         "MatrixOperator must be of category sequential or overlapping or nonoverlapping");
+      static_assert((static_cast<int>(MatrixOperator::category) ==
+                       static_cast<int>(SolverCategory::sequential)
+                     || static_cast<int>(MatrixOperator::category) ==
+                       static_cast<int>(SolverCategory::overlapping)
+                     || static_cast<int>(MatrixOperator::category) ==
+                       static_cast<int>(SolverCategory::nonoverlapping)),
+                    "MatrixOperator must be of category sequential or overlapping or nonoverlapping");
       if (static_cast<int>(MatrixOperator::category) != static_cast<int>(pinfo.getSolverCategory()))
         DUNE_THROW(ISTLError, "MatrixOperator and ParallelInformation must belong to the same category!");
 
@@ -916,7 +926,7 @@ namespace Dune
 
         typename MatrixOperator::matrix_type* coarseMatrix;
 
-        coarseMatrix = productBuilder.build(matrix->getmat(), *(get<0>(graphs)), visitedMap2,
+        coarseMatrix = productBuilder.build(*(get<0>(graphs)), visitedMap2,
                                             *info,
                                             *aggregatesMap,
                                             aggregates,

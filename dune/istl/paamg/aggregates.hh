@@ -15,6 +15,7 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
+#include <dune/common/unused.hh>
 
 #include <utility>
 #include <set>
@@ -535,8 +536,10 @@ namespace Dune
       {
       public:
         template<class EdgeIterator>
-        void operator()(const EdgeIterator& egde) const
-        {}
+        void operator()(const EdgeIterator& edge) const
+        {
+          DUNE_UNUSED_PARAMETER(edge);
+        }
       };
 
 
@@ -1351,6 +1354,7 @@ namespace Dune
     template<class M, class N>
     inline void SymmetricDependency<M,N>::initRow(const Row& row, int index)
     {
+      DUNE_UNUSED_PARAMETER(row);
       maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);
@@ -1405,6 +1409,7 @@ namespace Dune
     template<class M, class N>
     inline void Dependency<M,N>::initRow(const Row& row, int index)
     {
+      DUNE_UNUSED_PARAMETER(row);
       maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);

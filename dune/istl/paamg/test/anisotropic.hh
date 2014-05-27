@@ -4,6 +4,7 @@
 #ifndef ANISOTROPIC_HH
 #define  ANISOTROPIC_HH
 #include <dune/common/fmatrix.hh>
+#include <dune/common/unused.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/plocalindex.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
@@ -79,6 +80,7 @@ void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int ove
 template<class M, class T>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end, T eps)
 {
+  DUNE_UNUSED_PARAMETER(N);
   typedef typename M::block_type Block;
   Block dval(0), bone(0), bmone(0), beps(0);
 

@@ -16,12 +16,11 @@
 #include "istlexception.hh"
 #include "bvector.hh"
 #include "matrixutils.hh"
-#include <dune/common/shared_ptr.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/static_assert.hh>
+#include <dune/common/nullptr.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -1918,7 +1917,7 @@ namespace Dune {
     B*   a;      // [allocationSize] non-zero entries of the matrix in row-wise ordering
     // If a single array of column indices is used, it can be shared
     // between different matrices with the same sparsity pattern
-    Dune::shared_ptr<size_type> j;  // [allocationSize] column indices of entries
+    std::shared_ptr<size_type> j;  // [allocationSize] column indices of entries
 
     // additional data is needed in implicit buildmode
     size_type avg;

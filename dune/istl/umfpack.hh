@@ -13,6 +13,7 @@
 #include<dune/common/exceptions.hh>
 #include<dune/common/fmatrix.hh>
 #include<dune/common/fvector.hh>
+#include<dune/common/unused.hh>
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
@@ -336,6 +337,7 @@ namespace Dune {
      */
     virtual void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
+      DUNE_UNUSED_PARAMETER(reduction);
       apply(x,b,res);
     }
 
@@ -496,6 +498,8 @@ namespace Dune {
         std::cout << "Error Estimate: " << UMF_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Info[UMFPACK_OMEGA2] << std::endl;
       }
     }
+
+    UMFPackMatrix& getInternalMatrix() { return umfpackMatrix_; }
 
     UMFPackMatrix umfpackMatrix_;
     bool matrixIsLoaded_;

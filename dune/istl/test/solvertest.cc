@@ -49,7 +49,6 @@ int main(int argc, char** argv)
   Dune::GeneralizedPCGSolver<BVector> solver0(fop, prec0, 1e-3,10,2);
   solver0.apply(x,b, res);
 
-
   b=0;
   x=1;
   mat.mv(x, b);
@@ -57,5 +56,22 @@ int main(int argc, char** argv)
 
   Dune::CGSolver<BVector> solver1(fop, prec0, 1e-3,10,2);
   solver1.apply(x,b, res);
+
+  b=0;
+  x=1;
+  mat.mv(x, b);
+  x=99;
+
+  Dune::BiCGSTABSolver<BVector> solver2(fop, prec0, 1e-3,10,2);
+  solver2.apply(x,b, res);
+
+  b=0;
+  x=1;
+  mat.mv(x, b);
+  x=99;
+
+  Dune::RestartedGMResSolver<BVector> solver3(fop, prec0, 1e-3,5,20,2,false);
+  solver3.apply(x,b, res);
+
   return 0;
 }

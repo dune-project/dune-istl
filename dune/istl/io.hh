@@ -16,6 +16,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
+#include <dune/common/unused.hh>
 
 #include <dune/istl/matrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
@@ -68,6 +69,7 @@ namespace Dune {
                               std::string rowtext, int& counter, int columns,
                               int width, int precision)
   {
+    DUNE_UNUSED_PARAMETER(precision);
     // we now can print n numbers
     for (int i=0; i<n; i++)
     {
@@ -142,6 +144,7 @@ namespace Dune {
    */
   inline void fill_row (std::ostream& s, int m, int width, int precision)
   {
+    DUNE_UNUSED_PARAMETER(precision);
     for (int j=0; j<m; j++)
     {
       s << " ";         // space in front of each entry
@@ -203,6 +206,9 @@ namespace Dune {
                   typename FieldMatrix<K,n,m>::size_type therow, int width,
                   int precision)
   {
+    DUNE_UNUSED_PARAMETER(J);
+    DUNE_UNUSED_PARAMETER(precision);
+
     typedef typename FieldMatrix<K,n,m>::size_type size_type;
 
     for (size_type i=0; i<n; i++)
@@ -229,6 +235,9 @@ namespace Dune {
                   typename FieldMatrix<K,1,1>::size_type therow,
                   int width, int precision)
   {
+    DUNE_UNUSED_PARAMETER(J);
+    DUNE_UNUSED_PARAMETER(precision);
+
     if (I==therow)
     {
       s << " ";         // space in front of each entry

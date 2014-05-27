@@ -11,6 +11,7 @@
 #include "graph.hh"
 #include "properties.hh"
 #include <dune/common/propertymap.hh>
+#include <dune/common/unused.hh>
 
 
 namespace Dune
@@ -291,6 +292,7 @@ namespace Dune
   typename PropertyMapTypeSelector<Amg::VertexVisitedTag,Amg::PropertiesGraph<G,Amg::VertexProperties,EP,VM,EM> >::Type
   get(const Amg::VertexVisitedTag& tag, Amg::PropertiesGraph<G,Amg::VertexProperties,EP,VM,EM>& graph)
   {
+    DUNE_UNUSED_PARAMETER(tag);
     return Amg::PropertyGraphVertexPropertyMap<Amg::PropertiesGraph<G,Amg::VertexProperties,EP,VM,EM>, Amg::VertexProperties::VISITED>(graph);
   }
 

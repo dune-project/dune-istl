@@ -138,7 +138,7 @@ void testCoarsenIndices(int N)
 
   VisitedMap2 visitedMap2(visitedIterator, Dune::IdentityMap());
 
-  BCRSMat* coarseMat = productBuilder.build(mat, mg, visitedMap2, pinfo,
+  BCRSMat* coarseMat = productBuilder.build(mg, visitedMap2, pinfo,
                                             aggregatesMap, noCoarseVertices,
                                             Dune::EnumItem<GridFlag,GridAttributes::copy>());
 

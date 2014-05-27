@@ -37,6 +37,7 @@ NORMALTESTS = basearraytest \
               overlappingschwarztest \
               scaledidmatrixtest \
               seqmatrixmarkettest \
+              solvertest \
               vbvectortest
 
 # list of tests to run (indicestest is special case)
@@ -129,6 +130,8 @@ iotest_SOURCES = iotest.cc
 inverseoperator2prectest_SOURCES = inverseoperator2prectest.cc
 
 scaledidmatrixtest_SOURCES = scaledidmatrixtest.cc
+
+solvertest_SOURCES = solvertest.cc
 
 if MPI
   vectorcommtest_SOURCES = vectorcommtest.cc
