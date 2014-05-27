@@ -14,7 +14,7 @@ namespace Dune {
   template<typename F, int n, int m>
   class FieldMatrix;
 
-  template<typename F>
+  template<typename F, typename Allocator>
   class DynamicVector;
 
   template<typename F>
