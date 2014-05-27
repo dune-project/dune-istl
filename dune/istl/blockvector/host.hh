@@ -650,12 +650,12 @@ namespace Dune {
               {
                 DF* __restrict__  a = _data;
                 for (size_type i = r.begin() * _block_size, end = r.end() * _block_size; i != end; ++i)
-                  _allocator.construct(a+i);
+                  _allocator.construct(a+i, value_type());
               });
           }
         // always initialize padded memory area
         for (size_type i = size * _block_size, end = allocation_size * _block_size; i != end; ++i)
-          _allocator.construct(_data+i);
+          _allocator.construct(_data+i, value_type());
       }
 
       size_type _block_size;

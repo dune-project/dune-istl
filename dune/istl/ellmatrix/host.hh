@@ -255,6 +255,18 @@ namespace Dune {
         return (e.second ? _data[e.first] : _zero_element);
       }
 
+      void print() const
+      {
+        for (size_t row(0) ; row < _layout.rows() ; ++row)
+        {
+          for (size_t col(0) ; col < _layout.cols() ; ++col)
+          {
+            std::cout<<(*this).element(row,col)<<" ";
+          }
+          std::cout<<std::endl;
+        }
+      }
+
       template<typename RowIndices, typename ColIndices, typename Values>
       void read(const RowIndices& row_indices, const ColIndices& col_indices, Values& values) const
       {

@@ -275,11 +275,11 @@ namespace Dune {
 
     private:
 
-      Layout(shared_ptr<Data> data)
+      Layout(std::shared_ptr<Data> data)
         : _data(data)
       {}
 
-      shared_ptr<Data> _data;
+      std::shared_ptr<Data> _data;
 
     };
 
@@ -466,7 +466,7 @@ namespace Dune {
       }
 
       LayoutBuilder()
-        : _data(make_shared<Data>())
+        : _data(std::make_shared<Data>())
         , _rows_allocated(false)
         , _cols_allocated(false)
       {}
@@ -477,7 +477,7 @@ namespace Dune {
 
     private:
 
-      shared_ptr<Data> _data;
+      std::shared_ptr<Data> _data;
       bool _rows_allocated;
       bool _cols_allocated;
 

@@ -20,6 +20,8 @@ if UMFPACK
   UMFPACKTEST = umfpacktest
 endif
 
+CUDATESTS = cuda_vectortest cuda_ellmatrixtest cudatest
+
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest \
               bcrsbuildtest \
@@ -41,10 +43,10 @@ NORMALTESTS = basearraytest \
               vbvectortest
 
 # list of tests to run (indicestest is special case)
-TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(UMFPACKTEST)
+TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS) $(UMFPACKTEST)
 
 # programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(UMFPACKTEST)
+check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS) $(UMFPACKTEST)
 
 # define the programs
 
@@ -96,6 +98,34 @@ if PARDISO
   test_pardiso_SOURCES = test_pardiso.cc
   test_pardiso_LDADD = $(PARDISO_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(LIBS) $(FLIBS)
 endif
+
+cudatest_SOURCES = cudatest.cc
+cudatest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
+cudatest_LDFLAGS = $(AM_LDFLAGS)	\
+		   $(TBB_CPPFLAGS) \
+		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
+		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a
+cudatest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
+cuda_vectortest_SOURCES = cuda_vectortest.cc
+cuda_vectortest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
+cuda_vectortest_LDFLAGS = $(AM_LDFLAGS)	\
+		   $(TBB_CPPFLAGS) \
+		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
+		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
+		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a
+cuda_vectortest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
+cuda_ellmatrixtest_SOURCES = cuda_ellmatrixtest.cc
+cuda_ellmatrixtest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
+cuda_ellmatrixtest_LDFLAGS = $(AM_LDFLAGS)	\
+		   $(TBB_CPPFLAGS) \
+		   -lcublas -lcudart -L/sfw/cuda/5.5/lib64 \
+		   $(top_builddir)/../dune-common/dune/common/memory/libcuda_memory.a \
+		   $(top_builddir)/../dune-common/dune/common/kernel/vec/libvec_cuda.a \
+		   $(top_builddir)/../dune-common/dune/common/kernel/ell/libell_cuda.a
+cuda_ellmatrixtest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
 
 basearraytest_SOURCES = basearraytest.cc
 
