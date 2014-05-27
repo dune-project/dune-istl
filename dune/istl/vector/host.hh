@@ -532,6 +532,17 @@ namespace Dune {
         return 1;
       }
 
+      template<typename Archive>
+      void archive(Archive& ar)
+      {
+        ar & _size;
+        ar & _allocation_size;
+        ar & _chunk_size;
+        if (Archive::Traits::is_reading)
+          allocate(_size,false);
+        ar.bulk(_data,_allocation_size);
+      }
+
 
     private:
 

@@ -817,6 +817,22 @@ namespace Dune {
         return _data;
       }
 
+      template<typename Archive>
+      void archive(Archive& ar)
+      {
+        ar & _layout;
+        if (Archive::Traits::is_writing)
+          {
+            if (!_data)
+              DUNE_THROW(Exception, "need valid data for writing");
+          }
+        else
+          {
+            allocate();
+          }
+        ar.bulk(_data,_layout.allocatedRows());
+      }
+
     private:
 
       void deallocate()

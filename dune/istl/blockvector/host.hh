@@ -579,6 +579,18 @@ namespace Dune {
         return range_type(0,_size,kernel_block_size,(_chunk_size > minimum_chunk_size ? _chunk_size : minimum_chunk_size),minimum_chunk_size/kernel_block_size);
       }
 
+      template<typename Archive>
+      void archive(Archive& ar)
+      {
+        ar & _block_size;
+        ar & _size;
+        ar & _allocation_size;
+        ar & _chunk_size;
+        if (Archive::Traits::is_reading)
+          allocate(_size,false);
+        ar.bulk(_data,_allocation_size * _block_size);
+      }
+
     private:
 
       void deallocate()

@@ -907,6 +907,20 @@ namespace Dune {
         return _data;
       }
 
+      template<typename Archive>
+      void archive(Archive& ar)
+      {
+        ar & _layout;
+        ar & _block_rows;
+        ar & _block_cols;
+        ar & _chunk_size;
+        ar & _nonzeros_chunk_size;
+        ar & _zero_element;
+        if (Archive::Traits::is_reading)
+          allocate();
+        ar.bulk(_data,_layout.nonzeros() * _block_rows * _block_cols);
+      }
+
     private:
 
       void deallocate()

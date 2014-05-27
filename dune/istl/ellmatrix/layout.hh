@@ -55,6 +55,28 @@ namespace Dune {
         size_type _allocated_rows;
         allocator_type _allocator;
 
+        template<typename Archive>
+        void archive(Archive& ar)
+        {
+          if (Archive::Traits::is_writing && !(_col_index && _block_offset && _row_length))
+            DUNE_THROW(Exception,"Cannot write incomplete archive");
+          ar & _rows;
+          ar & _cols;
+          ar & _nonzeros;
+          ar & _blocks;
+          ar & _chunk_size;
+          ar & _non_zeros_chunk_size;
+          ar & _allocated_rows;
+          if (Archive::Traits::is_reading)
+            {
+              allocateRows();
+              allocateCols();
+            }
+          ar.bulk(_col_index,_nonzeros);
+          ar.bulk(_block_offset,_blocks+1);
+          ar.bulk(_row_length,_allocated_rows);
+        }
+
         Data()
           : _rows(0)
           , _cols(0)
@@ -131,6 +153,14 @@ namespace Dune {
       static const size_type block_size = Allocator::block_size;
       static const size_type block_shift = Memory::block_size_log2<block_size>::value;
       static const size_type block_mask = Allocator::block_size - 1;
+
+      template<typename Archive>
+      void archive(Archive& ar)
+      {
+        if (Archive::Traits::is_reading)
+          _data = make_shared<Data>();
+        ar & *_data;
+      }
 
       size_type minChunkSize() const
       {
