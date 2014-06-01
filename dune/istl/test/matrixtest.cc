@@ -9,6 +9,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
 #include <dune/istl/bdmatrix.hh>
@@ -40,7 +41,7 @@ void testSuperMatrix(MatrixType& matrix)
 
   typedef typename MatrixType::size_type size_type;
 
-  typedef typename MatrixType::allocator_type allocator_type;
+  typedef typename MatrixType::allocator_type allocator_type DUNE_UNUSED;
 
   size_type n = matrix.N();
   size_type m = matrix.M();
@@ -62,19 +63,19 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
   typedef typename FieldTraits<field_type>::real_type real_type;
 
-  typedef typename MatrixType::block_type block_type;
+  typedef typename MatrixType::block_type block_type DUNE_UNUSED;
 
-  typedef typename MatrixType::row_type row_type;
+  typedef typename MatrixType::row_type row_type DUNE_UNUSED;
 
   typedef typename MatrixType::size_type size_type;
 
-  typedef typename MatrixType::RowIterator RowIterator;
+  typedef typename MatrixType::RowIterator RowIterator DUNE_UNUSED;
 
-  typedef typename MatrixType::ConstRowIterator ConstRowIterator;
+  typedef typename MatrixType::ConstRowIterator ConstRowIterator DUNE_UNUSED;
 
-  typedef typename MatrixType::ColIterator ColIterator;
+  typedef typename MatrixType::ColIterator ColIterator DUNE_UNUSED;
 
-  typedef typename MatrixType::ConstColIterator ConstColIterator;
+  typedef typename MatrixType::ConstColIterator ConstColIterator DUNE_UNUSED;
 
   assert(MatrixType::blocklevel >= 0);
 
