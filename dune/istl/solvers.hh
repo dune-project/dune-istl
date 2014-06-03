@@ -854,7 +854,7 @@ namespace Dune {
       _op.applyscaleadd(-1,x,b);
 
       // compute residual norm
-      field_type def0 = _sp.norm(b);
+      real_type def0 = _sp.norm(b);
 
       // printing
       if(_verbose > 0) {
@@ -883,11 +883,11 @@ namespace Dune {
       }
 
       // the defect norm
-      field_type def = def0;
+      real_type def = def0;
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
         // diagonal entries of givens rotation
-      Dune::array<field_type,2> c{{0.0,0.0}};
+      Dune::array<real_type,2> c{{0.0,0.0}};
         // off-diagonal entries of givens rotation
       Dune::array<field_type,2> s{{0.0,0.0}};
 
@@ -980,7 +980,7 @@ namespace Dune {
 
         // check for convergence
         // the last entry in the rhs of the min-problem is the residual
-        field_type defnew = std::abs(beta0*xi[i%2]);
+        real_type defnew = std::abs(beta0*xi[i%2]);
 
           if(_verbose > 1)
             this->printOutput(std::cout,i,defnew,def);
@@ -1026,21 +1026,28 @@ namespace Dune {
 
   private:
 
-    void generateGivensRotation(field_type& dx, field_type& dy, field_type& cs, field_type& sn)
+    void generateGivensRotation(field_type& dx, field_type& dy, real_type& cs, field_type& sn)
     {
-      field_type temp = std::abs(dy);
-      if(temp < 1e-16) {
+      real_type norm_dx = std::abs(dx);
+      real_type norm_dy = std::abs(dy);
+      if(norm_dy < 1e-15) {
         cs = 1.0;
         sn = 0.0;
-      }
-      else if(temp > std::abs(dx)) {
-        temp = dx/dy;
-        sn = 1.0/std::sqrt(1.0 + temp*temp);
-        cs = temp * sn;
-      } else {
-        temp = dy/dx;
+      } else if(norm_dx < 1e-15) {
+        cs = 0.0;
+        sn = 1.0;
+      } else if(norm_dy > norm_dx) {
+        real_type temp = norm_dx/norm_dy;
         cs = 1.0/std::sqrt(1.0 + temp*temp);
-        sn = temp * cs;
+        sn = cs;
+        cs *= temp;
+        sn *= dx/norm_dx;
+        sn *= std::conj(dy)/norm_dy;
+      } else {
+        real_type temp = norm_dy/norm_dx;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = cs;
+        sn *= std::conj(dy/dx);
       }
     }
 
@@ -1170,7 +1177,8 @@ namespace Dune {
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
-      std::vector<field_type> s(m+1), cs(m), sn(m);
+      std::vector<field_type> s(m+1), sn(m);
+      std::vector<real_type> cs(m);
       // need copy of rhs if GMRes has to be restarted
       Y b2(b);
       // helper vector
@@ -1337,29 +1345,37 @@ namespace Dune {
     }
 
     void
-    generatePlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
+    generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      field_type temp = std::abs(dy);
-      if (std::abs(dy) < 1e-15 ) {
+      real_type norm_dx = std::abs(dx);
+      real_type norm_dy = std::abs(dy);
+      if(norm_dy < 1e-15) {
         cs = 1.0;
         sn = 0.0;
-      } else if (temp > std::abs(dx)) {
-        temp = dx / dy;
-        sn = 1.0 / std::sqrt( 1.0 + temp*temp );
-        cs = temp * sn;
+      } else if(norm_dx < 1e-15) {
+        cs = 0.0;
+        sn = 1.0;
+      } else if(norm_dy > norm_dx) {
+        real_type temp = norm_dx/norm_dy;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = cs;
+        cs *= temp;
+        sn *= dx/norm_dx;
+        sn *= std::conj(dy)/norm_dy;
       } else {
-        temp = dy / dx;
-        cs = 1.0 / std::sqrt( 1.0 + temp*temp );
-        sn = temp * cs;
+        real_type temp = norm_dy/norm_dx;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = cs;
+        sn *= std::conj(dy/dx);
       }
     }
 
 
     void
-    applyPlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
+    applyPlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       field_type temp  =  cs * dx + sn * dy;
-      dy = -sn * dx + cs * dy;
+      dy = -std::conj(sn) * dx + cs * dy;
       dx = temp;
     }
 
