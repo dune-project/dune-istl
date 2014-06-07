@@ -904,7 +904,9 @@ namespace Dune {
       z = 0.0;
       _prec.apply(z,b);
 
-      beta = std::sqrt(std::abs(_sp.dot(z,b)));
+      // beta is real and positive in exact arithmetic
+      // since it is the norm of the basis vectors (in unpreconditioned case)
+      beta = std::sqrt(_sp.dot(b,z));
       field_type beta0 = beta;
 
       // the search directions
@@ -933,13 +935,18 @@ namespace Dune {
         // symmetrically preconditioned Lanczos algorithm (see Greenbaum p.121)
         _op.apply(z,q[i2]); // q[i2] = Az
         q[i2].axpy(-beta,q[i0]);
-        alpha = _sp.dot(q[i2],z);
+        // alpha is real since it is the diagonal entry of the hermitian tridiagonal matrix
+        // from the Lanczos Algorithm
+        // so the order in the scalar product doesn't matter even for the complex case
+        alpha = _sp.dot(z,q[i2]);
         q[i2].axpy(-alpha,q[i1]);
 
         z = 0.0;
         _prec.apply(z,q[i2]);
 
-        beta = std::sqrt(std::abs(_sp.dot(q[i2],z)));
+        // beta is real and positive in exact arithmetic
+        // since it is the norm of the basis vectors (in unpreconditioned case)
+        beta = std::sqrt(_sp.dot(q[i2],z));
 
         q[i2] *= 1.0/beta;
         z *= 1.0/beta;
@@ -1026,7 +1033,17 @@ namespace Dune {
 
   private:
 
-    void generateGivensRotation(field_type& dx, field_type& dy, real_type& cs, field_type& sn)
+    template<typename T>
+    typename enable_if<is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      return t;
+    }
+
+    template<typename T>
+    typename enable_if<!is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      return conj(t);
+    }
+
+    void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       real_type norm_dx = std::abs(dx);
       real_type norm_dy = std::abs(dy);
@@ -1042,12 +1059,12 @@ namespace Dune {
         sn = cs;
         cs *= temp;
         sn *= dx/norm_dx;
-        sn *= std::conj(dy)/norm_dy;
+        sn *= conjugate(dy)/norm_dy;
       } else {
         real_type temp = norm_dy/norm_dx;
         cs = 1.0/std::sqrt(1.0 + temp*temp);
         sn = cs;
-        sn *= std::conj(dy/dx);
+        sn *= conjugate(dy/dx);
       }
     }
 
@@ -1235,7 +1252,11 @@ namespace Dune {
           _A.apply(v[i],v[i+1]);
           _W.apply(w,v[i+1]);
           for(int k=0; k<i+1; k++) {
-            H[k][i] = _sp.dot(w,v[k]);
+            // notice that _sp.dot(v[k],w) = v[k]\adjoint w
+            // so one has to pay attention to the order
+            // the in scalar product for the complex case
+            // doing the modified Gram-Schmidt algorithm
+            H[k][i] = _sp.dot(v[k],w);
             // w -= H[k][i] * v[k]
             w.axpy(-H[k][i],v[k]);
           }
@@ -1344,6 +1365,16 @@ namespace Dune {
       }
     }
 
+    template<typename T>
+    typename enable_if<is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      return t;
+    }
+
+    template<typename T>
+    typename enable_if<!is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      return conj(t);
+    }
+
     void
     generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
@@ -1361,12 +1392,12 @@ namespace Dune {
         sn = cs;
         cs *= temp;
         sn *= dx/norm_dx;
-        sn *= std::conj(dy)/norm_dy;
+        sn *= conjugate(dy)/norm_dy;
       } else {
         real_type temp = norm_dy/norm_dx;
         cs = 1.0/std::sqrt(1.0 + temp*temp);
         sn = cs;
-        sn *= std::conj(dy/dx);
+        sn *= conjugate(dy/dx);
       }
     }
 
@@ -1375,7 +1406,7 @@ namespace Dune {
     applyPlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       field_type temp  =  cs * dx + sn * dy;
-      dy = -std::conj(sn) * dx + cs * dy;
+      dy = -conjugate(sn) * dx + cs * dy;
       dx = temp;
     }
 
