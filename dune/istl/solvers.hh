@@ -1033,16 +1033,6 @@ namespace Dune {
 
   private:
 
-    template<typename T>
-    typename enable_if<is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
-      return t;
-    }
-
-    template<typename T>
-    typename enable_if<!is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
-      return conj(t);
-    }
-
     void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       real_type norm_dx = std::abs(dx);
@@ -1059,12 +1049,16 @@ namespace Dune {
         sn = cs;
         cs *= temp;
         sn *= dx/norm_dx;
-        sn *= conjugate(dy)/norm_dy;
+        // dy is real in exact arithmetic
+        // so we don't need to conjugate here
+        sn *= dy/norm_dy;
       } else {
         real_type temp = norm_dy/norm_dx;
         cs = 1.0/std::sqrt(1.0 + temp*temp);
         sn = cs;
-        sn *= conjugate(dy/dx);
+        sn *= dy/dx;
+        // dy and dx is real in exact arithmetic
+        // so we don't have to conjugate both of them
       }
     }
 
