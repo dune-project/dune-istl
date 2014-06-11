@@ -21,6 +21,7 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/typetraits.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
