@@ -3,6 +3,7 @@ set(NORMALTEST
   bvectortest
   bcrsbuildtest
   bcrsimplicitbuildtest
+  complexmatrixtest
   dotproducttest
   iotest
   inverseoperator2prectest
@@ -51,6 +52,7 @@ include(DuneMPI)
 # Provide source files
 add_executable(basearraytest "basearraytest.cc")
 add_executable(dotproducttest "dotproducttest.cc")
+add_executable(complexmatrixtest "complexmatrixtest.cc")
 add_executable(matrixutilstest "matrixutilstest.cc")
 add_executable(matrixtest "matrixtest.cc")
 add_executable(bvectortest "bvectortest.cc")

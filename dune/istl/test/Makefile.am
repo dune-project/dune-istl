@@ -25,6 +25,7 @@ NORMALTESTS = basearraytest \
               bcrsbuildtest \
               bcrsimplicitbuildtest \
               bvectortest \
+              complexmatrixtest \
               complexrhstest \
               dotproducttest \
               iotest \
@@ -106,7 +107,9 @@ bcrsimplicitbuildtest_CPPFLAGS = $(AM_CPPFLAGS) -DDUNE_ISTL_WITH_CHECKING=1
 
 bvectortest_SOURCES = bvectortest.cc
 
-complexrhstest_SOURCES = complexrhstest.cc laplacian.hh assemble_random_matrix_vectors.hh
+complexmatrixtest_SOURCES = complexmatrixtest.cc assemble_random_matrix_vectors.hh
+
+complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
 complexrhstest_LDADD= $(SUPERLU_LIBS)
 complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
 complexrhstest_CPPFLAGS=$(AM_CPPFLAGS) $(SUPERLU_CPPFLAGS) -DSUPERLU_NTYPE=3
