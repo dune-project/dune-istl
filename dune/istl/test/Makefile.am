@@ -170,6 +170,9 @@ if MPI
 	${DUNEMPILIBS}				\
 	$(LDADD)
 endif
+
+headercheck_IGNORE = assemble_random_matrix_vectors.hh
+
 include $(top_srcdir)/am/global-rules
 
 EXTRA_DIST = CMakeLists.txt
