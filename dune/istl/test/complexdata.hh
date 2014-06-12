@@ -1,4 +1,11 @@
+// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// vi: set et ts=4 sw=2 sts=2:
 
+/**
+ * \author: Marian Piatkowski, Steffen Müthing
+ * \file
+ * \brief Test data for complexmatrixtest.
+ */
 
 void assemblecomplexmatrix(Dune::FieldMatrix<std::complex<double>,10,10>& complexmatrix) {
   complexmatrix[0][0] = {-9.673988567513409e-01,-5.142264587405261e-01};
