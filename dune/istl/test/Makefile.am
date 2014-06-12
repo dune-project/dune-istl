@@ -25,6 +25,7 @@ NORMALTESTS = basearraytest \
               bcrsbuildtest \
               bcrsimplicitbuildtest \
               bvectortest \
+              complexmatrixtest \
               complexrhstest \
               dotproducttest \
               iotest \
@@ -106,6 +107,8 @@ bcrsimplicitbuildtest_CPPFLAGS = $(AM_CPPFLAGS) -DDUNE_ISTL_WITH_CHECKING=1
 
 bvectortest_SOURCES = bvectortest.cc
 
+complexmatrixtest_SOURCES = complexmatrixtest.cc complexdata.hh
+
 complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
 complexrhstest_LDADD= $(SUPERLU_LIBS)
 complexrhstest_LDFLAGS= $(AM_LDFLAGS) $(SUPERLU_LDFLAGS)
@@ -167,6 +170,9 @@ if MPI
 	${DUNEMPILIBS}				\
 	$(LDADD)
 endif
+
+headercheck_IGNORE = complexdata.hh
+
 include $(top_srcdir)/am/global-rules
 
 EXTRA_DIST = CMakeLists.txt

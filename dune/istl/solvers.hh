@@ -21,6 +21,7 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/typetraits.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
@@ -854,7 +855,7 @@ namespace Dune {
       _op.applyscaleadd(-1,x,b);
 
       // compute residual norm
-      field_type def0 = _sp.norm(b);
+      real_type def0 = _sp.norm(b);
 
       // printing
       if(_verbose > 0) {
@@ -883,11 +884,11 @@ namespace Dune {
       }
 
       // the defect norm
-      field_type def = def0;
+      real_type def = def0;
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
         // diagonal entries of givens rotation
-      Dune::array<field_type,2> c{{0.0,0.0}};
+      Dune::array<real_type,2> c{{0.0,0.0}};
         // off-diagonal entries of givens rotation
       Dune::array<field_type,2> s{{0.0,0.0}};
 
@@ -904,7 +905,9 @@ namespace Dune {
       z = 0.0;
       _prec.apply(z,b);
 
-      beta = std::sqrt(std::abs(_sp.dot(z,b)));
+      // beta is real and positive in exact arithmetic
+      // since it is the norm of the basis vectors (in unpreconditioned case)
+      beta = std::sqrt(_sp.dot(b,z));
       field_type beta0 = beta;
 
       // the search directions
@@ -933,13 +936,18 @@ namespace Dune {
         // symmetrically preconditioned Lanczos algorithm (see Greenbaum p.121)
         _op.apply(z,q[i2]); // q[i2] = Az
         q[i2].axpy(-beta,q[i0]);
-        alpha = _sp.dot(q[i2],z);
+        // alpha is real since it is the diagonal entry of the hermitian tridiagonal matrix
+        // from the Lanczos Algorithm
+        // so the order in the scalar product doesn't matter even for the complex case
+        alpha = _sp.dot(z,q[i2]);
         q[i2].axpy(-alpha,q[i1]);
 
         z = 0.0;
         _prec.apply(z,q[i2]);
 
-        beta = std::sqrt(std::abs(_sp.dot(q[i2],z)));
+        // beta is real and positive in exact arithmetic
+        // since it is the norm of the basis vectors (in unpreconditioned case)
+        beta = std::sqrt(_sp.dot(q[i2],z));
 
         q[i2] *= 1.0/beta;
         z *= 1.0/beta;
@@ -980,7 +988,7 @@ namespace Dune {
 
         // check for convergence
         // the last entry in the rhs of the min-problem is the residual
-        field_type defnew = std::abs(beta0*xi[i%2]);
+        real_type defnew = std::abs(beta0*xi[i%2]);
 
           if(_verbose > 1)
             this->printOutput(std::cout,i,defnew,def);
@@ -1026,21 +1034,32 @@ namespace Dune {
 
   private:
 
-    void generateGivensRotation(field_type& dx, field_type& dy, field_type& cs, field_type& sn)
+    void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      field_type temp = std::abs(dy);
-      if(temp < 1e-16) {
+      real_type norm_dx = std::abs(dx);
+      real_type norm_dy = std::abs(dy);
+      if(norm_dy < 1e-15) {
         cs = 1.0;
         sn = 0.0;
-      }
-      else if(temp > std::abs(dx)) {
-        temp = dx/dy;
-        sn = 1.0/std::sqrt(1.0 + temp*temp);
-        cs = temp * sn;
-      } else {
-        temp = dy/dx;
+      } else if(norm_dx < 1e-15) {
+        cs = 0.0;
+        sn = 1.0;
+      } else if(norm_dy > norm_dx) {
+        real_type temp = norm_dx/norm_dy;
         cs = 1.0/std::sqrt(1.0 + temp*temp);
-        sn = temp * cs;
+        sn = cs;
+        cs *= temp;
+        sn *= dx/norm_dx;
+        // dy is real in exact arithmetic
+        // so we don't need to conjugate here
+        sn *= dy/norm_dy;
+      } else {
+        real_type temp = norm_dy/norm_dx;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = cs;
+        sn *= dy/dx;
+        // dy and dx is real in exact arithmetic
+        // so we don't have to conjugate both of them
       }
     }
 
@@ -1170,7 +1189,8 @@ namespace Dune {
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
-      std::vector<field_type> s(m+1), cs(m), sn(m);
+      std::vector<field_type> s(m+1), sn(m);
+      std::vector<real_type> cs(m);
       // need copy of rhs if GMRes has to be restarted
       Y b2(b);
       // helper vector
@@ -1227,7 +1247,11 @@ namespace Dune {
           _A.apply(v[i],v[i+1]);
           _W.apply(w,v[i+1]);
           for(int k=0; k<i+1; k++) {
-            H[k][i] = _sp.dot(w,v[k]);
+            // notice that _sp.dot(v[k],w) = v[k]\adjoint w
+            // so one has to pay attention to the order
+            // the in scalar product for the complex case
+            // doing the modified Gram-Schmidt algorithm
+            H[k][i] = _sp.dot(v[k],w);
             // w -= H[k][i] * v[k]
             w.axpy(-H[k][i],v[k]);
           }
@@ -1336,30 +1360,48 @@ namespace Dune {
       }
     }
 
+    template<typename T>
+    typename enable_if<is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      return t;
+    }
+
+    template<typename T>
+    typename enable_if<!is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      return conj(t);
+    }
+
     void
-    generatePlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
+    generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      field_type temp = std::abs(dy);
-      if (std::abs(dy) < 1e-15 ) {
+      real_type norm_dx = std::abs(dx);
+      real_type norm_dy = std::abs(dy);
+      if(norm_dy < 1e-15) {
         cs = 1.0;
         sn = 0.0;
-      } else if (temp > std::abs(dx)) {
-        temp = dx / dy;
-        sn = 1.0 / std::sqrt( 1.0 + temp*temp );
-        cs = temp * sn;
+      } else if(norm_dx < 1e-15) {
+        cs = 0.0;
+        sn = 1.0;
+      } else if(norm_dy > norm_dx) {
+        real_type temp = norm_dx/norm_dy;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = cs;
+        cs *= temp;
+        sn *= dx/norm_dx;
+        sn *= conjugate(dy)/norm_dy;
       } else {
-        temp = dy / dx;
-        cs = 1.0 / std::sqrt( 1.0 + temp*temp );
-        sn = temp * cs;
+        real_type temp = norm_dy/norm_dx;
+        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        sn = cs;
+        sn *= conjugate(dy/dx);
       }
     }
 
 
     void
-    applyPlaneRotation(field_type &dx, field_type &dy, field_type &cs, field_type &sn)
+    applyPlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       field_type temp  =  cs * dx + sn * dy;
-      dy = -sn * dx + cs * dy;
+      dy = -conjugate(sn) * dx + cs * dy;
       dx = temp;
     }
 
