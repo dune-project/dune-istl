@@ -124,4 +124,4 @@ foreach(_exe ${ALLTESTS})
 endforeach(_exe ${ALLTESTS})
 
 exclude_from_headercheck(
-  assemble_random_matrix_vectors.hh)
+  complexdata.hh)

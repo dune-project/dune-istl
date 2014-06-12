@@ -17,7 +17,7 @@
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
-#include "assemble_random_matrix_vectors.hh"
+#include "complexdata.hh"
 
 typedef std::complex<double> FIELD_TYPE;
 

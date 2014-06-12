@@ -107,7 +107,7 @@ bcrsimplicitbuildtest_CPPFLAGS = $(AM_CPPFLAGS) -DDUNE_ISTL_WITH_CHECKING=1
 
 bvectortest_SOURCES = bvectortest.cc
 
-complexmatrixtest_SOURCES = complexmatrixtest.cc assemble_random_matrix_vectors.hh
+complexmatrixtest_SOURCES = complexmatrixtest.cc complexdata.hh
 
 complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
 complexrhstest_LDADD= $(SUPERLU_LIBS)
@@ -171,7 +171,7 @@ if MPI
 	$(LDADD)
 endif
 
-headercheck_IGNORE = assemble_random_matrix_vectors.hh
+headercheck_IGNORE = complexdata.hh
 
 include $(top_srcdir)/am/global-rules
 
