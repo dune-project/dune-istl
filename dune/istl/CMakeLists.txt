@@ -15,7 +15,6 @@ install(FILES
    btdmatrix.hh
    bvector.hh
    colcompmatrix.hh
-   diagonalmatrix.hh
    ellmatrix.hh
    forwarddeclarations.hh
    gsetc.hh
