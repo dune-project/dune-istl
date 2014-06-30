@@ -62,6 +62,8 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator that we do the inverse for.
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
        \brief Set up Loop solver.
@@ -84,7 +86,7 @@ namespace Dune {
      */
     template<class L, class P>
     LoopSolver (L& op, P& prec,
-                double reduction, int maxit, int verbose) :
+                real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -115,7 +117,7 @@ namespace Dune {
      */
     template<class L, class S, class P>
     LoopSolver (L& op, S& sp, P& prec,
-                double reduction, int maxit, int verbose) :
+                real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -141,7 +143,7 @@ namespace Dune {
       _op.applyscaleadd(-1,x,b);
 
       // compute norm, \todo parallelization
-      double def0 = _sp.norm(b);
+      real_type def0 = _sp.norm(b);
 
       // printing
       if (_verbose>0)
@@ -150,7 +152,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
+          this->printOutput(std::cout,real_type(0),def0);
         }
       }
 
@@ -158,16 +160,16 @@ namespace Dune {
       X v(x);
 
       // iteration loop
-      int i=1; double def=def0;
+      int i=1; real_type def=def0;
       for ( ; i<=_maxit; i++ )
       {
         v = 0;                      // clear correction
         _prec.apply(v,b);           // apply preconditioner
         x += v;                     // update solution
         _op.applyscaleadd(-1,v,b);  // update defect
-        double defnew=_sp.norm(b);  // comp defect norm
+        real_type defnew=_sp.norm(b);  // comp defect norm
         if (_verbose>1)             // print
-          this->printOutput(std::cout,i,defnew,def);
+          this->printOutput(std::cout,real_type(i),defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -182,7 +184,7 @@ namespace Dune {
 
       // print
       if (_verbose==1)
-        this->printOutput(std::cout,i,def);
+        this->printOutput(std::cout,real_type(i),def);
 
       // postprocess preconditioner
       _prec.post(x);
@@ -206,9 +208,10 @@ namespace Dune {
     //! \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      std::swap(_reduction,reduction);
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
       (*this).apply(x,b,res);
-      std::swap(_reduction,reduction);
+      _reduction = saved_reduction;
     }
 
   private:
@@ -216,7 +219,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
   };
@@ -233,6 +236,9 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator  that we do the inverse for.
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
+
 
     /*!
        \brief Set up solver.
@@ -241,7 +247,7 @@ namespace Dune {
      */
     template<class L, class P>
     GradientSolver (L& op, P& prec,
-                    double reduction, int maxit, int verbose) :
+                    real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -256,7 +262,7 @@ namespace Dune {
      */
     template<class L, class S, class P>
     GradientSolver (L& op, S& sp, P& prec,
-                    double reduction, int maxit, int verbose) :
+                    real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -280,7 +286,7 @@ namespace Dune {
       X p(x);                     // create local vectors
       X q(b);
 
-      double def0 = _sp.norm(b); // compute norm
+      real_type def0 = _sp.norm(b); // compute norm
 
       if (_verbose>0)             // printing
       {
@@ -288,11 +294,11 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
+          this->printOutput(std::cout,real_type(0),def0);
         }
       }
 
-      int i=1; double def=def0;   // loop variables
+      int i=1; real_type def=def0;   // loop variables
       field_type lambda;
       for ( ; i<=_maxit; i++ )
       {
@@ -303,9 +309,9 @@ namespace Dune {
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
-        double defnew=_sp.norm(b); // comp defect norm
+        real_type defnew=_sp.norm(b); // comp defect norm
         if (_verbose>1)             // print
-          this->printOutput(std::cout,i,defnew,def);
+          this->printOutput(std::cout,real_type(i),defnew,def);
 
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -319,12 +325,12 @@ namespace Dune {
       i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,i,def);
+        this->printOutput(std::cout,real_type(i),def);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = def/def0;
-      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.reduction = static_cast<double>(def/def0);
+      res.conv_rate  = static_cast<double>(pow(res.reduction,1.0/i));
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
         std::cout << "=== rate=" << res.conv_rate
@@ -340,9 +346,10 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      std::swap(_reduction,reduction);
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
       (*this).apply(x,b,res);
-      std::swap(_reduction,reduction);
+      _reduction = saved_reduction;
     }
 
   private:
@@ -350,7 +357,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
   };
@@ -367,6 +374,8 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator to be inverted.
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
        \brief Set up conjugate gradient solver.
@@ -374,7 +383,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
-    CGSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
+    CGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -388,7 +397,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S, class P>
-    CGSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
+    CGSolver (L& op, S& sp, P& prec, real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -412,7 +421,7 @@ namespace Dune {
       X p(x);              // the search direction
       X q(x);              // a temporary vector
 
-      double def0 = _sp.norm(b); // compute norm
+      real_type def0 = _sp.norm(b); // compute norm
       if (def0<1E-30)    // convergence check
       {
         res.converged  = true;
@@ -432,12 +441,12 @@ namespace Dune {
         std::cout << "=== CGSolver" << std::endl;
         if (_verbose>1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
+          this->printOutput(std::cout,real_type(0),def0);
         }
       }
 
       // some local variables
-      double def=def0;   // loop variables
+      real_type def=def0;   // loop variables
       field_type rho,rholast,lambda,alpha,beta;
 
       // determine initial search direction
@@ -457,10 +466,10 @@ namespace Dune {
         b.axpy(-lambda,q);          // update defect
 
         // convergence test
-        double defnew=_sp.norm(b); // comp defect norm
+        real_type defnew=_sp.norm(b); // comp defect norm
 
         if (_verbose>1)             // print
-          this->printOutput(std::cout,i,defnew,def);
+          this->printOutput(std::cout,real_type(i),defnew,def);
 
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -483,12 +492,12 @@ namespace Dune {
       i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,i,def);
+        this->printOutput(std::cout,real_type(i),def);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = def/def0;
-      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.reduction = static_cast<double>(def/def0);
+      res.conv_rate  = static_cast<double>(pow(res.reduction,1.0/i));
       res.elapsed = watch.elapsed();
 
       if (_verbose>0)                 // final print
@@ -508,9 +517,10 @@ namespace Dune {
     virtual void apply (X& x, X& b, double reduction,
                         InverseOperatorResult& res)
     {
-      std::swap(_reduction,reduction);
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
       (*this).apply(x,b,res);
-      std::swap(_reduction,reduction);
+      _reduction = saved_reduction;
     }
 
   private:
@@ -518,7 +528,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
   };
@@ -535,7 +545,7 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
@@ -545,7 +555,7 @@ namespace Dune {
      */
     template<class L, class P>
     BiCGSTABSolver (L& op, P& prec,
-                    double reduction, int maxit, int verbose) :
+                    real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -560,7 +570,7 @@ namespace Dune {
      */
     template<class L, class S, class P>
     BiCGSTABSolver (L& op, S& sp, P& prec,
-                    double reduction, int maxit, int verbose) :
+                    real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -576,7 +586,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      const double EPSILON=1e-80;
+      const real_type EPSILON=1e-80;
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
       real_type norm, norm_old, norm_0;
@@ -618,7 +628,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,0,norm_0);
+          this->printOutput(std::cout,real_type(0),norm_0);
           //std::cout << " Iter       Defect         Rate" << std::endl;
           //std::cout << "    0" << std::setw(14) << norm_0 << std::endl;
         }
@@ -699,7 +709,7 @@ namespace Dune {
 
         if (_verbose>1) // print
         {
-          this->printOutput(std::cout,it,norm,norm_old);
+          this->printOutput(std::cout,real_type(it),norm,norm_old);
         }
 
         if ( norm < (_reduction * norm_0) )
@@ -738,7 +748,7 @@ namespace Dune {
 
         if (_verbose > 1)             // print
         {
-          this->printOutput(std::cout,it,norm,norm_old);
+          this->printOutput(std::cout,real_type(it),norm,norm_old);
         }
 
         if ( norm < (_reduction * norm_0)  || norm<1E-30)
@@ -751,15 +761,15 @@ namespace Dune {
       } // end for
 
       //correct i which is wrong if convergence was not achieved.
-      it=std::min((double)_maxit,it);
+      it=std::min(static_cast<double>(_maxit),it);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,it,norm);
+        this->printOutput(std::cout,real_type(it),norm);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
-      res.reduction = norm/norm_0;
-      res.conv_rate  = pow(res.reduction,1.0/it);
+      res.reduction = static_cast<double>(norm/norm_0);
+      res.conv_rate  = static_cast<double>(pow(res.reduction,1.0/it));
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
         std::cout << "=== rate=" << res.conv_rate
@@ -775,9 +785,10 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      std::swap(_reduction,reduction);
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
       (*this).apply(x,b,res);
-      std::swap(_reduction,reduction);
+      _reduction = saved_reduction;
     }
 
   private:
@@ -785,7 +796,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
   };
@@ -805,7 +816,7 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator to be inverted.
     typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
@@ -814,7 +825,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
-    MINRESSolver (L& op, P& prec, double reduction, int maxit, int verbose) :
+    MINRESSolver (L& op, P& prec, real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -828,7 +839,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S, class P>
-    MINRESSolver (L& op, S& sp, P& prec, double reduction, int maxit, int verbose) :
+    MINRESSolver (L& op, S& sp, P& prec, real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
@@ -862,7 +873,7 @@ namespace Dune {
         std::cout << "=== MINRESSolver" << std::endl;
         if(_verbose > 1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
+          this->printOutput(std::cout,real_type(0),def0);
         }
       }
 
@@ -991,7 +1002,7 @@ namespace Dune {
         real_type defnew = std::abs(beta0*xi[i%2]);
 
           if(_verbose > 1)
-            this->printOutput(std::cout,i,defnew,def);
+            this->printOutput(std::cout,real_type(i),defnew,def);
 
           def = defnew;
           if(def < def0*_reduction || def < 1e-30 || i == _maxit ) {
@@ -1001,14 +1012,14 @@ namespace Dune {
         } // end for
 
         if(_verbose == 1)
-          this->printOutput(std::cout,i,def);
+          this->printOutput(std::cout,real_type(i),def);
 
         // postprocess preconditioner
         _prec.post(x);
         // fill statistics
         res.iterations = i;
-        res.reduction = def/def0;
-        res.conv_rate = pow(res.reduction,1.0/i);
+        res.reduction = static_cast<double>(def/def0);
+        res.conv_rate = static_cast<double>(pow(res.reduction,1.0/i));
         res.elapsed = watch.elapsed();
 
         // final print
@@ -1027,9 +1038,10 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      std::swap(_reduction,reduction);
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
       (*this).apply(x,b,res);
-      std::swap(_reduction,reduction);
+      _reduction = saved_reduction;
     }
 
   private:
@@ -1067,7 +1079,7 @@ namespace Dune {
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
   };
@@ -1095,7 +1107,7 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the operator to be inverted
     typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same of using real numbers, but differs for std::complex)
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
     //! \brief The field type of the basis vectors
     typedef F basis_type;
@@ -1183,9 +1195,9 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (X& x, Y& b, real_type reduction, InverseOperatorResult& res)
     {
-      const double EPSILON = 1e-80;
+      const real_type EPSILON = 1e-80;
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
@@ -1220,7 +1232,7 @@ namespace Dune {
           std::cout << "=== RestartedGMResSolver" << std::endl;
           if(_verbose > 1) {
             this->printHeader(std::cout);
-            this->printOutput(std::cout,0,norm_0);
+            this->printOutput(std::cout,real_type(0),norm_0);
           }
         }
 
@@ -1278,7 +1290,7 @@ namespace Dune {
 
           // print current iteration statistics
           if(_verbose > 1) {
-            this->printOutput(std::cout,j,norm,norm_old);
+            this->printOutput(std::cout,real_type(j),norm,norm_old);
           }
 
           norm_old = norm;
@@ -1320,8 +1332,8 @@ namespace Dune {
 
       // save solver statistics
       res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = norm/norm_0;
-      res.conv_rate = pow(res.reduction,1.0/(j-1));
+      res.reduction = static_cast<double>(norm/norm_0);
+      res.conv_rate = static_cast<double>(pow(res.reduction,1.0/(j-1)));
       res.elapsed = watch.elapsed();
 
       if(_verbose>0)
@@ -1439,6 +1451,8 @@ namespace Dune {
     typedef X range_type;
     //! \brief The field type of the operator to be inverted.
     typedef typename X::field_type field_type;
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
@@ -1448,7 +1462,7 @@ namespace Dune {
        the Krylov search space.
      */
     template<class L, class P>
-    GeneralizedPCGSolver (L& op, P& prec, double reduction, int maxit, int verbose,
+    GeneralizedPCGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose,
                           int restart=10) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit),
       _verbose(verbose), _restart(std::min(maxit,restart))
@@ -1468,7 +1482,7 @@ namespace Dune {
      */
     template<class L, class P, class S>
     GeneralizedPCGSolver (L& op, S& sp, P& prec,
-                          double reduction, int maxit, int verbose, int restart=10) :
+                          real_type reduction, int maxit, int verbose, int restart=10) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _restart(std::min(maxit,restart))
     {
@@ -1496,7 +1510,7 @@ namespace Dune {
 
       p[0].reset(new X(x));
 
-      double def0 = _sp.norm(b);    // compute norm
+      real_type def0 = _sp.norm(b);    // compute norm
       if (def0<1E-30)        // convergence check
       {
         res.converged  = true;
@@ -1516,11 +1530,11 @@ namespace Dune {
         std::cout << "=== GeneralizedPCGSolver" << std::endl;
         if (_verbose>1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
+          this->printOutput(std::cout,real_type(0),def0);
         }
       }
       // some local variables
-      double def=def0;       // loop variables
+      real_type def=def0;       // loop variables
       field_type rho, lambda;
 
       int i=0;
@@ -1536,9 +1550,9 @@ namespace Dune {
       b.axpy(-lambda,q);              // update defect
 
       // convergence test
-      double defnew=_sp.norm(b);    // comp defect norm
+      real_type defnew=_sp.norm(b);    // comp defect norm
       if (_verbose>1)                 // print
-        this->printOutput(std::cout,++i,defnew,def);
+        this->printOutput(std::cout,real_type(++i),defnew,def);
       def = defnew;                   // update norm
       if (def<def0*_reduction || def<1E-30)        // convergence check
       {
@@ -1580,10 +1594,10 @@ namespace Dune {
           b.axpy(-lambda,q);                  // update defect
 
           // convergence test
-          double defnew=_sp.norm(b);        // comp defect norm
+          real_type defnew=_sp.norm(b);        // comp defect norm
 
           if (_verbose>1)                     // print
-            this->printOutput(std::cout,++i,defnew,def);
+            this->printOutput(std::cout,real_type(++i),defnew,def);
 
           def = defnew;                       // update norm
           if (def<def0*_reduction || def<1E-30)            // convergence check
@@ -1626,16 +1640,17 @@ namespace Dune {
     virtual void apply (X& x, X& b, double reduction,
                         InverseOperatorResult& res)
     {
-      std::swap(_reduction,reduction);
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
       (*this).apply(x,b,res);
-      std::swap(_reduction,reduction);
+      _reduction = saved_reduction;
     }
   private:
     SeqScalarProduct<X> ssp;
     LinearOperator<X,X>& _op;
     Preconditioner<X,X>& _prec;
     ScalarProduct<X>& _sp;
-    double _reduction;
+    real_type _reduction;
     int _maxit;
     int _verbose;
     int _restart;

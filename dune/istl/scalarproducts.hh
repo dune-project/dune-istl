@@ -115,7 +115,7 @@ namespace Dune {
      */
     virtual double norm (const X& x)
     {
-      return x.two_norm();
+      return static_cast<double>(x.two_norm());
     }
   };
 

@@ -412,7 +412,7 @@ namespace Dune {
           if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
             mask[i->local().local()] = 0;
       }
-      result = 0;
+      result = T2(0.0);
 
       for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i]*(y[i])*mask[i];
@@ -439,10 +439,10 @@ namespace Dune {
           if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
             mask[i->local().local()] = 0;
       }
-      double result = 0;
+      typename T1::field_type result = typename T1::field_type(0.0);
       for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i].two_norm2()*mask[i];
-      return sqrt(cc.sum(result));
+      return static_cast<double>(sqrt(cc.sum(result)));
     }
 
     typedef Dune::EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopyFlags;
