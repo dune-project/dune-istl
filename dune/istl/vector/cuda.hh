@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <functional>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>

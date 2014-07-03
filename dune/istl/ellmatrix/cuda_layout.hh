@@ -12,7 +12,6 @@
 #include <vector>
 #include <set>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/memory/traits.hh>
 //#include <dune/common/kernel/ell.hh>
 
@@ -33,8 +32,8 @@ namespace Dune {
 
         typedef typename Allocator::size_type size_type;
 
-        dune_static_assert((is_same<typename Allocator::value_type,size_type>::value),
-                           "Layout data allocator must be for allocator_type::size_type");
+        static_assert((is_same<typename Allocator::value_type,size_type>::value),
+                      "Layout data allocator must be for allocator_type::size_type");
 
         size_type _rows;
         size_type _cols;

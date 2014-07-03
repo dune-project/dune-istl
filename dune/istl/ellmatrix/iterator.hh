@@ -8,7 +8,6 @@
 #include <type_traits>
 #include <algorithm>
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
 namespace Dune {
