@@ -875,7 +875,8 @@ namespace Dune {
         DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copied when both target and source are empty or fully built)");
 
       // make it simple: ALWAYS throw away memory for a and j
-      deallocate(false);
+      // and deallocate rows only if n != Mat.n
+      deallocate(n!=Mat.n);
 
       // reallocate the rows if required
       if (n>0 && n!=Mat.n) {
