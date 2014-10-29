@@ -1,5 +1,6 @@
 set(NORMALTEST
   basearraytest
+  bcrsassigntest
   bvectortest
   bcrsbuildtest
   bcrsimplicitbuildtest
@@ -51,6 +52,7 @@ include(DuneMPI)
 
 # Provide source files
 add_executable(basearraytest "basearraytest.cc")
+add_executable(bcrsassigntest "bcrsassigntest.cc")
 add_executable(dotproducttest "dotproducttest.cc")
 add_executable(complexmatrixtest "complexmatrixtest.cc")
 add_executable(matrixutilstest "matrixutilstest.cc")
