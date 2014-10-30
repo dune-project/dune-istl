@@ -101,7 +101,7 @@ endif
 
 basearraytest_SOURCES = basearraytest.cc
 
-bcrsassingtest_SOURCES = bcrsassigntest.cc
+bcrsassigntest_SOURCES = bcrsassigntest.cc
 
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
