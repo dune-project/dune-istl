@@ -1,7 +1,4 @@
 #include "config.h"
-
-#define HAVE_SPQR 1
-
 #include <complex>
 #include<iostream>
 
@@ -15,7 +12,6 @@
 #include <dune/istl/spqr.hh>
 
 #include "laplacian.hh"
-
 
 int main(int argc, char** argv)
 {
@@ -53,23 +49,26 @@ int main(int argc, char** argv)
 
     Dune::InverseOperatorResult res;
 
-    //Dune::SPQR<BCRSMat> solver1;
+    Dune::SPQR<BCRSMat> solver1;
 
-    //std::set<std::size_t> mrs;
-    //for(std::size_t s=0; s < N/2; ++s)
-      //mrs.insert(s);
+    std::set<std::size_t> mrs;
+    for(std::size_t s=0; s < N/2; ++s)
+      mrs.insert(s);
 
-    //solver1.setSubMatrix(mat,mrs);
-    //solver1.setVerbosity(true);
+    solver1.setSubMatrix(mat,mrs);
+    solver1.setVerbosity(true);
 
-    solver.apply(x,b, res);
+    solver.apply(x,b,res);
     solver.free();
 
-    //solver1.apply(x,b, res);
-    //solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x[0]), reinterpret_cast<FIELD_TYPE*>(&b[0]));
+    Vector residuum(N*N);
+    residuum=0;
+    fop.apply(x,residuum);
+    residuum-=b;
+    std::cout<<"Residuum : "<<residuum.two_norm()<<std::endl;
 
-    //Dune::UMFPack<BCRSMat> save_solver(mat,"umfpack_decomp",0);
-    //Dune::UMFPack<BCRSMat> load_solver(mat,"umfpack_decomp",0);
+    solver1.apply(x,b,res);
+
     return 0;
   }
   catch(Dune::Exception &e)
