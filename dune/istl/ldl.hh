@@ -1,9 +1,9 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_LDL_HH
-#define DUNE_LDL_HH
+#ifndef DUNE_ISTL_LDL_HH
+#define DUNE_ISTL_LDL_HH
 
-#if HAVE_LDL
+#if HAVE_LDL || defined DOXYGEN
 
 #include <iostream>
 #include<complex>
@@ -36,7 +36,7 @@ namespace Dune {
    * @brief Class for using LDL with ISTL matrices.
    */
 
-  // forward declaration
+  // forward declarations
   template<class M, class T, class TM, class TD, class TA>
   class SeqOverlappingSchwarz;
 
@@ -44,93 +44,140 @@ namespace Dune {
   struct SeqOverlappingSchwarzAssemblerHelper;
 
   /**
-   * @brief The %LDL direct sparse solver for matrices of type Matrix
-   * Details on LDL can be found on http://www.cise.ufl.edu/research/sparse/ldl/
+   * @brief Use the %LDL package to directly solve linear systems -- empty default class
+   * @tparam Matrix the matrix type defining the system
+   * Details on UMFPack can be found on
+   * http://www.cise.ufl.edu/research/sparse/ldl/
+   */
+  template<class Matrix>
+  class LDL
+  {};
+
+  /**
+   * @brief The %LDL direct sparse solver for matrices of type BCRSMatrix
+   *
+   * Specialization for the Dune::BCRSMatrix. %LDL will always go double
+   * precision.
+   *
+   * \tparam T Number type.  Only double is supported
+   * \tparam A STL-compatible allocator type
+   * \tparam n Number of rows in a matrix block
+   * \tparam m Number of columns in a matrix block
+   *
    * \note This will only work if dune-istl has been configured to use LDL
    */
-  template<typename MT>
-  class LDL
+  template<typename T, typename A, int n, int m>
+  class LDL<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+    : public InverseOperator<BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other>,
+                             BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> >
   {
     public:
     /** @brief The matrix type. */
-    typedef MT Matrix;
-
-    /** @brief The column-compressed matrix type.*/
-    typedef ColCompMatrix<Matrix> LDLMatrix;
+    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
+    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
+    /** @brief The corresponding SuperLU Matrix type. */
+    typedef Dune::ColCompMatrix<Matrix> LDLMatrix;
+    /** @brief Type of an associated initializer class. */
+    typedef ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+    /** @brief The type of the domain of the solver. */
+    typedef Dune::BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other> domain_type;
+    /** @brief The type of the range of the solver. */
+    typedef Dune::BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> range_type;
 
     /**
-     * @brief Construct a solver object.
-     * @param mat the matrix to solve for
+     * @brief Construct a solver object from a BCRSMatrix.
+     *
+     * This computes the matrix decomposition, and may take a long time
+     * (and use a lot of memory).
+     *
+     * @param matrix the matrix to solve for
      * @param verbose 0 or 1 set the verbosity level, defaults to 0
      */
-    LDL(const Matrix& mat, int verbose=0) : isloaded_(false), verbose_(verbose)
+    LDL(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false), verbose_(verbose)
     {
-      setMatrix(mat);
+      //check whether T is a supported type
+      static_assert(std::is_same<T,double>::value,"Unsupported Type in LDL (only double supported)");
+      setMatrix(matrix);
     }
 
     /**
      * @brief Constructor for compatibility with SuperLU standard constructor
-     * @param mat the matrix to solve for
+     *
+     * This computes the matrix decomposition, and may take a long time
+     * (and use a lot of memory).
+     *
+     * @param matrix the matrix to solve for
      * @param verbose 0 or 1 set the verbosity level, defaults to 0
      */
-    LDL(const Matrix& mat, int verbose, bool) : isloaded_(false), verbose_(verbose)
+    LDL(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false), verbose_(verbose)
     {
-      setMatrix(mat);
+      //check whether T is a supported type
+      static_assert(std::is_same<T,double>::value,"Unsupported Type in LDL (only double supported)");
+      setMatrix(matrix);
     }
 
     /** @brief Default constructor. */
-    LDL() : isloaded_(false), verbose_(0)
+    LDL() : matrixIsLoaded_(false), verbose_(0)
     {}
 
     /** @brief Default constructor. */
-    ~LDL()
+    virtual ~LDL()
     {
-      if ((mat_.N() + mat_.M() > 0) || isloaded_)
+      if ((ldlMatrix_.N() + ldlMatrix_.M() > 0) || matrixIsLoaded_)
         free();
     }
 
-    /** @brief Solve the system Ax=b. */
-    template<class DT,class RT>
-    void apply(DT& x, const RT& b, InverseOperatorResult& res)
+    /** \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&) */
+    virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
-      const int dimMat(mat_.N());
-      ldl_perm (dimMat, Y_, reinterpret_cast<double*>(&b[0]), P_);
+      const int dimMat(ldlMatrix_.N());
+      ldl_perm(dimMat, Y_, reinterpret_cast<double*>(&b[0]), P_);
       ldl_lsolve(dimMat, Y_, Lp_, Li_, Lx_);
       ldl_dsolve(dimMat, Y_, D_);
       ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
-      ldl_permt (dimMat, reinterpret_cast<double*>(&x[0]), Y_, P_);
+      ldl_permt(dimMat, reinterpret_cast<double*>(&x[0]), Y_, P_);
       // this is a direct solver
       res.iterations = 1;
       res.converged = true;
     }
 
-    /** @brief Solve the system Ax=b. */
-    template<class DT,class RT>
-    inline void apply(DT& x, const RT& b, double reduction, InverseOperatorResult& res)
+    /** \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&) */
+    virtual void apply(domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
     {
       DUNE_UNUSED_PARAMETER(reduction);
       apply(x,b,res);
     }
 
-    /** @brief Initialize data from given matrix. */
-    void setMatrix(const Matrix& mat)
+    /**
+     * @brief Additional apply method with c-arrays in analogy to superlu.
+     * @param x solution array
+     * @param b rhs array
+     */
+    void apply(T* x, T* b)
     {
-      if ((mat_.N() + mat_.M() > 0) || isloaded_)
+      const int dimMat(ldlMatrix_.N());
+      ldl_perm(dimMat, Y_, b, P_);
+      ldl_lsolve(dimMat, Y_, Lp_, Li_, Lx_);
+      ldl_dsolve(dimMat, Y_, D_);
+      ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
+      ldl_permt(dimMat, x, Y_, P_);
+    }
+
+    /** @brief Initialize data from given matrix. */
+    void setMatrix(const Matrix& matrix)
+    {
+      if ((ldlMatrix_.N() + ldlMatrix_.M() > 0) || matrixIsLoaded_)
         free();
-      mat_ = mat;
+      ldlMatrix_ = matrix;
+      decompose();
+    }
 
-      // set correct dimension for additional vectors (only those before symbolic)
-      const int dimMat(mat_.N());
-      D_ = new double [dimMat];
-      Y_ = new double [dimMat];
-      Lp_ = new int [dimMat + 1];
-      Parent_ = new int [dimMat];
-      Lnz_ = new int [dimMat];
-      Flag_ = new int [dimMat];
-      Pattern_ = new int [dimMat];
-      P_ = new int [dimMat];
-      Pinv_ = new int [dimMat];
-
+    template<class S>
+    void setSubMatrix(const Matrix& matrix, const S& rowIndexSet)
+    {
+      if ((ldlMatrix_.N() + ldlMatrix_.M() > 0) || matrixIsLoaded_)
+        free();
+      ldlMatrix_.setMatrix(matrix,rowIndexSet);
       decompose();
     }
 
@@ -144,6 +191,15 @@ namespace Dune {
     }
 
     /**
+     * @brief Return the column compress matrix.
+     * @warning It is up to the user to keep consistency.
+     */
+    inline LDLMatrix& getInternalMatrix()
+    {
+      return ldlMatrix_;
+    }
+
+    /**
      * @brief Free allocated space.
      * @warning Later calling apply will result in an error.
      */
@@ -152,16 +208,12 @@ namespace Dune {
       delete [] D_;
       delete [] Y_;
       delete [] Lp_;
-      delete [] Parent_;
-      delete [] Lnz_;
-      delete [] Flag_;
-      delete [] Pattern_;
       delete [] Lx_;
       delete [] Li_;
       delete [] P_;
       delete [] Pinv_;
-      mat_.free();
-      isloaded_ = false;
+      ldlMatrix_.free();
+      matrixIsLoaded_ = false;
     }
 
     /** @brief Get method name. */
@@ -172,36 +224,36 @@ namespace Dune {
 
     /**
      * @brief Get factorization diagonal matrix D.
-     * @warning It is up to the user to preserve consistency when modifyng it.
+     * @warning It is up to the user to preserve consistency.
      */
-    inline double* getD(void)
+    inline double* getD()
     {
       return D_;
     }
 
     /**
      * @brief Get factorization Lp.
-     * @warning It is up to the user to preserve consistency when modifyng it.
+     * @warning It is up to the user to preserve consistency.
      */
-    inline int* getLp(void)
+    inline int* getLp()
     {
       return Lp_;
     }
 
     /**
      * @brief Get factorization Li.
-     * @warning It is up to the user to preserve consistency when modifyng it.
+     * @warning It is up to the user to preserve consistency.
      */
-    inline int* getLi(void)
+    inline int* getLi()
     {
       return Li_;
     }
 
     /**
      * @brief Get factorization Lx.
-     * @warning It is up to the user to preserve consistency when modifyng it.
+     * @warning It is up to the user to preserve consistency.
      */
-    inline double* getLx(void)
+    inline double* getLx()
     {
       return Lx_;
     }
@@ -215,26 +267,43 @@ namespace Dune {
     /** @brief Computes the LDL decomposition. */
     void decompose()
     {
-      const int dimMat(mat_.N());
+      // allocate vectors
+      const int dimMat(ldlMatrix_.N());
+      D_ = new double [dimMat];
+      Y_ = new double [dimMat];
+      Lp_ = new int [dimMat + 1];
+      Parent_ = new int [dimMat];
+      Lnz_ = new int [dimMat];
+      Flag_ = new int [dimMat];
+      Pattern_ = new int [dimMat];
+      P_ = new int [dimMat];
+      Pinv_ = new int [dimMat];
+
       double Info [AMD_INFO];
-      if (amd_order (dimMat, mat_.getColStart(), mat_.getRowIndex(), P_, (double *) NULL, Info) < AMD_OK)
+      if(amd_order (dimMat, ldlMatrix_.getColStart(), ldlMatrix_.getRowIndex(), P_, (double *) NULL, Info) < AMD_OK)
         std::cout<<"WARNING: call to AMD failed."<<std::endl;
       if(verbose_ > 0)
         amd_info (Info);
       // compute the symbolic factorisation
-      ldl_symbolic(dimMat, mat_.getColStart(), mat_.getRowIndex(), Lp_, Parent_, Lnz_, Flag_, P_, Pinv_);
+      ldl_symbolic(dimMat, ldlMatrix_.getColStart(), ldlMatrix_.getRowIndex(), Lp_, Parent_, Lnz_, Flag_, P_, Pinv_);
       // initialise those entries of additionalVectors_ whose dimension is known only now
       Lx_ = new double [Lp_[dimMat]];
       Li_ = new int [Lp_[dimMat]];
       // compute the numeric factorisation
-      const int rank(ldl_numeric(dimMat, mat_.getColStart(), mat_.getRowIndex(), mat_.getValues(),
+      const int rank(ldl_numeric(dimMat, ldlMatrix_.getColStart(), ldlMatrix_.getRowIndex(), ldlMatrix_.getValues(),
                                  Lp_, Parent_, Lnz_, Li_, Lx_, D_, Y_, Pattern_, Flag_, P_, Pinv_));
+      // free temporary vectors
+      delete [] Flag_;
+      delete [] Pattern_;
+      delete [] Parent_;
+      delete [] Lnz_;
+
       if(rank!=dimMat)
         std::cout<<"WARNING: matrix is singular."<<std::endl;
     }
 
-    LDLMatrix mat_;
-    bool isloaded_;
+    LDLMatrix ldlMatrix_;
+    bool matrixIsLoaded_;
     int verbose_;
     int* Lp_;
     int* Parent_;
@@ -249,18 +318,19 @@ namespace Dune {
     int* Li_;
   };
 
-  template<typename MT>
-  struct IsDirectSolver<LDL<MT> >
+  template<typename T, typename A, int n, int m>
+  struct IsDirectSolver<LDL<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
   {
-    enum {value=true};
+    enum {value = true};
   };
 
-  template<typename MT>
-  struct StoresColumnCompressed<LDL<MT> >
+  template<typename T, typename A, int n, int m>
+  struct StoresColumnCompressed<LDL<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
   {
-    enum {value=true};
+    enum {value = true};
   };
+
 }
 
 #endif //HAVE_LDL
-#endif //DUNE_LDL_HH
+#endif //DUNE_ISTL_LDL_HH
