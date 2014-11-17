@@ -163,6 +163,12 @@ namespace Dune {
       ldl_permt(dimMat, x, Y_, P_);
     }
 
+    void setOption(unsigned int option, double value)
+    {
+      DUNE_UNUSED_PARAMETER(option);
+      DUNE_UNUSED_PARAMETER(value);
+    }
+
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& matrix)
     {
