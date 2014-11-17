@@ -165,25 +165,10 @@ namespace Dune {
       apply(x, b, res);
     }
 
-    /**
-     * @brief Additional apply method with c-arrays in analogy to superlu.
-     * @param x solution array
-     * @param b rhs array
-     */
-    void apply(T* x, T* b)
+    void setOption(unsigned int option, double value)
     {
-      b = SuiteSparseQR_qmult<T>(0, spqrfactorization_, b, cc_);
-      x = SuiteSparseQR_solve<T>(1, spqrfactorization_, b, cc_);
-      if(verbose_ > 0)
-      {
-        std::cout<<std::endl<<"Solving with SuiteSparseQR"<<std::endl;
-        std::cout<<"Flops Taken: "<<cc_->SPQR_flopcount<<std::endl;
-        std::cout<<"Analysis Time: "<<cc_->SPQR_analyze_time<<" s"<<std::endl;
-        std::cout<<"Factorize Time: "<<cc_->SPQR_factorize_time<<" s"<<std::endl;
-        std::cout<<"Backsolve Time: "<<cc_->SPQR_solve_time<<" s"<<std::endl;
-        std::cout<<"Peak Memory Usage: "<<cc_->memory_usage<<" bytes"<<std::endl;
-        std::cout<<"Rank Estimate: "<<cc_->SPQR_istat[4]<<std::endl<<std::endl;
-      }
+      DUNE_UNUSED_PARAMETER(option);
+      DUNE_UNUSED_PARAMETER(value);
     }
 
     /** @brief Initialize data from given matrix. */
@@ -192,6 +177,15 @@ namespace Dune {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
       spqrMatrix_ = matrix;
+      decompose();
+    }
+
+    template<class S>
+    void setSubMatrix(const Matrix& matrix, const S& rowIndexSet)
+    {
+      if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || (matrixIsLoaded_))
+        free();
+      spqrMatrix_.setMatrix(matrix,rowIndexSet);
       decompose();
     }
 
@@ -205,6 +199,24 @@ namespace Dune {
     }
 
     /**
+     * @brief Return the matrix factorization.
+     * @warning It is up to the user to keep consistency.
+     */
+    inline SuiteSparseQR_factorization<T>* getFactorization()
+    {
+      return spqrfactorization_;
+    }
+
+    /**
+     * @brief Return the column coppressed matrix.
+     * @warning It is up to the user to keep consistency.
+     */
+    inline SPQRMatrix& getInternalMatrix()
+    {
+      return spqrMatrix_;
+    }
+
+    /**
      * @brief Free allocated space.
      * @warning Later calling apply will result in an error.
      */
@@ -213,7 +225,7 @@ namespace Dune {
       cholmod_l_free_sparse(&A_, cc_);
       cholmod_l_free_dense(&B_, cc_);
       cholmod_l_free_dense(&X_, cc_);
-      SuiteSparseQR_free<double>(&spqrfactorization_, cc_);
+      SuiteSparseQR_free<T>(&spqrfactorization_, cc_);
       spqrMatrix_.free();
       matrixIsLoaded_ = false;
     }
@@ -224,22 +236,13 @@ namespace Dune {
       return "SPQR";
     }
 
-    /**
-     * @brief Get QR factorization.
-     * @warning It is up to the user to preserve consistency when modifyng it.
-     */
-    SuiteSparseQR_factorization<double>* getFactorization()
-    {
-      return spqrfactorization_;
-    }
-
     private:
     template<class M,class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
 
     friend struct SeqOverlappingSchwarzAssemblerHelper<SPQR<Matrix>,true>;
 
-    /** @brief Computes the SPQR decomposition. */
+    /** @brief Computes the QR decomposition. */
     void decompose()
     {
       const std::size_t dimMat(spqrMatrix_.N());
