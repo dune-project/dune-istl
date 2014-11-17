@@ -143,6 +143,7 @@ namespace Dune {
       // fill x
       for(std::size_t k = 0; k != dimMat; ++k)
         x [k] = (static_cast<T*>(X_->x))[k];
+      cholmod_l_free_dense(&X_, cc_);
       // this is a direct solver
       res.iterations = 1;
       res.converged = true;
@@ -224,7 +225,6 @@ namespace Dune {
     {
       cholmod_l_free_sparse(&A_, cc_);
       cholmod_l_free_dense(&B_, cc_);
-      cholmod_l_free_dense(&X_, cc_);
       SuiteSparseQR_free<T>(&spqrfactorization_, cc_);
       spqrMatrix_.free();
       matrixIsLoaded_ = false;
