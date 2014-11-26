@@ -410,6 +410,9 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
+    typedef typename X::field_type domain_value_type;
+    typedef typename Y::field_type range_value_type;
+
     // define the category
     enum {
       //! \brief The category the preconditioner is part of
