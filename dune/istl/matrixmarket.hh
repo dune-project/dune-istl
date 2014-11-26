@@ -921,8 +921,8 @@ namespace Dune
                          std::ostream& ostr,
                          const integral_constant<int,1>&)
   {
-    ostr<<matrix.M()*mm_multipliers<M>::rows<<" "
-        <<matrix.N()*mm_multipliers<M>::cols<<" "
+    ostr<<matrix.N()*mm_multipliers<M>::rows<<" "
+        <<matrix.M()*mm_multipliers<M>::cols<<" "
         <<countNonZeros(matrix)<<std::endl;
 
     typedef typename M::const_iterator riterator;
