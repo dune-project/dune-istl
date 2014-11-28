@@ -138,12 +138,12 @@ namespace Dune {
         (static_cast<T*>(B_->x))[k] = b[k];
       cholmod_dense* BTemp = B_;
       B_ = SuiteSparseQR_qmult<T>(0, spqrfactorization_, B_, cc_);
-      X_ = SuiteSparseQR_solve<T>(1, spqrfactorization_, B_, cc_);
+      cholmod_dense* X = SuiteSparseQR_solve<T>(1, spqrfactorization_, B_, cc_);
       cholmod_l_free_dense(&BTemp, cc_);
       // fill x
       for(std::size_t k = 0; k != dimMat; ++k)
-        x [k] = (static_cast<T*>(X_->x))[k];
-      cholmod_l_free_dense(&X_, cc_);
+        x [k] = (static_cast<T*>(X->x))[k];
+      cholmod_l_free_dense(&X, cc_);
       // this is a direct solver
       res.iterations = 1;
       res.converged = true;
@@ -268,7 +268,6 @@ namespace Dune {
     int verbose_;
     cholmod_common* cc_;
     cholmod_sparse* A_;
-    cholmod_dense* X_;
     cholmod_dense* B_;
     SuiteSparseQR_factorization<T>* spqrfactorization_;
   };
