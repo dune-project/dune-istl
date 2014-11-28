@@ -426,7 +426,7 @@ namespace Dune {
        */
       rowSizesBuilt=2,
       /** @brief The matrix structure is fully built. */
-      built=3,
+      built=3
     };
 
     //===== type definitions and constants
@@ -1375,7 +1375,7 @@ namespace Dune {
                          "Allocated memory for BCRSMatrix exhausted during compress()!"
                          "Please increase either the average number of entries per row or the overflow fraction."
                          );
-            //copy and element from the overflow area to the insertion position in a and j
+            //copy an element from the overflow area to the insertion position in a and j
             *jiit = oit->first.second;
             ++jiit;
             *aiit = oit->second;
