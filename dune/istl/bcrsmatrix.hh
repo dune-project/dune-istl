@@ -297,7 +297,7 @@ namespace Dune {
      B.setrowsize(2,1);
      B.setrowsize(1,1);
      // increase row size for row 2
-     B.incrementrowsize(2)
+     B.incrementrowsize(2);
 
      // finalize row setup phase
      B.endrowsizes();
