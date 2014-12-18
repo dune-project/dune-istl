@@ -502,7 +502,6 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"You cannot use operator[] in implicit build mode before calling compress()");
       if (r==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
       if (i>=n) DUNE_THROW(BCRSMatrixError,"index out of range");
-      if (r[i].getptr()==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
 #endif
       return r[i];
     }
