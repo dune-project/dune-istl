@@ -139,4 +139,6 @@ if(SUPERLU_FOUND)
   foreach(dir ${SUPERLU_INCLUDE_DIRS})
     set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-I${dir}")
   endforeach()
+  set_property(GLOBAL APPEND PROPERTY
+    ALL_PKG_LIBS "${SUPERLU_DUNE_LIBRARIES}")
 endif()
