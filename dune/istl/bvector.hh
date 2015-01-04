@@ -572,7 +572,7 @@ namespace Dune {
           But you can copy objects of this class and of the base class
       with reference semantics.
 
-          Assignment copies the data, if the format is incopmpatible with
+          Assignment copies the data, if the format is incompatible with
       the argument an exception is thrown in debug mode.
 
           Error checking: no error checking is provided normally.
