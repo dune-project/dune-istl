@@ -560,33 +560,19 @@ namespace Dune {
     //! random access to blocks, assumes ascending ordering
     B& operator[] (size_type i)
     {
-      size_type l=0, r=n-1;
-      while (l<r)
-      {
-        size_type q = (l+r)/2;
-        if (i <= j[q]) r=q;
-        else l = q+1;
-      }
-      if (j[l]!=i) {
+      const size_type* lb = std::lower_bound(j, j+n, i);
+      if (lb == j+n or *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
-      }
-      return p[l];
+      return p[lb-j];
     }
 
     //! same for read only access, assumes ascending ordering
     const B& operator[] (size_type i) const
     {
-      size_type l=0, r=n-1;
-      while (l<r)
-      {
-        size_type q = (l+r)/2;
-        if (i <= j[q]) r=q;
-        else l = q+1;
-      }
-      if (j[l]!=i) {
+      const size_type* lb = std::lower_bound(j, j+n, i);
+      if (lb == j+n or *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
-      }
-      return p[l];
+      return p[lb-j];
     }
 
     //! iterator class for sequential access
