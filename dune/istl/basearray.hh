@@ -561,7 +561,7 @@ namespace Dune {
     B& operator[] (size_type i)
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
-      if (lb == j+n or *lb != i)
+      if (lb == j+n || *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
       return p[lb-j];
     }
@@ -570,7 +570,7 @@ namespace Dune {
     const B& operator[] (size_type i) const
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
-      if (lb == j+n or *lb != i)
+      if (lb == j+n || *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
       return p[lb-j];
     }
@@ -703,7 +703,7 @@ namespace Dune {
     iterator find (size_type i)
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
-      return (lb != j+n and *lb == i)
+      return (lb != j+n && *lb == i)
         ? iterator(p,j,lb-j)
         : end();
     }
@@ -741,7 +741,7 @@ namespace Dune {
     const_iterator find (size_type i) const
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
-      return (lb != j+n and *lb == i)
+      return (lb != j+n && *lb == i)
         ? const_iterator(p,j,lb-j)
         : end();
     }
