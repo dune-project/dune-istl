@@ -115,7 +115,7 @@ if(SUPERLU_FOUND)
   set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determing location of ${SUPERLU_WITH_VERSION} succeded:\n"
+    "Determining location of ${SUPERLU_WITH_VERSION} succeeded:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
   set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS}"
@@ -125,7 +125,7 @@ if(SUPERLU_FOUND)
 else(SUPERLU_FOUND)
   # log errornous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-    "Determing location of SuperLU failed:\n"
+    "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
 endif(SUPERLU_FOUND)
