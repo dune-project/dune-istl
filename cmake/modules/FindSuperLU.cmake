@@ -133,12 +133,9 @@ endif(SUPERLU_FOUND)
 # set HAVE_SUPERLU for config.h
 set(HAVE_SUPERLU ${SUPERLU_FOUND})
 
-#add all superlu related flags to ALL_PKG_FLAGS, this must happen regardless of a target using add_dune_superlu_flags
+# register all superlu related flags
 if(SUPERLU_FOUND)
-  set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-DENABLE_SUPERLU ${SUPERLU_DUNE_COMPILE_FLAGS}")
-  foreach(dir ${SUPERLU_INCLUDE_DIRS})
-    set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-I${dir}")
-  endforeach()
-  set_property(GLOBAL APPEND PROPERTY
-    ALL_PKG_LIBS "${SUPERLU_DUNE_LIBRARIES}")
+  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_SUPERLU=1"
+                              LIBRARIES "${SUPERLU_DUNE_LIBRARIES}"
+                              INCLUDE_DIRS "${SUPERLU_INCLUDE_DIRS}")
 endif()
