@@ -1,5 +1,3 @@
-# $Id: Makefile.am 5184 2008-04-27 17:37:27Z christi $
-
 ALLM4S = 					\
 	dune_istl.m4				\
 	pardiso.m4				\

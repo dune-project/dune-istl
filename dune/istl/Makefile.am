@@ -1,5 +1,3 @@
-# $Id$
-
 SUBDIRS = . tutorial test paamg
 
 istldir = $(includedir)/dune/istl

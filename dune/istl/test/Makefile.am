@@ -1,5 +1,3 @@
-# $Id$
-
 if MPI
   MPITESTS = vectorcommtest matrixmarkettest
 endif

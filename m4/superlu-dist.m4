@@ -1,4 +1,3 @@
-# $Id: superlu-dist.m4 6518 2011-10-23 22:12:52Z christi $
 # searches for Superlu_Dist headers and libs
 AC_DEFUN([_slu_dist_lib_path],
     [
