@@ -311,7 +311,7 @@ namespace Dune {
 
       //int iterations = _iterations > 10 ? _iterations : 1;
 
-      for (int i = 0; i < _iterations; ++i)
+      for (size_type i = 0; i < _iterations; ++i)
         {
           tbb::parallel_for(
             _A.iteration_range(),
