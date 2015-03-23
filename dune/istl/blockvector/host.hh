@@ -666,6 +666,12 @@ namespace Dune {
 
     };
 
+    // definition, relevant apparently in debug mode
+    template<typename F_, typename A_>
+    const typename BlockVector<F_,A_,Memory::Domain::Host>::size_type
+    BlockVector<F_,A_,Memory::Domain::Host>::minimum_chunk_size;
+
+
   } // end namespace ISTL
 } // end namespace Dune
 

@@ -988,6 +988,10 @@ namespace Dune {
 
     };
 
+    template<typename F_, typename A_>
+    const typename BELLMatrix<F_,A_,Memory::Domain::Host>::size_type
+    BELLMatrix<F_,A_,Memory::Domain::Host>::minimum_chunk_size;
+
   } // end namespace ISTL
 } // end namespace Dune
 
