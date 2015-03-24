@@ -184,7 +184,7 @@ namespace Dune {
     template<class S>
     void setSubMatrix(const Matrix& matrix, const S& rowIndexSet)
     {
-      if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
       spqrMatrix_.setMatrix(matrix,rowIndexSet);
       decompose();
