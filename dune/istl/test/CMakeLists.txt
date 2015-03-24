@@ -67,7 +67,15 @@ if(SuiteSparse_UMFPACK_FOUND)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 endif()
 
-if (SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
+dune_add_test(
+  SOURCES ldltest.cc
+  SKIP_ON_77)
+
+dune_add_test(
+  SOURCES spqrtest.cc
+  SKIP_ON_77)
+
+if ((SUPERLU_FOUND) OR (SuiteSparse_UMFPACK_FOUND))
   dune_add_test(SOURCES overlappingschwarztest.cc)
 endif()
 

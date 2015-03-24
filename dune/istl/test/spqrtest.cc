@@ -15,6 +15,7 @@
 
 int main(int argc, char** argv)
 {
+#if HAVE_SPQR
   try
   {
     typedef double FIELD_TYPE;
@@ -81,4 +82,8 @@ int main(int argc, char** argv)
   {
     std::cerr << "Unknown exception" << std::endl;
   }
+#else // #if HAVE_SPQR
+  std::cerr << "You need SuiteSparse's LDL to run this test." << std::endl;
+  return 77;
+#endif // #if HAVE_SPQR
 }
