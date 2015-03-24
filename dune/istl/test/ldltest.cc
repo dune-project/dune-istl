@@ -1,5 +1,5 @@
-#include "config.h"
-#include<iostream>
+#include <config.h>
+#include <iostream>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
@@ -7,8 +7,8 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/colcompmatrix.hh>
 #include <dune/istl/io.hh>
-#include <dune/istl/operators.hh>
 #include <dune/istl/ldl.hh>
+#include <dune/istl/operators.hh>
 
 #include "laplacian.hh"
 
@@ -21,9 +21,11 @@ int main(int argc, char** argv)
     const int BS=1;
     std::size_t N=100;
 
-    if(argc>1)
+    if (argc > 1)
+    {
       N = atoi(argv[1]);
-    std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+    }
+    std::cout << "testing for N=" << N << " BS=" << BS << std::endl;
 
     typedef Dune::FieldMatrix<FIELD_TYPE,BS,BS> MatrixBlock;
     typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
@@ -75,5 +77,7 @@ int main(int argc, char** argv)
     std::cerr << "Dune reported error: " << e << std::endl;
   }
   catch (...)
-  {}
+  {
+    std::cerr << "Unknown exception" << std::endl;
+  }
 }

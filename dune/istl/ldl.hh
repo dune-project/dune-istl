@@ -6,8 +6,7 @@
 #if HAVE_LDL || defined DOXYGEN
 
 #include <iostream>
-#include<complex>
-#include<type_traits>
+#include <type_traits>
 
 #ifdef __cplusplus
 extern "C"
@@ -17,12 +16,12 @@ extern "C"
 }
 #endif
 
-#include<dune/common/exceptions.hh>
-#include<dune/common/unused.hh>
+#include <dune/common/exceptions.hh>
+#include <dune/common/unused.hh>
 
-#include<dune/istl/solvers.hh>
-#include<dune/istl/solvertype.hh>
-#include<dune/istl/colcompmatrix.hh>
+#include <dune/istl/colcompmatrix.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/solvertype.hh>
 
 namespace Dune {
   /**
