@@ -26,14 +26,14 @@ endif(NOT BLAS_FOUND)
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
-  PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
+  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
   NO_DEFAULT_PATH
 )
 
 # look for header files, including default paths
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
-  PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
+  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
 )
 
 # look for library, only at positions given by the user
