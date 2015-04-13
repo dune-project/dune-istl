@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_MATRIXMARKET_HH
-#define DUNE_MATRIXMARKET_HH
+#ifndef DUNE_ISTL_MATRIXMARKET_HH
+#define DUNE_ISTL_MATRIXMARKET_HH
 
 #include <ostream>
 #include <istream>

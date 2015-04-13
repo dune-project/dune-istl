@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_NOVLPSCHWARZ_HH
-#define DUNE_NOVLPSCHWARZ_HH
+#ifndef DUNE_ISTL_NOVLPSCHWARZ_HH
+#define DUNE_ISTL_NOVLPSCHWARZ_HH
 
 #include <iostream>              // for input/output to shell
 #include <fstream>               // for input/output to files
