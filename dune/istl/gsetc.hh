@@ -625,7 +625,7 @@ namespace Dune {
   {
     algmeta_itsteps<1>::bsorb(A,x,b,w);
   }
-  //! SSOR step
+  //! Backward SOR step
   template<class M, class X, class Y, class K, int l>
   void bsorb (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
