@@ -48,13 +48,41 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    */
+  inline
+  void recursive_printvector (std::ostream& s, double v, std::string rowtext,
+                              int& counter, int columns, int width,
+                              int precision)
+  {
+    DUNE_UNUSED_PARAMETER(precision);
+    if (counter%columns==0)
+    {
+      s << rowtext; // start a new row
+      s << " ";     // space in front of each entry
+      s.width(4);   // set width for counter
+      s << counter; // number of first entry in a line
+    }
+    s << " ";         // space in front of each entry
+    s.width(width);   // set width for each entry anew
+    s << v;           // yeah, the number !
+    counter++;        // increment the counter
+    if (counter%columns==0)
+      s << std::endl; // start a new line
+  }
+
+  /**
+   * \brief Recursively print all the blocks
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class V>
   void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
                               int& counter, int columns, int width,
                               int precision)
   {
-    for (typename V::ConstIterator i=v.begin(); i!=v.end(); ++i)
-      recursive_printvector(s,*i,rowtext,counter,columns,width,precision);
+    for (const auto &e : v)
+      recursive_printvector(s,e,rowtext,counter,columns,width,precision);
   }
 
   /**
@@ -114,7 +142,7 @@ namespace Dune {
     s.precision(precision);
 
     // print title
-    s << title << " [blocks=" << v.N() << ",dimension=" << v.dim() << "]"
+    s << title << " [blockSize=" << v.blockSize() << ",size=" << v.size() << "]"
       << std::endl;
 
     // print data from all blocks
