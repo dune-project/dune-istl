@@ -19,6 +19,7 @@
 #include <utility>
 #include <set>
 #include <algorithm>
+#include <complex>
 #include <limits>
 #include <ostream>
 
@@ -378,9 +379,41 @@ namespace Dune
       template<class M>
       typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
       {
-        return std::real(m[N][N]);
-        // return m[N][N];
+        return signed_abs(m[N][N]);
       }
+
+    private:
+
+      //! return sign * abs_value; for real numbers this is just v
+      template<typename T>
+      T signed_abs(const T & v)
+      {
+        return v;
+      }
+
+      //! return sign * abs_value; for complex numbers this is csgn(v) * abs(v)
+      template<typename T>
+      T signed_abs(const std::complex<T> & v)
+      {
+        // return sign * abs_value
+        // in case of complex numbers this extends to using the csgn function to determine the sign
+        return csgn(v) * std::abs(v);
+      }
+
+      //! sign function for complex numbers; for real numbers we assume imag(v) = 0
+      template<typename T>
+      T csgn(const T & v)
+      {
+        return (T(0) < val) - (val < T(0));
+      }
+
+      //! sign function for complex numbers
+      template<typename T>
+      T csgn(std::complex<T> a)
+      {
+        return csgn(a.real())+(a.real() == 0.0)*csgn(a.imag());
+      }
+
     };
 
     /**
