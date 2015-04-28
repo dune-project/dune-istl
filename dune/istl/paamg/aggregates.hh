@@ -172,13 +172,15 @@ namespace Dune
       /** @brief The matrix we work on. */
       const Matrix* matrix_;
       /** @brief The current max value.*/
-      typename Matrix::field_type maxValue_;
+      typedef typename Matrix::field_type field_type;
+      typedef typename FieldTraits<field_type>::real_type real_type;
+      real_type maxValue_;
       /** @brief The functor for calculating the norm. */
       Norm norm_;
       /** @brief index of the currently evaluated row. */
       int row_;
       /** @brief The norm of the current diagonal. */
-      typename Matrix::field_type diagonal_;
+      real_type diagonal_;
       std::vector<typename Matrix::field_type> vals_;
       typename std::vector<typename Matrix::field_type>::iterator valIter_;
 
@@ -207,7 +209,7 @@ namespace Dune
     inline void SymmetricMatrixDependency<M,N>::examine(const ColIter& col)
     {
       // skip positive offdiagonals if norm preserves sign of them.
-      typename Matrix::field_type eij = norm_(*col);
+      real_type eij = norm_(*col);
       if(!N::is_sign_preserving || eij<0)  // || eji<0)
       {
         *valIter_ = eij/diagonal_*eij/norm_(matrix_->operator[](col.index())[col.index()]);
@@ -287,13 +289,15 @@ namespace Dune
       /** @brief The matrix we work on. */
       const Matrix* matrix_;
       /** @brief The current max value.*/
-      typename Matrix::field_type maxValue_;
+      typedef typename Matrix::field_type field_type;
+      typedef typename FieldTraits<field_type>::real_type real_type;
+      real_type maxValue_;
       /** @brief The functor for calculating the norm. */
       Norm norm_;
       /** @brief index of the currently evaluated row. */
       int row_;
       /** @brief The norm of the current diagonal. */
-      typename Matrix::field_type diagonal_;
+      real_type diagonal_;
     };
 
     /**
@@ -346,13 +350,13 @@ namespace Dune
       /** @brief The matrix we work on. */
       const Matrix* matrix_;
       /** @brief The current max value.*/
-      typename Matrix::field_type maxValue_;
+      real_type maxValue_;
       /** @brief The functor for calculating the norm. */
       Norm norm_;
       /** @brief index of the currently evaluated row. */
       int row_;
       /** @brief The norm of the current diagonal. */
-      typename Matrix::field_type diagonal_;
+      real_type diagonal_;
     };
 
     /**
@@ -372,9 +376,10 @@ namespace Dune
        * @param m The matrix ro compute the norm of.
        */
       template<class M>
-      typename M::field_type operator()(const M& m) const
+      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
       {
-        return m[N][N];
+        return std::real(m[N][N]);
+        // return m[N][N];
       }
     };
 
@@ -401,7 +406,7 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename M::field_type operator()(const M& m) const
+      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
       {
         return m.infinity_norm();
       }
@@ -418,7 +423,7 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename M::field_type operator()(const M& m) const
+      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
       {
         return m.frobenius_norm();
       }
@@ -434,7 +439,7 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename M::field_type operator()(const M& m) const
+      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
       {
         return 1;
       }
@@ -1362,8 +1367,8 @@ namespace Dune
     template<class M, class N>
     inline void SymmetricDependency<M,N>::examine(const ColIter& col)
     {
-      typename Matrix::field_type eij = norm_(*col);
-      typename Matrix::field_type eji = norm_(matrix_->operator[](col.index())[row_]);
+      real_type eij = norm_(*col);
+      real_type eji = norm_(matrix_->operator[](col.index())[row_]);
 
       // skip positive offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || eij<0 || eji<0)
@@ -1376,8 +1381,8 @@ namespace Dune
     template<class G>
     inline void SymmetricDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
     {
-      typename Matrix::field_type eij = norm_(*col);
-      typename Matrix::field_type eji = norm_(matrix_->operator[](col.index())[row_]);
+      real_type eij = norm_(*col);
+      real_type eji = norm_(matrix_->operator[](col.index())[row_]);
 
       // skip positve offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || (eij<0 || eji<0))
@@ -1409,7 +1414,7 @@ namespace Dune
     inline void Dependency<M,N>::initRow(const Row& row, int index)
     {
       DUNE_UNUSED_PARAMETER(row);
-      maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
+      maxValue_ = std::min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);
     }
@@ -1758,7 +1763,7 @@ namespace Dune
         // the calculator should know whether the vertex is isolated.
         typedef typename Matrix::ConstColIterator ColIterator;
         ColIterator end = row.end();
-        typename Matrix::field_type absoffdiag=0;
+        typename FieldTraits<typename Matrix::field_type>::real_type absoffdiag=0.;
 
         if(firstlevel) {
           for(ColIterator col = row.begin(); col != end; ++col)
