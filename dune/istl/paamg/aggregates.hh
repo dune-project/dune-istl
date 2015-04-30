@@ -182,8 +182,8 @@ namespace Dune
       int row_;
       /** @brief The norm of the current diagonal. */
       real_type diagonal_;
-      std::vector<typename Matrix::field_type> vals_;
-      typename std::vector<typename Matrix::field_type>::iterator valIter_;
+      std::vector<real_type> vals_;
+      typename std::vector<real_type>::iterator valIter_;
 
     };
 
@@ -201,7 +201,7 @@ namespace Dune
       assert(vals_.size()==row.size());
       valIter_=vals_.begin();
 
-      maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
+      maxValue_ = std::min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
       diagonal_=norm_(row[index]);
       row_ = index;
     }
@@ -381,21 +381,26 @@ namespace Dune
       template<class M>
       typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
       {
-        return signed_abs(m[N][N]);
+        typedef typename M::field_type field_type;
+        typedef typename FieldTraits<field_type>::real_type real_type;
+        static_assert( std::is_convertible<field_type, real_type >::value,
+                  "use of diagonal norm in AMG not implemented for complex field_type");
+        return m[N][N];
+        // possible implementation for complex types: return signed_abs(m[N][N]);
       }
 
     private:
 
       //! return sign * abs_value; for real numbers this is just v
       template<typename T>
-      T signed_abs(const T & v)
+      static T signed_abs(const T & v)
       {
         return v;
       }
 
       //! return sign * abs_value; for complex numbers this is csgn(v) * abs(v)
       template<typename T>
-      T signed_abs(const std::complex<T> & v)
+      static T signed_abs(const std::complex<T> & v)
       {
         // return sign * abs_value
         // in case of complex numbers this extends to using the csgn function to determine the sign
@@ -404,14 +409,14 @@ namespace Dune
 
       //! sign function for complex numbers; for real numbers we assume imag(v) = 0
       template<typename T>
-      T csgn(const T & v)
+      static T csgn(const T & v)
       {
         return (T(0) < v) - (v < T(0));
       }
 
       //! sign function for complex numbers
       template<typename T>
-      T csgn(std::complex<T> a)
+      static T csgn(std::complex<T> a)
       {
         return csgn(a.real())+(a.real() == 0.0)*csgn(a.imag());
       }
