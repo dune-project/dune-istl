@@ -351,6 +351,8 @@ namespace Dune
       /** @brief The matrix we work on. */
       const Matrix* matrix_;
       /** @brief The current max value.*/
+      typedef typename Matrix::field_type field_type;
+      typedef typename FieldTraits<field_type>::real_type real_type;
       real_type maxValue_;
       /** @brief The functor for calculating the norm. */
       Norm norm_;
