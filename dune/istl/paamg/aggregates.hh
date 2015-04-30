@@ -406,7 +406,7 @@ namespace Dune
       template<typename T>
       T csgn(const T & v)
       {
-        return (T(0) < val) - (val < T(0));
+        return (T(0) < v) - (v < T(0));
       }
 
       //! sign function for complex numbers
