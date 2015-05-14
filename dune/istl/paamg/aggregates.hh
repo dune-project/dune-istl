@@ -15,6 +15,7 @@
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/ftraits.hh>
 
 #include <utility>
 #include <set>
