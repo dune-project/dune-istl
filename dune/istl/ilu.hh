@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_ILU_HH
-#define DUNE_ILU_HH
+#ifndef DUNE_ISTL_ILU_HH
+#define DUNE_ISTL_ILU_HH
 
 #include <cmath>
 #include <complex>
@@ -188,7 +188,9 @@ namespace Dune {
           coliterator kj = ILU[(*ik).first].find((*ik).first);                       // diagonal in k
           for (++kj; kj!=endk; ++kj)                       // row k eliminates in row i
           {
-            int generation = (int) firstmatrixelement(*kj);
+            // we misuse the storage to store an int. If the field_type is std::complex, we have to access the real part
+            // starting from C++11, we can use std::real to always return a real value, even if it is double/float
+            int generation = (int) std::real( firstmatrixelement(*kj) );
             if (generation<n)
             {
               mapiterator ij = rowpattern.find(kj.index());

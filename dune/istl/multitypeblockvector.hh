@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_MULTITYPEVECTOR_HH
-#define DUNE_MULTITYPEVECTOR_HH
+#ifndef DUNE_ISTL_MULTITYPEBLOCKVECTOR_HH
+#define DUNE_ISTL_MULTITYPEBLOCKVECTOR_HH
 
 #if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION

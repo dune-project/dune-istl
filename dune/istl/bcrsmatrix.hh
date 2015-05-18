@@ -1,8 +1,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_BCRSMATRIX_HH
-#define DUNE_BCRSMATRIX_HH
+#ifndef DUNE_ISTL_BCRSMATRIX_HH
+#define DUNE_ISTL_BCRSMATRIX_HH
 
 #include <cmath>
 #include <complex>
@@ -426,7 +426,7 @@ namespace Dune {
        */
       rowSizesBuilt=2,
       /** @brief The matrix structure is fully built. */
-      built=3,
+      built=3
     };
 
     //===== type definitions and constants
@@ -502,7 +502,6 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"You cannot use operator[] in implicit build mode before calling compress()");
       if (r==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
       if (i>=n) DUNE_THROW(BCRSMatrixError,"index out of range");
-      if (r[i].getptr()==0) DUNE_THROW(BCRSMatrixError,"row not initialized yet");
 #endif
       return r[i];
     }
@@ -875,7 +874,8 @@ namespace Dune {
         DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copied when both target and source are empty or fully built)");
 
       // make it simple: ALWAYS throw away memory for a and j
-      deallocate(false);
+      // and deallocate rows only if n != Mat.n
+      deallocate(n!=Mat.n);
 
       // reallocate the rows if required
       if (n>0 && n!=Mat.n) {
@@ -1374,7 +1374,7 @@ namespace Dune {
                          "Allocated memory for BCRSMatrix exhausted during compress()!"
                          "Please increase either the average number of entries per row or the overflow fraction."
                          );
-            //copy and element from the overflow area to the insertion position in a and j
+            //copy an element from the overflow area to the insertion position in a and j
             *jiit = oit->first.second;
             ++jiit;
             *aiit = oit->second;

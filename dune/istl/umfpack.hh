@@ -328,6 +328,7 @@ namespace Dune {
       //this is a direct solver
       res.iterations = 1;
       res.converged = true;
+      res.elapsed = UMF_Apply_Info[UMFPACK_SOLVE_WALLTIME];
 
       printOnApply(UMF_Apply_Info);
     }

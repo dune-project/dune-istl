@@ -17,8 +17,6 @@ using namespace Dune;
 template<class K, int n>
 void test_matrix()
 {
-  typedef typename ScaledIdentityMatrix<K,n>::size_type size_type;
-
   ScaledIdentityMatrix<K,n> A(1);
   FieldVector<K,n> f;
   FieldVector<K,n> v;

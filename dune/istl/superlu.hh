@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_SUPERLU_HH
-#define DUNE_SUPERLU_HH
+#ifndef DUNE_ISTL_SUPERLU_HH
+#define DUNE_ISTL_SUPERLU_HH
 
 #if HAVE_SUPERLU
 #ifdef TRUE
@@ -723,6 +723,37 @@ namespace Dune
     enum { value = true };
   };
 }
+
+// undefine macros from SuperLU's slu_util.h
+#undef FIRSTCOL_OF_SNODE
+#undef NO_MARKER
+#undef NUM_TEMPV
+#undef USER_ABORT
+#undef USER_MALLOC
+#undef SUPERLU_MALLOC
+#undef USER_FREE
+#undef SUPERLU_FREE
+#undef CHECK_MALLOC
+#undef SUPERLU_MAX
+#undef SUPERLU_MIN
+#undef L_SUB_START
+#undef L_SUB
+#undef L_NZ_START
+#undef L_FST_SUPC
+#undef U_NZ_START
+#undef U_SUB
+#undef TRUE
+#undef FALSE
+#undef EMPTY
+#undef NODROP
+#undef DROP_BASIC
+#undef DROP_PROWS
+#undef DROP_COLUMN
+#undef DROP_AREA
+#undef DROP_SECONDARY
+#undef DROP_DYNAMIC
+#undef DROP_INTERP
+#undef MILU_ALPHA
 
 #endif // HAVE_SUPERLU
 #endif // DUNE_SUPERLU_HH

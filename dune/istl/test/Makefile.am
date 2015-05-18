@@ -1,5 +1,3 @@
-# $Id$
-
 if MPI
   MPITESTS = vectorcommtest matrixmarkettest
 endif
@@ -24,9 +22,11 @@ CUDATESTS = cuda_vectortest cuda_ellmatrixtest cudatest
 
 # which tests where program to build and run are equal
 NORMALTESTS = basearraytest \
+              bcrsassigntest \
               bcrsbuildtest \
               bcrsimplicitbuildtest \
               bvectortest \
+              complexmatrixtest \
               complexrhstest \
               dotproducttest \
               iotest \
@@ -129,12 +129,16 @@ cuda_ellmatrixtest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
 
 basearraytest_SOURCES = basearraytest.cc
 
+bcrsassigntest_SOURCES = bcrsassigntest.cc
+
 bcrsbuildtest_SOURCES = bcrsbuild.cc
 
 bcrsimplicitbuildtest_SOURCES = bcrsimplicitbuild.cc
 bcrsimplicitbuildtest_CPPFLAGS = $(AM_CPPFLAGS) -DDUNE_ISTL_WITH_CHECKING=1
 
 bvectortest_SOURCES = bvectortest.cc
+
+complexmatrixtest_SOURCES = complexmatrixtest.cc complexdata.hh
 
 complexrhstest_SOURCES = complexrhstest.cc laplacian.hh
 complexrhstest_LDADD= $(SUPERLU_LIBS)
@@ -205,6 +209,9 @@ vectortest_SOURCES = vectortest.cc
 vectortest_CPPFLAGS = $(AM_CPPFLAGS) $(TBB_CPPFLAGS)
 vectortest_LDFLAGS = $(AM_LDFLAGS) $(TBB_LDFLAGS)
 vectortest_LDADD = $(TBB_LIBS) # $(AM_LDADD)
+
+
+headercheck_IGNORE = complexdata.hh
 
 include $(top_srcdir)/am/global-rules
 

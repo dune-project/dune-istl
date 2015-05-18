@@ -179,14 +179,6 @@ int main(int argc, char** argv)
   Dune::LoopSolver<BVector> dyn_solver(fop, dyn_prec0, 1e-2,100,2);
   dyn_solver.apply(x,b, res);
 
-  x=100;
-  b=0;
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-                              Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> >
-    dyn_prec1(mat, domains, 1, false);
-  Dune::LoopSolver<BVector> dyn_solver1(fop, dyn_prec1, 1e-2,100,2);
-  dyn_solver1.apply(x,b, res);
-
   std::cout<<"Additive Schwarz not on the fly (domains vector)"<<std::endl;
 
   b=0;

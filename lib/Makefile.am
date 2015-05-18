@@ -1,4 +1,3 @@
-# $Id: $
 dunemodulelibdir=$(libdir)
 
 EXTRA_DIST = CMakeLists.txt duneistlam2cmake.lib

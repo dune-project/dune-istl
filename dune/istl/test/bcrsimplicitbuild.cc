@@ -266,7 +266,7 @@ int testEntryConsistency()
   if(!Dune::FloatCmp::eq(static_cast<const double&>(m[4][4]),4.0))
     ++ret;
   if(ret)
-    std::cerr<<"ERROR: Entries are not consistent"<<std::cerr;
+    std::cerr<<"ERROR: Entries are not consistent"<<std::endl;
   return ret;
 }
 

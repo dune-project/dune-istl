@@ -1,5 +1,3 @@
-# $Id$
-
 if MPI
   MPITESTS =
   TESTPROGS = galerkintest hierarchytest pamgtest transfertest pamg_comm_repart_test

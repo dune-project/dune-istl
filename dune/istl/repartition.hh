@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_REPARTITION_HH
-#define DUNE_REPARTITION_HH
+#ifndef DUNE_ISTL_REPARTITION_HH
+#define DUNE_ISTL_REPARTITION_HH
 
 #include <cassert>
 #include <map>
@@ -767,6 +767,7 @@ namespace Dune
     typedef std::size_t idxtype;
 #endif
 
+#ifndef METIS_VER_MAJOR
   extern "C"
   {
     // backwards compatibility to parmetis < 4.0.0
@@ -778,6 +779,7 @@ namespace Dune
                                   idxtype *adjwgt, int *wgtflag, int *numflag, int *nparts,
                                   int *options, int *edgecut, idxtype *part);
   }
+#endif
 #else
   typedef std::size_t idxtype;
 #endif // HAVE_PARMETIS
@@ -1134,9 +1136,18 @@ namespace Dune
             std::cout<<"Creating grah one 1 process took "<<time.elapsed()<<std::endl;
           time.reset();
           options[0]=0; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
+#if METIS_VER_MAJOR >= 5
+          idxtype ncon = 1;
+          idxtype moptions[METIS_NOPTIONS];
+          METIS_SetDefaultOptions(moptions);
+          moptions[METIS_OPTION_NUMBERING] = numflag;
+          METIS_PartGraphRecursive(&noVertices, &ncon, gxadj, gadjncy, gvwgt, NULL, gadjwgt,
+                         &nparts, NULL, NULL, moptions, &edgecut, gpart);
+#else
           // Call metis
           METIS_PartGraphRecursive(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
                                    &numflag, &nparts, options, &edgecut, gpart);
+#endif
 
           if(verbose && oocomm.communicator().rank()==0)
             std::cout<<"METIS took "<<time.elapsed()<<std::endl;

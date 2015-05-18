@@ -1,5 +1,3 @@
-# $Id$
-
 SUBDIRS = doxygen
 
 TEXSOURCES = istl.tex istl.bib

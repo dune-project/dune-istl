@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_GSETC_HH
-#define DUNE_GSETC_HH
+#ifndef DUNE_ISTL_GSETC_HH
+#define DUNE_ISTL_GSETC_HH
 
 #include <cmath>
 #include <complex>
@@ -625,7 +625,7 @@ namespace Dune {
   {
     algmeta_itsteps<1>::bsorb(A,x,b,w);
   }
-  //! SSOR step
+  //! Backward SOR step
   template<class M, class X, class Y, class K, int l>
   void bsorb (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {

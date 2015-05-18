@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_BLOCK_TRIDIAGONAL_MATRIX_HH
-#define DUNE_BLOCK_TRIDIAGONAL_MATRIX_HH
+#ifndef DUNE_ISTL_BTDMATRIX_HH
+#define DUNE_ISTL_BTDMATRIX_HH
 
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>

@@ -118,9 +118,6 @@ void testCoarsenIndices(int N)
 
   Dune::Amg::GalerkinProduct<ParallelInformation> productBuilder;
 
-  typedef std::vector<bool> Vector;
-  typedef typename Vector::iterator Iterator;
-  //typedef Dune::IteratorPropertyMap<Iterator, Dune::IdentityMap> VisitedMap2;
   typedef Dune::IteratorPropertyMap<bool*, Dune::IdentityMap> VisitedMap2;
   /*
      Vector visited;

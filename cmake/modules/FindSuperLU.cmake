@@ -26,14 +26,14 @@ endif(NOT BLAS_FOUND)
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
-  PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
+  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
   NO_DEFAULT_PATH
 )
 
 # look for header files, including default paths
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
-  PATH_SUFFIXES "superlu" "include/superlu" "include" "SRC"
+  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
 )
 
 # look for library, only at positions given by the user
@@ -115,7 +115,7 @@ if(SUPERLU_FOUND)
   set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determing location of ${SUPERLU_WITH_VERSION} succeded:\n"
+    "Determining location of ${SUPERLU_WITH_VERSION} succeeded:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
   set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS}"
@@ -125,7 +125,7 @@ if(SUPERLU_FOUND)
 else(SUPERLU_FOUND)
   # log errornous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-    "Determing location of SuperLU failed:\n"
+    "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
 endif(SUPERLU_FOUND)
@@ -133,10 +133,9 @@ endif(SUPERLU_FOUND)
 # set HAVE_SUPERLU for config.h
 set(HAVE_SUPERLU ${SUPERLU_FOUND})
 
-#add all superlu related flags to ALL_PKG_FLAGS, this must happen regardless of a target using add_dune_superlu_flags
+# register all superlu related flags
 if(SUPERLU_FOUND)
-  set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-DENABLE_SUPERLU ${SUPERLU_DUNE_COMPILE_FLAGS}")
-  foreach(dir ${SUPERLU_INCLUDE_DIRS})
-    set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-I${dir}")
-  endforeach()
+  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_SUPERLU=1"
+                              LIBRARIES "${SUPERLU_DUNE_LIBRARIES}"
+                              INCLUDE_DIRS "${SUPERLU_INCLUDE_DIRS}")
 endif()

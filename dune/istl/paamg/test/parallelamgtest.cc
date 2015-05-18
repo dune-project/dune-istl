@@ -85,7 +85,6 @@ void testAmg(int N, int coarsenTarget)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef int LocalId;
   typedef int GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<GlobalId> Communication;
   typedef Dune::OverlappingSchwarzOperator<BCRSMat,Vector,Vector,Communication> Operator;

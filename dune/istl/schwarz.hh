@@ -1,7 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_SCHWARZ_HH
-#define DUNE_SCHWARZ_HH
+#ifndef DUNE_ISTL_SCHWARZ_HH
+#define DUNE_ISTL_SCHWARZ_HH
 
 #include <iostream>              // for input/output to shell
 #include <fstream>               // for input/output to files
@@ -53,21 +53,49 @@ namespace Dune {
    */
 
   /**
-   * @brief An overlapping schwarz operator.
+   * \brief An overlapping schwarz operator.
+   *
+   * This operator represents a parallel matrix product using
+   * sequential data structures together with a parallel index set
+   * describing an overlapping domain decomposition and the communication.
+   * \tparam M The type of the sequential matrix to use,
+   * e.g. BCRSMatrix or another matrix type fulfilling the
+   * matrix interface of ISTL.
+   * \tparam X The type of the sequential vector to use for the left hand side,
+   * e.g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam Y The type of the sequential vector to use for the right hand side,
+   * e..g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam C The type of the communication object.
+   * This must either be OwnerOverlapCopyCommunication or a type
+   * implementing the same interface.
    */
   template<class M, class X, class Y, class C>
   class OverlappingSchwarzOperator : public AssembledLinearOperator<M,X,Y>
   {
   public:
     //! \brief The type of the matrix we operate on.
+    //!
+    //! E.g. BCRSMatrix or another matrix type fulfilling the
+    //! matrix interface of ISTL
     typedef M matrix_type;
     //! \brief The type of the domain.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
     typedef X domain_type;
     //! \brief The type of the range.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
     typedef Y range_type;
     //! \brief The field type of the range
     typedef typename X::field_type field_type;
-    //! \brief The type of the communication object
+    //! \brief The type of the communication object.
+    //!
+    //! This must either be OwnerOverlapCopyCommunication or a type
+    //! implementing the same interface.
     typedef C communication_type;
 
     enum {
@@ -80,7 +108,7 @@ namespace Dune {
      *
      * @param A The assembled matrix.
      * @param com The communication object for syncing overlap and copy
-     * data points. (E.~g. OwnerOverlapCommunication )
+     * data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     OverlappingSchwarzOperator (const matrix_type& A, const communication_type& com)
       : _A_(A), communication(com)
@@ -103,7 +131,7 @@ namespace Dune {
                                     // since there d is const!
     }
 
-    //! get matrix via *
+    //! get the sequential assembled linear operator.
     virtual const matrix_type& getmat () const
     {
       return _A_;
@@ -124,16 +152,28 @@ namespace Dune {
    * \brief Scalar product for overlapping schwarz methods.
    *
    * Consistent vectors in interior and border are assumed.
+   * \tparam  X The type of the sequential vector to use for the left hand side,
+   * e.g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam C The type of the communication object.
+   * This must either be OwnerOverlapCopyCommunication or a type
+   * implementing the same interface.
    */
   template<class X, class C>
   class OverlappingSchwarzScalarProduct : public ScalarProduct<X>
   {
   public:
-    //! \brief The type of the domain.
+    //! \brief The type of the vector to compute the scalar product on.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
     typedef X domain_type;
-    //!  \brief The type of the range
+    //!  \brief The field type used by the vector type domain_type.
     typedef typename X::field_type field_type;
-    //! \brief The type of the communication object
+    //! \brief The type of the communication object.
+    //!
+    //! This must either be OwnerOverlapCopyCommunication or a type
+    //! implementing the same interface.
     typedef C communication_type;
 
     //! define the category
@@ -141,7 +181,7 @@ namespace Dune {
 
     /*! \brief Constructor needs to know the grid
      * \param com The communication object for syncing overlap and copy
-     * data points. (E.~g. OwnerOverlapCommunication )
+     * data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     OverlappingSchwarzScalarProduct (const communication_type& com)
       : communication(com)
@@ -196,6 +236,18 @@ namespace Dune {
    * @{
    */
   //! \brief A parallel SSOR preconditioner.
+  //! \tparam M The type of the sequential matrix to use,
+  //! e.g. BCRSMatrix or another matrix type fulfilling the
+  //! matrix interface of ISTL.
+  //! \tparam X The type of the sequential vector to use for the left hand side,
+  //! e.g. BlockVector or another type fulfilling the ISTL
+  //! vector interface.
+  //! \tparam Y The type of the sequential vector to use for the right hand side,
+  //! e..g. BlockVector or another type fulfilling the ISTL
+  //! vector interface.
+  //! \tparam C The type of the communication object.
+  //! This must either be OwnerOverlapCopyCommunication or a type
+  //! implementing the same interface.
   template<class M, class X, class Y, class C>
   class ParSSOR : public Preconditioner<X,Y> {
   public:
@@ -223,7 +275,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
        \param c The communication object for syncing overlap and copy
-     * data points. (E.~g. OwnerOverlapCommunication )
+     * data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     ParSSOR (const matrix_type& A, int n, field_type w, const communication_type& c)
       : _A_(A), _n(n), _w(w), communication(c)
@@ -283,18 +335,42 @@ namespace Dune {
    * preconditioner. In each step the sequential preconditioner
    * is applied and then all owner data points are updated on
    * all other processes.
+   * \tparam M The type of the sequential matrix to use,
+   * e.g. BCRSMatrix or another matrix type fulfilling the
+   * matrix interface of ISTL.
+   * \tparam X The type of the sequential vector to use for the left hand side,
+   * e.g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam Y The type of the sequential vector to use for the right hand side,
+   * e..g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam C The type of the communication object.
+   * This must either be OwnerOverlapCopyCommunication or a type
+   * implementing the same interface.
+   * \tparam The type of the sequential preconditioner to use
+   * for approximately solving the local matrix block consisting of unknowns
+   * owned by the process. Has to implement the Preconditioner interface.
    */
   template<class X, class Y, class C, class T=Preconditioner<X,Y> >
   class BlockPreconditioner : public Preconditioner<X,Y> {
     friend class Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,T> >;
   public:
     //! \brief The domain type of the preconditioner.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-    //! \brief The type of the communication object.
+    //! \brief The type of the communication object..
+    //!
+    //! This must either be OwnerOverlapCopyCommunication or a type
+    //! implementing the same interface.
     typedef C communication_type;
 
     // define the category
@@ -308,7 +384,7 @@ namespace Dune {
        constructor gets all parameters to operate the prec.
        \param p The sequential preconditioner.
        \param c The communication object for syncing overlap and copy
-       data points. (E.~g. OwnerOverlapCommunication )
+       data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     BlockPreconditioner (T& p, const communication_type& c)
       : preconditioner(p), communication(c)

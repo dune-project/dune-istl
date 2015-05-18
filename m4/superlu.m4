@@ -1,5 +1,4 @@
 ## -*- autoconf -*-
-# $Id: superlu.m4 5908 2010-02-23 16:46:05Z joe $
 # searches for SuperLU headers and libs
 
 # _slu_lib_path(SUPERLU_ROOT, HEADER)
