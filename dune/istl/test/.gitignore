@@ -7,6 +7,7 @@
 /complexmatrixtest
 /complexrhstest
 /dotproducttest
+/exaprintvectortest
 /inverseoperator2prectest
 /iotest
 /matrixiteratortest
@@ -17,6 +18,7 @@
 /mmtest
 /mv
 /overlappingschwarztest
+/printvectortest
 /scaledidmatrixtest
 /seqmatrixmarkettest
 /solvertest

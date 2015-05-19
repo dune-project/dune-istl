@@ -6,6 +6,7 @@ set(NORMALTEST
   bcrsimplicitbuildtest
   complexmatrixtest
   dotproducttest
+  exaprintvectortest
   iotest
   inverseoperator2prectest
   matrixiteratortest
@@ -13,6 +14,7 @@ set(NORMALTEST
   matrixutilstest
   mmtest
   mv
+  printvectortest
   scaledidmatrixtest
   seqmatrixmarkettest
   vbvectortest)
@@ -55,9 +57,13 @@ add_executable(basearraytest "basearraytest.cc")
 add_executable(bcrsassigntest "bcrsassigntest.cc")
 add_executable(dotproducttest "dotproducttest.cc")
 add_executable(complexmatrixtest "complexmatrixtest.cc")
+# [joe] no idea how to do this in cmake right now, but exaprintvectortest
+# needs the proper flags for TBB
+add_executable(exaprintvectortest "exaprintvectortest.cc")
 add_executable(matrixutilstest "matrixutilstest.cc")
 add_executable(matrixtest "matrixtest.cc")
 add_executable(bvectortest "bvectortest.cc")
+add_executable(printvectortest "printvectortest.cc")
 add_executable(vbvectortest "vbvectortest.cc")
 add_executable(bcrsbuildtest "bcrsbuild.cc")
 add_executable(bcrsimplicitbuildtest "bcrsimplicitbuild.cc")

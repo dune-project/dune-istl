@@ -29,6 +29,7 @@ NORMALTESTS = basearraytest \
               complexmatrixtest \
               complexrhstest \
               dotproducttest \
+              exaprintvectortest \
               iotest \
               inverseoperator2prectest \
               matrixiteratortest \
@@ -37,6 +38,7 @@ NORMALTESTS = basearraytest \
               mmtest \
               mv \
               overlappingschwarztest \
+              printvectortest \
               scaledidmatrixtest \
               seqmatrixmarkettest \
               solvertest \
@@ -49,11 +51,21 @@ TESTS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTEST
 check_PROGRAMS = $(NORMALTESTS) $(MPITESTS) $(SUPERLUTESTS) $(PARDISOTEST) $(PARMETISTESTS) $(CUDATESTS) $(UMFPACKTEST)
 
 # define the programs
+exaprintvectortest_SOURCES = exaprintvectortest.cc
+exaprintvectortest_CPPFLAGS = $(AM_CPPFLAGS)	\
+	$(TBB_CPPFLAGS)
+exaprintvectortest_LDFLAGS = $(AM_LDFLAGS)	\
+	$(TBB_LDFLAGS)
+exaprintvectortest_LDADD =			\
+	$(TBB_LIBS)				\
+	$(LDADD)
 
 overlappingschwarztest_SOURCES = overlappingschwarztest.cc
 overlappingschwarztest_LDADD =
 overlappingschwarztest_LDFLAGS= $(AM_LDFLAGS)
 overlappingschwarztest_CPPFLAGS= $(AM_CPPFLAGS)
+
+printvectortest_SOURCES = printvectortest.cc
 
 if SUPERLU
   superlutest_SOURCES = superlutest.cc
