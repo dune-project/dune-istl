@@ -18,6 +18,7 @@
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
 
+#include <dune/istl/forwarddeclarations.hh>
 #include <dune/istl/matrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "bcrsmatrix.hh"
@@ -48,13 +49,41 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    */
+  inline
+  void recursive_printvector (std::ostream& s, double v, std::string rowtext,
+                              int& counter, int columns, int width,
+                              int precision)
+  {
+    DUNE_UNUSED_PARAMETER(precision);
+    if (counter%columns==0)
+    {
+      s << rowtext; // start a new row
+      s << " ";     // space in front of each entry
+      s.width(4);   // set width for counter
+      s << counter; // number of first entry in a line
+    }
+    s << " ";         // space in front of each entry
+    s.width(width);   // set width for each entry anew
+    s << v;           // yeah, the number !
+    counter++;        // increment the counter
+    if (counter%columns==0)
+      s << std::endl; // start a new line
+  }
+
+  /**
+   * \brief Recursively print all the blocks
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   */
   template<class V>
   void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
                               int& counter, int columns, int width,
                               int precision)
   {
-    for (typename V::ConstIterator i=v.begin(); i!=v.end(); ++i)
-      recursive_printvector(s,*i,rowtext,counter,columns,width,precision);
+    for (const auto &e : v)
+      recursive_printvector(s,e,rowtext,counter,columns,width,precision);
   }
 
   /**
@@ -116,6 +145,46 @@ namespace Dune {
     // print title
     s << title << " [blocks=" << v.N() << ",dimension=" << v.dim() << "]"
       << std::endl;
+
+    // print data from all blocks
+    recursive_printvector(s,v,rowtext,counter,columns,width,precision);
+
+    // check if new line is required
+    if (counter%columns!=0)
+      s << std::endl;
+
+    // reset the output format
+    s.flags(oldflags);
+    s.precision(oldprec);
+  }
+
+  /**
+   * \brief Print an ISTL::BlockVector
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   */
+  template<typename F, typename A, typename D>
+  void printvector (std::ostream& s, const ISTL::BlockVector<F, A, D>& v,
+                    std::string title,
+                    std::string rowtext, int columns=1, int width=10,
+                    int precision=2)
+  {
+    // count the numbers printed to make columns
+    int counter=0;
+
+    // remember old flags
+    std::ios_base::fmtflags oldflags = s.flags();
+
+    // set the output format
+    s.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    int oldprec = s.precision();
+    s.precision(precision);
+
+    // print title
+    s << title << " [blockSize=" << v.blockSize() << ",blockCount=" << v.size()
+      << "]" << std::endl;
 
     // print data from all blocks
     recursive_printvector(s,v,rowtext,counter,columns,width,precision);
