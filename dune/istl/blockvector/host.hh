@@ -108,11 +108,13 @@ namespace Dune {
         other._allocation_size = 0;
       }
 
+      //! size of each block
       size_type blockSize() const
       {
         return _block_size;
       }
 
+      //! number of blocks
       size_type size() const
       {
         return _size;
@@ -171,11 +173,13 @@ namespace Dune {
         return *this;
       }
 
+      //! access block
       Block operator[] (size_type i)
       {
         return {_data + i * _block_size,_block_size};
       }
 
+      //! access block
       ConstBlock operator[] (size_type i) const
       {
         return {_data + i * _block_size,_block_size};
@@ -235,21 +239,25 @@ namespace Dune {
       }
       */
 
+      //! iterator over blocks
       iterator begin()
       {
         return {_data,0,_block_size};
       }
 
+      //! iterator over blocks
       iterator end()
       {
         return {_data,_size,_block_size};
       }
 
+      //! iterator over blocks
       const_iterator begin() const
       {
         return {_data,0,_block_size};
       }
 
+      //! iterator over blocks
       const_iterator end() const
       {
         return {_data,_size,_block_size};
@@ -658,8 +666,8 @@ namespace Dune {
       }
 
       size_type _block_size;
-      size_type _size;
-      size_type _allocation_size;
+      size_type _size; // number of blocks
+      size_type _allocation_size; // _size padded
       Allocator _allocator;
       value_type* _data;
       size_type _chunk_size;
