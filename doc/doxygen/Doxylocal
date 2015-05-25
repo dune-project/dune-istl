@@ -1,5 +1,5 @@
-INPUT                 += @srcdir@/mainpage \
-                         @srcdir@/modules \
+INPUT                 += @srcdir@/mainpage.txt \
+                         @srcdir@/modules.txt \
                          @top_srcdir@/dune/istl
 
 EXCLUDE               += @top_srcdir@/dune/istl/test \
