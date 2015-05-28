@@ -1409,7 +1409,14 @@ namespace Dune
     inline void SymmetricDependency<M,N>::examine(const ColIter& col)
     {
       real_type eij = norm_(*col);
-      real_type eji = norm_(matrix_->operator[](col.index())[row_]);
+      typename Matrix::ConstColIterator opposite_entry =
+        matrix_->operator[](col.index()).find(row_);
+      if ( opposite_entry == matrix_->operator[](col.index()).end() )
+      {
+        // Consider this a weak connection we disregard.
+        return;
+      }
+      real_type eji = norm_(*opposite_entry);
 
       // skip positive offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || eij<0 || eji<0)
@@ -1423,15 +1430,21 @@ namespace Dune
     inline void SymmetricDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
     {
       real_type eij = norm_(*col);
-      real_type eji = norm_(matrix_->operator[](col.index())[row_]);
+      typename Matrix::ConstColIterator opposite_entry =
+        matrix_->operator[](col.index()).find(row_);
 
+      if ( opposite_entry == matrix_->operator[](col.index()).end() )
+      {
+        // Consider this as a weak connection we disregard.
+        return;
+      }
+      real_type eji = norm_(*opposite_entry);
       // skip positve offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || (eij<0 || eji<0))
         if(eji / norm_(matrix_->operator[](edge.target())[edge.target()]) *
            eij/ diagonal_ > alpha() * maxValue_) {
           edge.properties().setDepends();
           edge.properties().setInfluences();
-
           typename G::EdgeProperties& other = graph.getEdgeProperties(edge.target(), edge.source());
           other.setInfluences();
           other.setDepends();
