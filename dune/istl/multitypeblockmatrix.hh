@@ -236,8 +236,8 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void mv (const X& x, Y& y) const {
-      BOOST_STATIC_ASSERT(mpl::size<X>::value == mpl::size<T1>::value);       //make sure x's length matches row length
-      BOOST_STATIC_ASSERT(mpl::size<Y>::value == mpl::size<type>::value);     //make sure y's length matches row count
+      static_assert(mpl::size<X>::value == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(mpl::size<Y>::value == mpl::size<type>::value, "length of y does not match row count");
 
       y = 0;                                                                  //reset y (for mv uses umv)
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,mpl::size<T1>::value,Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
@@ -248,8 +248,8 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void umv (const X& x, Y& y) const {
-      BOOST_STATIC_ASSERT(mpl::size<X>::value == mpl::size<T1>::value);       //make sure x's length matches row length
-      BOOST_STATIC_ASSERT(mpl::size<Y>::value == mpl::size<type>::value);     //make sure y's length matches row count
+      static_assert(mpl::size<X>::value == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(mpl::size<Y>::value == mpl::size<type>::value, "length of y does not match row count");
 
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,mpl::size<T1>::value,Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
     }
@@ -259,8 +259,8 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void mmv (const X& x, Y& y) const {
-      BOOST_STATIC_ASSERT(mpl::size<X>::value == mpl::size<T1>::value);       //make sure x's length matches row length
-      BOOST_STATIC_ASSERT(mpl::size<Y>::value == mpl::size<type>::value);     //make sure y's length matches row count
+      static_assert(mpl::size<X>::value == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(mpl::size<Y>::value == mpl::size<type>::value, "length of y does not match row count");
 
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,mpl::size<T1>::value,Y,type,X>::mmv(y, *this, x);    //iterate over all matrix elements
     }
@@ -268,8 +268,8 @@ namespace Dune {
     //! y += alpha A x
     template<typename AlphaType, typename X, typename Y>
     void usmv (const AlphaType& alpha, const X& x, Y& y) const {
-      BOOST_STATIC_ASSERT(mpl::size<X>::value == mpl::size<T1>::value);       //make sure x's length matches row length
-      BOOST_STATIC_ASSERT(mpl::size<Y>::value == mpl::size<type>::value);     //make sure y's length matches row count
+      static_assert(mpl::size<X>::value == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(mpl::size<Y>::value == mpl::size<type>::value, "length of y does not match row count");
 
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,mpl::size<T1>::value,Y,type,X>::usmv(alpha,y, *this, x);     //iterate over all matrix elements
 
