@@ -24,8 +24,10 @@
 #include <dune/istl/solvers.hh>
 #include <cstdlib>
 #include <ctime>
+#include <complex>
 
 typedef double XREAL;
+// typedef std::complex<double> XREAL;
 
 /*
    typedef HPA::xreal XREAL;
@@ -99,8 +101,10 @@ void testAMG(int N, int coarsenTarget, int ml)
   watch.reset();
   Operator fop(mat);
 
-  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
-  Criterion;
+  typedef typename std::conditional< std::is_convertible<XREAL, typename Dune::FieldTraits<XREAL>::real_type>::value,
+                   Dune::Amg::FirstDiagonal, Dune::Amg::RowSum >::type Norm;
+  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Norm> >
+          Criterion;
   typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
