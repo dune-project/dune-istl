@@ -31,6 +31,7 @@
 #include "solvercategory.hh"
 #include "istlexception.hh"
 #include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/istl/matrixmarket.hh>
 
 template<int dim, template<class,class> class Comm>
 void testRedistributed(int s);
