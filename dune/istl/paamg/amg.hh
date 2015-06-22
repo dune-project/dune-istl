@@ -789,6 +789,7 @@ namespace Dune
             // We are still participating in the computation
             levelContext.pinfo.getRedistributed().copyOwnerToAll(levelContext.rhs.getRedistributed(),
                                                     levelContext.rhs.getRedistributed());
+            levelContext.update.getRedistributed()=0; // overwrite old values.
             solver_->apply(levelContext.update.getRedistributed(),
                            levelContext.rhs.getRedistributed(), res);
           }
