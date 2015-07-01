@@ -498,32 +498,6 @@ namespace Dune
 
     }
 
-    void readNextLine(std::istream& file, std::ostringstream&, LineType& type)
-    {
-      DUNE_UNUSED_PARAMETER(type);
-      char c;
-      std::size_t index=0;
-
-      //empty lines will be disgarded and we will simply read the next line
-      while(index==0&&!file.eof())
-      {
-        // strip spaces
-        while(!file.eof() && (c=file.get())==' ') ;
-
-        //read the rest of the line until comment
-        while(!file.eof() && (c=file.get())=='\n') {
-          switch(c)
-          {
-          case '%' :
-            /* disgard the rest of the line */
-            file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-          }
-        }
-      }
-
-      //      buffer[index]='\0';
-    }
-
     template<std::size_t brows, std::size_t bcols>
     Dune::tuple<std::size_t, std::size_t, std::size_t>
     calculateNNZ(std::size_t rows, std::size_t cols, std::size_t entries, const MMHeader& header)
