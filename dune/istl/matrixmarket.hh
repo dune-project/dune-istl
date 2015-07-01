@@ -44,7 +44,7 @@ namespace Dune
    * @brief Provides classes for reading and writing MatrixMarket Files with
    * an extension for parallel matrices.
    */
-  namespace
+  namespace MatrixMarketImpl
   {
     /**
      * @brief Helper metaprogram to get
@@ -695,15 +695,18 @@ namespace Dune
 
       Setter(rows, matrix);
     }
-  } // end anonymous namespace
+  } // end namespace MatrixMarketImpl
 
   class MatrixMarketFormatError : public Dune::Exception
   {};
 
 
-  void mm_read_header(std::size_t& rows, std::size_t& cols, MMHeader& header, std::istream& istr,
+  void mm_read_header(std::size_t& rows, std::size_t& cols,
+                      MatrixMarketImpl::MMHeader& header, std::istream& istr,
                       bool isVector)
   {
+    using namespace MatrixMarketImpl;
+
     if(!readMatrixMarketBanner(istr, header)) {
       std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"
                 << "%%MatrixMarket matrix coordinate real general"<<std::endl;
@@ -749,6 +752,8 @@ namespace Dune
   void readMatrixMarket(Dune::BlockVector<Dune::FieldVector<T,entries>,A>& vector,
                         std::istream& istr)
   {
+    using namespace MatrixMarketImpl;
+
     MMHeader header;
     std::size_t rows, cols;
     mm_read_header(rows,cols,header,istr, true);
@@ -780,6 +785,8 @@ namespace Dune
   void readMatrixMarket(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>& matrix,
                         std::istream& istr)
   {
+    using namespace MatrixMarketImpl;
+
     MMHeader header;
     if(!readMatrixMarketBanner(istr, header)) {
       std::cerr << "First line was not a correct Matrix Market banner. Using default:\n"
@@ -863,6 +870,8 @@ namespace Dune
   void mm_print_vector_entry(const V& vector, std::ostream& ostr,
                              const integral_constant<int,0>&)
   {
+    using namespace MatrixMarketImpl;
+
     // Is the entry a supported numeric type?
     const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
     typedef typename V::const_iterator VIter;
@@ -884,6 +893,8 @@ namespace Dune
   void writeMatrixMarket(const V& vector, std::ostream& ostr,
                          const integral_constant<int,0>&)
   {
+    using namespace MatrixMarketImpl;
+
     ostr<<countEntries(vector)<<" "<<1<<std::endl;
     const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
     mm_print_vector_entry(vector,ostr, integral_constant<int,isnumeric>());
@@ -916,6 +927,8 @@ namespace Dune
   void writeMatrixMarket(const M& matrix,
                          std::ostream& ostr)
   {
+    using namespace MatrixMarketImpl;
+
     // Write header information
     mm_header_printer<M>::print(ostr);
     mm_block_structure_header<M>::print(ostr,matrix);
@@ -1020,6 +1033,8 @@ namespace Dune
                         OwnerOverlapCopyCommunication<G,L>& comm,
                         bool readIndices=true)
   {
+    using namespace MatrixMarketImpl;
+
     typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet::LocalIndex LocalIndex;
     typedef typename LocalIndex::Attribute Attribute;
     // Get our rank
