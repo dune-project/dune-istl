@@ -11,13 +11,13 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
 
 #include "istlexception.hh"
 #include "operators.hh"
 #include "scalarproducts.hh"
 #include "solver.hh"
 #include "preconditioner.hh"
-#include <dune/common/array.hh>
 #include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
@@ -899,15 +899,15 @@ namespace Dune {
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
         // diagonal entries of givens rotation
-      Dune::array<real_type,2> c{{0.0,0.0}};
+      std::array<real_type,2> c{{0.0,0.0}};
         // off-diagonal entries of givens rotation
-      Dune::array<field_type,2> s{{0.0,0.0}};
+      std::array<field_type,2> s{{0.0,0.0}};
 
       // recurrence coefficients (column k of tridiag matrix T_k)
-      Dune::array<field_type,3> T{{0.0,0.0,0.0}};
+      std::array<field_type,3> T{{0.0,0.0,0.0}};
 
       // the rhs vector of the min problem
-      Dune::array<field_type,2> xi{{1.0,0.0}};
+      std::array<field_type,2> xi{{1.0,0.0}};
 
       // some temporary vectors
       X z(b), dummy(b);
@@ -922,13 +922,13 @@ namespace Dune {
       field_type beta0 = beta;
 
       // the search directions
-      Dune::array<X,3> p{{b,b,b}};
+      std::array<X,3> p{{b,b,b}};
       p[0] = 0.0;
       p[1] = 0.0;
       p[2] = 0.0;
 
       // orthonormal basis vectors (in unpreconditioned case)
-      Dune::array<X,3> q{{b,b,b}};
+      std::array<X,3> q{{b,b,b}};
       q[0] = 0.0;
       q[1] *= 1.0/beta;
       q[2] = 0.0;
