@@ -303,6 +303,26 @@ namespace Dune {
       }
     }
 
+    /** \brief Construct from a std::initializer_list */
+    BlockVector (std::initializer_list<B> const &l)
+    {
+      this->n = l.size();
+      capacity_ = l.size();
+      if (capacity_>0) {
+        this->p = this->allocator_.allocate(capacity_);
+        // actually construct the objects
+        new(this->p)B[capacity_];
+
+        std::copy_n(l.begin(), l.size(), this->p);
+      } else
+      {
+        this->p = 0;
+        this->n = 0;
+        capacity_ = 0;
+      }
+    }
+
+
     /** \brief Make vector with _n components but preallocating capacity components
 
        If _n > capacity then space for _n entries is allocated.

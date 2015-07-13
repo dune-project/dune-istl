@@ -134,6 +134,13 @@ int main()
   VectorOfVector vv;
   vv.two_norm();
 
+  // Test construction from initializer_list
+  Vector fromInitializerList = {0,1,2};
+  assert(fromInitializerList.size() == 3);
+  assert(fromInitializerList[0] == value_type(0));
+  assert(fromInitializerList[1] == value_type(1));
+  assert(fromInitializerList[2] == value_type(2));
+
   int ret = 0;
 
   ret += testVector<1>();
