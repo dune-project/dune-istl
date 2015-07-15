@@ -1031,10 +1031,7 @@ namespace Dune {
       //! return true if column index is in row
       bool contains (size_type j)
       {
-        if (pattern.find(j)!=pattern.end())
-          return true;
-        else
-          return false;
+        return pattern.find(j) != pattern.end();
       }
       /**
        * @brief Get the current row size.
