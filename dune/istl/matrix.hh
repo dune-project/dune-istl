@@ -220,7 +220,7 @@ namespace Dune {
       return (*this);
     }
 
-    /** \brief Multiplication with a scalar */
+    /** \brief Division by a scalar */
     Matrix<T>& operator/=(const field_type& scalar) {
       data_ /= scalar;
       return (*this);
@@ -242,7 +242,7 @@ namespace Dune {
 
     /*! \brief Subtract the entries of another matrix from this one.
      *
-     * \param b The matrix to add to this one. Its size has to
+     * \param b The matrix to subtract from this one. Its size has to
      * be the same as the size of this matrix.
      */
     Matrix& operator-= (const Matrix& b) {
