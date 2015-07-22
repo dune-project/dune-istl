@@ -35,7 +35,7 @@ namespace Dune {
    * there is a clear separation of the parallel data composition together
    *  with the communication APIs from the data structures. This allows for
    * implementing overlapping and nonoverlapping domain decompositions as
-   * well as data parallel parallelisation aproaches.
+   * well as data parallel parallelisation approaches.
    *
    * The \ref ISTL_Solvers "solvers" can easily be turned into parallel solvers
    * initializing them with matching parallel subclasses of the base classes

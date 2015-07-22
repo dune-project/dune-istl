@@ -186,7 +186,7 @@ namespace Dune {
      @brief Vector scalar multiplication
 
      multiplies the current elements of x and y and recursively
-     sums it all up. Provides to variants:
+     sums it all up. Provides two variants:
      1) 'mul'  computes the indefinite inner product and
      2) 'dot'  provides an inner product by conjugating the first argument
    */
