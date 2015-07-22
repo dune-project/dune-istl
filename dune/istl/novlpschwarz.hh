@@ -38,7 +38,7 @@ namespace Dune {
    * well as data parallel parallelisation approaches.
    *
    * The \ref ISTL_Solvers "solvers" can easily be turned into parallel solvers
-   * initializing them with matching parallel subclasses of the the base classes
+   * initializing them with matching parallel subclasses of the base classes
    * ScalarProduct, Preconditioner and LinearOperator.
    *
    * The information of the data distribution is provided by OwnerOverlapCopyCommunication
