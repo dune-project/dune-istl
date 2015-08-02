@@ -22,6 +22,7 @@ AC_CONFIG_FILES([Makefile
     doc/doxygen/Makefile
     doc/doxygen/Doxyfile
     doc/Makefile
+    dune/istl/eigenvalue/Makefile
     dune/istl/paamg/test/Makefile
     dune/istl/paamg/Makefile
     dune/istl/tutorial/Makefile
