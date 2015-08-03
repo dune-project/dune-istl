@@ -634,11 +634,20 @@ namespace Dune
       return F::contains(pindex->local().attribute());
     }
 
+#if HAVE_PARMETIS
+#if PARMETIS_MAJOR_VERSION > 3
+    typedef idx_t idxtype;
+#elif defined(METISNAMEL)
+    typedef int idxtype;
+#else
+    //typedef std::size_t idxtype;
+    typedef int idxtype;
+#endif
 
     class BaseEdgeFunctor
     {
     public:
-      BaseEdgeFunctor(int* adj,const ParmetisDuneIndexMap& data)
+      BaseEdgeFunctor(idxtype* adj,const ParmetisDuneIndexMap& data)
         : i_(), adj_(adj), data_(data)
       {}
 
@@ -657,7 +666,7 @@ namespace Dune
 
     private:
       std::size_t i_;
-      int* adj_;
+      idxtype* adj_;
       const ParmetisDuneIndexMap& data_;
     };
 
@@ -665,11 +674,11 @@ namespace Dune
     struct EdgeFunctor
       : public BaseEdgeFunctor
     {
-      EdgeFunctor(int* adj, const ParmetisDuneIndexMap& data, std::size_t s)
+      EdgeFunctor(idxtype* adj, const ParmetisDuneIndexMap& data, std::size_t s)
         : BaseEdgeFunctor(adj, data)
       {}
 
-      int* getWeights()
+      idxtype* getWeights()
       {
         return NULL;
       }
@@ -681,10 +690,10 @@ namespace Dune
       :  public BaseEdgeFunctor
     {
     public:
-      EdgeFunctor(int* adj, const ParmetisDuneIndexMap& data, std::size_t s)
+      EdgeFunctor(idxtype* adj, const ParmetisDuneIndexMap& data, std::size_t s)
         : BaseEdgeFunctor(adj, data)
       {
-        weight_=new int[s];
+        weight_=new idxtype[s];
       }
 
       template<class T>
@@ -693,7 +702,7 @@ namespace Dune
         weight_[index()]=edge.properties().depends() ? 3 : 1;
         BaseEdgeFunctor::operator()(edge);
       }
-      int* getWeights()
+      idxtype* getWeights()
       {
         return weight_;
       }
@@ -704,7 +713,7 @@ namespace Dune
         }
       }
     private:
-      int* weight_;
+      idxtype* weight_;
     };
 
 
@@ -723,7 +732,7 @@ namespace Dune
      * @param ew Funcot to setup adjacency info.
      */
     template<class F, class G, class IS, class EW>
-    void getAdjArrays(G& graph, IS& indexSet, int *xadj,
+    void getAdjArrays(G& graph, IS& indexSet, idxtype *xadj,
                       EW& ew)
     {
       int j=0;
@@ -758,15 +767,6 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf,
                           bool verbose=false);
-#if HAVE_PARMETIS
-#if PARMETIS_MAJOR_VERSION > 3
-    typedef idx_t idxtype;
-#elif defined(METISNAMEL)
-    typedef int idxtype;
-#else
-    typedef std::size_t idxtype;
-#endif
-
 #ifndef METIS_VER_MAJOR
   extern "C"
   {
