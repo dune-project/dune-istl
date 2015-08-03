@@ -1891,7 +1891,7 @@ namespace Dune {
     }
 
 
-  private:
+  protected:
     // state information
     BuildMode build_mode;     // row wise or whole matrix
     BuildStage ready;               // indicate the stage the matrix building is in
