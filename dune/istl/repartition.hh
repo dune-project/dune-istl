@@ -648,6 +648,15 @@ namespace Dune
       return F::contains(pindex->local().attribute());
     }
 
+#if HAVE_PARMETIS
+#if PARMETIS_MAJOR_VERSION > 3
+    typedef idx_t idxtype;
+#elif defined(METISNAMEL)
+    typedef int idxtype;
+#else
+    //typedef std::size_t idxtype;
+    typedef int idxtype;
+#endif
 
     class BaseEdgeFunctor
     {
@@ -772,7 +781,6 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf,
                           bool verbose=false);
-#if HAVE_PARMETIS
 #ifndef METIS_VER_MAJOR
   extern "C"
   {
