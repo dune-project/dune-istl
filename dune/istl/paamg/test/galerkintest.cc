@@ -157,7 +157,7 @@ int main(int argc, char **argv)
 
   if(argc>1)
     N = atoi(argv[1]);
-  std::cout<<"Galerkin test with N="<<5<<std::endl;
+  std::cout << "Galerkin test with N=" << N << std::endl;
   testCoarsenIndices<1>(N);
   MPI_Finalize();
 }
