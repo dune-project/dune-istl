@@ -269,7 +269,7 @@ namespace Dune
       MM_STRUCTURE structure;
     };
 
-    bool lineFeed(std::istream& file)
+    inline bool lineFeed(std::istream& file)
     {
       char c;
       if(!file.eof())
@@ -293,7 +293,7 @@ namespace Dune
       return false;
     }
 
-    void skipComments(std::istream& file)
+    inline void skipComments(std::istream& file)
     {
       lineFeed(file);
       char c=file.peek();
@@ -307,7 +307,7 @@ namespace Dune
     }
 
 
-    bool readMatrixMarketBanner(std::istream& file, MMHeader& mmHeader)
+    inline bool readMatrixMarketBanner(std::istream& file, MMHeader& mmHeader)
     {
       std::string buffer;
       char c;
@@ -572,7 +572,7 @@ namespace Dune
       return is>>num.number;
     }
 
-    std::istream& operator>>(std::istream& is, NumericWrapper<PatternDummy>& num)
+    inline std::istream& operator>>(std::istream& is, NumericWrapper<PatternDummy>& num)
     {
       DUNE_UNUSED_PARAMETER(num);
       return is;
@@ -701,9 +701,9 @@ namespace Dune
   {};
 
 
-  void mm_read_header(std::size_t& rows, std::size_t& cols,
-                      MatrixMarketImpl::MMHeader& header, std::istream& istr,
-                      bool isVector)
+  inline void mm_read_header(std::size_t& rows, std::size_t& cols,
+                             MatrixMarketImpl::MMHeader& header, std::istream& istr,
+                             bool isVector)
   {
     using namespace MatrixMarketImpl;
 
