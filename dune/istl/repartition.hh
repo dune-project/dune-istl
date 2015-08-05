@@ -127,6 +127,17 @@ namespace Dune
     class ParmetisDuneIndexMap
     {
     public:
+      // define index type as provided by ParMETIS
+#if HAVE_PARMETIS
+  #if PARMETIS_MAJOR_VERSION > 3
+      typedef idx_t idxtype;
+  #else
+      typedef int idxtype;
+  #endif // PARMETIS_MAJOR_VERSION > 3
+#else
+      typedef std::size_t idxtype;
+#endif // #if HAVE_PARMETIS
+
       template<class Graph, class OOComm>
       ParmetisDuneIndexMap(const Graph& graph, const OOComm& com);
       int toParmetis(int i) const
@@ -149,7 +160,7 @@ namespace Dune
       {
         return parmetisToDune.size();
       }
-      int* vtxDist()
+      idxtype* vtxDist()
       {
         return &vtxDist_[0];
       }
@@ -159,7 +170,7 @@ namespace Dune
       std::vector<int> duneToParmetis;
       std::vector<int> parmetisToDune;
       // range of vertices for processor i: vtxdist[i] to vtxdist[i+1] (parmetis global)
-      std::vector<int> vtxDist_;
+      std::vector<idxtype> vtxDist_;
     };
 
     template<class G, class OOComm>
@@ -293,6 +304,9 @@ namespace Dune
 
   namespace
   {
+    // idxtype is given by ParMETIS package
+    typedef ParmetisDuneIndexMap :: idxtype idxtype ;
+
     /**
      * @brief Fills send buffer with global indices.
      *
@@ -634,15 +648,6 @@ namespace Dune
       return F::contains(pindex->local().attribute());
     }
 
-#if HAVE_PARMETIS
-#if PARMETIS_MAJOR_VERSION > 3
-    typedef idx_t idxtype;
-#elif defined(METISNAMEL)
-    typedef int idxtype;
-#else
-    //typedef std::size_t idxtype;
-    typedef int idxtype;
-#endif
 
     class BaseEdgeFunctor
     {
@@ -767,6 +772,7 @@ namespace Dune
                           Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                           RedistributeInterface& redistInf,
                           bool verbose=false);
+#if HAVE_PARMETIS
 #ifndef METIS_VER_MAJOR
   extern "C"
   {
@@ -780,8 +786,6 @@ namespace Dune
                                   int *options, int *edgecut, idxtype *part);
   }
 #endif
-#else
-  typedef std::size_t idxtype;
 #endif // HAVE_PARMETIS
 
   template<class S, class T>
@@ -834,7 +838,8 @@ namespace Dune
   }
 
   template<class M, class T1, class T2>
-  bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
+  bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
+                            idxtype nparts,
                             Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                             RedistributeInterface& redistInf,
                             bool verbose=false)
@@ -945,7 +950,8 @@ namespace Dune
                             vtxdist[oocomm.communicator().size()],
                             noNeighbours, xadj, adjncy, false));
 
-        int wgtflag=0, numflag=0, edgecut;
+        idxtype wgtflag=0, numflag=0;
+        idxtype edgecut;
 #ifdef USE_WEIGHTS
         wgtflag=3;
 #endif
@@ -1001,7 +1007,7 @@ namespace Dune
           std::cout<<"Gathering noedges took "<<time1.elapsed()<<std::endl;
         time1.reset();
 
-        int noVertices = vtxdist[oocomm.communicator().size()];
+        idxtype noVertices = vtxdist[oocomm.communicator().size()];
         idxtype *gxadj = 0;
         idxtype *gvwgt = 0;
         idxtype *gadjncy = 0;
@@ -1241,7 +1247,7 @@ namespace Dune
    * @param verbose Verbosity flag to give out additional information.
    */
   template<class G, class T1, class T2>
-  bool graphRepartition(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, int nparts,
+  bool graphRepartition(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, idxtype nparts,
                         Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
                         RedistributeInterface& redistInf,
                         bool verbose=false)
@@ -1321,7 +1327,7 @@ namespace Dune
       // 2) Call ParMETIS
       //
       //
-      int numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
+      idxtype numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
       //float *tpwgts = NULL;
       float *tpwgts = new float[nparts];
       for(int i=0; i<nparts; ++i)
