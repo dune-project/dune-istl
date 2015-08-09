@@ -164,7 +164,7 @@ namespace Dune {
 
   public:
     /**
-     * do y -= A x in next row
+     * do y += A x in next row
      */
     static void umv(TVecY& y, const TMatrix& A, const TVecX& x) {
       static const int rowlen = mpl::size< typename mpl::at_c<TMatrix,crow>::type >::value;

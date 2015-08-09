@@ -584,7 +584,7 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   Dune::MatrixAdapter<CM_BCRS,TestVector,TestVector> op(A);             // make linear operator from A
   Dune::SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
   Dune::SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
-  Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SSOR preconditioner
+  Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SOR preconditioner
   Dune::SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
 
   Dune::LoopSolver<TestVector> loop(op,gs,1E-4,18000,2);           // an inverse operator
