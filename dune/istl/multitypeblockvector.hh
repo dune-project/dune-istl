@@ -256,6 +256,12 @@ namespace Dune {
 
     typedef typename T1::field_type field_type;
 
+    /** \brief Return the number of vector entries */
+    static DUNE_CONSTEXPR std::size_t size()
+    {
+      return mpl::size<type>::value;
+    }
+
     /**
      * number of elements
      */

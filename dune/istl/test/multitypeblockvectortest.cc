@@ -37,6 +37,9 @@ int main(int argc, char** argv) try
 
   // test method 'count'
   std::cout << "multi vector has " << multiVector.count() << " first level blocks" << std::endl;
+
+  static_assert(multiVector.size()==2, "Method MultiTypeBlockVector::size() returned wrong value!");
+
   if (multiVector.count() != 2)
     DUNE_THROW(Exception, "Method MultiTypeBlockVector::count returned wrong value!");
 
