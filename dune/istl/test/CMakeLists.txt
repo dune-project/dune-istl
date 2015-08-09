@@ -12,6 +12,8 @@ set(NORMALTEST
   matrixtest
   matrixutilstest
   mmtest
+  multitypeblockmatrixtest
+  multitypeblockvectortest
   mv
   scaledidmatrixtest
   seqmatrixmarkettest
@@ -64,6 +66,10 @@ add_executable(bcrsimplicitbuildtest "bcrsimplicitbuild.cc")
 set_property(TARGET bcrsimplicitbuildtest APPEND PROPERTY COMPILE_DEFINITIONS "DUNE_ISTL_WITH_CHECKING=1")
 add_executable(matrixiteratortest "matrixiteratortest.cc")
 add_executable(mmtest mmtest.cc)
+add_executable(multitypeblockmatrixtest "multitypeblockmatrixtest.cc")
+add_dune_boost_flags(multitypeblockmatrixtest)
+add_executable(multitypeblockvectortest "multitypeblockvectortest.cc")
+add_dune_boost_flags(multitypeblockvectortest)
 add_executable(mv "mv.cc")
 add_executable(iotest "iotest.cc")
 add_executable(inverseoperator2prectest "inverseoperator2prectest.cc")
