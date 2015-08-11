@@ -70,7 +70,6 @@ add_executable(multitypeblockmatrixtest "multitypeblockmatrixtest.cc")
 add_dune_boost_flags(multitypeblockmatrixtest)
 add_executable(multitypeblockvectortest "multitypeblockvectortest.cc")
 add_dune_boost_flags(multitypeblockvectortest)
-set_tests_properties(multitypeblockmatrixtest multitypeblockvectortest PROPERTIES SKIP_RETURN_CODE 77)
 add_executable(mv "mv.cc")
 add_executable(iotest "iotest.cc")
 add_executable(inverseoperator2prectest "inverseoperator2prectest.cc")
@@ -131,6 +130,8 @@ foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")
   add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
+
+set_tests_properties(multitypeblockmatrixtest multitypeblockvectortest PROPERTIES SKIP_RETURN_CODE 77)
 
 exclude_from_headercheck(
   complexdata.hh)
