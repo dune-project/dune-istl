@@ -23,7 +23,7 @@
 namespace mpl=boost::mpl;
 namespace fusion=boost::fusion;
 
-// forward decl
+// forward declaration
 namespace Dune {
   template<typename T1, typename T2=fusion::void_, typename T3=fusion::void_, typename T4=fusion::void_,
       typename T5=fusion::void_, typename T6=fusion::void_, typename T7=fusion::void_,
@@ -78,7 +78,7 @@ namespace Dune {
 
 
   /**
-     @brief set a MultiTypeBlockVector to some specific value
+     @brief Set a MultiTypeBlockVector to some specific value
 
      This class is used by the MultiTypeBlockVector class' internal = operator.
      Whenever a vector is assigned to a value, each vector element
@@ -110,7 +110,7 @@ namespace Dune {
 
 
   /**
-     @brief add/sub second vector to/from the first (v1 += v2)
+     @brief Add/subtract second vector to/from the first (v1 += v2)
 
      This class implements vector addition/subtraction for any MultiTypeBlockVector-Class type.
    */
@@ -127,7 +127,7 @@ namespace Dune {
     }
 
     /**
-     * sub vector from vector
+     * Subtract vector from vector
      */
     static void sub (T& a, const T& b) {    //sub vector elements
       fusion::at_c<(count-1)>(a) -= fusion::at_c<(count-1)>(b);
@@ -160,10 +160,9 @@ namespace Dune {
   class MultiTypeBlockVector_AXPY<0,TVec,Ta> {public: static void axpy (TVec& x, const Ta& a, const TVec& y) {} };
 
 
-  /**
-     @brief Scalar * Vector Multiplication
-
-     calculates v *= a for each element of the given vector
+  /** @brief In-place multiplication with a scalar
+   *
+   * Calculates v *= a for each element of the given vector.
    */
   template<int count, typename TVec, typename Ta>
   class MultiTypeBlockVector_Mulscal {
@@ -182,13 +181,12 @@ namespace Dune {
 
 
 
-  /**
-     @brief Vector scalar multiplication
-
-     multiplies the current elements of x and y and recursively
-     sums it all up. Provides two variants:
-     1) 'mul'  computes the indefinite inner product and
-     2) 'dot'  provides an inner product by conjugating the first argument
+  /** @brief Scalar products
+   *
+   * multiplies the current elements of x and y pairwise, and sum up the results.
+   * Provides two variants:
+   * 1) 'mul'  computes the indefinite inner product and
+   * 2) 'dot'  provides an inner product by conjugating the first argument
    */
   template<int count, typename TVec>
   class MultiTypeBlockVector_Mul {
@@ -207,8 +205,7 @@ namespace Dune {
 
 
 
-  /**
-     @brief calulate the 2-norm out of vector elements
+  /** \brief Calculate the 2-norm
 
      Each element of the vector has to provide the method "two_norm2()"
      in order to calculate the whole vector's 2-norm.
@@ -306,8 +303,7 @@ namespace Dune {
       return fusion::at_c<index>(*this);
     }
 
-    /**
-     * assignment operator
+    /** \brief Assignment operator
      */
     template<typename T>
     void operator= (const T& newval) {MultiTypeBlockVector_Ident<mpl::size<type>::value,type,T>::equalize(*this, newval); }
@@ -329,18 +325,17 @@ namespace Dune {
     field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<mpl::size<type>::value,type>::mul(*this,newv);}
     field_type dot (const type& newv) const {return MultiTypeBlockVector_Mul<mpl::size<type>::value,type>::dot(*this,newv);}
 
-    /**
-     * two-norm^2
+    /** \brief Compute the squared Euclidean norm
      */
     typename FieldTraits<field_type>::real_type two_norm2() const {return MultiTypeBlockVector_Norm<mpl::size<type>::value,type>::result(*this);}
 
-    /**
-     * the real two-norm
+    /** \brief Compute the Euclidean norm
      */
     typename FieldTraits<field_type>::real_type two_norm() const {return sqrt(this->two_norm2());}
 
-    /**
-     * axpy operation on this vector (*this += a * y)
+    /** \brief Axpy operation on this vector (*this += a * y)
+     *
+     * \tparam Ta Type of the scalar 'a'
      */
     template<typename Ta>
     void axpy (const Ta& a, const type& y) {
@@ -351,10 +346,7 @@ namespace Dune {
 
 
 
-  /**
-     @brief << operator for a MultiTypeBlockVector
-
-     operator<< for printing out a MultiTypeBlockVector
+  /** \brief Send MultiTypeBlockVector to an outstream
    */
   template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
   std::ostream& operator<< (std::ostream& s, const MultiTypeBlockVector<T1,T2,T3,T4,T5,T6,T7,T8,T9>& v) {

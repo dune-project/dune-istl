@@ -20,7 +20,7 @@
 namespace mpl=boost::mpl;
 namespace fusion=boost::fusion;
 
-// forward decl
+// forward declaration
 namespace Dune
 {
   template<typename T1, typename T2=fusion::void_, typename T3=fusion::void_, typename T4=fusion::void_,
@@ -89,15 +89,15 @@ namespace Dune {
 
 
   /**
-     @brief set a MultiTypeBlockMatrix to some specific value
+     @brief Set a MultiTypeBlockMatrix to some specific scalar value
 
-     This class is used by the MultiTypeBlockMatrix class' internal = operator.
-     Whenever a vector is assigned to a value, each block element
-     has to provide the = operator for the right side. Example:
+     This class is used by the MultiTypeBlockMatrix class' internal assignment operator.
+     Whenever a vector is assigned a scalar value, each block element
+     has to provide operator= for the right side. Example:
      \code
      typedef MultiTypeBlockVector<int,int,int> CVect;
      MultiTypeBlockMatrix<CVect,CVect> CMat;
-     CMat = 3;                   //sets all 3*2 integer elements to 3
+     CMat = 3;                   //sets all 3x2 integer elements to 3
      \endcode
    */
   template<int rowcount, typename T1, typename T2>
@@ -123,7 +123,7 @@ namespace Dune {
   };
 
   /**
-     @brief Matrix Vector Multiplication
+     @brief Matrix-vector multiplication
 
      This class implements matrix vector multiplication for MultiTypeBlockMatrix/MultiTypeBlockVector types
    */
@@ -132,22 +132,23 @@ namespace Dune {
   class MultiTypeBlockMatrix_VectMul {
   public:
 
-    /**
-     * y += A x
+    /** \brief y += A x
      */
     static void umv(TVecY& y, const TMatrix& A, const TVecX& x) {
       fusion::at_c<ccol>( fusion::at_c<crow>(A) ).umv( fusion::at_c<ccol>(x), fusion::at_c<crow>(y) );
       MultiTypeBlockMatrix_VectMul<crow,remain_rows,ccol+1,remain_cols-1,TVecY,TMatrix,TVecX>::umv(y, A, x);
     }
 
-    /**
-     * y -= A x
+    /** \brief y -= A x
      */
     static void mmv(TVecY& y, const TMatrix& A, const TVecX& x) {
       fusion::at_c<ccol>( fusion::at_c<crow>(A) ).mmv( fusion::at_c<ccol>(x), fusion::at_c<crow>(y) );
       MultiTypeBlockMatrix_VectMul<crow,remain_rows,ccol+1,remain_cols-1,TVecY,TMatrix,TVecX>::mmv(y, A, x);
     }
 
+    /** \brief y += alpha A x
+     * \tparam AlphaType Type used for the scalar factor 'alpha'
+     */
     template<typename AlphaType>
     static void usmv(const AlphaType& alpha, TVecY& y, const TMatrix& A, const TVecX& x) {
       fusion::at_c<ccol>( fusion::at_c<crow>(A) ).usmv(alpha, fusion::at_c<ccol>(x), fusion::at_c<crow>(y) );
@@ -209,8 +210,8 @@ namespace Dune {
 
       This matrix class combines MultiTypeBlockVector elements as rows.
 
-      You must add BOOST_CPPFLAGS and BOOT_LDFLAGS to the CPPFLAGS and LDFLAGS during
-      compilation, respectively, to use this class
+      This class requires the boost fusion library.  Call add_dune_boost_flags for your
+      compilation target to set the necessary compiler and linker flags.
    */
   template<typename T1, typename T2, typename T3, typename T4,
       typename T5, typename T6, typename T7, typename T8, typename T9>
@@ -231,8 +232,7 @@ namespace Dune {
     template<typename T>
     void operator= (const T& newval) {MultiTypeBlockMatrix_Ident<mpl::size<type>::value,type,T>::equalize(*this, newval); }
 
-    /**
-     * y = A x
+    /** \brief y = A x
      */
     template<typename X, typename Y>
     void mv (const X& x, Y& y) const {
@@ -243,8 +243,7 @@ namespace Dune {
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,T1::size(),Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
     }
 
-    /**
-     * y += A x
+    /** \brief y += A x
      */
     template<typename X, typename Y>
     void umv (const X& x, Y& y) const {
@@ -254,8 +253,7 @@ namespace Dune {
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,T1::size(),Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
     }
 
-    /**
-     * y -= A x
+    /** \brief y -= A x
      */
     template<typename X, typename Y>
     void mmv (const X& x, Y& y) const {
@@ -265,7 +263,8 @@ namespace Dune {
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,T1::size(),Y,type,X>::mmv(y, *this, x);    //iterate over all matrix elements
     }
 
-    //! y += alpha A x
+    /** \brief y += alpha A x
+     */
     template<typename AlphaType, typename X, typename Y>
     void usmv (const AlphaType& alpha, const X& x, Y& y) const {
       static_assert(x.size() == mpl::size<T1>::value, "length of x does not match row length");
