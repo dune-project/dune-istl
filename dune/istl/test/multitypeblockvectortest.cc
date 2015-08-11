@@ -26,11 +26,14 @@ int main(int argc, char** argv) try
 #else
   MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
 
-  boost::fusion::at_c<0>(multiVector) = {{1,0,0},
-                                         {0,1,0},
-                                         {0,0,1}};
+  std::integral_constant<int, 0> _0;
+  std::integral_constant<int, 1> _1;
 
-  boost::fusion::at_c<1>(multiVector) = {3.14, 42};
+  multiVector[_0] = {{1,0,0},
+                     {0,1,0},
+                     {0,0,1}};
+
+  multiVector[_1] = {3.14, 42};
 
   // test operator<<
   std::cout << multiVector << std::endl;

@@ -267,6 +267,45 @@ namespace Dune {
      */
     int count() {return mpl::size<type>::value;}
 
+   /** \brief Random-access operator
+     *
+     * This method mimicks the behavior of normal vector access with square brackets like, e.g., v[5] = 1.
+     * The problem is that the return type is different for each value of the argument in the brackets.
+     * Therefore we implement a trick using std::integral_constant.  To access the first entry of
+     * a MultiTypeBlockVector named v write
+     * \code
+     *  MultiTypeBlockVector<A,B,C,D> v;
+     *  std::integral_constant<int,0> _0;
+     *  v[_0] = ...
+     * \endcode
+     * The name '_0' used here as a static replacement of the integer number zero is arbitrary.
+     * Any other variable name can be used.  If you don't like the separate variable, you can writee
+     * \code
+     *  MultiTypeBlockVector<A,B,C,D> v;
+     *  v[std::integral_constant<int,0>()] = ...
+     * \endcode
+     */
+    template< int index >
+    typename mpl::at_c<type,index>::type&
+    operator[] ( const std::integral_constant< int, index > indexVariable )
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return fusion::at_c<index>(*this);
+    }
+
+   /** \brief Const random-access operator
+     *
+     * This is the const version of the random-access operator.  See the non-const version for a full
+     * explanation of how to use it.
+     */
+    template< int index >
+    const typename mpl::at_c<type,index>::type&
+    operator[] ( const std::integral_constant< int, index > indexVariable ) const
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return fusion::at_c<index>(*this);
+    }
+
     /**
      * assignment operator
      */
