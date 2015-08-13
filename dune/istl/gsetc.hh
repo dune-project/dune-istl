@@ -378,12 +378,12 @@ namespace Dune {
 
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
+        typename T19,
+        typename... MultiTypeVectorArgs,
+        class K>
     static void dbgs (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                      MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                      const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                      MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                      const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                       const K& w)
     {
       const int rowcount =
@@ -426,12 +426,12 @@ namespace Dune {
 
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
+        typename T19,
+        typename... MultiTypeVectorArgs,
+        class K>
     static void bsorf (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                        const K& w)
     {
       const int rowcount =
@@ -476,12 +476,12 @@ namespace Dune {
 
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
+        typename T19,
+        typename... MultiTypeVectorArgs,
+        class K>
     static void bsorb (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                        const K& w)
     {
       const int rowcount =
@@ -523,15 +523,14 @@ namespace Dune {
 
 #if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
-
     template<typename T11, typename T12, typename T13, typename T14,
         typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
+        typename T19,
+        typename... MultiTypeVectorArgs,
+        class K>
     static void dbjac (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
+                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                        const K& w)
     {
       const int rowcount =

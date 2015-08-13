@@ -516,6 +516,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::FieldMatrix<double,1,1> LittleBlock;                    //matrix block type
   typedef Dune::BCRSMatrix<LittleBlock> BCRSMat;                        //matrix type
 
+  // Compile-time constants for the indices '0' and '1'
+  std::integral_constant<int, 0> _0;
+  std::integral_constant<int, 1> _1;
+
   const int X1=3;                                                       //index bounds of all four matrices
   const int X2=2;
   const int Y1=3;
@@ -528,10 +532,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::MultiTypeBlockVector<Dune::BlockVector<Dune::FieldVector<double,1> >,Dune::BlockVector<Dune::FieldVector<double,1> > > TestVector;
   TestVector x, b;
 
-  fusion::at_c<0>(x).resize(Y1);
-  fusion::at_c<1>(x).resize(Y2);
-  fusion::at_c<0>(b).resize(X1);
-  fusion::at_c<1>(b).resize(X2);
+  x[_0].resize(Y1);
+  x[_1].resize(Y2);
+  b[_0].resize(X1);
+  b[_1].resize(X2);
 
   x = 1; b = 1;
 
@@ -568,10 +572,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::MultiTypeBlockVector<BCRSMat,BCRSMat> BCRS_Row;
   typedef Dune::MultiTypeBlockMatrix<BCRS_Row,BCRS_Row> CM_BCRS;
   CM_BCRS A;
-  fusion::at_c<0>(fusion::at_c<0>(A)) = A11;
-  fusion::at_c<1>(fusion::at_c<0>(A)) = A12;
-  fusion::at_c<0>(fusion::at_c<1>(A)) = A21;
-  fusion::at_c<1>(fusion::at_c<1>(A)) = A22;
+  fusion::at_c<0>(A)[_0] = A11;
+  fusion::at_c<0>(A)[_1] = A12;
+  fusion::at_c<1>(A)[_0] = A21;
+  fusion::at_c<1>(A)[_1] = A22;
 
   printmatrix(std::cout,A11,"matrix A11","row",9,1);
   printmatrix(std::cout,A12,"matrix A12","row",9,1);
@@ -592,8 +596,8 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
 
   loop.apply(x,b,r);
 
-  printvector(std::cout,fusion::at_c<0>(x),"solution x1","entry",11,9,1);
-  printvector(std::cout,fusion::at_c<1>(x),"solution x2","entry",11,9,1);
+  printvector(std::cout,x[_0],"solution x1","entry",11,9,1);
+  printvector(std::cout,x[_1],"solution x2","entry",11,9,1);
 
 }
 #endif

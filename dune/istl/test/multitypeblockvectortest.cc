@@ -21,9 +21,6 @@ using namespace Dune;
 
 int main(int argc, char** argv) try
 {
-#if ! HAVE_DUNE_BOOST || ! defined HAVE_BOOST_FUSION
-  return 77;
-#else
   MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
 
   std::integral_constant<int, 0> _0;
@@ -79,7 +76,6 @@ int main(int argc, char** argv) try
   std::cout << multiVector.dot(multiVector2) << std::endl;
 
   return 0;
-#endif
 }
 catch (Dune::Exception& e)
 {

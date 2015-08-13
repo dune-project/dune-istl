@@ -41,37 +41,40 @@ int main(int argc, char** argv) try
   typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,3,3> >, Matrix<FieldMatrix<double,3,1> > > RowType0;
   typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,1,3> >, Matrix<FieldMatrix<double,1,1> > > RowType1;
 
+  std::integral_constant<int, 0> _0;
+  std::integral_constant<int, 1> _1;
+
   MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
 
-  fusion::at_c<0>( fusion::at_c<0>(multiMatrix)).setSize(3,3);
-  fusion::at_c<1>( fusion::at_c<0>(multiMatrix)).setSize(3,2);
-  fusion::at_c<0>( fusion::at_c<1>(multiMatrix)).setSize(2,3);
-  fusion::at_c<1>( fusion::at_c<1>(multiMatrix)).setSize(2,2);
+  fusion::at_c<0>(multiMatrix)[_0].setSize(3,3);
+  fusion::at_c<0>(multiMatrix)[_1].setSize(3,2);
+  fusion::at_c<1>(multiMatrix)[_0].setSize(2,3);
+  fusion::at_c<1>(multiMatrix)[_1].setSize(2,2);
 
   // lazy solution: initialize the entire matrix with zeros
-  fusion::at_c<0>( fusion::at_c<0>(multiMatrix)) = 0;
-  fusion::at_c<1>( fusion::at_c<0>(multiMatrix)) = 0;
-  fusion::at_c<0>( fusion::at_c<1>(multiMatrix)) = 0;
-  fusion::at_c<1>( fusion::at_c<1>(multiMatrix)) = 0;
+  fusion::at_c<0>(multiMatrix)[_0] = 0;
+  fusion::at_c<0>(multiMatrix)[_1] = 0;
+  fusion::at_c<1>(multiMatrix)[_0] = 0;
+  fusion::at_c<1>(multiMatrix)[_1] = 0;
 
-  printmatrix(std::cout, fusion::at_c<0>( fusion::at_c<0>(multiMatrix)), "(0,0)", "--");
-  printmatrix(std::cout, fusion::at_c<1>( fusion::at_c<0>(multiMatrix)), "(0,1)", "--");
-  printmatrix(std::cout, fusion::at_c<0>( fusion::at_c<1>(multiMatrix)), "(1,0)", "--");
-  printmatrix(std::cout, fusion::at_c<1>( fusion::at_c<1>(multiMatrix)), "(1,1)", "--");
+  printmatrix(std::cout, fusion::at_c<0>(multiMatrix)[_0], "(0,0)", "--");
+  printmatrix(std::cout, fusion::at_c<0>(multiMatrix)[_1], "(0,1)", "--");
+  printmatrix(std::cout, fusion::at_c<1>(multiMatrix)[_0], "(1,0)", "--");
+  printmatrix(std::cout, fusion::at_c<1>(multiMatrix)[_1], "(1,1)", "--");
 
   // set up a test vector
   MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
 
-  boost::fusion::at_c<0>(multiVector) = {{1,0,0},
-                                  {0,1,0},
-                                  {0,0,1}};
+  multiVector[_0] = {{1,0,0},
+                     {0,1,0},
+                     {0,0,1}};
 
-  boost::fusion::at_c<1>(multiVector) = {3.14, 42};
+  multiVector[_1] = {3.14, 42};
 
   // Test matrix-vector products
   MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > result;
-  fusion::at_c<0>(result).resize(3);
-  fusion::at_c<1>(result).resize(2);
+  result[_0].resize(3);
+  result[_1].resize(2);
 
   multiMatrix.mv(multiVector,result);
   multiMatrix.umv(multiVector,result);
@@ -100,10 +103,10 @@ int main(int argc, char** argv) try
   typedef Dune::MultiTypeBlockVector<Dune::BlockVector<Dune::FieldVector<double,1> >,Dune::BlockVector<Dune::FieldVector<double,1> > > TestVector;
   TestVector x, b;
 
-  fusion::at_c<0>(x).resize(Y1);
-  fusion::at_c<1>(x).resize(Y2);
-  fusion::at_c<0>(b).resize(X1);
-  fusion::at_c<1>(b).resize(X2);
+  x[_0].resize(Y1);
+  x[_1].resize(Y2);
+  b[_0].resize(X1);
+  b[_1].resize(X2);
 
   x = 1; b = 1;
 
@@ -171,10 +174,10 @@ int main(int argc, char** argv) try
   typedef Dune::MultiTypeBlockVector<BCRSMat,BCRSMat> BCRS_Row;
   typedef Dune::MultiTypeBlockMatrix<BCRS_Row,BCRS_Row> CM_BCRS;
   CM_BCRS A;
-  fusion::at_c<0>(fusion::at_c<0>(A)) = A11;
-  fusion::at_c<1>(fusion::at_c<0>(A)) = A12;
-  fusion::at_c<0>(fusion::at_c<1>(A)) = A21;
-  fusion::at_c<1>(fusion::at_c<1>(A)) = A22;
+  fusion::at_c<0>(A)[_0] = A11;
+  fusion::at_c<0>(A)[_1] = A12;
+  fusion::at_c<1>(A)[_0] = A21;
+  fusion::at_c<1>(A)[_1] = A22;
 
   x = 1;
   b = 1;
@@ -191,8 +194,8 @@ int main(int argc, char** argv) try
   // Solve linear system
   loop.apply(x,b,r);
 
-  printvector(std::cout,fusion::at_c<0>(x),"solution x1","entry",11,9,1);
-  printvector(std::cout,fusion::at_c<1>(x),"solution x2","entry",11,9,1);
+  printvector(std::cout,x[_0],"solution x1","entry",11,9,1);
+  printvector(std::cout,x[_1],"solution x2","entry",11,9,1);
 
   return 0;
 #endif

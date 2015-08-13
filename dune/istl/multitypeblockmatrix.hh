@@ -135,14 +135,14 @@ namespace Dune {
     /** \brief y += A x
      */
     static void umv(TVecY& y, const TMatrix& A, const TVecX& x) {
-      fusion::at_c<ccol>( fusion::at_c<crow>(A) ).umv( fusion::at_c<ccol>(x), fusion::at_c<crow>(y) );
+      std::get<ccol>( fusion::at_c<crow>(A) ).umv( std::get<ccol>(x), std::get<crow>(y) );
       MultiTypeBlockMatrix_VectMul<crow,remain_rows,ccol+1,remain_cols-1,TVecY,TMatrix,TVecX>::umv(y, A, x);
     }
 
     /** \brief y -= A x
      */
     static void mmv(TVecY& y, const TMatrix& A, const TVecX& x) {
-      fusion::at_c<ccol>( fusion::at_c<crow>(A) ).mmv( fusion::at_c<ccol>(x), fusion::at_c<crow>(y) );
+      std::get<ccol>( fusion::at_c<crow>(A) ).mmv( std::get<ccol>(x), std::get<crow>(y) );
       MultiTypeBlockMatrix_VectMul<crow,remain_rows,ccol+1,remain_cols-1,TVecY,TMatrix,TVecX>::mmv(y, A, x);
     }
 
@@ -151,7 +151,7 @@ namespace Dune {
      */
     template<typename AlphaType>
     static void usmv(const AlphaType& alpha, TVecY& y, const TMatrix& A, const TVecX& x) {
-      fusion::at_c<ccol>( fusion::at_c<crow>(A) ).usmv(alpha, fusion::at_c<ccol>(x), fusion::at_c<crow>(y) );
+      std::get<ccol>( fusion::at_c<crow>(A) ).usmv(alpha, std::get<ccol>(x), std::get<crow>(y) );
       MultiTypeBlockMatrix_VectMul<crow,remain_rows,ccol+1,remain_cols-1,TVecY,TMatrix,TVecX>::usmv(alpha,y, A, x);
     }
 
@@ -224,7 +224,7 @@ namespace Dune {
      */
     typedef MultiTypeBlockMatrix<T1, T2, T3, T4, T5, T6, T7, T8, T9> type;
 
-    typedef typename mpl::at_c<T1,0>::type field_type;
+    typedef typename T1::field_type field_type;
 
     /**
      * assignment operator
@@ -236,7 +236,7 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void mv (const X& x, Y& y) const {
-      static_assert(x.size() == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(x.size() == T1::size(), "length of x does not match row length");
       static_assert(y.size() == mpl::size<type>::value, "length of y does not match row count");
 
       y = 0;                                                                  //reset y (for mv uses umv)
@@ -247,7 +247,7 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void umv (const X& x, Y& y) const {
-      static_assert(x.size() == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(x.size() == T1::size(), "length of x does not match row length");
       static_assert(y.size() == mpl::size<type>::value, "length of y does not match row count");
 
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,T1::size(),Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
@@ -257,7 +257,7 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void mmv (const X& x, Y& y) const {
-      static_assert(x.size() == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(x.size() == T1::size(), "length of x does not match row length");
       static_assert(y.size() == mpl::size<type>::value, "length of y does not match row count");
 
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,T1::size(),Y,type,X>::mmv(y, *this, x);    //iterate over all matrix elements
@@ -267,7 +267,7 @@ namespace Dune {
      */
     template<typename AlphaType, typename X, typename Y>
     void usmv (const AlphaType& alpha, const X& x, Y& y) const {
-      static_assert(x.size() == mpl::size<T1>::value, "length of x does not match row length");
+      static_assert(x.size() == T1::size(), "length of x does not match row length");
       static_assert(y.size() == mpl::size<type>::value, "length of y does not match row count");
 
       MultiTypeBlockMatrix_VectMul<0,mpl::size<type>::value,0,T1::size(),Y,type,X>::usmv(alpha,y, *this, x);     //iterate over all matrix elements
@@ -321,7 +321,7 @@ namespace Dune {
      */
     template <typename Trhs, typename TVector, typename TMatrix, typename K>
     static void calc_rhs(const TMatrix& A, TVector& x, TVector& v, Trhs& b, const K& w) {
-      fusion::at_c<ccol>( fusion::at_c<crow>(A) ).mmv( fusion::at_c<ccol>(x), b );
+      std::get<ccol>( fusion::at_c<crow>(A) ).mmv( std::get<ccol>(x), b );
       MultiTypeBlockMatrix_Solver_Col<I, crow, ccol+1, remain_col-1>::calc_rhs(A,x,v,b,w); //next column element
     }
 
@@ -358,12 +358,11 @@ namespace Dune {
     }
     template <typename TVector, typename TMatrix, typename K>
     static void dbgs(const TMatrix& A, TVector& x, TVector& v, const TVector& b, const K& w) {
-      typename mpl::at_c<TVector,crow>::type rhs;
-      rhs = fusion::at_c<crow> (b);
+      auto rhs = std::get<crow> (b);
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, mpl::at_c<TMatrix,crow>::type::size()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::dbgs(fusion::at_c<crow>( fusion::at_c<crow>(A)), fusion::at_c<crow>(x),rhs,w);
+      algmeta_itsteps<I-1>::dbgs(std::get<crow>( fusion::at_c<crow>(A)), std::get<crow>(x),rhs,w);
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::dbgs(A,x,v,b,w); //next row
     }
 
@@ -381,13 +380,12 @@ namespace Dune {
     }
     template <typename TVector, typename TMatrix, typename K>               //recursion over all matrix rows (A)
     static void bsorf(const TMatrix& A, TVector& x, TVector& v, const TVector& b, const K& w) {
-      typename mpl::at_c<TVector,crow>::type rhs;
-      rhs = fusion::at_c<crow> (b);
+      auto rhs = std::get<crow> (b);
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, mpl::at_c<TMatrix,crow>::type::size()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::bsorf(fusion::at_c<crow>( fusion::at_c<crow>(A)), fusion::at_c<crow>(v),rhs,w);
-      fusion::at_c<crow>(x).axpy(w,fusion::at_c<crow>(v));
+      algmeta_itsteps<I-1>::bsorf(std::get<crow>( fusion::at_c<crow>(A)), std::get<crow>(v),rhs,w);
+      std::get<crow>(x).axpy(w,std::get<crow>(v));
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::bsorf(A,x,v,b,w);        //next row
     }
 
@@ -403,13 +401,12 @@ namespace Dune {
     }
     template <typename TVector, typename TMatrix, typename K>               //recursion over all matrix rows (A)
     static void bsorb(const TMatrix& A, TVector& x, TVector& v, const TVector& b, const K& w) {
-      typename mpl::at_c<TVector,crow>::type rhs;
-      rhs = fusion::at_c<crow> (b);
+      auto rhs = std::get<crow> (b);
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, mpl::at_c<TMatrix,crow>::type::size()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::bsorb(fusion::at_c<crow>( fusion::at_c<crow>(A)), fusion::at_c<crow>(v),rhs,w);
-      fusion::at_c<crow>(x).axpy(w,fusion::at_c<crow>(v));
+      algmeta_itsteps<I-1>::bsorb(std::get<crow>( fusion::at_c<crow>(A)), std::get<crow>(v),rhs,w);
+      std::get<crow>(x).axpy(w,std::get<crow>(v));
       MultiTypeBlockMatrix_Solver<I,crow-1,remain_row-1>::bsorb(A,x,v,b,w);        //next row
     }
 
@@ -426,12 +423,11 @@ namespace Dune {
     }
     template <typename TVector, typename TMatrix, typename K>
     static void dbjac(const TMatrix& A, TVector& x, TVector& v, const TVector& b, const K& w) {
-      typename mpl::at_c<TVector,crow>::type rhs;
-      rhs = fusion::at_c<crow> (b);
+      auto rhs = std::get<crow> (b);
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, mpl::at_c<TMatrix,crow>::type::size()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::dbjac(fusion::at_c<crow>( fusion::at_c<crow>(A)), fusion::at_c<crow>(v),rhs,w);
+      algmeta_itsteps<I-1>::dbjac(std::get<crow>( fusion::at_c<crow>(A)), std::get<crow>(v),rhs,w);
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::dbjac(A,x,v,b,w);        //next row
     }
 
