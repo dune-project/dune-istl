@@ -28,9 +28,6 @@ using namespace Dune;
 
 int main(int argc, char** argv) try
 {
-#if ! HAVE_DUNE_BOOST || ! defined HAVE_BOOST_FUSION
-  return 77;
-#else
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   //  First, we test a MultiTypeBlockMatrix consisting of an array of 2x2 dense matrices.
   //  The upper left dense matrix has dense 3x3 blocks, the lower right matrix has 1x1 blocks,
@@ -199,7 +196,6 @@ int main(int argc, char** argv) try
   printvector(std::cout,x[_1],"solution x2","entry",11,9,1);
 
   return 0;
-#endif
 }
 catch (Dune::Exception& e)
 {

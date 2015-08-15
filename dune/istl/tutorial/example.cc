@@ -507,8 +507,6 @@ void test_Interface ()
 }
 
 
-#ifdef HAVE_BOOST_FUSION
-
 void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                           //Jacobi Solver Test MultiTypeBlockMatrix_Solver::dbjac on MultiTypeBlockMatrix<BCRSMatrix>
 
   std::cout << "\n\n\nJacobi Solver Test on MultiTypeBlockMatrix<BCRSMatrix>\n";
@@ -572,10 +570,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::MultiTypeBlockVector<BCRSMat,BCRSMat> BCRS_Row;
   typedef Dune::MultiTypeBlockMatrix<BCRS_Row,BCRS_Row> CM_BCRS;
   CM_BCRS A;
-  fusion::at_c<0>(A)[_0] = A11;
-  fusion::at_c<0>(A)[_1] = A12;
-  fusion::at_c<1>(A)[_0] = A21;
-  fusion::at_c<1>(A)[_1] = A22;
+  A[_0][_0] = A11;
+  A[_0][_1] = A12;
+  A[_1][_0] = A21;
+  A[_1][_1] = A22;
 
   printmatrix(std::cout,A11,"matrix A11","row",9,1);
   printmatrix(std::cout,A12,"matrix A12","row",9,1);
@@ -600,7 +598,6 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   printvector(std::cout,x[_1],"solution x2","entry",11,9,1);
 
 }
-#endif
 
 
 

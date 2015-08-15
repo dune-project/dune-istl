@@ -373,9 +373,6 @@ namespace Dune {
   template<int I>
   struct algmeta_itsteps {
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
     template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
@@ -386,8 +383,6 @@ namespace Dune {
     {
       Dune::MultiTypeBlockMatrix_Solver<I,0,A.N()>::dbgs(A, x, b, w);
     }
-#endif
-#endif
 
     template<class M, class X, class Y, class K>
     static void dbgs (const M& A, X& x, const Y& b, const K& w)
@@ -417,9 +412,6 @@ namespace Dune {
       x.axpy(K(1)-w,xold);
     }
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
     template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
@@ -430,8 +422,6 @@ namespace Dune {
     {
       Dune::MultiTypeBlockMatrix_Solver<I,0,A.N()>::bsorf(A, x, b, w);
     }
-#endif
-#endif
 
     template<class M, class X, class Y, class K>
     static void bsorf (const M& A, X& x, const Y& b, const K& w)
@@ -463,9 +453,6 @@ namespace Dune {
       }
     }
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
     template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
@@ -476,8 +463,6 @@ namespace Dune {
     {
       Dune::MultiTypeBlockMatrix_Solver<I,A.N()-1,A.N()>::bsorb(A, x, b, w);
     }
-#endif
-#endif
 
     template<class M, class X, class Y, class K>
     static void bsorb (const M& A, X& x, const Y& b, const K& w)
@@ -509,8 +494,6 @@ namespace Dune {
       }
     }
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
     template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
@@ -521,8 +504,6 @@ namespace Dune {
     {
       Dune::MultiTypeBlockMatrix_Solver<I,0,A.N()>::dbjac(A, x, b, w);
     }
-#endif
-#endif
 
     template<class M, class X, class Y, class K>
     static void dbjac (const M& A, X& x, const Y& b, const K& w)

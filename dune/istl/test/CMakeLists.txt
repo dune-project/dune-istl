@@ -67,7 +67,6 @@ set_property(TARGET bcrsimplicitbuildtest APPEND PROPERTY COMPILE_DEFINITIONS "D
 add_executable(matrixiteratortest "matrixiteratortest.cc")
 add_executable(mmtest mmtest.cc)
 add_executable(multitypeblockmatrixtest "multitypeblockmatrixtest.cc")
-add_dune_boost_flags(multitypeblockmatrixtest)
 add_executable(multitypeblockvectortest "multitypeblockvectortest.cc")
 add_executable(mv "mv.cc")
 add_executable(iotest "iotest.cc")
@@ -129,8 +128,6 @@ foreach(_exe ${ALLTESTS})
   target_link_libraries(${_exe} "dunecommon")
   add_test(${_exe} ${_exe})
 endforeach(_exe ${ALLTESTS})
-
-set_tests_properties(multitypeblockmatrixtest PROPERTIES SKIP_RETURN_CODE 77)
 
 exclude_from_headercheck(
   complexdata.hh)
