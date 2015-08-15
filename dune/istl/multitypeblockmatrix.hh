@@ -23,9 +23,7 @@ namespace fusion=boost::fusion;
 // forward declaration
 namespace Dune
 {
-  template<typename T1, typename T2=fusion::void_, typename T3=fusion::void_, typename T4=fusion::void_,
-      typename T5=fusion::void_, typename T6=fusion::void_, typename T7=fusion::void_,
-      typename T8=fusion::void_, typename T9=fusion::void_>
+  template<typename FirstRow, typename... Args>
   class MultiTypeBlockMatrix;
 
   template<int I, int crow, int remain_row>
@@ -210,18 +208,17 @@ namespace Dune {
       This class requires the boost fusion library.  Call add_dune_boost_flags for your
       compilation target to set the necessary compiler and linker flags.
    */
-  template<typename T1, typename T2, typename T3, typename T4,
-      typename T5, typename T6, typename T7, typename T8, typename T9>
-  class MultiTypeBlockMatrix : public fusion::vector<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
+  template<typename FirstRow, typename... Args>
+  class MultiTypeBlockMatrix : public fusion::vector<FirstRow, Args...> {
 
   public:
 
     /**
      * own class' type
      */
-    typedef MultiTypeBlockMatrix<T1, T2, T3, T4, T5, T6, T7, T8, T9> type;
+    typedef MultiTypeBlockMatrix<FirstRow, Args...> type;
 
-    typedef typename T1::field_type field_type;
+    typedef typename FirstRow::field_type field_type;
 
     /** \brief Return the number of matrix rows */
     static DUNE_CONSTEXPR std::size_t N()
@@ -232,7 +229,7 @@ namespace Dune {
     /** \brief Return the number of matrix columns */
     static DUNE_CONSTEXPR std::size_t M()
     {
-      return T1::size();
+      return FirstRow::size();
     }
 
     /**

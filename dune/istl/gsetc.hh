@@ -376,19 +376,15 @@ namespace Dune {
 #if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19,
+    template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
-    static void dbgs (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+    static void dbgs (const MultiTypeBlockMatrix<MultiTypeMatrixArgs...>& A,
                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                       const K& w)
     {
-      const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::dbgs(A, x, b, w);
+      Dune::MultiTypeBlockMatrix_Solver<I,0,A.N()>::dbgs(A, x, b, w);
     }
 #endif
 #endif
@@ -424,19 +420,15 @@ namespace Dune {
 #if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19,
+    template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
-    static void bsorf (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+    static void bsorf (const MultiTypeBlockMatrix<MultiTypeMatrixArgs...>& A,
                        MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
                        const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                        const K& w)
     {
-      const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::bsorf(A, x, b, w);
+      Dune::MultiTypeBlockMatrix_Solver<I,0,A.N()>::bsorf(A, x, b, w);
     }
 #endif
 #endif
@@ -474,19 +466,15 @@ namespace Dune {
 #if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
 
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19,
+    template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
-    static void bsorb (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+    static void bsorb (const MultiTypeBlockMatrix<MultiTypeMatrixArgs...>& A,
                        MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
                        const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                        const K& w)
     {
-      const int rowcount =
-        mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,rowcount-1,rowcount>::bsorb(A, x, b, w);
+      Dune::MultiTypeBlockMatrix_Solver<I,A.N()-1,A.N()>::bsorb(A, x, b, w);
     }
 #endif
 #endif
@@ -523,19 +511,15 @@ namespace Dune {
 
 #if HAVE_DUNE_BOOST
 #ifdef HAVE_BOOST_FUSION
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19,
+    template<typename... MultiTypeMatrixArgs,
         typename... MultiTypeVectorArgs,
         class K>
-    static void dbjac (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
+    static void dbjac (const MultiTypeBlockMatrix<MultiTypeMatrixArgs...>& A,
                        MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
                        const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
                        const K& w)
     {
-      const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount >::dbjac(A, x, b, w);
+      Dune::MultiTypeBlockMatrix_Solver<I,0,A.N()>::dbjac(A, x, b, w);
     }
 #endif
 #endif
