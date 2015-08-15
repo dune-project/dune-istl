@@ -17,11 +17,13 @@
 #include <dune/istl/istlexception.hh>  // provides Dune::ISTLError
 #include <dune/istl/io.hh>             // provides Dune::printvector(...)
 
+#ifdef Status
 #undef Status        // prevent preprocessor from damaging the ARPACK++
                      // code when "X11/Xlib.h" is included (the latter
                      // defines Status as "#define Status int" and
                      // ARPACK++ provides a class with a method called
                      // Status)
+#endif
 #include "arssym.h"  // provides ARSymStdEig
 
 
