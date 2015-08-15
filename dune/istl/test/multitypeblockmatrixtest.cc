@@ -46,21 +46,22 @@ int main(int argc, char** argv) try
 
   MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
 
-  fusion::at_c<0>(multiMatrix)[_0].setSize(3,3);
-  fusion::at_c<0>(multiMatrix)[_1].setSize(3,2);
-  fusion::at_c<1>(multiMatrix)[_0].setSize(2,3);
-  fusion::at_c<1>(multiMatrix)[_1].setSize(2,2);
+  //fusion::at_c<0>(multiMatrix)[_0].setSize(3,3);
+  multiMatrix[_0][_0].setSize(3,3);
+  multiMatrix[_0][_1].setSize(3,2);
+  multiMatrix[_1][_0].setSize(2,3);
+  multiMatrix[_1][_1].setSize(2,2);
 
   // lazy solution: initialize the entire matrix with zeros
-  fusion::at_c<0>(multiMatrix)[_0] = 0;
-  fusion::at_c<0>(multiMatrix)[_1] = 0;
-  fusion::at_c<1>(multiMatrix)[_0] = 0;
-  fusion::at_c<1>(multiMatrix)[_1] = 0;
+  multiMatrix[_0][_0] = 0;
+  multiMatrix[_0][_1] = 0;
+  multiMatrix[_1][_0] = 0;
+  multiMatrix[_1][_1] = 0;
 
-  printmatrix(std::cout, fusion::at_c<0>(multiMatrix)[_0], "(0,0)", "--");
-  printmatrix(std::cout, fusion::at_c<0>(multiMatrix)[_1], "(0,1)", "--");
-  printmatrix(std::cout, fusion::at_c<1>(multiMatrix)[_0], "(1,0)", "--");
-  printmatrix(std::cout, fusion::at_c<1>(multiMatrix)[_1], "(1,1)", "--");
+  printmatrix(std::cout, multiMatrix[_0][_0], "(0,0)", "--");
+  printmatrix(std::cout, multiMatrix[_0][_1], "(0,1)", "--");
+  printmatrix(std::cout, multiMatrix[_1][_0], "(1,0)", "--");
+  printmatrix(std::cout, multiMatrix[_1][_1], "(1,1)", "--");
 
   // set up a test vector
   MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
@@ -174,10 +175,10 @@ int main(int argc, char** argv) try
   typedef Dune::MultiTypeBlockVector<BCRSMat,BCRSMat> BCRS_Row;
   typedef Dune::MultiTypeBlockMatrix<BCRS_Row,BCRS_Row> CM_BCRS;
   CM_BCRS A;
-  fusion::at_c<0>(A)[_0] = A11;
-  fusion::at_c<0>(A)[_1] = A12;
-  fusion::at_c<1>(A)[_0] = A21;
-  fusion::at_c<1>(A)[_1] = A22;
+  A[_0][_0] = A11;
+  A[_0][_1] = A12;
+  A[_1][_0] = A21;
+  A[_1][_1] = A22;
 
   x = 1;
   b = 1;
