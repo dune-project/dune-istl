@@ -9,6 +9,7 @@
 
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/std/constexpr.hh>
 
 #include "istlexception.hh"
 

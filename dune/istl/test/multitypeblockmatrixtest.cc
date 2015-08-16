@@ -43,7 +43,6 @@ int main(int argc, char** argv) try
 
   MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
 
-  //fusion::at_c<0>(multiMatrix)[_0].setSize(3,3);
   multiMatrix[_0][_0].setSize(3,3);
   multiMatrix[_0][_1].setSize(3,2);
   multiMatrix[_1][_0].setSize(2,3);

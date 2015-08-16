@@ -5,6 +5,8 @@
 
 #include <cmath>
 #include <iostream>
+#include <tuple>
+#include <dune/common/std/constexpr.hh>
 
 #include "istlexception.hh"
 
