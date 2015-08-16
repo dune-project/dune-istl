@@ -193,9 +193,6 @@ namespace Dune {
       @brief A Matrix class to support different block types
 
       This matrix class combines MultiTypeBlockVector elements as rows.
-
-      This class requires the boost fusion library.  Call add_dune_boost_flags for your
-      compilation target to set the necessary compiler and linker flags.
    */
   template<typename FirstRow, typename... Args>
   class MultiTypeBlockMatrix
