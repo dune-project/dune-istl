@@ -57,7 +57,7 @@ namespace Dune {
   template<int crow, int remain_rows, int ccol, typename TMatrix> //specialization for remain_cols=0
   class MultiTypeBlockMatrix_Print<crow,remain_rows,ccol,0,TMatrix> {
   public: static void print(const TMatrix& m) {
-      MultiTypeBlockMatrix_Print<crow+1,remain_rows-1,0,m.N(),TMatrix>::print(m);                 //next row
+      MultiTypeBlockMatrix_Print<crow+1,remain_rows-1,0,TMatrix::N(),TMatrix>::print(m);                 //next row
     }
   };
 
@@ -334,25 +334,17 @@ namespace Dune {
 
      operator<< for printing out a MultiTypeBlockMatrix
    */
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-      typename T6, typename T7, typename T8, typename T9>
-  std::ostream& operator<< (std::ostream& s, const MultiTypeBlockMatrix<T1,T2,T3,T4,T5,T6,T7,T8,T9>& m) {
-    MultiTypeBlockMatrix_Print<0,m.N(),0,m.M(),MultiTypeBlockMatrix<T1,T2,T3,T4,T5,T6,T7,T8,T9> >::print(m);
+  template<typename T1, typename... Args>
+  std::ostream& operator<< (std::ostream& s, const MultiTypeBlockMatrix<T1,Args...>& m) {
+    static const int N = MultiTypeBlockMatrix<T1,Args...>::N();
+    static const int M = MultiTypeBlockMatrix<T1,Args...>::M();
+    MultiTypeBlockMatrix_Print<0,N,0,M,MultiTypeBlockMatrix<T1,Args...> >::print(m);
     return s;
   }
 
-
-
-
-
   //make algmeta_itsteps known
-  template<int I>
+  template<int I, typename M>
   struct algmeta_itsteps;
-
-
-
-
-
 
   /**
      @brief part of solvers for MultiTypeBlockVector & MultiTypeBlockMatrix types
@@ -407,7 +399,7 @@ namespace Dune {
     static void dbgs(const TMatrix& A, TVector& x, TVector& v, const TVector& b, const K& w) {
       auto rhs = std::get<crow> (b);
 
-      MultiTypeBlockMatrix_Solver_Col<I,crow,0, A.M()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
+      MultiTypeBlockMatrix_Solver_Col<I,crow,0, TMatrix::M()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
       algmeta_itsteps<I-1>::dbgs(std::get<crow>( std::get<crow>(A)), std::get<crow>(x),rhs,w);
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::dbgs(A,x,v,b,w); //next row
