@@ -119,11 +119,11 @@ namespace Dune
   template<typename FirstRow, typename... Args>
   class MultiTypeBlockMatrix;
 
-  template<typename... Args, std::size_t blocklevel, std::size_t l>
-  struct CheckIfDiagonalPresent<MultiTypeBlockMatrix<Args...>,
+  template<std::size_t blocklevel, std::size_t l, typename T1, typename... Args>
+  struct CheckIfDiagonalPresent<MultiTypeBlockMatrix<T1,Args...>,
       blocklevel,l>
   {
-    typedef MultiTypeBlockMatrix<Args...> Matrix;
+    typedef MultiTypeBlockMatrix<T1,Args...> Matrix;
 
     /**
      * @brief Check whether the a matrix has diagonal values
