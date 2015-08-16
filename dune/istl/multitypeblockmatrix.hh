@@ -401,7 +401,13 @@ namespace Dune {
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, TMatrix::M()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::dbgs(std::get<crow>( std::get<crow>(A)), std::get<crow>(x),rhs,w);
+      using M =
+        typename std::remove_cv<
+          typename std::remove_reference<
+            decltype(std::get<crow>( std::get<crow>(A)))
+          >::type
+        >::type;
+      algmeta_itsteps<I-1,M>::dbgs(std::get<crow>( std::get<crow>(A)), std::get<crow>(x),rhs,w);
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::dbgs(A,x,v,b,w); //next row
     }
 
@@ -423,7 +429,13 @@ namespace Dune {
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0,TMatrix::M()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::bsorf(std::get<crow>( std::get<crow>(A)), std::get<crow>(v),rhs,w);
+      using M =
+        typename std::remove_cv<
+          typename std::remove_reference<
+            decltype(std::get<crow>( std::get<crow>(A)))
+          >::type
+        >::type;
+      algmeta_itsteps<I-1,M>::bsorf(std::get<crow>( std::get<crow>(A)), std::get<crow>(v),rhs,w);
       std::get<crow>(x).axpy(w,std::get<crow>(v));
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::bsorf(A,x,v,b,w);        //next row
     }
@@ -444,7 +456,13 @@ namespace Dune {
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, TMatrix::M()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::bsorb(std::get<crow>( std::get<crow>(A)), std::get<crow>(v),rhs,w);
+      using M =
+        typename std::remove_cv<
+          typename std::remove_reference<
+            decltype(std::get<crow>( std::get<crow>(A)))
+          >::type
+        >::type;
+      algmeta_itsteps<I-1,M>::bsorb(std::get<crow>( std::get<crow>(A)), std::get<crow>(v),rhs,w);
       std::get<crow>(x).axpy(w,std::get<crow>(v));
       MultiTypeBlockMatrix_Solver<I,crow-1,remain_row-1>::bsorb(A,x,v,b,w);        //next row
     }
@@ -466,7 +484,13 @@ namespace Dune {
 
       MultiTypeBlockMatrix_Solver_Col<I,crow,0, TMatrix::M()>::calc_rhs(A,x,v,rhs,w);  // calculate right side of equation
       //solve on blocklevel I-1
-      algmeta_itsteps<I-1>::dbjac(std::get<crow>( std::get<crow>(A)), std::get<crow>(v),rhs,w);
+      using M =
+        typename std::remove_cv<
+          typename std::remove_reference<
+            decltype(std::get<crow>( std::get<crow>(A)))
+          >::type
+        >::type;
+      algmeta_itsteps<I-1,M>::dbjac(std::get<crow>( std::get<crow>(A)), std::get<crow>(v),rhs,w);
       MultiTypeBlockMatrix_Solver<I,crow+1,remain_row-1>::dbjac(A,x,v,b,w);        //next row
     }
 
