@@ -613,9 +613,7 @@ int main (int /*argc*/, char ** /*argv*/)
     test_IO();
     test_Iter();
     test_Interface();
-#ifdef HAVE_BOOST_FUSION
     test_MultiTypeBlockVector_MultiTypeBlockMatrix();
-#endif
   }
   catch (Dune::ISTLError& error)
   {
