@@ -265,8 +265,13 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void mv (const X& x, Y& y) const {
-      static_assert(x.size() == M(), "length of x does not match row length");
-      static_assert(y.size() == N(), "length of y does not match row count");
+#if HAVE_CONSTEXPR
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+#else
+      assert(x.size() == M() && "length of x does not match row length");
+      assert(y.size() == N() && "length of y does not match row count");
+#endif
 
       y = 0;                                                                  //reset y (for mv uses umv)
       MultiTypeBlockMatrix_VectMul<0,N(),0,M(),Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
@@ -276,8 +281,13 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void umv (const X& x, Y& y) const {
-      static_assert(x.size() == M(), "length of x does not match row length");
-      static_assert(y.size() == N(), "length of y does not match row count");
+#if HAVE_CONSTEXPR
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+#else
+      assert(x.size() == M() && "length of x does not match row length");
+      assert(y.size() == N() && "length of y does not match row count");
+#endif
 
       MultiTypeBlockMatrix_VectMul<0,N(),0,M(),Y,type,X>::umv(y, *this, x);    //iterate over all matrix elements
     }
@@ -286,8 +296,13 @@ namespace Dune {
      */
     template<typename X, typename Y>
     void mmv (const X& x, Y& y) const {
-      static_assert(x.size() == M(), "length of x does not match row length");
-      static_assert(y.size() == N(), "length of y does not match row count");
+#if HAVE_CONSTEXPR
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+#else
+      assert(x.size() == M() && "length of x does not match row length");
+      assert(y.size() == N() && "length of y does not match row count");
+#endif
 
       MultiTypeBlockMatrix_VectMul<0,N(),0,M(),Y,type,X>::mmv(y, *this, x);    //iterate over all matrix elements
     }
@@ -296,8 +311,13 @@ namespace Dune {
      */
     template<typename AlphaType, typename X, typename Y>
     void usmv (const AlphaType& alpha, const X& x, Y& y) const {
-      static_assert(x.size() == M(), "length of x does not match row length");
-      static_assert(y.size() == N(), "length of y does not match row count");
+#if HAVE_CONSTEXPR
+      static_assert(X::size() == M(), "length of x does not match row length");
+      static_assert(Y::size() == N(), "length of y does not match row count");
+#else
+      assert(x.size() == M() && "length of x does not match row length");
+      assert(y.size() == N() && "length of y does not match row count");
+#endif
 
       MultiTypeBlockMatrix_VectMul<0,N(),0,M(),Y,type,X>::usmv(alpha,y, *this, x);     //iterate over all matrix elements
 
