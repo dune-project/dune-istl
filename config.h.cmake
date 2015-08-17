@@ -37,6 +37,9 @@
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 
+/* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
+#cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
+
 /* define to 1 because older versions of SuperLU are no longer supported*/
 #define SUPERLU_POST_2005_VERSION 1
 
