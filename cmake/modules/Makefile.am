@@ -1,5 +1,8 @@
-MODULES = AddSuperLUFlags.cmake \
+MODULES = AddARPACKPPFlags.cmake \
+ AddSuperLUFlags.cmake \
  DuneIstlMacros.cmake \
+ FindARPACK.cmake \
+ FindARPACKPP.cmake \
  FindSuperLU.cmake
 
 modulesdir= $(datadir)/dune/cmake/modules
