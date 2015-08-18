@@ -181,15 +181,35 @@ int main(int argc, char** argv) try
 
   // Set up a variety of solvers, just to make sure they compile
   MatrixAdapter<CM_BCRS,TestVector,TestVector> op(A);             // make linear operator from A
-  SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
-  SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
   SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SOR preconditioner
   SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
+
+  // Solve system using a Gauss-Seidel method
+  SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
   LoopSolver<TestVector> loop(op,gs,1E-4,18000,2);           // an inverse operator
   InverseOperatorResult r;
 
-  // Solve linear system
   loop.apply(x,b,r);
+
+  // Solve system using a CG method with a Jacobi preconditioner
+  SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
+  CGSolver<TestVector> cgSolver(op,jac,1E-4,18000,2);           // an inverse operator
+
+  cgSolver.apply(x,b,r);
+
+  // Solve system using a GMRes solver without preconditioner at all
+  // Fancy (but only) way to not have a preconditioner at all
+  Richardson<TestVector,TestVector> richardson(1.0);
+
+  // Preconditioned conjugate-gradient solver
+  RestartedGMResSolver<TestVector> gmres(op,
+                                         richardson,
+                                         1e-4,  // desired residual reduction factor
+                                         5,     // number of iterations between restarts
+                                         100,   // maximum number of iterations
+                                         2);    // verbosity of the solver
+
+  gmres.apply(x, b, r);
 
   printvector(std::cout,x[_0],"solution x1","entry",11,9,1);
   printvector(std::cout,x[_1],"solution x2","entry",11,9,1);
