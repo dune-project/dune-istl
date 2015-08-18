@@ -49,10 +49,7 @@ int main(int argc, char** argv) try
   multiMatrix[_1][_1].setSize(2,2);
 
   // lazy solution: initialize the entire matrix with zeros
-  multiMatrix[_0][_0] = 0;
-  multiMatrix[_0][_1] = 0;
-  multiMatrix[_1][_0] = 0;
-  multiMatrix[_1][_1] = 0;
+  multiMatrix = 0;
 
   printmatrix(std::cout, multiMatrix[_0][_0], "(0,0)", "--");
   printmatrix(std::cout, multiMatrix[_0][_1], "(0,1)", "--");

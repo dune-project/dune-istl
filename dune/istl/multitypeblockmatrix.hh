@@ -96,7 +96,7 @@ namespace Dune {
      * note: uses MultiTypeBlockVector_Ident to equalize each row (which is of MultiTypeBlockVector type)
      */
     static void equalize(T1& a, const T2& b) {
-      MultiTypeBlockVector_Ident<std::get<rowcount-1>(a).size(),T1,T2>::equalize(a,b);              //rows are cvectors
+      MultiTypeBlockVector_Ident<T1::M(),T1,T2>::equalize(a,b);              //rows are cvectors
       MultiTypeBlockMatrix_Ident<rowcount-1,T1,T2>::equalize(a,b);         //iterate over rows
     }
   };
