@@ -98,6 +98,15 @@ find_path(ARPACKPP_INCLUDE_DIR
   PATH_SUFFIXES "include" "include/arpack++"
 )
 
+# The arpack++ package in Debian also includes a shared library that we have
+# to link to. Other versions of arpack++ are header-only.
+# Thus we will later use the arpack++ shared library if found and just ignore
+# it if it was not found.
+find_library(ARPACKPP_LIBRARY
+  NAMES "arpack++"
+  PATH_SUFFIXES "lib" "lib32" "lib64"
+)
+
 # check header usability
 include(CMakePushCheckState)
 cmake_push_check_state()
@@ -109,7 +118,14 @@ cmake_push_check_state()
 # correctly in the CMake files."
 if(ARPACKPP_INCLUDE_DIR)
   set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${ARPACKPP_INCLUDE_DIR})
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${ARPACK_LIBRARIES}) #${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${UMFPACK_LIBRARIES} ${SUPERLU_LIBRARIES}
+  if(ARPACKPP_LIBRARY)
+    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES}
+                                 ${ARPACK_LIBRARIES}
+                                 ${ARPACKPP_LIBRARY})
+  else(ARPACKPP_LIBRARY)
+    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES}
+                                 ${ARPACK_LIBRARIES})
+  endif(ARPACKPP_LIBRARY)
 endif(ARPACKPP_INCLUDE_DIR)
 
 # end of header usability check
@@ -129,7 +145,11 @@ mark_as_advanced(ARPACKPP_INCLUDE_DIR)
 # if headers are found, store results
 if(ARPACKPP_FOUND)
   set(ARPACKPP_INCLUDE_DIRS ${ARPACKPP_INCLUDE_DIR})
-  set(ARPACKPP_LIBRARIES ${ARPACK_LIBRARIES}) #${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${UMFPACK_LIBRARIES} ${SUPERLU_LIBRARIES}
+  if(ARPACKPP_LIBRARY)
+    set(ARPACKPP_LIBRARIES ${ARPACKPP_LIBRARY} ${ARPACK_LIBRARIES})
+  else(ARPACKPP_LIBRARY)
+    set(ARPACKPP_LIBRARIES ${ARPACK_LIBRARIES})
+  endif(ARPACKPP_LIBRARY)
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determing location of ARPACK++ succeded:\n"
