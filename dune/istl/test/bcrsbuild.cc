@@ -80,7 +80,7 @@ struct Builder<Dune::BCRSMatrix<B,A> >
        }*/
   }
 
-  void rowWiseBuild(Dune::BCRSMatrix<B,A>& matrix, int rows, int cols)
+  void rowWiseBuild(Dune::BCRSMatrix<B,A>& matrix, int /* rows */, int cols)
   {
 
     for(typename Dune::BCRSMatrix<B,A>::CreateIterator ci=matrix.createbegin(), cend=matrix.createend();

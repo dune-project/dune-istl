@@ -24,7 +24,7 @@ public:
   int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm *comm, int *err_code, ...){
+void MPI_err_handler(MPI_Comm *, int *err_code, ...){
   char *err_string=new char[MPI_MAX_ERROR_STRING];
   int err_length;
   MPI_Error_string(*err_code, err_string, &err_length);

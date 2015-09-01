@@ -97,7 +97,7 @@ namespace Dune
 
     // Store the global index information for repairing the remote index information
     std::map<int,SLList<std::pair<T1,Attribute> > > globalIndices;
-    storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices(), indexSet);
+    storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices());
     indexSet.beginResize();
 
     for(VertexIterator vertex = graph.begin(), vend=graph.end(); vertex != vend; ++vertex) {
@@ -679,7 +679,7 @@ namespace Dune
     struct EdgeFunctor
       : public BaseEdgeFunctor
     {
-      EdgeFunctor(idxtype* adj, const ParmetisDuneIndexMap& data, std::size_t s)
+      EdgeFunctor(int* adj, const ParmetisDuneIndexMap& data, std::size_t)
         : BaseEdgeFunctor(adj, data)
       {}
 

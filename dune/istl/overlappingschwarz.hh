@@ -1125,6 +1125,7 @@ namespace Dune
                         const SubDomains& subDomains,
                         bool onTheFly)
   {
+    DUNE_UNUSED_PARAMETER(onTheFly);
     DUNE_UNUSED_PARAMETER(rowToDomain);
     DUNE_UNUSED_PARAMETER(mat);
     DUNE_UNUSED_PARAMETER(solvers);

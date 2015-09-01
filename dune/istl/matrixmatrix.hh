@@ -157,7 +157,7 @@ namespace Dune
       {}
 
       template<class T1, class T2>
-      void operator()(const T1& t1, const T2& t2, size_type j)
+      void operator()(const T1&, const T2&, size_type j)
       {
         rowiter.insert(j);
       }
@@ -183,11 +183,11 @@ namespace Dune
       typedef typename Matrix::CreateIterator CreateIterator;
       typedef typename Matrix::size_type size_type;
 
-      MatrixInitializer(Matrix& A_, size_type rows)
+      MatrixInitializer(Matrix& A_, size_type)
         : count(0), A(A_)
       {}
       template<class T1, class T2>
-      void operator()(const T1& t1, const T2& t2, int j)
+      void operator()(const T1&, const T2&, int)
       {
         ++count;
       }
@@ -230,7 +230,7 @@ namespace Dune
       {}
 
       template<class T1, class T2>
-      void operator()(const T1& t1, const T2& t2, size_type i, size_type j)
+      void operator()(const T1&, const T2&, size_type i, size_type j)
       {
         entries[i].insert(j);
       }
@@ -247,8 +247,8 @@ namespace Dune
         return nnz;
       }
       template<class A1, class A2, int n2, int m2, int n3, int m3>
-      void initPattern(const BCRSMatrix<FieldMatrix<T,n2,m2>,A1>& mat1,
-                       const BCRSMatrix<FieldMatrix<T,n3,m3>,A2>& mat2)
+      void initPattern(const BCRSMatrix<FieldMatrix<T,n2,m2>,A1>&,
+                       const BCRSMatrix<FieldMatrix<T,n3,m3>,A2>&)
       {
         typedef typename std::vector<std::set<size_t> >::const_iterator Iter;
         CreateIterator citer = A.createbegin();
@@ -420,6 +420,7 @@ namespace Dune
       template<class T1, class T2>
       void operator()(const T1& t1, const T2& t2, size_type i)
       {
+        DUNE_UNUSED_PARAMETER(i);
         assert(this->col.index()==i);
         addMatMultTransposeMat(*this->col,t1,t2);
       }
@@ -556,6 +557,7 @@ namespace Dune
   void matMultTransposeMat(BCRSMatrix<FieldMatrix<T,n,k>,A>& res, const BCRSMatrix<FieldMatrix<T,n,m>,A1>& mat,
                            const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, bool tryHard=false)
   {
+    DUNE_UNUSED_PARAMETER(tryHard);
     matMultMat<2>(res,mat, matt);
   }
 
@@ -586,6 +588,7 @@ namespace Dune
   void transposeMatMultMat(BCRSMatrix<FieldMatrix<T,n,m>,A>& res, const BCRSMatrix<FieldMatrix<T,k,n>,A1>& mat,
                            const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, bool tryHard=false)
   {
+    DUNE_UNUSED_PARAMETER(tryHard);
     matMultMat<1>(res,mat, matt);
   }
 

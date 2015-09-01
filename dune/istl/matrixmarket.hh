@@ -212,7 +212,7 @@ namespace Dune
     {
       typedef BlockVector<FieldVector<T,i>,A> M;
 
-      static void print(std::ostream& os, const M& m)
+      static void print(std::ostream& os, const M&)
       {
         os<<"% ISTL_STRUCT blocked ";
         os<<i<<" "<<1<<std::endl;
@@ -224,7 +224,7 @@ namespace Dune
     {
       typedef BCRSMatrix<FieldMatrix<T,i,j>,A> M;
 
-      static void print(std::ostream& os, const M& m)
+      static void print(std::ostream& os, const M&)
       {
         os<<"% ISTL_STRUCT blocked ";
         os<<i<<" "<<j<<std::endl;

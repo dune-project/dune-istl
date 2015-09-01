@@ -105,7 +105,7 @@ namespace Dune {
   template<typename T1, typename T2>
   class MultiTypeBlockMatrix_Ident<0,T1,T2> {
   public:
-    static void equalize (T1& a, const T2& b)
+    static void equalize (T1&, const T2&)
     {}
   };
 
@@ -369,7 +369,7 @@ namespace Dune {
   class MultiTypeBlockMatrix_Solver_Col<I,crow,ccol,0> {
   public:
     template <typename Trhs, typename TVector, typename TMatrix, typename K>
-    static void calc_rhs(const TMatrix& A, TVector& x, TVector& v, Trhs& b, const K& w) {}
+    static void calc_rhs(const TMatrix&, TVector&, TVector&, Trhs&, const K&) {}
   };
 
 
@@ -502,20 +502,20 @@ namespace Dune {
   class MultiTypeBlockMatrix_Solver<I,crow,0> {
   public:
     template <typename TVector, typename TMatrix, typename K>
-    static void dbgs(const TMatrix& A, TVector& x, TVector& v,
-                     const TVector& b, const K& w) {}
+    static void dbgs(const TMatrix&, TVector&, TVector&,
+                     const TVector&, const K&) {}
 
     template <typename TVector, typename TMatrix, typename K>
-    static void bsorf(const TMatrix& A, TVector& x, TVector& v,
-                      const TVector& b, const K& w) {}
+    static void bsorf(const TMatrix&, TVector&, TVector&,
+                      const TVector&, const K&) {}
 
     template <typename TVector, typename TMatrix, typename K>
-    static void bsorb(const TMatrix& A, TVector& x, TVector& v,
-                      const TVector& b, const K& w) {}
+    static void bsorb(const TMatrix&, TVector&, TVector&,
+                      const TVector&, const K&) {}
 
     template <typename TVector, typename TMatrix, typename K>
-    static void dbjac(const TMatrix& A, TVector& x, TVector& v,
-                      const TVector& b, const K& w) {}
+    static void dbjac(const TMatrix&, TVector&, TVector&,
+                      const TVector&, const K&) {}
   };
 
 } // end namespace
