@@ -192,11 +192,11 @@ namespace Dune {
   class MultiTypeBlockMatrix_VectMul<crow,0,ccol,remain_cols,TVecY,TMatrix,TVecX> {
     //end recursion
   public:
-    static void umv(TVecY& y, const TMatrix& A, const TVecX& x) {}
-    static void mmv(TVecY& y, const TMatrix& A, const TVecX& x) {}
+    static void umv(TVecY&, const TMatrix&, const TVecX&) {}
+    static void mmv(TVecY&, const TMatrix&, const TVecX&) {}
 
     template<typename AlphaType>
-    static void usmv(const AlphaType& alpha, TVecY& y, const TMatrix& A, const TVecX& x) {}
+    static void usmv(const AlphaType&, TVecY&, const TMatrix&, const TVecX&) {}
   };
 
 
