@@ -148,8 +148,8 @@ namespace Dune
     template <bool is_direct_solver, typename Dummy = void>
     struct Implementation
     {
-      static void setMatrix (ISTLLinearSolver& solver,
-                             const BCRSMatrix& matrix)
+      static void setMatrix (ISTLLinearSolver&,
+                             const BCRSMatrix&)
       {}
     };
 

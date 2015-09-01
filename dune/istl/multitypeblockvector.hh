@@ -60,7 +60,7 @@ namespace Dune {
   template<int current_element, typename TVec>            //recursion end (remaining_elements=0)
   class MultiTypeBlockVector_Print<current_element,0,TVec> {
   public:
-    static void print(const TVec& v) {std::cout << "\n";}
+    static void print(const TVec&) {std::cout << "\n";}
   };
 
 
@@ -90,7 +90,7 @@ namespace Dune {
     }
   };
   template<typename T1, typename T2>                      //recursion end (count=0)
-  class MultiTypeBlockVector_Ident<0,T1,T2> {public: static void equalize (T1& a, const T2& b) {} };
+  class MultiTypeBlockVector_Ident<0,T1,T2> {public: static void equalize (T1&, const T2&) {} };
 
 
 
@@ -123,7 +123,7 @@ namespace Dune {
     }
   };
   template<typename T>                                    //recursion end; specialization for count=0
-  class MultiTypeBlockVector_Add<0,T> {public: static void add (T& a, const T& b) {} static void sub (T& a, const T& b) {} };
+  class MultiTypeBlockVector_Add<0,T> {public: static void add (T&, const T&) {} static void sub (T&, const T&) {} };
 
 
 
@@ -145,7 +145,7 @@ namespace Dune {
     }
   };
   template<typename TVec, typename Ta>                    //specialization for count=0
-  class MultiTypeBlockVector_AXPY<0,TVec,Ta> {public: static void axpy (TVec& x, const Ta& a, const TVec& y) {} };
+  class MultiTypeBlockVector_AXPY<0,TVec,Ta> {public: static void axpy (TVec&, const Ta&, const TVec&) {} };
 
 
   /** @brief In-place multiplication with a scalar
@@ -165,7 +165,7 @@ namespace Dune {
     }
   };
   template<typename TVec, typename Ta>                    //specialization for count=0
-  class MultiTypeBlockVector_Mulscal<0,TVec,Ta> {public: static void mul (TVec& x, const Ta& a) {} };
+  class MultiTypeBlockVector_Mulscal<0,TVec,Ta> {public: static void mul (TVec&, const Ta&) {} };
 
 
 
@@ -193,8 +193,8 @@ namespace Dune {
   template<typename TVec>
   class MultiTypeBlockVector_Mul<0,TVec> {
   public:
-    static typename TVec::field_type mul(const TVec& x, const TVec& y) {return 0;}
-    static typename TVec::field_type dot(const TVec& x, const TVec& y) {return 0;}
+    static typename TVec::field_type mul(const TVec&, const TVec&) {return 0;}
+    static typename TVec::field_type dot(const TVec&, const TVec&) {return 0;}
   };
 
 
@@ -225,7 +225,7 @@ namespace Dune {
   public:
     typedef typename T::field_type field_type;
     typedef typename FieldTraits<field_type>::real_type real_type;
-    static real_type result (const T& a) {return 0.0;}
+    static real_type result (const T&) {return 0.0;}
   };
 
   /**
