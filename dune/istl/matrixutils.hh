@@ -131,7 +131,7 @@ namespace Dune
      * @brief Check whether the a matrix has diagonal values
      * on blocklevel recursion levels.
      */
-    static void check(const Matrix& mat)
+    static void check(const Matrix& /* mat */)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       // TODO Implement check

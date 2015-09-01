@@ -223,7 +223,7 @@ namespace Dune
 
     template<class M, class N>
     template<class G>
-    inline void SymmetricMatrixDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
+    inline void SymmetricMatrixDependency<M,N>::examine(G&, const typename G::EdgeIterator& edge, const ColIter&)
     {
       if(*valIter_ > alpha() * maxValue_) {
         edge.properties().setDepends();

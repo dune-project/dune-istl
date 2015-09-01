@@ -113,7 +113,7 @@ namespace Dune
 
     }
 
-    static void destroy(SuperMatrix *m)
+    static void destroy(SuperMatrix*)
     {}
 
   };
@@ -194,7 +194,7 @@ namespace Dune
 
     }
 
-    static void destroy(SuperMatrix *mat)
+    static void destroy(SuperMatrix*)
     {}
   };
 
@@ -234,7 +234,7 @@ namespace Dune
 
     }
 
-    static void destroy(SuperMatrix *mat)
+    static void destroy(SuperMatrix* /* mat */)
     {}
   };
 
