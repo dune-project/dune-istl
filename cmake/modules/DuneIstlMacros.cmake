@@ -1,5 +1,3 @@
-include(DuneBoost)
-find_package(BoostFusion)
 find_package(METIS)
 find_package(ParMETIS)
 include(AddParMETISFlags)
