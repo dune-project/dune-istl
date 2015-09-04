@@ -679,7 +679,7 @@ namespace Dune
     struct EdgeFunctor
       : public BaseEdgeFunctor
     {
-      EdgeFunctor(int* adj, const ParmetisDuneIndexMap& data, std::size_t)
+      EdgeFunctor(idxtype* adj, const ParmetisDuneIndexMap& data, std::size_t)
         : BaseEdgeFunctor(adj, data)
       {}
 
