@@ -498,7 +498,7 @@ void testGraph ()
 }
 
 
-void testAggregate(double eps)
+void testAggregate()
 {
 
   typedef Dune::FieldMatrix<double,1,1> ScalarDouble;
