@@ -243,6 +243,30 @@ namespace Dune {
       return std::get<index>(*this);
     }
 
+    /** \brief Random-access operator
+     *
+     * This method mimicks the behavior of normal vector access with square brackets like, e.g., m[5] = ....
+     * The problem is that the return type is different for each value of the argument in the brackets.
+     * Therefore we implement a trick using std::integral_constant.  To access the first row of
+     * a MultiTypeBlockMatrix named m write
+     * \code
+     *  std::integral_constant<std::size_t,0> _0;
+     *  m[_0] = ...
+     * \endcode
+     * The name '_0' used here as a static replacement of the integer number zero is arbitrary.
+     * Any other variable name can be used.  If you don't like the separate variable, you can writee
+     * \code
+     *  m[std::integral_constant<std::size_t,0>()] = ...
+     * \endcode
+     */
+    template< std::size_t index >
+    auto
+    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) -> decltype(std::get<index>(*this))
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return std::get<index>(*this);
+    }
+
    /** \brief Const random-access operator
      *
      * This is the const version of the random-access operator.  See the non-const version for a full
@@ -255,6 +279,20 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
     }
+
+   /** \brief Const random-access operator
+     *
+     * This is the const version of the random-access operator.  See the non-const version for a full
+     * explanation of how to use it.
+     */
+    template< std::size_t index >
+    auto
+    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) const -> decltype(std::get<index>(*this))
+    {
+      DUNE_UNUSED_PARAMETER(indexVariable);
+      return std::get<index>(*this);
+    }
+
     /**
      * assignment operator
      */
