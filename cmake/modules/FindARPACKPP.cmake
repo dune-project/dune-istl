@@ -137,7 +137,6 @@ set(HAVE_ARPACKPP ${ARPACKPP_FOUND})
 
 # register all ARPACK++ related flags
 if(ARPACKPP_FOUND)
-  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_ARPACKPP=1"
-                              LIBRARIES "${ARPACKPP_LIBRARIES}"
+  dune_register_package_flags(LIBRARIES "${ARPACKPP_LIBRARIES}"
                               INCLUDE_DIRS "${ARPACKPP_INCLUDE_DIRS}")
 endif(ARPACKPP_FOUND)
