@@ -231,9 +231,8 @@ namespace Dune
 
     /**
      * @brief Initialize data from a given set of matrix rows and columns
-     * @tparam The type of the row index set.
      * @param mat the matrix with the values
-     * @param mrs The set of row (and column) indices to represent
+     * @param mrs The set of row (and column) indices to remove
      */
     virtual void setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs);
     /** @brief free allocated space. */
