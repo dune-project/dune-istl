@@ -1195,7 +1195,7 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, Y& b, real_type reduction, InverseOperatorResult& res)
+    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
       const real_type EPSILON = 1e-80;
       const int m = _restart;
