@@ -1,13 +1,28 @@
+# .. cmake_module::
 #
-# Module that checks whether ARPACK++ is available and usable.
+#    Module that checks whether ARPACK++ is available and usable.
 #
-# Variables used by this module which you may want to set:
-# ARPACKPP_ROOT           Path list to search for ARPACK++.
+#    Variables used by this module which you may want to set:
 #
-# Sets the following variables:
-# ARPACKPP_FOUND          True if ARPACK++ available.
-# ARPACKPP_INCLUDE_DIRS   Path to the ARPACK++ include directories.
-# ARPACKPP_LIBRARIES      Link against these libraries to use ARPACK++.
+#    :ref:`ARPACKPP_ROOT`
+#       Path list to search for ARPACK++.
+#
+#    Sets the following variables:
+#
+#    :code:`ARPACKPP_FOUND`
+#       True if ARPACK++ available.
+#
+#    :code:`ARPACKPP_INCLUDE_DIRS`
+#       Path to the ARPACK++ include directories.
+#
+#    :code:`ARPACKPP_LIBRARIES`
+#       Link against these libraries to use ARPACK++.
+#
+# .. cmake_variable:: ARPACKPP_ROOT
+#
+#    You may set this variable to have :ref:`FindARPACKPP` look
+#    for the ARPACKPP package in the given path before inspecting
+#    system paths.
 #
 
 # find ARPACK which is required by ARPACK++

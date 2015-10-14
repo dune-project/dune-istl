@@ -1,12 +1,15 @@
+# Defines the functions to use SuperLU
 #
-# Module providing convenience methods for compile binaries with SuperLU support.
+# .. cmake_function:: add_dune_superlu_flags
 #
-# Provides the following functions:
+#    .. cmake_param:: targets
+#       :positional:
+#       :single:
+#       :required:
 #
-# add_dune_superlu_flags(target1 target2 ...)
+#       A list of targets to use SuperLU with.
 #
-# adds SuperLU flags to the targets for compilation and linking
-#
+
 function(add_dune_superlu_flags)
   if(SUPERLU_FOUND)
     cmake_parse_arguments(_add_superlu "OBJECT" "" "" ${ARGN})

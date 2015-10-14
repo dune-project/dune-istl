@@ -1,18 +1,35 @@
-
+# .. cmake_module::
 #
-# Module that checks whether SuperLU is available and usable.
-# SuperLU must be a version released after the year 2005.
+#    Module that checks whether SuperLU is available and usable.
+#    SuperLU must be a version released after the year 2005.
 #
-# Variables used by this module which you may want to set:
-# SUPERLU_ROOT         Path list to search for SuperLU
+#    Variables used by this module which you may want to set:
 #
-# Sets the follwing variable:
+#    :ref:`SUPERLU_ROOT`
+#       Path list to search for SuperLU
 #
-# SUPERLU_FOUND           True if SuperLU available and usable.
-# SUPERLU_MIN_VERSION_4_3 True if SuperLU version >= 4.3.
-# SUPERLU_WITH_VERSION    Human readable string containing version information.
-# SUPERLU_INCLUDE_DIRS    Path to the SuperLU include dirs.
-# SUPERLU_LIBRARIES       Name to the SuperLU library.
+#    Sets the follwing variables:
+#
+#    :code:`SUPERLU_FOUND`
+#       True if SuperLU available and usable.
+#
+#    :code:`SUPERLU_MIN_VERSION_4_3`
+#       True if SuperLU version >= 4.3.
+#
+#    :code:`SUPERLU_WITH_VERSION`
+#       Human readable string containing version information.
+#
+#    :code:`SUPERLU_INCLUDE_DIRS`
+#       Path to the SuperLU include dirs.
+#
+#    :code:`SUPERLU_LIBRARIES`
+#       Name to the SuperLU library.
+#
+# .. cmake_variable:: SUPERLU_ROOT
+#
+#    You may set this variable to have :ref:`FindSuperLU` look
+#    for the SuperLU package in the given path before inspecting
+#    system paths.
 #
 
 # look for BLAS

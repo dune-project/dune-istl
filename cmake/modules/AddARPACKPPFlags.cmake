@@ -1,12 +1,15 @@
+# Defines the functions to use ARPACKPP
 #
-# Module providing convenience methods for compile binaries with ARPACK++ support.
+# .. cmake_function:: add_dune_arpackpp_flags
 #
-# Provides the following functions:
+#    .. cmake_param:: targets
+#       :positional:
+#       :single:
+#       :required:
 #
-# add_dune_arpackpp_flags(target1 target2 ...)
+#       A list of targets to use ARPACKPP with.
 #
-# adds ARPACK++ flags to the targets for compilation and linking
-#
+
 function(add_dune_arpackpp_flags _targets)
   if(ARPACKPP_FOUND)
     foreach(_target ${_targets})

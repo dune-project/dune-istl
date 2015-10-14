@@ -1,12 +1,25 @@
+# .. cmake_module::
 #
-# Module that checks whether ARPACK is available and usable.
+#    Module that checks whether ARPACK is available and usable.
 #
-# Variables used by this module which you may want to set:
-# ARPACK_ROOT           Path list to search for ARPACK.
+#    Variables used by this module which you may want to set:
 #
-# Sets the following variables:
-# ARPACK_FOUND          True if ARPACK available.
-# ARPACK_LIBRARIES      Link against these libraries to use ARPACK.
+#    :ref:`ARPACK_ROOT`
+#       Path list to search for ARPACK.
+#
+#    Sets the following variables:
+#
+#    :code:`ARPACK_FOUND`
+#       True if ARPACK available.
+#
+#    :code:`ARPACK_LIBRARIES`
+#       Link against these libraries to use ARPACK.
+#
+# .. cmake_variable:: ARPACK_ROOT
+#
+#    You may set this variable to have :ref:`FindARPACK` look
+#    for the ARPACK package in the given path before inspecting
+#    system paths.
 #
 
 # check for Fortran support which is required by ARPACK
