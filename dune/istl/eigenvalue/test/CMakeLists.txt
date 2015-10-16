@@ -1,54 +1,22 @@
-set(NORMALTESTS
-  poweriterationtest
-)
+add_executable(poweriterationtest cond2test.cc)
+target_link_libraries(poweriterationtest dunecommon)
+dune_add_test(TARGET poweriterationtest)
 
 if(SUPERLU_FOUND)
-  set(SUPERLUTESTS
-    poweriterationsuperlutest
-  )
+  add_executable(poweriterationsuperlutest cond2test.cc)
+  add_dune_superlu_flags(poweriterationsuperlutest)
+  dune_add_test(TARGET poweriterationsuperlutest)
+  target_link_libraries(poweriterationsuperlutest dunecommon)
 endif(SUPERLU_FOUND)
 
 if(ARPACKPP_FOUND)
-  set(ARPACKPPTESTS
-    arpackpptest
-  )
+  add_executable(arpackpptest cond2test.cc)
+  add_dune_arpackpp_flags(arpackpptest)
+  target_link_libraries(arpackpptest dunecommon)
+  dune_add_test(TARGET arpackpptest)
 endif(ARPACKPP_FOUND)
 
-if((ARPACKPP_FOUND) AND (SUPERLU_FOUND))
-  set(ARPACKPPSUPERLUTESTS
-    arpackppsuperlutest
-  )
-endif((ARPACKPP_FOUND) AND (SUPERLU_FOUND))
-
-set(ALLTESTS ${NORMALTESTS} ${SUPERLUTESTS} ${ARPACKPPTESTS} ${ARPACKPPSUPERLUTESTS})
-
-
-# We do not want want to build the tests during make all,
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${ALLTESTS})
-
-
-# Provide source files
-add_executable(poweriterationtest "cond2test.cc")
-
-if(SUPERLU_FOUND)
-  add_executable(poweriterationsuperlutest "cond2test.cc")
-  add_dune_superlu_flags("${SUPERLUTESTS}")
-endif(SUPERLU_FOUND)
-
-if(ARPACKPP_FOUND)
-  add_executable(arpackpptest "cond2test.cc")
-  add_dune_arpackpp_flags("${ARPACKPPTESTS}")
-endif(ARPACKPP_FOUND)
-
-if((ARPACKPP_FOUND) AND (SUPERLU_FOUND))
-  add_executable(arpackppsuperlutest "cond2test.cc")
-  add_dune_arpackpp_flags("${ARPACKPPSUPERLUTESTS}")
-  add_dune_superlu_flags("${ARPACKPPSUPERLUTESTS}")
-endif((ARPACKPP_FOUND) AND (SUPERLU_FOUND))
-
-foreach(_exe ${ALLTESTS})
-  target_link_libraries(${_exe} "dunecommon")
-  add_test(${_exe} ${_exe})
-endforeach(_exe ${ALLTESTS})
+if(ARPACKPP_FOUND AND SUPERLU_FOUND)
+  dune_add_test(NAME arpackppsuperlutest
+                SOURCES cond2test.cc)
+endif()
