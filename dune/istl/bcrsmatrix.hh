@@ -20,7 +20,6 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/nullptr.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
