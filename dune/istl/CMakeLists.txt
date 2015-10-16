@@ -1,7 +1,7 @@
 add_subdirectory("eigenvalue")
 add_subdirectory("paamg")
 add_subdirectory("tutorial")
-add_subdirectory("test" EXCLUDE_FROM_ALL)
+add_subdirectory(test)
 
 #install headers
 install(FILES
