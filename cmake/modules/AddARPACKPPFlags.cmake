@@ -18,6 +18,6 @@ function(add_dune_arpackpp_flags _targets)
       string(REPLACE "_props-NOTFOUND" "" _props "${_props}")
       set_target_properties(${_target} PROPERTIES COMPILE_FLAGS
         "${_props} ${ARPACKPP_DUNE_COMPILE_FLAGS} -DENABLE_ARPACKPP=1")
-    endforeach(_target ${_targets})
-  endif(ARPACKPP_FOUND)
+    endforeach()
+  endif()
 endfunction(add_dune_arpackpp_flags)

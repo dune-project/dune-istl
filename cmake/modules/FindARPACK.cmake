@@ -30,7 +30,7 @@ if(NOT(Fortran_Works))
     "Determing location of ARPACK failed:\n"
     "Fortran support is required but could not be detected\n\n")
   return()
-endif(NOT(Fortran_Works))
+endif()
 
 # look for library, only at positions given by the user
 find_library(ARPACK_LIBRARY
@@ -57,7 +57,7 @@ cmake_push_check_state()
 # correctly in the CMake files."
 if(ARPACK_LIBRARY)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${ARPACK_LIBRARY})
-endif(ARPACK_LIBRARY)
+endif()
 
 # end of header usability check
 cmake_pop_check_state()
@@ -82,9 +82,9 @@ if(ARPACK_FOUND)
     "Libraries to link against: ${ARPACK_LIBRARIES}\n\n")
   set(ARPACK_DUNE_LIBRARIES ${ARPACK_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking ARPACK programs")
-else(ARPACK_FOUND)
+else()
   # log errornous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determing location of ARPACK failed:\n"
     "Libraries to link against: ${ARPACK_LIBRARIES}\n\n")
-endif(ARPACK_FOUND)
+endif()

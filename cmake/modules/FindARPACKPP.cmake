@@ -122,11 +122,11 @@ if(ARPACKPP_INCLUDE_DIR)
     set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES}
                                  ${ARPACK_LIBRARIES}
                                  ${ARPACKPP_LIBRARY})
-  else(ARPACKPP_LIBRARY)
+  else()
     set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES}
                                  ${ARPACK_LIBRARIES})
-  endif(ARPACKPP_LIBRARY)
-endif(ARPACKPP_INCLUDE_DIR)
+  endif()
+endif()
 
 # end of header usability check
 cmake_pop_check_state()
@@ -159,13 +159,13 @@ if(ARPACKPP_FOUND)
     CACHE STRING "Compile flags used by DUNE when compiling ARPACK++ programs")
   set(ARPACKPP_DUNE_LIBRARIES ${ARPACKPP_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking ARPACK++ programs")
-else(ARPACKPP_FOUND)
+else()
   # log errornous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determing location of ARPACK++ failed:\n"
     "Include directory: ${ARPACKPP_INCLUDE_DIRS}\n"
     "Libraries to link against: ${ARPACKPP_LIBRARIES}\n\n")
-endif(ARPACKPP_FOUND)
+endif()
 
 # set HAVE_ARPACKPP for config.h
 set(HAVE_ARPACKPP ${ARPACKPP_FOUND})
@@ -175,4 +175,4 @@ if(ARPACKPP_FOUND)
   dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_ARPACKPP=1"
                               LIBRARIES "${ARPACKPP_LIBRARIES}"
                               INCLUDE_DIRS "${ARPACKPP_INCLUDE_DIRS}")
-endif(ARPACKPP_FOUND)
+endif()
