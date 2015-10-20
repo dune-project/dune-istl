@@ -27,62 +27,6 @@
 
 # find ARPACK which is required by ARPACK++
 find_package(ARPACK)
-if(NOT(ARPACK_FOUND))
-  message(WARNING "ARPACK not found, skipping search for ARPACK++.")
-  # log errornous result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-    "Determing location of ARPACK++ failed:\n"
-    "ARPACK is required but could not be found\n\n")
-  return()
-endif(NOT(ARPACK_FOUND))
-
-# # find BLAS which is required by ARPACK++
-# # (not needed for the ARPACK++ classes that we currently use)
-# find_package(BLAS QUIET)
-# if(NOT(BLAS_FOUND))
-#   message(WARNING "BLAS not found, skipping search for ARPACK++.")
-#   # log errornous result
-#   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-#     "Determing location of ARPACK++ failed:\n"
-#     "BLAS is required but could not be found\n\n")
-#   return()
-# endif(NOT(BLAS_FOUND))
-
-# # find LAPACK which is required by ARPACK++
-# # (not needed for the ARPACK++ classes that we currently use)
-# find_package(LAPACK QUIET)
-# if(NOT(LAPACK_FOUND))
-#   message(WARNING "LAPACK not found, skipping search for ARPACK++.")
-#   # log errornous result
-#   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-#     "Determing location of ARPACK++ failed:\n"
-#     "LAPACK is required but could not be found\n\n")
-#   return()
-# endif(NOT(LAPACK_FOUND))
-
-# # find UMFPACK which is required by ARPACK++
-# # (not needed for the ARPACK++ classes that we currently use)
-# find_package(UMFPack QUIET)
-# if(NOT(UMFPACK_FOUND))
-#   message(WARNING "UMFPACK not found, skipping search for ARPACK++.")
-#   # log errornous result
-#   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-#     "Determing location of ARPACK++ failed:\n"
-#     "UMFPACK is required but could not be found\n\n")
-#   return()
-# endif(NOT(UMFPACK_FOUND))
-
-# # find SuperLU which is required by ARPACK++
-# # (not needed for the ARPACK++ classes that we currently use)
-# find_package(SuperLU QUIET)
-# if(NOT(SUPERLU_FOUND))
-#   message(WARNING "SuperLU not found, skipping search for ARPACK++.")
-#   # log errornous result
-#   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-#     "Determing location of ARPACK++ failed:\n"
-#     "SuperLU is required but could not be found\n\n")
-#   return()
-# endif(NOT(SUPERLU_FOUND))
 
 # look for header files, only at positions given by the user
 find_path(ARPACKPP_INCLUDE_DIR
@@ -136,11 +80,12 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   "ARPACKPP"
   DEFAULT_MSG
+  ARPACK_FOUND
   ARPACKPP_INCLUDE_DIR
 )
 
 # hide the introduced cmake cached variables in cmake GUIs
-mark_as_advanced(ARPACKPP_INCLUDE_DIR)
+mark_as_advanced(ARPACKPP_INCLUDE_DIR ARPACKPP_LIBRARY)
 
 # if headers are found, store results
 if(ARPACKPP_FOUND)
