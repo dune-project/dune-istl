@@ -29,9 +29,7 @@ void randomize(const M& mat, V& b)
 template <int BS>
 void testAMG(int N, int coarsenTarget, int ml)
 {
-
   std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<" maxlevel="<<ml<<std::endl;
-
 
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
@@ -110,8 +108,8 @@ void testAMG(int N, int coarsenTarget, int ml)
 
 
 int main(int argc, char** argv)
+try
 {
-
   int N=100;
   int coarsenTarget=1200;
   int ml=10;
@@ -127,5 +125,10 @@ int main(int argc, char** argv)
 
   testAMG<1>(N, coarsenTarget, ml);
   testAMG<2>(N, coarsenTarget, ml);
-
 }
+catch (Dune::Exception &e)
+{
+  std::cerr << "Dune reported error: " << e << std::endl;
+}
+catch (...)
+{}

@@ -35,6 +35,7 @@ typedef std::complex<double> FIELD_TYPE;
 #endif
 
 int main(int argc, char** argv)
+try
 {
   const int BS=1;
   std::size_t N=100;
@@ -80,3 +81,9 @@ int main(int argc, char** argv)
   solver1.apply(x,b, res);
   solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x[0]), reinterpret_cast<FIELD_TYPE*>(&b[0]));
 }
+catch (Dune::Exception &e)
+{
+  std::cerr << "Dune reported error: " << e << std::endl;
+}
+catch (...)
+{}
