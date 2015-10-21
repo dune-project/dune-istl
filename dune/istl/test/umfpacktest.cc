@@ -37,11 +37,13 @@ int main(int argc, char** argv)
 
     BCRSMat mat;
     Operator fop(mat);
-    Vector b(N*N), x(N*N);
+    Vector b(N*N), x(N*N), b1(N/2), x1(N/2);
 
     setupLaplacian(mat,N);
     b=1;
+    b1=1;
     x=0;
+    x1=0;
 
     Dune::Timer watch;
 
@@ -50,6 +52,9 @@ int main(int argc, char** argv)
     Dune::UMFPack<BCRSMat> solver(mat,1);
 
     Dune::InverseOperatorResult res;
+
+    solver.apply(x, b, res);
+    solver.free();
 
     Dune::UMFPack<BCRSMat> solver1;
 
@@ -60,11 +65,8 @@ int main(int argc, char** argv)
     solver1.setSubMatrix(mat,mrs);
     solver1.setVerbosity(true);
 
-    solver.apply(x,b, res);
-    solver.free();
-
-    solver1.apply(x,b, res);
-    solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x[0]), reinterpret_cast<FIELD_TYPE*>(&b[0]));
+    solver1.apply(x1,b1, res);
+    solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x1[0]), reinterpret_cast<FIELD_TYPE*>(&b1[0]));
 
     Dune::UMFPack<BCRSMat> save_solver(mat,"umfpack_decomp",0);
     Dune::UMFPack<BCRSMat> load_solver(mat,"umfpack_decomp",0);
