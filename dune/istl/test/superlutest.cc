@@ -53,11 +53,13 @@ try
 
   BCRSMat mat;
   Operator fop(mat);
-  Vector b(N*N), x(N*N);
+  Vector b(N*N), x(N*N), b1(N/2), x1(N/2);
 
   setupLaplacian(mat,N);
   b=1;
+  b1=1;
   x=0;
+  x1=0;
 
   Dune::Timer watch;
 
@@ -69,17 +71,17 @@ try
 
   Dune::SuperLU<BCRSMat> solver1;
 
+  solver.setVerbosity(true);
+  solver.apply(x,b, res);
+
   std::set<std::size_t> mrs;
   for(std::size_t s=0; s < N/2; ++s)
     mrs.insert(s);
 
   solver1.setSubMatrix(mat,mrs);
-  solver.setVerbosity(true);
-  solver.apply(x,b, res);
 
-  std::cout<<"Defect reduction is "<<res.reduction<<std::endl;
-  solver1.apply(x,b, res);
-  solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x[0]), reinterpret_cast<FIELD_TYPE*>(&b[0]));
+  solver1.apply(x1,b1, res);
+  solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x1[0]), reinterpret_cast<FIELD_TYPE*>(&b1[0]));
 }
 catch (Dune::Exception &e)
 {
