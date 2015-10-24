@@ -125,10 +125,15 @@ try
 
   testAMG<1>(N, coarsenTarget, ml);
   testAMG<2>(N, coarsenTarget, ml);
+
+  return 0;
 }
-catch (Dune::Exception &e)
+catch (std::exception &e)
 {
-  std::cerr << "Dune reported error: " << e << std::endl;
+  throw;
 }
 catch (...)
-{}
+{
+  std::cerr << "Dune reported an unknown error." << std::endl;
+  exit(1);
+}

@@ -560,21 +560,14 @@ int main (int argc , char ** argv)
     testAggregate();
     exit(testEdge());
   }
-  catch (Dune::ISTLError& error)
+  catch(std::exception& e)
   {
-    std::cout << error << std::endl;
-  }
-  catch (Dune::Exception& error)
-  {
-    std::cout << error << std::endl;
-  }
-  catch (const std::bad_alloc& e)
-  {
-    std::cout << "memory exhausted" << std::endl;
+    throw;
   }
   catch (...)
   {
-    std::cout << "unknown exception caught" << std::endl;
+    std::cerr << "unknown exception caught" << std::endl;
+    exit(1);
   }
 
   return 0;

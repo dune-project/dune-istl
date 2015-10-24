@@ -127,8 +127,8 @@ void testAMG(int N, int coarsenTarget, int ml)
 
 
 int main(int argc, char** argv)
+try
 {
-
   int N=100;
   int coarsenTarget=1200;
   int ml=10;
@@ -145,4 +145,14 @@ int main(int argc, char** argv)
   testAMG<1>(N, coarsenTarget, ml);
   testAMG<2>(N, coarsenTarget, ml);
 
+  return 0;
+}
+catch (std::exception &e)
+{
+  throw;
+}
+catch (...)
+{
+  std::cerr << "Dune reported an unknown error." << std::endl;
+  exit(1);
 }
