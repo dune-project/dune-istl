@@ -82,10 +82,15 @@ try
 
   solver1.apply(x1,b1, res);
   solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x1[0]), reinterpret_cast<FIELD_TYPE*>(&b1[0]));
+
+  return 0;
 }
-catch (Dune::Exception &e)
+catch (std::exception &e)
 {
-  std::cerr << "Dune reported error: " << e << std::endl;
+  throw;
 }
 catch (...)
-{}
+{
+  std::cerr << "Dune reported an unknown error." << std::endl;
+  exit(1);
+}
