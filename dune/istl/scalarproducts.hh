@@ -59,6 +59,9 @@ namespace Dune {
      */
     virtual real_type norm (const X& x) = 0;
 
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const = 0;
+
     //! every abstract base class has a virtual destructor
     virtual ~ScalarProduct () {}
   };
@@ -100,9 +103,6 @@ namespace Dune {
     typedef typename X::field_type field_type;
     typedef typename FieldTraits<field_type>::real_type real_type;
 
-    //! define the category
-    enum {category=SolverCategory::sequential};
-
     /*! \brief Dot product of two vectors. In the complex case, the first argument is conjugated.
        It is assumed that the vectors are consistent on the interior+border
        partition.
@@ -119,6 +119,13 @@ namespace Dune {
     {
       return x.two_norm();
     }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   };
 
   template<class X, class C>
