@@ -268,6 +268,7 @@ namespace Dune {
        started at the lowest index in the vector v, if false at
        the highest index of vector v.
      */
+#warning the forward option is not used at all
     template<bool forward>
     void apply(X& v, const Y& d)
     {
