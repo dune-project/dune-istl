@@ -380,11 +380,6 @@ public:
    * @brief The type of the fine level smoother.
    */
   typedef S SmootherType;
-  // define the category
-  enum {
-    //! \brief The category the preconditioner is part of.
-    category=SolverCategory::sequential
-  };
 
   /**
    * @brief Constructs a two level method.
@@ -461,6 +456,12 @@ public:
     // Postsmoothing
     postsmooth(context, postSteps_);
 
+  }
+
+  //! Category of the preconditioner (see SolverCategory::Category)
+  virtual SolverCategory::Category category() const
+  {
+    return SolverCategory::sequential;
   }
 
 private:
