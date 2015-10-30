@@ -7,6 +7,10 @@
 #include <iomanip>
 #include <ostream>
 
+#include "preconditioner.hh"
+#include "operators.hh"
+#include "scalarproducts.hh"
+
 namespace Dune
 {
 /**
@@ -87,6 +91,9 @@ namespace Dune
     /** \brief The field type of the operator. */
     typedef typename X::field_type field_type;
 
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
+
     /**
         \brief Apply inverse operator,
 
@@ -109,6 +116,9 @@ namespace Dune
        \param res Object to store the statistics about applying the operator.
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) = 0;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const = 0;
 
     //! \brief Destructor
     virtual ~InverseOperator () {}
@@ -147,6 +157,109 @@ namespace Dune
       s << std::setw(iterationSpacing)  << iter << " ";
       s << std::setw(normSpacing) << norm << std::endl;
     }
+  };
+
+  template<class X, class Y>
+  class IterativeSolver : public InverseOperator<X,Y>{
+  public:
+    using typename InverseOperator<X,Y>::domain_type;
+    using typename InverseOperator<X,Y>::range_type;
+    using typename InverseOperator<X,Y>::field_type;
+    using typename InverseOperator<X,Y>::real_type;
+
+    /*!
+       \brief General constructor to initialize an iterative solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to apply in each iteration of the loop.
+       Has to inherit from Preconditioner.
+       \param reduction The relative defect reduction to achieve when applying
+       the operator.
+       \param maxit The maximum number of iteration steps allowed when applying
+       the operator.
+       \param verbose The verbosity level.
+
+       Verbose levels are:
+       <ul>
+       <li> 0 : print nothing </li>
+       <li> 1 : print initial and final defect and statistics </li>
+       <li> 2 : print line for each iteration </li>
+       </ul>
+     */
+    IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int maxit, int verbose) :
+      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::sequential)
+    {
+      if(op.category() != SolverCategory::sequential)
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator has to be sequential!");
+      if(op.category() != SolverCategory::sequential)
+        DUNE_THROW(InvalidSolverCategory, "Preconditioner has to be sequential!");
+    }
+
+    /**
+        \brief General constructor to initialize an iterative solver
+
+        \param op The operator we solve.
+        \param sp The scalar product to use, e. g. SeqScalarproduct.
+        \param prec The preconditioner to apply in each iteration of the loop.
+        Has to inherit from Preconditioner.
+        \param reduction The relative defect reduction to achieve when applying
+        the operator.
+        \param maxit The maximum number of iteration steps allowed when applying
+        the operator.
+        \param verbose The verbosity level.
+
+        Verbose levels are:
+        <ul>
+        <li> 0 : print nothing </li>
+        <li> 1 : print initial and final defect and statistics </li>
+        <li> 2 : print line for each iteration </li>
+        </ul>
+     */
+    IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
+      real_type reduction, int maxit, int verbose) :
+      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(_op.category())
+    {
+      if(op.category() != prec.category())
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
+      if(op.category() != sp.category())
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
+    }
+
+#warning actually we want to have this as the default and just implement the second one
+    // //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+    // virtual void apply (X& x, Y& b, InverseOperatorResult& res)
+    // {
+    //   apply(x,b,_reduction,res);
+    // }
+
+    /*!
+       \brief Apply inverse operator with given reduction factor.
+
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    {
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
+      static_cast<InverseOperator<X,Y>*>(this)->apply(x,b,res);
+      _reduction = saved_reduction;
+    }
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _category;
+    }
+
+  protected:
+    SeqScalarProduct<X> ssp;
+    LinearOperator<X,Y>& _op;
+    Preconditioner<X,Y>& _prec;
+    ScalarProduct<X>& _sp;
+    real_type _reduction;
+    int _maxit;
+    int _verbose;
+    SolverCategory::Category _category;
   };
 
 /**

@@ -21,10 +21,12 @@ namespace Dune {
       sequential,
       //! \brief Category for on overlapping solvers.
       nonoverlapping,
-      //! \brief Category for ovelapping solvers.
+      //! \brief Category for overlapping solvers.
       overlapping
     };
   };
+
+  class InvalidSolverCategory : public InvalidStateException{};
 
   /** @} end documentation */
 
