@@ -25,6 +25,7 @@
 #include <dune/common/rangeutilities.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/typetraits.hh>
 
 namespace Dune {
   /** @addtogroup ISTL_Solvers
@@ -38,7 +39,7 @@ namespace Dune {
       This file provides various preconditioned Krylov methods.
    */
 
-  //=====================================================================
+   //=====================================================================
   // Implementation of this interface
   //=====================================================================
 
@@ -51,78 +52,15 @@ namespace Dune {
      step in each iteration loop.
    */
   template<class X>
-  class LoopSolver : public InverseOperator<X,X> {
+  class LoopSolver : public IterativeSolver<X,X> {
   public:
-    //! \brief The domain type of the operator that we do the inverse for.
-    typedef X domain_type;
-    //! \brief The range type of the operator that we do the inverse for.
-    typedef X range_type;
-    //! \brief The field type of the operator that we do the inverse for.
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
-    /*!
-       \brief Set up Loop solver.
-
-       \param op The operator we solve.
-       \param prec The preconditioner to apply in each iteration of the loop.
-       Has to inherit from Preconditioner.
-       \param reduction The relative defect reduction to achieve when applying
-       the operator.
-       \param maxit The maximum number of iteration steps allowed when applying
-       the operator.
-       \param verbose The verbosity level.
-
-       Verbose levels are:
-       <ul>
-       <li> 0 : print nothing </li>
-       <li> 1 : print initial and final defect and statistics </li>
-       <li> 2 : print line for each iteration </li>
-       </ul>
-     */
-    template<class L, class P>
-    LoopSolver (L& op, P& prec,
-                real_type reduction, int maxit, int verbose) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P have to have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
-    }
-
-    /**
-        \brief Set up loop solver
-
-        \param op The operator we solve.
-        \param sp The scalar product to use, e. g. SeqScalarproduct.
-        \param prec The preconditioner to apply in each iteration of the loop.
-        Has to inherit from Preconditioner.
-        \param reduction The relative defect reduction to achieve when applying
-        the operator.
-        \param maxit The maximum number of iteration steps allowed when applying
-        the operator.
-        \param verbose The verbosity level.
-
-        Verbose levels are:
-        <ul>
-        <li> 0 : print nothing </li>
-        <li> 1 : print initial and final defect and statistics </li>
-        <li> 2 : print line for each iteration </li>
-        </ul>
-     */
-    template<class L, class S, class P>
-    LoopSolver (L& op, S& sp, P& prec,
-                real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
-    }
-
+    // copy base class constructors
+    using IterativeSolver<X,X>::IterativeSolver;
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
@@ -202,71 +140,28 @@ namespace Dune {
       }
     }
 
-    //! \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
-    {
-      real_type saved_reduction = _reduction;
-      _reduction = reduction;
-      (*this).apply(x,b,res);
-      _reduction = saved_reduction;
-    }
-
-  private:
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
-    Preconditioner<X,X>& _prec;
-    ScalarProduct<X>& _sp;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
+  protected:
+    using IterativeSolver<X,X>::_op;
+    using IterativeSolver<X,X>::_prec;
+    using IterativeSolver<X,X>::_sp;
+    using IterativeSolver<X,X>::_reduction;
+    using IterativeSolver<X,X>::_maxit;
+    using IterativeSolver<X,X>::_verbose;
   };
 
 
   // all these solvers are taken from the SUMO library
   //! gradient method
   template<class X>
-  class GradientSolver : public InverseOperator<X,X> {
+  class GradientSolver : public IterativeSolver<X,X> {
   public:
-    //! \brief The domain type of the operator that we do the inverse for.
-    typedef X domain_type;
-    //! \brief The range type of the operator  that we do the inverse for.
-    typedef X range_type;
-    //! \brief The field type of the operator  that we do the inverse for.
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
-
-    /*!
-       \brief Set up solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-     */
-    template<class L, class P>
-    GradientSolver (L& op, P& prec,
-                    real_type reduction, int maxit, int verbose) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P have to have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
-    }
-    /*!
-       \brief Set up solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
-     */
-    template<class L, class S, class P>
-    GradientSolver (L& op, S& sp, P& prec,
-                    real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P have to have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S have to have the same category!");
-    }
+    // copy base class constructors
+    using IterativeSolver<X,X>::IterativeSolver;
 
     /*!
        \brief Apply inverse operator.
@@ -336,72 +231,28 @@ namespace Dune {
                   << ", IT=" << i << std::endl;
     }
 
-    /*!
-       \brief Apply inverse operator with given reduction factor.
-
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-     */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
-    {
-      real_type saved_reduction = _reduction;
-      _reduction = reduction;
-      (*this).apply(x,b,res);
-      _reduction = saved_reduction;
-    }
-
-  private:
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
-    Preconditioner<X,X>& _prec;
-    ScalarProduct<X>& _sp;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
+  protected:
+    using IterativeSolver<X,X>::_op;
+    using IterativeSolver<X,X>::_prec;
+    using IterativeSolver<X,X>::_sp;
+    using IterativeSolver<X,X>::_reduction;
+    using IterativeSolver<X,X>::_maxit;
+    using IterativeSolver<X,X>::_verbose;
   };
 
 
 
   //! \brief conjugate gradient method
   template<class X>
-  class CGSolver : public InverseOperator<X,X> {
+  class CGSolver : public IterativeSolver<X,X> {
   public:
-    //! \brief The domain type of the operator to be inverted.
-    typedef X domain_type;
-    //! \brief The range type of the operator to be inverted.
-    typedef X range_type;
-    //! \brief The field type of the operator to be inverted.
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
-    /*!
-       \brief Set up conjugate gradient solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-     */
-    template<class L, class P>
-    CGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
-    }
-    /*!
-       \brief Set up conjugate gradient solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
-     */
-    template<class L, class S, class P>
-    CGSolver (L& op, S& sp, P& prec, real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
-    }
+    // copy base class constructors
+    using IterativeSolver<X,X>::IterativeSolver;
 
     /*!
        \brief Apply inverse operator.
@@ -519,7 +370,7 @@ namespace Dune {
         this->printOutput(std::cout,i,def);
 
       _prec.post(x);                  // postprocess preconditioner
-      res.iterations = i;             // fill statistics
+      res.iterations = i;               // fill statistics
       res.reduction = static_cast<double>(max_value(max_value(def/def0)));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
@@ -533,81 +384,28 @@ namespace Dune {
       }
     }
 
-    /*!
-       \brief Apply inverse operator with given reduction factor.
-
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-
-       \note Currently, the CGSolver aborts when a NaN or infinite defect is
-             detected.  However, -ffinite-math-only (implied by -ffast-math)
-             can inhibit a result from becoming NaN that really should be NaN.
-             E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
-             -ffast-math.
-     */
-    virtual void apply (X& x, X& b, double reduction,
-                        InverseOperatorResult& res)
-    {
-      real_type saved_reduction = _reduction;
-      _reduction = reduction;
-      (*this).apply(x,b,res);
-      _reduction = saved_reduction;
-    }
-
-  private:
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
-    Preconditioner<X,X>& _prec;
-    ScalarProduct<X>& _sp;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
+  protected:
+    using IterativeSolver<X,X>::_op;
+    using IterativeSolver<X,X>::_prec;
+    using IterativeSolver<X,X>::_sp;
+    using IterativeSolver<X,X>::_reduction;
+    using IterativeSolver<X,X>::_maxit;
+    using IterativeSolver<X,X>::_verbose;
   };
 
 
   // Ronald Kriemanns BiCG-STAB implementation from Sumo
   //! \brief Bi-conjugate Gradient Stabilized (BiCG-STAB)
   template<class X>
-  class BiCGSTABSolver : public InverseOperator<X,X> {
+  class BiCGSTABSolver : public IterativeSolver<X,X> {
   public:
-    //! \brief The domain type of the operator to be inverted.
-    typedef X domain_type;
-    //! \brief The range type of the operator to be inverted.
-    typedef X range_type;
-    //! \brief The field type of the operator to be inverted
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
-    /*!
-       \brief Set up solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-     */
-    template<class L, class P>
-    BiCGSTABSolver (L& op, P& prec,
-                    real_type reduction, int maxit, int verbose) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must be of the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
-    }
-    /*!
-       \brief Set up solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
-     */
-    template<class L, class S, class P>
-    BiCGSTABSolver (L& op, S& sp, P& prec,
-                    real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
-    }
+    // copy base class constructors
+    using IterativeSolver<X,X>::IterativeSolver;
 
     /*!
        \brief Apply inverse operator.
@@ -814,29 +612,13 @@ namespace Dune {
                   << ", IT=" << it << std::endl;
     }
 
-    /*!
-       \brief Apply inverse operator with given reduction factor.
-
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-
-       \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
-     */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
-    {
-      real_type saved_reduction = _reduction;
-      _reduction = reduction;
-      (*this).apply(x,b,res);
-      _reduction = saved_reduction;
-    }
-
-  private:
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
-    Preconditioner<X,X>& _prec;
-    ScalarProduct<X>& _sp;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
+  protected:
+    using IterativeSolver<X,X>::_op;
+    using IterativeSolver<X,X>::_prec;
+    using IterativeSolver<X,X>::_sp;
+    using IterativeSolver<X,X>::_reduction;
+    using IterativeSolver<X,X>::_maxit;
+    using IterativeSolver<X,X>::_verbose;
   };
 
   /*! \brief Minimal Residual Method (MINRES)
@@ -846,45 +628,15 @@ namespace Dune {
      Note that in order to ensure the (symmetrically) preconditioned system to remain symmetric, the preconditioner has to be spd.
    */
   template<class X>
-  class MINRESSolver : public InverseOperator<X,X> {
+  class MINRESSolver : public IterativeSolver<X,X> {
   public:
-    //! \brief The domain type of the operator to be inverted.
-    typedef X domain_type;
-    //! \brief The range type of the operator to be inverted.
-    typedef X range_type;
-    //! \brief The field type of the operator to be inverted.
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
-    /*!
-       \brief Set up MINRES solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-     */
-    template<class L, class P>
-    MINRESSolver (L& op, P& prec, real_type reduction, int maxit, int verbose) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
-    }
-    /*!
-       \brief Set up MINRES solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
-     */
-    template<class L, class S, class P>
-    MINRESSolver (L& op, S& sp, P& prec, real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
-    }
+    // copy base class constructors
+    using IterativeSolver<X,X>::IterativeSolver;
 
     /*!
        \brief Apply inverse operator.
@@ -938,9 +690,9 @@ namespace Dune {
       real_type def = def0;
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
-      // diagonal entries of givens rotation
+        // diagonal entries of givens rotation
       std::array<real_type,2> c{{0.0,0.0}};
-      // off-diagonal entries of givens rotation
+        // off-diagonal entries of givens rotation
       std::array<field_type,2> s{{0.0,0.0}};
 
       // recurrence coefficients (column k of tridiag matrix T_k)
@@ -1072,19 +824,6 @@ namespace Dune {
         }
     }
 
-    /*!
-       \brief Apply inverse operator with given reduction factor.
-
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-     */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
-    {
-      real_type saved_reduction = _reduction;
-      _reduction = reduction;
-      (*this).apply(x,b,res);
-      _reduction = saved_reduction;
-    }
-
   private:
 
     // helper function to extract the real value of a real or complex number
@@ -1133,13 +872,13 @@ namespace Dune {
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dy/dx)));
     }
 
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
-    Preconditioner<X,X>& _prec;
-    ScalarProduct<X>& _sp;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
+  protected:
+    using IterativeSolver<X,X>::_op;
+    using IterativeSolver<X,X>::_prec;
+    using IterativeSolver<X,X>::_sp;
+    using IterativeSolver<X,X>::_reduction;
+    using IterativeSolver<X,X>::_maxit;
+    using IterativeSolver<X,X>::_verbose;
   };
 
   /**
@@ -1156,91 +895,35 @@ namespace Dune {
    */
 
   template<class X, class Y=X, class F = Y>
-  class RestartedGMResSolver : public InverseOperator<X,Y>
+  class RestartedGMResSolver : public IterativeSolver<X,Y>
   {
   public:
-    //! \brief The domain type of the operator to be inverted.
-    typedef X domain_type;
-    //! \brief The range type of the operator to be inverted.
-    typedef Y range_type;
-    //! \brief The field type of the operator to be inverted
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    //! \brief The field type of the basis vectors
-    typedef F basis_type;
-
-    template<class L, class P>
-    DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
-    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
-      : _A(op)
-      , _W(prec)
-      , ssp()
-      , _sp(ssp)
-      , _restart(restart)
-      , _reduction(reduction)
-      , _maxit(maxit)
-      , _verbose(verbose)
-    {
-      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                    "P and L must be the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
-    }
-
+    using typename IterativeSolver<X,Y>::domain_type;
+    using typename IterativeSolver<X,Y>::range_type;
+    using typename IterativeSolver<X,Y>::field_type;
+    using typename IterativeSolver<X,Y>::real_type;
 
     /*!
-       \brief Set up solver.
+       \brief Set up RestartedGMResSolver solver.
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    template<class L, class P>
-    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) :
-      _A(op), _W(prec),
-      ssp(), _sp(ssp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                    "P and L must be the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
-    }
-
-    template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
-    RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
-      : _A(op)
-      , _W(prec)
-      , _sp(sp)
-      , _restart(restart)
-      , _reduction(reduction)
-      , _maxit(maxit)
-      , _verbose(verbose)
-    {
-      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                    " P and L must have the same category!");
-      static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
-                    "P and S must have the same category!");
-    }
+    RestartedGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int restart, int maxit, int verbose) :
+      IterativeSolver<X,Y>::IterativeSolver(op,prec,reduction,maxit,verbose),
+      _restart(restart)
+    {}
 
     /*!
-       \brief Set up solver.
+       \brief Set up RestartedGMResSolver solver.
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    template<class L, class S, class P>
-    RestartedGMResSolver (L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) :
-      _A(op), _W(prec),
-      _sp(sp), _restart(restart),
-      _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      static_assert(static_cast<int>(P::category) == static_cast<int>(L::category),
-                    "P and L must have the same category!");
-      static_assert(static_cast<int>(P::category) == static_cast<int>(S::category),
-                    "P and S must have the same category!");
-    }
+    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, real_type reduction, int restart, int maxit, int verbose) :
+      IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
+      _restart(restart)
+    {}
 
     /*!
        \brief Apply inverse operator.
@@ -1285,12 +968,12 @@ namespace Dune {
 
       // clear solver statistics and set res.converged to false
       res.clear();
-      _W.pre(x,b);
+      _prec.pre(x,b);
 
       // calculate defect and overwrite rhs with it
-      _A.applyscaleadd(-1.0,x,b); // b -= Ax
+      _op.applyscaleadd(-1.0,x,b); // b -= Ax
       // calculate preconditioned defect
-      v[0] = 0.0; _W.apply(v[0],b); // r = W^-1 b
+      v[0] = 0.0; _prec.apply(v[0],b); // r = W^-1 b
       norm_0 = _sp.norm(v[0]);
       norm = norm_0;
       norm_old = norm;
@@ -1306,7 +989,7 @@ namespace Dune {
         }
 
       if(all_true(norm_0 < EPSILON)) {
-        _W.post(x);
+        _prec.post(x);
         res.converged = true;
         if(_verbose > 0) // final print
           print_result(res);
@@ -1325,8 +1008,8 @@ namespace Dune {
           // use v[i+1] as temporary vector
           v[i+1] = 0.0;
           // do Arnoldi algorithm
-          _A.apply(v[i],v[i+1]);
-          _W.apply(w,v[i+1]);
+          _op.apply(v[i],v[i+1]);
+          _prec.apply(w,v[i+1]);
           for(int k=0; k<i+1; k++) {
             // notice that _sp.dot(v[k],w) = v[k]\adjoint w
             // so one has to pay attention to the order
@@ -1386,10 +1069,10 @@ namespace Dune {
           // get saved rhs
           b = b2;
           // calculate new defect
-          _A.applyscaleadd(-1.0,x,b); // b -= Ax;
+          _op.applyscaleadd(-1.0,x,b); // b -= Ax;
           // calculate preconditioned defect
           v[0] = 0.0;
-          _W.apply(v[0],b);
+          _prec.apply(v[0],b);
           norm = _sp.norm(v[0]);
           norm_old = norm;
         }
@@ -1397,7 +1080,7 @@ namespace Dune {
       } //end while
 
       // postprocess preconditioner
-      _W.post(x);
+      _prec.post(x);
 
       // save solver statistics
       res.iterations = j-1; // it has to be j-1!!!
@@ -1504,14 +1187,13 @@ namespace Dune {
       dx = temp;
     }
 
-    LinearOperator<X,Y>& _A;
-    Preconditioner<X,Y>& _W;
-    SeqScalarProduct<X> ssp;
-    ScalarProduct<X>& _sp;
+    using IterativeSolver<X,Y>::_op;
+    using IterativeSolver<X,Y>::_prec;
+    using IterativeSolver<X,Y>::_sp;
+    using IterativeSolver<X,Y>::_reduction;
+    using IterativeSolver<X,Y>::_maxit;
+    using IterativeSolver<X,Y>::_verbose;
     int _restart;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
   };
 
 
@@ -1529,37 +1211,25 @@ namespace Dune {
    * the orthogonalization is done explicitly.
    */
   template<class X>
-  class GeneralizedPCGSolver : public InverseOperator<X,X>
+  class GeneralizedPCGSolver : public IterativeSolver<X,X>
   {
   public:
-    //! \brief The domain type of the operator to be inverted.
-    typedef X domain_type;
-    //! \brief The range type of the operator to be inverted.
-    typedef X range_type;
-    //! \brief The field type of the operator to be inverted.
-    typedef typename X::field_type field_type;
-    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
-    typedef typename FieldTraits<field_type>::real_type real_type;
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-       \param restart When to restart the construction of
-       the Krylov search space.
+       \param restart number of GMRes cycles before restart
      */
-    template<class L, class P>
-    GeneralizedPCGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose,
-                          int restart=10) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit),
-      _verbose(verbose), _restart(std::min(maxit,restart))
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P have to have the same category!");
-      static_assert(static_cast<int>(L::category) ==
-                    static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
-    }
+    GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, real_type reduction, int maxit, int verbose, int restart = 10) :
+      IterativeSolver<X,X>::IterativeSolver(op,prec,reduction,maxit,verbose),
+      _restart(restart)
+    {}
+
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
@@ -1567,17 +1237,11 @@ namespace Dune {
        \param restart When to restart the construction of
        the Krylov search space.
      */
-    template<class L, class P, class S>
-    GeneralizedPCGSolver (L& op, S& sp, P& prec,
-                          real_type reduction, int maxit, int verbose, int restart=10) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose),
-      _restart(std::min(maxit,restart))
-    {
-      static_assert(static_cast<int>(L::category) == static_cast<int>(P::category),
-                    "L and P must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
-    }
+    GeneralizedPCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec, real_type reduction, int maxit, int verbose, int restart = 10) :
+      IterativeSolver<X,X>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
+      _restart(restart)
+    {}
+
     /*!
        \brief Apply inverse operator.
 
@@ -1681,12 +1345,12 @@ namespace Dune {
           b.axpy(-lambda,q);                  // update defect
 
           // convergence test
-          real_type defNew=_sp.norm(b);        // comp defect norm
+          defnew=_sp.norm(b);        // comp defect norm
 
           if (_verbose>1)                     // print
-            this->printOutput(std::cout,++i,defNew,def);
+            this->printOutput(std::cout,++i,defnew,def);
 
-          def = defNew;                       // update norm
+          def = defnew;                       // update norm
           if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
           {
             res.converged  = true;
@@ -1719,27 +1383,13 @@ namespace Dune {
       }
     }
 
-    /*!
-       \brief Apply inverse operator with given reduction factor.
-
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-     */
-    virtual void apply (X& x, X& b, double reduction,
-                        InverseOperatorResult& res)
-    {
-      real_type saved_reduction = _reduction;
-      _reduction = reduction;
-      (*this).apply(x,b,res);
-      _reduction = saved_reduction;
-    }
   private:
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
-    Preconditioner<X,X>& _prec;
-    ScalarProduct<X>& _sp;
-    real_type _reduction;
-    int _maxit;
-    int _verbose;
+    using IterativeSolver<X,X>::_op;
+    using IterativeSolver<X,X>::_prec;
+    using IterativeSolver<X,X>::_sp;
+    using IterativeSolver<X,X>::_reduction;
+    using IterativeSolver<X,X>::_maxit;
+    using IterativeSolver<X,X>::_verbose;
     int _restart;
   };
 
