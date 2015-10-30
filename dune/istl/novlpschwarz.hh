@@ -81,11 +81,6 @@ namespace Dune {
     typedef std::multimap<int,std::pair<int,RILIterator> > RIMap;
     typedef typename RIMap::iterator RIMapit;
 
-    enum {
-      //! \brief The solver category.
-      category=SolverCategory::nonoverlapping
-    };
-
     /**
      * @brief constructor: just store a reference to a matrix.
      *
@@ -231,6 +226,12 @@ namespace Dune {
       }
     }
 
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
+    }
+
   private:
     const matrix_type& _A_;
     const communication_type& communication;
@@ -263,9 +264,6 @@ namespace Dune {
     //! \brief The type of the communication object
     typedef C communication_type;
 
-    //! define the category
-    enum {category=SolverCategory::nonoverlapping};
-
     /*! \brief Constructor
      * \param com The communication object for syncing owner and copy
      * data points. (E.~g. OwnerOverlapCommunication )
@@ -291,6 +289,12 @@ namespace Dune {
     virtual real_type norm (const X& x)
     {
       return communication.norm(x);
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
     }
 
     /*! \brief make additive vector consistent
@@ -349,12 +353,6 @@ namespace Dune {
     //! \brief The type of the communication object.
     typedef C communication_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::nonoverlapping
-    };
-
     /*! \brief Constructor.
 
        constructor gets all parameters to operate the prec.
@@ -398,6 +396,12 @@ namespace Dune {
     virtual void post (domain_type& x)
     {
       preconditioner.post(x);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
     }
 
   private:
