@@ -26,6 +26,8 @@ namespace Dune {
     };
   };
 
+  class InvalidSolverCategory : public InvalidStateException{};
+
   /** @} end documentation */
 
 } // end namespace
