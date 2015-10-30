@@ -806,11 +806,6 @@ namespace Dune
     /** @brief The vector type containing subdomain solvers. */
     typedef std::vector<slu, typename TA::template rebind<slu>::other> slu_vector;
 
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category = SolverCategory::sequential
-    };
-
     /**
      * @brief Construct the overlapping Schwarz method.
      * @param mat The matrix to precondition.
@@ -871,6 +866,12 @@ namespace Dune
 
     template<bool forward>
     void apply(X& v, const X& d);
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
   private:
     const M& mat;
