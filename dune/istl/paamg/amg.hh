@@ -90,11 +90,6 @@ namespace Dune
       /** @brief The argument type for the construction of the smoother. */
       typedef typename SmootherTraits<Smoother>::Arguments SmootherArgs;
 
-      enum {
-        /** @brief The solver category. */
-        category = S::category
-      };
-
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -138,6 +133,9 @@ namespace Dune
 
       /** \copydoc Preconditioner::post */
       void post(Domain& x);
+
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const;
 
       /**
        * @brief Get the aggregate number of each unknown on the coarsest level.
@@ -639,6 +637,13 @@ namespace Dune
         v=*levelContext.update;
       }
 
+    }
+
+    template<class M, class X, class S, class PI, class A>
+    SolverCategory::Category AMG<M,X,S,PI,A>::category() const
+    {
+      #error where can I get access to a smoother instance?
+      return .category();
     }
 
     template<class M, class X, class S, class PI, class A>
