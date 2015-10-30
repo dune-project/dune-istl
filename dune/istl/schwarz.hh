@@ -98,11 +98,6 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    enum {
-      //! \brief The solver category.
-      category=SolverCategory::overlapping
-    };
-
     /**
      * @brief constructor: just store a reference to a matrix.
      *
@@ -135,6 +130,12 @@ namespace Dune {
     virtual const matrix_type& getmat () const
     {
       return _A_;
+    }
+
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
     }
 
   private:
@@ -177,9 +178,6 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    //! define the category
-    enum {category=SolverCategory::overlapping};
-
     /*! \brief Constructor needs to know the grid
      * \param com The communication object for syncing overlap and copy
      * data points. (E.~g. OwnerOverlapCopyCommunication )
@@ -205,6 +203,12 @@ namespace Dune {
     virtual real_type norm (const X& x)
     {
       return communication.norm(x);
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
     }
 
   private:
@@ -263,12 +267,6 @@ namespace Dune {
     //! \brief The type of the communication object.
     typedef C communication_type;
 
-    // define the category
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::overlapping
-    };
-
     /*! \brief Constructor.
 
        constructor gets all parameters to operate the prec.
@@ -312,6 +310,12 @@ namespace Dune {
        \copydoc Preconditioner::post(X&)
      */
     virtual void post (X& x) {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
+    }
 
   private:
     //! \brief The matrix we operate on.
@@ -374,12 +378,6 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    // define the category
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::overlapping
-    };
-
     /*! \brief Constructor.
 
        constructor gets all parameters to operate the prec.
@@ -428,6 +426,12 @@ namespace Dune {
     virtual void post (X& x)
     {
       preconditioner.post(x);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
     }
 
   private:
