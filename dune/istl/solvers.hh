@@ -23,6 +23,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/parametertree.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
@@ -93,7 +94,37 @@ namespace Dune {
       if (static_cast<int>(L::category) != prec->category)
          DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
       static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
+                    "L must be sequential!");
+    }
+
+    /*!
+       \brief Set up Loop solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to apply in each iteration of the loop.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template<class L>
+    LoopSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      ssp(), _op(op), _prec(prec), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     /**
@@ -260,6 +291,36 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
+       \param op The operator we solve.
+       \param prec The preconditioner to be used.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template<class L>
+    GradientSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      ssp(), _op(op), _prec(prec), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L has to be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+    }
+
+    /*!
+       \brief Set up solver.
+
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S>
@@ -394,6 +455,25 @@ namespace Dune {
       static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
                     "L must be sequential!");
     }
+
+    /*!
+       \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+     */
+    template<class L>
+    CGSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+              const ParameterTree& configuration) :
+      ssp(), _op(op), _prec(prec), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+    }
+
     /*!
        \brief Set up conjugate gradient solver.
 
@@ -599,6 +679,23 @@ namespace Dune {
          DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
       static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
                     "L must be sequential!");
+    }
+
+    /*!
+       \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+     */
+    template<class L>
+    BiCGSTABSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      ssp(), _op(op), _prec(prec), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     /*!
@@ -878,6 +975,24 @@ namespace Dune {
          DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
       static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
                     "L must be sequential!");
+    }
+
+    /*!
+       \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+     */
+    template<class L>
+    MINRESSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+                  const ParameterTree& configuration) :
+      ssp(), _op(op), _prec(prec), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     /*!
@@ -1201,6 +1316,40 @@ namespace Dune {
          DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
       static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
                     "L must be sequential!");
+    }
+
+    /*!
+       \brief Set up solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to be used.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       restart           | Number of GMRes cycles before restart.
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template<class L>
+    RestartedGMResSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+                          const ParameterTree& configuration) :
+      _A(op), _W(prec),
+      ssp(), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
+                    "L must be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _restart = configuration.get<int>("restart");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     template<class L, class S>
@@ -1542,6 +1691,40 @@ namespace Dune {
                     static_cast<int>(SolverCategory::sequential),
                     "L has to be sequential!");
     }
+
+    /*!
+       \brief Set up solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to be used.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       restart           | When to restart the construction of the Krylov search space.
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template<class L>
+    GeneralizedPCGSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      ssp(), _op(op), _prec(prec), _sp(ssp)
+    {
+      if (static_cast<int>(L::category) != prec->category)
+         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
+      static_assert(static_cast<int>(L::category) ==
+                    static_cast<int>(SolverCategory::sequential),
+                    "L has to be sequential!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+      _restart = std::min(_maxit, configuration.get<int>("restart", 10));
+    }
+
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
