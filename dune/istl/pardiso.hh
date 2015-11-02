@@ -24,7 +24,6 @@ extern "C" int F77_FUNC(pardiso)
   (void *, int *, int *, int *, int *, int *,
   double *, int *, int *, int *, int *, int *,
   int *, double *, double *, int *);
-#endif
 
 namespace Dune {
 
@@ -62,8 +61,6 @@ namespace Dune {
     SeqPardiso (const M& A)
       : A_(A)
     {
-#ifdef HAVE_PARDISO
-
       mtype_ = 11;
       nrhs_ = 1;
       num_procs_ = 1;
@@ -122,10 +119,6 @@ namespace Dune {
         DUNE_THROW(MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
 
       std::cout << "Constructor SeqPardiso: Factorization completed." << std::endl;
-
-#else
-      DUNE_THROW(NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
-#endif
     }
 
     /*!
@@ -142,7 +135,6 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-#ifdef HAVE_PARDISO
       int phase = 33;
 
       iparm_[7] = 1;         /* Max numbers of iterative refinement steps. */
@@ -166,7 +158,6 @@ namespace Dune {
         v[i] = x[i];
 
       std::cout << "SeqPardiso: Backsolve completed." << std::endl;
-#endif
     }
 
     /*!
@@ -178,7 +169,6 @@ namespace Dune {
 
     ~SeqPardiso()
     {
-#ifdef HAVE_PARDISO
       int phase = -1;                   // Release internal memory.
       int idum;
       double ddum;
@@ -189,7 +179,6 @@ namespace Dune {
       delete[] a_;
       delete[] ia_;
       delete[] ja_;
-#endif
     }
 
   private:
@@ -214,7 +203,7 @@ namespace Dune {
   {
     enum { value=true};
   };
-
+#endif //HAVE_PARDISO
 
 } // end namespace Dune
 #endif
