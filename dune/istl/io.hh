@@ -15,6 +15,7 @@
 #include "istlexception.hh"
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
 
@@ -467,6 +468,27 @@ namespace Dune {
   {
     for (int i=0; i<rows; i++)
       for (int j=0; j<cols; j++) {
+        //+1 for Matlab numbering
+        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
+        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
+      }
+  }
+
+  /**
+   * \brief Helper method for the writeMatrixToMatlab routine.
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   *
+   * This specialization for DynamicMatrices ends the recursion
+   */
+  template <class FieldType>
+  void writeMatrixToMatlabHelper(const DynamicMatrix<FieldType>& matrix, int rowOffset,
+                                 int colOffset, std::ostream& s)
+  {
+    for (int i=0; i<matrix.N(); i++)
+      for (int j=0; j<matrix.M(); j++) {
         //+1 for Matlab numbering
         s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
         MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
