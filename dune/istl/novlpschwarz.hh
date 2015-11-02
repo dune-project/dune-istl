@@ -258,6 +258,8 @@ namespace Dune {
     typedef X domain_type;
     //!  \brief The type of the range
     typedef typename X::field_type field_type;
+    //!  \brief The real-type of the range
+    typedef typename FieldTraits<field_type>::real_type real_type;
     //! \brief The type of the communication object
     typedef C communication_type;
 
@@ -286,7 +288,7 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x)
+    virtual real_type norm (const X& x)
     {
       return communication.norm(x);
     }
