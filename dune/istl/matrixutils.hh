@@ -8,6 +8,7 @@
 #include <limits>
 #include <dune/common/typetraits.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
 #include <dune/istl/scaledidmatrix.hh>
@@ -358,6 +359,33 @@ namespace Dune
     static size_type coldim(const Matrix& /*A*/)
     {
       return m;
+    }
+  };
+
+  template <class T>
+  struct MatrixDimension<Dune::DynamicMatrix<T> >
+  {
+    typedef Dune::DynamicMatrix<T> MatrixType;
+    typedef typename MatrixType::size_type size_type;
+
+    static size_type rowdim(const MatrixType& /*A*/, size_type /*r*/)
+    {
+      return 1;
+    }
+
+    static size_type coldim(const MatrixType& /*A*/, size_type /*r*/)
+    {
+      return 1;
+    }
+
+    static size_type rowdim(const MatrixType& A)
+    {
+      return A.N();
+    }
+
+    static size_type coldim(const MatrixType& A)
+    {
+      return A.M();
     }
   };
 
