@@ -25,12 +25,17 @@ namespace Dune {
   template<class X, class Y>
   class Preconditioner {
   public:
+
+    Preconditioner (const SolverCategory::Category _category) : category(_category) { }
+
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+
+    SolverCategory::Category const category;
 
     /*! \brief Prepare the preconditioner.
 

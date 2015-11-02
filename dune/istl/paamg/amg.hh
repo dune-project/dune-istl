@@ -341,7 +341,8 @@ namespace Dune
 
     template<class M, class X, class S, class PI, class A>
     inline AMG<M,X,S,PI,A>::AMG(const AMG& amg)
-    : matrices_(amg.matrices_), smootherArgs_(amg.smootherArgs_),
+    : Preconditioner<X,X>(static_cast<SolverCategory::Category>(S::category)),
+      matrices_(amg.matrices_), smootherArgs_(amg.smootherArgs_),
       smoothers_(amg.smoothers_), solver_(amg.solver_),
       rhs_(), lhs_(), update_(),
       scalarProduct_(amg.scalarProduct_), gamma_(amg.gamma_),
@@ -363,7 +364,8 @@ namespace Dune
                          const SmootherArgs& smootherArgs,
                          std::size_t gamma, std::size_t preSmoothingSteps,
                          std::size_t postSmoothingSteps, bool additive_)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(S::category)),
+        matrices_(&matrices), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
@@ -380,7 +382,8 @@ namespace Dune
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(S::category)),
+        matrices_(&matrices), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
@@ -403,7 +406,8 @@ namespace Dune
                          std::size_t postSmoothingSteps,
                          bool additive_,
                          const PI& pinfo)
-      : smootherArgs_(smootherArgs),
+      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(S::category)),
+        smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(),
         rhs_(), lhs_(), update_(), scalarProduct_(), gamma_(gamma),
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
@@ -424,7 +428,8 @@ namespace Dune
                          const C& criterion,
                          const SmootherArgs& smootherArgs,
                          const PI& pinfo)
-      : smootherArgs_(smootherArgs),
+      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(S::category)),
+        smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(),
         rhs_(), lhs_(), update_(), scalarProduct_(),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
@@ -526,13 +531,13 @@ namespace Dune
               // We are still participating on this level
               solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
                                                   *scalarProduct_,
-                                                  *coarseSmoother_, 1E-2, 1000, 0));
+                                                  coarseSmoother_, 1E-2, 1000, 0));
             else
               solver_.reset();
           }else
             solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
                                                 *scalarProduct_,
-                                                *coarseSmoother_, 1E-2, 1000, 0));
+                                                coarseSmoother_, 1E-2, 1000, 0));
         }
       }
 

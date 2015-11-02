@@ -87,7 +87,8 @@ namespace Dune {
      * @param inverse_operator The inverse operator to wrap.
      */
     InverseOperator2Preconditioner(InverseOperator& inverse_operator)
-    : inverse_operator_(inverse_operator)
+    : Preconditioner<typename O::domain_type, typename O::range_type>(c),
+      inverse_operator_(inverse_operator)
     {}
 
     void pre(domain_type&,range_type&)
@@ -149,7 +150,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     SeqSSOR (const M& A, int n, field_type w)
-      : _A_(A), _n(n), _w(w)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential), _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
@@ -237,7 +238,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     SeqSOR (const M& A, int n, field_type w)
-      : _A_(A), _n(n), _w(w)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential), _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
@@ -340,7 +341,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     SeqGS (const M& A, int n, field_type w)
-      : _A_(A), _n(n), _w(w)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential), _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
@@ -424,7 +425,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     SeqJac (const M& A, int n, field_type w)
-      : _A_(A), _n(n), _w(w)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential), _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
@@ -509,7 +510,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     SeqILU0 (const M& A, field_type w)
-      : ILU(A) // copy A
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential), ILU(A) // copy A
     {
       _w =w;
       bilu0_decomposition(ILU);
@@ -594,7 +595,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     SeqILUn (const M& A, int n, field_type w)
-      : ILU(A.N(),A.M(),M::row_wise)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential), ILU(A.N(),A.M(),M::row_wise)
     {
       _n = n;
       _w = w;
@@ -674,6 +675,7 @@ namespace Dune {
        \param w The relaxation factor.
      */
     Richardson (field_type w=1.0)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential)
     {
       _w = w;
     }

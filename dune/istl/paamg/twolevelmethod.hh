@@ -406,7 +406,8 @@ public:
                                            CoarseOperatorType>& policy,
                  CoarseLevelSolverPolicy& coarsePolicy,
                  std::size_t preSteps=1, std::size_t postSteps=1)
-    : operator_(&op), smoother_(smoother),
+    : Preconditioner<typename FO::domain_type, typename FO::range_type>(SolverCategory::sequential),
+      operator_(&op), smoother_(smoother),
       preSteps_(preSteps), postSteps_(postSteps)
   {
     policy_ = policy.clone();
@@ -415,7 +416,8 @@ public:
   }
 
   TwoLevelMethod(const TwoLevelMethod& other)
-  : operator_(other.operator_), coarseSolver_(new CoarseLevelSolver(*other.coarseSolver_)),
+  : Preconditioner<typename FO::domain_type, typename FO::range_type>(SolverCategory::sequential),
+    operator_(other.operator_), coarseSolver_(new CoarseLevelSolver(*other.coarseSolver_)),
     smoother_(other.smoother_), policy_(other.policy_->clone()),
     preSteps_(other.preSteps_), postSteps_(other.postSteps_)
   {}

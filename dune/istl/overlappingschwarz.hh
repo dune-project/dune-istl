@@ -999,7 +999,8 @@ namespace Dune
   template<class M, class X, class TM, class TD, class TA>
   SeqOverlappingSchwarz<M,X,TM,TD,TA>::SeqOverlappingSchwarz(const matrix_type& mat_, const rowtodomain_vector& rowToDomain,
                                                              field_type relaxationFactor, bool fly)
-    : mat(mat_), relax(relaxationFactor), onTheFly(fly)
+    : Preconditioner<X,X>(SolverCategory::Category::sequential),
+      mat(mat_), relax(relaxationFactor), onTheFly(fly)
   {
     typedef typename rowtodomain_vector::const_iterator RowDomainIterator;
     typedef typename subdomain_list::const_iterator DomainIterator;
@@ -1048,7 +1049,8 @@ namespace Dune
                                                              const subdomain_vector& sd,
                                                              field_type relaxationFactor,
                                                              bool fly)
-    :  mat(mat_), solvers(sd.size()), subDomains(sd), relax(relaxationFactor),
+    : Preconditioner<X,X>(SolverCategory::Category::sequential),
+      mat(mat_), solvers(sd.size()), subDomains(sd), relax(relaxationFactor),
       onTheFly(fly)
   {
     typedef typename subdomain_vector::const_iterator DomainIterator;

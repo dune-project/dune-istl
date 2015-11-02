@@ -288,7 +288,8 @@ namespace Dune
 
     template<class M, class X, class PI, class A>
     FastAMG<M,X,PI,A>::FastAMG(const FastAMG& amg)
-    : matrices_(amg.matrices_), solver_(amg.solver_),
+    : Preconditioner<X,X>(SolverCategory::Category::sequential),
+      matrices_(amg.matrices_), solver_(amg.solver_),
       rhs_(), lhs_(), residual_(), scalarProduct_(amg.scalarProduct_),
       gamma_(amg.gamma_), preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
       symmetric(amg.symmetric), coarsesolverconverged(amg.coarsesolverconverged),
@@ -305,7 +306,8 @@ namespace Dune
     template<class M, class X, class PI, class A>
     FastAMG<M,X,PI,A>::FastAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                                const Parameters& parms, bool symmetric_)
-      : matrices_(&matrices), solver_(&coarseSolver),
+      : Preconditioner<X,X>(SolverCategory::Category::sequential),
+        matrices_(&matrices), solver_(&coarseSolver),
         rhs_(), lhs_(), residual_(), scalarProduct_(),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
@@ -328,7 +330,8 @@ namespace Dune
                                const Parameters& parms,
                                bool symmetric_,
                                const PI& pinfo)
-      : solver_(), rhs_(), lhs_(), residual_(), scalarProduct_(), gamma_(parms.getGamma()),
+      : Preconditioner<X,X>(SolverCategory::Category::sequential),
+        solver_(), rhs_(), lhs_(), residual_(), scalarProduct_(), gamma_(parms.getGamma()),
         preSteps_(parms.getNoPreSmoothSteps()), postSteps_(parms.getNoPostSmoothSteps()),
         buildHierarchy_(true),
         symmetric(symmetric_), coarsesolverconverged(true),

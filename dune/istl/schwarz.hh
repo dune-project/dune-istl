@@ -279,7 +279,8 @@ namespace Dune {
      * data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     ParSSOR (const matrix_type& A, int n, field_type w, const communication_type& c)
-      : _A_(A), _n(n), _w(w), communication(c)
+      : Preconditioner<X,Y>(SolverCategory::Category::overlapping),
+        _A_(A), _n(n), _w(w), communication(c)
     {   }
 
     /*!
@@ -388,7 +389,8 @@ namespace Dune {
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     BlockPreconditioner (T& p, const communication_type& c)
-      : preconditioner(p), communication(c)
+      : Preconditioner<X,Y>(SolverCategory::Category::overlapping),
+        preconditioner(p), communication(c)
     {   }
 
     /*!

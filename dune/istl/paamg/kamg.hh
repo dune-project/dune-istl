@@ -48,7 +48,8 @@ namespace Dune
        */
 
       KAmgTwoGrid(AMG& amg, std::shared_ptr<InverseOperator<Domain,Range> > coarseSolver)
-        : amg_(amg), coarseSolver_(coarseSolver)
+        : Preconditioner<typename AMG::Domain,typename AMG::Range>(static_cast<SolverCategory::Category>(AMG::category)),
+          amg_(amg), coarseSolver_(coarseSolver)
       {}
 
       /**  \copydoc Preconditioner::pre(X&,Y&) */
@@ -278,7 +279,8 @@ namespace Dune
                             std::size_t gamma, std::size_t preSmoothingSteps,
                             std::size_t postSmoothingSteps,
                             std::size_t ksteps, double reduction)
-      : amg(matrices, coarseSolver, smootherArgs, gamma, preSmoothingSteps,
+      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(Amg::category)),
+        amg(matrices, coarseSolver, smootherArgs, gamma, preSmoothingSteps,
             postSmoothingSteps), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
@@ -297,7 +299,8 @@ namespace Dune
                             std::size_t preSmoothingSteps, std::size_t postSmoothingSteps,
                             std::size_t ksteps, double reduction,
                             const ParallelInformation& pinfo)
-      : amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
+      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(Amg::category)),
+        amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
             postSmoothingSteps, false, pinfo), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 

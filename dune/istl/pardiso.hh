@@ -48,7 +48,8 @@ namespace Dune {
        \param A The matrix to operate on.
      */
     SeqPardiso (const M& A)
-      : A_(A)
+      : Preconditioner<X,Y>(SolverCategory::Category::sequential),
+        A_(A)
     {
       mtype_ = 11;
       nrhs_ = 1;
