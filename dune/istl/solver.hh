@@ -11,6 +11,7 @@
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
+#include <dune/common/parametertree.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
@@ -263,6 +264,36 @@ namespace Dune
       if(SolverCategory::category(op) != SolverCategory::category(prec))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
       if(SolverCategory::category(op) != SolverCategory::category(sp))
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
+    }
+
+    IterativeSolver (LinearOperator<X,Y>& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      _op(stackobject_to_shared_ptr(op)),
+      _prec(stackobject_to_shared_ptr(prec)),
+      _sp(new SeqScalarProduct<X>),
+      _reduction(configuration.get<real_type>("reduction")),
+      _maxit(configuration.get<int>("maxit")),
+      _verbose(configuration.get<int>("verbose")),
+      _category(SolverCategory::category(*_op))
+    {
+      if(SolverCategory::category(*op) != SolverCategory::sequential)
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator has to be sequential!");
+      if(SolverCategory::category(*prec) != SolverCategory::sequential)
+        DUNE_THROW(InvalidSolverCategory, "Preconditioner has to be sequential!");
+    }
+
+    IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      _op(stackobject_to_shared_ptr(op)),
+      _prec(prec),
+      _sp(sp),
+      _reduction(configuration.get<real_type>("reduction")),
+      _maxit(configuration.get<int>("maxit")),
+      _verbose(configuration.get<int>("verbose")),
+      _category(SolverCategory::category(*op))
+    {
+      if(SolverCategory::category(*op) != SolverCategory::category(*prec))
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
+      if(SolverCategory::category(*op) != SolverCategory::category(*sp))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
 

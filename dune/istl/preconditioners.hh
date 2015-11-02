@@ -12,6 +12,7 @@
 
 #include <dune/common/simd/simd.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/parametertree.hh>
 
 #include "preconditioner.hh"
 #include "solver.hh"
@@ -160,6 +161,27 @@ namespace Dune {
     }
 
     /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       iterations        | The number of iterations to perform.
+       relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqSSOR (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
        \brief Prepare the preconditioner.
 
        \copydoc Preconditioner::pre(X&,Y&)
@@ -246,6 +268,17 @@ namespace Dune {
     SeqSOR (const M& A, int n, scalar_field_type w)
       : _A_(A), _n(n), _w(w)
     {
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqSOR (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -355,6 +388,17 @@ namespace Dune {
     }
 
     /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqGS (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
        \brief Prepare the preconditioner.
 
        \copydoc Preconditioner::pre(X&,Y&)
@@ -437,6 +481,17 @@ namespace Dune {
     SeqJac (const M& A, int n, scalar_field_type w)
       : _A_(A), _n(n), _w(w)
     {
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqJac (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -680,6 +735,25 @@ namespace Dune {
     }
 
     /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqILU0 (const M& A, const ParameterTree& configuration)
+      : ILU(A) // copy A
+    {
+      _w = configuration.get<field_type>("relaxation");
+      bilu0_decomposition(ILU);
+    }
+
+    /*!
        \brief Prepare the preconditioner.
 
        \copydoc Preconditioner::pre(X&,Y&)
@@ -770,6 +844,17 @@ namespace Dune {
     }
 
     /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqILUn (const M& A, const ParameterTree& configuration)
+      : ILU(A.N(),A.M(),M::row_wise)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
+      bilu_decomposition(A,_n,ILU);
+    }
+
+    /*!
        \brief Prepare the preconditioner.
 
        \copydoc Preconditioner::pre(X&,Y&)
@@ -846,6 +931,14 @@ namespace Dune {
     Richardson (scalar_field_type w=1.0) :
       _w(w)
     {}
+
+    /*!
+       \copydoc SeqILU0::SeqILU0(const M&,const ParameterTree&)
+     */
+    Richardson (const ParameterTree& configuration)
+    {
+      _w = configuration.get<field_type>("relaxation");
+    }
 
     /*!
        \brief Prepare the preconditioner.
