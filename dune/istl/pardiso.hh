@@ -203,7 +203,7 @@ namespace Dune {
   {
     enum { value=true};
   };
-#endif //HAVE_PARDISO
-
 } // end namespace Dune
+
+#endif //HAVE_PARDISO
 #endif
