@@ -498,7 +498,7 @@ void testGraph ()
 }
 
 
-void testAggregate(double eps)
+void testAggregate()
 {
 
   typedef Dune::FieldMatrix<double,1,1> ScalarDouble;
@@ -557,7 +557,7 @@ int main (int argc , char ** argv)
 {
   try {
     testGraph();
-    testAggregate(.001);
+    testAggregate();
     exit(testEdge());
   }
   catch (Dune::ISTLError& error)

@@ -535,6 +535,8 @@ namespace Dune {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i<0 || i>=N()) DUNE_THROW(ISTLError,"row index out of range");
       if (j<0 || i>=M()) DUNE_THROW(ISTLError,"column index out of range");
+#else
+      DUNE_UNUSED_PARAMETER(i);  DUNE_UNUSED_PARAMETER(j);
 #endif
       return true;
     }

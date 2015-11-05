@@ -53,11 +53,15 @@ namespace Dune
 
       /**  \copydoc Preconditioner::pre(X&,Y&) */
       void pre(typename AMG::Domain& x, typename AMG::Range& b)
-      {}
+      {
+        DUNE_UNUSED_PARAMETER(x); DUNE_UNUSED_PARAMETER(b);
+      }
 
       /**  \copydoc Preconditioner::post(X&) */
       void post(typename AMG::Domain& x)
-      {}
+      {
+        DUNE_UNUSED_PARAMETER(x);
+      }
 
       /** \copydoc Preconditioner::apply(X&,const Y&) */
       void apply(typename AMG::Domain& v, const typename AMG::Range& d)

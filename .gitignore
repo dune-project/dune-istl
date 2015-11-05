@@ -1,3 +1,4 @@
+*.log
 *.o
 *.trs
 *~
@@ -20,7 +21,7 @@
 /depcomp
 /dependencies.m4
 /dune-istl-*.tar.gz
-/dune-istl-?.?
+/dune-istl-?.?/
 /dune-istl.pc
 /install-sh
 /libtool
