@@ -86,15 +86,14 @@ namespace Dune {
        <li> 2 : print line for each iteration </li>
        </ul>
      */
-    template<class L>
-    LoopSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    LoopSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                 real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
     /*!
@@ -113,14 +112,13 @@ namespace Dune {
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    template<class L>
-    LoopSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    LoopSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       ssp(), _op(op), _prec(prec), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _maxit = configuration.get<int>("maxit");
@@ -147,15 +145,15 @@ namespace Dune {
         <li> 2 : print line for each iteration </li>
         </ul>
      */
-    template<class L, class S>
-    LoopSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    LoopSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                 real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
 
@@ -172,7 +170,7 @@ namespace Dune {
       _prec->pre(x,b);
 
       // overwrite b with defect
-      _op.applyscaleadd(-1,x,b);
+      _op->applyscaleadd(-1,x,b);
 
       // compute norm, \todo parallelization
       real_type def0 = _sp.norm(b);
@@ -198,7 +196,7 @@ namespace Dune {
         v = 0;                      // clear correction
         _prec->apply(v,b);           // apply preconditioner
         x += v;                     // update solution
-        _op.applyscaleadd(-1,v,b);  // update defect
+        _op->applyscaleadd(-1,v,b);  // update defect
         real_type defnew=_sp.norm(b);  // comp defect norm
         if (_verbose>1)             // print
           this->printOutput(std::cout,i,defnew,def);
@@ -248,7 +246,7 @@ namespace Dune {
 
   private:
     SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
+    std::shared_ptr<LinearOperator<X,X> > _op;
     std::shared_ptr<Preconditioner<X,X> > _prec;
     ScalarProduct<X>& _sp;
     real_type _reduction;
@@ -277,15 +275,14 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
-    template<class L>
-    GradientSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    GradientSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                     real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
          DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
     }
 
     /*!
@@ -304,14 +301,13 @@ namespace Dune {
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    template<class L>
-    GradientSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    GradientSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       ssp(), _op(op), _prec(prec), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _maxit = configuration.get<int>("maxit");
@@ -323,15 +319,15 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
-    template<class L, class S>
-    GradientSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    GradientSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                     real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S have to have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
     /*!
@@ -344,7 +340,7 @@ namespace Dune {
       res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec->pre(x,b);             // prepare preconditioner
-      _op.applyscaleadd(-1,x,b);  // overwrite b with defect
+      _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);                     // create local vectors
       X q(b);
@@ -367,7 +363,7 @@ namespace Dune {
       {
         p = 0;                      // clear correction
         _prec->apply(p,b);           // apply preconditioner
-        _op.apply(p,q);             // q=Ap
+        _op->apply(p,q);             // q=Ap
         lambda = _sp.dot(p,b)/_sp.dot(q,p); // minimization
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
@@ -417,7 +413,7 @@ namespace Dune {
 
   private:
     SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
+    std::shared_ptr<LinearOperator<X,X> > _op;
     std::shared_ptr<Preconditioner<X,X> > _prec;
     ScalarProduct<X>& _sp;
     real_type _reduction;
@@ -445,29 +441,27 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
-    template<class L>
-    CGSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    CGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
               real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
     /*!
        \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
      */
-    template<class L>
-    CGSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    CGSolver (std::shared_ptr<LinearOperator<X,X> >op, std::shared_ptr<Preconditioner<X,X> > prec,
               const ParameterTree& configuration) :
       ssp(), _op(op), _prec(prec), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _maxit = configuration.get<int>("maxit");
@@ -479,15 +473,15 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
-    template<class L, class S>
-    CGSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    CGSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
               real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
     /*!
@@ -508,7 +502,7 @@ namespace Dune {
       res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec->pre(x,b);             // prepare preconditioner
-      _op.applyscaleadd(-1,x,b);  // overwrite b with defect
+      _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);              // the search direction
       X q(x);              // a temporary vector
@@ -561,7 +555,7 @@ namespace Dune {
       for ( ; i<=_maxit; i++ )
       {
         // minimize in given search direction p
-        _op.apply(p,q);             // q=Ap
+        _op->apply(p,q);             // q=Ap
         alpha = _sp.dot(p,q);       // scalar product
         lambda = rholast/alpha;     // minimization
         x.axpy(lambda,p);           // update solution
@@ -642,7 +636,7 @@ namespace Dune {
 
   private:
     SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
+    std::shared_ptr<LinearOperator<X,X> > _op;
     std::shared_ptr<Preconditioner<X,X> > _prec;
     ScalarProduct<X>& _sp;
     real_type _reduction;
@@ -670,28 +664,26 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
-    template<class L>
-    BiCGSTABSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                     real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
     /*!
        \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
      */
-    template<class L>
-    BiCGSTABSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       ssp(), _op(op), _prec(prec), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _maxit = configuration.get<int>("maxit");
@@ -703,15 +695,15 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
-    template<class L, class S>
-    BiCGSTABSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                     real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
     /*!
@@ -747,7 +739,7 @@ namespace Dune {
       res.clear();                // clear solver statistics
       Timer watch;                // start a timer
       _prec->pre(x,r);             // prepare preconditioner
-      _op.applyscaleadd(-1,x,r);  // overwrite b with defect
+      _op->applyscaleadd(-1,x,r);  // overwrite b with defect
 
       rt=r;
 
@@ -822,7 +814,7 @@ namespace Dune {
         _prec->apply(y,p);           // apply preconditioner
 
         // v = A * y
-        _op.apply(y,v);
+        _op->apply(y,v);
 
         // alpha = rho_new / < rt, v >
         h = _sp.dot(rt,v);
@@ -866,7 +858,7 @@ namespace Dune {
         _prec->apply(y,r);
 
         // t = A * y
-        _op.apply(y,t);
+        _op->apply(y,t);
 
         // omega = < t, r > / < t, t >
         omega = _sp.dot(t,r)/_sp.dot(t,t);
@@ -935,7 +927,7 @@ namespace Dune {
 
   private:
     SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
+    std::shared_ptr<LinearOperator<X,X> > _op;
     std::shared_ptr<Preconditioner<X,X> > _prec;
     ScalarProduct<X>& _sp;
     real_type _reduction;
@@ -966,29 +958,27 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
-    template<class L>
-    MINRESSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                   real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
     /*!
        \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
      */
-    template<class L>
-    MINRESSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                   const ParameterTree& configuration) :
       ssp(), _op(op), _prec(prec), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _maxit = configuration.get<int>("maxit");
@@ -1000,15 +990,15 @@ namespace Dune {
 
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
-    template<class L, class S>
-    MINRESSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                   real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
     /*!
@@ -1028,7 +1018,7 @@ namespace Dune {
       // prepare preconditioner
       _prec->pre(x,b);
       // overwrite rhs with defect
-      _op.applyscaleadd(-1,x,b);
+      _op->applyscaleadd(-1,x,b);
 
       // compute residual norm
       real_type def0 = _sp.norm(b);
@@ -1110,7 +1100,7 @@ namespace Dune {
           i2 = (i1+1)%3;
 
         // symmetrically preconditioned Lanczos algorithm (see Greenbaum p.121)
-        _op.apply(z,q[i2]); // q[i2] = Az
+        _op->apply(z,q[i2]); // q[i2] = Az
         q[i2].axpy(-beta,q[i0]);
         // alpha is real since it is the diagonal entry of the hermitian tridiagonal matrix
         // from the Lanczos Algorithm
@@ -1243,7 +1233,7 @@ namespace Dune {
     }
 
     SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
+    std::shared_ptr<LinearOperator<X,X> > _op;
     std::shared_ptr<Preconditioner<X,X> > _prec;
     ScalarProduct<X>& _sp;
     real_type _reduction;
@@ -1279,9 +1269,8 @@ namespace Dune {
     //! \brief The field type of the basis vectors
     typedef F basis_type;
 
-    template<class L>
     DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
-    RestartedGMResSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                           real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
       : _A(op)
       , _W(prec)
@@ -1292,10 +1281,10 @@ namespace Dune {
       , _maxit(maxit)
       , _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
 
@@ -1305,17 +1294,16 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    template<class L>
-    RestartedGMResSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                           real_type reduction, int restart, int maxit, int verbose) :
       _A(op), _W(prec),
       ssp(), _sp(ssp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
     /*!
@@ -1335,16 +1323,15 @@ namespace Dune {
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    template<class L>
-    RestartedGMResSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec,
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                           const ParameterTree& configuration) :
       _A(op), _W(prec),
       ssp(), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(SolverCategory::sequential),
-                    "L must be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _restart = configuration.get<int>("restart");
@@ -1352,9 +1339,9 @@ namespace Dune {
       _verbose = configuration.get<int>("verbose");
     }
 
-    template<class L, class S>
+    template<class S>
     DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
-    RestartedGMResSolver(L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    RestartedGMResSolver(std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                          real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
       : _A(op)
       , _W(prec)
@@ -1364,10 +1351,10 @@ namespace Dune {
       , _maxit(maxit)
       , _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(prec->category() == static_cast<int>(S::category),
-                    "P and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
     /*!
@@ -1376,17 +1363,17 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    template<class L, class S>
-    RestartedGMResSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                           real_type reduction, int restart, int maxit, int verbose) :
       _A(op), _W(prec),
       _sp(sp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(prec->category() == static_cast<int>(S::category),
-                    "P and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
     /*!
@@ -1435,7 +1422,7 @@ namespace Dune {
       _W->pre(x,b);
 
       // calculate defect and overwrite rhs with it
-      _A.applyscaleadd(-1.0,x,b); // b -= Ax
+      _A->applyscaleadd(-1.0,x,b); // b -= Ax
       // calculate preconditioned defect
       v[0] = 0.0; _W->apply(v[0],b); // r = W^-1 b
       norm_0 = _sp.norm(v[0]);
@@ -1472,7 +1459,7 @@ namespace Dune {
           // use v[i+1] as temporary vector
           v[i+1] = 0.0;
           // do Arnoldi algorithm
-          _A.apply(v[i],v[i+1]);
+          _A->apply(v[i],v[i+1]);
           _W->apply(w,v[i+1]);
           for(int k=0; k<i+1; k++) {
             // notice that _sp.dot(v[k],w) = v[k]\adjoint w
@@ -1533,7 +1520,7 @@ namespace Dune {
           // get saved rhs
           b = b2;
           // calculate new defect
-          _A.applyscaleadd(-1.0,x,b); // b -= Ax;
+          _A->applyscaleadd(-1.0,x,b); // b -= Ax;
           // calculate preconditioned defect
           v[0] = 0.0;
           _W->apply(v[0],b);
@@ -1635,7 +1622,7 @@ namespace Dune {
       dx = temp;
     }
 
-    LinearOperator<X,Y>& _A;
+    std::shared_ptr<LinearOperator<X,X> > _A;
     std::shared_ptr<Preconditioner<X,X> > _W;
     SeqScalarProduct<X> ssp;
     ScalarProduct<X>& _sp;
@@ -1679,17 +1666,15 @@ namespace Dune {
        \param restart When to restart the construction of
        the Krylov search space.
      */
-    template<class L>
-    GeneralizedPCGSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, real_type reduction,
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, real_type reduction,
                           int maxit, int verbose, int restart=10) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit),
       _verbose(verbose), _restart(std::min(maxit,restart))
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) ==
-                    static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
     /*!
@@ -1709,15 +1694,13 @@ namespace Dune {
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    template<class L>
-    GeneralizedPCGSolver (L& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       ssp(), _op(op), _prec(prec), _sp(ssp)
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) ==
-                    static_cast<int>(SolverCategory::sequential),
-                    "L has to be sequential!");
+      if (op->category != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
       _maxit = configuration.get<int>("maxit");
@@ -1732,16 +1715,16 @@ namespace Dune {
        \param restart When to restart the construction of
        the Krylov search space.
      */
-    template<class L, class S>
-    GeneralizedPCGSolver (L& op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
+    template<class S>
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, S& sp, std::shared_ptr<Preconditioner<X,X> > prec,
                           real_type reduction, int maxit, int verbose, int restart=10) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _restart(std::min(maxit,restart))
     {
-      if (static_cast<int>(L::category) != prec->category)
-         DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
-      static_assert(static_cast<int>(L::category) == static_cast<int>(S::category),
-                    "L and S must have the same category!");
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != static_cast<int>(S::category))
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
     /*!
        \brief Apply inverse operator.
@@ -1753,7 +1736,7 @@ namespace Dune {
       res.clear();                      // clear solver statistics
       Timer watch;                    // start a timer
       _prec->pre(x,b);                 // prepare preconditioner
-      _op.applyscaleadd(-1,x,b);      // overwrite b with defect
+      _op->applyscaleadd(-1,x,b);      // overwrite b with defect
 
       std::vector<std::shared_ptr<X> > p(_restart);
       std::vector<typename X::field_type> pp(_restart);
@@ -1795,7 +1778,7 @@ namespace Dune {
       *(p[0]) = 0;                              // clear correction
       _prec->apply(*(p[0]),b);                   // apply preconditioner
       rho = _sp.dot(*(p[0]),b);             // orthogonalization
-      _op.apply(*(p[0]),q);                 // q=Ap
+      _op->apply(*(p[0]),q);                 // q=Ap
       pp[0] = _sp.dot(*(p[0]),q);           // scalar product
       lambda = rho/pp[0];         // minimization
       x.axpy(lambda,*(p[0]));               // update solution
@@ -1830,7 +1813,7 @@ namespace Dune {
           _prec->apply(prec_res,b);                       // apply preconditioner
 
           p[ii].reset(new X(prec_res));
-          _op.apply(prec_res, q);
+          _op->apply(prec_res, q);
 
           for(int j=0; j<ii; ++j) {
             rho =_sp.dot(q,*(p[j]))/pp[j];
@@ -1838,7 +1821,7 @@ namespace Dune {
           }
 
           // minimize in given search direction
-          _op.apply(*(p[ii]),q);                     // q=Ap
+          _op->apply(*(p[ii]),q);                     // q=Ap
           pp[ii] = _sp.dot(*(p[ii]),q);               // scalar product
           rho = _sp.dot(*(p[ii]),b);                 // orthogonalization
           lambda = rho/pp[ii];             // minimization
@@ -1899,7 +1882,7 @@ namespace Dune {
     }
   private:
     SeqScalarProduct<X> ssp;
-    LinearOperator<X,X>& _op;
+    std::shared_ptr<LinearOperator<X,X> > _op;
     std::shared_ptr<Preconditioner<X,X> > _prec;
     ScalarProduct<X>& _sp;
     real_type _reduction;
