@@ -149,7 +149,7 @@ namespace Dune
        * All parameters can be set in the criterion!
        */
       template<class C>
-      AMG(const Operator& fineOperator, const C& criterion,
+      AMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs, std::size_t gamma,
           std::size_t preSmoothingSteps,
           std::size_t postSmoothingSteps,
@@ -168,7 +168,7 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      AMG(const Operator& fineOperator, const C& criterion,
+      AMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation());
 
@@ -226,7 +226,7 @@ namespace Dune
        * @param pinfo The fine level parallel information.
        */
       template<class C>
-      void createHierarchies(C& criterion, Operator& matrix,
+      void createHierarchies(C& criterion, std::shared_ptr<Operator> matrix,
                              const PI& pinfo);
       /**
        * @brief A struct that holds the context of the current level.
@@ -399,7 +399,7 @@ namespace Dune
 
     template<class M, class X, class S, class PI, class A>
     template<class C>
-    AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix,
                          const C& criterion,
                          const SmootherArgs& smootherArgs,
                          std::size_t gamma, std::size_t preSmoothingSteps,
@@ -419,12 +419,12 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
     template<class C>
-    AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix,
                          const C& criterion,
                          const SmootherArgs& smootherArgs,
                          const PI& pinfo)
@@ -442,7 +442,7 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
     }
 
 
@@ -468,7 +468,7 @@ namespace Dune
 
     template<class M, class X, class S, class PI, class A>
     template<class C>
-    void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, Operator& matrix,
+    void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, std::shared_ptr<Operator> matrix,
                                             const PI& pinfo)
     {
       Timer watch;

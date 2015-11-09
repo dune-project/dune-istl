@@ -357,7 +357,7 @@ namespace Dune
        * @param fineMatrix The matrix to coarsen.
        * @param pinfo The information about the parallel data decomposition at the first level.
        */
-      MatrixHierarchy(const MatrixOperator& fineMatrix,
+      MatrixHierarchy(std::shared_ptr<const MatrixOperator> fineMatrix,
                       const ParallelInformation& pinfo=ParallelInformation());
 
 
@@ -467,6 +467,8 @@ namespace Dune
       AggregatesMapList aggregatesMaps_;
       /** @brief The list of redistributes. */
       RedistributeInfoList redistributes_;
+      /** @brief The fine grid operator. */
+      std::shared_ptr<const MatrixOperator> fineOperator_;
       /** @brief The hierarchy of parallel matrices. */
       ParallelMatrixHierarchy matrices_;
       /** @brief The hierarchy of the parallel information. */
@@ -657,9 +659,10 @@ namespace Dune
     }
 
     template<class M, class IS, class A>
-    MatrixHierarchy<M,IS,A>::MatrixHierarchy(const MatrixOperator& fineOperator,
+    MatrixHierarchy<M,IS,A>::MatrixHierarchy(std::shared_ptr<const MatrixOperator> fineOperator,
                                              const ParallelInformation& pinfo)
-      : matrices_(const_cast<MatrixOperator&>(fineOperator)),
+      : fineOperator_(fineOperator),
+        matrices_(const_cast<MatrixOperator&>(*fineOperator)),
         parallelInformation_(const_cast<ParallelInformation&>(pinfo))
     {
       static_assert((static_cast<int>(MatrixOperator::category) ==
