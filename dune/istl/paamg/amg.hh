@@ -15,6 +15,7 @@
 #include <dune/istl/solvertype.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/parametertree.hh>
 
 namespace Dune
 {
@@ -120,6 +121,32 @@ namespace Dune
       AMG(const Operator& fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation());
+
+      /*!
+         \brief Constructor an AMG via ParameterTree.
+
+         \param fineOperator The operator on the fine level.
+         \param configuration ParameterTree containing AMG parameters.
+         \param pinfo Optionally, specify ParallelInformation
+
+         ParameterTree Key         | Meaning
+         --------------------------|------------
+         smootherIterations        | The number of iterations to perform.
+         smootherRelaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+         maxLevel                  | Maximum number of levels allowed in the hierarchy.
+         coarsenTarget             | Maximum number of unknowns on the coarsest level.
+         prolongationDampingFactor | Damping factor for the prolongation.
+         alpha                     | Scaling avlue for marking connections as strong.
+         beta                      | Treshold for marking nodes as isolated.
+         additive                  | Whether to use additive multigrid.
+         gamma                     | 1 for V-cycle, 2 for W-cycle.
+         preSteps                  | Number of presmoothing steps.
+         postSteps                 | Number of postsmoothing steps.
+         verbosity                 | Output verbosity.
+
+         See \ref ISTL_Factory for the ParameterTree layout and examples.
+       */
+      AMG(std::shared_ptr<const Operator> fineOperator, const ParameterTree& configuration, const ParallelInformation& pinfo=ParallelInformation());
 
       /**
        * @brief Copy constructor.
@@ -359,6 +386,60 @@ namespace Dune
       createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
+
+    template<class M, class X, class S, class PI, class A>
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix,
+                         const ParameterTree& configuration,
+                         const ParallelInformation& pinfo) :
+      smoothers_(new Hierarchy<Smoother,A>),
+      solver_(), rhs_(), lhs_(), update_(), scalarProduct_(), buildHierarchy_(true),
+      coarsesolverconverged(true), coarseSmoother_(),
+      category_(SolverCategory::category(pinfo))
+    {
+
+      if (configuration.hasKey ("smootherIterations"))
+        smootherArgs_.iterations = configuration.get<int>("smootherIterations");
+
+      if (configuration.hasKey ("smootherRelaxation"))
+        smootherArgs_.relaxationFactor = configuration.get<typename SmootherArgs::RelaxationFactor>("smootherRelaxation");
+
+      typedef Amg::RowSum Norm;
+      typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> > Criterion;
+
+      Criterion criterion (configuration.get<int>("maxLevel"));
+
+      if (configuration.hasKey ("coarsenTarget"))
+        criterion.setCoarsenTarget (configuration.get<int>("coarsenTarget"));
+      if (configuration.hasKey ("prolongationDampingFactor"))
+        criterion.setProlongationDampingFactor (configuration.get<double>("prolongationDampingFactor"));
+
+      if (configuration.hasKey ("alpha"))
+        criterion.setAlpha (configuration.get<double> ("alpha"));
+
+      if (configuration.hasKey ("beta"))
+        criterion.setBeta (configuration.get<double> ("beta"));
+
+      if (configuration.hasKey ("gamma"))
+        criterion.setGamma (configuration.get<std::size_t> ("gamma"));
+      gamma_ = criterion.getGamma();
+
+      if (configuration.hasKey ("additive"))
+        criterion.setAdditive (configuration.get<bool>("additive"));
+      additive = criterion.getAdditive();
+
+      if (configuration.hasKey ("preSteps"))
+        criterion.setNoPreSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+      preSteps_ = criterion.getNoPreSmoothSteps ();
+
+      if (configuration.hasKey ("postSteps"))
+        criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+      postSteps_ = criterion.getNoPostSmoothSteps ();
+
+      verbosity_ = configuration.get("verbosity",2);
+      criterion.setDebugLevel (verbosity_);
+
+      createHierarchies(criterion, const_cast<Operator&>(*matrix), pinfo);
+    }
 
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::~AMG()
