@@ -170,6 +170,7 @@ namespace Dune {
     typedef X domain_type;
     //!  \brief The field type used by the vector type domain_type.
     typedef typename X::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
     //! \brief The type of the communication object.
     //!
     //! This must either be OwnerOverlapCopyCommunication or a type
@@ -201,7 +202,7 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x)
+    virtual real_type norm (const X& x)
     {
       return communication.norm(x);
     }
