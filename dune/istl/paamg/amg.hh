@@ -590,13 +590,13 @@ namespace Dune
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
               // We are still participating on this level
               solver_ = std::make_shared<BiCGSTABSolver<X> >(Dune::stackobject_to_shared_ptr(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed())),
-                                                  *scalarProduct_,
+                                                  Dune::stackobject_to_shared_ptr(*scalarProduct_),
                                                   coarseSmoother_, 1E-2, 1000, 0);
             else
               solver_.reset();
           }else
             solver_ = std::make_shared<BiCGSTABSolver<X> >(Dune::stackobject_to_shared_ptr(const_cast<M&>(*matrices_->matrices().coarsest())),
-                                                *scalarProduct_,
+                                                Dune::stackobject_to_shared_ptr(*scalarProduct_),
                                                 coarseSmoother_, 1E-2, 1000, 0);
         }
       }
