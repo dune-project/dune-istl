@@ -45,7 +45,7 @@ namespace Dune {
     //! export types, they come from the derived class
     typedef X domain_type;
     typedef typename X::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*! \brief Dot product of two vectors.
        It is assumed that the vectors are consistent on the interior+border

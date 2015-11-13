@@ -1,6 +1,7 @@
 #include"config.h"
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/istl/paamg/twolevelmethod.hh>
