@@ -5,6 +5,7 @@
 
 #include <dune/common/parametertree.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/solver.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/paamg/amg.hh>
 
@@ -214,6 +215,39 @@ namespace Dune {
         return std::make_shared<RestartedGMResSolver<X> > (linearoperator, preconditioner, configuration);
       DUNE_THROW(ISTLError, "Factory does not know solver type '" + id + "'!\n");
     }
+
+    /*!
+       \brief Creates a solver from a ParameterTree, requires a preconditioner.
+       \param linearoperator The linear operator that the solver will work on.
+       \param preconditioner The preconditioner to be given to the solver.
+       \param id A string matching the type name of the desired solver.
+       \param configuration A ParameterTree subsection containing configuration parameters for the solver.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template <typename X>
+    static std::shared_ptr<InverseOperator<X,X> > create (std::shared_ptr<LinearOperator<X,X> > linearoperator,
+                                                                   std::shared_ptr<ScalarProduct<X> > scalarproduct,
+                                                                   std::shared_ptr<Preconditioner<X,X> > preconditioner,
+                                                                   std::string id, const ParameterTree& configuration)
+    {
+      if (id == "BiCGSTABSolver")
+        return std::make_shared<BiCGSTABSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      if (id == "CGSolver")
+        return std::make_shared<CGSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      if (id == "GeneralizedPCGSolver")
+        return std::make_shared<GeneralizedPCGSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      if (id == "GradientSolver")
+        return std::make_shared<GradientSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      if (id == "LoopSolver")
+        return std::make_shared<LoopSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      if (id == "MINRESSolver")
+        return std::make_shared<MINRESSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      if (id == "RestartedGMResSolver")
+        return std::make_shared<RestartedGMResSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
+      DUNE_THROW(ISTLError, "Factory does not know solver type '" + id + "'!\n");
+    }
+
   };
 
   /*!
