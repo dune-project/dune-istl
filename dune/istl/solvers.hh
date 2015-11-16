@@ -157,6 +157,38 @@ namespace Dune {
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
+    /**
+       \brief Set up Loop solver.
+
+       \param op The operator we solve.
+       \param sp The scalar product to use, e. g. SeqScalarproduct.
+       \param prec The preconditioner to apply in each iteration of the loop.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    LoopSolver (std::shared_ptr<LinearOperator<X,X> > op,
+                std::shared_ptr<ScalarProduct<X> > sp,
+                std::shared_ptr<Preconditioner<X,X> > prec,
+                const ParameterTree& configuration) :
+      _op(op), _prec(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+    }
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
@@ -273,7 +305,7 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     GradientSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                     real_type reduction, int maxit, int verbose) :
@@ -317,7 +349,7 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     GradientSolver (std::shared_ptr<LinearOperator<X,X> > op,
                     std::shared_ptr<ScalarProduct<X> > sp,
@@ -330,6 +362,40 @@ namespace Dune {
       if (op->category != sp->category)
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
+
+    /*!
+       \brief Set up solver.
+
+       \param op The operator we solve.
+       \param sp The scalar product to use, e. g. SeqScalarproduct.
+       \param prec The preconditioner to be used.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    GradientSolver (std::shared_ptr<LinearOperator<X,X> > op,
+                    std::shared_ptr<ScalarProduct<X> > sp,
+                    std::shared_ptr<Preconditioner<X,X> > prec,
+                    const ParameterTree& configuration) :
+      _op(op), _prec(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+    }
+
 
     /*!
        \brief Apply inverse operator.
@@ -439,7 +505,7 @@ namespace Dune {
     /*!
        \brief Set up conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     CGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
               real_type reduction, int maxit, int verbose) :
@@ -452,7 +518,7 @@ namespace Dune {
     }
 
     /*!
-       \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+       \copydoc GradientSolver::GradientSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
      */
     CGSolver (std::shared_ptr<LinearOperator<X,X> >op, std::shared_ptr<Preconditioner<X,X> > prec,
               const ParameterTree& configuration) :
@@ -471,7 +537,7 @@ namespace Dune {
     /*!
        \brief Set up conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     CGSolver (std::shared_ptr<LinearOperator<X,X> > op,
               std::shared_ptr<ScalarProduct<X> > sp,
@@ -483,6 +549,25 @@ namespace Dune {
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
       if (op->category != sp->category)
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+
+    /*!
+       \copydetails GradientSolver::GradientSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+     */
+    CGSolver (std::shared_ptr<LinearOperator<X,X> >op,
+              std::shared_ptr<ScalarProduct<X> > sp,
+              std::shared_ptr<Preconditioner<X,X> > prec,
+              const ParameterTree& configuration) :
+      _op(op), _prec(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     /*!
@@ -662,7 +747,7 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                     real_type reduction, int maxit, int verbose) :
@@ -675,7 +760,7 @@ namespace Dune {
     }
 
     /*!
-       \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+       \copydoc GradientSolver::GradientSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
      */
     BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
@@ -693,7 +778,7 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op,
                     std::shared_ptr<ScalarProduct<X> > sp,
@@ -705,6 +790,27 @@ namespace Dune {
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
       if (op->category != sp->category)
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+
+    /*!
+       \brief Set up solver.
+
+       \copydetails GradientSolver::GradientSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+     */
+    BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op,
+                    std::shared_ptr<ScalarProduct<X> > sp,
+                    std::shared_ptr<Preconditioner<X,X> > prec,
+                    const ParameterTree& configuration) :
+      _op(op), _prec(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     /*!
@@ -956,7 +1062,7 @@ namespace Dune {
     /*!
        \brief Set up MINRES solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                   real_type reduction, int maxit, int verbose) :
@@ -969,7 +1075,7 @@ namespace Dune {
     }
 
     /*!
-       \copydoc GradientSolver::GradientSolver(L&,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+       \copydoc GradientSolver::GradientSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
      */
     MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
                   const ParameterTree& configuration) :
@@ -988,7 +1094,7 @@ namespace Dune {
     /*!
        \brief Set up MINRES solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
      */
     MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op,
                   std::shared_ptr<ScalarProduct<X> > sp,
@@ -1000,6 +1106,27 @@ namespace Dune {
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
       if (op->category != sp->category)
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+
+    /*!
+       \brief Set up MINRES solver.
+
+       \copydetails GradientSolver::GradientSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,const ParameterTree&)
+     */
+    MINRESSolver (std::shared_ptr<LinearOperator<X,X> > op,
+                  std::shared_ptr<ScalarProduct<X> > sp,
+                  std::shared_ptr<Preconditioner<X,X> > prec,
+                  const ParameterTree& configuration) :
+      _op(op), _prec(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
     }
 
     /*!
@@ -1290,7 +1417,7 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
        \param restart number of GMRes cycles before restart
      */
     RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
@@ -1360,7 +1487,7 @@ namespace Dune {
     /*!
        \brief Set up solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
        \param restart number of GMRes cycles before restart
      */
     RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op,
@@ -1378,6 +1505,42 @@ namespace Dune {
     }
 
     /*!
+       \brief Set up solver.
+
+       \param op The operator we solve.
+       \param sp The scalar product to use, e. g. SeqScalarproduct.
+       \param prec The preconditioner to be used.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       restart           | Number of GMRes cycles before restart.
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op,
+                          std::shared_ptr<ScalarProduct<X> > sp,
+                          std::shared_ptr<Preconditioner<X,X> > prec,
+                          const ParameterTree& configuration) :
+      _A(op), _W(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _restart = configuration.get<int>("restart");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+    }
+
+    /*!
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
@@ -1662,7 +1825,8 @@ namespace Dune {
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
+
        \param restart When to restart the construction of
        the Krylov search space.
      */
@@ -1711,7 +1875,8 @@ namespace Dune {
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+       \copydetails LoopSolver::LoopSolver(std::shared_ptr<LinearOperator<X,X> >,std::shared_ptr<ScalarProduct<X> >,std::shared_ptr<Preconditioner<X,X> >,real_type,int,int)
+
        \param restart When to restart the construction of
        the Krylov search space.
      */
@@ -1727,6 +1892,42 @@ namespace Dune {
       if (op->category != sp->category)
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
+
+    /*!
+       \brief Set up solver.
+
+       \param op The operator we solve.
+       \param sp The scalar product to use, e. g. SeqScalarproduct.
+       \param prec The preconditioner to be used.
+       Has to inherit from Preconditioner.
+       \param configuration ParameterTree containing solver parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       maxit             | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       reduction         | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       restart           | When to restart the construction of the Krylov search space.
+       verbose           | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op,
+                          std::shared_ptr<ScalarProduct<X> > sp,
+                          std::shared_ptr<Preconditioner<X,X> > prec,
+                          const ParameterTree& configuration) :
+      _op(op), _prec(prec), _sp(sp)
+    {
+      if (op->category != prec->category)
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (op->category != sp->category)
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+
+      _reduction = configuration.get<real_type>("reduction");
+      _maxit = configuration.get<int>("maxit");
+      _verbose = configuration.get<int>("verbose");
+      _restart = std::min(_maxit, configuration.get<int>("restart", 10));
+    }
+
     /*!
        \brief Apply inverse operator.
 
