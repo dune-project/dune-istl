@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_LDL_HH
 #define DUNE_ISTL_LDL_HH
 
-#if HAVE_LDL || defined DOXYGEN
+#if HAVE_SUITESPARSE_LDL || defined DOXYGEN
 
 #include <iostream>
 #include <type_traits>
@@ -337,5 +337,5 @@ namespace Dune {
 
 }
 
-#endif //HAVE_LDL
+#endif //HAVE_SUITESPARSE_LDL
 #endif //DUNE_ISTL_LDL_HH

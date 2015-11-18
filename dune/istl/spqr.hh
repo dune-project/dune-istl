@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_SPQR_HH
 #define DUNE_ISTL_SPQR_HH
 
-#if HAVE_SPQR || defined DOXYGEN
+#if HAVE_SUITESPARSE_SPQR || defined DOXYGEN
 
 #include <complex>
 #include <type_traits>
@@ -287,5 +287,5 @@ namespace Dune {
 
 }
 
-#endif //HAVE_SPQR
+#endif //HAVE_SUITESPARSE_SPQR
 #endif //DUNE_ISTL_SPQR_HH
