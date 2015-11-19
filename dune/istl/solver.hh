@@ -126,9 +126,9 @@ namespace Dune
     }
 
     //! helper function for printing solver output
-    template <class DataType>
+    template <typename Int, typename DataType>
     void printOutput(std::ostream& s,
-                     const DataType& iter,
+                     const Int& iter,
                      const DataType& norm,
                      const DataType& norm_old) const
     {
@@ -139,9 +139,9 @@ namespace Dune
     }
 
     //! helper function for printing solver output
-    template <class DataType>
+    template <typename Int, typename DataType>
     void printOutput(std::ostream& s,
-                     const DataType& iter,
+                     const Int& iter,
                      const DataType& norm) const
     {
       s << std::setw(iterationSpacing)  << iter << " ";

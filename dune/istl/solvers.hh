@@ -152,7 +152,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -169,7 +169,7 @@ namespace Dune {
         _op.applyscaleadd(-1,v,b);  // update defect
         real_type defnew=_sp.norm(b);  // comp defect norm
         if (_verbose>1)             // print
-          this->printOutput(std::cout,real_type(i),defnew,def);
+          this->printOutput(std::cout,i,defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -184,7 +184,7 @@ namespace Dune {
 
       // print
       if (_verbose==1)
-        this->printOutput(std::cout,real_type(i),def);
+        this->printOutput(std::cout,i,def);
 
       // postprocess preconditioner
       _prec.post(x);
@@ -294,7 +294,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -311,7 +311,7 @@ namespace Dune {
 
         real_type defnew=_sp.norm(b); // comp defect norm
         if (_verbose>1)             // print
-          this->printOutput(std::cout,real_type(i),defnew,def);
+          this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -325,7 +325,7 @@ namespace Dune {
       i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,real_type(i),def);
+        this->printOutput(std::cout,i,def);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
@@ -628,7 +628,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),norm_0);
+          this->printOutput(std::cout,0,norm_0);
           //std::cout << " Iter       Defect         Rate" << std::endl;
           //std::cout << "    0" << std::setw(14) << norm_0 << std::endl;
         }
@@ -709,7 +709,7 @@ namespace Dune {
 
         if (_verbose>1) // print
         {
-          this->printOutput(std::cout,real_type(it),norm,norm_old);
+          this->printOutput(std::cout,it,norm,norm_old);
         }
 
         if ( norm < (_reduction * norm_0) )
@@ -748,7 +748,7 @@ namespace Dune {
 
         if (_verbose > 1)             // print
         {
-          this->printOutput(std::cout,real_type(it),norm,norm_old);
+          this->printOutput(std::cout,it,norm,norm_old);
         }
 
         if ( norm < (_reduction * norm_0)  || norm<1E-30)
@@ -764,7 +764,7 @@ namespace Dune {
       it=std::min(static_cast<double>(_maxit),it);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,real_type(it),norm);
+        this->printOutput(std::cout,it,norm);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
@@ -873,7 +873,7 @@ namespace Dune {
         std::cout << "=== MINRESSolver" << std::endl;
         if(_verbose > 1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -1002,7 +1002,7 @@ namespace Dune {
         real_type defnew = std::abs(beta0*xi[i%2]);
 
           if(_verbose > 1)
-            this->printOutput(std::cout,real_type(i),defnew,def);
+            this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;
           if(def < def0*_reduction || def < 1e-30 || i == _maxit ) {
@@ -1012,7 +1012,7 @@ namespace Dune {
         } // end for
 
         if(_verbose == 1)
-          this->printOutput(std::cout,real_type(i),def);
+          this->printOutput(std::cout,i,def);
 
         // postprocess preconditioner
         _prec.post(x);
@@ -1232,7 +1232,7 @@ namespace Dune {
           std::cout << "=== RestartedGMResSolver" << std::endl;
           if(_verbose > 1) {
             this->printHeader(std::cout);
-            this->printOutput(std::cout,real_type(0),norm_0);
+            this->printOutput(std::cout,0,norm_0);
           }
         }
 
@@ -1290,7 +1290,7 @@ namespace Dune {
 
           // print current iteration statistics
           if(_verbose > 1) {
-            this->printOutput(std::cout,real_type(j),norm,norm_old);
+            this->printOutput(std::cout,j,norm,norm_old);
           }
 
           norm_old = norm;
@@ -1530,7 +1530,7 @@ namespace Dune {
         std::cout << "=== GeneralizedPCGSolver" << std::endl;
         if (_verbose>1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
       // some local variables
@@ -1552,7 +1552,7 @@ namespace Dune {
       // convergence test
       real_type defnew=_sp.norm(b);    // comp defect norm
       if (_verbose>1)                 // print
-        this->printOutput(std::cout,real_type(++i),defnew,def);
+        this->printOutput(std::cout,++i,defnew,def);
       def = defnew;                   // update norm
       if (def<def0*_reduction || def<1E-30)        // convergence check
       {
@@ -1597,7 +1597,7 @@ namespace Dune {
           real_type defnew=_sp.norm(b);        // comp defect norm
 
           if (_verbose>1)                     // print
-            this->printOutput(std::cout,real_type(++i),defnew,def);
+            this->printOutput(std::cout,++i,defnew,def);
 
           def = defnew;                       // update norm
           if (def<def0*_reduction || def<1E-30)            // convergence check
