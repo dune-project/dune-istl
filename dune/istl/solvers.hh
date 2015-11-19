@@ -20,6 +20,8 @@
 #include "preconditioner.hh"
 #include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/simd.hh>
+#include <dune/common/rangeutilities.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
@@ -170,7 +172,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
         def = defnew;               // update norm
-        if (def<def0*_reduction || def<1E-30)    // convergence check
+        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -189,7 +191,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = def/def0;
+      res.reduction = max_value(def/def0);
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -312,7 +314,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (def<def0*_reduction || def<1E-30)    // convergence check
+        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -327,8 +329,8 @@ namespace Dune {
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(def/def0);
-      res.conv_rate  = static_cast<double>(pow(res.reduction,1.0/i));
+      res.reduction = static_cast<double>(max_value(def/def0));
+      res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
         std::cout << "=== rate=" << res.conv_rate
@@ -429,7 +431,7 @@ namespace Dune {
 
       real_type def0 = _sp.norm(b); // compute norm
 
-      if (!isfinite(def0)) // check for inf or NaN
+      if (!all_true(isfinite(def0))) // check for inf or NaN
       {
         if (_verbose>0)
           std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
@@ -438,7 +440,7 @@ namespace Dune {
                    << " is infinite or NaN");
       }
 
-      if (def0<1E-30)    // convergence check
+      if (max_value(def0)<1E-30)    // convergence check
       {
         res.converged  = true;
         res.iterations = 0;               // fill statistics
@@ -457,7 +459,7 @@ namespace Dune {
         std::cout << "=== CGSolver" << std::endl;
         if (_verbose>1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -485,10 +487,10 @@ namespace Dune {
         real_type defnew=_sp.norm(b); // comp defect norm
 
         if (_verbose>1)             // print
-          this->printOutput(std::cout,real_type(i),defnew,def);
+          this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (!isfinite(def)) // check for inf or NaN
+        if (!all_true(isfinite(def))) // check for inf or NaN
         {
           if (_verbose>0)
             std::cout << "=== CGSolver: abort due to infinite or NaN defect"
@@ -497,7 +499,7 @@ namespace Dune {
                      "CGSolver: defect=" << def << " is infinite or NaN");
         }
 
-        if (def<def0*_reduction || def<1E-30)    // convergence check
+        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -517,12 +519,12 @@ namespace Dune {
       i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,real_type(i),def);
+        this->printOutput(std::cout,i,def);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(def/def0);
-      res.conv_rate  = static_cast<double>(pow(res.reduction,1.0/i));
+      res.reduction = static_cast<double>(max_value(max_value(def/def0)));
+      res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
       if (_verbose>0)                 // final print
@@ -621,6 +623,7 @@ namespace Dune {
     {
       using std::abs;
       const real_type EPSILON=1e-80;
+      using std::abs;
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
       real_type norm, norm_old, norm_0;
@@ -668,7 +671,7 @@ namespace Dune {
         }
       }
 
-      if ( norm < (_reduction * norm_0)  || norm<1E-30)
+      if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
       {
         res.converged = 1;
         _prec.post(x);                  // postprocess preconditioner
@@ -693,13 +696,13 @@ namespace Dune {
         rho_new = _sp.dot(rt,r);
 
         // look if breakdown occurred
-        if (abs(rho) <= EPSILON)
+        if (all_true(abs(rho) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
-                     << rho << " <= EPSILON " << EPSILON
+                     << rho << " <= EPSILON " << max_value(EPSILON)
                      << " after " << it << " iterations");
-        if (abs(omega) <= EPSILON)
+        if (all_true(abs(omega) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
-                     << omega << " <= EPSILON " << EPSILON
+                     << omega << " <= EPSILON " << max_value(EPSILON)
                      << " after " << it << " iterations");
 
 
@@ -723,9 +726,9 @@ namespace Dune {
         // alpha = rho_new / < rt, v >
         h = _sp.dot(rt,v);
 
-        if (abs(h) < EPSILON)
+        if ( all_true(abs(h) < EPSILON) )
           DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
-                     << abs(h) << " < EPSILON " << EPSILON
+                     << abs(h) << " < EPSILON " << max_value(EPSILON)
                      << " after " << it << " iterations");
 
         alpha = rho_new / h;
@@ -748,7 +751,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( norm < (_reduction * norm_0) )
+        if ( all_true(norm < (_reduction * norm_0)) )
         {
           res.converged = 1;
           break;
@@ -787,7 +790,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( norm < (_reduction * norm_0)  || norm<1E-30)
+        if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
         {
           res.converged = 1;
           break;
@@ -804,8 +807,8 @@ namespace Dune {
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
-      res.reduction = static_cast<double>(norm/norm_0);
-      res.conv_rate  = static_cast<double>(pow(res.reduction,1.0/it));
+      res.reduction = static_cast<double>(max_value(norm/norm_0));
+      res.conv_rate  = pow(res.reduction,1.0/it);
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
         std::cout << "=== rate=" << res.conv_rate
@@ -918,7 +921,7 @@ namespace Dune {
       }
 
       // check for convergence
-      if(def0 < 1e-30 ) {
+      if( max_value(def0) < 1e-30 ) {
         res.converged = true;
         res.iterations = 0;
         res.reduction = 0;
@@ -1045,7 +1048,8 @@ namespace Dune {
             this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;
-          if(def < def0*_reduction || def < 1e-30 || i == _maxit ) {
+          if(all_true(def < def0*_reduction)
+              || max_value(def) < 1e-30 || i == _maxit ) {
             res.converged = true;
             break;
           }
@@ -1058,8 +1062,8 @@ namespace Dune {
         _prec.post(x);
         // fill statistics
         res.iterations = i;
-        res.reduction = static_cast<double>(def/def0);
-        res.conv_rate = static_cast<double>(pow(res.reduction,1.0/i));
+        res.reduction = static_cast<double>(max_value(def/def0));
+        res.conv_rate = pow(res.reduction,1.0/i);
         res.elapsed = watch.elapsed();
 
         // final print
@@ -1236,7 +1240,7 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
-      apply(x,b,_reduction,res);
+      apply(x,b,max_value(_reduction),res);
     }
 
     /*!
@@ -1289,7 +1293,7 @@ namespace Dune {
           }
         }
 
-      if(norm_0 < EPSILON) {
+      if(all_true(norm_0 < EPSILON)) {
         _W.post(x);
         res.converged = true;
         if(_verbose > 0) // final print
@@ -1321,7 +1325,7 @@ namespace Dune {
             w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp.norm(w);
-          if(abs(H[i+1][i]) < EPSILON)
+          if(all_true(abs(H[i+1][i]) < EPSILON))
             DUNE_THROW(SolverAbort,
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
@@ -1349,7 +1353,7 @@ namespace Dune {
           norm_old = norm;
 
           // check convergence
-          if(norm < reduction * norm_0)
+          if(all_true(norm < reduction * norm_0))
             res.converged = true;
 
         } // end for
@@ -1385,8 +1389,8 @@ namespace Dune {
 
       // save solver statistics
       res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = static_cast<double>(norm/norm_0);
-      res.conv_rate = static_cast<double>(pow(res.reduction,1.0/(j-1)));
+      res.reduction = static_cast<double>(max_value(norm/norm_0));
+      res.conv_rate = pow(res.reduction,1.0/(j-1));
       res.elapsed = watch.elapsed();
 
       if(_verbose>0)
@@ -1426,12 +1430,13 @@ namespace Dune {
     }
 
     template<typename T>
-    typename std::enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       return t;
     }
 
     template<typename T>
-    typename std::enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+      using std::conj;
       return conj(t);
     }
 
@@ -1566,7 +1571,7 @@ namespace Dune {
       p[0].reset(new X(x));
 
       real_type def0 = _sp.norm(b);    // compute norm
-      if (def0<1E-30)        // convergence check
+      if ( max_value(def0) < 1E-30 )   // convergence check
       {
         res.converged  = true;
         res.iterations = 0;                     // fill statistics
@@ -1609,7 +1614,7 @@ namespace Dune {
       if (_verbose>1)                 // print
         this->printOutput(std::cout,++i,defnew,def);
       def = defnew;                   // update norm
-      if (def<def0*_reduction || def<1E-30)        // convergence check
+      if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
       {
         res.converged  = true;
         if (_verbose>0)                       // final print
@@ -1655,7 +1660,7 @@ namespace Dune {
             this->printOutput(std::cout,++i,defNew,def);
 
           def = defNew;                       // update norm
-          if (def<def0*_reduction || def<1E-30)            // convergence check
+          if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
           {
             res.converged  = true;
             break;
@@ -1674,7 +1679,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = def/def0;
+      res.reduction = max_value(def/def0);
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
