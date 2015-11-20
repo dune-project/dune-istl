@@ -151,7 +151,7 @@ void testAmg(int N, int coarsenTarget)
 
   typedef Dune::Amg::AMG<Operator,Vector,ParSmoother,Communication> AMG;
 
-  AMG amg(fop, criterion, smootherArgs, 1, 2, 2, false, comm);
+  AMG amg(fop, criterion, smootherArgs, comm);
 
   buildtime = watch.elapsed();
 

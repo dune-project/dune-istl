@@ -129,13 +129,16 @@ void testAMG(int N, int coarsenTarget, int ml)
   criterion.setBeta(1.0e-4);
   criterion.setMaxLevel(ml);
   criterion.setSkipIsolated(false);
+  // specify pre/post smoother steps
+  criterion.setNoPreSmoothSteps(1);
+  criterion.setNoPostSmoothSteps(1);
 
   Dune::SeqScalarProduct<Vector> sp;
   typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
 
   Smoother smoother(mat,1,1);
 
-  AMG amg(fop, criterion, smootherArgs, 1, 1, 1, false);
+  AMG amg(fop, criterion, smootherArgs);
 
 
   double buildtime = watch.elapsed();
