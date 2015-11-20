@@ -139,7 +139,7 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //  setBoundary(x,b,N);
-#if HAVE_UMFPACK
+#if HAVE_SUITESPARSE_UMFPACK
   std::cout << "Do testing with UMFPack" << std::endl;
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
       Dune::UMFPack<BCRSMat> > prec0(mat, domains, 1);
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
     prec1(mat, domains, 1, false);
   Dune::LoopSolver<BVector> solver1(fop, prec1, 1e-2,100,2);
   solver1.apply(x,b, res);
-#endif
+#endif // HAVE_SUITESPARSE_UMFPACK
 #if HAVE_SUPERLU
   std::cout << "Do testing with SuperLU" << std::endl;
   x=100;

@@ -400,8 +400,8 @@ namespace Dune
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
         scalarProduct_.reset(ScalarProductChooserType::construct(cargs.getComm()));
 
-#if HAVE_SUPERLU|| HAVE_UMFPACK
-#if HAVE_UMFPACK
+#if HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
+#if HAVE_SUITESPARSE_UMFPACK
 #define DIRECTSOLVER UMFPack
 #else
 #define DIRECTSOLVER SuperLU
@@ -425,7 +425,7 @@ namespace Dune
             solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
         }else
 #undef DIRECTSOLVER
-#endif
+#endif // HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
         {
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {

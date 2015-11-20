@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_UMFPACK_HH
 #define DUNE_ISTL_UMFPACK_HH
 
-#if HAVE_UMFPACK || defined DOXYGEN
+#if HAVE_SUITESPARSE_UMFPACK || defined DOXYGEN
 
 #include<complex>
 #include<type_traits>
@@ -528,6 +528,6 @@ namespace Dune {
   };
 }
 
-#endif //HAVE_UMFPACK
+#endif // HAVE_SUITESPARES_UMFPACK
 
 #endif //DUNE_ISTL_UMFPACK_HH

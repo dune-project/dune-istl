@@ -15,7 +15,7 @@ if(CMAKE_USE_PTHREADS_INIT)
   target_link_libraries(pthreadtwoleveltest ${CMAKE_THREAD_LIBS_INIT} ${DUNE_LIBS})
   dune_add_test(TARGET pthreadtwoleveltest)
 
-  if(SUPERLU_FOUND OR UMFPACK_FOUND)
+  if(SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
     dune_add_test(NAME pthreaddirectamgtest
                   SOURCES pthreadamgtest.cc
                   COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>
@@ -53,13 +53,13 @@ if(SUPERLU_FOUND)
   dune_add_test(TARGET superlufastamgtest)
 endif(SUPERLU_FOUND)
 
-if(UMFPACK_FOUND)
+if(SuiteSparse_UMFPACK_FOUND)
   dune_add_test(NAME umfpackamgtest
                 SOURCES amgtest.cc)
 
   dune_add_test(NAME umfpackfastamgtest
                 SOURCES fastamg.cc)
-endif(UMFPACK_FOUND)
+endif()
 
 
 dune_add_test(SOURCES twolevelmethodtest.cc)

@@ -56,14 +56,14 @@ if(SUPERLU_FOUND)
 
   dune_add_test(SOURCES complexrhstest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
-endif(SUPERLU_FOUND)
+endif()
 
-if(UMFPACK_FOUND)
+if(SuiteSparse_UMFPACK_FOUND)
   dune_add_test(SOURCES umfpacktest.cc)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 endif()
 
-if ((SUPERLU_FOUND) OR (UMFPACK_FOUND))
+if (SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
   dune_add_test(SOURCES overlappingschwarztest.cc)
 endif()
 

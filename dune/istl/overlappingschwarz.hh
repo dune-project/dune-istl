@@ -310,7 +310,7 @@ namespace Dune
     std::size_t maxlength_;
   };
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   template<template<class> class S, int n, int m, typename T, typename A>
   struct OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>, A> >, true>
   {
@@ -394,7 +394,7 @@ namespace Dune
     std::size_t maxlength_;
   };
 
-#endif
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<class M, class X, class Y>
   class OverlappingAssignerILUBase
@@ -1141,7 +1141,7 @@ namespace Dune
     return maxlength;
   }
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   template<template<class> class S, typename T, typename A, int m, int n>
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t SeqOverlappingSchwarzAssemblerHelper<S<BCRSMatrix<FieldMatrix<T,m,n>,A> >,true>::assembleLocalProblems(const RowToDomain& rowToDomain,
@@ -1193,7 +1193,7 @@ namespace Dune
     return maxlength;
   }
 
-#endif
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<class M,class X,class Y>
   template<class RowToDomain, class Solvers, class SubDomains>
@@ -1387,7 +1387,7 @@ namespace Dune
     }
   }
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<template<class> class S, int n, int m, typename T, typename A>
   OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>
@@ -1480,7 +1480,7 @@ namespace Dune
     return rhs_;
   }
 
-#endif
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<class M, class X, class Y>
   OverlappingAssignerILUBase<M,X,Y>::OverlappingAssignerILUBase(std::size_t maxlength,

@@ -493,8 +493,8 @@ namespace Dune
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
         scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
-#if HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
+#if HAVE_SUITESPARSE_UMFPACK
 #define DIRECTSOLVER UMFPack
 #else
 #define DIRECTSOLVER SuperLU
@@ -518,7 +518,7 @@ namespace Dune
             std::cout<< "Using a direct coarse solver (" << static_cast< DIRECTSOLVER<typename M::matrix_type>* >(solver_.get())->name() << ")" << std::endl;
         }else
 #undef DIRECTSOLVER
-#endif
+#endif // HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
         {
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
