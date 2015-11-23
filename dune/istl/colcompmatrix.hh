@@ -156,8 +156,8 @@ namespace Dune
   template<class M, class X, class TM, class TD, class T1>
   class SeqOverlappingSchwarz;
 
-  template<class T>
-  struct SeqOverlappingSchwarzAssembler;
+  template<class T, bool flag>
+  struct SeqOverlappingSchwarzAssemblerHelper;
 
   /**
    * @brief Converter for BCRSMatrix to column-compressed Matrix.
@@ -166,14 +166,12 @@ namespace Dune
   template<class B, class TA, int n, int m>
   class ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
   {
-    template<class M, class X, class TM, class TD, class T1>
-    friend class SeqOverlappingSchwarz;
     friend struct ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
 
   public:
     /** @brief The type of the matrix to convert. */
     typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
-    friend struct SeqOverlappingSchwarzAssembler<ColCompMatrix<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssemblerHelper<ColCompMatrix<Matrix>, true>;
 
     typedef typename Matrix::size_type size_type;
 

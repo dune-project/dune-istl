@@ -231,7 +231,7 @@ namespace Dune
     /** @brief The type of the matrix to convert. */
     typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
 
-    friend struct SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>, true>;
 
     typedef typename Matrix::size_type size_type;
 
