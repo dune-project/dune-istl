@@ -479,27 +479,46 @@ namespace Dune
         solver_(), rhs_(), lhs_(), update_(), scalarProduct_(), buildHierarchy_(true),
         coarsesolverconverged(true), coarseSmoother_()
     {
-      smootherArgs_.iterations = configuration.get<int>("smootherIterations");
-      smootherArgs_.relaxationFactor = configuration.get<typename SmootherArgs::RelaxationFactor>("smootherRelaxation");
+
+      if (configuration.hasKey ("smootherIterations"))
+        smootherArgs_.iterations = configuration.get<int>("smootherIterations");
+
+      if (configuration.hasKey ("smootherRelaxation"))
+        smootherArgs_.relaxationFactor = configuration.get<typename SmootherArgs::RelaxationFactor>("smootherRelaxation");
 
       typedef Amg::RowSum Norm;
       typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> > Criterion;
 
       Criterion criterion (configuration.get<int>("maxLevel"));
 
-      criterion.setCoarsenTarget (configuration.get<int>("coarsenTarget"));
-      criterion.setProlongationDampingFactor (configuration.get<double>("prolongationDampingFactor"));
-      criterion.setAlpha (configuration.get<double>("alpha"));
-      criterion.setBeta (configuration.get<double>("beta"));
+      if (configuration.hasKey ("coarsenTarget"))
+        criterion.setCoarsenTarget (configuration.get<int>("coarsenTarget"));
+      if (configuration.hasKey ("prolongationDampingFactor"))
+        criterion.setProlongationDampingFactor (configuration.get<double>("prolongationDampingFactor"));
 
-      additive = configuration.get<bool>("additive");
-      criterion.setAdditive (additive);
-      gamma_ = configuration.get<std::size_t> ("gamma");
-      criterion.setGamma (gamma_);
-      preSteps_ = configuration.get<std::size_t> ("preSteps");
-      criterion.setNoPreSmoothSteps (preSteps_);
-      postSteps_ = configuration.get<std::size_t> ("postSteps");
-      criterion.setNoPostSmoothSteps (postSteps_);
+      if (configuration.hasKey ("alpha"))
+        criterion.setAlpha (configuration.get<double> ("alpha"));
+
+      if (configuration.hasKey ("beta"))
+        criterion.setBeta (configuration.get<double> ("beta"));
+
+      if (configuration.hasKey ("gamma"))
+        criterion.setGamma (configuration.get<std::size_t> ("gamma"));
+      gamma_ = criterion.getGamma();
+
+
+      if (configuration.hasKey ("additive"))
+        criterion.setAdditive (configuration.get<bool>("additive"));
+      additive = criterion.getAdditive();
+
+      if (configuration.hasKey ("preSteps"))
+        criterion.setNoPreSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+      preSteps_ = criterion.getNoPreSmoothSteps ();
+
+      if (configuration.hasKey ("postSteps"))
+        criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+      postSteps_ = criterion.getNoPostSmoothSteps ();
+
       verbosity_ = configuration.get<std::size_t> ("verbosity");
       criterion.setDebugLevel (verbosity_);
 
