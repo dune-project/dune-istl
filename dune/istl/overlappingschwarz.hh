@@ -210,15 +210,7 @@ namespace Dune
   {};
 
   template<typename T>
-  struct OverlappingAssigner : public OverlappingAssignerHelper<T,Dune::StoresColumnCompressed<T>::value >
-  {
-    public:
-    OverlappingAssigner(std::size_t maxlength, const typename T::matrix_type& mat,
-                        const typename T::range_type& b, typename T::range_type& x)
-      : OverlappingAssignerHelper<T,Dune::StoresColumnCompressed<T>::value >
-      (maxlength,mat,b,x)
-      {}
-  };
+  using OverlappingAssigner = OverlappingAssignerHelper<T, Dune::StoresColumnCompressed<T>::value>;
 
   // specialization for DynamicMatrix
   template<class K, int n, class Al, class X, class Y>
@@ -691,10 +683,7 @@ namespace Dune
   {};
 
   template<class T>
-  struct SeqOverlappingSchwarzAssembler
-    : public SeqOverlappingSchwarzAssemblerHelper<T,Dune::StoresColumnCompressed<T>::value>
-  {};
-
+  using SeqOverlappingSchwarzAssembler = SeqOverlappingSchwarzAssemblerHelper<T,Dune::StoresColumnCompressed<T>::value>;
 
   template<class K, int n, class Al, class X, class Y>
   struct SeqOverlappingSchwarzAssemblerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
