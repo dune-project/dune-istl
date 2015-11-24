@@ -15,7 +15,6 @@ int main(int argc, char** argv)
 {
   try
   {
-#ifdef HAVE_PARDISO
     /* Matrix data. */
     int n = 8;
     int ia[ 9] = { 0, 4, 7, 9, 11, 12, 15, 17, 20 };
@@ -50,6 +49,8 @@ int main(int argc, char** argv)
 
     /* Pardiso control parameters. */
     int iparm[64];
+    double dparm[64];
+    int solver;
     int maxfct, mnum, phase, error, msglvl;
 
     /* Number of processors. */
@@ -66,7 +67,7 @@ int main(int argc, char** argv)
     /* ..  Setup Pardiso control parameters.                                */
     /* -------------------------------------------------------------------- */
 
-    F77_FUNC(pardisoinit) (pt,  &mtype, iparm);
+    pardisoinit(pt,  &mtype, &solver, iparm, dparm, &error);
 
     iparm[2]  = 1;
 
@@ -96,9 +97,9 @@ int main(int argc, char** argv)
       b[i] = 1;
     }
 
-    F77_FUNC(pardiso) (pt, &maxfct, &mnum, &mtype, &phase,
-                       &n, a, ia, ja, &idum, &nrhs,
-                       iparm, &msglvl, b, x, &error);
+    pardiso(pt, &maxfct, &mnum, &mtype, &phase,
+            &n, a, ia, ja, &idum, &nrhs,
+            iparm, &msglvl, b, x, &error, dparm);
 
     if (error != 0) {
       printf("\nERROR during solution: %d", error);
@@ -117,9 +118,9 @@ int main(int argc, char** argv)
     /* -------------------------------------------------------------------- */
     phase = -1;                 /* Release internal memory. */
 
-    F77_FUNC(pardiso) (pt, &maxfct, &mnum, &mtype, &phase,
-                       &n, &ddum, ia, ja, &idum, &nrhs,
-                       iparm, &msglvl, &ddum, &ddum, &error);
+    pardiso(pt, &maxfct, &mnum, &mtype, &phase,
+            &n, &ddum, ia, ja, &idum, &nrhs,
+            iparm, &msglvl, &ddum, &ddum, &error, dparm);
 
     typedef Dune::FieldMatrix<double,1,1> M;
     Dune::BCRSMatrix<M> B(8,8,Dune::BCRSMatrix<M>::random);
@@ -182,11 +183,6 @@ int main(int argc, char** argv)
       std::cout << "\n x [" << i << "] = " << y[i];
     }
     std::cout << "\n";
-
-#else
-    DUNE_THROW(Dune::NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
-#endif
-
 
     return 0;
   }

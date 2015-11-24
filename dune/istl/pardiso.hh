@@ -5,26 +5,14 @@
 
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvertype.hh>
-/* Change this, if your Fortran compiler does not append underscores. */
-/* e.g. the AIX compiler:  #define F77_FUNC(func) func                */
-
-#ifdef AIX
-#define F77_FUNC(func)  func
-#else
-#define F77_FUNC(func)  func ## _
-#endif
-
 
 #ifdef HAVE_PARDISO
-/* PARDISO prototype. */
-extern "C" int F77_FUNC(pardisoinit)
-  (void *, int *, int *);
+// PARDISO prototypes
+extern "C" void pardisoinit(void *, int *, int *, int *, double *, int *);
 
-extern "C" int F77_FUNC(pardiso)
-  (void *, int *, int *, int *, int *, int *,
-  double *, int *, int *, int *, int *, int *,
-  int *, double *, double *, int *);
-#endif
+extern "C" void pardiso(void *, int *, int *, int *, int *, int *,
+                        double *, int *, int *, int *, int *, int *,
+                        int *, double *, double *, int *, double *);
 
 namespace Dune {
 
@@ -62,8 +50,6 @@ namespace Dune {
     SeqPardiso (const M& A)
       : A_(A)
     {
-#ifdef HAVE_PARDISO
-
       mtype_ = 11;
       nrhs_ = 1;
       num_procs_ = 1;
@@ -72,16 +58,14 @@ namespace Dune {
       msglvl_ = 0;
       error_  = 0;
 
-      n_ = A_.rowdim();
+      n_ = A_.N();
       int nnz = 0;
       RowIterator endi = A_.end();
       for (RowIterator i = A_.begin(); i != endi; ++i)
       {
-        if (A_.rowdim(i.index()) != 1)
-          DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
         ColIterator endj = (*i).end();
         for (ColIterator j = (*i).begin(); j != endj; ++j) {
-          if (A_.coldim(j.index()) != 1)
+          if (j->size() != 1)
             DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
           nnz++;
         }
@@ -107,25 +91,21 @@ namespace Dune {
       }
       ia_[n_] = count+1;
 
-      F77_FUNC(pardisoinit) (pt_,  &mtype_, iparm_);
+      pardisoinit(pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
 
       int phase = 11;
       int idum;
       double ddum;
       iparm_[2]  = num_procs_;
 
-      F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
-                         &n_, a_, ia_, ja_, &idum, &nrhs_,
-                         iparm_, &msglvl_, &ddum, &ddum, &error_);
+      pardiso(pt_, &maxfct_, &mnum_, &mtype_, &phase,
+              &n_, a_, ia_, ja_, &idum, &nrhs_,
+              iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
       if (error_ != 0)
         DUNE_THROW(MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
 
       std::cout << "Constructor SeqPardiso: Factorization completed." << std::endl;
-
-#else
-      DUNE_THROW(NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
-#endif
     }
 
     /*!
@@ -142,7 +122,6 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-#ifdef HAVE_PARDISO
       int phase = 33;
 
       iparm_[7] = 1;         /* Max numbers of iterative refinement steps. */
@@ -155,9 +134,9 @@ namespace Dune {
         b[i] = d[i];
       }
 
-      F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
-                         &n_, a_, ia_, ja_, &idum, &nrhs_,
-                         iparm_, &msglvl_, b, x, &error_);
+      pardiso(pt_, &maxfct_, &mnum_, &mtype_, &phase,
+              &n_, a_, ia_, ja_, &idum, &nrhs_,
+              iparm_, &msglvl_, b, x, &error_, dparm_);
 
       if (error_ != 0)
         DUNE_THROW(MathError, "SeqPardiso.apply: Backsolve failed. Error code " << error_);
@@ -166,7 +145,6 @@ namespace Dune {
         v[i] = x[i];
 
       std::cout << "SeqPardiso: Backsolve completed." << std::endl;
-#endif
     }
 
     /*!
@@ -178,18 +156,16 @@ namespace Dune {
 
     ~SeqPardiso()
     {
-#ifdef HAVE_PARDISO
       int phase = -1;                   // Release internal memory.
       int idum;
       double ddum;
 
-      F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
-                         &n_, &ddum, ia_, ja_, &idum, &nrhs_,
-                         iparm_, &msglvl_, &ddum, &ddum, &error_);
+      pardiso(pt_, &maxfct_, &mnum_, &mtype_, &phase,
+              &n_, &ddum, ia_, ja_, &idum, &nrhs_,
+              iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
       delete[] a_;
       delete[] ia_;
       delete[] ja_;
-#endif
     }
 
   private:
@@ -199,14 +175,16 @@ namespace Dune {
     int *ia_; //!< indices to rows
     int *ja_; //!< column indices
     int mtype_; //!< matrix type, currently only 11 (real unsymmetric matrix) is supported
+    int solver_; //!< solver method
     int nrhs_; //!< number of right hand sides
     void *pt_[64]; //!< internal solver memory pointer
-    int iparm_[64]; //!< Pardiso control parameters.
-    int maxfct_;        //!< Maximum number of numerical factorizations.
-    int mnum_;  //!<        Which factorization to use.
+    int iparm_[64]; //!< Pardiso integer control parameters
+    double dparm_[64]; //!< Pardiso double control parameters
+    int maxfct_;        //!< Maximum number of numerical factorizations
+    int mnum_;  //!< Which factorization to use
     int msglvl_;    //!< flag to print statistical information
     int error_;      //!< error flag
-    int num_procs_; //!< number of processors.
+    int num_procs_; //!< number of processors
   };
 
   template<class M, class X, class Y>
@@ -214,7 +192,7 @@ namespace Dune {
   {
     enum { value=true};
   };
-
-
 } // end namespace Dune
+
+#endif //HAVE_PARDISO
 #endif
