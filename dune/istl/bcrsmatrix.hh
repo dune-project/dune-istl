@@ -297,7 +297,7 @@ namespace Dune {
      B.setrowsize(2,1);
      B.setrowsize(1,1);
      // increase row size for row 2
-     B.incrementrowsize(2)
+     B.incrementrowsize(2);
 
      // finalize row setup phase
      B.endrowsizes();
@@ -1799,45 +1799,90 @@ namespace Dune {
     }
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
-    typename FieldTraits<field_type>::real_type infinity_norm () const
-    {
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
 
-      double max=0;
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        double sum=0;
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          sum += (*j).infinity_norm();
-        max = std::max(max,sum);
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm();
+        norm = max(sum, norm);
       }
-      return max;
+      return norm;
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<field_type>::real_type infinity_norm_real () const
-    {
-#ifdef DUNE_ISTL_WITH_CHECKING
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
-#endif
 
-      double max=0;
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        double sum=0;
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          sum += (*j).infinity_norm_real();
-        max = std::max(max,sum);
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm_real();
+        norm = max(sum, norm);
       }
-      return max;
+      return norm;
     }
 
+    //! infinity norm (row sum norm, how to generalize for blocks?)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
+
+    //! simplified infinity norm (uses Manhattan norm for complex values)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm_real();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
 
     //===== sizes
 
