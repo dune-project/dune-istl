@@ -2,6 +2,8 @@ dune_add_test(SOURCES basearraytest.cc)
 
 dune_add_test(SOURCES bcrsassigntest.cc)
 
+dune_add_test(SOURCES bcrsnormtest.cc)
+
 dune_add_test(SOURCES dotproducttest.cc)
 
 dune_add_test(SOURCES complexmatrixtest.cc)
