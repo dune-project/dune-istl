@@ -119,9 +119,6 @@ int main()
   const size_t numBlocks = 10;
   const size_t capacity = BlockSize * numBlocks * 2; // use capacity here, that we can use the a constructor taking two integers  for both BlockVector and VariableBlockVector
 
-  ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<int,BlockSize> >, Dune::BlockVector<Dune::FieldVector<std::complex<int>,BlockSize> > >  (numBlocks,capacity);
-  ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<int,1> >, Dune::VariableBlockVector<Dune::FieldVector<std::complex<int>,1> > >  (numBlocks,BlockSize);
-
   ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<int,BlockSize> >, Dune::BlockVector<Dune::FieldVector<int,BlockSize> > >  (numBlocks,capacity);
   ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<int,1> >, Dune::VariableBlockVector<Dune::FieldVector<int,1> > >  (numBlocks,1);
 
