@@ -5,6 +5,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/debugallocator.hh>
+#include <dune/common/classname.hh>
 
 template<typename T, int BS>
 void assign(Dune::FieldVector<T,BS>& b, const T& i)
@@ -120,6 +121,74 @@ void testCapacity()
   vec1.reserve(0, false);
 }
 
+template <class V>
+void checkNormNAN(V const &v, int line) {
+  if (!std::isnan(v.one_norm())) {
+    std::cerr << "error: norm not NaN: one_norm() on line "
+              << line << " (type: " << Dune::className(v[0][0]) << ")"
+              << std::endl;
+    std::exit(-1);
+  }
+  if (!std::isnan(v.two_norm())) {
+    std::cerr << "error: norm not NaN: two_norm() on line "
+              << line << " (type: " << Dune::className(v[0][0]) << ")"
+              << std::endl;
+    std::exit(-1);
+  }
+  if (!std::isnan(v.infinity_norm())) {
+    std::cerr << "error: norm not NaN: infinity_norm() on line "
+              << line << " (type: " << Dune::className(v[0][0]) << ")"
+              << std::endl;
+    std::exit(-1);
+  }
+}
+
+// Make sure that vectors with NaN entries have norm NaN.
+// See also bug flyspray/FS#1147
+template <typename T>
+void
+test_nan(T const &mynan)
+{
+  using FV = Dune::FieldVector<T,2>;
+  using V = Dune::BlockVector<FV>;
+  T n(0);
+  {
+    V v = {
+      { mynan, n },
+      { n, n }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { n, mynan },
+      { n, n }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { n, n },
+      { mynan, n }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { n, n },
+      { n, mynan }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { mynan, mynan },
+      { mynan, mynan }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+}
+
 int main()
 {
   typedef std::complex<double> value_type;
@@ -140,6 +209,15 @@ int main()
   assert(fromInitializerList[0] == value_type(0));
   assert(fromInitializerList[1] == value_type(1));
   assert(fromInitializerList[2] == value_type(2));
+
+  {
+    double nan = std::nan("");
+    test_nan(nan);
+  }
+  {
+    std::complex<double> nan( std::nan(""), 17 );
+    test_nan(nan);
+  }
 
   int ret = 0;
 
