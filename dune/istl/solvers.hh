@@ -586,6 +586,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      using std::abs;
       const real_type EPSILON=1e-80;
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
@@ -659,11 +660,11 @@ namespace Dune {
         rho_new = _sp.dot(rt,r);
 
         // look if breakdown occured
-        if (std::abs(rho) <= EPSILON)
+        if (abs(rho) <= EPSILON)
           DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - rho "
                      << rho << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
-        if (std::abs(omega) <= EPSILON)
+        if (abs(omega) <= EPSILON)
           DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - omega "
                      << omega << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
@@ -689,7 +690,7 @@ namespace Dune {
         // alpha = rho_new / < rt, v >
         h = _sp.dot(rt,v);
 
-        if ( std::abs(h) < EPSILON )
+        if (abs(h) < EPSILON)
           DUNE_THROW(ISTLError,"h=0 in BiCGSTAB");
 
         alpha = rho_new / h;
@@ -855,6 +856,8 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      using std::sqrt;
+      using std::abs;
       // clear solver statistics
       res.clear();
       // start a timer
@@ -918,7 +921,7 @@ namespace Dune {
 
       // beta is real and positive in exact arithmetic
       // since it is the norm of the basis vectors (in unpreconditioned case)
-      beta = std::sqrt(_sp.dot(b,z));
+      beta = sqrt(_sp.dot(b,z));
       field_type beta0 = beta;
 
       // the search directions
@@ -958,7 +961,7 @@ namespace Dune {
 
         // beta is real and positive in exact arithmetic
         // since it is the norm of the basis vectors (in unpreconditioned case)
-        beta = std::sqrt(_sp.dot(q[i2],z));
+        beta = sqrt(_sp.dot(q[i2],z));
 
         q[i2] *= 1.0/beta;
         z *= 1.0/beta;
@@ -999,7 +1002,7 @@ namespace Dune {
 
         // check for convergence
         // the last entry in the rhs of the min-problem is the residual
-        real_type defnew = std::abs(beta0*xi[i%2]);
+        real_type defnew = abs(beta0*xi[i%2]);
 
           if(_verbose > 1)
             this->printOutput(std::cout,i,defnew,def);
@@ -1048,8 +1051,10 @@ namespace Dune {
 
     void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      real_type norm_dx = std::abs(dx);
-      real_type norm_dy = std::abs(dy);
+      using std::sqrt;
+      using std::abs;
+      real_type norm_dx = abs(dx);
+      real_type norm_dy = abs(dy);
       if(norm_dy < 1e-15) {
         cs = 1.0;
         sn = 0.0;
@@ -1058,7 +1063,7 @@ namespace Dune {
         sn = 1.0;
       } else if(norm_dy > norm_dx) {
         real_type temp = norm_dx/norm_dy;
-        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        cs = 1.0/sqrt(1.0 + temp*temp);
         sn = cs;
         cs *= temp;
         sn *= dx/norm_dx;
@@ -1067,7 +1072,7 @@ namespace Dune {
         sn *= dy/norm_dy;
       } else {
         real_type temp = norm_dy/norm_dx;
-        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        cs = 1.0/sqrt(1.0 + temp*temp);
         sn = cs;
         sn *= dy/dx;
         // dy and dx is real in exact arithmetic
@@ -1197,6 +1202,7 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
+      using std::abs;
       const real_type EPSILON = 1e-80;
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
@@ -1268,7 +1274,7 @@ namespace Dune {
             w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp.norm(w);
-          if(std::abs(H[i+1][i]) < EPSILON)
+          if(abs(H[i+1][i]) < EPSILON)
             DUNE_THROW(ISTLError,
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
@@ -1286,7 +1292,7 @@ namespace Dune {
           applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
 
           // norm of the defect is the last component the vector s
-          norm = std::abs(s[i+1]);
+          norm = abs(s[i+1]);
 
           // print current iteration statistics
           if(_verbose > 1) {
@@ -1385,8 +1391,10 @@ namespace Dune {
     void
     generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      real_type norm_dx = std::abs(dx);
-      real_type norm_dy = std::abs(dy);
+      using std::sqrt;
+      using std::abs;
+      real_type norm_dx = abs(dx);
+      real_type norm_dy = abs(dy);
       if(norm_dy < 1e-15) {
         cs = 1.0;
         sn = 0.0;
@@ -1395,14 +1403,14 @@ namespace Dune {
         sn = 1.0;
       } else if(norm_dy > norm_dx) {
         real_type temp = norm_dx/norm_dy;
-        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        cs = 1.0/sqrt(1.0 + temp*temp);
         sn = cs;
         cs *= temp;
         sn *= dx/norm_dx;
         sn *= conjugate(dy)/norm_dy;
       } else {
         real_type temp = norm_dy/norm_dx;
-        cs = 1.0/std::sqrt(1.0 + temp*temp);
+        cs = 1.0/sqrt(1.0 + temp*temp);
         sn = cs;
         sn *= conjugate(dy/dx);
       }
