@@ -20,6 +20,8 @@ dune_add_test(SOURCES matrixutilstest.cc)
 
 dune_add_test(SOURCES matrixtest.cc)
 
+dune_add_test(SOURCES multirhstest.cc)
+
 dune_add_test(SOURCES bvectortest.cc)
 
 dune_add_test(SOURCES vbvectortest.cc)
