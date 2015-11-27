@@ -55,7 +55,7 @@ template <typename V>
 V detectVectorType(Dune::LinearOperator<V,V> &);
 
 template<typename Operator, typename Solver>
-void run_test (Operator & op, Solver & solver, unsigned int N, unsigned int Runs)
+void run_test (std::string precName, std::string solverName, Operator & op, Solver & solver, unsigned int N, unsigned int Runs)
 {
   using Vector = decltype(detectVectorType(op));
   using FT = typename Vector::field_type;
@@ -74,11 +74,12 @@ void run_test (Operator & op, Solver & solver, unsigned int N, unsigned int Runs
     Dune::InverseOperatorResult r;
     solver.apply(x,b,r);
   }
-  std::cout << "Test run " << Dune::className<FT>() << " took " << t.stop() << std::endl;
+  std::cout << "Test " << Runs << " run(s) " << solverName << "(" << precName << ")"
+            << " with " << Dune::className<FT>() << " took " << t.stop() << std::endl;
 }
 
 template<typename Operator, typename Prec>
-void test_all_solvers(Operator & op, Prec & prec, unsigned int N, unsigned int Runs)
+void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned int N, unsigned int Runs)
 {
   using Vector = decltype(detectVectorType(op));
 
@@ -92,13 +93,13 @@ void test_all_solvers(Operator & op, Prec & prec, unsigned int N, unsigned int R
   // Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
   Dune::GeneralizedPCGSolver<Vector> gpcg(op,prec,reduction,8000,verb);
 
-  run_test(op,loop,N,Runs);
-  run_test(op,cg,N,Runs);
-  run_test(op,bcgs,N,Runs);
-  run_test(op,grad,N,Runs);
-  // run_test(op,gmres,N,Runs);
-  // run_test(op,minres,N,Runs);
-  run_test(op,gpcg,N,Runs);
+  run_test(precName, "Loop",           op,loop,N,Runs);
+  run_test(precName, "CG",             op,cg,N,Runs);
+  run_test(precName, "Gradient",       op,bcgs,N,Runs);
+  run_test(precName, "RestartedGMRes", op,grad,N,Runs);
+  // run_test(precName,                   op,gmres,N,Runs);
+  // run_test(precName, "MINRes",         op,minres,N,Runs);
+  run_test(precName, "GeneralizedPCG", op,gpcg,N,Runs);
 }
 
 template<typename FT>
@@ -111,7 +112,7 @@ void test_all(unsigned int Runs = 1)
   typedef Dune::BCRSMatrix<MB> Matrix;
 
   // size
-  unsigned int size = 400;
+  unsigned int size = 100;
   unsigned int N = size*size;
 
   // make a compressed row matrix with five point stencil
@@ -128,12 +129,12 @@ void test_all(unsigned int Runs = 1)
   Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.92);     // preconditioner object
 
   // run the sub-tests
-  test_all_solvers(op,jac,N,Runs);
-  test_all_solvers(op,gs,N,Runs);
-  test_all_solvers(op,sor,N,Runs);
-  test_all_solvers(op,ssor,N,Runs);
-  test_all_solvers(op,ilu0,N,Runs);
-  test_all_solvers(op,ilu1,N,Runs);
+  test_all_solvers("Jacobi",      op,jac,N,Runs);
+  test_all_solvers("GaussSeidel", op,gs,N,Runs);
+  test_all_solvers("SOR",         op,sor,N,Runs);
+  test_all_solvers("SSOR",        op,ssor,N,Runs);
+  test_all_solvers("ILU0",        op,ilu0,N,Runs);
+  test_all_solvers("ILU1",        op,ilu1,N,Runs);
 }
 
 int main ()
