@@ -691,7 +691,9 @@ namespace Dune {
         h = _sp.dot(rt,v);
 
         if (abs(h) < EPSILON)
-          DUNE_THROW(ISTLError,"h=0 in BiCGSTAB");
+          DUNE_THROW(ISTLError,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
+                     << abs(h) << " < EPSILON " << EPSILON
+                     << " after " << it << " iterations");
 
         alpha = rho_new / h;
 
@@ -901,9 +903,9 @@ namespace Dune {
       real_type def = def0;
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
-        // diagonal entries of givens rotation
+      // diagonal entries of givens rotation
       std::array<real_type,2> c{{0.0,0.0}};
-        // off-diagonal entries of givens rotation
+      // off-diagonal entries of givens rotation
       std::array<field_type,2> s{{0.0,0.0}};
 
       // recurrence coefficients (column k of tridiag matrix T_k)
@@ -1267,7 +1269,7 @@ namespace Dune {
           for(int k=0; k<i+1; k++) {
             // notice that _sp.dot(v[k],w) = v[k]\adjoint w
             // so one has to pay attention to the order
-            // the in scalar product for the complex case
+            // in the scalar product for the complex case
             // doing the modified Gram-Schmidt algorithm
             H[k][i] = _sp.dot(v[k],w);
             // w -= H[k][i] * v[k]
