@@ -561,11 +561,11 @@ namespace Dune
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::apply(domain_type& x, range_type& b, InverseOperatorResult& res)
   {
-    if (mat.N() != b.size())
+    if (mat.N() != b.dim())
       DUNE_THROW(ISTLError, "Size of right-hand-side vector b does not match the number of matrix rows!");
-    if (mat.M() != x.size())
+    if (mat.M() != x.dim())
       DUNE_THROW(ISTLError, "Size of solution vector x does not match the number of matrix columns!");
-    if(mat.M()+mat.N()==0)
+    if (mat.M()+mat.N()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
     SuperMatrix* mB = &B;
@@ -577,7 +577,7 @@ namespace Dune
         SuperLUDenseMatChooser<T>::create(&X, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
         first=false;
       }else{
-        ((DNformat*) B.Store)->nzval=&b[0];
+        ((DNformat*)B.Store)->nzval=&b[0];
         ((DNformat*)X.Store)->nzval=&x[0];
       }
     } else {

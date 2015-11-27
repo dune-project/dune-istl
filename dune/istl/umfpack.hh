@@ -314,9 +314,9 @@ namespace Dune {
      */
     virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
-      if (umfpackMatrix_.N() != b.size())
+      if (umfpackMatrix_.N() != b.dim())
         DUNE_THROW(Dune::ISTLError, "Size of right-hand-side vector b does not match the number of matrix rows!");
-      if (umfpackMatrix_.M() != x.size())
+      if (umfpackMatrix_.M() != x.dim())
         DUNE_THROW(Dune::ISTLError, "Size of solution vector x does not match the number of matrix columns!");
 
       double UMF_Apply_Info[UMFPACK_INFO];
