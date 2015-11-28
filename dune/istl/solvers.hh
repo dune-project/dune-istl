@@ -31,7 +31,6 @@ namespace Dune {
       @{
    */
 
-
   /** \file
 
       \brief   Implementations of the inverse operator interface.
@@ -39,9 +38,7 @@ namespace Dune {
       This file provides various preconditioned Krylov methods.
    */
 
-
-
-   //=====================================================================
+  //=====================================================================
   // Implementation of this interface
   //=====================================================================
 
@@ -1094,31 +1091,33 @@ namespace Dune {
     {
       using std::sqrt;
       using std::abs;
+      using std::max;
+      using std::min;
+      real_type eps = 1e-15;
       real_type norm_dx = abs(dx);
       real_type norm_dy = abs(dy);
-      if(norm_dy < 1e-15) {
-        cs = 1.0;
-        sn = 0.0;
-      } else if(norm_dx < 1e-15) {
-        cs = 0.0;
-        sn = 1.0;
-      } else if(norm_dy > norm_dx) {
-        real_type temp = norm_dx/norm_dy;
-        cs = 1.0/sqrt(1.0 + temp*temp);
-        sn = cs;
-        cs *= temp;
-        sn *= dx/norm_dx;
-        // dy is real in exact arithmetic
-        // so we don't need to conjugate here
-        sn *= dy/norm_dy;
-      } else {
-        real_type temp = norm_dy/norm_dx;
-        cs = 1.0/sqrt(1.0 + temp*temp);
-        sn = cs;
-        sn *= dy/dx;
-        // dy and dx is real in exact arithmetic
-        // so we don't have to conjugate both of them
-      }
+      real_type norm_max = max(norm_dx, norm_dy);
+      real_type norm_min = min(norm_dx, norm_dy);
+      real_type temp = norm_min/norm_max;
+      // we rewrite the code in a vectorizable fashion
+      cs = cond(norm_dy < eps,
+        field_type(1.0),
+        cond(norm_dx < 1e-15,
+          field_type(0.0),
+          cond(norm_dy > norm_dx,
+            1.0/sqrt(1.0 + temp*temp)*temp,
+            // dy is real in exact arithmetic
+            // so we don't need to conjugate here
+            1.0/sqrt(1.0 + temp*temp)*dx/norm_dx*dy/norm_dy)));
+      sn = cond(norm_dy < eps,
+        field_type(0.0),
+        cond(norm_dx < eps,
+          field_type(1.0),
+          cond(norm_dy > norm_dx,
+            1.0/sqrt(1.0 + temp*temp),
+            // dy and dx is real in exact arithmetic
+            // so we don't have to conjugate both of them
+            1.0/sqrt(1.0 + temp*temp)*dy/dx)));
     }
 
     SeqScalarProduct<X> ssp;
@@ -1445,27 +1444,29 @@ namespace Dune {
     {
       using std::sqrt;
       using std::abs;
+      using std::max;
+      using std::min;
+      real_type eps = 1e-15;
       real_type norm_dx = abs(dx);
       real_type norm_dy = abs(dy);
-      if(norm_dy < 1e-15) {
-        cs = 1.0;
-        sn = 0.0;
-      } else if(norm_dx < 1e-15) {
-        cs = 0.0;
-        sn = 1.0;
-      } else if(norm_dy > norm_dx) {
-        real_type temp = norm_dx/norm_dy;
-        cs = 1.0/sqrt(1.0 + temp*temp);
-        sn = cs;
-        cs *= temp;
-        sn *= dx/norm_dx;
-        sn *= conjugate(dy)/norm_dy;
-      } else {
-        real_type temp = norm_dy/norm_dx;
-        cs = 1.0/sqrt(1.0 + temp*temp);
-        sn = cs;
-        sn *= conjugate(dy/dx);
-      }
+      real_type norm_max = max(norm_dx, norm_dy);
+      real_type norm_min = min(norm_dx, norm_dy);
+      real_type temp = norm_min/norm_max;
+      // we rewrite the code in a vectorizable fashion
+      cs = cond(norm_dy < eps,
+        field_type(1.0),
+        cond(norm_dx < 1e-15,
+          field_type(0.0),
+          cond(norm_dy > norm_dx,
+            1.0/sqrt(1.0 + temp*temp)*temp,
+            1.0/sqrt(1.0 + temp*temp)*dx/norm_dx*conjugate(dy)/norm_dy)));
+      sn = cond(norm_dy < eps,
+        field_type(0.0),
+        cond(norm_dx < eps,
+          field_type(1.0),
+          cond(norm_dy > norm_dx,
+            1.0/sqrt(1.0 + temp*temp),
+            1.0/sqrt(1.0 + temp*temp)*conjugate(dy/dx))));
     }
 
 
