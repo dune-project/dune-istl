@@ -13,7 +13,6 @@
 #ifndef SUPERLU_NTYPE
 #define  SUPERLU_NTYPE 1
 #endif
-#ifdef SUPERLU_POST_2005_VERSION
 
 #if SUPERLU_NTYPE==0
 #include "slu_sdefs.h"
@@ -31,26 +30,6 @@
 #include "slu_zdefs.h"
 #endif
 
-#else
-
-#if SUPERLU_NTYPE==0
-#include "ssp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE==1
-#include "dsp_defs.h"
-#warning Support for SuperLU older than SuperLU 3.0 from August 2005 is deprecated.
-#endif
-
-#if SUPERLU_NTYPE==2
-#include "csp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE>=3
-#include "zsp_defs.h"
-#endif
-
-#endif
 #include "solvers.hh"
 #include "supermatrix.hh"
 #include <algorithm>

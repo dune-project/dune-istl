@@ -34,9 +34,6 @@
 /* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
 #cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
 
-/* define to 1 because older versions of SuperLU are no longer supported*/
-#define SUPERLU_POST_2005_VERSION 1
-
 /* Define to 1 if 'expansions' is a member of 'mem_usage_t'. */
 #cmakedefine HAVE_MEM_USAGE_T_EXPANSIONS @HAVE_MEM_USAGE_T_EXPANSIONS@
 
