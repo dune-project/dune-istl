@@ -16,7 +16,7 @@
 #
 
 # look for BLAS
-find_package(BLAS QUIET REQUIRED)
+find_package(BLAS QUIET)
 if(NOT BLAS_FOUND)
   message(WARNING "SuperLU requires BLAS which was not found, skipping the test.")
   return()
