@@ -496,12 +496,8 @@ namespace Dune
         QuerySpaceChooser<T>::querySpace(&L, &U, &memusage);
         dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
              <<" \texpansions ";
-
-#ifdef HAVE_MEM_USAGE_T_EXPANSIONS
-        std::cout<<memusage.expansions<<std::endl;
-#else
         std::cout<<stat.expansions<<std::endl;
-#endif
+
       } else if ( info > 0 && lwork == -1 ) {
         dinfo<<"** Estimated memory: "<< info - n<<std::endl;
       }
