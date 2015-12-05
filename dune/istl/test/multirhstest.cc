@@ -4,6 +4,8 @@
 // start with including some headers
 #include "config.h"
 
+// #undef HAVE_VC
+
 #include <iostream>               // for input/output to shell
 #include <fstream>                // for input/output to files
 #include <vector>                 // STL vector class
@@ -35,6 +37,7 @@ struct Random {
   }
 };
 
+#if HAVE_VC
 template<typename T, typename A>
 struct Random<Vc::Vector<T,A>> {
   static Vc::Vector<T,A> gen()
@@ -50,6 +53,7 @@ struct Random<Vc::SimdArray<T,N,V,M>> {
     return Vc::SimdArray<T,N,V,M>::Random();
   }
 };
+#endif
 
 template <typename V>
 V detectVectorType(Dune::LinearOperator<V,V> &);
@@ -61,6 +65,8 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
   using FT = typename Vector::field_type;
 
   Dune::Timer t;
+  std::cout << "Trying " << solverName << "(" << precName << ")"
+            << " with " << Dune::className<FT>() << std::endl;
   for (unsigned int run = 0; run < Runs; run++) {
     // set up system
     Vector x(N),b(N);
@@ -74,8 +80,7 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
     Dune::InverseOperatorResult r;
     solver.apply(x,b,r);
   }
-  std::cout << "Test " << Runs << " run(s) " << solverName << "(" << precName << ")"
-            << " with " << Dune::className<FT>() << " took " << t.stop() << std::endl;
+  std::cout << Runs << " run(s) took " << t.stop() << std::endl;
 }
 
 template<typename Operator, typename Prec>
@@ -84,21 +89,21 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
   using Vector = decltype(detectVectorType(op));
 
   double reduction = 1e-4;
-  int verb = 0;
+  int verb = 1;
   Dune::LoopSolver<Vector> loop(op,prec,reduction,18000,verb);
   Dune::CGSolver<Vector> cg(op,prec,reduction,8000,verb);
   Dune::BiCGSTABSolver<Vector> bcgs(op,prec,reduction,8000,verb);
   Dune::GradientSolver<Vector> grad(op,prec,reduction,18000,verb);
-  // Dune::RestartedGMResSolver<Vector> gmres(op,prec,reduction,40,8000,verb);
-  // Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
+  Dune::RestartedGMResSolver<Vector> gmres(op,prec,reduction,40,8000,verb);
+  Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
   Dune::GeneralizedPCGSolver<Vector> gpcg(op,prec,reduction,8000,verb);
 
-  run_test(precName, "Loop",           op,loop,N,Runs);
+  // run_test(precName, "Loop",           op,loop,N,Runs);
   run_test(precName, "CG",             op,cg,N,Runs);
-  run_test(precName, "Gradient",       op,bcgs,N,Runs);
-  run_test(precName, "RestartedGMRes", op,grad,N,Runs);
-  // run_test(precName,                   op,gmres,N,Runs);
-  // run_test(precName, "MINRes",         op,minres,N,Runs);
+  run_test(precName, "BiCGStab",       op,bcgs,N,Runs);
+  run_test(precName, "Gradient",       op,grad,N,Runs);
+  run_test(precName, "RestartedGMRes", op,gmres,N,Runs);
+  run_test(precName, "MINRes",         op,minres,N,Runs);
   run_test(precName, "GeneralizedPCG", op,gpcg,N,Runs);
 }
 
@@ -121,12 +126,12 @@ void test_all(unsigned int Runs = 1)
   Dune::MatrixAdapter<Matrix,Vector,Vector> op(A);        // make linear operator from A
 
   // create all preconditioners
-  Dune::SeqJac<Matrix,Vector,Vector> jac(A,1,1);          // Jacobi preconditioner
-  Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,0.5);          // GS preconditioner
-  Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,1.9520932);  // SOR preconditioner
-  Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,1.0);      // SSOR preconditioner
-  Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,1.0);        // preconditioner object
-  Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.92);     // preconditioner object
+  Dune::SeqJac<Matrix,Vector,Vector> jac(A,1,0.1);          // Jacobi preconditioner
+  Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,0.1);          // GS preconditioner
+  Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,0.1);  // SOR preconditioner
+  Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,0.1);      // SSOR preconditioner
+  Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,0.1);        // preconditioner object
+  Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.1);     // preconditioner object
 
   // run the sub-tests
   test_all_solvers("Jacobi",      op,jac,N,Runs);
@@ -137,12 +142,13 @@ void test_all(unsigned int Runs = 1)
   test_all_solvers("ILU1",        op,ilu1,N,Runs);
 }
 
-int main ()
+int main (int argc, char ** argv)
 {
   test_all<float>();
   test_all<double>();
-  test_all<Vc::double_v>();
 #if HAVE_VC
+  test_all<Vc::float_v>();
+  test_all<Vc::double_v>();
   test_all<Vc::Vector<double, Vc::VectorAbi::Scalar>>();
   test_all<Vc::SimdArray<double,2>>();
   test_all<Vc::SimdArray<double,2,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
