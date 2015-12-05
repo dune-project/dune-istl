@@ -20,7 +20,7 @@
 #include "preconditioner.hh"
 #include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/simd.hh>
+#include <dune/common/conditional.hh>
 #include <dune/common/rangeutilities.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
@@ -519,7 +519,7 @@ namespace Dune {
         this->printOutput(std::cout,i,def);
 
       _prec.post(x);                  // postprocess preconditioner
-      res.iterations = i;               // fill statistics
+      res.iterations = i;             // fill statistics
       res.reduction = static_cast<double>(max_value(max_value(def/def0)));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
@@ -1093,7 +1093,7 @@ namespace Dune {
       using std::abs;
       using std::max;
       using std::min;
-      real_type eps = 1e-15;
+      const real_type eps = 1e-15;
       real_type norm_dx = abs(dx);
       real_type norm_dy = abs(dy);
       real_type norm_max = max(norm_dx, norm_dy);
@@ -1102,22 +1102,22 @@ namespace Dune {
       // we rewrite the code in a vectorizable fashion
       cs = cond(norm_dy < eps,
         field_type(1.0),
-        cond(norm_dx < 1e-15,
+        cond(norm_dx < eps,
           field_type(0.0),
           cond(norm_dy > norm_dx,
-            1.0/sqrt(1.0 + temp*temp)*temp,
+            field_type(1.0)/sqrt(1.0 + temp*temp)*temp,
             // dy is real in exact arithmetic
             // so we don't need to conjugate here
-            1.0/sqrt(1.0 + temp*temp)*dx/norm_dx*dy/norm_dy)));
+            field_type(1.0)/sqrt(1.0 + temp*temp)*dx/norm_dx*dy/norm_dy)));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
           field_type(1.0),
           cond(norm_dy > norm_dx,
-            1.0/sqrt(1.0 + temp*temp),
+            field_type(1.0)/sqrt(1.0 + temp*temp),
             // dy and dx is real in exact arithmetic
             // so we don't have to conjugate both of them
-            1.0/sqrt(1.0 + temp*temp)*dy/dx)));
+            field_type(1.0)/sqrt(1.0 + temp*temp)*dy/dx)));
     }
 
     SeqScalarProduct<X> ssp;
@@ -1446,7 +1446,7 @@ namespace Dune {
       using std::abs;
       using std::max;
       using std::min;
-      real_type eps = 1e-15;
+      const real_type eps = 1e-15;
       real_type norm_dx = abs(dx);
       real_type norm_dy = abs(dy);
       real_type norm_max = max(norm_dx, norm_dy);
@@ -1455,18 +1455,18 @@ namespace Dune {
       // we rewrite the code in a vectorizable fashion
       cs = cond(norm_dy < eps,
         field_type(1.0),
-        cond(norm_dx < 1e-15,
+        cond(norm_dx < eps,
           field_type(0.0),
           cond(norm_dy > norm_dx,
-            1.0/sqrt(1.0 + temp*temp)*temp,
-            1.0/sqrt(1.0 + temp*temp)*dx/norm_dx*conjugate(dy)/norm_dy)));
+            field_type(1.0)/sqrt(1.0 + temp*temp)*temp,
+            field_type(1.0)/sqrt(1.0 + temp*temp)*dx/norm_dx*conjugate(dy)/norm_dy)));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
           field_type(1.0),
           cond(norm_dy > norm_dx,
-            1.0/sqrt(1.0 + temp*temp),
-            1.0/sqrt(1.0 + temp*temp)*conjugate(dy/dx))));
+            field_type(1.0)/sqrt(1.0 + temp*temp),
+            field_type(1.0)/sqrt(1.0 + temp*temp)*conjugate(dy/dx))));
     }
 
 
