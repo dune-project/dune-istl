@@ -43,7 +43,11 @@ namespace Dune
     typedef Y range_type;
     typedef typename X::field_type field_type;
 
-    enum {category = Dune::SolverCategory::sequential};
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     ScalingLinearOperator (field_type immutable_scaling,
                            const field_type& mutable_scaling)
@@ -88,7 +92,11 @@ namespace Dune
     typedef typename OP1::range_type range_type;
     typedef typename domain_type::field_type field_type;
 
-    enum {category = Dune::SolverCategory::sequential};
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     LinearOperatorSum (const OP1& op1, const OP2& op2)
       : op1_(op1), op2_(op2)
@@ -246,7 +254,7 @@ namespace Dune
         mu_(0.0),
         matrixOperator_(m_),
         scalingOperator_(-1.0,mu_),
-        itOperator_(matrixOperator_,scalingOperator_),
+        itOperator_(std::make_shared<OperatorSum>(matrixOperator_,scalingOperator_)),
         nIterations_(0),
         title_("    PowerIteration_Algorithms: "),
         blank_(title_.length(),' ')
@@ -957,7 +965,7 @@ namespace Dune
      * preconditioners which require that the matrix is provided
      * explicitly use getIterationMatrix() instead/additionally.
      */
-    inline IterationOperator& getIterationOperator ()
+    inline std::shared_ptr<OperatorSum> getIterationOperator ()
     {
       // return iteration operator
       return itOperator_;
@@ -1062,7 +1070,7 @@ namespace Dune
     // iteration operator (m_ - mu_*I), passing shift mu_ by reference
     const MatrixOperator matrixOperator_;
     const ScalingOperator scalingOperator_;
-    OperatorSum itOperator_;
+    std::shared_ptr<OperatorSum> itOperator_;
 
     // iteration matrix (m_ - mu_*I), provided on demand when needed
     // (e.g. for preconditioning)
