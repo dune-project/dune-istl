@@ -190,26 +190,26 @@ int main(int argc, char** argv) try
   b = 1;
 
   // Set up a variety of solvers, just to make sure they compile
-  MatrixAdapter<CM_BCRS,TestVector,TestVector> op(A);             // make linear operator from A
+  auto op = std::make_shared<MatrixAdapter<CM_BCRS,TestVector,TestVector> >(A);             // make linear operator from A
   SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SOR preconditioner
   SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
 
   // Solve system using a Gauss-Seidel method
-  SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
+  auto gs = std::make_shared<SeqGS<CM_BCRS,TestVector,TestVector,2> >(A,1,1);                  // GS preconditioner
   LoopSolver<TestVector> loop(op,gs,1E-4,18000,2);           // an inverse operator
   InverseOperatorResult r;
 
   loop.apply(x,b,r);
 
   // Solve system using a CG method with a Jacobi preconditioner
-  SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
+  auto jac = std::make_shared<SeqJac<CM_BCRS,TestVector,TestVector,2> >(A,1,1);                // Jacobi preconditioner
   CGSolver<TestVector> cgSolver(op,jac,1E-4,18000,2);           // an inverse operator
 
   cgSolver.apply(x,b,r);
 
   // Solve system using a GMRes solver without preconditioner at all
   // Fancy (but only) way to not have a preconditioner at all
-  Richardson<TestVector,TestVector> richardson(1.0);
+  auto richardson = std::make_shared<Richardson<TestVector,TestVector> >(1.0);
 
   // Preconditioned conjugate-gradient solver
   RestartedGMResSolver<TestVector> gmres(op,

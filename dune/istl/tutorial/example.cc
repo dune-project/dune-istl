@@ -489,13 +489,13 @@ void test_Interface ()
     x[i] = i*0.1;
 
   // set up the high-level solver objects
-  Dune::MatrixAdapter<Matrix,Vector,Vector> op(A);        // make linear operator from A
-  Dune::SeqJac<Matrix,Vector,Vector> jac(A,1,1);          // Jacobi preconditioner
-  Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,1);            // GS preconditioner
-  Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,1.9520932);  // SSOR preconditioner
-  Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,1.0); // SSOR preconditioner
-  Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,1.0);        // preconditioner object
-  Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.92);     // preconditioner object
+  auto op = std::make_shared<Dune::MatrixAdapter<Matrix,Vector,Vector> >(A);        // make linear operator from A
+  auto jac = std::make_shared<Dune::SeqJac<Matrix,Vector,Vector> >(A,1,1);          // Jacobi preconditioner
+  auto gs = std::make_shared<Dune::SeqGS<Matrix,Vector,Vector> >(A,1,1);            // GS preconditioner
+  auto sor = std::make_shared<Dune::SeqSOR<Matrix,Vector,Vector> >(A,1,1.9520932);  // SSOR preconditioner
+  auto ssor = std::make_shared<Dune::SeqSSOR<Matrix,Vector,Vector> >(A,1,1.0);      // SSOR preconditioner
+  auto ilu0 = std::make_shared<Dune::SeqILU0<Matrix,Vector,Vector> >(A,1.0);        // preconditioner object
+  auto ilu1 = std::make_shared<Dune::SeqILUn<Matrix,Vector,Vector> >(A,1,0.92);     // preconditioner object
 
   Dune::LoopSolver<Vector> loop(op,jac,1E-4,18000,2);     // an inverse operator
   Dune::CGSolver<Vector> cg(op,ilu0,1E-4,8000,2);         // an inverse operator
@@ -583,11 +583,11 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   x = 1;
   b = 1;
 
-  Dune::MatrixAdapter<CM_BCRS,TestVector,TestVector> op(A);             // make linear operator from A
-  Dune::SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
-  Dune::SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
-  Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SOR preconditioner
-  Dune::SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
+  auto op = std::make_shared<Dune::MatrixAdapter<CM_BCRS,TestVector,TestVector> >(A);          // make linear operator from A
+  auto jac = std::make_shared<Dune::SeqJac<CM_BCRS,TestVector,TestVector,2> >(A,1,1);          // Jacobi preconditioner
+  auto gs = std::make_shared<Dune::SeqGS<CM_BCRS,TestVector,TestVector,2> >(A,1,1);            // GS preconditioner
+  auto sor = std::make_shared<Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> >(A,1,1.9520932);  // SOR preconditioner
+  auto ssor = std::make_shared<Dune::SeqSSOR<CM_BCRS,TestVector,TestVector,2> >(A,1,1.0);      // SSOR preconditioner
 
   Dune::LoopSolver<TestVector> loop(op,gs,1E-4,18000,2);           // an inverse operator
   Dune::InverseOperatorResult r;
