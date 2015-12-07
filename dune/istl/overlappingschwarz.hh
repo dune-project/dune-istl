@@ -795,10 +795,11 @@ namespace Dune
     /** @brief The vector type containing subdomain solvers. */
     typedef std::vector<slu, typename TA::template rebind<slu>::other> slu_vector;
 
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category = SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /**
      * @brief Construct the overlapping Schwarz method.
@@ -999,8 +1000,7 @@ namespace Dune
   template<class M, class X, class TM, class TD, class TA>
   SeqOverlappingSchwarz<M,X,TM,TD,TA>::SeqOverlappingSchwarz(const matrix_type& mat_, const rowtodomain_vector& rowToDomain,
                                                              field_type relaxationFactor, bool fly)
-    : Preconditioner<X,X>(SolverCategory::Category::sequential),
-      mat(mat_), relax(relaxationFactor), onTheFly(fly)
+    : mat(mat_), relax(relaxationFactor), onTheFly(fly)
   {
     typedef typename rowtodomain_vector::const_iterator RowDomainIterator;
     typedef typename subdomain_list::const_iterator DomainIterator;
@@ -1049,8 +1049,7 @@ namespace Dune
                                                              const subdomain_vector& sd,
                                                              field_type relaxationFactor,
                                                              bool fly)
-    : Preconditioner<X,X>(SolverCategory::Category::sequential),
-      mat(mat_), solvers(sd.size()), subDomains(sd), relax(relaxationFactor),
+    : mat(mat_), solvers(sd.size()), subDomains(sd), relax(relaxationFactor),
       onTheFly(fly)
   {
     typedef typename subdomain_vector::const_iterator DomainIterator;

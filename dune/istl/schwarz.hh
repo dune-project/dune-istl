@@ -98,10 +98,11 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    enum {
-      //! \brief The solver category.
-      category=SolverCategory::overlapping
-    };
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
+    }
 
     /**
      * @brief constructor: just store a reference to a matrix.
@@ -375,11 +376,11 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    // define the category
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::overlapping
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
+    }
 
     /*! \brief Constructor.
 
@@ -389,8 +390,7 @@ namespace Dune {
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     BlockPreconditioner (T& p, const communication_type& c)
-      : Preconditioner<X,Y>(SolverCategory::Category::overlapping),
-        preconditioner(p), communication(c)
+      : preconditioner(p), communication(c)
     {   }
 
     /*!

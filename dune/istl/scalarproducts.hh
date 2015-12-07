@@ -44,15 +44,13 @@ namespace Dune {
   class ScalarProduct {
   public:
 
-    ScalarProduct (const SolverCategory::Category _category) : category(_category) { }
-
     //! export types, they come from the derived class
     typedef X domain_type;
     typedef typename X::field_type field_type;
     typedef typename FieldTraits<field_type>::real_type real_type;
 
-    /** @brief The solver category. */
-    SolverCategory::Category const category;
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const = 0;
 
     /*! \brief Dot product of two vectors.
        It is assumed that the vectors are consistent on the interior+border
@@ -102,15 +100,16 @@ namespace Dune {
   {
   public:
 
-    SeqScalarProduct() : ScalarProduct<X>(SolverCategory::Category::sequential) { }
-
     //! export types
     typedef X domain_type;
     typedef typename X::field_type field_type;
     typedef typename FieldTraits<field_type>::real_type real_type;
 
-    //! define the category
-    enum {category=SolverCategory::sequential};
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Dot product of two vectors. In the complex case, the first argument is conjugated.
        It is assumed that the vectors are consistent on the interior+border

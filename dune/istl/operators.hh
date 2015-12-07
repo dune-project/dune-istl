@@ -61,9 +61,6 @@ namespace Dune {
   template<class X, class Y>
   class LinearOperator {
   public:
-
-    LinearOperator (const SolverCategory::Category _category) : category(_category) { }
-
     //! The type of the domain of the operator.
     typedef X domain_type;
     //! The type of the range of the operator.
@@ -71,8 +68,8 @@ namespace Dune {
     //! The field type of the operator.
     typedef typename X::field_type field_type;
 
-    //! define the category
-    SolverCategory::Category const category;
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const = 0;
 
     /*! \brief apply operator to x:  \f$ y = A(x) \f$
           The input vector is consistent and the output must also be
@@ -99,9 +96,6 @@ namespace Dune {
   template<class M, class X, class Y>
   class AssembledLinearOperator : public LinearOperator<X,Y> {
   public:
-
-    AssembledLinearOperator (const SolverCategory::Category _category) : LinearOperator<X,Y>(_category) { }
-
     //! export types, usually they come from the derived class
     typedef M matrix_type;
     typedef X domain_type;
@@ -130,18 +124,20 @@ namespace Dune {
   class MatrixAdapter : public AssembledLinearOperator<M,X,Y>
   {
   public:
-
     //! export types
     typedef M matrix_type;
     typedef X domain_type;
     typedef Y range_type;
     typedef typename X::field_type field_type;
 
-    //! define the category
-    enum {category=SolverCategory::sequential};
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     //! constructor: just store a reference to a matrix
-    explicit MatrixAdapter (const M& A) : AssembledLinearOperator<M,X,Y>(SolverCategory::sequential), _A_(A) {}
+    explicit MatrixAdapter (const M& A) : _A_(A) {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply (const X& x, Y& y) const

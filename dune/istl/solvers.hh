@@ -90,9 +90,9 @@ namespace Dune {
                 real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
          DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -115,9 +115,9 @@ namespace Dune {
     LoopSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
          DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -151,9 +151,9 @@ namespace Dune {
                 real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -180,9 +180,9 @@ namespace Dune {
                 const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -311,9 +311,9 @@ namespace Dune {
                     real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError,"Linear operator and preconditioner must have the same category!");
     }
 
@@ -336,9 +336,9 @@ namespace Dune {
     GradientSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -357,9 +357,9 @@ namespace Dune {
                     real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -386,9 +386,9 @@ namespace Dune {
                     const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -511,9 +511,9 @@ namespace Dune {
               real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -524,9 +524,9 @@ namespace Dune {
               const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -545,9 +545,9 @@ namespace Dune {
               real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -560,9 +560,9 @@ namespace Dune {
               const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -753,9 +753,9 @@ namespace Dune {
                     real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -765,9 +765,9 @@ namespace Dune {
     BiCGSTABSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -786,9 +786,9 @@ namespace Dune {
                     real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -803,9 +803,9 @@ namespace Dune {
                     const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -1068,9 +1068,9 @@ namespace Dune {
                   real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -1081,9 +1081,9 @@ namespace Dune {
                   const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -1102,9 +1102,9 @@ namespace Dune {
                   real_type reduction, int maxit, int verbose) :
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -1119,9 +1119,9 @@ namespace Dune {
                   const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -1407,9 +1407,9 @@ namespace Dune {
       , _maxit(maxit)
       , _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -1426,9 +1426,9 @@ namespace Dune {
       _sp(new SeqScalarProduct<X>()), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -1454,9 +1454,9 @@ namespace Dune {
       _A(op), _W(prec),
       _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -1478,9 +1478,9 @@ namespace Dune {
       , _maxit(maxit)
       , _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -1498,9 +1498,9 @@ namespace Dune {
       _sp(sp), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -1528,9 +1528,9 @@ namespace Dune {
                           const ParameterTree& configuration) :
       _A(op), _W(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -1835,9 +1835,9 @@ namespace Dune {
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit),
       _verbose(verbose), _restart(std::min(maxit,restart))
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
 
@@ -1861,9 +1861,9 @@ namespace Dune {
     GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(new SeqScalarProduct<X>())
     {
-      if (op->category != SolverCategory::sequential)
+      if (op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
@@ -1887,9 +1887,9 @@ namespace Dune {
       _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _restart(std::min(maxit,restart))
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
     }
 
@@ -1917,9 +1917,9 @@ namespace Dune {
                           const ParameterTree& configuration) :
       _op(op), _prec(prec), _sp(sp)
     {
-      if (op->category != prec->category)
+      if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (op->category != sp->category)
+      if (op->category() != sp->category())
          DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
 
       _reduction = configuration.get<real_type>("reduction");
