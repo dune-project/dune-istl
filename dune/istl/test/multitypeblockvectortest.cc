@@ -69,6 +69,9 @@ int main(int argc, char** argv) try
   // Test two_norm2
   std::cout << "multivector2 has two_norm2: " << multiVector2.two_norm2() << std::endl;
 
+  // Test infinity_norm
+  std::cout << "multivector2 has infinity_norm: " << multiVector2.infinity_norm() << std::endl;
+
   // Test operator*
   std::cout << multiVector * multiVector2 << std::endl;
 
