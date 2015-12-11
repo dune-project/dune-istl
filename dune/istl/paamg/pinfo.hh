@@ -77,6 +77,28 @@ namespace Dune
         DUNE_UNUSED_PARAMETER(v);
       }
 
+      /**
+       * @brief Dummy needed for compatibility with parallel equivalent
+       */
+      template<class T1, class T2>
+      void dot (const T1& x, const T1& y, T2& result) const
+      {
+        DUNE_UNUSED_PARAMETER(x);
+        DUNE_UNUSED_PARAMETER(y);
+        DUNE_UNUSED_PARAMETER(result);
+        DUNE_THROW(ISTLError, "This is sequential!");
+      }
+
+      /**
+       * @brief Dummy needed for compatibility with parallel equivalent
+       */
+      template<class T1>
+      double norm (const T1& x) const
+      {
+        DUNE_UNUSED_PARAMETER(x);
+        DUNE_THROW(ISTLError, "This is sequential!");
+      }
+
       template<class T>
       SequentialInformation(const CollectiveCommunication<T>&)
       {}

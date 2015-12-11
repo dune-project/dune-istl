@@ -15,7 +15,7 @@ namespace Dune
 {
   namespace Amg
   {
-    template<class M, int cat=M::category>
+    template<class M, int cat>
     struct PropertiesGraphCreator
     {};
 
@@ -34,9 +34,9 @@ namespace Dune
 
       typedef Dune::tuple<MatrixGraph*,PropertiesGraph*> GraphTuple;
 
-      template<class OF, class T>
+      template<class OF, class T, class PI>
       static GraphTuple create(const M& matrix, T& excluded,
-                               const SequentialInformation& pinfo,
+                               const PI& pinfo,
                                const OF&)
       {
         DUNE_UNUSED_PARAMETER(excluded);
