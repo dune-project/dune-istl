@@ -665,14 +665,11 @@ namespace Dune
         matrices_(const_cast<MatrixOperator&>(*fineOperator)),
         parallelInformation_(const_cast<ParallelInformation&>(pinfo))
     {
-      static_assert((static_cast<int>(MatrixOperator::category) ==
-                       static_cast<int>(SolverCategory::sequential)
-                     || static_cast<int>(MatrixOperator::category) ==
-                       static_cast<int>(SolverCategory::overlapping)
-                     || static_cast<int>(MatrixOperator::category) ==
-                       static_cast<int>(SolverCategory::nonoverlapping)),
-                    "MatrixOperator must be of category sequential or overlapping or nonoverlapping");
-      if (static_cast<int>(MatrixOperator::category) != static_cast<int>(pinfo.getSolverCategory()))
+      if (!(fineOperator->category() == SolverCategory::sequential
+                     || fineOperator->category() == SolverCategory::overlapping
+                     || fineOperator->category() == SolverCategory::nonoverlapping))
+        DUNE_THROW(ISTLError, "MatrixOperator must be of category sequential or overlapping or nonoverlapping");
+      if (fineOperator->category() != pinfo.getSolverCategory())
         DUNE_THROW(ISTLError, "MatrixOperator and ParallelInformation must belong to the same category!");
 
     }

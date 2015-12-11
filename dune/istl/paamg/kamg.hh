@@ -35,10 +35,11 @@ namespace Dune
       typedef typename AMG::Range Range;
     public:
 
-      enum {
-        /** @brief The solver category. */
-        category = AMG::category
-      };
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return amg_.category();
+      }
 
       /**
        * @brief Constructor.
@@ -48,8 +49,7 @@ namespace Dune
        */
 
       KAmgTwoGrid(AMG& amg, std::shared_ptr<InverseOperator<Domain,Range> > coarseSolver)
-        : Preconditioner<typename AMG::Domain,typename AMG::Range>(static_cast<SolverCategory::Category>(AMG::category)),
-          amg_(amg), coarseSolver_(coarseSolver)
+        : amg_(amg), coarseSolver_(coarseSolver)
       {}
 
       /**  \copydoc Preconditioner::pre(X&,Y&) */
@@ -161,13 +161,12 @@ namespace Dune
       typedef typename Amg::Range Range;
       /** @brief The type of the hierarchy of parallel information. */
       typedef typename Amg::ParallelInformationHierarchy ParallelInformationHierarchy;
-      /** @brief The type of the scalar product. */
-      typedef typename Amg::ScalarProduct ScalarProduct;
 
-      enum {
-        /** @brief The solver category. */
-        category = Amg::category
-      };
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return amg.category();
+      }
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -222,7 +221,7 @@ namespace Dune
        * All parameters can be set in the criterion!
        */
       template<class C>
-      KAMG(const Operator& fineOperator, const C& criterion,
+      KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
            const SmootherArgs& smootherArgs, std::size_t gamma,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
@@ -267,7 +266,7 @@ namespace Dune
       double levelDefectReduction;
 
       /** @brief pointers to the allocated scalar products. */
-      std::vector<std::shared_ptr<typename Amg::ScalarProduct> > scalarproducts;
+      std::vector<std::shared_ptr<ScalarProduct<X> > > scalarproducts;
 
       /** @brief pointers to the allocated krylov solvers. */
       std::vector<std::shared_ptr<KAmgTwoGrid<Amg> > > ksolvers;
@@ -279,8 +278,7 @@ namespace Dune
                             std::size_t gamma, std::size_t preSmoothingSteps,
                             std::size_t postSmoothingSteps,
                             std::size_t ksteps, double reduction)
-      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(Amg::category)),
-        amg(matrices, coarseSolver, smootherArgs, gamma, preSmoothingSteps,
+      : amg(matrices, coarseSolver, smootherArgs, gamma, preSmoothingSteps,
             postSmoothingSteps), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
@@ -294,13 +292,12 @@ namespace Dune
 
     template<class M, class X, class S, class P, class K, class A>
     template<class C>
-    KAMG<M,X,S,P,K,A>::KAMG(const Operator& fineOperator, const C& criterion,
+    KAMG<M,X,S,P,K,A>::KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
                             const SmootherArgs& smootherArgs, std::size_t gamma,
                             std::size_t preSmoothingSteps, std::size_t postSmoothingSteps,
                             std::size_t ksteps, double reduction,
                             const ParallelInformation& pinfo)
-      : Preconditioner<X,X>(static_cast<SolverCategory::Category>(Amg::category)),
-        amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
+      : amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
             postSmoothingSteps, false, pinfo), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
@@ -341,10 +338,10 @@ namespace Dune
 
       if(matrix!=amg.matrices_->matrices().finest())
         while(true) {
-          scalarproducts.push_back(std::shared_ptr<typename Amg::ScalarProduct>(Amg::ScalarProductChooser::construct(*pinfo)));
+          scalarproducts.push_back(ScalarProductChooser::construct<X>(category(), *pinfo));
           std::shared_ptr<InverseOperator<Domain,Range> > ks =
-            std::shared_ptr<InverseOperator<Domain,Range> >(new KrylovSolver(*matrix, *(scalarproducts.back()),
-                                                                        *(ksolvers.back()), levelDefectReduction,
+            std::shared_ptr<InverseOperator<Domain,Range> >(new KrylovSolver(Dune::stackobject_to_shared_ptr(*matrix), scalarproducts.back(),
+                                                                        ksolvers.back(), levelDefectReduction,
                                                                         maxLevelKrylovSteps, 0));
           ksolvers.push_back(std::shared_ptr<KAmgTwoGrid<Amg> >(new KAmgTwoGrid<Amg>(amg, ks)));
           --matrix;
