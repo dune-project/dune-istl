@@ -99,7 +99,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::Timer watch;
 
   watch.reset();
-  Operator fop(mat);
+  auto fop = std::make_shared<Operator>(mat);
 
   typedef typename std::conditional< std::is_convertible<XREAL, typename Dune::FieldTraits<XREAL>::real_type>::value,
                    Dune::Amg::FirstDiagonal, Dune::Amg::RowSum >::type Norm;
@@ -138,7 +138,7 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   Smoother smoother(mat,1,1);
 
-  AMG amg(fop, criterion, smootherArgs);
+  auto amg = std::make_shared<AMG>(fop, criterion, smootherArgs);
 
 
   double buildtime = watch.elapsed();

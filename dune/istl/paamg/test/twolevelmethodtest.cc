@@ -44,7 +44,7 @@ void testTwoLevelMethod()
 #ifndef USE_OVERLAPPINGSCHWARZ
     // Smoother used for the finest level
     typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> FSmoother;
-    FSmoother fineSmoother(mat,1,1.0);
+    auto fineSmoother = std::make_shared<FSmoother>(mat,1,1.0);
 #else
     // Smoother used for the finest level. There is an additional
     // template parameter to provide the subdomain solver.
@@ -63,7 +63,7 @@ void testTwoLevelMethod()
             subdomains[index].insert(i*N+j);
         }
     //create smoother
-    FSmoother fineSmoother(mat,subdomains, 1.0, false);
+    auto fineSmoother = std::make_shared<FSmoother>(mat,subdomains, 1.0, false);
 #endif
     typedef Dune::SeqJac<BCRSMat,Vector,Vector> CSmoother;
     typedef Dune::Amg::SmootherTraits<CSmoother>::Arguments SmootherArgs;
@@ -74,13 +74,14 @@ void testTwoLevelMethod()
     Criterion crit;
     CoarsePolicy coarsePolicy=CoarsePolicy(SmootherArgs(), crit);
     TransferPolicy transferPolicy(crit);
-    Operator fop(mat);
-    Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner(fop,
-                                                                          Dune::stackobject_to_shared_ptr(fineSmoother),
+    auto fop = std::make_shared<Operator>(mat);
+    auto preconditioner = std::make_shared<Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> >
+                                                                         (fop,
+                                                                          fineSmoother,
                                                                           transferPolicy,
                                                                           coarsePolicy);
     Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,.8,80,2);
-    Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner1(preconditioner);
+    Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner1(*preconditioner);
     Dune::InverseOperatorResult res;
     amgCG.apply(x,b,res);
 }
