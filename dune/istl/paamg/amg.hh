@@ -180,6 +180,7 @@ namespace Dune
 
          \param fineOperator The operator on the fine level.
          \param configuration ParameterTree containing AMG parameters.
+         \param pinfo Optionally, specify ParallelInformation
 
          ParameterTree Key         | Meaning
          --------------------------|------------
@@ -198,7 +199,7 @@ namespace Dune
 
          See \ref ISTL_Factory for the ParameterTree layout and examples.
        */
-      AMG(std::shared_ptr<const Operator> fineOperator, const ParameterTree& configuration);
+      AMG(std::shared_ptr<const Operator> fineOperator, const ParameterTree& configuration, const ParallelInformation& pinfo=ParallelInformation());
 
       /**
        * @brief Copy constructor.
@@ -460,7 +461,9 @@ namespace Dune
     }
 
     template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix, const ParameterTree& configuration)
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix,
+                         const ParameterTree& configuration,
+                         const ParallelInformation& pinfo)
       : smoothers_(new Hierarchy<Smoother,A>),
         solver_(), rhs_(), lhs_(), update_(), scalarProduct_(), buildHierarchy_(true),
         coarsesolverconverged(true), coarseSmoother_()
@@ -508,7 +511,7 @@ namespace Dune
       verbosity_ = configuration.get<std::size_t> ("verbosity");
       criterion.setDebugLevel (verbosity_);
 
-      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), ParallelInformation());
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
