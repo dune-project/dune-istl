@@ -126,9 +126,9 @@ namespace Dune
     }
 
     //! helper function for printing solver output
-    template <typename Int, typename DataType>
+    template <typename CountType, typename DataType>
     void printOutput(std::ostream& s,
-                     const Int& iter,
+                     const CountType& iter,
                      const DataType& norm,
                      const DataType& norm_old) const
     {
@@ -139,9 +139,9 @@ namespace Dune
     }
 
     //! helper function for printing solver output
-    template <typename Int, typename DataType>
+    template <typename CountType, typename DataType>
     void printOutput(std::ostream& s,
-                     const Int& iter,
+                     const CountType& iter,
                      const DataType& norm) const
     {
       s << std::setw(iterationSpacing)  << iter << " ";
