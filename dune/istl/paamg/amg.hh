@@ -95,7 +95,7 @@ namespace Dune
       //! Category of the preconditioner (see SolverCategory::Category)
       virtual SolverCategory::Category category() const
       {
-        return smoothers_->coarsest()->category();
+        return coarseSmoother_->category();
       }
 
       /**
@@ -563,7 +563,7 @@ namespace Dune
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
         scalarProduct_ = ScalarProductChooser::construct<X,PI>(matrix->category(), cargs.getComm());
 
-        if (matrix->category()!=smoothers_->coarsest()->category())
+        if (matrix->category()!=coarseSmoother_->category())
           DUNE_THROW(ISTLError, "Matrix and Smoother must match in terms of category!");
 
 #if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
