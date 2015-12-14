@@ -15,13 +15,52 @@ namespace Dune
 {
   namespace Amg
   {
-    template<class M, int cat>
+
+    template<class M, class PI>
     struct PropertiesGraphCreator
-    {};
+    {
+      typedef typename M::matrix_type Matrix;
+      typedef Dune::Amg::MatrixGraph<const Matrix> MatrixGraph;
+      typedef Dune::Amg::SubGraph<MatrixGraph,
+          std::vector<bool> > SubGraph;
+      typedef Dune::Amg::PropertiesGraph<SubGraph,
+          VertexProperties,
+          EdgeProperties,
+          IdentityMap,
+          typename SubGraph::EdgeIndexMap>
+      PropertiesGraph;
+
+      typedef Dune::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
+
+      template<class OF, class T>
+      static GraphTuple create(const M& matrix, T& excluded,
+                               PI& pinfo, const OF& of)
+      {
+        MatrixGraph* mg = new MatrixGraph(matrix.getmat());
+        typedef typename PI::ParallelIndexSet ParallelIndexSet;
+        typedef typename ParallelIndexSet::const_iterator IndexIterator;
+        IndexIterator iend = pinfo.indexSet().end();
+
+        for(IndexIterator index = pinfo.indexSet().begin(); index != iend; ++index)
+          excluded[index->local()] = of.contains(index->local().attribute());
+
+        SubGraph* sg= new SubGraph(*mg, excluded);
+        PropertiesGraph* pg = new PropertiesGraph(*sg, IdentityMap(), sg->getEdgeIndexMap());
+        return GraphTuple(mg,pg,sg);
+      }
+
+      static void free(GraphTuple& graphs)
+      {
+        delete get<2>(graphs);
+        delete get<1>(graphs);
+      }
+    };
 
     template<class M>
-    struct PropertiesGraphCreator<M,SolverCategory::sequential>
+    struct PropertiesGraphCreator <M, SequentialInformation>
     {
+      typedef SequentialInformation PI;
+
       typedef typename M::matrix_type Matrix;
 
       typedef Dune::Amg::MatrixGraph<const Matrix> MatrixGraph;
@@ -34,7 +73,7 @@ namespace Dune
 
       typedef Dune::tuple<MatrixGraph*,PropertiesGraph*> GraphTuple;
 
-      template<class OF, class T, class PI>
+      template<class OF, class T>
       static GraphTuple create(const M& matrix, T& excluded,
                                const PI& pinfo,
                                const OF&)
@@ -51,86 +90,6 @@ namespace Dune
         delete get<1>(graphs);
       }
 
-    };
-
-    template<class M>
-    struct PropertiesGraphCreator<M,SolverCategory::overlapping>
-    {
-      typedef typename M::matrix_type Matrix;
-      typedef Dune::Amg::MatrixGraph<const Matrix> MatrixGraph;
-      typedef Dune::Amg::SubGraph<MatrixGraph,
-          std::vector<bool> > SubGraph;
-      typedef Dune::Amg::PropertiesGraph<SubGraph,
-          VertexProperties,
-          EdgeProperties,
-          IdentityMap,
-          typename SubGraph::EdgeIndexMap>
-      PropertiesGraph;
-
-      typedef Dune::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
-
-      template<class OF, class T, class PI>
-      static GraphTuple create(const M& matrix, T& excluded,
-                               PI& pinfo, const OF& of)
-      {
-        MatrixGraph* mg = new MatrixGraph(matrix.getmat());
-        typedef typename PI::ParallelIndexSet ParallelIndexSet;
-        typedef typename ParallelIndexSet::const_iterator IndexIterator;
-        IndexIterator iend = pinfo.indexSet().end();
-
-        for(IndexIterator index = pinfo.indexSet().begin(); index != iend; ++index)
-          excluded[index->local()] = of.contains(index->local().attribute());
-
-        SubGraph* sg= new SubGraph(*mg, excluded);
-        PropertiesGraph* pg = new PropertiesGraph(*sg, IdentityMap(), sg->getEdgeIndexMap());
-        return GraphTuple(mg,pg,sg);
-      }
-
-      static void free(GraphTuple& graphs)
-      {
-        delete get<2>(graphs);
-        delete get<1>(graphs);
-      }
-    };
-
-    template<class M>
-    struct PropertiesGraphCreator<M,SolverCategory::nonoverlapping>
-    {
-      typedef typename M::matrix_type Matrix;
-      typedef Dune::Amg::MatrixGraph<const Matrix> MatrixGraph;
-      typedef Dune::Amg::SubGraph<MatrixGraph,
-          std::vector<bool> > SubGraph;
-      typedef Dune::Amg::PropertiesGraph<SubGraph,
-          VertexProperties,
-          EdgeProperties,
-          IdentityMap,
-          typename SubGraph::EdgeIndexMap>
-      PropertiesGraph;
-
-      typedef Dune::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
-
-      template<class OF, class T, class PI>
-      static GraphTuple create(const M& matrix, T& excluded,
-                               PI& pinfo, const OF& of)
-      {
-        MatrixGraph* mg = new MatrixGraph(matrix.getmat());
-        typedef typename PI::ParallelIndexSet ParallelIndexSet;
-        typedef typename ParallelIndexSet::const_iterator IndexIterator;
-        IndexIterator iend = pinfo.indexSet().end();
-
-        for(IndexIterator index = pinfo.indexSet().begin(); index != iend; ++index)
-          excluded[index->local()] = of.contains(index->local().attribute());
-
-        SubGraph* sg= new SubGraph(*mg, excluded);
-        PropertiesGraph* pg = new PropertiesGraph(*sg, IdentityMap(), sg->getEdgeIndexMap());
-        return GraphTuple(mg,pg,sg);
-      }
-
-      static void free(GraphTuple& graphs)
-      {
-        delete get<2>(graphs);
-        delete get<1>(graphs);
-      }
     };
 
   } //namespace Amg

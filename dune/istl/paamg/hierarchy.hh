@@ -480,10 +480,6 @@ namespace Dune
       /** @brief The maximum number of level across all processors.*/
       int maxlevels_;
 
-      /** @brief Actual implementation of build with static category */
-      template<typename O, typename T, int category>
-      void build_(const T& criterion);
-
       typename MatrixOperator::field_type prolongDamp_;
 
       /**
@@ -682,22 +678,6 @@ namespace Dune
     template<typename O, typename T>
     void MatrixHierarchy<M,IS,A>::build(const T& criterion)
     {
-      if (matrices_.finest()->category() == SolverCategory::sequential)
-        build_<O,T,SolverCategory::sequential>(criterion);
-      #if HAVE_MPI
-      else if (matrices_.finest()->category() == SolverCategory::overlapping)
-        build_<O,T,SolverCategory::overlapping>(criterion);
-      else if (matrices_.finest()->category() == SolverCategory::nonoverlapping)
-        build_<O,T,SolverCategory::nonoverlapping>(criterion);
-      #endif
-      else
-        DUNE_THROW(ISTLError, "SolverCategory unknown. Check MPI in parallel case.");
-    }
-
-    template<class M, class IS, class A>
-    template<typename O, typename T, int category>
-    void MatrixHierarchy<M,IS,A>::build_(const T& criterion)
-    {
       prolongDamp_ = criterion.getProlongationDampingFactor();
       typedef O OverlapFlags;
       typedef typename ParallelMatrixHierarchy::Iterator MatIterator;
@@ -787,7 +767,7 @@ namespace Dune
           // No further coarsening needed
           break;
 
-        typedef PropertiesGraphCreator<MatrixOperator, category> GraphCreator;
+        typedef PropertiesGraphCreator<MatrixOperator, IS> GraphCreator;
         typedef typename GraphCreator::PropertiesGraph PropertiesGraph;
         typedef typename GraphCreator::GraphTuple GraphTuple;
 
