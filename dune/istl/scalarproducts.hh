@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <string>
 
+#include "bvector.hh"
 #include "solvercategory.hh"
 
 
