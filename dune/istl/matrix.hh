@@ -166,54 +166,6 @@ namespace Dune {
       return cols_;
     }
 
-    /** \brief The number of scalar rows */
-    size_type rowdim() const {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if (M()==0)
-        DUNE_THROW(ISTLError, "Can't compute rowdim() when there are no columns!");
-#endif
-      size_type dim = 0;
-      for (size_type i=0; i<data_.N(); i++)
-        dim += data_[i][0].rowdim();
-
-      return dim;
-    }
-
-    /** \brief The number of scalar columns */
-    size_type coldim() const {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if (N()==0)
-        DUNE_THROW(ISTLError, "Can't compute coldim() when there are no rows!");
-#endif
-      size_type dim = 0;
-      for (size_type i=0; i<data_[0].size(); i++)
-        dim += data_[0][i].coldim();
-
-      return dim;
-    }
-
-    /** \brief The number of scalar rows */
-    size_type rowdim(size_type r) const {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if (r<0 || r>=N())
-        DUNE_THROW(ISTLError, "Rowdim for nonexisting row " << r << " requested!");
-      if (M()==0)
-        DUNE_THROW(ISTLError, "Can't compute rowdim() when there are no columns!");
-#endif
-      return data_[r][0].rowdim();
-    }
-
-    /** \brief The number of scalar columns */
-    size_type coldim(size_type c) const {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if (c<0 || c>=M())
-        DUNE_THROW(ISTLError, "Coldim for nonexisting column " << c << " requested!");
-      if (N()==0)
-        DUNE_THROW(ISTLError, "Can't compute coldim() when there are no rows!");
-#endif
-      return data_[0][c].coldim();
-    }
-
     /** \brief Multiplication with a scalar */
     Matrix<T>& operator*=(const field_type& scalar) {
       data_ *= scalar;
