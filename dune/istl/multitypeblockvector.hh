@@ -9,7 +9,6 @@
 
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/std/constexpr.hh>
 
 #include "istlexception.hh"
 
@@ -319,7 +318,7 @@ namespace Dune {
     typedef double field_type;
 
     /** \brief Return the number of vector entries */
-    static DUNE_CONSTEXPR std::size_t size()
+    static constexpr std::size_t size()
     {
       return sizeof...(Args);
     }
