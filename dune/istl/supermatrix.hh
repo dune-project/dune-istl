@@ -169,9 +169,9 @@ namespace Dune
 
   template<class T>
   const Dtype_t BaseGetSuperLUType<T>::type =
-    Dune::is_same<T,float>::value ? SLU_S :
-    (  Dune::is_same<T,std::complex<double> >::value ? SLU_Z :
-       ( Dune::is_same<T,std::complex<float> >::value ? SLU_C : SLU_D ));
+    std::is_same<T,float>::value ? SLU_S :
+    (  std::is_same<T,std::complex<double> >::value ? SLU_Z :
+       ( std::is_same<T,std::complex<float> >::value ? SLU_C : SLU_D ));
 
   template<>
   struct GetSuperLUType<double>

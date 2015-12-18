@@ -500,7 +500,7 @@ namespace Dune
 #define DIRECTSOLVER SuperLU
 #endif
         // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+        if(std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
            || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
            || (matrices_->parallelInformation().coarsest().isRedistributed()
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
