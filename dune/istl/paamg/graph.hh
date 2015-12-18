@@ -56,7 +56,7 @@ namespace Dune
       /**
        * @brief The mutable type of the matrix we are a graph for.
        */
-      typedef typename remove_const<M>::type MutableMatrix;
+      typedef typename std::remove_const<M>::type MutableMatrix;
 
       /**
        * @brief The type of the weights
@@ -81,7 +81,7 @@ namespace Dune
         /*
          * @brief Whether Matrix is mutable.
          */
-        mutableMatrix = is_same<M, typename remove_const<M>::type>::value
+        mutableMatrix = is_same<M, typename std::remove_const<M>::type>::value
       };
 
 
@@ -96,11 +96,11 @@ namespace Dune
         /**
          *  @brief The mutable type of the container type.
          */
-        typedef typename remove_const<C>::type MutableContainer;
+        typedef typename std::remove_const<C>::type MutableContainer;
         /**
          * @brief The constant type of the container type.
          */
-        typedef const typename remove_const<C>::type ConstContainer;
+        typedef const typename std::remove_const<C>::type ConstContainer;
 
         friend class EdgeIteratorT<MutableContainer>;
         friend class EdgeIteratorT<ConstContainer>;
@@ -149,7 +149,7 @@ namespace Dune
         template<class C1>
         EdgeIteratorT(const EdgeIteratorT<C1>& other);
 
-        typedef typename conditional<is_same<C, typename remove_const<C>::type>::value && C::mutableMatrix,
+        typedef typename conditional<is_same<C, typename std::remove_const<C>::type>::value && C::mutableMatrix,
             typename M::block_type, const typename M::block_type>::type
         WeightType;
 
@@ -162,16 +162,16 @@ namespace Dune
         EdgeIteratorT<C>& operator++();
 
         /** @brief Inequality operator. */
-        bool operator!=(const EdgeIteratorT<typename remove_const<C>::type>& other) const;
+        bool operator!=(const EdgeIteratorT<typename std::remove_const<C>::type>& other) const;
 
         /** @brief Inequality operator. */
-        bool operator!=(const EdgeIteratorT<const typename remove_const<C>::type>& other) const;
+        bool operator!=(const EdgeIteratorT<const typename std::remove_const<C>::type>& other) const;
 
         /** @brief Equality operator. */
-        bool operator==(const EdgeIteratorT<typename remove_const<C>::type>& other) const;
+        bool operator==(const EdgeIteratorT<typename std::remove_const<C>::type>& other) const;
 
         /** @brief Equality operator. */
-        bool operator==(const EdgeIteratorT<const typename remove_const<C>::type>& other) const;
+        bool operator==(const EdgeIteratorT<const typename std::remove_const<C>::type>& other) const;
 
         /** @brief The index of the target vertex of the current edge. */
         VertexDescriptor target() const;
@@ -209,11 +209,11 @@ namespace Dune
         /**
          *  @brief The mutable type of the container type.
          */
-        typedef typename remove_const<C>::type MutableContainer;
+        typedef typename std::remove_const<C>::type MutableContainer;
         /**
          * @brief The constant type of the container type.
          */
-        typedef const typename remove_const<C>::type ConstContainer;
+        typedef const typename std::remove_const<C>::type ConstContainer;
 
         friend class VertexIteratorT<MutableContainer>;
         friend class VertexIteratorT<ConstContainer>;
@@ -259,7 +259,7 @@ namespace Dune
         /** @brief Equality operator. */
         bool operator==(const VertexIteratorT<MutableContainer>& other) const;
 
-        typedef typename conditional<is_same<C, typename remove_const<C>::type>::value && C::mutableMatrix,
+        typedef typename conditional<is_same<C, typename std::remove_const<C>::type>::value && C::mutableMatrix,
             typename M::block_type, const typename M::block_type>::type
         WeightType;
         /** @brief Access the weight of the vertex. */
@@ -794,18 +794,18 @@ namespace Dune
 
       template<class C>
       class VertexIteratorT
-        : public conditional<is_same<typename remove_const<C>::type,
+        : public conditional<is_same<typename std::remove_const<C>::type,
                   C>::value,
               typename Graph::VertexIterator,
               typename Graph::ConstVertexIterator>::type
       {
-        friend class VertexIteratorT<const typename remove_const<C>::type>;
-        friend class VertexIteratorT<typename remove_const<C>::type>;
+        friend class VertexIteratorT<const typename std::remove_const<C>::type>;
+        friend class VertexIteratorT<typename std::remove_const<C>::type>;
       public:
         /**
          * @brief The father class.
          */
-        typedef typename conditional<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename std::remove_const<C>::type,
                 C>::value,
             typename Graph::VertexIterator,
             typename Graph::ConstVertexIterator>::type
@@ -814,7 +814,7 @@ namespace Dune
         /**
          * @brief The class of the edge iterator.
          */
-        typedef typename conditional<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename std::remove_const<C>::type,
                 C>::value,
             typename Graph::EdgeIterator,
             typename Graph::ConstEdgeIterator>::type
@@ -848,7 +848,7 @@ namespace Dune
         /**
          * @brief Get the properties of the current Vertex.
          */
-        typename conditional<is_same<C,typename remove_const<C>::type>::value,
+        typename conditional<is_same<C,typename std::remove_const<C>::type>::value,
             VertexProperties&,
             const VertexProperties&>::type
         properties() const;
@@ -1029,19 +1029,19 @@ namespace Dune
 
       template<class C>
       class EdgeIteratorT
-        :  public conditional<is_same<typename remove_const<C>::type,
+        :  public conditional<is_same<typename std::remove_const<C>::type,
                   C>::value,
               typename Graph::EdgeIterator,
               typename Graph::ConstEdgeIterator>::type
       {
 
-        friend class EdgeIteratorT<const typename remove_const<C>::type>;
-        friend class EdgeIteratorT<typename remove_const<C>::type>;
+        friend class EdgeIteratorT<const typename std::remove_const<C>::type>;
+        friend class EdgeIteratorT<typename std::remove_const<C>::type>;
       public:
         /**
          * @brief The father class.
          */
-        typedef typename conditional<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename std::remove_const<C>::type,
                 C>::value,
             typename Graph::EdgeIterator,
             typename Graph::ConstEdgeIterator>::type
@@ -1074,7 +1074,7 @@ namespace Dune
         /**
          * @brief Get the properties of the current edge.
          */
-        typename conditional<is_same<C,typename remove_const<C>::type>::value,
+        typename conditional<is_same<C,typename std::remove_const<C>::type>::value,
             EdgeProperties&,
             const EdgeProperties&>::type
         properties() const;
@@ -1131,18 +1131,18 @@ namespace Dune
 
       template<class C>
       class VertexIteratorT
-        : public conditional<is_same<typename remove_const<C>::type,
+        : public conditional<is_same<typename std::remove_const<C>::type,
                   C>::value,
               typename Graph::VertexIterator,
               typename Graph::ConstVertexIterator>::type
       {
-        friend class VertexIteratorT<const typename remove_const<C>::type>;
-        friend class VertexIteratorT<typename remove_const<C>::type>;
+        friend class VertexIteratorT<const typename std::remove_const<C>::type>;
+        friend class VertexIteratorT<typename std::remove_const<C>::type>;
       public:
         /**
          * @brief The father class.
          */
-        typedef typename conditional<is_same<typename remove_const<C>::type,
+        typedef typename conditional<is_same<typename std::remove_const<C>::type,
                 C>::value,
             typename Graph::VertexIterator,
             typename Graph::ConstVertexIterator>::type
@@ -1176,7 +1176,7 @@ namespace Dune
         /**
          * @brief Get the properties of the current Vertex.
          */
-        typename conditional<is_same<C,typename remove_const<C>::type>::value,
+        typename conditional<is_same<C,typename std::remove_const<C>::type>::value,
             VertexProperties&,
             const VertexProperties&>::type
         properties() const;
@@ -1584,28 +1584,28 @@ namespace Dune
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const typename MatrixGraph<M>::template EdgeIteratorT<typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const typename MatrixGraph<M>::template EdgeIteratorT<typename std::remove_const<C>::type>& other) const
     {
       return block_!=other.block_;
     }
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const typename MatrixGraph<M>::template EdgeIteratorT<const typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator!=(const typename MatrixGraph<M>::template EdgeIteratorT<const typename std::remove_const<C>::type>& other) const
     {
       return block_!=other.block_;
     }
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const typename MatrixGraph<M>::template EdgeIteratorT<typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const typename MatrixGraph<M>::template EdgeIteratorT<typename std::remove_const<C>::type>& other) const
     {
       return block_==other.block_;
     }
 
     template<class M>
     template<class C>
-    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const typename MatrixGraph<M>::template EdgeIteratorT<const typename remove_const<C>::type>& other) const
+    inline bool MatrixGraph<M>::EdgeIteratorT<C>::operator==(const typename MatrixGraph<M>::template EdgeIteratorT<const typename std::remove_const<C>::type>& other) const
     {
       return block_==other.block_;
     }
@@ -2076,7 +2076,7 @@ namespace Dune
 
     template<class G, class V, class VM>
     template<class C>
-    typename conditional<is_same<C,typename remove_const<C>::type>::value,
+    typename conditional<is_same<C,typename std::remove_const<C>::type>::value,
         V&, const V&>::type
     inline VertexPropertiesGraph<G,V,VM>::VertexIteratorT<C>::properties() const
     {
@@ -2085,7 +2085,7 @@ namespace Dune
 
     template<class G, class V, class VM>
     template<class C>
-    typename conditional<is_same<typename remove_const<C>::type,
+    typename conditional<is_same<typename std::remove_const<C>::type,
             C>::value,
         typename G::EdgeIterator,
         typename G::ConstEdgeIterator>::type
@@ -2096,7 +2096,7 @@ namespace Dune
 
     template<class G, class V, class VM>
     template<class C>
-    typename conditional<is_same<typename remove_const<C>::type,
+    typename conditional<is_same<typename std::remove_const<C>::type,
             C>::value,
         typename G::EdgeIterator,
         typename G::ConstEdgeIterator>::type
@@ -2195,7 +2195,7 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     template<class C>
-    inline typename conditional<is_same<C,typename remove_const<C>::type>::value,E&,const E&>::type
+    inline typename conditional<is_same<C,typename std::remove_const<C>::type>::value,E&,const E&>::type
     PropertiesGraph<G,V,E,VM,EM>::EdgeIteratorT<C>::properties() const
     {
       return graph_->getEdgeProperties(Father::operator*());
@@ -2254,7 +2254,7 @@ namespace Dune
 
     template<class G, class V, class E, class VM, class EM>
     template<class C>
-    inline typename conditional<is_same<C,typename remove_const<C>::type>::value,
+    inline typename conditional<is_same<C,typename std::remove_const<C>::type>::value,
         V&, const V&>::type
     PropertiesGraph<G,V,E,VM,EM>::VertexIteratorT<C>::properties() const
     {

@@ -349,11 +349,10 @@ void setupAnisotropic(M& A, double eps)
 template<class N, class G>
 void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 {
-  using Dune::remove_const;
   using Dune::is_same;
   using Dune::conditional;
 
-  typedef typename remove_const<G>::type Mutable;
+  typedef typename std::remove_const<G>::type Mutable;
   typedef typename conditional<is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::type VertexIterator;
@@ -375,11 +374,10 @@ void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 template<class G>
 void printPropertiesGraph(G& graph, std::ostream& os)
 {
-  using Dune::remove_const;
   using Dune::is_same;
   using Dune::conditional;
 
-  typedef typename remove_const<G>::type Mutable;
+  typedef typename std::remove_const<G>::type Mutable;
   typedef typename conditional<is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::type VertexIterator;
@@ -401,11 +399,10 @@ void printPropertiesGraph(G& graph, std::ostream& os)
 template<class G>
 void printGraph(G& graph, std::ostream& os)
 {
-  using Dune::remove_const;
   using Dune::is_same;
   using Dune::conditional;
 
-  typedef typename remove_const<G>::type Mutable;
+  typedef typename std::remove_const<G>::type Mutable;
   typedef typename conditional<is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::type VertexIterator;
