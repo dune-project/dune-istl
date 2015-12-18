@@ -158,10 +158,10 @@ namespace Dune
       class LevelIterator
         : public BidirectionalIteratorFacade<LevelIterator<C,T1>,T1,T1&>
       {
-        friend class LevelIterator<typename remove_const<C>::type,
-            typename remove_const<T1>::type >;
-        friend class LevelIterator<const typename remove_const<C>::type,
-            const typename remove_const<T1>::type >;
+        friend class LevelIterator<typename std::remove_const<C>::type,
+            typename std::remove_const<T1>::type >;
+        friend class LevelIterator<const typename std::remove_const<C>::type,
+            const typename std::remove_const<T1>::type >;
 
       public:
         /** @brief Constructor. */
@@ -174,22 +174,22 @@ namespace Dune
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<typename remove_const<C>::type,
-                          typename remove_const<T1>::type>& other)
+        LevelIterator(const LevelIterator<typename std::remove_const<C>::type,
+                          typename std::remove_const<T1>::type>& other)
           : element_(other.element_)
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<const typename remove_const<C>::type,
-                          const typename remove_const<T1>::type>& other)
+        LevelIterator(const LevelIterator<const typename std::remove_const<C>::type,
+                          const typename std::remove_const<T1>::type>& other)
           : element_(other.element_)
         {}
 
         /**
          * @brief Equality check.
          */
-        bool equals(const LevelIterator<typename remove_const<C>::type,
-                        typename remove_const<T1>::type>& other) const
+        bool equals(const LevelIterator<typename std::remove_const<C>::type,
+                        typename std::remove_const<T1>::type>& other) const
         {
           return element_ == other.element_;
         }
@@ -197,8 +197,8 @@ namespace Dune
         /**
          * @brief Equality check.
          */
-        bool equals(const LevelIterator<const typename remove_const<C>::type,
-                        const typename remove_const<T1>::type>& other) const
+        bool equals(const LevelIterator<const typename std::remove_const<C>::type,
+                        const typename std::remove_const<T1>::type>& other) const
         {
           return element_ == other.element_;
         }
