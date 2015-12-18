@@ -860,7 +860,7 @@ namespace Dune
   // Write a vector entry
   template<typename V>
   void mm_print_vector_entry(const V& entry, std::ostream& ostr,
-                             const integral_constant<int,1>&)
+                             const std::integral_constant<int,1>&)
   {
     ostr<<entry<<std::endl;
   }
@@ -868,7 +868,7 @@ namespace Dune
   // Write a vector
   template<typename V>
   void mm_print_vector_entry(const V& vector, std::ostream& ostr,
-                             const integral_constant<int,0>&)
+                             const std::integral_constant<int,0>&)
   {
     using namespace MatrixMarketImpl;
 
@@ -879,7 +879,7 @@ namespace Dune
     for(VIter i=vector.begin(); i != vector.end(); ++i)
 
       mm_print_vector_entry(*i, ostr,
-                            integral_constant<int,isnumeric>());
+                            std::integral_constant<int,isnumeric>());
   }
 
   template<typename T, typename A, int i>
@@ -891,20 +891,20 @@ namespace Dune
   // Version for writing vectors.
   template<typename V>
   void writeMatrixMarket(const V& vector, std::ostream& ostr,
-                         const integral_constant<int,0>&)
+                         const std::integral_constant<int,0>&)
   {
     using namespace MatrixMarketImpl;
 
     ostr<<countEntries(vector)<<" "<<1<<std::endl;
     const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
-    mm_print_vector_entry(vector,ostr, integral_constant<int,isnumeric>());
+    mm_print_vector_entry(vector,ostr, std::integral_constant<int,isnumeric>());
   }
 
   // Versions for writing matrices
   template<typename M>
   void writeMatrixMarket(const M& matrix,
                          std::ostream& ostr,
-                         const integral_constant<int,1>&)
+                         const std::integral_constant<int,1>&)
   {
     ostr<<matrix.N()*mm_multipliers<M>::rows<<" "
         <<matrix.M()*mm_multipliers<M>::cols<<" "
@@ -933,7 +933,7 @@ namespace Dune
     mm_header_printer<M>::print(ostr);
     mm_block_structure_header<M>::print(ostr,matrix);
     // Choose the correct function for matrix and vector
-    writeMatrixMarket(matrix,ostr,integral_constant<int,IsMatrix<M>::value>());
+    writeMatrixMarket(matrix,ostr,std::integral_constant<int,IsMatrix<M>::value>());
   }
 
 
