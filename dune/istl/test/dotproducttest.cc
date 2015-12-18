@@ -13,10 +13,10 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   typedef typename ComplexBlockVector::field_type ct;
   const rt myEps((rt)1e-6);
 
-  static_assert(Dune::is_same< typename Dune::FieldTraits<rt>::real_type, rt>::value,
+  static_assert(std::is_same< typename Dune::FieldTraits<rt>::real_type, rt>::value,
                 "DotProductTest requires real data type for first block vector!");
 
-  const bool secondBlockIsComplex = !Dune::is_same< typename Dune::FieldTraits<ct>::real_type, ct>::value;
+  const bool secondBlockIsComplex = !std::is_same< typename Dune::FieldTraits<ct>::real_type, ct>::value;
 
   const ct complexSign = secondBlockIsComplex ? -1. : 1.;
   // avoid constructor ct(0.,1.)

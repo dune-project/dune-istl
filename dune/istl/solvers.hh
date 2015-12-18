@@ -1381,12 +1381,12 @@ namespace Dune {
     }
 
     template<typename T>
-    typename enable_if<is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       return t;
     }
 
     template<typename T>
-    typename enable_if<!is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       return conj(t);
     }
 
