@@ -1472,8 +1472,7 @@ namespace Dune
       start_ = new EdgeDescriptor[matrix_.N()+1];
 
       typedef typename M::ConstIterator Iterator;
-      Iterator row = matrix_.begin();
-      start_[row.index()] = 0;
+      start_[matrix_.begin().index()] = 0;
 
       for(Iterator row=matrix_.begin(); row != matrix_.end(); ++row)
         start_[row.index()+1] = start_[row.index()] + row->size();

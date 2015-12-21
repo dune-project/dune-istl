@@ -740,9 +740,9 @@ namespace Dune
             repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
                                            redistComm, redistributes_.back(), nodomains,
                                            criterion);
-          BIGINT unknowns = redistMat->N();
-          unknowns = infoLevel->communicator().sum(unknowns);
-          dunknowns= unknowns.todouble();
+          BIGINT unknownsRedist = redistMat->N();
+          unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
+          dunknowns= unknownsRedist.todouble();
           if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
             std::cout<<"Level "<<level<<" (redistributed) has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
                      <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
@@ -959,11 +959,11 @@ namespace Dune
 
       if(criterion.debugLevel()>0) {
         if(level==criterion.maxLevel()) {
-          BIGINT unknowns = mlevel->getmat().N();
-          unknowns = infoLevel->communicator().sum(unknowns);
-          double dunknowns = unknowns.todouble();
+          BIGINT unknownsLevel = mlevel->getmat().N();
+          unknownsLevel = infoLevel->communicator().sum(unknownsLevel);
+          double dunknownsLevel = unknownsLevel.todouble();
           if(rank==0 && criterion.debugLevel()>1) {
-            std::cout<<"Level "<<level<<" has "<<dunknowns<<" unknowns, "<<dunknowns/infoLevel->communicator().size()
+            std::cout<<"Level "<<level<<" has "<<dunknownsLevel<<" unknowns, "<<dunknownsLevel/infoLevel->communicator().size()
                      <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
           }
         }
@@ -986,12 +986,12 @@ namespace Dune
         repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
                                        redistComm, redistributes_.back(), nodomains,criterion);
         MatrixArgs args(*redistMat, *redistComm);
-        BIGINT unknowns = redistMat->N();
-        unknowns = infoLevel->communicator().sum(unknowns);
+        BIGINT unknownsRedist = redistMat->N();
+        unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
 
         if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1) {
-          double dunknowns= unknowns.todouble();
-          std::cout<<"Level "<<level<<" redistributed has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
+          double dunknownsRedist = unknownsRedist.todouble();
+          std::cout<<"Level "<<level<<" redistributed has "<<dunknownsRedist<<" unknowns, "<<dunknownsRedist/redistComm->communicator().size()
                    <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
         }
         mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
