@@ -1925,10 +1925,7 @@ namespace Dune {
       if (i<0 || i>=n) DUNE_THROW(BCRSMatrixError,"row index out of range");
       if (j<0 || j>=m) DUNE_THROW(BCRSMatrixError,"column index out of range");
 #endif
-      if (r[i].size() && r[i].find(j)!=r[i].end())
-        return true;
-      else
-        return false;
+      return (r[i].size() && r[i].find(j) != r[i].end());
     }
 
 
