@@ -20,16 +20,14 @@ struct Builder<Dune::BCRSMatrix<B,A> >
 {
   void randomBuild(int rows, int cols)
   {
-    int maxNZCols = 15; // maximal number of nonzeros per column
+    int maxNZCols = 15; // maximal number of nonzeros per row
     {
-
       Dune::BCRSMatrix<B,A> matrix( rows, cols, Dune::BCRSMatrix<B,A>::random );
-      for(int i=0; i<rows; ++i) matrix.setrowsize(i,maxNZCols);
+      for(int i=0; i<rows; ++i)
+        matrix.setrowsize(i,maxNZCols);
       matrix.endrowsizes();
 
-      ////////////////////////
-      //während des Aufstellens
-      // oder wenn es nicht anders geht auch davor.
+      // During setup, or before, if there is no other way.
       for(int i=0; i<rows; ++i) {
         if(i<cols)
           matrix.addindex(i,i);
