@@ -318,7 +318,7 @@ namespace Dune
         preSteps_=postSteps_=0;
       }
       assert(matrices_->isBuilt());
-      static_assert(is_same<PI,SequentialInformation>::value,
+      static_assert(std::is_same<PI,SequentialInformation>::value,
                     "Currently only sequential runs are supported");
     }
     template<class M, class X, class PI, class A>
@@ -339,7 +339,7 @@ namespace Dune
         std::cerr<<"WARNING only one step of smoothing is supported!"<<std::endl;
         preSteps_=postSteps_=1;
       }
-      static_assert(is_same<PI,SequentialInformation>::value,
+      static_assert(std::is_same<PI,SequentialInformation>::value,
                     "Currently only sequential runs are supported");
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
@@ -407,7 +407,7 @@ namespace Dune
 #define DIRECTSOLVER SuperLU
 #endif
         // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+        if(std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
            || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
            || (matrices_->parallelInformation().coarsest().isRedistributed()
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1

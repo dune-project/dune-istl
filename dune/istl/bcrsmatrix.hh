@@ -528,7 +528,7 @@ namespace Dune {
 
     public:
       //! \brief The unqualified value type
-      typedef typename remove_const<T>::type ValueType;
+      typedef typename std::remove_const<T>::type ValueType;
 
       friend class RandomAccessIteratorFacade<RealRowIterator<const ValueType>, const ValueType>;
       friend class RandomAccessIteratorFacade<RealRowIterator<ValueType>, ValueType>;

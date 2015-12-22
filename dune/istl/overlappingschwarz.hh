@@ -142,9 +142,9 @@ namespace Dune
     typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> M;
   public:
     //! \brief The matrix type the preconditioner is for.
-    typedef typename Dune::remove_const<M>::type matrix_type;
+    typedef typename std::remove_const<M>::type matrix_type;
     typedef K field_type;
-    typedef typename Dune::remove_const<M>::type rilu_type;
+    typedef typename std::remove_const<M>::type rilu_type;
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
