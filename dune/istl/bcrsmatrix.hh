@@ -279,7 +279,7 @@ namespace Dune {
 
      For general finite element implementations the number of rows n
      is known, the number of non-zeroes might also be known (e.g.
-     \#edges + \#nodes for P1) but the size of a row and the indices of a row
+     \#edges + \#nodes for P2) but the size of a row and the indices of a row
      can not be defined in sequential order.
 
      \code
