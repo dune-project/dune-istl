@@ -472,12 +472,12 @@ namespace Dune {
        *
        * For general finite element implementations the number of rows n
        * is known, the number of non-zeroes might also be known (e.g.
-       * \#edges + \#nodes for P1) but the size of a row and the indices of a row
-       * can not be defined in sequential order.
+       * \#edges + \#nodes for P2) but the size of a row and the indices of a row
+       * cannot be defined in sequential order.
        */
       random,
       /**
-       * @brief Build entries randomly with an educated guess on entries per row.
+       * @brief Build entries randomly with an educated guess for the number of entries per row.
        *
        * Allows random order generation as in random mode, but row sizes do not need
        * to be given first. Instead an average number of non-zeroes per row is passed
@@ -1015,7 +1015,7 @@ namespace Dune {
         return (i==it.i) && (&Mat==&it.Mat);
       }
 
-      //! dereferencing
+      //! The number of the row that the iterator currently points to
       size_type index () const
       {
         return i;
@@ -1069,7 +1069,12 @@ namespace Dune {
 
     //===== random creation interface
 
-    //! set number of indices in row i to s
+    /** \brief Set number of indices in row i to s
+     *
+     * The number s may actually be larger than the true number of nonzero entries in row i.  In that
+     * case, the extra memory goes wasted.  You will receive run-time warnings about this, sent to
+     * the Dune::dwarn stream.
+     */
     void setrowsize (size_type i, size_type s)
     {
       if (build_mode!=random)
