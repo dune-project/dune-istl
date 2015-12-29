@@ -973,7 +973,7 @@ namespace Dune {
           }
         }else
           // setup empty row
-          Mat.r[i].set(0,0,0);
+          Mat.r[i].set(0,nullptr,nullptr);
 
         // initialize the j array for row i from pattern
         size_type k=0;
@@ -1979,7 +1979,7 @@ namespace Dune {
           current_row.setindexptr(current_row.getindexptr()+s);
         } else{
           // empty row
-          r[i].set(0,0,0);
+          r[i].set(0,nullptr,nullptr);
         }
       }
     }
@@ -2002,7 +2002,7 @@ namespace Dune {
           r[i].setindexptr(jptr);
         } else{
           // empty row
-          r[i].set(0,0,0);
+          r[i].set(0,nullptr,nullptr);
         }
 
         // advance position in global array
@@ -2025,7 +2025,7 @@ namespace Dune {
           r[i].setptr(aptr);
         } else{
           // empty row
-          r[i].set(0,0,0);
+          r[i].set(0,nullptr,nullptr);
         }
 
         // advance position in global array
