@@ -976,10 +976,7 @@ namespace Dune {
           Mat.r[i].set(0,nullptr,nullptr);
 
         // initialize the j array for row i from pattern
-        size_type k=0;
-        size_type *j =  Mat.r[i].getindexptr();
-        for (typename PatternType::const_iterator it=pattern.begin(); it!=pattern.end(); ++it)
-          j[k++] = *it;
+        std::copy(pattern.cbegin(), pattern.cend(), Mat.r[i].getindexptr());
 
         // now go to next row
         i++;
