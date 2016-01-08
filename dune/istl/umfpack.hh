@@ -242,7 +242,7 @@ namespace Dune {
 
     /** @brief default constructor
      */
-    UMFPack() : matrixIsLoaded_(false), verbose(0)
+    UMFPack() : matrixIsLoaded_(false), verbosity_(0)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
@@ -423,13 +423,13 @@ namespace Dune {
      */
     void setVerbosity(int v)
     {
-      verbose = v;
+      verbosity_ = v;
       // set the verbosity level in UMFPack
-      if (verbose == 0)
+      if (verbosity_ == 0)
         UMF_Control[UMFPACK_PRL] = 1;
-      if (verbose == 1)
+      if (verbosity_ == 1)
         UMF_Control[UMFPACK_PRL] = 2;
-      if (verbose == 2)
+      if (verbosity_ == 2)
         UMF_Control[UMFPACK_PRL] = 4;
     }
 
@@ -477,7 +477,7 @@ namespace Dune {
                       UMF_Control,
                       UMF_Decomposition_Info);
       Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
-      if (verbose == 1)
+      if (verbosity_ == 1)
       {
         std::cout << "[UMFPack Decomposition]" << std::endl;
         std::cout << "Wallclock Time taken: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_WALLTIME] << " (CPU Time: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_TIME] << ")" << std::endl;
@@ -486,7 +486,7 @@ namespace Dune {
         std::cout << "Condition number estimate: " << 1./UMF_Decomposition_Info[UMFPACK_RCOND] << std::endl;
         std::cout << "Numbers of non-zeroes in decomposition: L: " << UMF_Decomposition_Info[UMFPACK_LNZ] << " U: " << UMF_Decomposition_Info[UMFPACK_UNZ] << std::endl;
       }
-      if (verbose == 2)
+      if (verbosity_ == 2)
       {
         Caller::report_info(UMF_Control,UMF_Decomposition_Info);
       }
@@ -495,7 +495,7 @@ namespace Dune {
     void printOnApply(double* UMF_Info)
     {
       Caller::report_status(UMF_Control,UMF_Info[UMFPACK_STATUS]);
-      if (verbose > 0)
+      if (verbosity_ > 0)
       {
         std::cout << "[UMFPack Solve]" << std::endl;
         std::cout << "Wallclock Time: " << UMF_Info[UMFPACK_SOLVE_WALLTIME] << " (CPU Time: " << UMF_Info[UMFPACK_SOLVE_TIME] << ")" << std::endl;
@@ -509,7 +509,7 @@ namespace Dune {
 
     UMFPackMatrix umfpackMatrix_;
     bool matrixIsLoaded_;
-    int verbose;
+    int verbosity_;
     void *UMF_Symbolic;
     void *UMF_Numeric;
     double UMF_Control[UMFPACK_CONTROL];

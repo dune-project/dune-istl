@@ -250,10 +250,10 @@ namespace Dune
     static size_type coldim (const Matrix& A, size_type c)
     {
       // find an entry in column c
-      if (A.nnz>0)
+      if (A.nnz_ > 0)
       {
-        for (size_type k=0; k<A.nnz; k++) {
-          if (A.j.get()[k]==c) {
+        for (size_type k=0; k<A.nnz_; k++) {
+          if (A.j_.get()[k] == c) {
             return MatrixDimension<block_type>::coldim(A.a[k]);
           }
         }

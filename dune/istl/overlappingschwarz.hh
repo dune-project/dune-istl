@@ -1174,9 +1174,10 @@ namespace Dune
 
       // Calculate the LU decompositions
       std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&S<BCRSMatrix<FieldMatrix<T,m,n>,A> >::decompose));
-      for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
-        assert(solver->getInternalMatrix().N()==solver->getInternalMatrix().M());
-        maxlength=std::max(maxlength, solver->getInternalMatrix().N());
+      for (SolverIterator solverIt = solvers.begin(); solverIt != solvers.end(); ++solverIt)
+      {
+        assert(solverIt->getInternalMatrix().N() == solverIt->getInternalMatrix().M());
+        maxlength = std::max(maxlength, solverIt->getInternalMatrix().N());
       }
     }
     return maxlength;
