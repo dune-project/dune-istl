@@ -1707,8 +1707,8 @@ namespace Dune
           int messageLength;
           MPI_Error_string(statuses[i].MPI_ERROR, message, &messageLength);
           std::cerr<<" source="<<statuses[i].MPI_SOURCE<<" message: ";
-          for(int i=0; i< messageLength; i++)
-            std::cout<<message[i];
+          for(int j = 0; j < messageLength; j++)
+            std::cout<<message[j];
         }
       std::cerr<<std::endl;
     }

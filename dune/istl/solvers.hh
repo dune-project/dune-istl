@@ -1604,12 +1604,12 @@ namespace Dune {
           b.axpy(-lambda,q);                  // update defect
 
           // convergence test
-          real_type defnew=_sp.norm(b);        // comp defect norm
+          real_type defNew=_sp.norm(b);        // comp defect norm
 
           if (_verbose>1)                     // print
-            this->printOutput(std::cout,++i,defnew,def);
+            this->printOutput(std::cout,++i,defNew,def);
 
-          def = defnew;                       // update norm
+          def = defNew;                       // update norm
           if (def<def0*_reduction || def<1E-30)            // convergence check
           {
             res.converged  = true;
