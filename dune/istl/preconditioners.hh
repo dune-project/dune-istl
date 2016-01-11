@@ -29,10 +29,10 @@ namespace Dune {
    * (e.g. AMG, BlockPreconditioner) available for plugging them into the solvers
    * together with matching ScalarProducts.
    *
-   * Some of the available perconditioners (e.g. SeqJacobi, SeqSOR, SeqSSOR))
+   * Some of the available preconditioners (e.g. SeqJacobi, SeqSOR, SeqSSOR))
    * may be given an aditional int as a template parameter, the block recursion level.
    * These preconditioners
-   * can be used on blockrecursive matrices with an arbitrary hierarchy depths
+   * can be used on block-recursive matrices with an arbitrary hierarchy depth
    * (eg. BCRSMatrix<BCRSMatrix<FieldMatrix,n,m> > >. Given a block recursion level
    * \f$k\f$ those preconditioners work as
    * normal on the offdiagonal blocks, treating them as traditional matrix
