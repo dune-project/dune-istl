@@ -16,6 +16,7 @@ install(FILES
    ilusubdomainsolver.hh
    io.hh
    istlexception.hh
+   ldl.hh
    matrix.hh
    matrixindexset.hh
    matrixmarket.hh
@@ -39,6 +40,7 @@ install(FILES
    solver.hh
    solvers.hh
    solvertype.hh
+   spqr.hh
    superlu.hh
    supermatrix.hh
    umfpack.hh
