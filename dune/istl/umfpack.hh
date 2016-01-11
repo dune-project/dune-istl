@@ -209,7 +209,7 @@ namespace Dune {
      * This computes the matrix decomposition, and may take a long time
      * (and use a lot of memory).
      *
-     *  @param mat_ the matrix to solve for
+     *  @param matrix the matrix to solve for
      *  @param verbose [0..2] set the verbosity level, defaults to 0
      */
     UMFPack(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false)
@@ -227,7 +227,7 @@ namespace Dune {
      * This computes the matrix decomposition, and may take a long time
      * (and use a lot of memory).
      *
-     * @param mat_ the matrix to solve for
+     * @param matrix the matrix to solve for
      * @param verbose [0..2] set the verbosity level, defaults to 0
      */
     UMFPack(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false)
@@ -305,7 +305,7 @@ namespace Dune {
 
     virtual ~UMFPack()
     {
-      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
     }
 
@@ -399,7 +399,7 @@ namespace Dune {
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& matrix)
     {
-      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
       umfpackMatrix_ = matrix;
       decompose();
@@ -408,7 +408,7 @@ namespace Dune {
     template<class S>
     void setSubMatrix(const Matrix& _mat, const S& rowIndexSet)
     {
-      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
       umfpackMatrix_.setMatrix(_mat,rowIndexSet);
       decompose();
@@ -431,6 +431,24 @@ namespace Dune {
         UMF_Control[UMFPACK_PRL] = 2;
       if (verbosity_ == 2)
         UMF_Control[UMFPACK_PRL] = 4;
+    }
+
+    /**
+     * @brief Return the matrix factorization.
+     * @warning It is up to the user to keep consistency.
+     */
+    void* getFactorization()
+    {
+      return UMF_Numeric;
+    }
+
+    /**
+     * @brief Return the column compress matrix from UMFPack.
+     * @warning It is up to the user to keep consistency.
+     */
+    UMFPackMatrix& getInternalMatrix()
+    {
+      return umfpackMatrix_;
     }
 
     /**
@@ -504,8 +522,6 @@ namespace Dune {
         std::cout << "Error Estimate: " << UMF_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Info[UMFPACK_OMEGA2] << std::endl;
       }
     }
-
-    UMFPackMatrix& getInternalMatrix() { return umfpackMatrix_; }
 
     UMFPackMatrix umfpackMatrix_;
     bool matrixIsLoaded_;
