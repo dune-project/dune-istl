@@ -1,10 +1,11 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <config.h>
 
-#include "config.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>

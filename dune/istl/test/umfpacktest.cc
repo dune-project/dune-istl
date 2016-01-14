@@ -1,7 +1,7 @@
-#include "config.h"
+#include <config.h>
 
 #include <complex>
-#include<iostream>
+#include <iostream>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>

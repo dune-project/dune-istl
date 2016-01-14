@@ -6,7 +6,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvertype.hh>
 
-#ifdef HAVE_PARDISO
+#if HAVE_PARDISO
 // PARDISO prototypes
 extern "C" void pardisoinit(void *, int *, int *, int *, double *, int *);
 
