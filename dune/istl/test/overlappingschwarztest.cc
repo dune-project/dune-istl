@@ -18,7 +18,7 @@
 
 int main(int argc, char** argv)
 {
-
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   const int BS=1;
   int N=4;
 
@@ -235,4 +235,10 @@ int main(int argc, char** argv)
   Dune::SeqSOR<BCRSMat,BVector,BVector> sor(mat, 1,1);
   Dune::LoopSolver<BVector> solver4(fop, sor, 1e-2,100,2);
   solver4.apply(x,b, res);
+
+  return 0;
+#else // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
+  std::cerr << "You need SuperLU or SuiteSparse's UMFPack to run this test." << std::endl;
+  return 77;
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 }

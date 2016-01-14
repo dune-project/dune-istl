@@ -13,6 +13,7 @@
 
 int main(int argc, char** argv)
 {
+#if HAVE_PARDISO
   try
   {
     /* Matrix data. */
@@ -186,10 +187,15 @@ int main(int argc, char** argv)
 
     return 0;
   }
-  catch (Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
+  catch (std::exception &e)
+  {
+    throw;
   }
   catch (...) {
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
+#else // HAVE_PARDISO
+  std::cerr << "You need Pardiso to run this test." << std::endl;
+  return 77;
+#endif // HAVE_PARDISO
 }
