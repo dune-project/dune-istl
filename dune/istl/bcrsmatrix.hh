@@ -696,14 +696,14 @@ namespace Dune {
     //! an empty matrix
     BCRSMatrix ()
       : build_mode(unknown), ready(notAllocated), n(0), m(0), nnz_(0),
-        allocationSize(0), r(0), a(0),
+        allocationSize_(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {}
 
     //! matrix with known number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, size_type _nnz, BuildMode bm)
       : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
-        allocationSize(0), r(0), a(0),
+        allocationSize_(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m, _nnz,true,false);
@@ -712,7 +712,7 @@ namespace Dune {
     //! matrix with unknown number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
       : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
-        allocationSize(0), r(0), a(0),
+        allocationSize_(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m,0,true,false);
@@ -731,7 +731,7 @@ namespace Dune {
      */
     BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
       : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
-        allocationSize(0), r(0), a(0),
+        allocationSize_(0), r(0), a(0),
         avg(_avg), overflowsize(_overflowsize)
     {
       if (bm != implicit)
@@ -752,7 +752,7 @@ namespace Dune {
      */
     BCRSMatrix (const BCRSMatrix& Mat)
       : build_mode(Mat.build_mode), ready(notAllocated), n(0), m(0), nnz_(0),
-        allocationSize(0), r(0), a(0),
+        allocationSize_(0), r(0), a(0),
         avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
       if (!(Mat.ready == notAllocated || Mat.ready == built))
@@ -1427,7 +1427,7 @@ namespace Dune {
       std::ptrdiff_t diff = (r[n-1].getindexptr() + r[n-1].getsize() - j_.get());
       nnz_ = diff;
       stats.avg = (double) (nnz_) / (double) n;
-      stats.mem_ratio = (double) (nnz_) / (double) allocationSize;
+      stats.mem_ratio = (double) (nnz_) / (double) allocationSize_;
 
       //matrix is now built
       ready = built;
@@ -1947,7 +1947,7 @@ namespace Dune {
     size_type n;       // number of rows
     size_type m;       // number of columns
     size_type nnz_;     // number of nonzeroes contained in the matrix
-    size_type allocationSize; //allocated size of a and j arrays, except in implicit mode: nnz_==allocationsSize
+    size_type allocationSize_; //allocated size of a and j arrays, except in implicit mode: nnz_==allocationsSize_
     // zero means that memory is allocated separately for each row.
 
     // the rows are dynamically allocated
@@ -2059,15 +2059,15 @@ namespace Dune {
       if (notAllocated)
         return;
 
-      if (allocationSize>0)
+      if (allocationSize_>0)
       {
         // a,j_ have been allocated as one long vector
         j_.reset();
         if (a)
           {
-            for(B *aiter=a+(allocationSize-1), *aend=a-1; aiter!=aend; --aiter)
+            for(B *aiter=a+(allocationSize_-1), *aend=a-1; aiter!=aend; --aiter)
               allocator_.destroy(aiter);
-            allocator_.deallocate(a,allocationSize);
+            allocator_.deallocate(a,allocationSize_);
             a = nullptr;
           }
       }
@@ -2128,18 +2128,18 @@ namespace Dune {
      *
      * @param row The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
-     * @param allocationSize_ The number of nonzero entries the matrix should hold (if omitted
+     * @param allocationSize The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
      * @param allocateRow Whether we have to allocate the row pointers, too. (Defaults to
      * true)
      */
-    void allocate(size_type rows, size_type columns, size_type allocationSize_, bool allocateRows, bool allocate_data)
+    void allocate(size_type rows, size_type columns, size_type allocationSize, bool allocateRows, bool allocate_data)
     {
       // Store size
       n = rows;
       m = columns;
-      nnz_ = allocationSize_;
-      allocationSize = allocationSize_;
+      nnz_ = allocationSize;
+      allocationSize_ = allocationSize;
 
       // allocate rows
       if(allocateRows) {
@@ -2155,10 +2155,10 @@ namespace Dune {
       // allocate a and j_ array
       if (allocate_data)
         allocateData();
-      if (allocationSize>0) {
+      if (allocationSize_>0) {
         // allocate column indices only if not yet present (enable sharing)
         if (!j_.get())
-          j_.reset(sizeAllocator_.allocate(allocationSize),Deallocator(sizeAllocator_));
+          j_.reset(sizeAllocator_.allocate(allocationSize_),Deallocator(sizeAllocator_));
       }else{
         j_.reset();
         for(row_type* ri=r; ri!=r+rows; ++ri)
@@ -2173,11 +2173,11 @@ namespace Dune {
     {
       if (a)
         DUNE_THROW(InvalidStateException,"Cannot allocate data array (already allocated)");
-      if (allocationSize>0) {
-        a = allocator_.allocate(allocationSize);
+      if (allocationSize_>0) {
+        a = allocator_.allocate(allocationSize_);
         // use placement new to call constructor that allocates
         // additional memory.
-        new (a) B[allocationSize];
+        new (a) B[allocationSize_];
       } else {
         a = nullptr;
       }
@@ -2200,9 +2200,9 @@ namespace Dune {
         DUNE_THROW(InvalidStateException,"You have to set the implicit build mode parameters before starting to build the matrix");
       //calculate size of overflow region, add buffer for row sort!
       size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
-      allocationSize = _n*avg + osize;
+      allocationSize_ = _n*avg + osize;
 
-      allocate(_n, _m, allocationSize,true,true);
+      allocate(_n, _m, allocationSize_,true,true);
 
       //set row pointers correctly
       size_type* jptr = j_.get() + osize;
