@@ -26,8 +26,6 @@ int main (int argc, char** argv)
 
     typedef Dune::FieldMatrix<FIELD_TYPE,BS,BS> MatrixBlock;
     typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-    typedef Dune::FieldVector<FIELD_TYPE,BS> VectorBlock;
-    typedef Dune::BlockVector<VectorBlock> Vector;
 
     BCRSMat mat;
     setupLaplacian(mat,N);
