@@ -33,7 +33,7 @@
 #
 
 # look for BLAS
-find_package(BLAS QUIET REQUIRED)
+find_package(BLAS QUIET)
 if(NOT BLAS_FOUND)
   message(WARNING "SuperLU requires BLAS which was not found, skipping the test.")
   return()
@@ -55,7 +55,7 @@ find_path(SUPERLU_INCLUDE_DIR
 
 # look for library, only at positions given by the user
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
+  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
   PATH_SUFFIXES "lib" "lib32" "lib64"
   NO_DEFAULT_PATH
@@ -63,7 +63,7 @@ find_library(SUPERLU_LIBRARY
 
 # look for library files, including default paths
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
+  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
   PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
@@ -87,16 +87,6 @@ endif(SUPERLU_LIBRARY)
 if(BLAS_LIBRARIES)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
 endif(BLAS_LIBRARIES)
-# check whether "mem_usage_t.expansions" was found in "slu_ddefs.h"
-CHECK_C_SOURCE_COMPILES("
-#include <slu_ddefs.h>
-int main(void)
-{
-  mem_usage_t mem;
-  return mem.expansions;
-}"
-HAVE_MEM_USAGE_T_EXPANSIONS)
-
 # check whether version is at least 4.3
 CHECK_C_SOURCE_COMPILES("
 #include <slu_ddefs.h>
@@ -111,7 +101,7 @@ if(SUPERLU_MIN_VERSION_4_3)
   set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
     "Human readable string containing SuperLU version information.")
 else()
-  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2, post 2005" CACHE STRING
+  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
     "Human readable string containing SuperLU version information.")
 endif(SUPERLU_MIN_VERSION_4_3)
 
