@@ -1,7 +1,7 @@
-#include "config.h"
+#include <config.h>
 
 #include <complex>
-#include<iostream>
+#include <iostream>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
@@ -17,6 +17,7 @@
 
 int main(int argc, char** argv)
 {
+#if HAVE_SUITESPARSE_UMFPACK
   try
   {
     typedef double FIELD_TYPE;
@@ -81,4 +82,8 @@ int main(int argc, char** argv)
     std::cerr << "Dune reported an unknown error." << std::endl;
     exit(1);
   }
+#else // HAVE_SUITESPARSE_UMFPACK
+  std::cerr << "You need SuiteSparse's UMFPack to run this test." << std::endl;
+  return 77;
+#endif // HAVE_SUITESPARSE_UMFPACK
 }

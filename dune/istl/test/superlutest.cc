@@ -1,6 +1,6 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#include "config.h"
+#include <config.h>
 
 #include <complex>
 
@@ -37,6 +37,7 @@ typedef std::complex<double> FIELD_TYPE;
 int main(int argc, char** argv)
 try
 {
+#if HAVE_SUPERLU
   const int BS=1;
   std::size_t N=100;
 
@@ -84,6 +85,10 @@ try
   solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x1[0]), reinterpret_cast<FIELD_TYPE*>(&b1[0]));
 
   return 0;
+#else // HAVE_SUPERLU
+  std::cerr << "You need SuperLU to run this test." << std::endl;
+  return 77;
+#endif // HAVE_SUPERLU
 }
 catch (std::exception &e)
 {

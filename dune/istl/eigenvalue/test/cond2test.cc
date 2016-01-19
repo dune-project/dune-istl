@@ -1,4 +1,4 @@
-#include "config.h"
+#include <config.h>
 
 #include <iostream>
 
@@ -52,15 +52,9 @@ int main (int argc, char** argv)
 
     return 0;
   }
-  catch (Dune::Exception& e)
-  {
-    std::cerr << "Dune reported error: " << e << std::endl;
-    return 1;
-  }
   catch (std::exception& e)
   {
-    std::cerr << "Standard library reported error: " << e.what() << std::endl;
-    return 1;
+    throw;
   }
   catch (...)
   {

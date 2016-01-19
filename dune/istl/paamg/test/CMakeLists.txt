@@ -51,7 +51,7 @@ if(SUPERLU_FOUND)
   add_dune_superlu_flags(superlufastamgtest)
   target_link_libraries(superlufastamgtest ${DUNE_LIBS})
   dune_add_test(TARGET superlufastamgtest)
-endif(SUPERLU_FOUND)
+endif()
 
 if(SuiteSparse_UMFPACK_FOUND)
   dune_add_test(NAME umfpackamgtest

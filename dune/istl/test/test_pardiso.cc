@@ -1,10 +1,11 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <config.h>
 
-#include "config.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>
@@ -13,6 +14,7 @@
 
 int main(int argc, char** argv)
 {
+#if HAVE_PARDISO
   try
   {
     /* Matrix data. */
@@ -186,10 +188,15 @@ int main(int argc, char** argv)
 
     return 0;
   }
-  catch (Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
+  catch (std::exception &e)
+  {
+    throw;
   }
   catch (...) {
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
+#else // HAVE_PARDISO
+  std::cerr << "You need Pardiso to run this test." << std::endl;
+  return 77;
+#endif // HAVE_PARDISO
 }

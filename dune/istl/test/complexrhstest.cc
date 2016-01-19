@@ -7,10 +7,8 @@
  *        \f$A*x = b\f$ with \f$A\f$ being a \f$N^2 \times N^2\f$
  *        Laplacian and \f$b\f$ a complex valued rhs.
  */
+#include <config.h>
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include <complex>
 
 #include <dune/istl/bvector.hh>
@@ -188,6 +186,8 @@ int main(int argc, char** argv)
 #if HAVE_SUPERLU
   Dune::SuperLU<BCRSMat> solverSuperLU(mat, true);
   std::cout << "SuperLU converged:  "<< solverTest(solverSuperLU) << std::endl <<  std::endl;
+#else
+  std::cout << "SuperLU skipped because not found." << std::endl <<  std::endl;
 #endif
 
   typedef  Dune::GradientSolver<Vector> GradientSolver;

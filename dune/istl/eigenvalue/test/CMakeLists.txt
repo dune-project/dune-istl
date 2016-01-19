@@ -7,14 +7,14 @@ if(SUPERLU_FOUND)
   add_dune_superlu_flags(poweriterationsuperlutest)
   dune_add_test(TARGET poweriterationsuperlutest)
   target_link_libraries(poweriterationsuperlutest dunecommon)
-endif(SUPERLU_FOUND)
+endif()
 
 if(ARPACKPP_FOUND)
   add_executable(arpackpptest cond2test.cc)
   add_dune_arpackpp_flags(arpackpptest)
   target_link_libraries(arpackpptest dunecommon)
   dune_add_test(TARGET arpackpptest)
-endif(ARPACKPP_FOUND)
+endif()
 
 if(ARPACKPP_FOUND AND SUPERLU_FOUND)
   dune_add_test(NAME arpackppsuperlutest
