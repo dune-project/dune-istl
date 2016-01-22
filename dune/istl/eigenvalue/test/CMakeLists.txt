@@ -1,11 +1,15 @@
 add_executable(poweriterationtest cond2test.cc)
 target_link_libraries(poweriterationtest dunecommon)
-dune_add_test(TARGET poweriterationtest)
+dune_add_test(
+  TARGET poweriterationtest
+  CMD_ARGS 40)
 
 if(SUPERLU_FOUND)
   add_executable(poweriterationsuperlutest cond2test.cc)
   add_dune_superlu_flags(poweriterationsuperlutest)
-  dune_add_test(TARGET poweriterationsuperlutest)
+  dune_add_test(
+    TARGET poweriterationsuperlutest
+    CMD_ARGS 40)
   target_link_libraries(poweriterationsuperlutest dunecommon)
 endif()
 
