@@ -1,8 +1,8 @@
 # set up project
-project("dune-istl" C CXX)
+project(dune-istl C CXX)
 
 # general stuff
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 2.8.12)
 
 # guess build tree of dune-common
 if(NOT (dune-common_DIR OR dune-common_ROOT OR
@@ -23,10 +23,10 @@ include(DuneMacros)
 # start a dune project with information from dune.module
 dune_project()
 
-add_subdirectory("cmake/modules")
-add_subdirectory("m4")
-add_subdirectory("dune")
-add_subdirectory("doc")
+add_subdirectory(cmake/modules)
+add_subdirectory(m4)
+add_subdirectory(dune)
+add_subdirectory(doc)
 
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
