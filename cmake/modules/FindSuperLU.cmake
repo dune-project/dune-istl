@@ -32,12 +32,7 @@
 #    system paths.
 #
 
-# look for BLAS
 find_package(BLAS QUIET)
-if(NOT BLAS_FOUND)
-  message(WARNING "SuperLU requires BLAS which was not found, skipping the test.")
-  return()
-endif(NOT BLAS_FOUND)
 
 # look for header files, only at positions given by the user
 find_path(SUPERLU_INCLUDE_DIR
@@ -110,6 +105,7 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   "SuperLU"
   DEFAULT_MSG
+  BLAS_FOUND
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
 )
