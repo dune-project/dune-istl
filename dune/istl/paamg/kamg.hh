@@ -125,6 +125,9 @@ namespace Dune
     /**
      * @brief an algebraic multigrid method using a Krylov-cycle.
      *
+     * The implementation is based on the paper
+     * [[Notay and Vassilevski, 2007]](http://onlinelibrary.wiley.com/doi/10.1002/nla.542/abstract)
+     *
      * @tparam M The type of the linear operator.
      * @tparam X The type of the range and domain.
      * @tparam PI The parallel information object. Use SequentialInformation (default)
