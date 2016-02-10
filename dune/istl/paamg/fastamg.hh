@@ -6,6 +6,7 @@
 #include <memory>
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/common/unused.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>

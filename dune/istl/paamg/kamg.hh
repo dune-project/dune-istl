@@ -181,7 +181,7 @@ namespace Dune
        * @param minDefectReduction The minimal defect reduction to achieve on each Krylov level.
        */
       KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-           const SmootherArgs& smootherArgs, std::size_t gamma,
+           const SmootherArgs& smootherArgs, std::size_t gamma=1,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1) DUNE_DEPRECATED;
 
@@ -222,7 +222,7 @@ namespace Dune
        */
       template<class C>
       KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
-           const SmootherArgs& smootherArgs, std::size_t gamma,
+           const SmootherArgs& smootherArgs, std::size_t gamma=1,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
            const ParallelInformation& pinfo=ParallelInformation()) DUNE_DEPRECATED;
