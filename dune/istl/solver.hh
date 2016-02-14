@@ -63,6 +63,18 @@ namespace Dune
   };
 
 
+  /// Print InverseOperatorResult.
+  inline std::ostream& operator<<(std::ostream& os, const Dune::InverseOperatorResult& res)
+  {
+    os << " === Iterative solver statistics ===\n";
+    os << "     Converged:        " << std::boolalpha << res.converged << "\n";
+    os << "     Iterations:       " << res.iterations << "\n";
+    os << "     Reduction:        " << std::scientific << res.reduction << "\n";
+    os << "     Convergence rate: " << std::scientific << res.conv_rate << "\n";
+    os << "     Elapsed time:     " << res.elapsed << "s" << std::endl;
+    return os;
+  }
+
   //=====================================================================
   /*!
      \brief Abstract base class for all solvers.
