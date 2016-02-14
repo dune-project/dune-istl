@@ -128,7 +128,7 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     //! define the category
-    enum {category=SolverCategory::sequential};
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     //! constructor: just store a reference to a matrix
     explicit MatrixAdapter (const M& A) : _A_(A) {}

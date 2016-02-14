@@ -135,11 +135,8 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     /*! \brief Constructor.
 
@@ -223,11 +220,8 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     /*! \brief Constructor.
 
@@ -326,11 +320,8 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     /*! \brief Constructor.
 
@@ -410,11 +401,9 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
+
 
     /*! \brief Constructor.
 
@@ -496,11 +485,8 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     /*! \brief Constructor.
 
@@ -580,11 +566,8 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     /*! \brief Constructor.
 
@@ -662,11 +645,8 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    /// Category this preconditioner is part of.
+    static constexpr typename SolverCategory::Category category = SolverCategory::sequential;
 
     /*! \brief Constructor.
 
