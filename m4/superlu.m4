@@ -132,7 +132,7 @@ AC_DEFUN([_slu_search_default],
 #     "SLU_DOUBLE" while earlier versions use "DOUBLE".
 #   HAVE_MEM_USAGE_T_EXPANSIONS
 #     1 or undefined.  Whether "mem_usage_t.expansions" was found in
-#     "slu_ddefs.h" or "dsp_defs.h" as apropriate.
+#     "slu_ddefs.h" or "dsp_defs.h" as appropriate.
 #
 # Conditionals:
 #   SUPERLU
@@ -274,7 +274,7 @@ AC_DEFUN([DUNE_PATH_SUPERLU],[
         HAVE_SUPERLU=0
     fi
 
-    # Inform the user whether SuperLU was sucessfully found
+    # Inform the user whether SuperLU was successfully found
     AC_MSG_CHECKING([SuperLU])
     if test x$HAVE_SUPERLU = x1 ; then
         if test "$my_slu_header" = "slu_ddefs.h"; then

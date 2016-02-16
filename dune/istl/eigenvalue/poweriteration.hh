@@ -94,9 +94,9 @@ namespace Dune
       : op1_(op1), op2_(op2)
     {
       static_assert(std::is_same<typename OP2::domain_type,domain_type>::value,
-                    "Domain type of both operators doesnt match!");
+                    "Domain type of both operators doesn't match!");
       static_assert(std::is_same<typename OP2::range_type,range_type>::value,
-                    "Range type of both operators doesnt match!");
+                    "Range type of both operators doesn't match!");
     }
 
     virtual void apply (const domain_type& x, range_type& y) const

@@ -792,8 +792,8 @@ namespace Dune
                             const AggregatesMap& amap, Visitor& overlapVisitor,
                             IteratorPropertyMap<std::vector<bool>::iterator,IdentityMap>& visitedMap )
       {
-        // count  number ag aggregates. We asume that the
-        // aggregates are numbered consecutively from 0 exept
+        // count  number ag aggregates. We assume that the
+        // aggregates are numbered consecutively from 0 except
         // for the isolated ones. All isolated vertices form
         // one aggregate, here.
         int isolated=0;

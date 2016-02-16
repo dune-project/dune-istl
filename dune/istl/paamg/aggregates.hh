@@ -55,7 +55,7 @@ namespace Dune
       /**
        * @brief Constructor.
        *
-       * The paramters will be initialized with default values suitable
+       * The parameters will be initialized with default values suitable
        * for 2D isotropic problems.
        *
        * If that does not fit your needs either use setDefaultValuesIsotropic
@@ -2308,7 +2308,7 @@ namespace Dune
             candidates.clear();
             candidates.push_back(*vertex);
 
-            // two way connections preceed
+            // two way connections precede
             maxOneCons = std::numeric_limits<int>::max();
           }
 

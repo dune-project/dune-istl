@@ -22,7 +22,7 @@ namespace Dune
        */
       AggregateRenumberer(AggregatesMap<Vertex>& aggregates);
 
-      /** @brief Convertion to vertex. */
+      /** @brief Conversion to vertex. */
       operator Vertex() const;
 
       void operator()(const typename G::ConstEdgeIterator& edge);

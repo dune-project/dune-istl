@@ -78,7 +78,7 @@ if(ARPACK_FOUND)
   set(ARPACK_LIBRARIES ${ARPACK_LIBRARY})
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determing location of ARPACK succeded:\n"
+    "Determing location of ARPACK succeeded:\n"
     "Libraries to link against: ${ARPACK_LIBRARIES}\n\n")
   set(ARPACK_DUNE_LIBRARIES ${ARPACK_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking ARPACK programs")

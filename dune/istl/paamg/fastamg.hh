@@ -88,7 +88,7 @@ namespace Dune
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
-       * grid, must match the coarse matrix in the matrix hierachy.
+       * grid, must match the coarse matrix in the matrix hierarchy.
        * @param parms The parameters for the AMG.
        */
       FastAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
