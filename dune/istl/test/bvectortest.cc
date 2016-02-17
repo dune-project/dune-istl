@@ -200,7 +200,7 @@ int main()
   v=0;
   Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
   v1=0;
-  VectorOfVector vv;
+  VectorOfVector vv = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
   vv.two_norm();
 
   // Test construction from initializer_list
