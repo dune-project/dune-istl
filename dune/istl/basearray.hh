@@ -137,6 +137,12 @@ namespace Dune {
         --i;
       }
 
+      // Needed for operator[] of the iterator
+      B& elementAt (std::ptrdiff_t offset) const
+      {
+        return *(i+offset);
+      }
+
       //! dereferencing
       B& dereference () const
       {
