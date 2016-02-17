@@ -185,10 +185,7 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     iterator find (size_type i)
     {
-      if (i<n)
-        return iterator(p,p+i);
-      else
-        return iterator(p,p+n);
+      return iterator(p,p+std::min(i,n));
     }
 
     //! iterator class for sequential access
@@ -223,10 +220,7 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     const_iterator find (size_type i) const
     {
-      if (i<n)
-        return const_iterator(p,p+i);
-      else
-        return const_iterator(p,p+n);
+      return const_iterator(p,p+std::min(i,n));
     }
 
 
