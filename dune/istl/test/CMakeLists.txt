@@ -1,3 +1,7 @@
+# install the test tools as we want to support testing 3rd-party vectors with an installed dune-istl
+install(FILES vectortest.hh
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
+
 dune_add_test(SOURCES basearraytest.cc)
 
 dune_add_test(SOURCES bcrsassigntest.cc)

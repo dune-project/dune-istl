@@ -7,6 +7,8 @@
 #include <dune/common/debugallocator.hh>
 #include <dune/common/classname.hh>
 
+#include <dune/istl/test/vectortest.hh>
+
 template<typename T, int BS>
 void assign(Dune::FieldVector<T,BS>& b, const T& i)
 {
@@ -47,6 +49,11 @@ int testVector()
     v2[i] = i*10;
   w = v;
 
+  testHomogeneousRandomAccessContainer(v);
+  Dune::testConstructibility<Vector>();
+  testNorms(v);
+  testVectorSpaceOperations(v);
+  testScalarProduct(v);
 
   assert(w.N()==v.N());
   assert(w.capacity()==v.capacity());
@@ -195,13 +202,20 @@ int main()
   //typedef double value_type;
   typedef Dune::FieldVector<value_type,1> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::BlockVector<Vector> VectorOfVector;
   Vector v;
   v=0;
   Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
   v1=0;
+
+  // Test a BlockVector of BlockVectors
+  typedef Dune::BlockVector<Vector> VectorOfVector;
   VectorOfVector vv = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
-  vv.two_norm();
+
+  testHomogeneousRandomAccessContainer(vv);
+  Dune::testConstructibility<VectorOfVector>();
+  testNorms(vv);
+  testVectorSpaceOperations(vv);
+  testScalarProduct(vv);
 
   // Test construction from initializer_list
   Vector fromInitializerList = {0,1,2};
