@@ -20,7 +20,7 @@ template<int BS, class A=std::allocator<void> >
 int testVector()
 {
 
-  typedef Dune::FieldVector<int,BS> VectorBlock;
+  typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef typename A::template rebind<VectorBlock>::other Alloc;
   typedef Dune::BlockVector<VectorBlock, Alloc> Vector;
 
@@ -84,7 +84,7 @@ int testVector()
 
   // check the entries
   for(typename Vector::size_type i=0; i < v.N(); ++i) {
-    assign(b, (int)i);
+    assign(b, (typename VectorBlock::field_type)i);
     assert(v[i] == b);
   }
 
@@ -96,7 +96,7 @@ int testVector()
   // check the entries
 
   for(typename Vector::size_type i=0; i < v.N(); ++i) {
-    assign(b,(int)i);
+    assign(b,(typename VectorBlock::field_type)i);
     assert(v[i] == b);
   }
 
