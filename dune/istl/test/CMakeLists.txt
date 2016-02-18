@@ -12,6 +12,8 @@ dune_add_test(SOURCES dotproducttest.cc)
 
 dune_add_test(SOURCES complexmatrixtest.cc)
 
+dune_add_test(SOURCES fieldvectortest.cc)
+
 dune_add_test(SOURCES matrixnormtest.cc)
 
 dune_add_test(SOURCES matrixutilstest.cc)
