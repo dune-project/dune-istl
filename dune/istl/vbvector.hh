@@ -51,9 +51,14 @@ namespace Dune {
     //! The size type for the index access
     typedef typename A::size_type size_type;
 
-    /** export the type representing the components, note that this
-            is *not* the type refered to by the iterators and random access.
-            However, it can be used to copy blocks (which is its only purpose).
+    /** \brief Type of the elements of the outer vector, i.e., dynamic vectors of B
+     *
+     * Note that this is *not* the type refered to by the iterators and random access operators,
+     * which return proxy objects.
+     */
+    typedef BlockVector<B,A> value_type;
+
+    /** \brief Same as value_type, here for historical reasons
      */
     typedef BlockVector<B,A> block_type;
 
@@ -723,6 +728,12 @@ namespace Dune {
       const window_type* p;
       size_type i;
     };
+
+    /** \brief Export the iterator type using std naming rules */
+    using iterator = Iterator;
+
+    /** \brief Export the const iterator type using std naming rules */
+    using const_iterator = ConstIterator;
 
     //! begin ConstIterator
     ConstIterator begin () const
