@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 
+#include <dune/common/iteratorfacades.hh>
 #include "istlexception.hh"
 #include "bvector.hh"
 
@@ -522,78 +523,62 @@ namespace Dune {
       return block[i];
     }
 
-    // forward declaration
-    class ConstIterator;
-
     //! Iterator class for sequential access
-    class Iterator
+    template <class T, class R>
+    class RealIterator
+    : public RandomAccessIteratorFacade<RealIterator<T,R>, T, R>
     {
     public:
       //! constructor, no arguments
-      Iterator ()
+      RealIterator ()
       {
         p = 0;
         i = 0;
       }
 
       //! constructor
-      Iterator (window_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
+      RealIterator (window_type* _p, size_type _i)
+      : p(_p), i(_i)
+      {}
 
       //! prefix increment
-      Iterator& operator++()
+      void increment()
       {
         ++i;
-        return *this;
       }
 
       //! prefix decrement
-      Iterator& operator--()
+      void decrement()
       {
         --i;
-        return *this;
       }
 
       //! equality
-      bool operator== (const Iterator& it) const
+      bool equals (const RealIterator& it) const
       {
         return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const Iterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! equality
-      bool operator== (const ConstIterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const ConstIterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
       }
 
       //! dereferencing
-      window_type& operator* () const
+      window_type& dereference () const
       {
         return p[i];
       }
 
-      //! arrow
-      window_type* operator-> () const
+      void advance(std::ptrdiff_t d)
       {
-        return p+i;
+        i+=d;
       }
 
-      // return index corresponding to pointer
-      size_type index () const
+      std::ptrdiff_t distanceTo(const RealIterator& o) const
       {
-        return i;
+        return o.i-i;
+      }
+
+      // Needed for operator[] of the iterator
+      window_type& elementAt (std::ptrdiff_t offset) const
+      {
+        return p[i+offset];
       }
 
       friend class ConstIterator;
@@ -602,6 +587,8 @@ namespace Dune {
       window_type* p;
       size_type i;
     };
+
+    using Iterator = RealIterator<value_type,window_type&>;
 
     //! begin Iterator
     Iterator begin ()
@@ -629,102 +616,11 @@ namespace Dune {
       return Iterator(block,-1);
     }
 
-    //! random access returning iterator (end if not contained)
-    Iterator find (size_type i)
-    {
-      return Iterator(block,std::min(i,nblocks));
-    }
-
-    //! random access returning iterator (end if not contained)
-    ConstIterator find (size_type i) const
-    {
-      return ConstIterator(block,std::min(i,nblocks));
-    }
-
-    //! ConstIterator class for sequential access
-    class ConstIterator
-    {
-    public:
-      //! constructor
-      ConstIterator ()
-      {
-        p = 0;
-        i = 0;
-      }
-
-      //! constructor from pointer
-      ConstIterator (const window_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
-
-      //! constructor from non_const iterator
-      ConstIterator (const Iterator& it) : p(it.p), i(it.i)
-      {       }
-
-      //! prefix increment
-      ConstIterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
-
-      //! prefix decrement
-      ConstIterator& operator--()
-      {
-        --i;
-        return *this;
-      }
-
-      //! equality
-      bool operator== (const ConstIterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const ConstIterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! equality
-      bool operator== (const Iterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const Iterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! dereferencing
-      const window_type& operator* () const
-      {
-        return p[i];
-      }
-
-      //! arrow
-      const window_type* operator-> () const
-      {
-        return p+i;
-      }
-
-      // return index corresponding to pointer
-      size_type index () const
-      {
-        return i;
-      }
-
-      friend class Iterator;
-
-    private:
-      const window_type* p;
-      size_type i;
-    };
-
     /** \brief Export the iterator type using std naming rules */
     using iterator = Iterator;
+
+    /** \brief Const iterator */
+    using ConstIterator = RealIterator<const value_type, const window_type&>;
 
     /** \brief Export the const iterator type using std naming rules */
     using const_iterator = ConstIterator;
@@ -754,6 +650,17 @@ namespace Dune {
       return ConstIterator(block,-1);
     }
 
+    //! random access returning iterator (end if not contained)
+    Iterator find (size_type i)
+    {
+      return Iterator(block,std::min(i,nblocks));
+    }
+
+    //! random access returning iterator (end if not contained)
+    ConstIterator find (size_type i) const
+    {
+      return ConstIterator(block,std::min(i,nblocks));
+    }
 
     //===== sizes
 
