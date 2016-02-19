@@ -3,6 +3,12 @@
 #ifndef DUNE_ISTL_UMFPACK_HH
 #define DUNE_ISTL_UMFPACK_HH
 
+// some trickery to make the preprocessor define setup
+// of the backported UMFPACK test work with old code
+#if ENABLE_UMFPACK && not defined(ENABLE_SUITESPARSE)
+#define ENABLE_SUITESPARSE ENABLE_UMFPACK
+#endif
+
 #if HAVE_UMFPACK || defined DOXYGEN
 
 #include<complex>
