@@ -632,19 +632,13 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     Iterator find (size_type i)
     {
-      if (i>=0 && i<nblocks)
-        return Iterator(block,i);
-      else
-        return Iterator(block,nblocks);
+      return Iterator(block,std::min(i,nblocks));
     }
 
     //! random access returning iterator (end if not contained)
     ConstIterator find (size_type i) const
     {
-      if (i>=0 && i<nblocks)
-        return ConstIterator(block,i);
-      else
-        return ConstIterator(block,nblocks);
+      return ConstIterator(block,std::min(i,nblocks));
     }
 
     //! ConstIterator class for sequential access
