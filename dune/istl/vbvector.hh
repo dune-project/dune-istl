@@ -39,6 +39,9 @@ namespace Dune {
                               // on the large array. However, access operators have to be
                               // overwritten.
   {
+    // just a shorthand
+    typedef BlockVectorWindow<B,A> window_type;
+
   public:
 
     //===== type definitions and constants
@@ -70,10 +73,6 @@ namespace Dune {
       //! The number of blocklevels this vector contains.
       blocklevel = B::blocklevel+2
     };
-
-    // just a shorthand
-    typedef BlockVectorWindow<B,A> window_type;
-
 
     //===== constructors and such
 
