@@ -670,6 +670,15 @@ namespace Dune {
       return nblocks;
     }
 
+    /** Number of blocks in the vector
+     *
+     * Returns the same value as method N(), because the vector is dense
+    */
+    size_type size () const
+    {
+      return nblocks;
+    }
+
 
   private:
     size_type nblocks;            // number of blocks in vector
