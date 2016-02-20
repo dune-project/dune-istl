@@ -40,6 +40,12 @@ namespace Dune
     static_assert(std::is_same<typename Vector::block_type, typename Vector::value_type>::value,
                   "'block_type' is not equal to 'value_type'");
 
+    // Check whether 'reference' and 'const_reference' are properly exported
+    static_assert(std::is_same<typename Vector::reference, typename Vector::reference>::value,
+                  "Vector does not export 'reference'");
+    static_assert(std::is_same<typename Vector::const_reference, typename Vector::const_reference>::value,
+                  "Vector does not export 'const_reference'");
+
     // class allocator_type
 #if 0  // Out-commented, because it is not clear whether vectors with static allocation should have this
     static_assert(std::is_same<typename Vector::allocator_type, typename Vector::allocator_type>::value,
@@ -55,10 +61,9 @@ namespace Dune
 
     // - is random-access iterator
     Vector vMutable = v;
-    auto noop = [](const typename Vector::value_type& t){};
+    auto noop = [](typename Vector::const_reference t){};
     // This is testing the non-const iterators
     testRandomAccessIterator(vMutable.begin(), vMutable.end(), noop);
-
     // ConstIterator / const_iterator
     static_assert(std::is_same<typename Vector::ConstIterator, typename Vector::ConstIterator>::value,
                   "Vector does not export 'ConstIterator'");
