@@ -65,6 +65,12 @@ namespace Dune {
     //! for STL compatibility
     typedef B value_type;
 
+    //! Type used for references
+    typedef B& reference;
+
+    //! Type used for const references
+    typedef const B& const_reference;
+
     //===== assignment from scalar
     //! Assignment from a scalar
 

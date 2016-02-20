@@ -52,6 +52,18 @@ namespace Dune {
     //! export the allocator type
     typedef A allocator_type;
 
+    /** \brief Export type used for references to container entries
+     *
+     * \note This is not B&, but an internal proxy class!
+     */
+    typedef window_type& reference;
+
+    /** \brief Export type used for const references to container entries
+     *
+     * \note This is not B&, but an internal proxy class!
+     */
+    typedef const window_type& const_reference;
+
     //! The size type for the index access
     typedef typename A::size_type size_type;
 
