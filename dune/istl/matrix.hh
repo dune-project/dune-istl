@@ -7,13 +7,589 @@
     \brief A dynamic dense block matrix class
  */
 
-#include <vector>
 #include <memory>
+#include <cmath>
 
-#include <dune/istl/vbvector.hh>
 #include <dune/common/ftraits.hh>
 
+#include <dune/istl/istlexception.hh>
+#include <dune/istl/bvector.hh>
+
 namespace Dune {
+
+namespace MatrixImp
+{
+  /**
+      \brief A Vector of blocks with different blocksizes.
+
+       This class started as a copy of VariableBlockVector, which used to be used for the internal memory managerment
+       of the 'Matrix' class.  However, that mechanism stopped working when I started using the RandomAccessIteratorFacade
+       in VariableBlockVector (308dd85483108f8baaa4051251e2c75e2a9aed32, to make VariableBlockVector pass a number of
+       tightened interface compliance tests), and I couldn't quite figure out how to fix that.  However, using
+       VariableBlockVector in Matrix internally was a hack anyway, so I simply took the working version of VariableBlockVector
+       and copied it here under the new name of DenseMatrixBase.  This is still hacky, but one step closer to an
+       elegant solution.
+   */
+  template<class B, class A=std::allocator<B> >
+  class DenseMatrixBase : public block_vector_unmanaged<B,A>
+                              // this derivation gives us all the blas level 1 and norms
+                              // on the large array. However, access operators have to be
+                              // overwritten.
+  {
+  public:
+
+    //===== type definitions and constants
+
+    //! export the type representing the field
+    typedef typename B::field_type field_type;
+
+    //! export the allocator type
+    typedef A allocator_type;
+
+    //! The size type for the index access
+    typedef typename A::size_type size_type;
+
+    /** \brief Type of the elements of the outer vector, i.e., dynamic vectors of B
+     *
+     * Note that this is *not* the type refered to by the iterators and random access operators,
+     * which return proxy objects.
+     */
+    typedef BlockVector<B,A> value_type;
+
+    /** \brief Same as value_type, here for historical reasons
+     */
+    typedef BlockVector<B,A> block_type;
+
+    /** increment block level counter, yes, it is two levels because
+            DenseMatrixBase is a container of containers
+     */
+    enum {
+      //! The number of blocklevels this vector contains.
+      blocklevel = B::blocklevel+2
+    };
+
+    // just a shorthand
+    typedef BlockVectorWindow<B,A> window_type;
+
+
+    //===== constructors and such
+
+    /** constructor without arguments makes empty vector,
+            object cannot be used yet
+     */
+    DenseMatrixBase () : block_vector_unmanaged<B,A>()
+    {
+      // nothing is known ...
+      nblocks = 0;
+      block = 0;
+    }
+
+    /** make vector with given number of blocks each having a constant size,
+            object is fully usable then.
+
+            \param _nblocks Number of blocks
+            \param m Number of elements in each block
+     */
+    DenseMatrixBase (size_type _nblocks, size_type m) : block_vector_unmanaged<B,A>()
+    {
+      // and we can allocate the big array in the base class
+      this->n = _nblocks*m;
+      if (this->n>0)
+      {
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
+      }
+      else
+      {
+        this->n = 0;
+        this->p = 0;
+      }
+
+      // we can allocate the windows now
+      nblocks = _nblocks;
+      if (nblocks>0)
+      {
+        // allocate and construct the windows
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
+
+        // set the windows into the big array
+        for (size_type i=0; i<nblocks; ++i)
+          block[i].set(m,this->p+(i*m));
+      }
+      else
+      {
+        nblocks = 0;
+        block = 0;;
+      }
+    }
+
+    //! copy constructor, has copy semantics
+    DenseMatrixBase (const DenseMatrixBase& a)
+    {
+      // allocate the big array in the base class
+      this->n = a.n;
+      if (this->n>0)
+      {
+        // allocate and construct objects
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
+
+        // copy data
+        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
+      }
+      else
+      {
+        this->n = 0;
+        this->p = 0;
+      }
+
+      // we can allocate the windows now
+      nblocks = a.nblocks;
+      if (nblocks>0)
+      {
+        // alloc
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
+
+        // and we must set the windows
+        block[0].set(a.block[0].getsize(),this->p);           // first block
+        for (size_type i=1; i<nblocks; ++i)                         // and the rest
+          block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
+      }
+      else
+      {
+        nblocks = 0;
+        block = 0;;
+      }
+    }
+
+    //! free dynamic memory
+    ~DenseMatrixBase ()
+    {
+      if (this->n>0) {
+        size_type i=this->n;
+        while (i)
+          this->p[--i].~B();
+        allocator_.deallocate(this->p,this->n);
+      }
+      if (nblocks>0) {
+        size_type i=nblocks;
+        while (i)
+          block[--i].~window_type();
+        windowAllocator_.deallocate(block,nblocks);
+      }
+
+    }
+
+    //! same effect as constructor with same argument
+    void resize (size_type _nblocks, size_type m)
+    {
+      // deconstruct objects and deallocate memory if necessary
+      if (this->n>0) {
+        size_type i=this->n;
+        while (i)
+          this->p[--i].~B();
+        allocator_.deallocate(this->p,this->n);
+      }
+      if (nblocks>0) {
+        size_type i=nblocks;
+        while (i)
+          block[--i].~window_type();
+        windowAllocator_.deallocate(block,nblocks);
+      }
+
+      // and we can allocate the big array in the base class
+      this->n = _nblocks*m;
+      if (this->n>0)
+      {
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
+      }
+      else
+      {
+        this->n = 0;
+        this->p = 0;
+      }
+
+      // we can allocate the windows now
+      nblocks = _nblocks;
+      if (nblocks>0)
+      {
+        // allocate and construct objects
+        block = windowAllocator_.allocate(nblocks);
+        new (block) window_type[nblocks];
+
+        // set the windows into the big array
+        for (size_type i=0; i<nblocks; ++i)
+          block[i].set(m,this->p+(i*m));
+      }
+      else
+      {
+        nblocks = 0;
+        block = 0;;
+      }
+    }
+
+    //! assignment
+    DenseMatrixBase& operator= (const DenseMatrixBase& a)
+    {
+      if (&a!=this)     // check if this and a are different objects
+      {
+        // reallocate arrays if necessary
+        // Note: still the block sizes may vary !
+        if (this->n!=a.n || nblocks!=a.nblocks)
+        {
+          // deconstruct objects and deallocate memory if necessary
+          if (this->n>0) {
+            size_type i=this->n;
+            while (i)
+              this->p[--i].~B();
+            allocator_.deallocate(this->p,this->n);
+          }
+          if (nblocks>0) {
+            size_type i=nblocks;
+            while (i)
+              block[--i].~window_type();
+            windowAllocator_.deallocate(block,nblocks);
+          }
+
+          // allocate the big array in the base class
+          this->n = a.n;
+          if (this->n>0)
+          {
+            // allocate and construct objects
+            this->p = allocator_.allocate(this->n);
+            new (this->p)B[this->n];
+          }
+          else
+          {
+            this->n = 0;
+            this->p = 0;
+          }
+
+          // we can allocate the windows now
+          nblocks = a.nblocks;
+          if (nblocks>0)
+          {
+            // alloc
+            block = windowAllocator_.allocate(nblocks);
+            new (block) window_type[nblocks];
+          }
+          else
+          {
+            nblocks = 0;
+            block = 0;;
+          }
+        }
+
+        // copy block structure, might be different although
+        // sizes are the same !
+        if (nblocks>0)
+        {
+          block[0].set(a.block[0].getsize(),this->p);                 // first block
+          for (size_type i=1; i<nblocks; ++i)                               // and the rest
+            block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
+        }
+
+        // and copy the data
+        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
+      }
+
+      return *this;     // Gebe Referenz zurueck damit a=b=c; klappt
+    }
+
+
+    //===== assignment from scalar
+
+    //! assign from scalar
+    DenseMatrixBase& operator= (const field_type& k)
+    {
+      (static_cast<block_vector_unmanaged<B,A>&>(*this)) = k;
+      return *this;
+    }
+
+
+    //===== access to components
+    // has to be overwritten from base class because it must
+    // return access to the windows
+
+    //! random access to blocks
+    window_type& operator[] (size_type i)
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+#endif
+      return block[i];
+    }
+
+    //! same for read only access
+    const window_type& operator[] (size_type i) const
+    {
+#ifdef DUNE_ISTL_WITH_CHECKING
+      if (i<0 || i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+#endif
+      return block[i];
+    }
+
+    // forward declaration
+    class ConstIterator;
+
+    //! Iterator class for sequential access
+    class Iterator
+    {
+    public:
+      //! constructor, no arguments
+      Iterator ()
+      {
+        p = 0;
+        i = 0;
+      }
+
+      //! constructor
+      Iterator (window_type* _p, size_type _i) : p(_p), i(_i)
+      {       }
+
+      //! prefix increment
+      Iterator& operator++()
+      {
+        ++i;
+        return *this;
+      }
+
+      //! prefix decrement
+      Iterator& operator--()
+      {
+        --i;
+        return *this;
+      }
+
+      //! equality
+      bool operator== (const Iterator& it) const
+      {
+        return (p+i)==(it.p+it.i);
+      }
+
+      //! inequality
+      bool operator!= (const Iterator& it) const
+      {
+        return (p+i)!=(it.p+it.i);
+      }
+
+      //! equality
+      bool operator== (const ConstIterator& it) const
+      {
+        return (p+i)==(it.p+it.i);
+      }
+
+      //! inequality
+      bool operator!= (const ConstIterator& it) const
+      {
+        return (p+i)!=(it.p+it.i);
+      }
+
+      //! dereferencing
+      window_type& operator* () const
+      {
+        return p[i];
+      }
+
+      //! arrow
+      window_type* operator-> () const
+      {
+        return p+i;
+      }
+
+      // return index corresponding to pointer
+      size_type index () const
+      {
+        return i;
+      }
+
+      friend class ConstIterator;
+
+    private:
+      window_type* p;
+      size_type i;
+    };
+
+    //! begin Iterator
+    Iterator begin ()
+    {
+      return Iterator(block,0);
+    }
+
+    //! end Iterator
+    Iterator end ()
+    {
+      return Iterator(block,nblocks);
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector, i.e. at the last entry.
+    Iterator beforeEnd ()
+    {
+      return Iterator(block,nblocks-1);
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    Iterator beforeBegin () const
+    {
+      return Iterator(block,-1);
+    }
+
+    //! random access returning iterator (end if not contained)
+    Iterator find (size_type i)
+    {
+      if (i>=0 && i<nblocks)
+        return Iterator(block,i);
+      else
+        return Iterator(block,nblocks);
+    }
+
+    //! random access returning iterator (end if not contained)
+    ConstIterator find (size_type i) const
+    {
+      if (i>=0 && i<nblocks)
+        return ConstIterator(block,i);
+      else
+        return ConstIterator(block,nblocks);
+    }
+
+    //! ConstIterator class for sequential access
+    class ConstIterator
+    {
+    public:
+      //! constructor
+      ConstIterator ()
+      {
+        p = 0;
+        i = 0;
+      }
+
+      //! constructor from pointer
+      ConstIterator (const window_type* _p, size_type _i) : p(_p), i(_i)
+      {       }
+
+      //! constructor from non_const iterator
+      ConstIterator (const Iterator& it) : p(it.p), i(it.i)
+      {       }
+
+      //! prefix increment
+      ConstIterator& operator++()
+      {
+        ++i;
+        return *this;
+      }
+
+      //! prefix decrement
+      ConstIterator& operator--()
+      {
+        --i;
+        return *this;
+      }
+
+      //! equality
+      bool operator== (const ConstIterator& it) const
+      {
+        return (p+i)==(it.p+it.i);
+      }
+
+      //! inequality
+      bool operator!= (const ConstIterator& it) const
+      {
+        return (p+i)!=(it.p+it.i);
+      }
+
+      //! equality
+      bool operator== (const Iterator& it) const
+      {
+        return (p+i)==(it.p+it.i);
+      }
+
+      //! inequality
+      bool operator!= (const Iterator& it) const
+      {
+        return (p+i)!=(it.p+it.i);
+      }
+
+      //! dereferencing
+      const window_type& operator* () const
+      {
+        return p[i];
+      }
+
+      //! arrow
+      const window_type* operator-> () const
+      {
+        return p+i;
+      }
+
+      // return index corresponding to pointer
+      size_type index () const
+      {
+        return i;
+      }
+
+      friend class Iterator;
+
+    private:
+      const window_type* p;
+      size_type i;
+    };
+
+    /** \brief Export the iterator type using std naming rules */
+    using iterator = Iterator;
+
+    /** \brief Export the const iterator type using std naming rules */
+    using const_iterator = ConstIterator;
+
+    //! begin ConstIterator
+    ConstIterator begin () const
+    {
+      return ConstIterator(block,0);
+    }
+
+    //! end ConstIterator
+    ConstIterator end () const
+    {
+      return ConstIterator(block,nblocks);
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the end iterator of the vector. i.e. at the last element.
+    ConstIterator beforeEnd() const
+    {
+      return ConstIterator(block,nblocks-1);
+    }
+
+    //! end ConstIterator
+    ConstIterator rend () const
+    {
+      return ConstIterator(block,-1);
+    }
+
+
+    //===== sizes
+
+    //! number of blocks in the vector (are of variable size here)
+    size_type N () const
+    {
+      return nblocks;
+    }
+
+
+  private:
+    size_type nblocks;            // number of blocks in vector
+    window_type* block;     // array of blocks pointing to the array in the base class
+
+    A allocator_;
+
+    typename A::template rebind<window_type>::other windowAllocator_;
+  };
+
+}  // namespace MatrixImp
 
   /** \addtogroup ISTL_SPMV
      \{
@@ -35,19 +611,19 @@ namespace Dune {
     typedef A allocator_type;
 
     /** \brief The type implementing a matrix row */
-    typedef typename VariableBlockVector<T,A>::window_type row_type;
+    typedef typename MatrixImp::DenseMatrixBase<T,A>::window_type row_type;
 
     /** \brief Type for indices and sizes */
     typedef typename A::size_type size_type;
 
     /** \brief Iterator over the matrix rows */
-    typedef typename VariableBlockVector<T,A>::Iterator RowIterator;
+    typedef typename MatrixImp::DenseMatrixBase<T,A>::Iterator RowIterator;
 
     /** \brief Iterator for the entries of each row */
     typedef typename row_type::iterator ColIterator;
 
     /** \brief Const iterator over the matrix rows */
-    typedef typename VariableBlockVector<T,A>::ConstIterator ConstRowIterator;
+    typedef typename MatrixImp::DenseMatrixBase<T,A>::ConstIterator ConstRowIterator;
 
     /** \brief Const iterator for the entries of each row */
     typedef typename row_type::const_iterator ConstColIterator;
@@ -58,7 +634,7 @@ namespace Dune {
     };
 
     /** \brief Create empty matrix */
-    Matrix() : data_(0), cols_(0)
+    Matrix() : data_(0,0), cols_(0)
     {}
 
     /** \brief Create uninitialized matrix of size rows x cols
@@ -543,12 +1119,12 @@ namespace Dune {
 
   protected:
 
-    /** \brief Abuse VariableBlockVector as an engine for a 2d array ISTL-style
+    /** \brief Abuse DenseMatrixBase as an engine for a 2d array ISTL-style
 
        This is almost as good as it can get.  Further speedup may be possible by using
        the fact that all rows have the same length.
      */
-    VariableBlockVector<T,A> data_;
+    MatrixImp::DenseMatrixBase<T,A> data_;
 
     /** \brief Number of columns of the matrix
 
