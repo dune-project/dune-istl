@@ -95,7 +95,7 @@ namespace Dune {
     {
       // nothing is known ...
       nblocks = 0;
-      block = 0;
+      block = nullptr;
       initialized = false;
     }
 
@@ -114,7 +114,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // Note: memory in base class still not allocated
@@ -140,7 +140,7 @@ namespace Dune {
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
@@ -158,7 +158,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and the vector is usable
@@ -182,7 +182,7 @@ namespace Dune {
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
@@ -201,7 +201,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and we have a usable vector
@@ -244,7 +244,7 @@ namespace Dune {
         windowAllocator_.deallocate(block,nblocks);
       }
       this->n = 0;
-      this->p = 0;
+      this->p = nullptr;
 
       // we can allocate the windows now
       nblocks = _nblocks;
@@ -256,7 +256,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and the vector not fully usable
@@ -290,7 +290,7 @@ namespace Dune {
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
@@ -308,7 +308,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and the vector is usable
@@ -349,7 +349,7 @@ namespace Dune {
           else
           {
             this->n = 0;
-            this->p = 0;
+            this->p = nullptr;
           }
 
           // we can allocate the windows now
@@ -363,7 +363,7 @@ namespace Dune {
           else
           {
             nblocks = 0;
-            block = 0;;
+            block = nullptr;
           }
         }
 
@@ -442,7 +442,7 @@ namespace Dune {
           else
           {
             v.n = 0;
-            v.p = 0;
+            v.p = nullptr;
           }
 
           // and we set the window pointer
@@ -543,7 +543,7 @@ namespace Dune {
       //! constructor, no arguments
       RealIterator ()
       {
-        p = 0;
+        p = nullptr;
         i = 0;
       }
 
@@ -591,8 +591,6 @@ namespace Dune {
       {
         return p[i+offset];
       }
-
-      friend class ConstIterator;
 
     private:
       window_type* p;
