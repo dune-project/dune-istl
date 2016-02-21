@@ -71,6 +71,10 @@ namespace MatrixImp
     // just a shorthand
     typedef BlockVectorWindow<B,A> window_type;
 
+    typedef window_type reference;
+
+    typedef const window_type const_reference;
+
 
     //===== constructors and such
 
@@ -81,6 +85,7 @@ namespace MatrixImp
     {
       // nothing is known ...
       nblocks = 0;
+      columns_ = 0;
       block = 0;
     }
 
@@ -94,6 +99,7 @@ namespace MatrixImp
     {
       // and we can allocate the big array in the base class
       this->n = _nblocks*m;
+      columns_ = m;
       if (this->n>0)
       {
         this->p = allocator_.allocate(this->n);
@@ -129,6 +135,7 @@ namespace MatrixImp
     {
       // allocate the big array in the base class
       this->n = a.n;
+      columns_ = a.columns_;
       if (this->n>0)
       {
         // allocate and construct objects
@@ -160,7 +167,7 @@ namespace MatrixImp
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
     }
 
@@ -209,11 +216,12 @@ namespace MatrixImp
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
       nblocks = _nblocks;
+      columns_ = m;
       if (nblocks>0)
       {
         // allocate and construct objects
@@ -227,7 +235,7 @@ namespace MatrixImp
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
     }
 
@@ -236,6 +244,7 @@ namespace MatrixImp
     {
       if (&a!=this)     // check if this and a are different objects
       {
+        columns_ = a.columns_;
         // reallocate arrays if necessary
         // Note: still the block sizes may vary !
         if (this->n!=a.n || nblocks!=a.nblocks)
@@ -296,7 +305,7 @@ namespace MatrixImp
         for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
       }
 
-      return *this;     // Gebe Referenz zurueck damit a=b=c; klappt
+      return *this;
     }
 
 
@@ -315,21 +324,21 @@ namespace MatrixImp
     // return access to the windows
 
     //! random access to blocks
-    window_type& operator[] (size_type i)
+    reference operator[] (size_type i)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
 #endif
-      return block[i];
+      return window_type(this->p + i*columns_, columns_);
     }
 
     //! same for read only access
-    const window_type& operator[] (size_type i) const
+    const_reference operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i<0 || i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
 #endif
-      return block[i];
+      return window_type(this->p + i*columns_, columns_);
     }
 
     // forward declaration
@@ -582,6 +591,7 @@ namespace MatrixImp
 
   private:
     size_type nblocks;            // number of blocks in vector
+    size_type columns_;           // number of matrix columns
     window_type* block;     // array of blocks pointing to the array in the base class
 
     A allocator_;
@@ -711,7 +721,7 @@ namespace MatrixImp
     }
 
     /** \brief The index operator */
-    row_type& operator[](size_type row) {
+    row_type operator[](size_type row) {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (row<0)
         DUNE_THROW(ISTLError, "Can't access negative rows!");
@@ -722,7 +732,7 @@ namespace MatrixImp
     }
 
     /** \brief The const index operator */
-    const row_type& operator[](size_type row) const {
+    const row_type operator[](size_type row) const {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (row<0)
         DUNE_THROW(ISTLError, "Can't access negative rows!");
