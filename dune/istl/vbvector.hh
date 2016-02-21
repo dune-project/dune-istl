@@ -592,6 +592,12 @@ namespace Dune {
         return p[i+offset];
       }
 
+      /** \brief Return the index of the entry this iterator is pointing to */
+      size_type index() const
+      {
+        return i;
+      }
+
     private:
       window_type* p;
       size_type i;
