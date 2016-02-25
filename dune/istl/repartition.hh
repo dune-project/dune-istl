@@ -404,26 +404,17 @@ namespace Dune
       int i=0;
       int j=0;
 
-      std::vector<int> domain(nparts);
-      std::vector<int> assigned(npes);
-      // init
-      for (i=0; i<nparts; i++) {
-        domainMapping[i] = -1;
-        domain[i] = 0;
-      }
-      for (i=0; i<npes; i++) {
-        assigned[i] = -0;
-      }
+      std::vector<int> domain(nparts, 0);
+      std::vector<int> assigned(npes, -0);
+      // init domain Mapping
+      domainMapping.assign(domainMapping.size(), -1);
+
       // count the occurance of domains
       for (i=0; i<numOfOwnVtx; i++) {
         domain[part[i]]++;
       }
 
-      int *domainMatrix = new int[npes * nparts];
-      // init
-      for(i=0; i<npes*nparts; i++) {
-        domainMatrix[i]=-1;
-      }
+      std::vector<int> domainMatrix(npes * nparts, -1);
 
       // init buffer with the own domain
       int *buf = new int[nparts];
@@ -475,7 +466,6 @@ namespace Dune
         maxOccurance = 0;
       }
 
-      delete[] domainMatrix;
 
     }
 
