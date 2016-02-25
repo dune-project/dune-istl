@@ -60,14 +60,6 @@ namespace MatrixImp
      */
     typedef BlockVector<B,A> block_type;
 
-    /** increment block level counter, yes, it is two levels because
-            DenseMatrixBase is a container of containers
-     */
-    enum {
-      //! The number of blocklevels this vector contains.
-      blocklevel = B::blocklevel+2
-    };
-
     // just a shorthand
     typedef BlockVectorWindow<B,A> window_type;
 
@@ -84,9 +76,8 @@ namespace MatrixImp
     DenseMatrixBase () : block_vector_unmanaged<B,A>()
     {
       // nothing is known ...
-      nblocks = 0;
+      rows_ = 0;
       columns_ = 0;
-      block = 0;
     }
 
     /** make vector with given number of blocks each having a constant size,
@@ -95,11 +86,11 @@ namespace MatrixImp
             \param _nblocks Number of blocks
             \param m Number of elements in each block
      */
-    DenseMatrixBase (size_type _nblocks, size_type m) : block_vector_unmanaged<B,A>()
+    DenseMatrixBase (size_type rows, size_type columns) : block_vector_unmanaged<B,A>()
     {
       // and we can allocate the big array in the base class
-      this->n = _nblocks*m;
-      columns_ = m;
+      this->n = rows*columns;
+      columns_ = columns;
       if (this->n>0)
       {
         this->p = allocator_.allocate(this->n);
@@ -112,22 +103,7 @@ namespace MatrixImp
       }
 
       // we can allocate the windows now
-      nblocks = _nblocks;
-      if (nblocks>0)
-      {
-        // allocate and construct the windows
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-
-        // set the windows into the big array
-        for (size_type i=0; i<nblocks; ++i)
-          block[i].set(m,this->p+(i*m));
-      }
-      else
-      {
-        nblocks = 0;
-        block = 0;;
-      }
+      rows_ = rows;
     }
 
     //! copy constructor, has copy semantics
@@ -143,32 +119,17 @@ namespace MatrixImp
         new (this->p)B[this->n];
 
         // copy data
-        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
+        for (size_type i=0; i<this->n; i++)
+          this->p[i]=a.p[i];
       }
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
-      nblocks = a.nblocks;
-      if (nblocks>0)
-      {
-        // alloc
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-
-        // and we must set the windows
-        block[0].set(a.block[0].getsize(),this->p);           // first block
-        for (size_type i=1; i<nblocks; ++i)                         // and the rest
-          block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
-      }
+      rows_ = a.rows_;
     }
 
     //! free dynamic memory
@@ -180,17 +141,10 @@ namespace MatrixImp
           this->p[--i].~B();
         allocator_.deallocate(this->p,this->n);
       }
-      if (nblocks>0) {
-        size_type i=nblocks;
-        while (i)
-          block[--i].~window_type();
-        windowAllocator_.deallocate(block,nblocks);
-      }
-
     }
 
     //! same effect as constructor with same argument
-    void resize (size_type _nblocks, size_type m)
+    void resize (size_type rows, size_type columns)
     {
       // deconstruct objects and deallocate memory if necessary
       if (this->n>0) {
@@ -199,15 +153,9 @@ namespace MatrixImp
           this->p[--i].~B();
         allocator_.deallocate(this->p,this->n);
       }
-      if (nblocks>0) {
-        size_type i=nblocks;
-        while (i)
-          block[--i].~window_type();
-        windowAllocator_.deallocate(block,nblocks);
-      }
 
       // and we can allocate the big array in the base class
-      this->n = _nblocks*m;
+      this->n = rows*columns;
       if (this->n>0)
       {
         this->p = allocator_.allocate(this->n);
@@ -220,23 +168,8 @@ namespace MatrixImp
       }
 
       // we can allocate the windows now
-      nblocks = _nblocks;
-      columns_ = m;
-      if (nblocks>0)
-      {
-        // allocate and construct objects
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-
-        // set the windows into the big array
-        for (size_type i=0; i<nblocks; ++i)
-          block[i].set(m,this->p+(i*m));
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
-      }
+      rows_ = rows;
+      columns_ = columns;
     }
 
     //! assignment
@@ -247,7 +180,7 @@ namespace MatrixImp
         columns_ = a.columns_;
         // reallocate arrays if necessary
         // Note: still the block sizes may vary !
-        if (this->n!=a.n || nblocks!=a.nblocks)
+        if (this->n!=a.n || rows_!=a.rows_)
         {
           // deconstruct objects and deallocate memory if necessary
           if (this->n>0) {
@@ -255,12 +188,6 @@ namespace MatrixImp
             while (i)
               this->p[--i].~B();
             allocator_.deallocate(this->p,this->n);
-          }
-          if (nblocks>0) {
-            size_type i=nblocks;
-            while (i)
-              block[--i].~window_type();
-            windowAllocator_.deallocate(block,nblocks);
           }
 
           // allocate the big array in the base class
@@ -274,35 +201,16 @@ namespace MatrixImp
           else
           {
             this->n = 0;
-            this->p = 0;
+            this->p = nullptr;
           }
 
-          // we can allocate the windows now
-          nblocks = a.nblocks;
-          if (nblocks>0)
-          {
-            // alloc
-            block = windowAllocator_.allocate(nblocks);
-            new (block) window_type[nblocks];
-          }
-          else
-          {
-            nblocks = 0;
-            block = 0;;
-          }
-        }
-
-        // copy block structure, might be different although
-        // sizes are the same !
-        if (nblocks>0)
-        {
-          block[0].set(a.block[0].getsize(),this->p);                 // first block
-          for (size_type i=1; i<nblocks; ++i)                               // and the rest
-            block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
+          // Copy number of rows
+          rows_ = a.rows_;
         }
 
         // and copy the data
-        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
+        for (size_type i=0; i<this->n; i++)
+          this->p[i]=a.p[i];
       }
 
       return *this;
@@ -350,19 +258,46 @@ namespace MatrixImp
     public:
       //! constructor, no arguments
       Iterator ()
+      : window_(nullptr,0)
       {
-        p = 0;
+        data_ = nullptr;
         i = 0;
       }
 
+      Iterator (Iterator& other) = default;
+      Iterator (Iterator&& other) = default;
+
       //! constructor
-      Iterator (window_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
+      Iterator (B* data, size_type columns, size_type _i)
+      : data_(data), i(_i),
+        window_(data + _i*columns, columns)
+      {}
+
+      /** \brief Move assignment */
+      Iterator& operator=(Iterator&& other)
+      {
+        data_ = other.data_;
+        i = other.i;
+        // Do NOT use window_.operator=, because that copies the window content, not just the window!
+        window_.set(other.window_.getsize(),other.window_.getptr());
+        return *this;
+      }
+
+      /** \brief Copy assignment */
+      Iterator& operator=(Iterator& other)
+      {
+        data_ = other.data_;
+        i = other.i;
+        // Do NOT use window_.operator=, because that copies the window content, not just the window!
+        window_.set(other.window_.getsize(),other.window_.getptr());
+        return *this;
+      }
 
       //! prefix increment
       Iterator& operator++()
       {
         ++i;
+        window_.setptr(window_.getptr()+window_.getsize());
         return *this;
       }
 
@@ -370,43 +305,44 @@ namespace MatrixImp
       Iterator& operator--()
       {
         --i;
+        window_.setptr(window_.getptr()-window_.getsize());
         return *this;
       }
 
       //! equality
       bool operator== (const Iterator& it) const
       {
-        return (p+i)==(it.p+it.i);
+        return window_.getptr() == it.window_.getptr();
       }
 
       //! inequality
       bool operator!= (const Iterator& it) const
       {
-        return (p+i)!=(it.p+it.i);
+        return window_.getptr() != it.window_.getptr();
       }
 
       //! equality
       bool operator== (const ConstIterator& it) const
       {
-        return (p+i)==(it.p+it.i);
+        return window_.getptr() == it.window_.getptr();
       }
 
       //! inequality
       bool operator!= (const ConstIterator& it) const
       {
-        return (p+i)!=(it.p+it.i);
+        return window_.getptr() != it.window_.getptr();
       }
 
       //! dereferencing
       window_type& operator* () const
       {
-        return p[i];
+        return window_;
       }
 
       //! arrow
       window_type* operator-> () const
       {
-        return p+i;
+        return &window_;
       }
 
       // return index corresponding to pointer
@@ -418,52 +354,47 @@ namespace MatrixImp
       friend class ConstIterator;
 
     private:
-      window_type* p;
+      B* data_;
       size_type i;
+      mutable window_type window_;
     };
 
     //! begin Iterator
     Iterator begin ()
     {
-      return Iterator(block,0);
+      return Iterator(this->p, columns_, 0);
     }
 
     //! end Iterator
     Iterator end ()
     {
-      return Iterator(block,nblocks);
+      return Iterator(this->p, columns_, rows_);
     }
 
     //! @returns an iterator that is positioned before
     //! the end iterator of the vector, i.e. at the last entry.
     Iterator beforeEnd ()
     {
-      return Iterator(block,nblocks-1);
+      return Iterator(this->p, columns_, rows_-1);
     }
 
     //! @returns an iterator that is positioned before
     //! the first entry of the vector.
     Iterator beforeBegin () const
     {
-      return Iterator(block,-1);
+      return Iterator(this->p, columns_, -1);
     }
 
     //! random access returning iterator (end if not contained)
     Iterator find (size_type i)
     {
-      if (i>=0 && i<nblocks)
-        return Iterator(block,i);
-      else
-        return Iterator(block,nblocks);
+      return Iterator(this->p, columns_, std::min(i,rows_));
     }
 
     //! random access returning iterator (end if not contained)
     ConstIterator find (size_type i) const
     {
-      if (i>=0 && i<nblocks)
-        return ConstIterator(block,i);
-      else
-        return ConstIterator(block,nblocks);
+      return ConstIterator(this->p, columns_, std::min(i,rows_));
     }
 
     //! ConstIterator class for sequential access
@@ -472,23 +403,47 @@ namespace MatrixImp
     public:
       //! constructor
       ConstIterator ()
+      : window_(nullptr,0)
       {
-        p = 0;
+        data_ = nullptr;
+        columns_ = 0;
         i = 0;
       }
 
       //! constructor from pointer
-      ConstIterator (const window_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
+      ConstIterator (const B* data, size_type columns, size_type _i)
+      : data_(data), i(_i),
+        window_(const_cast<B*>(data + _i * columns), columns)
+      {}
 
       //! constructor from non_const iterator
-      ConstIterator (const Iterator& it) : p(it.p), i(it.i)
-      {       }
+      ConstIterator (const Iterator& it)
+      : data_(it.data_), i(it.i), window_(it.window_.getptr(),it.window_.getsize())
+      {}
+
+      ConstIterator& operator=(Iterator&& other)
+      {
+        data_ = other.data_;
+        i = other.i;
+        // Do NOT use window_.operator=, because that copies the window content, not just the window!
+        window_.set(other.window_.getsize(),other.window_.getptr());
+        return *this;
+      }
+
+      ConstIterator& operator=(Iterator& other)
+      {
+        data_ = other.data_;
+        i = other.i;
+        // Do NOT use window_.operator=, because that copies the window content, not just the window!
+        window_.set(other.window_.getsize(),other.window_.getptr());
+        return *this;
+      }
 
       //! prefix increment
       ConstIterator& operator++()
       {
         ++i;
+        window_.setptr(window_.getptr()+window_.getsize());
         return *this;
       }
 
@@ -496,43 +451,44 @@ namespace MatrixImp
       ConstIterator& operator--()
       {
         --i;
+        window_.setptr(window_.getptr()-window_.getsize());
         return *this;
       }
 
       //! equality
       bool operator== (const ConstIterator& it) const
       {
-        return (p+i)==(it.p+it.i);
+        return window_.getptr() == it.window_.getptr();
       }
 
       //! inequality
       bool operator!= (const ConstIterator& it) const
       {
-        return (p+i)!=(it.p+it.i);
+        return window_.getptr() != it.window_.getptr();
       }
 
       //! equality
       bool operator== (const Iterator& it) const
       {
-        return (p+i)==(it.p+it.i);
+        return window_.getptr() == it.window_.getptr();
       }
 
       //! inequality
       bool operator!= (const Iterator& it) const
       {
-        return (p+i)!=(it.p+it.i);
+        return window_.getptr() != it.window_.getptr();
       }
 
       //! dereferencing
       const window_type& operator* () const
       {
-        return p[i];
+        return window_;
       }
 
       //! arrow
       const window_type* operator-> () const
       {
-        return p+i;
+        return &window_;
       }
 
       // return index corresponding to pointer
@@ -544,8 +500,9 @@ namespace MatrixImp
       friend class Iterator;
 
     private:
-      const window_type* p;
+      const B* data_;
       size_type i;
+      mutable window_type window_;
     };
 
     /** \brief Export the iterator type using std naming rules */
@@ -557,46 +514,42 @@ namespace MatrixImp
     //! begin ConstIterator
     ConstIterator begin () const
     {
-      return ConstIterator(block,0);
+      return ConstIterator(this->p, columns_, 0);
     }
 
     //! end ConstIterator
     ConstIterator end () const
     {
-      return ConstIterator(block,nblocks);
+      return ConstIterator(this->p, columns_, rows_);
     }
 
     //! @returns an iterator that is positioned before
     //! the end iterator of the vector. i.e. at the last element.
     ConstIterator beforeEnd() const
     {
-      return ConstIterator(block,nblocks-1);
+      return ConstIterator(this->p, columns_, rows_-1);
     }
 
     //! end ConstIterator
     ConstIterator rend () const
     {
-      return ConstIterator(block,-1);
+      return ConstIterator(this->p, columns_, -1);
     }
-
 
     //===== sizes
 
     //! number of blocks in the vector (are of variable size here)
     size_type N () const
     {
-      return nblocks;
+      return rows_;
     }
 
 
   private:
-    size_type nblocks;            // number of blocks in vector
+    size_type rows_;            // number of matrix rows
     size_type columns_;           // number of matrix columns
-    window_type* block;     // array of blocks pointing to the array in the base class
 
     A allocator_;
-
-    typename A::template rebind<window_type>::other windowAllocator_;
   };
 
 }  // namespace MatrixImp
@@ -1130,9 +1083,6 @@ namespace MatrixImp
   protected:
 
     /** \brief Abuse DenseMatrixBase as an engine for a 2d array ISTL-style
-
-       This is almost as good as it can get.  Further speedup may be possible by using
-       the fact that all rows have the same length.
      */
     MatrixImp::DenseMatrixBase<T,A> data_;
 
