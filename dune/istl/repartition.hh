@@ -405,7 +405,7 @@ namespace Dune
       int j=0;
 
       std::vector<int> domain(nparts, 0);
-      std::vector<int> assigned(npes, -0);
+      std::vector<int> assigned(npes, 0);
       // init domain Mapping
       domainMapping.assign(domainMapping.size(), -1);
 
@@ -442,6 +442,8 @@ namespace Dune
       // particular domain is selected to choose it's favorate domain
       int maxOccurance = 0;
       pe = -1;
+      std::set<std::size_t> unassigned;
+
       for(i=0; i<nparts; i++) {
         for(j=0; j<npes; j++) {
           // process has no domain assigned
@@ -463,10 +465,23 @@ namespace Dune
           }
           pe = -1;
         }
+        else
+        {
+          unassigned.insert(i);
+        }
         maxOccurance = 0;
       }
 
+      typename std::vector<int>::iterator next_free = assigned.begin();
 
+      for(typename std::set<std::size_t>::iterator domain = unassigned.begin(),
+            end = unassigned.end(); domain != end; ++domain)
+      {
+        next_free = std::find_if(next_free, assigned.end(), std::bind2nd(std::less<int>(), 1));
+        assert(next_free !=  assigned.end());
+        domainMapping[*domain] = next_free-assigned.begin();
+        *next_free = 1;
+      }
     }
 
     struct SortFirst
