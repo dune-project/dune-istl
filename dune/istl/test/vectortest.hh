@@ -15,6 +15,7 @@
  * bound: any feature that is tested here is part of the dune-istl vector interface.
  */
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/test/iteratortest.hh>
 
 namespace Dune
