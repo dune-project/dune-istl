@@ -229,7 +229,7 @@ namespace Dune {
      *  m[_0] = ...
      * \endcode
      * The name '_0' used here as a static replacement of the integer number zero is arbitrary.
-     * Any other variable name can be used.  If you don't like the separate variable, you can writee
+     * Any other variable name can be used.  If you don't like the separate variable, you can write
      * \code
      *  m[std::integral_constant<int,0>()] = ...
      * \endcode
@@ -253,7 +253,7 @@ namespace Dune {
      *  m[_0] = ...
      * \endcode
      * The name '_0' used here as a static replacement of the integer number zero is arbitrary.
-     * Any other variable name can be used.  If you don't like the separate variable, you can writee
+     * Any other variable name can be used.  If you don't like the separate variable, you can write
      * \code
      *  m[std::integral_constant<std::size_t,0>()] = ...
      * \endcode
