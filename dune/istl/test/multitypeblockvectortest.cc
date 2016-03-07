@@ -13,6 +13,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/indices.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/multitypeblockvector.hh>
@@ -21,10 +22,9 @@ using namespace Dune;
 
 int main(int argc, char** argv) try
 {
-  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
+  using namespace Indices;
 
-  std::integral_constant<int, 0> _0;
-  std::integral_constant<int, 1> _1;
+  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
 
   multiVector[_0] = {{1,0,0},
                      {0,1,0},

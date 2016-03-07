@@ -14,6 +14,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/indices.hh>
 
 #include <dune/istl/matrix.hh>
 #include <dune/istl/bvector.hh>
@@ -28,6 +29,9 @@ using namespace Dune;
 
 int main(int argc, char** argv) try
 {
+  // Import the static constants _0, _1, etc
+  using namespace Indices;
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   //  First, we test a MultiTypeBlockMatrix consisting of an array of 2x2 dense matrices.
   //  The upper left dense matrix has dense 3x3 blocks, the lower right matrix has 1x1 blocks,
@@ -37,9 +41,6 @@ int main(int argc, char** argv) try
   // set up the test matrix
   typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,3,3> >, Matrix<FieldMatrix<double,3,1> > > RowType0;
   typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,1,3> >, Matrix<FieldMatrix<double,1,1> > > RowType1;
-
-  std::integral_constant<int, 0> _0;
-  std::integral_constant<int, 1> _1;
 
   MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
 

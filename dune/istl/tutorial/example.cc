@@ -12,6 +12,7 @@
 #include <cmath>                 // Yes, we do some math here
 #include <sys/times.h>            // for timing measurements
 
+#include <dune/common/indices.hh>
 #include <dune/istl/istlexception.hh>
 #include <dune/istl/basearray.hh>
 #include <dune/common/fvector.hh>
@@ -514,9 +515,8 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::FieldMatrix<double,1,1> LittleBlock;                    //matrix block type
   typedef Dune::BCRSMatrix<LittleBlock> BCRSMat;                        //matrix type
 
-  // Compile-time constants for the indices '0' and '1'
-  std::integral_constant<int, 0> _0;
-  std::integral_constant<int, 1> _1;
+  // Import static constants '_0' and '_1'
+  using namespace Dune::Indices;
 
   const int X1=3;                                                       //index bounds of all four matrices
   const int X2=2;
