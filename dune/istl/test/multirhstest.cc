@@ -4,6 +4,8 @@
 // start with including some headers
 #include "config.h"
 
+#define DISABLE_AMG_DIRECTSOLVER 1
+
 // #undef HAVE_VC
 
 #include <iostream>               // for input/output to shell
@@ -26,6 +28,8 @@
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/pinfo.hh>
 
 #include "laplacian.hh"
 
@@ -71,7 +75,7 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
     // set up system
     Vector x(N),b(N);
     for (unsigned int i=0; i<N; i++)
-      x[i] = Random<FT>::gen()/10.0;
+      x[i] = Random<FT>::gen()/FT(10.0);
     x=0; x[0]=1; x[N-1]=2; // prescribe known solution
     b=0; op.apply(x,b);    // set right hand side accordingly
     x=1;                   // initial guess
@@ -98,7 +102,7 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
   Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
   Dune::GeneralizedPCGSolver<Vector> gpcg(op,prec,reduction,8000,verb);
 
-  // run_test(precName, "Loop",           op,loop,N,Runs);
+  run_test(precName, "Loop",           op,loop,N,Runs);
   run_test(precName, "CG",             op,cg,N,Runs);
   run_test(precName, "BiCGStab",       op,bcgs,N,Runs);
   run_test(precName, "Gradient",       op,grad,N,Runs);
@@ -123,7 +127,8 @@ void test_all(unsigned int Runs = 1)
   // make a compressed row matrix with five point stencil
   Matrix A;
   setupLaplacian(A,size);
-  Dune::MatrixAdapter<Matrix,Vector,Vector> op(A);        // make linear operator from A
+  typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
+  Operator op(A);        // make linear operator from A
 
   // create all preconditioners
   Dune::SeqJac<Matrix,Vector,Vector> jac(A,1,0.1);          // Jacobi preconditioner
@@ -133,6 +138,30 @@ void test_all(unsigned int Runs = 1)
   Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,0.1);        // preconditioner object
   Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.1);     // preconditioner object
 
+  // AMG
+  typedef Dune::Amg::RowSum Norm;
+  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<Matrix,Norm> >
+          Criterion;
+  typedef Dune::SeqSSOR<Matrix,Vector,Vector> Smoother;
+  typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+  SmootherArgs smootherArgs;
+  smootherArgs.iterations = 1;
+  smootherArgs.relaxationFactor = 1;
+  unsigned int coarsenTarget = 1000;
+  unsigned int maxLevel = 10;
+  Criterion criterion(15,coarsenTarget);
+  criterion.setDefaultValuesIsotropic(2);
+  criterion.setAlpha(.67);
+  criterion.setBeta(1.0e-4);
+  criterion.setMaxLevel(maxLevel);
+  criterion.setSkipIsolated(false);
+  criterion.setNoPreSmoothSteps(1);
+  criterion.setNoPostSmoothSteps(1);
+  Dune::SeqScalarProduct<Vector> sp;
+  typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
+  Smoother smoother(A,1,1);
+  AMG amg(op, criterion, smootherArgs);
+
   // run the sub-tests
   test_all_solvers("Jacobi",      op,jac,N,Runs);
   test_all_solvers("GaussSeidel", op,gs,N,Runs);
@@ -140,6 +169,7 @@ void test_all(unsigned int Runs = 1)
   test_all_solvers("SSOR",        op,ssor,N,Runs);
   test_all_solvers("ILU0",        op,ilu0,N,Runs);
   test_all_solvers("ILU1",        op,ilu1,N,Runs);
+  test_all_solvers("AMG",         op,amg,N,Runs);
 }
 
 int main (int argc, char ** argv)
@@ -155,6 +185,7 @@ int main (int argc, char ** argv)
   test_all<Vc::SimdArray<double,8>>();
   test_all<Vc::SimdArray<double,8,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
 #endif
+
   test_all<double>(8);
 
   return 0;
