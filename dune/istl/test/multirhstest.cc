@@ -75,8 +75,7 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
     // set up system
     Vector x(N),b(N);
     for (unsigned int i=0; i<N; i++)
-      x[i] = Random<FT>::gen()/FT(10.0);
-    x=0; x[0]=1; x[N-1]=2; // prescribe known solution
+      x[i] += Random<FT>::gen();
     b=0; op.apply(x,b);    // set right hand side accordingly
     x=1;                   // initial guess
 
@@ -102,7 +101,7 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
   Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
   Dune::GeneralizedPCGSolver<Vector> gpcg(op,prec,reduction,8000,verb);
 
-  run_test(precName, "Loop",           op,loop,N,Runs);
+  // run_test(precName, "Loop",           op,loop,N,Runs);
   run_test(precName, "CG",             op,cg,N,Runs);
   run_test(precName, "BiCGStab",       op,bcgs,N,Runs);
   run_test(precName, "Gradient",       op,grad,N,Runs);
