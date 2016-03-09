@@ -378,7 +378,9 @@ namespace Dune
       enum SolverType { umfpack, superlu, none };
 
       static constexpr SolverType solver =
-#if HAVE_SUITESPARSE_UMFPACK
+#if DISABLE_AMG_DIRECTSOLVER
+        none;
+#elif HAVE_SUITESPARSE_UMFPACK
         UMFPackMethodChooser< field_type > :: valid ? umfpack : none ;
 #elif HAVE_SUPERLU
         superlu ;
