@@ -260,7 +260,6 @@ namespace MatrixImp
       Iterator ()
       : window_(nullptr,0)
       {
-        data_ = nullptr;
         i = 0;
       }
 
@@ -269,14 +268,13 @@ namespace MatrixImp
 
       //! constructor
       Iterator (B* data, size_type columns, size_type _i)
-      : data_(data), i(_i),
+      : i(_i),
         window_(data + _i*columns, columns)
       {}
 
       /** \brief Move assignment */
       Iterator& operator=(Iterator&& other)
       {
-        data_ = other.data_;
         i = other.i;
         // Do NOT use window_.operator=, because that copies the window content, not just the window!
         window_.set(other.window_.getsize(),other.window_.getptr());
@@ -286,7 +284,6 @@ namespace MatrixImp
       /** \brief Copy assignment */
       Iterator& operator=(Iterator& other)
       {
-        data_ = other.data_;
         i = other.i;
         // Do NOT use window_.operator=, because that copies the window content, not just the window!
         window_.set(other.window_.getsize(),other.window_.getptr());
@@ -354,7 +351,6 @@ namespace MatrixImp
       friend class ConstIterator;
 
     private:
-      B* data_;
       size_type i;
       mutable window_type window_;
     };
@@ -405,24 +401,22 @@ namespace MatrixImp
       ConstIterator ()
       : window_(nullptr,0)
       {
-        data_ = nullptr;
         i = 0;
       }
 
       //! constructor from pointer
       ConstIterator (const B* data, size_type columns, size_type _i)
-      : data_(data), i(_i),
+      : i(_i),
         window_(const_cast<B*>(data + _i * columns), columns)
       {}
 
       //! constructor from non_const iterator
       ConstIterator (const Iterator& it)
-      : data_(it.data_), i(it.i), window_(it.window_.getptr(),it.window_.getsize())
+      : i(it.i), window_(it.window_.getptr(),it.window_.getsize())
       {}
 
       ConstIterator& operator=(Iterator&& other)
       {
-        data_ = other.data_;
         i = other.i;
         // Do NOT use window_.operator=, because that copies the window content, not just the window!
         window_.set(other.window_.getsize(),other.window_.getptr());
@@ -431,7 +425,6 @@ namespace MatrixImp
 
       ConstIterator& operator=(Iterator& other)
       {
-        data_ = other.data_;
         i = other.i;
         // Do NOT use window_.operator=, because that copies the window content, not just the window!
         window_.set(other.window_.getsize(),other.window_.getptr());
@@ -499,7 +492,6 @@ namespace MatrixImp
       friend class Iterator;
 
     private:
-      const B* data_;
       size_type i;
       mutable window_type window_;
     };
