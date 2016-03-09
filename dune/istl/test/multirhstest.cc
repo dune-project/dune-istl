@@ -147,7 +147,7 @@ int main (int argc, char ** argv)
   test_all<float>();
   test_all<double>();
 #if HAVE_VC
-  test_all<Vc::float_v>();
+  // test_all<Vc::float_v>();
   test_all<Vc::double_v>();
   test_all<Vc::Vector<double, Vc::VectorAbi::Scalar>>();
   test_all<Vc::SimdArray<double,2>>();
