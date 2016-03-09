@@ -406,7 +406,6 @@ namespace MatrixImp
       : window_(nullptr,0)
       {
         data_ = nullptr;
-        columns_ = 0;
         i = 0;
       }
 
