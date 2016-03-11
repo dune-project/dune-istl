@@ -81,6 +81,9 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   AMG amg(fop, criterion, parms);
 
+  // check if recalculation of matrix hierarchy works
+  amg.recalculateHierarchy();
+
   double buildtime = watch.elapsed();
 
   std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
