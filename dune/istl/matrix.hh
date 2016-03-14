@@ -235,7 +235,7 @@ namespace MatrixImp
     reference operator[] (size_type i)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+      if (i>=rows_) DUNE_THROW(ISTLError,"index out of range");
 #endif
       return window_type(this->p + i*columns_, columns_);
     }
@@ -244,7 +244,7 @@ namespace MatrixImp
     const_reference operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i<0 || i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+      if (i<0 || i>=rows_) DUNE_THROW(ISTLError,"index out of range");
 #endif
       return window_type(this->p + i*columns_, columns_);
     }
