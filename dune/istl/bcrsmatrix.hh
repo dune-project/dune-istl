@@ -1625,7 +1625,7 @@ namespace Dune {
     }
 
     //! y += alpha A x
-    template<typename F, class X, class Y>
+    template<class X, class Y, class F>
     void usmv (F&& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
