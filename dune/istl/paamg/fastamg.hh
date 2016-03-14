@@ -480,7 +480,8 @@ namespace Dune
         if(isDirichlet && hasDiagonal)
           diag->solve(x[row.index()], b[row.index()]);
       }
-      std::cout<<" Preprocessing Dirichlet took "<<watch1.elapsed()<<std::endl;
+      if (verbosity_>0)
+        std::cout<<" Preprocessing Dirichlet took "<<watch1.elapsed()<<std::endl;
       watch1.reset();
       // No smoother to make x consistent! Do it by hand
       matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
