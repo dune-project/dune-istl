@@ -290,6 +290,19 @@ namespace Dune {
     }
   };
 
+  /** @addtogroup DenseMatVec
+      @{
+   */
+  template <typename Arg0, typename... Args>
+  struct FieldTraits< MultiTypeBlockVector<Arg0, Args...> >
+  {
+    typedef typename FieldTraits<Arg0>::field_type field_type;
+    typedef typename FieldTraits<Arg0>::real_type real_type;
+  };
+  /**
+      @}
+   */
+
   /**
       @brief A Vector class to support different block types
 
