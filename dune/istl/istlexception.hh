@@ -36,7 +36,9 @@ namespace Dune {
   //! Thrown when a solver aborts due to some problem.
   /**
    * Problems that may cause the solver to abort include a NaN detected during
-   * the convergence check (which may be caused by invalid input data).
+   * the convergence check (which may be caused by invalid input data), or
+   * breakdown conditions (which can happen e.g. in BiCGSTABSolver or
+   * RestartedGMResSolver).
    */
   class SolverAbort : public ISTLError {};
 

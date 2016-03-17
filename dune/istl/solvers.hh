@@ -617,6 +617,8 @@ namespace Dune {
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
@@ -819,6 +821,8 @@ namespace Dune {
        \brief Apply inverse operator with given reduction factor.
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
@@ -1225,7 +1229,14 @@ namespace Dune {
                     "P and S must have the same category!");
     }
 
-    //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+    /*!
+       \brief Apply inverse operator.
+
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the RestartedGMResSolver aborts when it detects a
+             breakdown.
+     */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
       apply(x,b,_reduction,res);
@@ -1235,6 +1246,9 @@ namespace Dune {
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the RestartedGMResSolver aborts when it detects a
+             breakdown.
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
