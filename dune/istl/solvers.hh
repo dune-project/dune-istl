@@ -695,11 +695,11 @@ namespace Dune {
 
         // look if breakdown occured
         if (abs(rho) <= EPSILON)
-          DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - rho "
+          DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
                      << rho << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
         if (abs(omega) <= EPSILON)
-          DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - omega "
+          DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
                      << omega << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
 
@@ -725,7 +725,7 @@ namespace Dune {
         h = _sp.dot(rt,v);
 
         if (abs(h) < EPSILON)
-          DUNE_THROW(ISTLError,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
+          DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
                      << abs(h) << " < EPSILON " << EPSILON
                      << " after " << it << " iterations");
 
