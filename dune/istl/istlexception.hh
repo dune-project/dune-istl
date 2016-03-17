@@ -33,6 +33,13 @@ namespace Dune {
     : public BCRSMatrixError
   {};
 
+  //! Thrown when a solver aborts due to some problem.
+  /**
+   * Problems that may cause the solver to abort include a NaN detected during
+   * the convergence check (which may be caused by invalid input data).
+   */
+  class SolverAbort : public ISTLError {};
+
   /** @} end documentation */
 
 } // end namespace
