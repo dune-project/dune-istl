@@ -844,5 +844,22 @@ namespace Dune
     redistributeMatrixEntries(origMatrix, newMatrix, origComm, newComm, ri);
   }
 #endif
+
+template<typename M>
+  void redistributeMatrixEntries(M& origMatrix, M& newMatrix,
+                                 Dune::Amg::SequentialInformation& origComm,
+                                 Dune::Amg::SequentialInformation& newComm,
+                                 RedistributeInformation<Dune::Amg::SequentialInformation>& ri)
+  {
+    DUNE_THROW(InvalidStateException, "Trying to redistribute in sequential program!");
+  }
+  template<typename M>
+  void redistributeMatrix(M& origMatrix, M& newMatrix,
+                          Dune::Amg::SequentialInformation& origComm,
+                          Dune::Amg::SequentialInformation& newComm,
+                          RedistributeInformation<Dune::Amg::SequentialInformation>& ri)
+  {
+    DUNE_THROW(InvalidStateException, "Trying to redistribute in sequential program!");
+  }
 }
 #endif

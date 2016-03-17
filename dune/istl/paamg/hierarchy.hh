@@ -1192,7 +1192,7 @@ namespace Dune
       typename RedistributeInfoList::iterator riIter = redistributes_.begin();
       Iterator level = matrices_.finest(), coarsest=matrices_.coarsest();
       if(level.isRedistributed()) {
-        info->buildGlobalLookup(info->indexSet().size());
+        info->buildGlobalLookup(level->getmat().N());
         redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
                                   const_cast<Matrix&>(level.getRedistributed().getmat()),
                                   *info,info.getRedistributed(), *riIter);
@@ -1206,7 +1206,7 @@ namespace Dune
         ++riIter;
         productBuilder.calculate(fine, *(*amap), const_cast<Matrix&>(level->getmat()), *info, copyFlags);
         if(level.isRedistributed()) {
-          info->buildGlobalLookup(info->indexSet().size());
+          info->buildGlobalLookup(level->getmat().N());
           redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
                                     const_cast<Matrix&>(level.getRedistributed().getmat()), *info,
                                     info.getRedistributed(), *riIter);
