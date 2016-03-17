@@ -471,7 +471,7 @@ namespace Dune
         for(ColIter col=row->begin(); col!=row->end(); ++col) {
           if(row.index()==col.index()) {
             diag = col;
-            hasDiagonal = false;
+            hasDiagonal = (*col != zero);
           }else{
             if(*col!=zero)
               isDirichlet = false;
