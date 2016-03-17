@@ -7,6 +7,7 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/unused.hh>
 #include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/paamg/pinfo.hh>
 /**
  * @file
  * @brief Functionality for redistributing a sparse matrix.
