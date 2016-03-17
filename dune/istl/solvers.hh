@@ -1311,7 +1311,7 @@ namespace Dune {
           }
           H[i+1][i] = _sp.norm(w);
           if(abs(H[i+1][i]) < EPSILON)
-            DUNE_THROW(ISTLError,
+            DUNE_THROW(SolverAbort,
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
           // normalize new vector
