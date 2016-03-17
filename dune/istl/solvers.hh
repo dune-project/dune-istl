@@ -19,6 +19,7 @@
 #include "solver.hh"
 #include "preconditioner.hh"
 #include <dune/common/deprecated.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
@@ -410,9 +411,17 @@ namespace Dune {
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the CGSolver aborts when a NaN or infinite defect is
+             detected.  However, -ffinite-math-only (implied by -ffast-math)
+             can inhibit a result from becoming NaN that really should be NaN.
+             E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
+             -ffast-math.
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      using std::isfinite;
+
       res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec.pre(x,b);             // prepare preconditioner
@@ -422,6 +431,16 @@ namespace Dune {
       X q(x);              // a temporary vector
 
       real_type def0 = _sp.norm(b); // compute norm
+
+      if (!isfinite(def0)) // check for inf or NaN
+      {
+        if (_verbose>0)
+          std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
+                    << std::endl;
+        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << def0
+                   << " is infinite or NaN");
+      }
+
       if (def0<1E-30)    // convergence check
       {
         res.converged  = true;
@@ -472,6 +491,15 @@ namespace Dune {
           this->printOutput(std::cout,real_type(i),defnew,def);
 
         def = defnew;               // update norm
+        if (!isfinite(def)) // check for inf or NaN
+        {
+          if (_verbose>0)
+            std::cout << "=== CGSolver: abort due to infinite or NaN defect"
+                      << std::endl;
+          DUNE_THROW(SolverAbort,
+                     "CGSolver: defect=" << def << " is infinite or NaN");
+        }
+
         if (def<def0*_reduction || def<1E-30)    // convergence check
         {
           res.converged  = true;
@@ -513,6 +541,12 @@ namespace Dune {
        \brief Apply inverse operator with given reduction factor.
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the CGSolver aborts when a NaN or infinite defect is
+             detected.  However, -ffinite-math-only (implied by -ffast-math)
+             can inhibit a result from becoming NaN that really should be NaN.
+             E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
+             -ffast-math.
      */
     virtual void apply (X& x, X& b, double reduction,
                         InverseOperatorResult& res)
