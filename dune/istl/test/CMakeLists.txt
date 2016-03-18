@@ -45,6 +45,9 @@ dune_add_test(SOURCES inverseoperator2prectest.cc)
 
 dune_add_test(SOURCES scaledidmatrixtest.cc)
 
+dune_add_test(SOURCES solveraborttest.cc
+              SKIP_ON_77)
+
 # Pardiso tests
 dune_add_test(SOURCES test_pardiso.cc
               SKIP_ON_77)
