@@ -659,7 +659,7 @@ namespace Dune {
         // rho_new = < rt , r >
         rho_new = _sp.dot(rt,r);
 
-        // look if breakdown occured
+        // look if breakdown occurred
         if (abs(rho) <= EPSILON)
           DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - rho "
                      << rho << " <= EPSILON " << EPSILON

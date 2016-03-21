@@ -99,7 +99,7 @@ namespace Dune
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
-       * grid, must match the coarse matrix in the matrix hierachy.
+       * grid, must match the coarse matrix in the matrix hierarchy.
        * @param smootherArgs The  arguments needed for thesmoother to use
        * for pre and post smoothing
        * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
@@ -121,7 +121,7 @@ namespace Dune
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
-       * grid, must match the coarse matrix in the matrix hierachy.
+       * grid, must match the coarse matrix in the matrix hierarchy.
        * @param smootherArgs The  arguments needed for thesmoother to use
        * for pre and post smoothing.
        * @param parms The parameters for the AMG.

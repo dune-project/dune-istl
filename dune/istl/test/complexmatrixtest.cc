@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
     std::cout << "============================================" << '\n'
               << "solving system with hermitian matrix of size 10" << '\n'
-              << "randomly generated with the Eigen libary... "
+              << "randomly generated with the Eigen library... "
               << std::endl << std::endl;
 
     Dune::RestartedGMResSolver<Dune::FieldVector<std::complex<double>,10> > hermitiangmrestest(hermitianadapter,complexnoprec,1e-12,maxIter,maxIter*maxIter,2);

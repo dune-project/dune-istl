@@ -173,7 +173,7 @@ namespace Dune {
     std::size_t offset=0;
     for(SIter rowIdx = rowSet.begin(), rowEnd=rowSet.end();
         rowIdx!= rowEnd; ++rowIdx, ++rowCreator) {
-      // See wich row entries are in our subset and add them to
+      // See which row entries are in our subset and add them to
       // the sparsity pattern
       guess = indexMap.begin();
 
@@ -195,7 +195,7 @@ namespace Dune {
 
     for(SIter rowIdx = rowSet.begin(), rowEnd=rowSet.end();
         rowIdx!= rowEnd; ++rowIdx, ++iluRow) {
-      // See wich row entries are in our subset and add them to
+      // See which row entries are in our subset and add them to
       // the sparsity pattern
       typename matrix_type::ColIterator localCol=iluRow->begin();
       for(typename matrix_type::ConstColIterator col=A[*rowIdx].begin(),

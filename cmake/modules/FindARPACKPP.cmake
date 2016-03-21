@@ -97,7 +97,7 @@ if(ARPACKPP_FOUND)
   endif(ARPACKPP_LIBRARY)
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determing location of ARPACK++ succeded:\n"
+    "Determing location of ARPACK++ succeeded:\n"
     "Include directory: ${ARPACKPP_INCLUDE_DIRS}\n"
     "Libraries to link against: ${ARPACKPP_LIBRARIES}\n\n")
   set(ARPACKPP_DUNE_COMPILE_FLAGS "-I${ARPACKPP_INCLUDE_DIRS}"

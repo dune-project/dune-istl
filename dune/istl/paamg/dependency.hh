@@ -51,7 +51,7 @@ namespace Dune
       /** @brief Access the bits directly */
       std::bitset<SIZE>::reference operator[](std::size_t v);
 
-      /** @brief Acess the bits directly */
+      /** @brief Access the bits directly */
       bool operator[](std::size_t v) const;
 
       /**
@@ -138,7 +138,7 @@ namespace Dune
       /** @brief Access the bits directly */
       std::bitset<SIZE>::reference operator[](std::size_t v);
 
-      /** @brief Acess the bits directly */
+      /** @brief Access the bits directly */
       bool operator[](std::size_t v) const;
 
       /**

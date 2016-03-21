@@ -544,6 +544,6 @@ namespace Dune {
   };
 }
 
-#endif // HAVE_SUITESPARES_UMFPACK
+#endif // HAVE_SUITESPARSE_UMFPACK
 
 #endif //DUNE_ISTL_UMFPACK_HH

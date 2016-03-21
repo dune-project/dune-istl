@@ -128,7 +128,7 @@ namespace Dune
 
   } // end Amg namspace
 
-  // foward declaration
+  // forward declaration
   template<class M, class X, class Y, class C>
   class OverlappingSchwarzOperator;
 

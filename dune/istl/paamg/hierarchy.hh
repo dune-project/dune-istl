@@ -436,7 +436,7 @@ namespace Dune
       const AggregatesMapList& aggregatesMaps() const;
 
       /**
-       * @brief Get the hierachy of the information about redistributions,
+       * @brief Get the hierarchy of the information about redistributions,
        * @return The hierarchy of the information about redistributions of the
        * data to fewer processes.
        */

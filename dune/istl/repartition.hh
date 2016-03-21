@@ -409,7 +409,7 @@ namespace Dune
       // init domain Mapping
       domainMapping.assign(domainMapping.size(), -1);
 
-      // count the occurance of domains
+      // count the occurrence of domains
       for (i=0; i<numOfOwnVtx; i++) {
         domain[part[i]]++;
       }
@@ -509,7 +509,7 @@ namespace Dune
 
       typedef typename std::vector<std::pair<GI,int> >::const_iterator VIter;
 #ifdef DEBUG_REPART
-      // Safty check for duplicates.
+      // Safety check for duplicates.
       if(ownerVec.size()>0)
       {
         VIter old=ownerVec.begin();
