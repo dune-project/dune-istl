@@ -86,9 +86,11 @@ dune_add_test(SOURCES overlappingschwarztest.cc
               SKIP_ON_77)
 
 # MPI tests
-dune_add_test(SOURCES matrixredisttest.cc)
+if(MPI_FOUND)
+  dune_add_test(SOURCES matrixredisttest.cc)
 
-dune_add_test(SOURCES vectorcommtest.cc)
+  dune_add_test(SOURCES vectorcommtest.cc)
+endif()
 
 dune_add_test(SOURCES matrixmarkettest.cc)
 
