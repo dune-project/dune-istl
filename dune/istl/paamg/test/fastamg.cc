@@ -133,7 +133,8 @@ try
 }
 catch (std::exception &e)
 {
-  throw;
+  std::cout << "ERROR: " << e.what() << std::endl;
+  return 1;
 }
 catch (...)
 {

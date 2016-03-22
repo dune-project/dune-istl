@@ -75,7 +75,8 @@ int main(int argc, char** argv)
   }
   catch (std::exception &e)
   {
-    throw;
+    std::cout << "ERROR: " << e.what() << std::endl;
+    return 1;
   }
   catch (...)
   {
