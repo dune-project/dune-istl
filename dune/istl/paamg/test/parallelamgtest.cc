@@ -151,7 +151,7 @@ void testAmg(int N, int coarsenTarget)
 
   typedef Dune::Amg::AMG<Operator,Vector,ParSmoother,Communication> AMG;
 
-  auto amg = std::make_shared<AMG>(fop, criterion, smootherArgs);
+  auto amg = std::make_shared<AMG>(fop, criterion, smootherArgs, comm);
 
   buildtime = watch.elapsed();
 
