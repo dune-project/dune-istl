@@ -82,7 +82,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   auto amg = std::make_shared<AMG>(fop, criterion, parms);
 
   // check if recalculation of matrix hierarchy works
-  amg.recalculateHierarchy();
+  amg->recalculateHierarchy();
 
   double buildtime = watch.elapsed();
 
