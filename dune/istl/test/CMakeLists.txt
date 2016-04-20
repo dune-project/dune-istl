@@ -14,6 +14,9 @@ dune_add_test(SOURCES complexmatrixtest.cc)
 
 dune_add_test(SOURCES fieldvectortest.cc)
 
+dune_add_test(SOURCES factorytest.cc LINK_LIBRARIES duneistl MPI_RANKS 1 2 TIMEOUT 30)
+dune_symlink_to_source_files(FILES factorytest_config.ini)
+
 dune_add_test(SOURCES matrixnormtest.cc)
 
 dune_add_test(SOURCES matrixutilstest.cc)
