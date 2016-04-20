@@ -142,7 +142,7 @@ namespace Dune {
   public:
 
     /*!
-       \brief Creates a preconditioner from a ParameterTree.
+       \brief Creates a sequential preconditioner from a ParameterTree.
        \param id A string matching the type name of the desired preconditioner.
        \param A The matrix to be preconditioned.
        \param configuration A ParameterTree subsection containing configuration parameters for the preconditioner.
@@ -174,8 +174,72 @@ namespace Dune {
         return std::make_shared<SeqSSOR<M,X,Y> > (A, configuration);
       if (id == "SeqSOR")
         return std::make_shared<SeqSOR<M,X,Y> > (A, configuration);
-      DUNE_THROW(ISTLError, "Factory does not know preconditioner type '" + id + "'!\n");
+      DUNE_THROW(ISTLError, "Factory does not know sequential preconditioner type '" + id + "'!\n");
     }
+
+    /*!
+       \brief Creates a parallel preconditioner from a ParameterTree.
+       \param id A string matching the type name of the desired preconditioner.
+       \param A The matrix to be preconditioned.
+       \param configuration A ParameterTree subsection containing configuration parameters for the preconditioner.
+       \param comm The communicator to be used by the preconditioner.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template <typename COMM, typename M, typename X, typename Y>
+    static std::shared_ptr<Preconditioner<X,Y> > create (std::string id, const M& A,
+                                                         const ParameterTree& configuration,
+                                                         const COMM& comm) {
+      // Pass dummy operator to actual implementation
+      std::shared_ptr<LinearOperator<X,X> > dummy_linearoperator;
+      return create <COMM, M, X, Y> (id, A, configuration, comm, dummy_linearoperator);
+    }
+
+    /*!
+       \brief Creates a parallel preconditioner from a ParameterTree.
+       \param id A string matching the type name of the desired preconditioner.
+       \param A The matrix to be preconditioned.
+       \param configuration A ParameterTree subsection containing configuration parameters for the preconditioner.
+       \param comm The communicator to be used by the preconditioner.
+       \param out_linearoperator Returns the linear operator the preconditioner will use.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template <typename COMM, typename M, typename X, typename Y>
+    static std::shared_ptr<Preconditioner<X,Y> > create (std::string id, const M& A,
+                                                         const ParameterTree& configuration,
+                                                         const COMM& comm,
+                                                         std::shared_ptr<LinearOperator<X,X> >& out_linearoperator) {
+      if (id == "AMG") {
+
+        std::string smoother = configuration.get<std::string> ("smoother");
+        if (smoother == "SeqSSOR") {
+
+          typedef Dune::SeqSSOR<M,X,X> Smoother;
+          typedef Dune::BlockPreconditioner<X,X,COMM,Smoother> ParSmoother;
+          typedef Dune::OverlappingSchwarzOperator<M,X,X,COMM> Operator;
+
+          auto linearoperator = std::make_shared<Operator>(A, comm);
+          out_linearoperator = linearoperator;
+
+          return std::make_shared<Amg::AMG<Operator,X,ParSmoother,COMM> > (linearoperator, configuration, comm);
+        } else if (smoother == "SeqJac") {
+
+          typedef Dune::SeqJac<M,X,X> Smoother;
+          typedef Dune::BlockPreconditioner<X,X,COMM,Smoother> ParSmoother;
+          typedef Dune::OverlappingSchwarzOperator<M,X,X,COMM> Operator;
+
+          auto linearoperator = std::make_shared<Operator>(A, comm);
+          out_linearoperator = linearoperator;
+
+          return std::make_shared<Amg::AMG<Operator,X,ParSmoother,COMM> > (linearoperator, configuration, comm);
+        } else {
+          DUNE_THROW(ISTLError, "Factory does not know AMG smoother type '" + smoother + "'!\n");
+        }
+      }
+      DUNE_THROW(ISTLError, "Factory does not know parallel preconditioner type '" + id + "'!\n");
+    }
+
   };
 
   /*!
@@ -213,7 +277,7 @@ namespace Dune {
         return std::make_shared<MINRESSolver<X> > (linearoperator, preconditioner, configuration);
       if (id == "RestartedGMResSolver")
         return std::make_shared<RestartedGMResSolver<X> > (linearoperator, preconditioner, configuration);
-      DUNE_THROW(ISTLError, "Factory does not know solver type '" + id + "'!\n");
+      DUNE_THROW(ISTLError, "Factory does not know sequential solver type '" + id + "'!\n");
     }
 
     /*!
@@ -222,15 +286,19 @@ namespace Dune {
        \param preconditioner The preconditioner to be given to the solver.
        \param id A string matching the type name of the desired solver.
        \param configuration A ParameterTree subsection containing configuration parameters for the solver.
+       \param comm The communicator to be used by the solver.
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    template <typename X>
+    template <typename X, typename COMM>
     static std::shared_ptr<InverseOperator<X,X> > create (std::shared_ptr<LinearOperator<X,X> > linearoperator,
-                                                                   std::shared_ptr<ScalarProduct<X> > scalarproduct,
                                                                    std::shared_ptr<Preconditioner<X,X> > preconditioner,
-                                                                   std::string id, const ParameterTree& configuration)
+                                                                   std::string id, const ParameterTree& configuration,
+                                                                   const COMM& comm)
     {
+      // Create suitable scalar product
+      auto scalarproduct = ScalarProductChooser::construct<X> (preconditioner->category(), comm);
+
       if (id == "BiCGSTABSolver")
         return std::make_shared<BiCGSTABSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
       if (id == "CGSolver")
@@ -245,7 +313,7 @@ namespace Dune {
         return std::make_shared<MINRESSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
       if (id == "RestartedGMResSolver")
         return std::make_shared<RestartedGMResSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
-      DUNE_THROW(ISTLError, "Factory does not know solver type '" + id + "'!\n");
+      DUNE_THROW(ISTLError, "Factory does not know parallel solver type '" + id + "'!\n");
     }
 
   };
@@ -258,7 +326,7 @@ namespace Dune {
   public:
 
     /*!
-       \brief Creates a solver with a preconditioner from a ParameterTree.
+       \brief Creates a sequential solver with a preconditioner from a ParameterTree.
        \param A The matrix to be solved.
        \param configuration A ParameterTree containing preconditioner and solver types as well as their configuration.
        \param group The name of the ParameterTree section defining the solver and preconditioner type.
@@ -290,6 +358,55 @@ namespace Dune {
       auto preconditioner = PreconditionerFactory::create<X, X> (precond_id, A, precondconf);
       return SolverFactory::create (madapt, preconditioner, solver_id, solverconf);
     }
+
+    /*!
+       \brief Creates a parallel solver with a preconditioner from a ParameterTree.
+       \param A The matrix to be solved.
+       \param comm The communicator to be used.
+       \param configuration A ParameterTree containing preconditioner and solver types as well as their configuration.
+       \param group The name of the ParameterTree section defining the solver and preconditioner type.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    template <typename X, typename COMM, typename M>
+    static std::shared_ptr<InverseOperator<X,X> > create (const M& A,
+                                                           const COMM& comm,
+                                                           ParameterTree& configuration,
+                                                           std::string group = "solver")
+    {
+
+      // Read selection of precond and solver
+      auto subconf = configuration.sub (group);
+
+      // Pass to sequential case if parallel is not activated
+      if (subconf.get<bool>("parallel", false) == false)
+        return create<X>(A, configuration, group);
+
+      std::string solver_id = subconf["solver"];
+      std::string precond_id = subconf["precond"];
+
+      // Get subtrees of precond and solver
+      auto precondconf = configuration.sub (precond_id);
+      auto solverconf = configuration.sub (solver_id);
+
+      // Set verbosity to 0 for all but rank 0
+      if (comm.communicator().rank() != 0) {
+        precondconf["verbose"] = "0";
+        solverconf["verbose"] = "0";
+      }
+
+      // If type is specified explicitly, use it
+      precond_id = precondconf.get ("type", precond_id);
+      solver_id = solverconf.get ("type", solver_id);
+
+      // Need to get the linearoperator from the preconditioner factory in order to pass it to the solver
+      std::shared_ptr<LinearOperator<X,X> > linearoperator;
+
+      // Build precond and solver, return solver
+      auto preconditioner = PreconditionerFactory::create<COMM, M, X, X> (precond_id, A, precondconf, comm, linearoperator);
+      return SolverFactory::create<X> (linearoperator, preconditioner, solver_id, solverconf, comm);
+    }
+
   };
 
 } // end namespace
