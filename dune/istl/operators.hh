@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <dune/common/deprecated.hh>
 
 #include "solvercategory.hh"
 
@@ -121,7 +122,7 @@ namespace Dune {
      Adapts a matrix to the assembled linear operator interface
    */
   template<class M, class X, class Y>
-  class MatrixAdapter : public AssembledLinearOperator<M,X,Y>
+  class MatrixOperator : public AssembledLinearOperator<M,X,Y>
   {
   public:
     //! export types
@@ -137,7 +138,7 @@ namespace Dune {
     }
 
     //! constructor: just store a reference to a matrix
-    explicit MatrixAdapter (const M& A) : _A_(A) {}
+    explicit MatrixOperator (const M& A) : _A_(A) {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply (const X& x, Y& y) const
@@ -160,6 +161,10 @@ namespace Dune {
   private:
     const M& _A_;
   };
+
+  // Backwards compatibility for MatrixAdapter
+  template<class M, class X, class Y>
+  using MatrixAdapter DUNE_DEPRECATED_MSG("MatrixAdapter was renamed to MatrixOperator") = MatrixOperator<M,X,Y>;
 
   /** @} end documentation */
 
