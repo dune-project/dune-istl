@@ -67,6 +67,12 @@ namespace Dune {
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _prec->category();
+    }
+
     /*!
        \brief Set up Loop solver.
 
@@ -301,6 +307,11 @@ namespace Dune {
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _prec->category();
+    }
 
     /*!
        \brief Set up solver.
@@ -501,6 +512,12 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _prec->category();
+    }
 
     /*!
        \brief Set up conjugate gradient solver.
@@ -743,6 +760,12 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _prec->category();
+    }
 
     /*!
        \brief Set up solver.
@@ -1058,6 +1081,12 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _prec->category();
+    }
 
     /*!
        \brief Set up MINRES solver.
@@ -1395,6 +1424,12 @@ namespace Dune {
     typedef typename FieldTraits<field_type>::real_type real_type;
     //! \brief The field type of the basis vectors
     typedef F basis_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _W->category();
+    }
 
     DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
     RestartedGMResSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec,
@@ -1821,6 +1856,12 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _prec->category();
+    }
 
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.

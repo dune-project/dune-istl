@@ -271,6 +271,12 @@ private:
       : amg_(op, crit,args), first_(true)
     {}
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return amg_.category();
+    }
+
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
     {
       DUNE_UNUSED_PARAMETER(reduction);

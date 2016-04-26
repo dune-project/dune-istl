@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   auto prec0 = std::make_shared<Dune::SeqJac<BCRSMat,BVector,BVector> >(mat, 1,1.0);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-3,10,0);
   auto prec = std::make_shared<Dune::InverseOperator2Preconditioner<Dune::LoopSolver<BVector> > >
-                                                                    (solver0, prec0->category());
+                                                                    (solver0);
   Dune::LoopSolver<BVector> solver(fop, prec, 1e-8,10,2);
   solver.apply(x,b,res);
 

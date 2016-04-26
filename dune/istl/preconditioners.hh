@@ -80,15 +80,15 @@ namespace Dune {
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
     {
-      return category_;
+      return inverse_operator_.category();
     }
 
     /**
      * @brief Construct the preconditioner from the solver
      * @param inverse_operator The inverse operator to wrap.
      */
-    InverseOperator2Preconditioner(InverseOperator& inverse_operator, const SolverCategory::Category category)
-    : category_(category), inverse_operator_(inverse_operator)
+    InverseOperator2Preconditioner(InverseOperator& inverse_operator)
+    : inverse_operator_(inverse_operator)
     {}
 
     void pre(domain_type&,range_type&)
@@ -106,7 +106,6 @@ namespace Dune {
 
   private:
     InverseOperator& inverse_operator_;
-    const SolverCategory::Category category_;
   };
 
   //=====================================================================
