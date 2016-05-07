@@ -64,20 +64,26 @@ endif()
 
 dune_add_test(SOURCES twolevelmethodtest.cc)
 
-dune_add_test(SOURCES galerkintest.cc)
 dune_add_test(SOURCES graphtest.cc)
-dune_add_test(SOURCES hierarchytest.cc)
+
 dune_add_test(SOURCES kamgtest.cc)
-
-dune_add_test(NAME pamg_comm_repart_test
-              SOURCES parallelamgtest.cc
-              COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH)
-
-dune_add_test(NAME pamgtest
-              SOURCES parallelamgtest.cc)
 
 dune_add_test(SOURCES transfertest.cc)
 
 dune_add_test(NAME twolevelmethodschwarztest
               SOURCES twolevelmethodtest.cc
               COMPILE_DEFINITIONS USE_OVERLAPPINGSCHWARZ)
+
+# These tests need MPI, even though they are only run sequentially
+if(MPI_FOUND)
+  dune_add_test(SOURCES galerkintest.cc)
+
+  dune_add_test(SOURCES hierarchytest.cc)
+
+  dune_add_test(NAME pamgtest
+                SOURCES parallelamgtest.cc)
+
+  dune_add_test(NAME pamg_comm_repart_test
+                SOURCES parallelamgtest.cc
+                COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH)
+endif()
