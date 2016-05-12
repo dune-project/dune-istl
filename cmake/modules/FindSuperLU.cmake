@@ -90,15 +90,31 @@ int main(void)
   return SLU_DOUBLE;
 }"
 SUPERLU_MIN_VERSION_4_3)
+
+CHECK_C_SOURCE_COMPILES("
+#include <slu_ddefs.h>
+int main(void)
+{
+  dgssvx(NULL, NULL, NULL, NULL, NULL,
+         NULL, NULL, NULL, NULL, NULL,
+         NULL, 1, NULL, NULL, NULL,
+         NULL, NULL, NULL, NULL,
+         NULL, NULL, NULL);
+}"
+SUPERLU_MIN_VERSION_5)
+
 cmake_pop_check_state()
 
-if(SUPERLU_MIN_VERSION_4_3)
+if(SUPERLU_MIN_VERSION_5)
+  set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
+    "Human readable string containing SuperLU version information.")
+elseif(SUPERLU_MIN_VERSION_4_3)
   set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
     "Human readable string containing SuperLU version information.")
 else()
   set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
     "Human readable string containing SuperLU version information.")
-endif(SUPERLU_MIN_VERSION_4_3)
+endif()
 
 # behave like a CMake module is supposed to behave
 include(FindPackageHandleStandardArgs)

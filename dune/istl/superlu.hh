@@ -146,9 +146,16 @@ namespace Dune
                       double *rpg, double *rcond, double *ferr, double *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VER_5
+      GlobalLU_t gLU;
+      dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
