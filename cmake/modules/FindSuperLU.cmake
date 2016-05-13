@@ -38,7 +38,10 @@ find_path(SUPERLU_INCLUDE_DIR
 
 # look for library, only at positions given by the user
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
+  NAMES "superlu"
+        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
+        "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0"
+        "superlu_3.1" "superlu_3.0"
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
   PATH_SUFFIXES "lib" "lib32" "lib64"
   NO_DEFAULT_PATH
@@ -46,7 +49,10 @@ find_library(SUPERLU_LIBRARY
 
 # look for library files, including default paths
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
+  NAMES "superlu"
+        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
+        "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0"
+        "superlu_3.1" "superlu_3.0"
   PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
