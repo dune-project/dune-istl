@@ -90,14 +90,13 @@ int main(void)
 SUPERLU_MIN_VERSION_4_3)
 
 CHECK_C_SOURCE_COMPILES("
-#include <slu_ddefs.h>
+typedef int int_t;
+#include <supermatrix.h>
+#include <slu_util.h>
 int main(void)
 {
-  dgssvx(NULL, NULL, NULL, NULL, NULL,
-         NULL, NULL, NULL, NULL, NULL,
-         NULL, 1, NULL, NULL, NULL,
-         NULL, NULL, NULL, NULL,
-         NULL, NULL, NULL);
+  GlobalLU_t glu;
+  return 0;
 }"
 SUPERLU_MIN_VERSION_5)
 
