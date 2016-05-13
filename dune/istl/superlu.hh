@@ -105,9 +105,16 @@ namespace Dune
                       float *rpg, float *rcond, float *ferr, float *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      sgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       sgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -146,9 +153,16 @@ namespace Dune
                       double *rpg, double *rcond, double *ferr, double *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -186,9 +200,16 @@ namespace Dune
                       double *rpg, double *rcond, double *ferr, double *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      zgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       zgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -226,9 +247,16 @@ namespace Dune
                       float *rpg, float *rcond, float *ferr, float *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      cgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       cgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 

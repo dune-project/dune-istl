@@ -40,6 +40,9 @@
 /* define to 1 if SuperLU header slu_ddefs.h contains SLU_DOUBLE */
 #cmakedefine SUPERLU_MIN_VERSION_4_3 @SUPERLU_MIN_VERSION_4_3@
 
+/* define to 1 if SuperLU dgssvx takes a GlobalLU_t parameter */
+#cmakedefine SUPERLU_MIN_VERSION_5 @SUPERLU_MIN_VERSION_5@
+
 /* Define to the version of dune-istl */
 #define DUNE_ISTL_VERSION "${DUNE_ISTL_VERSION}"
 

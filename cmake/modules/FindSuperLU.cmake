@@ -50,7 +50,7 @@ find_path(SUPERLU_INCLUDE_DIR
 
 # look for library, only at positions given by the user
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
+  NAMES "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0" "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
   PATH_SUFFIXES "lib" "lib32" "lib64"
   NO_DEFAULT_PATH
@@ -58,7 +58,7 @@ find_library(SUPERLU_LIBRARY
 
 # look for library files, including default paths
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
+  NAMES  "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0" "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
   PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
@@ -90,15 +90,30 @@ int main(void)
   return SLU_DOUBLE;
 }"
 SUPERLU_MIN_VERSION_4_3)
+
+CHECK_C_SOURCE_COMPILES("
+typedef int int_t;
+#include <supermatrix.h>
+#include <slu_util.h>
+int main(void)
+{
+  GlobalLU_t glu;
+  return 0;
+}"
+SUPERLU_MIN_VERSION_5)
+
 cmake_pop_check_state()
 
-if(SUPERLU_MIN_VERSION_4_3)
+if(SUPERLU_MIN_VERSION_5)
+  set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
+    "Human readable string containing SuperLU version information.")
+elseif(SUPERLU_MIN_VERSION_4_3)
   set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
     "Human readable string containing SuperLU version information.")
 else()
   set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
     "Human readable string containing SuperLU version information.")
-endif(SUPERLU_MIN_VERSION_4_3)
+endif()
 
 # behave like a CMake module is supposed to behave
 include(FindPackageHandleStandardArgs)
