@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <dune/common/enumset.hh>
-#include <dune/common/tuples.hh>
+#include <dune/common/propertymap.hh>
 #include <dune/common/parallel/communicator.hh>
 #include <dune/istl/paamg/galerkin.hh>
 #include <dune/istl/paamg/dependency.hh>
@@ -12,13 +12,10 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/bcrsmatrix.hh>
-#include <dune/common/fmatrix.hh>
 #include <dune/istl/paamg/indicescoarsener.hh>
 #include <dune/istl/paamg/galerkin.hh>
 #include <dune/istl/owneroverlapcopy.hh>
-#include <dune/common/propertymap.hh>
 #include "anisotropic.hh"
-//#include<dune/istl/paamg/aggregates.hh>
 
 template<int BS>
 void testCoarsenIndices(int N)
@@ -157,7 +154,7 @@ int main(int argc, char **argv)
 
   if(argc>1)
     N = atoi(argv[1]);
-  std::cout<<"Galerkin test with N="<<5<<std::endl;
+  std::cout << "Galerkin test with N=" << N << std::endl;
   testCoarsenIndices<1>(N);
   MPI_Finalize();
 }

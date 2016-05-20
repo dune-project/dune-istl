@@ -1,10 +1,11 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include <config.h>
 
-#include "config.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>
@@ -13,9 +14,9 @@
 
 int main(int argc, char** argv)
 {
+#if HAVE_PARDISO
   try
   {
-#ifdef HAVE_PARDISO
     /* Matrix data. */
     int n = 8;
     int ia[ 9] = { 0, 4, 7, 9, 11, 12, 15, 17, 20 };
@@ -50,6 +51,8 @@ int main(int argc, char** argv)
 
     /* Pardiso control parameters. */
     int iparm[64];
+    double dparm[64];
+    int solver;
     int maxfct, mnum, phase, error, msglvl;
 
     /* Number of processors. */
@@ -66,7 +69,7 @@ int main(int argc, char** argv)
     /* ..  Setup Pardiso control parameters.                                */
     /* -------------------------------------------------------------------- */
 
-    F77_FUNC(pardisoinit) (pt,  &mtype, iparm);
+    pardisoinit(pt,  &mtype, &solver, iparm, dparm, &error);
 
     iparm[2]  = 1;
 
@@ -96,9 +99,9 @@ int main(int argc, char** argv)
       b[i] = 1;
     }
 
-    F77_FUNC(pardiso) (pt, &maxfct, &mnum, &mtype, &phase,
-                       &n, a, ia, ja, &idum, &nrhs,
-                       iparm, &msglvl, b, x, &error);
+    pardiso(pt, &maxfct, &mnum, &mtype, &phase,
+            &n, a, ia, ja, &idum, &nrhs,
+            iparm, &msglvl, b, x, &error, dparm);
 
     if (error != 0) {
       printf("\nERROR during solution: %d", error);
@@ -117,9 +120,9 @@ int main(int argc, char** argv)
     /* -------------------------------------------------------------------- */
     phase = -1;                 /* Release internal memory. */
 
-    F77_FUNC(pardiso) (pt, &maxfct, &mnum, &mtype, &phase,
-                       &n, &ddum, ia, ja, &idum, &nrhs,
-                       iparm, &msglvl, &ddum, &ddum, &error);
+    pardiso(pt, &maxfct, &mnum, &mtype, &phase,
+            &n, &ddum, ia, ja, &idum, &nrhs,
+            iparm, &msglvl, &ddum, &ddum, &error, dparm);
 
     typedef Dune::FieldMatrix<double,1,1> M;
     Dune::BCRSMatrix<M> B(8,8,Dune::BCRSMatrix<M>::random);
@@ -183,17 +186,18 @@ int main(int argc, char** argv)
     }
     std::cout << "\n";
 
-#else
-    DUNE_THROW(Dune::NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
-#endif
-
-
     return 0;
   }
-  catch (Dune::Exception &e) {
-    std::cerr << "Dune reported error: " << e << std::endl;
+  catch (std::exception &e)
+  {
+    std::cout << "ERROR: " << e.what() << std::endl;
+    return 1;
   }
   catch (...) {
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
+#else // HAVE_PARDISO
+  std::cerr << "You need Pardiso to run this test." << std::endl;
+  return 77;
+#endif // HAVE_PARDISO
 }

@@ -25,6 +25,7 @@ AC_CONFIG_FILES([Makefile
     dune/istl/bellmatrix/Makefile
     dune/istl/blockvector/Makefile
     dune/istl/blockvector/host/Makefile
+    dune/istl/eigenvalue/Makefile
     dune/istl/ellmatrix/Makefile
     dune/istl/paamg/test/Makefile
     dune/istl/paamg/Makefile

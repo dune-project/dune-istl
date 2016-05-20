@@ -95,6 +95,9 @@ namespace Dune
         \param x The left hand side to store the result in.
         \param b The right hand side
         \param res Object to store the statistics about applying the operator.
+
+        \throw SolverAbort When the solver detects a problem and cannot
+                           continue
      */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res) = 0;
 
@@ -107,6 +110,9 @@ namespace Dune
        \param b The right hand side
        \param reduction The minimum defect reduction to achieve.
        \param res Object to store the statistics about applying the operator.
+
+       \throw SolverAbort When the solver detects a problem and cannot
+                          continue
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) = 0;
 
@@ -126,9 +132,9 @@ namespace Dune
     }
 
     //! helper function for printing solver output
-    template <class DataType>
+    template <typename CountType, typename DataType>
     void printOutput(std::ostream& s,
-                     const DataType& iter,
+                     const CountType& iter,
                      const DataType& norm,
                      const DataType& norm_old) const
     {
@@ -139,9 +145,9 @@ namespace Dune
     }
 
     //! helper function for printing solver output
-    template <class DataType>
+    template <typename CountType, typename DataType>
     void printOutput(std::ostream& s,
-                     const DataType& iter,
+                     const CountType& iter,
                      const DataType& norm) const
     {
       s << std::setw(iterationSpacing)  << iter << " ";

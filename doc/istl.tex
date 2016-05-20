@@ -367,7 +367,7 @@ structure can be generated simply with the copy constructor.
 
 For a matrix representing a linear map (or homomorphism) $A: V \mapsto
 W$ from vector space $V$ to vector space $W$ the recursive block
-structure of the matrix rows and columns immediatly follows
+structure of the matrix rows and columns immediately follows
  from the recursive block structure of the vectors representing
 the domain and range of the mapping, respectively. As a natural
 consequence we designed the following matrix classes:
@@ -493,10 +493,6 @@ complete list of names.
 \hline
 \texttt{M::N()} & \texttt{int} & row blocks\\
 \texttt{M::M()} & \texttt{int} & col blocks\\
-\texttt{M::rowdim(int)} & \texttt{int} & dim.~of row block\\
-\texttt{M::rowdim()} & \texttt{int} & dim.~of row space\\
-\texttt{M::coldim(int)} & \texttt{int} & dim.~of col block\\
-\texttt{M::coldim()} & \texttt{int} & dim.~of col space\\
 \texttt{M::exists(int i, int j)} & \texttt{bool} &\\
 \hline
 \end{tabular}
@@ -638,7 +634,7 @@ operations $y = A(x)$ and $y = y + \alpha A(x)$, respectively.
 The subclass 
 \lstinline!template<class M, class X, class Y> AssembledLinearOperator!
 represents linear operators that have a matrix
-representation. Convertion from any matrix into a linear operator is
+representation. Conversion from any matrix into a linear operator is
 done by the class 
 \lstinline!template<class M, class X, class Y> MatrixAdapter!.
 
@@ -765,7 +761,7 @@ might be needed on new platforms.
 
 \section{Performance}
 We evaluated the performance of our implementation on a Petium 4 Mobile
-2.4 GHz with a measured memory bandwith of 1084 MB/s for the daypy
+2.4 GHz with a measured memory bandwidth of 1084 MB/s for the daypy
 operation ($x = y + \alpha z$) in Tables
 \ref{tab:istl_performance}. 
 \begin{table}[htb]
@@ -825,7 +821,7 @@ The performance for the scalarproduct,
 see Table \ref{tab:perf_sp},
 and the daxpy operation, see Table \ref{tab:perf_daxpy}  is nearly
 optimal and for large $N$ the limiting factor is clearly the memory
-bandwith. Table \ref{tab:perf_mvp} shows that we take advantage of
+bandwidth. Table \ref{tab:perf_mvp} shows that we take advantage of
 cache reusage for matrices of dense blocks with block size $b>1$.
 In Table
 \ref{tab:perf_gs} we compared the generic implementation of

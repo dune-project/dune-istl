@@ -5,6 +5,9 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/debugallocator.hh>
+#include <dune/common/classname.hh>
+
+#include <dune/istl/test/vectortest.hh>
 
 template<typename T, int BS>
 void assign(Dune::FieldVector<T,BS>& b, const T& i)
@@ -19,7 +22,7 @@ template<int BS, class A=std::allocator<void> >
 int testVector()
 {
 
-  typedef Dune::FieldVector<int,BS> VectorBlock;
+  typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef typename A::template rebind<VectorBlock>::other Alloc;
   typedef Dune::BlockVector<VectorBlock, Alloc> Vector;
 
@@ -46,6 +49,11 @@ int testVector()
     v2[i] = i*10;
   w = v;
 
+  testHomogeneousRandomAccessContainer(v);
+  Dune::testConstructibility<Vector>();
+  testNorms(v);
+  testVectorSpaceOperations(v);
+  testScalarProduct(v);
 
   assert(w.N()==v.N());
   assert(w.capacity()==v.capacity());
@@ -83,7 +91,7 @@ int testVector()
 
   // check the entries
   for(typename Vector::size_type i=0; i < v.N(); ++i) {
-    assign(b, (int)i);
+    assign(b, (typename VectorBlock::field_type)i);
     assert(v[i] == b);
   }
 
@@ -95,7 +103,7 @@ int testVector()
   // check the entries
 
   for(typename Vector::size_type i=0; i < v.N(); ++i) {
-    assign(b,(int)i);
+    assign(b,(typename VectorBlock::field_type)i);
     assert(v[i] == b);
   }
 
@@ -120,19 +128,110 @@ void testCapacity()
   vec1.reserve(0, false);
 }
 
+template <class V>
+void checkNormNAN(V const &v, int line) {
+  if (!std::isnan(v.one_norm())) {
+    std::cerr << "error: norm not NaN: one_norm() on line "
+              << line << " (type: " << Dune::className(v[0][0]) << ")"
+              << std::endl;
+    std::exit(-1);
+  }
+  if (!std::isnan(v.two_norm())) {
+    std::cerr << "error: norm not NaN: two_norm() on line "
+              << line << " (type: " << Dune::className(v[0][0]) << ")"
+              << std::endl;
+    std::exit(-1);
+  }
+  if (!std::isnan(v.infinity_norm())) {
+    std::cerr << "error: norm not NaN: infinity_norm() on line "
+              << line << " (type: " << Dune::className(v[0][0]) << ")"
+              << std::endl;
+    std::exit(-1);
+  }
+}
+
+// Make sure that vectors with NaN entries have norm NaN.
+// See also bug flyspray/FS#1147
+template <typename T>
+void
+test_nan(T const &mynan)
+{
+  using FV = Dune::FieldVector<T,2>;
+  using V = Dune::BlockVector<FV>;
+  T n(0);
+  {
+    V v = {
+      { mynan, n },
+      { n, n }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { n, mynan },
+      { n, n }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { n, n },
+      { mynan, n }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { n, n },
+      { n, mynan }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+  {
+    V v = {
+      { mynan, mynan },
+      { mynan, mynan }
+    };
+    checkNormNAN(v, __LINE__);
+  }
+}
+
 int main()
 {
   typedef std::complex<double> value_type;
   //typedef double value_type;
   typedef Dune::FieldVector<value_type,1> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::BlockVector<Vector> VectorOfVector;
   Vector v;
   v=0;
   Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
   v1=0;
-  VectorOfVector vv;
-  vv.two_norm();
+
+  // Test a BlockVector of BlockVectors
+  typedef Dune::BlockVector<Vector> VectorOfVector;
+  VectorOfVector vv = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
+
+  testHomogeneousRandomAccessContainer(vv);
+  Dune::testConstructibility<VectorOfVector>();
+  testNorms(vv);
+  testVectorSpaceOperations(vv);
+  testScalarProduct(vv);
+
+  // Test construction from initializer_list
+  Vector fromInitializerList = {0,1,2};
+  assert(fromInitializerList.size() == 3);
+  assert(fromInitializerList[0] == value_type(0));
+  assert(fromInitializerList[1] == value_type(1));
+  assert(fromInitializerList[2] == value_type(2));
+
+  {
+    double nan = std::nan("");
+    test_nan(nan);
+  }
+  {
+    std::complex<double> nan( std::nan(""), 17 );
+    test_nan(nan);
+  }
 
   int ret = 0;
 

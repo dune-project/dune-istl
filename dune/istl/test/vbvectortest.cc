@@ -4,6 +4,8 @@
 #include <dune/istl/vbvector.hh>
 #include <dune/common/fvector.hh>
 
+#include <dune/istl/test/vectortest.hh>
+
 using namespace Dune;
 
 int main()
@@ -18,11 +20,16 @@ int main()
 
   v3 = v4;
 
-  VariableBlockVector<FieldVector<double,1> >::CreateIterator cIt = v1.createbegin();
+  for (auto cIt = v3.createbegin(); cIt!=v3.createend(); ++cIt)
+    cIt.setblocksize(3);
 
-  for (; cIt!=v1.createend(); ++cIt) {
-    int foo = 0; ++foo;
-  }
+  v3 = 1.0;
 
+  testHomogeneousRandomAccessContainer(v3);
+  Dune::testConstructibility<VariableBlockVector<FieldVector<double,1> > >();
+  testNorms(v3);
+  testVectorSpaceOperations(v3);
+  testScalarProduct(v3);
 
+  return 0;
 }

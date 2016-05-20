@@ -4,7 +4,6 @@
 #define DUNE_ISTL_SUPERMATRIX_HH
 
 #if HAVE_SUPERLU
-#ifdef SUPERLU_POST_2005_VERSION
 
 #ifndef SUPERLU_NTYPE
 #define SUPERLU_NTYPE 1
@@ -26,25 +25,6 @@
 #include "slu_zdefs.h"
 #endif
 
-#else
-
-#if SUPERLU_NTYPE==0
-#include "ssp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE==1
-#include "dsp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE==2
-#include "csp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE>=3
-#include "zsp_defs.h"
-#endif
-
-#endif
 #include "bcrsmatrix.hh"
 #include "bvector.hh"
 #include <dune/common/fmatrix.hh>
@@ -169,9 +149,9 @@ namespace Dune
 
   template<class T>
   const Dtype_t BaseGetSuperLUType<T>::type =
-    Dune::is_same<T,float>::value ? SLU_S :
-    (  Dune::is_same<T,std::complex<double> >::value ? SLU_Z :
-       ( Dune::is_same<T,std::complex<float> >::value ? SLU_C : SLU_D ));
+    std::is_same<T,float>::value ? SLU_S :
+    (  std::is_same<T,std::complex<double> >::value ? SLU_Z :
+       ( std::is_same<T,std::complex<float> >::value ? SLU_C : SLU_D ));
 
   template<>
   struct GetSuperLUType<double>
@@ -231,7 +211,7 @@ namespace Dune
     /** @brief The type of the matrix to convert. */
     typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
 
-    friend struct SeqOverlappingSchwarzAssembler<SuperLU<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>, true>;
 
     typedef typename Matrix::size_type size_type;
 
@@ -350,5 +330,5 @@ namespace Dune
     SuperLUMatrix* slumat;
   };
 }
-#endif
+#endif // HAVE_SUPERLU
 #endif

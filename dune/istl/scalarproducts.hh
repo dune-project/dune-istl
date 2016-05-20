@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <string>
 
+#include "bvector.hh"
 #include "solvercategory.hh"
 
 
@@ -45,6 +46,7 @@ namespace Dune {
     //! export types, they come from the derived class
     typedef X domain_type;
     typedef typename X::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*! \brief Dot product of two vectors.
        It is assumed that the vectors are consistent on the interior+border
@@ -55,8 +57,7 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x) = 0;
-
+    virtual real_type norm (const X& x) = 0;
 
     //! every abstract base class has a virtual destructor
     virtual ~ScalarProduct () {}
@@ -97,6 +98,7 @@ namespace Dune {
     //! export types
     typedef X domain_type;
     typedef typename X::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
 
     //! define the category
     enum {category=SolverCategory::sequential};
@@ -113,9 +115,9 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x)
+    virtual real_type norm (const X& x)
     {
-      return static_cast<double>(x.two_norm());
+      return x.two_norm();
     }
   };
 

@@ -1,11 +1,12 @@
 add_subdirectory("bellmatrix")
 add_subdirectory("blockvector")
+add_subdirectory("eigenvalue")
 add_subdirectory("ellmatrix")
 add_subdirectory("paamg")
 add_subdirectory("preconditioners")
 add_subdirectory("tutorial")
 add_subdirectory("vector")
-add_subdirectory("test" EXCLUDE_FROM_ALL)
+add_subdirectory("test")
 
 #install headers
 install(FILES
@@ -22,6 +23,7 @@ install(FILES
    ilusubdomainsolver.hh
    io.hh
    istlexception.hh
+   ldl.hh
    matrix.hh
    matrixindexset.hh
    matrixmarket.hh
@@ -45,6 +47,7 @@ install(FILES
    solver.hh
    solvers.hh
    solvertype.hh
+   spqr.hh
    superlu.hh
    supermatrix.hh
    umfpack.hh

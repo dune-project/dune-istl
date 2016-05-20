@@ -358,9 +358,6 @@ namespace Dune {
   }
 
 
-
-
-
   //============================================================
   // generic steps of iteration methods
   // Jacobi, Gauss-Seidel, SOR, SSOR
@@ -368,32 +365,11 @@ namespace Dune {
   // we can recurse over a fixed number of levels
   //============================================================
 
-
   // template meta program for iterative solver steps
-  template<int I>
+  template<int I, typename M>
   struct algmeta_itsteps {
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
-    static void dbgs (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                      MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                      const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
-                      const K& w)
-    {
-      const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::dbgs(A, x, b, w);
-    }
-#endif
-#endif
-
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void dbgs (const M& A, X& x, const Y& b, const K& w)
     {
       typedef typename M::ConstRowIterator rowiterator;
@@ -414,34 +390,14 @@ namespace Dune {
         coliterator diag=j++;           // *diag = a_ii and increment coliterator j from a_ii to a_i+1,i to skip diagonal
         for (; j != endj; ++j)           // iterate over a_ij with j > i
           (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j>i} a_ij * xold_j
-        algmeta_itsteps<I-1>::dbgs(*diag,x[i.index()],rhs,w);           // if I==1: xnew_i = rhs/a_ii
+        algmeta_itsteps<I-1,typename M::block_type>::dbgs(*diag,x[i.index()],rhs,w);           // if I==1: xnew_i = rhs/a_ii
       }
       // next two lines: xnew_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j) + (1-w)*xold;
       x *= w;
       x.axpy(K(1)-w,xold);
     }
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
-    static void bsorf (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
-                       const K& w)
-    {
-      const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount>::bsorf(A, x, b, w);
-    }
-#endif
-#endif
-
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void bsorf (const M& A, X& x, const Y& b, const K& w)
     {
       typedef typename M::ConstRowIterator rowiterator;
@@ -466,32 +422,12 @@ namespace Dune {
         coliterator diag=j;           // *diag = a_ii
         for (; j!=endj; ++j)
           (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
-        algmeta_itsteps<I-1>::bsorf(*diag,v,rhs,w);           // if blocksize I==1: v = rhs/a_ii
+        algmeta_itsteps<I-1,typename M::block_type>::bsorf(*diag,v,rhs,w);           // if blocksize I==1: v = rhs/a_ii
         x[i.index()].axpy(w,v);           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
       }
     }
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
-    static void bsorb (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
-                       const K& w)
-    {
-      const int rowcount =
-        mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,rowcount-1,rowcount>::bsorb(A, x, b, w);
-    }
-#endif
-#endif
-
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void bsorb (const M& A, X& x, const Y& b, const K& w)
     {
       typedef typename M::ConstRowIterator rowiterator;
@@ -516,32 +452,12 @@ namespace Dune {
         coliterator diag=j;
         for (; j!=endj; ++j)
           (*j).mmv(x[j.index()],rhs);
-        algmeta_itsteps<I-1>::bsorb(*diag,v,rhs,w);
+        algmeta_itsteps<I-1,typename M::block_type>::bsorb(*diag,v,rhs,w);
         x[i.index()].axpy(w,v);
       }
     }
 
-#if HAVE_DUNE_BOOST
-#ifdef HAVE_BOOST_FUSION
-
-    template<typename T11, typename T12, typename T13, typename T14,
-        typename T15, typename T16, typename T17, typename T18,
-        typename T19, typename T21, typename T22, typename T23,
-        typename T24, typename T25, typename T26, typename T27,
-        typename T28, typename T29, class K>
-    static void dbjac (const MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19>& A,
-                       MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& x,
-                       const MultiTypeBlockVector<T21,T22,T23,T24,T25,T26,T27,T28,T29>& b,
-                       const K& w)
-    {
-      const int rowcount =
-        boost::mpl::size<MultiTypeBlockMatrix<T11,T12,T13,T14,T15,T16,T17,T18,T19> >::value;
-      Dune::MultiTypeBlockMatrix_Solver<I,0,rowcount >::dbjac(A, x, b, w);
-    }
-#endif
-#endif
-
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void dbjac (const M& A, X& x, const Y& b, const K& w)
     {
       typedef typename M::ConstRowIterator rowiterator;
@@ -562,36 +478,87 @@ namespace Dune {
         coliterator diag=j;
         for (; j!=endj; ++j)
           (*j).mmv(x[j.index()],rhs);
-        algmeta_itsteps<I-1>::dbjac(*diag,v[i.index()],rhs,w);
+        algmeta_itsteps<I-1,typename M::block_type>::dbjac(*diag,v[i.index()],rhs,w);
       }
       x.axpy(w,v);
     }
   };
   // end of recursion
-  template<>
-  struct algmeta_itsteps<0> {
-    template<class M, class X, class Y, class K>
+  template<typename M>
+  struct algmeta_itsteps<0,M> {
+    template<class X, class Y, class K>
     static void dbgs (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void bsorf (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void bsorb (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
-    template<class M, class X, class Y, class K>
+    template<class X, class Y, class K>
     static void dbjac (const M& A, X& x, const Y& b, const K& /*w*/)
     {
       A.solve(x,b);
     }
   };
 
+  template<int I, typename T1, typename... MultiTypeMatrixArgs>
+  struct algmeta_itsteps<I,MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>> {
+    template<
+        typename... MultiTypeVectorArgs,
+        class K>
+    static void dbgs (const MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>& A,
+                      MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                      const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
+                      const K& w)
+    {
+      static const int N = MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>::N();
+      Dune::MultiTypeBlockMatrix_Solver<I,0,N>::dbgs(A, x, b, w);
+    }
+
+    template<
+      typename... MultiTypeVectorArgs,
+      class K>
+    static void bsorf (const MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>& A,
+                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
+                       const K& w)
+    {
+      static const int N = MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>::N();
+      Dune::MultiTypeBlockMatrix_Solver<I,0,N>::bsorf(A, x, b, w);
+    }
+
+    template<
+      typename... MultiTypeVectorArgs,
+      class K>
+    static void bsorb (const MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>& A,
+                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
+                       const K& w)
+    {
+      static const int N = MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>::N();
+      Dune::MultiTypeBlockMatrix_Solver<I,N-1,N>::bsorb(A, x, b, w);
+    }
+
+    template<
+      typename... MultiTypeVectorArgs,
+      class K
+      >
+    static void dbjac (const MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>& A,
+                       MultiTypeBlockVector<MultiTypeVectorArgs...>& x,
+                       const MultiTypeBlockVector<MultiTypeVectorArgs...>& b,
+                       const K& w)
+    {
+      static const int N = MultiTypeBlockMatrix<T1, MultiTypeMatrixArgs...>::N();
+      Dune::MultiTypeBlockMatrix_Solver<I,0,N>::dbjac(A, x, b, w);
+    }
+  };
 
   // user calls
 
@@ -599,49 +566,49 @@ namespace Dune {
   template<class M, class X, class Y, class K>
   void dbgs (const M& A, X& x, const Y& b, const K& w)
   {
-    algmeta_itsteps<1>::dbgs(A,x,b,w);
+    algmeta_itsteps<1,M>::dbgs(A,x,b,w);
   }
   //! GS step
   template<class M, class X, class Y, class K, int l>
   void dbgs (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
-    algmeta_itsteps<l>::dbgs(A,x,b,w);
+    algmeta_itsteps<l,M>::dbgs(A,x,b,w);
   }
   //! SOR step
   template<class M, class X, class Y, class K>
   void bsorf (const M& A, X& x, const Y& b, const K& w)
   {
-    algmeta_itsteps<1>::bsorf(A,x,b,w);
+    algmeta_itsteps<1,M>::bsorf(A,x,b,w);
   }
   //! SOR step
   template<class M, class X, class Y, class K, int l>
   void bsorf (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
-    algmeta_itsteps<l>::bsorf(A,x,b,w);
+    algmeta_itsteps<l,M>::bsorf(A,x,b,w);
   }
   //! SSOR step
   template<class M, class X, class Y, class K>
   void bsorb (const M& A, X& x, const Y& b, const K& w)
   {
-    algmeta_itsteps<1>::bsorb(A,x,b,w);
+    algmeta_itsteps<1,M>::bsorb(A,x,b,w);
   }
   //! Backward SOR step
   template<class M, class X, class Y, class K, int l>
   void bsorb (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
-    algmeta_itsteps<l>::bsorb(A,x,b,w);
+    algmeta_itsteps<l,typename std::remove_cv<M>::type>::bsorb(A,x,b,w);
   }
   //! Jacobi step
   template<class M, class X, class Y, class K>
   void dbjac (const M& A, X& x, const Y& b, const K& w)
   {
-    algmeta_itsteps<1>::dbjac(A,x,b,w);
+    algmeta_itsteps<1,M>::dbjac(A,x,b,w);
   }
   //! Jacobi step
   template<class M, class X, class Y, class K, int l>
   void dbjac (const M& A, X& x, const Y& b, const K& w, BL<l> /*bl*/)
   {
-    algmeta_itsteps<l>::dbjac(A,x,b,w);
+    algmeta_itsteps<l,M>::dbjac(A,x,b,w);
   }
 
 

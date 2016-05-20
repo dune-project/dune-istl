@@ -12,6 +12,7 @@
 #include <cmath>                 // Yes, we do some math here
 #include <sys/times.h>            // for timing measurements
 
+#include <dune/common/indices.hh>
 #include <dune/istl/istlexception.hh>
 #include <dune/istl/basearray.hh>
 #include <dune/common/fvector.hh>
@@ -507,14 +508,15 @@ void test_Interface ()
 }
 
 
-#ifdef HAVE_BOOST_FUSION
-
 void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                           //Jacobi Solver Test MultiTypeBlockMatrix_Solver::dbjac on MultiTypeBlockMatrix<BCRSMatrix>
 
   std::cout << "\n\n\nJacobi Solver Test on MultiTypeBlockMatrix<BCRSMatrix>\n";
 
   typedef Dune::FieldMatrix<double,1,1> LittleBlock;                    //matrix block type
   typedef Dune::BCRSMatrix<LittleBlock> BCRSMat;                        //matrix type
+
+  // Import static constants '_0' and '_1'
+  using namespace Dune::Indices;
 
   const int X1=3;                                                       //index bounds of all four matrices
   const int X2=2;
@@ -528,10 +530,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::MultiTypeBlockVector<Dune::BlockVector<Dune::FieldVector<double,1> >,Dune::BlockVector<Dune::FieldVector<double,1> > > TestVector;
   TestVector x, b;
 
-  fusion::at_c<0>(x).resize(Y1);
-  fusion::at_c<1>(x).resize(Y2);
-  fusion::at_c<0>(b).resize(X1);
-  fusion::at_c<1>(b).resize(X2);
+  x[_0].resize(Y1);
+  x[_1].resize(Y2);
+  b[_0].resize(X1);
+  b[_1].resize(X2);
 
   x = 1; b = 1;
 
@@ -568,10 +570,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   typedef Dune::MultiTypeBlockVector<BCRSMat,BCRSMat> BCRS_Row;
   typedef Dune::MultiTypeBlockMatrix<BCRS_Row,BCRS_Row> CM_BCRS;
   CM_BCRS A;
-  fusion::at_c<0>(fusion::at_c<0>(A)) = A11;
-  fusion::at_c<1>(fusion::at_c<0>(A)) = A12;
-  fusion::at_c<0>(fusion::at_c<1>(A)) = A21;
-  fusion::at_c<1>(fusion::at_c<1>(A)) = A22;
+  A[_0][_0] = A11;
+  A[_0][_1] = A12;
+  A[_1][_0] = A21;
+  A[_1][_1] = A22;
 
   printmatrix(std::cout,A11,"matrix A11","row",9,1);
   printmatrix(std::cout,A12,"matrix A12","row",9,1);
@@ -584,7 +586,7 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   Dune::MatrixAdapter<CM_BCRS,TestVector,TestVector> op(A);             // make linear operator from A
   Dune::SeqJac<CM_BCRS,TestVector,TestVector,2> jac(A,1,1);                // Jacobi preconditioner
   Dune::SeqGS<CM_BCRS,TestVector,TestVector,2> gs(A,1,1);                  // GS preconditioner
-  Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SSOR preconditioner
+  Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SOR preconditioner
   Dune::SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
 
   Dune::LoopSolver<TestVector> loop(op,gs,1E-4,18000,2);           // an inverse operator
@@ -592,11 +594,10 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
 
   loop.apply(x,b,r);
 
-  printvector(std::cout,fusion::at_c<0>(x),"solution x1","entry",11,9,1);
-  printvector(std::cout,fusion::at_c<1>(x),"solution x2","entry",11,9,1);
+  printvector(std::cout,x[_0],"solution x1","entry",11,9,1);
+  printvector(std::cout,x[_1],"solution x2","entry",11,9,1);
 
 }
-#endif
 
 
 
@@ -612,9 +613,7 @@ int main (int /*argc*/, char ** /*argv*/)
     test_IO();
     test_Iter();
     test_Interface();
-#ifdef HAVE_BOOST_FUSION
     test_MultiTypeBlockVector_MultiTypeBlockMatrix();
-#endif
   }
   catch (Dune::ISTLError& error)
   {

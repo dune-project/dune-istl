@@ -7,6 +7,7 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/unused.hh>
 #include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/paamg/pinfo.hh>
 /**
  * @file
  * @brief Functionality for redistributing a sparse matrix.
@@ -105,7 +106,6 @@ namespace Dune
 #ifdef DEBUG_REPART
       if(inf!=interface) {
 
-        int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         if(rank==0)
           std::cout<<"Interfaces do not match!"<<std::endl;
@@ -571,13 +571,13 @@ namespace Dune
         if (gi != std::numeric_limits<GlobalIndex>::max()) {
           const typename I::IndexPair& ip=cont.aggidxset.at(gi);
           assert(ip.global()==gi);
-          std::size_t col = ip.local();
-          cont.sparsity[i].insert(col);
+          std::size_t column = ip.local();
+          cont.sparsity[i].insert(column);
 
           typedef typename Dune::OwnerOverlapCopyCommunication<int>::OwnerSet OwnerSet;
           if(!OwnerSet::contains(ip.local().attribute()))
             // preserve symmetry for overlap
-            cont.sparsity[col].insert(i);
+            cont.sparsity[column].insert(i);
         }
       }
       catch(Dune::RangeError er) {
@@ -845,5 +845,22 @@ namespace Dune
     redistributeMatrixEntries(origMatrix, newMatrix, origComm, newComm, ri);
   }
 #endif
+
+template<typename M>
+  void redistributeMatrixEntries(M& origMatrix, M& newMatrix,
+                                 Dune::Amg::SequentialInformation& origComm,
+                                 Dune::Amg::SequentialInformation& newComm,
+                                 RedistributeInformation<Dune::Amg::SequentialInformation>& ri)
+  {
+    DUNE_THROW(InvalidStateException, "Trying to redistribute in sequential program!");
+  }
+  template<typename M>
+  void redistributeMatrix(M& origMatrix, M& newMatrix,
+                          Dune::Amg::SequentialInformation& origComm,
+                          Dune::Amg::SequentialInformation& newComm,
+                          RedistributeInformation<Dune::Amg::SequentialInformation>& ri)
+  {
+    DUNE_THROW(InvalidStateException, "Trying to redistribute in sequential program!");
+  }
 }
 #endif

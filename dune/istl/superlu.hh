@@ -13,7 +13,6 @@
 #ifndef SUPERLU_NTYPE
 #define  SUPERLU_NTYPE 1
 #endif
-#ifdef SUPERLU_POST_2005_VERSION
 
 #if SUPERLU_NTYPE==0
 #include "slu_sdefs.h"
@@ -31,26 +30,6 @@
 #include "slu_zdefs.h"
 #endif
 
-#else
-
-#if SUPERLU_NTYPE==0
-#include "ssp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE==1
-#include "dsp_defs.h"
-#warning Support for SuperLU older than SuperLU 3.0 from August 2005 is deprecated.
-#endif
-
-#if SUPERLU_NTYPE==2
-#include "csp_defs.h"
-#endif
-
-#if SUPERLU_NTYPE>=3
-#include "zsp_defs.h"
-#endif
-
-#endif
 #include "solvers.hh"
 #include "supermatrix.hh"
 #include <algorithm>
@@ -126,9 +105,16 @@ namespace Dune
                       float *rpg, float *rcond, float *ferr, float *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      sgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       sgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -167,9 +153,16 @@ namespace Dune
                       double *rpg, double *rcond, double *ferr, double *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -207,9 +200,16 @@ namespace Dune
                       double *rpg, double *rcond, double *ferr, double *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      zgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       zgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -247,9 +247,16 @@ namespace Dune
                       float *rpg, float *rcond, float *ferr, float *berr,
                       mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
     {
+#if SUPERLU_MIN_VERSION_5
+      GlobalLU_t gLU;
+      cgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
+             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
+             &gLU, memusage, stat, info);
+#else
       cgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
              L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
              memusage, stat, info);
+#endif
     }
   };
 
@@ -517,12 +524,8 @@ namespace Dune
         QuerySpaceChooser<T>::querySpace(&L, &U, &memusage);
         dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
              <<" \texpansions ";
-
-#ifdef HAVE_MEM_USAGE_T_EXPANSIONS
-        std::cout<<memusage.expansions<<std::endl;
-#else
         std::cout<<stat.expansions<<std::endl;
-#endif
+
       } else if ( info > 0 && lwork == -1 ) {
         dinfo<<"** Estimated memory: "<< info - n<<std::endl;
       }
@@ -561,7 +564,11 @@ namespace Dune
   void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
   ::apply(domain_type& x, range_type& b, InverseOperatorResult& res)
   {
-    if(mat.M()+mat.N()==0)
+    if (mat.N() != b.dim())
+      DUNE_THROW(ISTLError, "Size of right-hand-side vector b does not match the number of matrix rows!");
+    if (mat.M() != x.dim())
+      DUNE_THROW(ISTLError, "Size of solution vector x does not match the number of matrix columns!");
+    if (mat.M()+mat.N()==0)
       DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
 
     SuperMatrix* mB = &B;
@@ -573,7 +580,7 @@ namespace Dune
         SuperLUDenseMatChooser<T>::create(&X, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
         first=false;
       }else{
-        ((DNformat*) B.Store)->nzval=&b[0];
+        ((DNformat*)B.Store)->nzval=&b[0];
         ((DNformat*)X.Store)->nzval=&x[0];
       }
     } else {

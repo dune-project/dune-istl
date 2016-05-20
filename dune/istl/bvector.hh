@@ -65,6 +65,12 @@ namespace Dune {
     //! for STL compatibility
     typedef B value_type;
 
+    //! Type used for references
+    typedef B& reference;
+
+    //! Type used for const references
+    typedef const B& const_reference;
+
     //===== assignment from scalar
     //! Assignment from a scalar
 
@@ -196,19 +202,69 @@ namespace Dune {
     }
 
     //! infinity norm (maximum of absolute values of entries)
-    typename FieldTraits<field_type>::real_type infinity_norm () const
-    {
-      typename FieldTraits<field_type>::real_type max=0;
-      for (size_type i=0; i<this->n; ++i) max = std::max(max,(*this)[i].infinity_norm());
-      return max;
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm();
+        norm = max(a, norm);
+      }
+      return norm;
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<field_type>::real_type infinity_norm_real () const
-    {
-      typename FieldTraits<field_type>::real_type max=0;
-      for (size_type i=0; i<this->n; ++i) max = std::max(max,(*this)[i].infinity_norm_real());
-      return max;
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm_real();
+        norm = max(a, norm);
+      }
+      return norm;
+    }
+
+    //! infinity norm (maximum of absolute values of entries)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm();
+        norm = max(a, norm);
+        isNaN += a;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
+
+    //! simplified infinity norm (uses Manhattan norm for complex values)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm_real();
+        norm = max(a, norm);
+        isNaN += a;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
     }
 
     //===== sizes
@@ -302,6 +358,26 @@ namespace Dune {
         capacity_ = 0;
       }
     }
+
+    /** \brief Construct from a std::initializer_list */
+    BlockVector (std::initializer_list<B> const &l)
+    {
+      this->n = l.size();
+      capacity_ = l.size();
+      if (capacity_>0) {
+        this->p = this->allocator_.allocate(capacity_);
+        // actually construct the objects
+        new(this->p)B[capacity_];
+
+        std::copy_n(l.begin(), l.size(), this->p);
+      } else
+      {
+        this->p = 0;
+        this->n = 0;
+        capacity_ = 0;
+      }
+    }
+
 
     /** \brief Make vector with _n components but preallocating capacity components
 
@@ -853,21 +929,70 @@ namespace Dune {
     }
 
     //! infinity norm (maximum of absolute values of entries)
-    typename FieldTraits<field_type>::real_type infinity_norm () const
-    {
-      typename FieldTraits<field_type>::real_type max=0;
-      for (size_type i=0; i<this->n; ++i) max = std::max(max,(this->p)[i].infinity_norm());
-      return max;
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm();
+        norm = max(a, norm);
+      }
+      return norm;
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<field_type>::real_type infinity_norm_real () const
-    {
-      typename FieldTraits<field_type>::real_type max=0;
-      for (size_type i=0; i<this->n; ++i) max = std::max(max,(this->p)[i].infinity_norm_real());
-      return max;
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm_real();
+        norm = max(a, norm);
+      }
+      return norm;
     }
 
+    //! infinity norm (maximum of absolute values of entries)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm();
+        norm = max(a, norm);
+        isNaN += a;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
+
+    //! simplified infinity norm (uses Manhattan norm for complex values)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type const a = x.infinity_norm_real();
+        norm = max(a, norm);
+        isNaN += a;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
 
     //===== sizes
 

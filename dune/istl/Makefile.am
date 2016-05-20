@@ -1,12 +1,4 @@
-SUBDIRS =					\
-  bellmatrix					\
-  blockvector					\
-  ellmatrix					\
-  paamg						\
-  preconditioners				\
-  vector					\
-  test						\
-  tutorial
+SUBDIRS = . tutorial test paamg eigenvalue
 
 istldir = $(includedir)/dune/istl
 istl_HEADERS = basearray.hh \

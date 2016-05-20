@@ -88,7 +88,7 @@ namespace Dune
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
-       * grid, must match the coarse matrix in the matrix hierachy.
+       * grid, must match the coarse matrix in the matrix hierarchy.
        * @param parms The parameters for the AMG.
        */
       FastAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
@@ -318,7 +318,7 @@ namespace Dune
         preSteps_=postSteps_=0;
       }
       assert(matrices_->isBuilt());
-      static_assert(is_same<PI,SequentialInformation>::value,
+      static_assert(std::is_same<PI,SequentialInformation>::value,
                     "Currently only sequential runs are supported");
     }
     template<class M, class X, class PI, class A>
@@ -339,7 +339,7 @@ namespace Dune
         std::cerr<<"WARNING only one step of smoothing is supported!"<<std::endl;
         preSteps_=postSteps_=1;
       }
-      static_assert(is_same<PI,SequentialInformation>::value,
+      static_assert(std::is_same<PI,SequentialInformation>::value,
                     "Currently only sequential runs are supported");
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
@@ -400,14 +400,14 @@ namespace Dune
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
         scalarProduct_.reset(ScalarProductChooserType::construct(cargs.getComm()));
 
-#if HAVE_SUPERLU|| HAVE_UMFPACK
-#if HAVE_UMFPACK
+#if HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
+#if HAVE_SUITESPARSE_UMFPACK
 #define DIRECTSOLVER UMFPack
 #else
 #define DIRECTSOLVER SuperLU
 #endif
         // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+        if(std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
            || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
            || (matrices_->parallelInformation().coarsest().isRedistributed()
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
@@ -425,7 +425,7 @@ namespace Dune
             solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
         }else
 #undef DIRECTSOLVER
-#endif
+#endif // HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
         {
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
@@ -471,7 +471,7 @@ namespace Dune
         for(ColIter col=row->begin(); col!=row->end(); ++col) {
           if(row.index()==col.index()) {
             diag = col;
-            hasDiagonal = false;
+            hasDiagonal = (*col != zero);
           }else{
             if(*col!=zero)
               isDirichlet = false;
@@ -480,7 +480,8 @@ namespace Dune
         if(isDirichlet && hasDiagonal)
           diag->solve(x[row.index()], b[row.index()]);
       }
-      std::cout<<" Preprocessing Dirichlet took "<<watch1.elapsed()<<std::endl;
+      if (verbosity_>0)
+        std::cout<<" Preprocessing Dirichlet took "<<watch1.elapsed()<<std::endl;
       watch1.reset();
       // No smoother to make x consistent! Do it by hand
       matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);

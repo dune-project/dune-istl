@@ -349,16 +349,12 @@ void setupAnisotropic(M& A, double eps)
 template<class N, class G>
 void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 {
-  using Dune::remove_const;
-  using Dune::is_same;
-  using Dune::conditional;
-
-  typedef typename remove_const<G>::type Mutable;
-  typedef typename conditional<is_same<G,Mutable>::value,
+  typedef typename std::remove_const<G>::type Mutable;
+  typedef typename std::conditional<std::is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::type VertexIterator;
 
-  typedef typename conditional<is_same<G,Mutable>::value,
+  typedef typename std::conditional<std::is_same<G,Mutable>::value,
       typename G::EdgeIterator,
       typename G::ConstEdgeIterator>::type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
@@ -375,16 +371,12 @@ void printWeightedGraph(G& graph, std::ostream& os, const N& norm=N())
 template<class G>
 void printPropertiesGraph(G& graph, std::ostream& os)
 {
-  using Dune::remove_const;
-  using Dune::is_same;
-  using Dune::conditional;
-
-  typedef typename remove_const<G>::type Mutable;
-  typedef typename conditional<is_same<G,Mutable>::value,
+  typedef typename std::remove_const<G>::type Mutable;
+  typedef typename std::conditional<std::is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::type VertexIterator;
 
-  typedef typename conditional<is_same<G,Mutable>::value,
+  typedef typename std::conditional<std::is_same<G,Mutable>::value,
       typename G::EdgeIterator,
       typename G::ConstEdgeIterator>::type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
@@ -401,16 +393,12 @@ void printPropertiesGraph(G& graph, std::ostream& os)
 template<class G>
 void printGraph(G& graph, std::ostream& os)
 {
-  using Dune::remove_const;
-  using Dune::is_same;
-  using Dune::conditional;
-
-  typedef typename remove_const<G>::type Mutable;
-  typedef typename conditional<is_same<G,Mutable>::value,
+  typedef typename std::remove_const<G>::type Mutable;
+  typedef typename std::conditional<std::is_same<G,Mutable>::value,
       typename G::VertexIterator,
       typename G::ConstVertexIterator>::type VertexIterator;
 
-  typedef typename conditional<is_same<G,Mutable>::value,
+  typedef typename std::conditional<std::is_same<G,Mutable>::value,
       typename G::EdgeIterator,
       typename G::ConstEdgeIterator>::type EdgeIterator;
   for(VertexIterator vertex = graph.begin(); vertex!=graph.end(); ++vertex) {
@@ -560,21 +548,15 @@ int main (int argc , char ** argv)
     testAggregate();
     exit(testEdge());
   }
-  catch (Dune::ISTLError& error)
+  catch(std::exception& e)
   {
-    std::cout << error << std::endl;
-  }
-  catch (Dune::Exception& error)
-  {
-    std::cout << error << std::endl;
-  }
-  catch (const std::bad_alloc& e)
-  {
-    std::cout << "memory exhausted" << std::endl;
+    std::cout << "ERROR: " << e.what() << std::endl;
+    return 1;
   }
   catch (...)
   {
-    std::cout << "unknown exception caught" << std::endl;
+    std::cerr << "unknown exception caught" << std::endl;
+    exit(1);
   }
 
   return 0;

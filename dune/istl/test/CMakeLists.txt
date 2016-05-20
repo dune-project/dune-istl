@@ -1,135 +1,100 @@
-set(NORMALTEST
-  basearraytest
-  bcrsassigntest
-  bvectortest
-  bcrsbuildtest
-  bcrsimplicitbuildtest
-  complexmatrixtest
-  dotproducttest
-  exaprintvectortest
-  iotest
-  inverseoperator2prectest
-  matrixiteratortest
-  matrixtest
-  matrixutilstest
-  mmtest
-  mv
-  printvectortest
-  scaledidmatrixtest
-  seqmatrixmarkettest
-  vbvectortest)
+# install the test tools as we want to support testing 3rd-party vectors with an installed dune-istl
+install(FILES vectortest.hh
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
 
-if(HAVE_PARDISO)
-  set(PARDISOTEST test_pardiso)
-endif(HAVE_PARDISO)
+dune_add_test(SOURCES basearraytest.cc)
 
-if(SUPERLU_FOUND)
-  set(SUPERLUTESTS
-  complexrhstest superlutest superluztest superluctest superlustest
-  )
-endif(SUPERLU_FOUND)
+dune_add_test(SOURCES bcrsassigntest.cc)
 
-if(UMFPACK_FOUND)
-  set(UMFPACKTESTS umfpacktest)
+dune_add_test(SOURCES bcrsnormtest.cc)
+
+dune_add_test(SOURCES dotproducttest.cc)
+
+dune_add_test(SOURCES complexmatrixtest.cc)
+
+dune_add_test(SOURCES fieldvectortest.cc)
+
+dune_add_test(SOURCES matrixnormtest.cc)
+
+dune_add_test(SOURCES matrixutilstest.cc)
+
+dune_add_test(SOURCES matrixtest.cc)
+
+dune_add_test(SOURCES bvectortest.cc)
+
+dune_add_test(SOURCES vbvectortest.cc)
+
+dune_add_test(SOURCES bcrsbuild.cc)
+
+dune_add_test(SOURCES bcrsimplicitbuild.cc
+              COMPILE_DEFINITIONS DUNE_ISTL_WITH_CHECKING=1)
+
+dune_add_test(SOURCES matrixiteratortest.cc)
+
+dune_add_test(SOURCES mmtest.cc)
+
+dune_add_test(SOURCES multitypeblockmatrixtest.cc)
+
+dune_add_test(SOURCES multitypeblockvectortest.cc)
+
+dune_add_test(SOURCES mv.cc)
+
+dune_add_test(SOURCES iotest.cc)
+
+dune_add_test(SOURCES inverseoperator2prectest.cc)
+
+dune_add_test(SOURCES scaledidmatrixtest.cc)
+
+dune_add_test(SOURCES solveraborttest.cc
+              SKIP_ON_77)
+
+# Pardiso tests
+dune_add_test(SOURCES test_pardiso.cc
+              SKIP_ON_77)
+
+# SuperLU tests
+dune_add_test(NAME superlustest
+              SOURCES superlutest.cc
+              COMPILE_DEFINITIONS SUPERLU_NTYPE=0
+              SKIP_ON_77)
+
+dune_add_test(SOURCES superlutest.cc
+              SKIP_ON_77)
+
+dune_add_test(NAME superluctest
+              SOURCES superlutest.cc
+              COMPILE_DEFINITIONS SUPERLU_NTYPE=2
+              SKIP_ON_77)
+
+dune_add_test(NAME superluztest
+              SOURCES superlutest.cc
+              COMPILE_DEFINITIONS SUPERLU_NTYPE=3
+              SKIP_ON_77)
+
+dune_add_test(SOURCES complexrhstest.cc
+              COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
+
+# SuiteSparse tests
+dune_add_test(SOURCES umfpacktest.cc
+              SKIP_ON_77)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
+
+dune_add_test(SOURCES ldltest.cc
+              SKIP_ON_77)
+
+dune_add_test(SOURCES spqrtest.cc
+              SKIP_ON_77)
+
+dune_add_test(SOURCES overlappingschwarztest.cc
+              SKIP_ON_77)
+
+# MPI tests
+if(MPI_FOUND)
+  dune_add_test(SOURCES matrixredisttest.cc)
+
+  dune_add_test(SOURCES vectorcommtest.cc)
 endif()
 
-if ((SUPERLU_FOUND) OR (UMFPACK_FOUND))
-  set(OVLPSCHWARZTESTS overlappingschwarztest)
-endif()
+dune_add_test(SOURCES matrixmarkettest.cc)
 
-if(HAVE_MPI)
-  set(MPITESTS vectorcommtest matrixmarkettest matrixredisttest)
-endif(HAVE_MPI)
-
-set(ALLTESTS ${MPITESTS} ${NORMALTEST} ${PARDISOTEST} ${SUPERLUTESTS} ${UMFPACKTESTS} ${OVLPSCHWARZTESTS})
-
-
-# We do not want want to build the tests during make all,
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${ALLTESTS})
-
-
-include(DuneMPI)
-
-# Provide source files
-add_executable(basearraytest "basearraytest.cc")
-add_executable(bcrsassigntest "bcrsassigntest.cc")
-add_executable(dotproducttest "dotproducttest.cc")
-add_executable(complexmatrixtest "complexmatrixtest.cc")
-# [joe] no idea how to do this in cmake right now, but exaprintvectortest
-# needs the proper flags for TBB
-add_executable(exaprintvectortest "exaprintvectortest.cc")
-add_executable(matrixutilstest "matrixutilstest.cc")
-add_executable(matrixtest "matrixtest.cc")
-add_executable(bvectortest "bvectortest.cc")
-add_executable(printvectortest "printvectortest.cc")
-add_executable(vbvectortest "vbvectortest.cc")
-add_executable(bcrsbuildtest "bcrsbuild.cc")
-add_executable(bcrsimplicitbuildtest "bcrsimplicitbuild.cc")
-set_property(TARGET bcrsimplicitbuildtest APPEND PROPERTY COMPILE_DEFINITIONS "DUNE_ISTL_WITH_CHECKING=1")
-add_executable(matrixiteratortest "matrixiteratortest.cc")
-add_executable(mmtest mmtest.cc)
-add_executable(mv "mv.cc")
-add_executable(iotest "iotest.cc")
-add_executable(inverseoperator2prectest "inverseoperator2prectest.cc")
-add_executable(scaledidmatrixtest "scaledidmatrixtest.cc")
-add_executable(seqmatrixmarkettest "matrixmarkettest.cc")
-#set_target_properties(seqmatrixmarkettest PROPERTIES COMPILE_FLAGS
-#  "-DMMSEQUENTIAL ${MPI_DUNE_COMPILE_FLAGS} -DENABLE_MPI=1 -DMPICH_SKIP_MPICXX -DMPIPP_H")
-
-if(HAVE_PARDISO)
-  add_executable(pardiso_test test_pardiso.cc)
-
-  # TODO add pardiso flags
-endif(HAVE_PARDISO)
-
-if(SUPERLU_FOUND)
-  add_executable(complexrhstest complexrhstest.cc)
-  set_property(TARGET complexrhstest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=3")
-
-  add_executable(superlutest "superlutest.cc")
-
-  add_executable(superlustest "superlutest.cc")
-  set_property(TARGET superlustest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=0")
-
-  add_executable(superluctest "superlutest.cc")
-  set_property(TARGET superluctest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=2")
-
-  add_executable(superluztest "superlutest.cc")
-  set_property(TARGET superluztest APPEND PROPERTY COMPILE_DEFINITIONS "SUPERLU_NTYPE=3")
-
-  add_dune_superlu_flags("${SUPERLUTESTS}")
-endif(SUPERLU_FOUND)
-
-if(UMFPACK_FOUND)
-  add_executable(umfpacktest umfpacktest.cc)
-  add_dune_umfpack_flags(umfpacktest)
-  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
-endif()
-
-if ((SUPERLU_FOUND) OR (UMFPACK_FOUND))
-  add_executable(overlappingschwarztest "overlappingschwarztest.cc")
-  if (SUPERLU_FOUND)
-    add_dune_superlu_flags(overlappingschwarztest)
-  endif()
-  if (UMFPACK_FOUND)
-    add_dune_umfpack_flags(overlappingschwarztest)
-  endif()
-endif()
-
-if(HAVE_MPI)
-  add_executable(matrixredisttest "matrixredisttest.cc")
-  add_executable(vectorcommtest "vectorcommtest.cc")
-  add_executable(matrixmarkettest "matrixmarkettest.cc")
-  add_dune_mpi_flags("${MPITESTS}")
-  add_dune_parmetis_flags(matrixredisttest)
-endif(HAVE_MPI)
-
-foreach(_exe ${ALLTESTS})
-  target_link_libraries(${_exe} "dunecommon")
-  add_test(${_exe} ${_exe})
-endforeach(_exe ${ALLTESTS})
-
-exclude_from_headercheck(
-  complexdata.hh)
+exclude_from_headercheck(complexdata.hh)

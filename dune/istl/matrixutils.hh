@@ -8,6 +8,7 @@
 #include <limits>
 #include <dune/common/typetraits.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
 #include <dune/istl/scaledidmatrix.hh>
@@ -116,16 +117,14 @@ namespace Dune
     }
   };
 
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-      typename T6, typename T7, typename T8, typename T9>
+  template<typename FirstRow, typename... Args>
   class MultiTypeBlockMatrix;
 
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-      typename T6, typename T7, typename T8, typename T9, std::size_t blocklevel, std::size_t l>
-  struct CheckIfDiagonalPresent<MultiTypeBlockMatrix<T1,T2,T3,T4,T5,T6,T7,T8,T9>,
+  template<std::size_t blocklevel, std::size_t l, typename T1, typename... Args>
+  struct CheckIfDiagonalPresent<MultiTypeBlockMatrix<T1,Args...>,
       blocklevel,l>
   {
-    typedef MultiTypeBlockMatrix<T1,T2,T3,T4,T5,T6,T7,T8,T9> Matrix;
+    typedef MultiTypeBlockMatrix<T1,Args...> Matrix;
 
     /**
      * @brief Check whether the a matrix has diagonal values
@@ -251,10 +250,10 @@ namespace Dune
     static size_type coldim (const Matrix& A, size_type c)
     {
       // find an entry in column c
-      if (A.nnz>0)
+      if (A.nnz_ > 0)
       {
-        for (size_type k=0; k<A.nnz; k++) {
-          if (A.j.get()[k]==c) {
+        for (size_type k=0; k<A.nnz_; k++) {
+          if (A.j_.get()[k] == c) {
             return MatrixDimension<block_type>::coldim(A.a[k]);
           }
         }
@@ -360,6 +359,33 @@ namespace Dune
     static size_type coldim(const Matrix& /*A*/)
     {
       return m;
+    }
+  };
+
+  template <class T>
+  struct MatrixDimension<Dune::DynamicMatrix<T> >
+  {
+    typedef Dune::DynamicMatrix<T> MatrixType;
+    typedef typename MatrixType::size_type size_type;
+
+    static size_type rowdim(const MatrixType& /*A*/, size_type /*r*/)
+    {
+      return 1;
+    }
+
+    static size_type coldim(const MatrixType& /*A*/, size_type /*r*/)
+    {
+      return 1;
+    }
+
+    static size_type rowdim(const MatrixType& A)
+    {
+      return A.N();
+    }
+
+    static size_type coldim(const MatrixType& A)
+    {
+      return A.M();
     }
   };
 

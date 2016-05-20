@@ -34,11 +34,11 @@ namespace Dune {
    * (implicitly) know the data distribution and communication patterns,
    * there is a clear separation of the parallel data composition together
    *  with the communication APIs from the data structures. This allows for
-   * implementing overalapping and nonoverlapping domain decompositions as
-   * well as data parallel parallelisation aproaches.
+   * implementing overlapping and nonoverlapping domain decompositions as
+   * well as data parallel parallelisation approaches.
    *
    * The \ref ISTL_Solvers "solvers" can easily be turned into parallel solvers
-   * initializing them with matching parallel subclasses of the the base classes
+   * initializing them with matching parallel subclasses of the base classes
    * ScalarProduct, Preconditioner and LinearOperator.
    *
    * The information of the data distribution is provided by OwnerOverlapCopyCommunication
@@ -170,6 +170,7 @@ namespace Dune {
     typedef X domain_type;
     //!  \brief The field type used by the vector type domain_type.
     typedef typename X::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
     //! \brief The type of the communication object.
     //!
     //! This must either be OwnerOverlapCopyCommunication or a type
@@ -201,7 +202,7 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual double norm (const X& x)
+    virtual real_type norm (const X& x)
     {
       return communication.norm(x);
     }

@@ -28,23 +28,20 @@
 
 /* end private */
 
-/* define if the Boost::Fusion headers are available */
-#cmakedefine HAVE_BOOST_FUSION
-
-/* Define to ENABLE_BOOST if the Boost library is available */
-#cmakedefine HAVE_BOOST ENABLE_BOOST
-
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 
-/* define to 1 because older versions of SuperLU are no longer supported*/
-#define SUPERLU_POST_2005_VERSION 1
+/* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
+#cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
 
-/* Define to 1 if 'expansions' is a member of 'mem_usage_t'. */
-#cmakedefine HAVE_MEM_USAGE_T_EXPANSIONS @HAVE_MEM_USAGE_T_EXPANSIONS@
+/* Define to 0 as all versions since SuperLu 4.0 do no longer provide it that way. */
+#define HAVE_MEM_USAGE_T_EXPANSIONS 1
 
 /* define to 1 if SuperLU header slu_ddefs.h contains SLU_DOUBLE */
 #cmakedefine SUPERLU_MIN_VERSION_4_3 @SUPERLU_MIN_VERSION_4_3@
+
+/* define to 1 if SuperLU dgssvx takes a GlobalLU_t parameter */
+#cmakedefine SUPERLU_MIN_VERSION_5 @SUPERLU_MIN_VERSION_5@
 
 /* Define to the version of dune-istl */
 #define DUNE_ISTL_VERSION "${DUNE_ISTL_VERSION}"

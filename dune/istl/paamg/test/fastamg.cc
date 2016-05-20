@@ -29,9 +29,7 @@ void randomize(const M& mat, V& b)
 template <int BS>
 void testAMG(int N, int coarsenTarget, int ml)
 {
-
   std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<" maxlevel="<<ml<<std::endl;
-
 
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
@@ -83,6 +81,9 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   AMG amg(fop, criterion, parms);
 
+  // check if recalculation of matrix hierarchy works
+  amg.recalculateHierarchy();
+
   double buildtime = watch.elapsed();
 
   std::cout<<"Building hierarchy took "<<buildtime<<" seconds"<<std::endl;
@@ -110,8 +111,8 @@ void testAMG(int N, int coarsenTarget, int ml)
 
 
 int main(int argc, char** argv)
+try
 {
-
   int N=100;
   int coarsenTarget=1200;
   int ml=10;
@@ -128,4 +129,15 @@ int main(int argc, char** argv)
   testAMG<1>(N, coarsenTarget, ml);
   testAMG<2>(N, coarsenTarget, ml);
 
+  return 0;
+}
+catch (std::exception &e)
+{
+  std::cout << "ERROR: " << e.what() << std::endl;
+  return 1;
+}
+catch (...)
+{
+  std::cerr << "Dune reported an unknown error." << std::endl;
+  exit(1);
 }

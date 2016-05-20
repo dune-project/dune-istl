@@ -20,16 +20,14 @@ struct Builder<Dune::BCRSMatrix<B,A> >
 {
   void randomBuild(int rows, int cols)
   {
-    int maxNZCols = 15; // maximal number of nonzeros per column
+    int maxNZCols = 15; // maximal number of nonzeros per row
     {
-
       Dune::BCRSMatrix<B,A> matrix( rows, cols, Dune::BCRSMatrix<B,A>::random );
-      for(int i=0; i<rows; ++i) matrix.setrowsize(i,maxNZCols);
+      for(int i=0; i<rows; ++i)
+        matrix.setrowsize(i,maxNZCols);
       matrix.endrowsizes();
 
-      ////////////////////////
-      //während des Aufstellens
-      // oder wenn es nicht anders geht auch davor.
+      // During setup, or before, if there is no other way.
       for(int i=0; i<rows; ++i) {
         if(i<cols)
           matrix.addindex(i,i);
@@ -49,24 +47,11 @@ struct Builder<Dune::BCRSMatrix<B,A> >
     /*{
 
        Dune::BCRSMatrix<B,A> matrix( rows, cols, rows*maxNZCols, Dune::BCRSMatrix<B,A>::random );
-       for(int i=0; i<rows; ++i){
-        matrix.setrowsize(i,maxNZCols);
-        if(i<cols)
-          matrix.addindex(i,i);
-        if(i-1>=0)
-          matrix.addindex(i,i-1);
-        if(i+1<cols)
-          matrix.addindex(i,i+1);
-       }
+       for(int i=0; i<rows; ++i)
+         matrix.setrowsize(i,maxNZCols);
        matrix.endrowsizes();
 
-       Dune::printmatrix(std::cout, matrix, "random", "row");
-       }
-       {
-
-       Dune::BCRSMatrix<B,A> matrix( rows, cols, Dune::BCRSMatrix<B,A>::random );
        for(int i=0; i<rows; ++i){
-        matrix.setrowsize(i,maxNZCols);
         if(i<cols)
           matrix.addindex(i,i);
         if(i-1>=0)

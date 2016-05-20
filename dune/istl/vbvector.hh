@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 
+#include <dune/common/iteratorfacades.hh>
 #include "istlexception.hh"
 #include "bvector.hh"
 
@@ -38,6 +39,9 @@ namespace Dune {
                               // on the large array. However, access operators have to be
                               // overwritten.
   {
+    // just a shorthand
+    typedef BlockVectorWindow<B,A> window_type;
+
   public:
 
     //===== type definitions and constants
@@ -48,12 +52,29 @@ namespace Dune {
     //! export the allocator type
     typedef A allocator_type;
 
+    /** \brief Export type used for references to container entries
+     *
+     * \note This is not B&, but an internal proxy class!
+     */
+    typedef window_type& reference;
+
+    /** \brief Export type used for const references to container entries
+     *
+     * \note This is not B&, but an internal proxy class!
+     */
+    typedef const window_type& const_reference;
+
     //! The size type for the index access
     typedef typename A::size_type size_type;
 
-    /** export the type representing the components, note that this
-            is *not* the type refered to by the iterators and random access.
-            However, it can be used to copy blocks (which is its only purpose).
+    /** \brief Type of the elements of the outer vector, i.e., dynamic vectors of B
+     *
+     * Note that this is *not* the type referred to by the iterators and random access operators,
+     * which return proxy objects.
+     */
+    typedef BlockVector<B,A> value_type;
+
+    /** \brief Same as value_type, here for historical reasons
      */
     typedef BlockVector<B,A> block_type;
 
@@ -65,10 +86,6 @@ namespace Dune {
       blocklevel = B::blocklevel+2
     };
 
-    // just a shorthand
-    typedef BlockVectorWindow<B,A> window_type;
-
-
     //===== constructors and such
 
     /** constructor without arguments makes empty vector,
@@ -78,7 +95,7 @@ namespace Dune {
     {
       // nothing is known ...
       nblocks = 0;
-      block = 0;
+      block = nullptr;
       initialized = false;
     }
 
@@ -97,7 +114,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // Note: memory in base class still not allocated
@@ -123,7 +140,7 @@ namespace Dune {
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
@@ -141,7 +158,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and the vector is usable
@@ -165,7 +182,7 @@ namespace Dune {
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
@@ -184,7 +201,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and we have a usable vector
@@ -227,7 +244,7 @@ namespace Dune {
         windowAllocator_.deallocate(block,nblocks);
       }
       this->n = 0;
-      this->p = 0;
+      this->p = nullptr;
 
       // we can allocate the windows now
       nblocks = _nblocks;
@@ -239,7 +256,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and the vector not fully usable
@@ -273,7 +290,7 @@ namespace Dune {
       else
       {
         this->n = 0;
-        this->p = 0;
+        this->p = nullptr;
       }
 
       // we can allocate the windows now
@@ -291,7 +308,7 @@ namespace Dune {
       else
       {
         nblocks = 0;
-        block = 0;;
+        block = nullptr;
       }
 
       // and the vector is usable
@@ -332,7 +349,7 @@ namespace Dune {
           else
           {
             this->n = 0;
-            this->p = 0;
+            this->p = nullptr;
           }
 
           // we can allocate the windows now
@@ -346,7 +363,7 @@ namespace Dune {
           else
           {
             nblocks = 0;
-            block = 0;;
+            block = nullptr;
           }
         }
 
@@ -425,7 +442,7 @@ namespace Dune {
           else
           {
             v.n = 0;
-            v.p = 0;
+            v.p = nullptr;
           }
 
           // and we set the window pointer
@@ -517,86 +534,76 @@ namespace Dune {
       return block[i];
     }
 
-    // forward declaration
-    class ConstIterator;
-
     //! Iterator class for sequential access
-    class Iterator
+    template <class T, class R>
+    class RealIterator
+    : public RandomAccessIteratorFacade<RealIterator<T,R>, T, R>
     {
     public:
       //! constructor, no arguments
-      Iterator ()
+      RealIterator ()
       {
-        p = 0;
+        p = nullptr;
         i = 0;
       }
 
       //! constructor
-      Iterator (window_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
+      RealIterator (window_type* _p, size_type _i)
+      : p(_p), i(_i)
+      {}
 
       //! prefix increment
-      Iterator& operator++()
+      void increment()
       {
         ++i;
-        return *this;
       }
 
       //! prefix decrement
-      Iterator& operator--()
+      void decrement()
       {
         --i;
-        return *this;
       }
 
       //! equality
-      bool operator== (const Iterator& it) const
+      bool equals (const RealIterator& it) const
       {
         return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const Iterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! equality
-      bool operator== (const ConstIterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const ConstIterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
       }
 
       //! dereferencing
-      window_type& operator* () const
+      window_type& dereference () const
       {
         return p[i];
       }
 
-      //! arrow
-      window_type* operator-> () const
+      void advance(std::ptrdiff_t d)
       {
-        return p+i;
+        i+=d;
       }
 
-      // return index corresponding to pointer
-      size_type index () const
+      std::ptrdiff_t distanceTo(const RealIterator& o) const
+      {
+        return o.i-i;
+      }
+
+      // Needed for operator[] of the iterator
+      window_type& elementAt (std::ptrdiff_t offset) const
+      {
+        return p[i+offset];
+      }
+
+      /** \brief Return the index of the entry this iterator is pointing to */
+      size_type index() const
       {
         return i;
       }
-
-      friend class ConstIterator;
 
     private:
       window_type* p;
       size_type i;
     };
+
+    using Iterator = RealIterator<value_type,window_type&>;
 
     //! begin Iterator
     Iterator begin ()
@@ -624,105 +631,14 @@ namespace Dune {
       return Iterator(block,-1);
     }
 
-    //! random access returning iterator (end if not contained)
-    Iterator find (size_type i)
-    {
-      if (i>=0 && i<nblocks)
-        return Iterator(block,i);
-      else
-        return Iterator(block,nblocks);
-    }
+    /** \brief Export the iterator type using std naming rules */
+    using iterator = Iterator;
 
-    //! random access returning iterator (end if not contained)
-    ConstIterator find (size_type i) const
-    {
-      if (i>=0 && i<nblocks)
-        return ConstIterator(block,i);
-      else
-        return ConstIterator(block,nblocks);
-    }
+    /** \brief Const iterator */
+    using ConstIterator = RealIterator<const value_type, const window_type&>;
 
-    //! ConstIterator class for sequential access
-    class ConstIterator
-    {
-    public:
-      //! constructor
-      ConstIterator ()
-      {
-        p = 0;
-        i = 0;
-      }
-
-      //! constructor from pointer
-      ConstIterator (const window_type* _p, size_type _i) : p(_p), i(_i)
-      {       }
-
-      //! constructor from non_const iterator
-      ConstIterator (const Iterator& it) : p(it.p), i(it.i)
-      {       }
-
-      //! prefix increment
-      ConstIterator& operator++()
-      {
-        ++i;
-        return *this;
-      }
-
-      //! prefix decrement
-      ConstIterator& operator--()
-      {
-        --i;
-        return *this;
-      }
-
-      //! equality
-      bool operator== (const ConstIterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const ConstIterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! equality
-      bool operator== (const Iterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! inequality
-      bool operator!= (const Iterator& it) const
-      {
-        return (p+i)!=(it.p+it.i);
-      }
-
-      //! dereferencing
-      const window_type& operator* () const
-      {
-        return p[i];
-      }
-
-      //! arrow
-      const window_type* operator-> () const
-      {
-        return p+i;
-      }
-
-      // return index corresponding to pointer
-      size_type index () const
-      {
-        return i;
-      }
-
-      friend class Iterator;
-
-    private:
-      const window_type* p;
-      size_type i;
-    };
+    /** \brief Export the const iterator type using std naming rules */
+    using const_iterator = ConstIterator;
 
     //! begin ConstIterator
     ConstIterator begin () const
@@ -749,11 +665,31 @@ namespace Dune {
       return ConstIterator(block,-1);
     }
 
+    //! random access returning iterator (end if not contained)
+    Iterator find (size_type i)
+    {
+      return Iterator(block,std::min(i,nblocks));
+    }
+
+    //! random access returning iterator (end if not contained)
+    ConstIterator find (size_type i) const
+    {
+      return ConstIterator(block,std::min(i,nblocks));
+    }
 
     //===== sizes
 
     //! number of blocks in the vector (are of variable size here)
     size_type N () const
+    {
+      return nblocks;
+    }
+
+    /** Number of blocks in the vector
+     *
+     * Returns the same value as method N(), because the vector is dense
+    */
+    size_type size () const
     {
       return nblocks;
     }

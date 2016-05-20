@@ -404,26 +404,17 @@ namespace Dune
       int i=0;
       int j=0;
 
-      std::vector<int> domain(nparts);
-      std::vector<int> assigned(npes);
-      // init
-      for (i=0; i<nparts; i++) {
-        domainMapping[i] = -1;
-        domain[i] = 0;
-      }
-      for (i=0; i<npes; i++) {
-        assigned[i] = -0;
-      }
-      // count the occurance of domains
+      std::vector<int> domain(nparts, 0);
+      std::vector<int> assigned(npes, 0);
+      // init domain Mapping
+      domainMapping.assign(domainMapping.size(), -1);
+
+      // count the occurrence of domains
       for (i=0; i<numOfOwnVtx; i++) {
         domain[part[i]]++;
       }
 
-      int *domainMatrix = new int[npes * nparts];
-      // init
-      for(i=0; i<npes*nparts; i++) {
-        domainMatrix[i]=-1;
-      }
+      std::vector<int> domainMatrix(npes * nparts, -1);
 
       // init buffer with the own domain
       int *buf = new int[nparts];
@@ -451,6 +442,8 @@ namespace Dune
       // particular domain is selected to choose it's favorate domain
       int maxOccurance = 0;
       pe = -1;
+      std::set<std::size_t> unassigned;
+
       for(i=0; i<nparts; i++) {
         for(j=0; j<npes; j++) {
           // process has no domain assigned
@@ -472,11 +465,23 @@ namespace Dune
           }
           pe = -1;
         }
+        else
+        {
+          unassigned.insert(i);
+        }
         maxOccurance = 0;
       }
 
-      delete[] domainMatrix;
+      typename std::vector<int>::iterator next_free = assigned.begin();
 
+      for(typename std::set<std::size_t>::iterator domain = unassigned.begin(),
+            end = unassigned.end(); domain != end; ++domain)
+      {
+        next_free = std::find_if(next_free, assigned.end(), std::bind2nd(std::less<int>(), 1));
+        assert(next_free !=  assigned.end());
+        domainMapping[*domain] = next_free-assigned.begin();
+        *next_free = 1;
+      }
     }
 
     struct SortFirst
@@ -504,7 +509,7 @@ namespace Dune
 
       typedef typename std::vector<std::pair<GI,int> >::const_iterator VIter;
 #ifdef DEBUG_REPART
-      // Safty check for duplicates.
+      // Safety check for duplicates.
       if(ownerVec.size()>0)
       {
         VIter old=ownerVec.begin();
@@ -1707,8 +1712,8 @@ namespace Dune
           int messageLength;
           MPI_Error_string(statuses[i].MPI_ERROR, message, &messageLength);
           std::cerr<<" source="<<statuses[i].MPI_SOURCE<<" message: ";
-          for(int i=0; i< messageLength; i++)
-            std::cout<<message[i];
+          for(int j = 0; j < messageLength; j++)
+            std::cout<<message[j];
         }
       std::cerr<<std::endl;
     }

@@ -427,7 +427,7 @@ namespace Dune {
      * @return The global euclidian norm of that vector.
      */
     template<class T1>
-    double norm (const T1& x) const
+    typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
     {
       // set up mask vector
       if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size()))

@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_UMFPACK_HH
 #define DUNE_ISTL_UMFPACK_HH
 
-#if HAVE_UMFPACK || defined DOXYGEN
+#if HAVE_SUITESPARSE_UMFPACK || defined DOXYGEN
 
 #include<complex>
 #include<type_traits>
@@ -209,7 +209,7 @@ namespace Dune {
      * This computes the matrix decomposition, and may take a long time
      * (and use a lot of memory).
      *
-     *  @param mat_ the matrix to solve for
+     *  @param matrix the matrix to solve for
      *  @param verbose [0..2] set the verbosity level, defaults to 0
      */
     UMFPack(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false)
@@ -227,7 +227,7 @@ namespace Dune {
      * This computes the matrix decomposition, and may take a long time
      * (and use a lot of memory).
      *
-     * @param mat_ the matrix to solve for
+     * @param matrix the matrix to solve for
      * @param verbose [0..2] set the verbosity level, defaults to 0
      */
     UMFPack(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false)
@@ -242,7 +242,7 @@ namespace Dune {
 
     /** @brief default constructor
      */
-    UMFPack() : matrixIsLoaded_(false), verbose(0)
+    UMFPack() : matrixIsLoaded_(false), verbosity_(0)
     {
       //check whether T is a supported type
       static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
@@ -305,7 +305,7 @@ namespace Dune {
 
     virtual ~UMFPack()
     {
-      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
     }
 
@@ -314,6 +314,11 @@ namespace Dune {
      */
     virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
+      if (umfpackMatrix_.N() != b.dim())
+        DUNE_THROW(Dune::ISTLError, "Size of right-hand-side vector b does not match the number of matrix rows!");
+      if (umfpackMatrix_.M() != x.dim())
+        DUNE_THROW(Dune::ISTLError, "Size of solution vector x does not match the number of matrix columns!");
+
       double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
                     umfpackMatrix_.getColStart(),
@@ -394,7 +399,7 @@ namespace Dune {
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& matrix)
     {
-      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
       umfpackMatrix_ = matrix;
       decompose();
@@ -403,7 +408,7 @@ namespace Dune {
     template<class S>
     void setSubMatrix(const Matrix& _mat, const S& rowIndexSet)
     {
-      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || (matrixIsLoaded_))
+      if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
       umfpackMatrix_.setMatrix(_mat,rowIndexSet);
       decompose();
@@ -418,14 +423,32 @@ namespace Dune {
      */
     void setVerbosity(int v)
     {
-      verbose = v;
+      verbosity_ = v;
       // set the verbosity level in UMFPack
-      if (verbose == 0)
+      if (verbosity_ == 0)
         UMF_Control[UMFPACK_PRL] = 1;
-      if (verbose == 1)
+      if (verbosity_ == 1)
         UMF_Control[UMFPACK_PRL] = 2;
-      if (verbose == 2)
+      if (verbosity_ == 2)
         UMF_Control[UMFPACK_PRL] = 4;
+    }
+
+    /**
+     * @brief Return the matrix factorization.
+     * @warning It is up to the user to keep consistency.
+     */
+    void* getFactorization()
+    {
+      return UMF_Numeric;
+    }
+
+    /**
+     * @brief Return the column compress matrix from UMFPack.
+     * @warning It is up to the user to keep consistency.
+     */
+    UMFPackMatrix& getInternalMatrix()
+    {
+      return umfpackMatrix_;
     }
 
     /**
@@ -472,7 +495,7 @@ namespace Dune {
                       UMF_Control,
                       UMF_Decomposition_Info);
       Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
-      if (verbose == 1)
+      if (verbosity_ == 1)
       {
         std::cout << "[UMFPack Decomposition]" << std::endl;
         std::cout << "Wallclock Time taken: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_WALLTIME] << " (CPU Time: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_TIME] << ")" << std::endl;
@@ -481,7 +504,7 @@ namespace Dune {
         std::cout << "Condition number estimate: " << 1./UMF_Decomposition_Info[UMFPACK_RCOND] << std::endl;
         std::cout << "Numbers of non-zeroes in decomposition: L: " << UMF_Decomposition_Info[UMFPACK_LNZ] << " U: " << UMF_Decomposition_Info[UMFPACK_UNZ] << std::endl;
       }
-      if (verbose == 2)
+      if (verbosity_ == 2)
       {
         Caller::report_info(UMF_Control,UMF_Decomposition_Info);
       }
@@ -490,7 +513,7 @@ namespace Dune {
     void printOnApply(double* UMF_Info)
     {
       Caller::report_status(UMF_Control,UMF_Info[UMFPACK_STATUS]);
-      if (verbose > 0)
+      if (verbosity_ > 0)
       {
         std::cout << "[UMFPack Solve]" << std::endl;
         std::cout << "Wallclock Time: " << UMF_Info[UMFPACK_SOLVE_WALLTIME] << " (CPU Time: " << UMF_Info[UMFPACK_SOLVE_TIME] << ")" << std::endl;
@@ -500,11 +523,9 @@ namespace Dune {
       }
     }
 
-    UMFPackMatrix& getInternalMatrix() { return umfpackMatrix_; }
-
     UMFPackMatrix umfpackMatrix_;
     bool matrixIsLoaded_;
-    int verbose;
+    int verbosity_;
     void *UMF_Symbolic;
     void *UMF_Numeric;
     double UMF_Control[UMFPACK_CONTROL];
@@ -523,6 +544,6 @@ namespace Dune {
   };
 }
 
-#endif //HAVE_UMFPACK
+#endif // HAVE_SUITESPARSE_UMFPACK
 
 #endif //DUNE_ISTL_UMFPACK_HH

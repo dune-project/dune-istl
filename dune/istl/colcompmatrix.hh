@@ -156,8 +156,8 @@ namespace Dune
   template<class M, class X, class TM, class TD, class T1>
   class SeqOverlappingSchwarz;
 
-  template<class T>
-  struct SeqOverlappingSchwarzAssembler;
+  template<class T, bool flag>
+  struct SeqOverlappingSchwarzAssemblerHelper;
 
   /**
    * @brief Converter for BCRSMatrix to column-compressed Matrix.
@@ -166,14 +166,12 @@ namespace Dune
   template<class B, class TA, int n, int m>
   class ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
   {
-    template<class M, class X, class TM, class TD, class T1>
-    friend class SeqOverlappingSchwarz;
     friend struct ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
 
   public:
     /** @brief The type of the matrix to convert. */
     typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
-    friend struct SeqOverlappingSchwarzAssembler<ColCompMatrix<Matrix> >;
+    friend struct SeqOverlappingSchwarzAssemblerHelper<ColCompMatrix<Matrix>, true>;
 
     typedef typename Matrix::size_type size_type;
 
@@ -231,9 +229,8 @@ namespace Dune
 
     /**
      * @brief Initialize data from a given set of matrix rows and columns
-     * @tparam The type of the row index set.
      * @param mat the matrix with the values
-     * @param mrs The set of row (and column) indices to represent
+     * @param mrs The set of row (and column) indices to remove
      */
     virtual void setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs);
     /** @brief free allocated space. */

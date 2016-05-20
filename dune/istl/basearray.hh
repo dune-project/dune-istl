@@ -35,6 +35,10 @@ namespace Dune {
            Error checking: no error checking is provided normally.
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
            enables error checking.
+
+   \todo There shouldn't be an allocator argument here, because the array is 'unmanaged'.
+         And indeed, of the allocator, only its size_type is used.  Hence, the signature
+         of this class should be changed to <class B, int stype>
    */
   template<class B, class A=std::allocator<B> >
   class base_array_unmanaged
@@ -80,7 +84,7 @@ namespace Dune {
     {
     public:
       //! \brief The unqualified value type
-      typedef typename remove_const<T>::type ValueType;
+      typedef typename std::remove_const<T>::type ValueType;
 
       friend class RandomAccessIteratorFacade<RealIterator<const ValueType>, const ValueType>;
       friend class RandomAccessIteratorFacade<RealIterator<ValueType>, ValueType>;
@@ -137,6 +141,12 @@ namespace Dune {
         --i;
       }
 
+      // Needed for operator[] of the iterator
+      B& elementAt (std::ptrdiff_t offset) const
+      {
+        return *(i+offset);
+      }
+
       //! dereferencing
       B& dereference () const
       {
@@ -185,10 +195,7 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     iterator find (size_type i)
     {
-      if (i<n)
-        return iterator(p,p+i);
-      else
-        return iterator(p,p+n);
+      return iterator(p,p+std::min(i,n));
     }
 
     //! iterator class for sequential access
@@ -223,10 +230,7 @@ namespace Dune {
     //! random access returning iterator (end if not contained)
     const_iterator find (size_type i) const
     {
-      if (i<n)
-        return const_iterator(p,p+i);
-      else
-        return const_iterator(p,p+n);
+      return const_iterator(p,p+std::min(i,n));
     }
 
 
@@ -582,7 +586,7 @@ namespace Dune {
     {
     public:
       //! \brief The unqualified value type
-      typedef typename remove_const<T>::type ValueType;
+      typedef typename std::remove_const<T>::type ValueType;
 
       friend class BidirectionalIteratorFacade<RealIterator<const ValueType>, const ValueType>;
       friend class BidirectionalIteratorFacade<RealIterator<ValueType>, ValueType>;

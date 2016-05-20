@@ -4,7 +4,7 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/communicator.hh>
 #include <dune/common/parallel/remoteindices.hh>
-#include <dune/istl/bvector.hh>
+#include <vector>
 #include <dune/common/enumset.hh>
 #include <dune/common/fvector.hh>
 #include <algorithm>
@@ -53,7 +53,7 @@ void testIndices(MPI_Comm comm)
   int size = Ny*(end-start);
 
   typedef Dune::FieldVector<int,5> Vector;
-  typedef Dune::BlockVector<Vector> Array;
+  typedef std::vector<Vector> Array;
 
   Array distArray(size);
   Array* globalArray;
@@ -107,33 +107,50 @@ void testIndices(MPI_Comm comm)
 
   overlapExchanger.build(overlapIndices, Dune::EnumItem<GridFlags,owner>(), distArray, Dune::EnumItem<GridFlags,overlap>(), distArray);
 
-  std::cout<< rank<<": before forward distArray="<< distArray<<std::endl;
+  std::cout<< rank<<": before forward distArray=";
+  std::copy(distArray.begin(), distArray.end(), std::ostream_iterator<Vector>(std::cout, " "));
 
   // Exchange the overlap
   overlapExchanger.forward();
 
-  std::cout<<rank<<": overlap exchanged distArray"<< distArray<<std::endl;
+  std::cout<<rank<<": overlap exchanged distArray=";
+  std::copy(distArray.begin(), distArray.end(), std::ostream_iterator<Vector>(std::cout, " "));
 
   if(rank==master)
-    std::cout<<": before forward globalArray="<< *globalArray<<std::endl;
+  {
+    std::cout<<": before forward globalArray=";
+    std::copy(globalArray->begin(), globalArray->end(), std::ostream_iterator<Vector>(std::cout, " "));
+  }
 
   accumulator.forward();
 
 
   if(rank==master) {
-    std::cout<<"after forward global: "<<*globalArray<<std::endl;
-    *globalArray*=2;
-    std::cout<<" added one: globalArray="<<*globalArray<<std::endl;
+    std::cout<<"after forward global: ";
+    std::copy(globalArray->begin(), globalArray->end(), std::ostream_iterator<Vector>(std::cout, " "));
+    struct Twice
+    {
+      void operator()(Vector& v)
+      {
+        v*=2;
+      }
+    };
+
+    std::for_each(globalArray->begin(), globalArray->end(), Twice());
+    std::cout<<" Multiplied by two: globalArray=";
+    std::copy(globalArray->begin(), globalArray->end(), std::ostream_iterator<Vector>(std::cout, " "));
   }
 
   accumulator.backward();
-  std::cout<< rank<<": after backward distArray"<< distArray<<std::endl;
+  std::cout<< rank<<": after backward distArray=";
+  std::copy(distArray.begin(), distArray.end(), std::ostream_iterator<Vector>(std::cout, " "));
 
 
   // Exchange the overlap
   overlapExchanger.forward();
 
-  std::cout<<rank<<": overlap exchanged distArray"<< distArray<<std::endl;
+  std::cout<<rank<<": overlap exchanged distArray=";
+  std::copy(distArray.begin(), distArray.end(), std::ostream_iterator<Vector>(std::cout, " "));
 
   //std::cout << rank<<": source and dest are the same:"<<std::endl;
   //std::cout << remote<<std::endl<<std::flush;

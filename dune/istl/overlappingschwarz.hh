@@ -142,9 +142,9 @@ namespace Dune
     typedef BCRSMatrix< FieldMatrix<K,n,n>, Al> M;
   public:
     //! \brief The matrix type the preconditioner is for.
-    typedef typename Dune::remove_const<M>::type matrix_type;
+    typedef typename std::remove_const<M>::type matrix_type;
     typedef K field_type;
-    typedef typename Dune::remove_const<M>::type rilu_type;
+    typedef typename std::remove_const<M>::type rilu_type;
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
@@ -210,15 +210,7 @@ namespace Dune
   {};
 
   template<typename T>
-  struct OverlappingAssigner : public OverlappingAssignerHelper<T,Dune::StoresColumnCompressed<T>::value >
-  {
-    public:
-    OverlappingAssigner(std::size_t maxlength, const typename T::matrix_type& mat,
-                        const typename T::range_type& b, typename T::range_type& x)
-      : OverlappingAssignerHelper<T,Dune::StoresColumnCompressed<T>::value >
-      (maxlength,mat,b,x)
-      {}
-  };
+  using OverlappingAssigner = OverlappingAssignerHelper<T, Dune::StoresColumnCompressed<T>::value>;
 
   // specialization for DynamicMatrix
   template<class K, int n, class Al, class X, class Y>
@@ -310,7 +302,7 @@ namespace Dune
     std::size_t maxlength_;
   };
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   template<template<class> class S, int n, int m, typename T, typename A>
   struct OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>, A> >, true>
   {
@@ -394,7 +386,7 @@ namespace Dune
     std::size_t maxlength_;
   };
 
-#endif
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<class M, class X, class Y>
   class OverlappingAssignerILUBase
@@ -691,10 +683,7 @@ namespace Dune
   {};
 
   template<class T>
-  struct SeqOverlappingSchwarzAssembler
-    : public SeqOverlappingSchwarzAssemblerHelper<T,Dune::StoresColumnCompressed<T>::value>
-  {};
-
+  using SeqOverlappingSchwarzAssembler = SeqOverlappingSchwarzAssemblerHelper<T,Dune::StoresColumnCompressed<T>::value>;
 
   template<class K, int n, class Al, class X, class Y>
   struct SeqOverlappingSchwarzAssemblerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< FieldMatrix<K,n,n>, Al>, X, Y >,false>
@@ -1141,7 +1130,7 @@ namespace Dune
     return maxlength;
   }
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   template<template<class> class S, typename T, typename A, int m, int n>
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t SeqOverlappingSchwarzAssemblerHelper<S<BCRSMatrix<FieldMatrix<T,m,n>,A> >,true>::assembleLocalProblems(const RowToDomain& rowToDomain,
@@ -1185,15 +1174,16 @@ namespace Dune
 
       // Calculate the LU decompositions
       std::for_each(solvers.begin(), solvers.end(), std::mem_fun_ref(&S<BCRSMatrix<FieldMatrix<T,m,n>,A> >::decompose));
-      for(SolverIterator solver=solvers.begin(); solver!=solvers.end(); ++solver) {
-        assert(solver->getInternalMatrix().N()==solver->getInternalMatrix().M());
-        maxlength=std::max(maxlength, solver->getInternalMatrix().N());
+      for (SolverIterator solverIt = solvers.begin(); solverIt != solvers.end(); ++solverIt)
+      {
+        assert(solverIt->getInternalMatrix().N() == solverIt->getInternalMatrix().M());
+        maxlength = std::max(maxlength, solverIt->getInternalMatrix().N());
       }
     }
     return maxlength;
   }
 
-#endif
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<class M,class X,class Y>
   template<class RowToDomain, class Solvers, class SubDomains>
@@ -1387,7 +1377,7 @@ namespace Dune
     }
   }
 
-#if HAVE_SUPERLU || HAVE_UMFPACK
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<template<class> class S, int n, int m, typename T, typename A>
   OverlappingAssignerHelper<S<BCRSMatrix<FieldMatrix<T,n,m>,A> >,true>
@@ -1480,7 +1470,7 @@ namespace Dune
     return rhs_;
   }
 
-#endif
+#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 
   template<class M, class X, class Y>
   OverlappingAssignerILUBase<M,X,Y>::OverlappingAssignerILUBase(std::size_t maxlength,

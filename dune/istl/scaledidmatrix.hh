@@ -474,14 +474,17 @@ namespace Dune {
 
   };
 
-  template<class M, class K, int n>
-  void istl_assign_to_fmatrix(DenseMatrix<M>& fm, const ScaledIdentityMatrix<K,n>& s)
-  {
-    fm = K();
-    for(int i=0; i<n; ++i)
-      fm[i][i] = s.scalar();
-  }
-
+  template <class DenseMatrix, class field, int N>
+  struct DenseMatrixAssigner<DenseMatrix, ScaledIdentityMatrix<field, N>> {
+    static void apply(DenseMatrix& denseMatrix,
+                      ScaledIdentityMatrix<field, N> const& rhs) {
+      assert(denseMatrix.M() == N);
+      assert(denseMatrix.N() == N);
+      denseMatrix = field(0);
+      for (int i = 0; i < N; ++i)
+        denseMatrix[i][i] = rhs.scalar();
+    }
+  };
 } // end namespace
 
 #endif

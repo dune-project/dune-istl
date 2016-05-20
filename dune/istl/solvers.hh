@@ -11,14 +11,15 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <array>
 
 #include "istlexception.hh"
 #include "operators.hh"
 #include "scalarproducts.hh"
 #include "solver.hh"
 #include "preconditioner.hh"
-#include <dune/common/array.hh>
 #include <dune/common/deprecated.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
@@ -152,7 +153,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -169,7 +170,7 @@ namespace Dune {
         _op.applyscaleadd(-1,v,b);  // update defect
         real_type defnew=_sp.norm(b);  // comp defect norm
         if (_verbose>1)             // print
-          this->printOutput(std::cout,real_type(i),defnew,def);
+          this->printOutput(std::cout,i,defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -184,7 +185,7 @@ namespace Dune {
 
       // print
       if (_verbose==1)
-        this->printOutput(std::cout,real_type(i),def);
+        this->printOutput(std::cout,i,def);
 
       // postprocess preconditioner
       _prec.post(x);
@@ -294,7 +295,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -311,7 +312,7 @@ namespace Dune {
 
         real_type defnew=_sp.norm(b); // comp defect norm
         if (_verbose>1)             // print
-          this->printOutput(std::cout,real_type(i),defnew,def);
+          this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
         if (def<def0*_reduction || def<1E-30)    // convergence check
@@ -325,7 +326,7 @@ namespace Dune {
       i=std::min(_maxit,i);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,real_type(i),def);
+        this->printOutput(std::cout,i,def);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
@@ -410,9 +411,17 @@ namespace Dune {
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the CGSolver aborts when a NaN or infinite defect is
+             detected.  However, -ffinite-math-only (implied by -ffast-math)
+             can inhibit a result from becoming NaN that really should be NaN.
+             E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
+             -ffast-math.
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      using std::isfinite;
+
       res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec.pre(x,b);             // prepare preconditioner
@@ -422,6 +431,16 @@ namespace Dune {
       X q(x);              // a temporary vector
 
       real_type def0 = _sp.norm(b); // compute norm
+
+      if (!isfinite(def0)) // check for inf or NaN
+      {
+        if (_verbose>0)
+          std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
+                    << std::endl;
+        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << def0
+                   << " is infinite or NaN");
+      }
+
       if (def0<1E-30)    // convergence check
       {
         res.converged  = true;
@@ -472,6 +491,15 @@ namespace Dune {
           this->printOutput(std::cout,real_type(i),defnew,def);
 
         def = defnew;               // update norm
+        if (!isfinite(def)) // check for inf or NaN
+        {
+          if (_verbose>0)
+            std::cout << "=== CGSolver: abort due to infinite or NaN defect"
+                      << std::endl;
+          DUNE_THROW(SolverAbort,
+                     "CGSolver: defect=" << def << " is infinite or NaN");
+        }
+
         if (def<def0*_reduction || def<1E-30)    // convergence check
         {
           res.converged  = true;
@@ -513,6 +541,12 @@ namespace Dune {
        \brief Apply inverse operator with given reduction factor.
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the CGSolver aborts when a NaN or infinite defect is
+             detected.  However, -ffinite-math-only (implied by -ffast-math)
+             can inhibit a result from becoming NaN that really should be NaN.
+             E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
+             -ffast-math.
      */
     virtual void apply (X& x, X& b, double reduction,
                         InverseOperatorResult& res)
@@ -583,9 +617,12 @@ namespace Dune {
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      using std::abs;
       const real_type EPSILON=1e-80;
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
@@ -628,7 +665,7 @@ namespace Dune {
         if (_verbose>1)
         {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),norm_0);
+          this->printOutput(std::cout,0,norm_0);
           //std::cout << " Iter       Defect         Rate" << std::endl;
           //std::cout << "    0" << std::setw(14) << norm_0 << std::endl;
         }
@@ -658,14 +695,13 @@ namespace Dune {
         // rho_new = < rt , r >
         rho_new = _sp.dot(rt,r);
 
-        using std::abs;
-        // look if breakdown occured
+        // look if breakdown occurred
         if (abs(rho) <= EPSILON)
-          DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - rho "
+          DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
                      << rho << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
         if (abs(omega) <= EPSILON)
-          DUNE_THROW(ISTLError,"breakdown in BiCGSTAB - omega "
+          DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
                      << omega << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
 
@@ -690,8 +726,10 @@ namespace Dune {
         // alpha = rho_new / < rt, v >
         h = _sp.dot(rt,v);
 
-        if ( abs(h) < EPSILON )
-          DUNE_THROW(ISTLError,"h=0 in BiCGSTAB");
+        if (abs(h) < EPSILON)
+          DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
+                     << abs(h) << " < EPSILON " << EPSILON
+                     << " after " << it << " iterations");
 
         alpha = rho_new / h;
 
@@ -710,7 +748,7 @@ namespace Dune {
 
         if (_verbose>1) // print
         {
-          this->printOutput(std::cout,real_type(it),norm,norm_old);
+          this->printOutput(std::cout,it,norm,norm_old);
         }
 
         if ( norm < (_reduction * norm_0) )
@@ -749,7 +787,7 @@ namespace Dune {
 
         if (_verbose > 1)             // print
         {
-          this->printOutput(std::cout,real_type(it),norm,norm_old);
+          this->printOutput(std::cout,it,norm,norm_old);
         }
 
         if ( norm < (_reduction * norm_0)  || norm<1E-30)
@@ -765,7 +803,7 @@ namespace Dune {
       it=std::min(static_cast<double>(_maxit),it);
 
       if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,real_type(it),norm);
+        this->printOutput(std::cout,it,norm);
 
       _prec.post(x);                  // postprocess preconditioner
       res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
@@ -783,6 +821,8 @@ namespace Dune {
        \brief Apply inverse operator with given reduction factor.
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
@@ -856,6 +896,8 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      using std::sqrt;
+      using std::abs;
       // clear solver statistics
       res.clear();
       // start a timer
@@ -874,7 +916,7 @@ namespace Dune {
         std::cout << "=== MINRESSolver" << std::endl;
         if(_verbose > 1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
 
@@ -899,16 +941,16 @@ namespace Dune {
       real_type def = def0;
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
-        // diagonal entries of givens rotation
-      Dune::array<real_type,2> c{{0.0,0.0}};
-        // off-diagonal entries of givens rotation
-      Dune::array<field_type,2> s{{0.0,0.0}};
+      // diagonal entries of givens rotation
+      std::array<real_type,2> c{{0.0,0.0}};
+      // off-diagonal entries of givens rotation
+      std::array<field_type,2> s{{0.0,0.0}};
 
       // recurrence coefficients (column k of tridiag matrix T_k)
-      Dune::array<field_type,3> T{{0.0,0.0,0.0}};
+      std::array<field_type,3> T{{0.0,0.0,0.0}};
 
       // the rhs vector of the min problem
-      Dune::array<field_type,2> xi{{1.0,0.0}};
+      std::array<field_type,2> xi{{1.0,0.0}};
 
       // some temporary vectors
       X z(b), dummy(b);
@@ -919,18 +961,17 @@ namespace Dune {
 
       // beta is real and positive in exact arithmetic
       // since it is the norm of the basis vectors (in unpreconditioned case)
-      using std::sqrt;
       beta = sqrt(_sp.dot(b,z));
       field_type beta0 = beta;
 
       // the search directions
-      Dune::array<X,3> p{{b,b,b}};
+      std::array<X,3> p{{b,b,b}};
       p[0] = 0.0;
       p[1] = 0.0;
       p[2] = 0.0;
 
       // orthonormal basis vectors (in unpreconditioned case)
-      Dune::array<X,3> q{{b,b,b}};
+      std::array<X,3> q{{b,b,b}};
       q[0] = 0.0;
       q[1] *= 1.0/beta;
       q[2] = 0.0;
@@ -960,7 +1001,6 @@ namespace Dune {
 
         // beta is real and positive in exact arithmetic
         // since it is the norm of the basis vectors (in unpreconditioned case)
-        using std::sqrt;
         beta = sqrt(_sp.dot(q[i2],z));
 
         q[i2] *= 1.0/beta;
@@ -1006,7 +1046,7 @@ namespace Dune {
         real_type defnew = abs(beta0*xi[i%2]);
 
           if(_verbose > 1)
-            this->printOutput(std::cout,real_type(i),defnew,def);
+            this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;
           if(def < def0*_reduction || def < 1e-30 || i == _maxit ) {
@@ -1016,7 +1056,7 @@ namespace Dune {
         } // end for
 
         if(_verbose == 1)
-          this->printOutput(std::cout,real_type(i),def);
+          this->printOutput(std::cout,i,def);
 
         // postprocess preconditioner
         _prec.post(x);
@@ -1052,8 +1092,8 @@ namespace Dune {
 
     void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      using std::abs;
       using std::sqrt;
+      using std::abs;
       real_type norm_dx = abs(dx);
       real_type norm_dy = abs(dy);
       if(norm_dy < 1e-15) {
@@ -1190,7 +1230,14 @@ namespace Dune {
                     "P and S must have the same category!");
     }
 
-    //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+    /*!
+       \brief Apply inverse operator.
+
+       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the RestartedGMResSolver aborts when it detects a
+             breakdown.
+     */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
       apply(x,b,_reduction,res);
@@ -1200,9 +1247,13 @@ namespace Dune {
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the RestartedGMResSolver aborts when it detects a
+             breakdown.
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
+      using std::abs;
       const real_type EPSILON = 1e-80;
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
@@ -1238,7 +1289,7 @@ namespace Dune {
           std::cout << "=== RestartedGMResSolver" << std::endl;
           if(_verbose > 1) {
             this->printHeader(std::cout);
-            this->printOutput(std::cout,real_type(0),norm_0);
+            this->printOutput(std::cout,0,norm_0);
           }
         }
 
@@ -1267,16 +1318,15 @@ namespace Dune {
           for(int k=0; k<i+1; k++) {
             // notice that _sp.dot(v[k],w) = v[k]\adjoint w
             // so one has to pay attention to the order
-            // the in scalar product for the complex case
+            // in the scalar product for the complex case
             // doing the modified Gram-Schmidt algorithm
             H[k][i] = _sp.dot(v[k],w);
             // w -= H[k][i] * v[k]
             w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp.norm(w);
-          using std::abs;
           if(abs(H[i+1][i]) < EPSILON)
-            DUNE_THROW(ISTLError,
+            DUNE_THROW(SolverAbort,
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
           // normalize new vector
@@ -1297,7 +1347,7 @@ namespace Dune {
 
           // print current iteration statistics
           if(_verbose > 1) {
-            this->printOutput(std::cout,real_type(j),norm,norm_old);
+            this->printOutput(std::cout,j,norm,norm_old);
           }
 
           norm_old = norm;
@@ -1380,20 +1430,20 @@ namespace Dune {
     }
 
     template<typename T>
-    typename enable_if<is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename std::enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       return t;
     }
 
     template<typename T>
-    typename enable_if<!is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename std::enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       return conj(t);
     }
 
     void
     generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
-      using std::abs;
       using std::sqrt;
+      using std::abs;
       real_type norm_dx = abs(dx);
       real_type norm_dy = abs(dy);
       if(norm_dy < 1e-15) {
@@ -1539,7 +1589,7 @@ namespace Dune {
         std::cout << "=== GeneralizedPCGSolver" << std::endl;
         if (_verbose>1) {
           this->printHeader(std::cout);
-          this->printOutput(std::cout,real_type(0),def0);
+          this->printOutput(std::cout,0,def0);
         }
       }
       // some local variables
@@ -1561,7 +1611,7 @@ namespace Dune {
       // convergence test
       real_type defnew=_sp.norm(b);    // comp defect norm
       if (_verbose>1)                 // print
-        this->printOutput(std::cout,real_type(++i),defnew,def);
+        this->printOutput(std::cout,++i,defnew,def);
       def = defnew;                   // update norm
       if (def<def0*_reduction || def<1E-30)        // convergence check
       {
@@ -1603,12 +1653,12 @@ namespace Dune {
           b.axpy(-lambda,q);                  // update defect
 
           // convergence test
-          real_type defnew=_sp.norm(b);        // comp defect norm
+          real_type defNew=_sp.norm(b);        // comp defect norm
 
           if (_verbose>1)                     // print
-            this->printOutput(std::cout,real_type(++i),defnew,def);
+            this->printOutput(std::cout,++i,defNew,def);
 
-          def = defnew;                       // update norm
+          def = defNew;                       // update norm
           if (def<def0*_reduction || def<1E-30)            // convergence check
           {
             res.converged  = true;

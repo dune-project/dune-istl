@@ -1,26 +1,38 @@
+# .. cmake_module::
+#
+#    Module that checks whether SuperLU is available and usable.
+#    SuperLU must be a version released after the year 2005.
+#
+#    Variables used by this module which you may want to set:
+#
+#    :ref:`SUPERLU_ROOT`
+#       Path list to search for SuperLU
+#
+#    Sets the follwing variables:
+#
+#    :code:`SUPERLU_FOUND`
+#       True if SuperLU available and usable.
+#
+#    :code:`SUPERLU_MIN_VERSION_4_3`
+#       True if SuperLU version >= 4.3.
+#
+#    :code:`SUPERLU_WITH_VERSION`
+#       Human readable string containing version information.
+#
+#    :code:`SUPERLU_INCLUDE_DIRS`
+#       Path to the SuperLU include dirs.
+#
+#    :code:`SUPERLU_LIBRARIES`
+#       Name to the SuperLU library.
+#
+# .. cmake_variable:: SUPERLU_ROOT
+#
+#    You may set this variable to have :ref:`FindSuperLU` look
+#    for the SuperLU package in the given path before inspecting
+#    system paths.
+#
 
-#
-# Module that checks whether SuperLU is available and usable.
-# SuperLU must be a version released after the year 2005.
-#
-# Variables used by this module which you may want to set:
-# SUPERLU_ROOT         Path list to search for SuperLU
-#
-# Sets the follwing variable:
-#
-# SUPERLU_FOUND           True if SuperLU available and usable.
-# SUPERLU_MIN_VERSION_4_3 True if SuperLU version >= 4.3.
-# SUPERLU_WITH_VERSION    Human readable string containing version information.
-# SUPERLU_INCLUDE_DIRS    Path to the SuperLU include dirs.
-# SUPERLU_LIBRARIES       Name to the SuperLU library.
-#
-
-# look for BLAS
-find_package(BLAS QUIET REQUIRED)
-if(NOT BLAS_FOUND)
-  message(WARNING "SuperLU requires BLAS which was not found, skipping the test.")
-  return()
-endif(NOT BLAS_FOUND)
+find_package(BLAS QUIET)
 
 # look for header files, only at positions given by the user
 find_path(SUPERLU_INCLUDE_DIR
@@ -38,7 +50,7 @@ find_path(SUPERLU_INCLUDE_DIR
 
 # look for library, only at positions given by the user
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
+  NAMES "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0" "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
   PATH_SUFFIXES "lib" "lib32" "lib64"
   NO_DEFAULT_PATH
@@ -46,7 +58,7 @@ find_library(SUPERLU_LIBRARY
 
 # look for library files, including default paths
 find_library(SUPERLU_LIBRARY
-  NAMES "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu_3.1" "superlu_3.0" "superlu"
+  NAMES  "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0" "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0" "superlu"
   PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
@@ -70,16 +82,6 @@ endif(SUPERLU_LIBRARY)
 if(BLAS_LIBRARIES)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
 endif(BLAS_LIBRARIES)
-# check whether "mem_usage_t.expansions" was found in "slu_ddefs.h"
-CHECK_C_SOURCE_COMPILES("
-#include <slu_ddefs.h>
-int main(void)
-{
-  mem_usage_t mem;
-  return mem.expansions;
-}"
-HAVE_MEM_USAGE_T_EXPANSIONS)
-
 # check whether version is at least 4.3
 CHECK_C_SOURCE_COMPILES("
 #include <slu_ddefs.h>
@@ -88,21 +90,37 @@ int main(void)
   return SLU_DOUBLE;
 }"
 SUPERLU_MIN_VERSION_4_3)
+
+CHECK_C_SOURCE_COMPILES("
+typedef int int_t;
+#include <supermatrix.h>
+#include <slu_util.h>
+int main(void)
+{
+  GlobalLU_t glu;
+  return 0;
+}"
+SUPERLU_MIN_VERSION_5)
+
 cmake_pop_check_state()
 
-if(SUPERLU_MIN_VERSION_4_3)
+if(SUPERLU_MIN_VERSION_5)
+  set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
+    "Human readable string containing SuperLU version information.")
+elseif(SUPERLU_MIN_VERSION_4_3)
   set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
     "Human readable string containing SuperLU version information.")
 else()
-  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2, post 2005" CACHE STRING
+  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
     "Human readable string containing SuperLU version information.")
-endif(SUPERLU_MIN_VERSION_4_3)
+endif()
 
 # behave like a CMake module is supposed to behave
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   "SuperLU"
   DEFAULT_MSG
+  BLAS_FOUND
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
 )

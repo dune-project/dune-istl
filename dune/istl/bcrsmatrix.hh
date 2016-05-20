@@ -20,7 +20,6 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/nullptr.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -280,7 +279,7 @@ namespace Dune {
 
      For general finite element implementations the number of rows n
      is known, the number of non-zeroes might also be known (e.g.
-     \#edges + \#nodes for P1) but the size of a row and the indices of a row
+     \#edges + \#nodes for P2) but the size of a row and the indices of a row
      can not be defined in sequential order.
 
      \code
@@ -298,7 +297,7 @@ namespace Dune {
      B.setrowsize(2,1);
      B.setrowsize(1,1);
      // increase row size for row 2
-     B.incrementrowsize(2)
+     B.incrementrowsize(2);
 
      // finalize row setup phase
      B.endrowsizes();
@@ -473,12 +472,12 @@ namespace Dune {
        *
        * For general finite element implementations the number of rows n
        * is known, the number of non-zeroes might also be known (e.g.
-       * \#edges + \#nodes for P1) but the size of a row and the indices of a row
-       * can not be defined in sequential order.
+       * \#edges + \#nodes for P2) but the size of a row and the indices of a row
+       * cannot be defined in sequential order.
        */
       random,
       /**
-       * @brief Build entries randomly with an educated guess on entries per row.
+       * @brief Build entries randomly with an educated guess for the number of entries per row.
        *
        * Allows random order generation as in random mode, but row sizes do not need
        * to be given first. Instead an average number of non-zeroes per row is passed
@@ -529,7 +528,7 @@ namespace Dune {
 
     public:
       //! \brief The unqualified value type
-      typedef typename remove_const<T>::type ValueType;
+      typedef typename std::remove_const<T>::type ValueType;
 
       friend class RandomAccessIteratorFacade<RealRowIterator<const ValueType>, const ValueType>;
       friend class RandomAccessIteratorFacade<RealRowIterator<ValueType>, ValueType>;
@@ -696,15 +695,15 @@ namespace Dune {
 
     //! an empty matrix
     BCRSMatrix ()
-      : build_mode(unknown), ready(notAllocated), n(0), m(0), nnz(0),
-        allocationSize(0), r(0), a(0),
+      : build_mode(unknown), ready(notAllocated), n(0), m(0), nnz_(0),
+        allocationSize_(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {}
 
     //! matrix with known number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, size_type _nnz, BuildMode bm)
-      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz(0),
-        allocationSize(0), r(0), a(0),
+      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
+        allocationSize_(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m, _nnz,true,false);
@@ -712,8 +711,8 @@ namespace Dune {
 
     //! matrix with unknown number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
-      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz(0),
-        allocationSize(0), r(0), a(0),
+      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
+        allocationSize_(0), r(0), a(0),
         avg(0), overflowsize(-1.0)
     {
       allocate(_n, _m,0,true,false);
@@ -731,8 +730,8 @@ namespace Dune {
      *
      */
     BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
-      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz(0),
-        allocationSize(0), r(0), a(0),
+      : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
+        allocationSize_(0), r(0), a(0),
         avg(_avg), overflowsize(_overflowsize)
     {
       if (bm != implicit)
@@ -752,15 +751,15 @@ namespace Dune {
      * Does a deep copy as expected.
      */
     BCRSMatrix (const BCRSMatrix& Mat)
-      : build_mode(Mat.build_mode), ready(notAllocated), n(0), m(0), nnz(0),
-        allocationSize(0), r(0), a(0),
+      : build_mode(Mat.build_mode), ready(notAllocated), n(0), m(0), nnz_(0),
+        allocationSize_(0), r(0), a(0),
         avg(Mat.avg), overflowsize(Mat.overflowsize)
     {
       if (!(Mat.ready == notAllocated || Mat.ready == built))
         DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copy-constructed when source matrix is completely empty (size not set) or fully built)");
 
       // deep copy in global array
-      size_type _nnz = Mat.nnz;
+      size_type _nnz = Mat.nnz_;
 
       // in case of row-wise allocation
       if (_nnz<=0)
@@ -770,7 +769,7 @@ namespace Dune {
           _nnz += Mat.r[i].getsize();
       }
 
-      j = Mat.j; // enable column index sharing, release array in case of row-wise allocation
+      j_ = Mat.j_; // enable column index sharing, release array in case of row-wise allocation
       allocate(Mat.n, Mat.m, _nnz, true, true);
 
       // build window structure
@@ -873,7 +872,7 @@ namespace Dune {
       if (!((ready == notAllocated || ready == built) && (Mat.ready == notAllocated || Mat.ready == built)))
         DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copied when both target and source are empty or fully built)");
 
-      // make it simple: ALWAYS throw away memory for a and j
+      // make it simple: ALWAYS throw away memory for a and j_
       // and deallocate rows only if n != Mat.n
       deallocate(n!=Mat.n);
 
@@ -885,16 +884,16 @@ namespace Dune {
         rowAllocator_.deallocate(r,n);
       }
 
-      nnz=Mat.nnz;
-      if (nnz<=0)
+      nnz_ = Mat.nnz_;
+      if (nnz_ <= 0)
       {
         for (size_type i=0; i<Mat.n; i++)
-          nnz += Mat.r[i].getsize();
+          nnz_ += Mat.r[i].getsize();
       }
 
-      // allocate a, share j
-      j = Mat.j;
-      allocate(Mat.n, Mat.m, nnz, n!=Mat.n, true);
+      // allocate a, share j_
+      j_ = Mat.j_;
+      allocate(Mat.n, Mat.m, nnz_, n!=Mat.n, true);
 
       // build window structure
       copyWindowStructure(Mat);
@@ -920,7 +919,7 @@ namespace Dune {
     public:
       //! constructor
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
-        : Mat(_Mat), i(_i), nnz(0), current_row(nullptr, Mat.j.get(), 0)
+        : Mat(_Mat), i(_i), nnz(0), current_row(nullptr, Mat.j_.get(), 0)
       {
         if (Mat.build_mode == unknown && Mat.ready == building)
           {
@@ -940,7 +939,7 @@ namespace Dune {
           DUNE_THROW(BCRSMatrixError,"matrix already built up");
 
         // row i is defined through the pattern
-        // get memory for the row and initialize the j array
+        // get memory for the row and initialize the j_ array
         // this depends on the allocation mode
 
         // compute size of the row
@@ -951,12 +950,12 @@ namespace Dune {
           nnz += s;
 
           // alloc memory / set window
-          if (Mat.nnz>0)
+          if (Mat.nnz_ > 0)
           {
             // memory is allocated in one long array
 
             // check if that memory is sufficient
-            if (nnz>Mat.nnz)
+            if (nnz > Mat.nnz_)
               DUNE_THROW(BCRSMatrixError,"allocated nnz too small");
 
             // set row i
@@ -965,22 +964,19 @@ namespace Dune {
           }else{
             // memory is allocated individually per row
             // allocate and set row i
-            B*   a = Mat.allocator_.allocate(s);
+            B* b = Mat.allocator_.allocate(s);
             // use placement new to call constructor that allocates
             // additional memory.
-            new (a) B[s];
+            new (b) B[s];
             size_type* j = Mat.sizeAllocator_.allocate(s);
-            Mat.r[i].set(s,a,j);
+            Mat.r[i].set(s,b,j);
           }
         }else
           // setup empty row
-          Mat.r[i].set(0,0,0);
+          Mat.r[i].set(0,nullptr,nullptr);
 
         // initialize the j array for row i from pattern
-        size_type k=0;
-        size_type *j =  Mat.r[i].getindexptr();
-        for (typename PatternType::const_iterator it=pattern.begin(); it!=pattern.end(); ++it)
-          j[k++] = *it;
+        std::copy(pattern.cbegin(), pattern.cend(), Mat.r[i].getindexptr());
 
         // now go to next row
         i++;
@@ -990,11 +986,11 @@ namespace Dune {
         if (i==Mat.n)
         {
           Mat.ready = built;
-          if(Mat.nnz>0)
+          if(Mat.nnz_ > 0)
           {
             // Set nnz to the exact number of nonzero blocks inserted
             // as some methods rely on it
-            Mat.nnz=nnz;
+            Mat.nnz_ = nnz;
             // allocate data array
             Mat.allocateData();
             Mat.setDataPointers();
@@ -1016,7 +1012,7 @@ namespace Dune {
         return (i==it.i) && (&Mat==&it.Mat);
       }
 
-      //! dereferencing
+      //! The number of the row that the iterator currently points to
       size_type index () const
       {
         return i;
@@ -1031,10 +1027,7 @@ namespace Dune {
       //! return true if column index is in row
       bool contains (size_type j)
       {
-        if (pattern.find(j)!=pattern.end())
-          return true;
-        else
-          return false;
+        return pattern.find(j) != pattern.end();
       }
       /**
        * @brief Get the current row size.
@@ -1073,7 +1066,12 @@ namespace Dune {
 
     //===== random creation interface
 
-    //! set number of indices in row i to s
+    /** \brief Set number of indices in row i to s
+     *
+     * The number s may actually be larger than the true number of nonzero entries in row i.  In that
+     * case, the extra memory goes wasted.  You will receive run-time warnings about this, sent to
+     * the Dune::dwarn stream.
+     */
     void setrowsize (size_type i, size_type s)
     {
       if (build_mode!=random)
@@ -1120,20 +1118,20 @@ namespace Dune {
         total += r[i].getsize();
       }
 
-      if(nnz==0)
+      if(nnz_ == 0)
         // allocate/check memory
         allocate(n,m,total,false,false);
-      else if(nnz<total)
-        DUNE_THROW(BCRSMatrixError,"Specified number of nonzeros ("<<nnz<<") not "
+      else if(nnz_ < total)
+        DUNE_THROW(BCRSMatrixError,"Specified number of nonzeros ("<<nnz_<<") not "
                                                              <<"sufficient for calculated nonzeros ("<<total<<"! ");
 
       // set the window pointers correctly
       setColumnPointers(begin());
 
-      // initialize j array with m (an invalid column index)
+      // initialize j_ array with m (an invalid column index)
       // this indicates an unused entry
-      for (size_type k=0; k<nnz; k++)
-        j.get()[k] = m;
+      for (size_type k=0; k<nnz_; k++)
+        j_.get()[k] = m;
       ready = rowSizesBuilt;
     }
 
@@ -1222,7 +1220,7 @@ namespace Dune {
       {
         ColIterator endj = (*i).end();
         for (ColIterator j=(*i).begin(); j!=endj; ++j) {
-          if (j.index()>=m) {
+          if (j.index() >= m) {
             dwarn << "WARNING: size of row "<< i.index()<<" is "<<j.offset()<<". But was specified as being "<< (*i).end().offset()
                   <<". This means you are wasting valuable space and creating additional cache misses!"<<std::endl;
             r[i.index()].setsize(j.offset());
@@ -1333,7 +1331,7 @@ namespace Dune {
       stats.maximum = 0;
 
       //get insertion iterators pointing to one before start (for later use of ++it)
-      size_type* jiit = j.get();
+      size_type* jiit = j_.get();
       B* aiit = a;
 
       //get iterator to the smallest overflow element
@@ -1393,7 +1391,7 @@ namespace Dune {
           //copy element from array
           *jiit = **it;
           ++jiit;
-          B* apos = *it-j.get()+a;
+          B* apos = *it - j_.get() + a;
           *aiit = *apos;
           ++aiit;
         }
@@ -1426,10 +1424,10 @@ namespace Dune {
       overflow.clear();
 
       //determine average number of entries and memory usage
-      std::ptrdiff_t diff = (r[n-1].getindexptr() + r[n-1].getsize() - j.get());
-      nnz = diff;
-      stats.avg = (double) (nnz) / (double) n;
-      stats.mem_ratio = (double) (nnz)/(double) allocationSize;
+      std::ptrdiff_t diff = (r[n-1].getindexptr() + r[n-1].getsize() - j_.get());
+      nnz_ = diff;
+      stats.avg = (double) (nnz_) / (double) n;
+      stats.mem_ratio = (double) (nnz_) / (double) allocationSize_;
 
       //matrix is now built
       ready = built;
@@ -1447,10 +1445,10 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
 #endif
 
-      if (nnz>0)
+      if (nnz_ > 0)
       {
         // process 1D array
-        for (size_type i=0; i<nnz; i++)
+        for (size_type i=0; i<nnz_; i++)
           a[i] *= k;
       }
       else
@@ -1475,10 +1473,10 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
 #endif
 
-      if (nnz>0)
+      if (nnz_ > 0)
       {
         // process 1D array
-        for (size_type i=0; i<nnz; i++)
+        for (size_type i=0; i<nnz_; i++)
           a[i] /= k;
       }
       else
@@ -1518,9 +1516,9 @@ namespace Dune {
       return *this;
     }
 
-    /*! \brief Substract the entries of another matrix to this one.
+    /*! \brief Subtract the entries of another matrix from this one.
      *
-     * \param b The matrix to add to this one. Its sparsity pattern
+     * \param b The matrix to subtract from this one. Its sparsity pattern
      * has to be subset of the sparsity pattern of this matrix.
      */
     BCRSMatrix& operator-= (const BCRSMatrix& b)
@@ -1627,8 +1625,8 @@ namespace Dune {
     }
 
     //! y += alpha A x
-    template<class X, class Y>
-    void usmv (const field_type& alpha, const X& x, Y& y) const
+    template<class X, class Y, class F>
+    void usmv (F&& alpha, const X& x, Y& y) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (ready != built)
@@ -1803,45 +1801,90 @@ namespace Dune {
     }
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
-    typename FieldTraits<field_type>::real_type infinity_norm () const
-    {
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
 
-      double max=0;
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        double sum=0;
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          sum += (*j).infinity_norm();
-        max = std::max(max,sum);
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm();
+        norm = max(sum, norm);
       }
-      return max;
+      return norm;
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
-    typename FieldTraits<field_type>::real_type infinity_norm_real () const
-    {
-#ifdef DUNE_ISTL_WITH_CHECKING
+    template <typename ft = field_type,
+              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
-#endif
 
-      double max=0;
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        double sum=0;
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          sum += (*j).infinity_norm_real();
-        max = std::max(max,sum);
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm_real();
+        norm = max(sum, norm);
       }
-      return max;
+      return norm;
     }
 
+    //! infinity norm (row sum norm, how to generalize for blocks?)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm() const {
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
+
+    //! simplified infinity norm (uses Manhattan norm for complex values)
+    template <typename ft = field_type,
+              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+    typename FieldTraits<ft>::real_type infinity_norm_real() const {
+      if (ready != built)
+        DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
+
+      using real_type = typename FieldTraits<ft>::real_type;
+      using std::max;
+
+      real_type norm = 0;
+      real_type isNaN = 1;
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += y.infinity_norm_real();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
+      isNaN /= isNaN;
+      return norm * isNaN;
+    }
 
     //===== sizes
 
@@ -1860,7 +1903,7 @@ namespace Dune {
     //! number of blocks that are stored (the number of blocks that possibly are nonzero)
     size_type nonzeroes () const
     {
-      return nnz;
+      return nnz_;
     }
 
     //! The current build stage of the matrix.
@@ -1884,10 +1927,7 @@ namespace Dune {
       if (i<0 || i>=n) DUNE_THROW(BCRSMatrixError,"row index out of range");
       if (j<0 || j>=m) DUNE_THROW(BCRSMatrixError,"column index out of range");
 #endif
-      if (r[i].size() && r[i].find(j)!=r[i].end())
-        return true;
-      else
-        return false;
+      return (r[i].size() && r[i].find(j) != r[i].end());
     }
 
 
@@ -1906,8 +1946,8 @@ namespace Dune {
     // size of the matrix
     size_type n;       // number of rows
     size_type m;       // number of columns
-    size_type nnz;     // number of nonzeroes contained in the matrix
-    size_type allocationSize; //allocated size of a and j arrays, except in implicit mode: nnz==allocationsSize
+    size_type nnz_;     // number of nonzeroes contained in the matrix
+    size_type allocationSize_; //allocated size of a and j arrays, except in implicit mode: nnz_==allocationsSize_
     // zero means that memory is allocated separately for each row.
 
     // the rows are dynamically allocated
@@ -1917,7 +1957,7 @@ namespace Dune {
     B*   a;      // [allocationSize] non-zero entries of the matrix in row-wise ordering
     // If a single array of column indices is used, it can be shared
     // between different matrices with the same sparsity pattern
-    std::shared_ptr<size_type> j;  // [allocationSize] column indices of entries
+    std::shared_ptr<size_type> j_;  // [allocationSize] column indices of entries
 
     // additional data is needed in implicit buildmode
     size_type avg;
@@ -1928,7 +1968,7 @@ namespace Dune {
 
     void setWindowPointers(ConstRowIterator row)
     {
-      row_type current_row(a,j.get(),0); // Pointers to current row data
+      row_type current_row(a,j_.get(),0); // Pointers to current row data
       for (size_type i=0; i<n; i++, ++row) {
         // set row i
         size_type s = row->getsize();
@@ -1941,7 +1981,7 @@ namespace Dune {
           current_row.setindexptr(current_row.getindexptr()+s);
         } else{
           // empty row
-          r[i].set(0,0,0);
+          r[i].set(0,nullptr,nullptr);
         }
       }
     }
@@ -1953,7 +1993,7 @@ namespace Dune {
      */
     void setColumnPointers(ConstRowIterator row)
     {
-      size_type* jptr = j.get();
+      size_type* jptr = j_.get();
       for (size_type i=0; i<n; ++i, ++row) {
         // set row i
         size_type s = row->getsize();
@@ -1964,7 +2004,7 @@ namespace Dune {
           r[i].setindexptr(jptr);
         } else{
           // empty row
-          r[i].set(0,0,0);
+          r[i].set(0,nullptr,nullptr);
         }
 
         // advance position in global array
@@ -1987,7 +2027,7 @@ namespace Dune {
           r[i].setptr(aptr);
         } else{
           // empty row
-          r[i].set(0,0,0);
+          r[i].set(0,nullptr,nullptr);
         }
 
         // advance position in global array
@@ -2019,15 +2059,15 @@ namespace Dune {
       if (notAllocated)
         return;
 
-      if (allocationSize>0)
+      if (allocationSize_>0)
       {
-        // a,j have been allocated as one long vector
-        j.reset();
+        // a,j_ have been allocated as one long vector
+        j_.reset();
         if (a)
           {
-            for(B *aiter=a+(allocationSize-1), *aend=a-1; aiter!=aend; --aiter)
+            for(B *aiter=a+(allocationSize_-1), *aend=a-1; aiter!=aend; --aiter)
               allocator_.destroy(aiter);
-            allocator_.deallocate(a,allocationSize);
+            allocator_.deallocate(a,allocationSize_);
             a = nullptr;
           }
       }
@@ -2088,18 +2128,18 @@ namespace Dune {
      *
      * @param row The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
-     * @param allocationSize_ The number of nonzero entries the matrix should hold (if omitted
+     * @param allocationSize The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
      * @param allocateRow Whether we have to allocate the row pointers, too. (Defaults to
      * true)
      */
-    void allocate(size_type rows, size_type columns, size_type allocationSize_, bool allocateRows, bool allocate_data)
+    void allocate(size_type rows, size_type columns, size_type allocationSize, bool allocateRows, bool allocate_data)
     {
       // Store size
       n = rows;
       m = columns;
-      nnz = allocationSize_;
-      allocationSize = allocationSize_;
+      nnz_ = allocationSize;
+      allocationSize_ = allocationSize;
 
       // allocate rows
       if(allocateRows) {
@@ -2112,15 +2152,15 @@ namespace Dune {
         }
       }
 
-      // allocate a and j array
+      // allocate a and j_ array
       if (allocate_data)
         allocateData();
-      if (allocationSize>0) {
+      if (allocationSize_>0) {
         // allocate column indices only if not yet present (enable sharing)
-        if (!j.get())
-          j.reset(sizeAllocator_.allocate(allocationSize),Deallocator(sizeAllocator_));
+        if (!j_.get())
+          j_.reset(sizeAllocator_.allocate(allocationSize_),Deallocator(sizeAllocator_));
       }else{
-        j.reset();
+        j_.reset();
         for(row_type* ri=r; ri!=r+rows; ++ri)
           rowAllocator_.construct(ri, row_type());
       }
@@ -2133,11 +2173,11 @@ namespace Dune {
     {
       if (a)
         DUNE_THROW(InvalidStateException,"Cannot allocate data array (already allocated)");
-      if (allocationSize>0) {
-        a = allocator_.allocate(allocationSize);
+      if (allocationSize_>0) {
+        a = allocator_.allocate(allocationSize_);
         // use placement new to call constructor that allocates
         // additional memory.
-        new (a) B[allocationSize];
+        new (a) B[allocationSize_];
       } else {
         a = nullptr;
       }
@@ -2160,12 +2200,12 @@ namespace Dune {
         DUNE_THROW(InvalidStateException,"You have to set the implicit build mode parameters before starting to build the matrix");
       //calculate size of overflow region, add buffer for row sort!
       size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
-      allocationSize = _n*avg + osize;
+      allocationSize_ = _n*avg + osize;
 
-      allocate(_n, _m, allocationSize,true,true);
+      allocate(_n, _m, allocationSize_,true,true);
 
       //set row pointers correctly
-      size_type* jptr = j.get() + osize;
+      size_type* jptr = j_.get() + osize;
       B* aptr = a + osize;
       for (size_type i=0; i<n; i++)
       {

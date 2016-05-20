@@ -158,10 +158,10 @@ namespace Dune
       class LevelIterator
         : public BidirectionalIteratorFacade<LevelIterator<C,T1>,T1,T1&>
       {
-        friend class LevelIterator<typename remove_const<C>::type,
-            typename remove_const<T1>::type >;
-        friend class LevelIterator<const typename remove_const<C>::type,
-            const typename remove_const<T1>::type >;
+        friend class LevelIterator<typename std::remove_const<C>::type,
+            typename std::remove_const<T1>::type >;
+        friend class LevelIterator<const typename std::remove_const<C>::type,
+            const typename std::remove_const<T1>::type >;
 
       public:
         /** @brief Constructor. */
@@ -174,22 +174,22 @@ namespace Dune
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<typename remove_const<C>::type,
-                          typename remove_const<T1>::type>& other)
+        LevelIterator(const LevelIterator<typename std::remove_const<C>::type,
+                          typename std::remove_const<T1>::type>& other)
           : element_(other.element_)
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<const typename remove_const<C>::type,
-                          const typename remove_const<T1>::type>& other)
+        LevelIterator(const LevelIterator<const typename std::remove_const<C>::type,
+                          const typename std::remove_const<T1>::type>& other)
           : element_(other.element_)
         {}
 
         /**
          * @brief Equality check.
          */
-        bool equals(const LevelIterator<typename remove_const<C>::type,
-                        typename remove_const<T1>::type>& other) const
+        bool equals(const LevelIterator<typename std::remove_const<C>::type,
+                        typename std::remove_const<T1>::type>& other) const
         {
           return element_ == other.element_;
         }
@@ -197,8 +197,8 @@ namespace Dune
         /**
          * @brief Equality check.
          */
-        bool equals(const LevelIterator<const typename remove_const<C>::type,
-                        const typename remove_const<T1>::type>& other) const
+        bool equals(const LevelIterator<const typename std::remove_const<C>::type,
+                        const typename std::remove_const<T1>::type>& other) const
         {
           return element_ == other.element_;
         }
@@ -436,7 +436,7 @@ namespace Dune
       const AggregatesMapList& aggregatesMaps() const;
 
       /**
-       * @brief Get the hierachy of the information about redistributions,
+       * @brief Get the hierarchy of the information about redistributions,
        * @return The hierarchy of the information about redistributions of the
        * data to fewer processes.
        */
@@ -740,9 +740,9 @@ namespace Dune
             repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
                                            redistComm, redistributes_.back(), nodomains,
                                            criterion);
-          BIGINT unknowns = redistMat->N();
-          unknowns = infoLevel->communicator().sum(unknowns);
-          dunknowns= unknowns.todouble();
+          BIGINT unknownsRedist = redistMat->N();
+          unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
+          dunknowns= unknownsRedist.todouble();
           if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
             std::cout<<"Level "<<level<<" (redistributed) has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
                      <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
@@ -959,11 +959,11 @@ namespace Dune
 
       if(criterion.debugLevel()>0) {
         if(level==criterion.maxLevel()) {
-          BIGINT unknowns = mlevel->getmat().N();
-          unknowns = infoLevel->communicator().sum(unknowns);
-          double dunknowns = unknowns.todouble();
+          BIGINT unknownsLevel = mlevel->getmat().N();
+          unknownsLevel = infoLevel->communicator().sum(unknownsLevel);
+          double dunknownsLevel = unknownsLevel.todouble();
           if(rank==0 && criterion.debugLevel()>1) {
-            std::cout<<"Level "<<level<<" has "<<dunknowns<<" unknowns, "<<dunknowns/infoLevel->communicator().size()
+            std::cout<<"Level "<<level<<" has "<<dunknownsLevel<<" unknowns, "<<dunknownsLevel/infoLevel->communicator().size()
                      <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
           }
         }
@@ -986,12 +986,12 @@ namespace Dune
         repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
                                        redistComm, redistributes_.back(), nodomains,criterion);
         MatrixArgs args(*redistMat, *redistComm);
-        BIGINT unknowns = redistMat->N();
-        unknowns = infoLevel->communicator().sum(unknowns);
+        BIGINT unknownsRedist = redistMat->N();
+        unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
 
         if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1) {
-          double dunknowns= unknowns.todouble();
-          std::cout<<"Level "<<level<<" redistributed has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
+          double dunknownsRedist = unknownsRedist.todouble();
+          std::cout<<"Level "<<level<<" redistributed has "<<dunknownsRedist<<" unknowns, "<<dunknownsRedist/redistComm->communicator().size()
                    <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
         }
         mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
@@ -1192,7 +1192,7 @@ namespace Dune
       typename RedistributeInfoList::iterator riIter = redistributes_.begin();
       Iterator level = matrices_.finest(), coarsest=matrices_.coarsest();
       if(level.isRedistributed()) {
-        info->buildGlobalLookup(info->indexSet().size());
+        info->buildGlobalLookup(level->getmat().N());
         redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
                                   const_cast<Matrix&>(level.getRedistributed().getmat()),
                                   *info,info.getRedistributed(), *riIter);
@@ -1206,7 +1206,7 @@ namespace Dune
         ++riIter;
         productBuilder.calculate(fine, *(*amap), const_cast<Matrix&>(level->getmat()), *info, copyFlags);
         if(level.isRedistributed()) {
-          info->buildGlobalLookup(info->indexSet().size());
+          info->buildGlobalLookup(level->getmat().N());
           redistributeMatrixEntries(const_cast<Matrix&>(level->getmat()),
                                     const_cast<Matrix&>(level.getRedistributed().getmat()), *info,
                                     info.getRedistributed(), *riIter);
