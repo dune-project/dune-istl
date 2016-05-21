@@ -130,7 +130,7 @@ namespace Dune {
     public:
 
       typedef typename M::size_type size_type;
-      typedef typename remove_const<T>::type value_type;
+      typedef std::decay_t<T> value_type;
       typedef typename std::add_lvalue_reference<T>::type reference;
       typedef typename M::Allocator::difference_type difference_type;
 

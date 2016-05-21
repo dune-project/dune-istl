@@ -34,7 +34,7 @@ namespace Dune {
 
         typedef typename Allocator::size_type size_type;
 
-        static_assert((is_same<typename Allocator::value_type,size_type>::value),
+        static_assert((std::is_same<typename Allocator::value_type,size_type>::value),
                       "Layout data allocator must be for allocator_type::size_type");
 
         // don't change this order, it makes sure that everything before _allocated_rows fits
