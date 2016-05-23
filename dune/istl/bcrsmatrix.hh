@@ -1932,6 +1932,26 @@ namespace Dune {
       return (r[i].size() && r[i].find(j) != r[i].end());
     }
 
+    friend size_type* columnIndices(BCRSMatrix& m)
+    {
+      return m.j_.get();
+    }
+
+    friend const size_type* columnIndices(const BCRSMatrix& m)
+    {
+      return m.j_.get();
+    }
+
+    friend B* values(BCRSMatrix& m)
+    {
+      return m.a;
+    }
+
+    friend const B* values(const BCRSMatrix& m)
+    {
+      return m.a;
+    }
+
 
   protected:
     // state information
