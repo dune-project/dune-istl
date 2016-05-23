@@ -478,6 +478,16 @@ namespace Dune {
       return capacity_;
     }
 
+    block_type* data()
+    {
+      return this->p;
+    }
+
+    const block_type* data() const
+    {
+      return this->p;
+    }
+
     /**
      * @brief Resize the vector.
      *
