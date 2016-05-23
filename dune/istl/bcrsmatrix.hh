@@ -1214,6 +1214,7 @@ namespace Dune {
       if (ready==notAllocated)
         DUNE_THROW(BCRSMatrixError,"matrix size not set and no memory allocated yet");
 
+#ifdef DUNE_ISTL_WITH_CHECKING
       // check if there are undefined indices
       RowIterator endi=end();
       for (RowIterator i=begin(); i!=endi; ++i)
@@ -1228,6 +1229,7 @@ namespace Dune {
           }
         }
       }
+#endif // DUNE_ISTL_WITH_CHECKING
 
       allocateData();
       setDataPointers();
