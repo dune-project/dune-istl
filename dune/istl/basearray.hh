@@ -758,6 +758,21 @@ namespace Dune {
       return n;
     }
 
+    size_type index(size_type i) const
+    {
+      return j[i];
+    }
+
+    B& entry(size_type i)
+    {
+      return p[i];
+    }
+
+    const B& entry(size_type i) const
+    {
+      return p[i];
+    }
+
   protected:
     //! makes empty array
     compressed_base_array_unmanaged ()
