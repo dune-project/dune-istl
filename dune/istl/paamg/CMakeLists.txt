@@ -1,5 +1,11 @@
 add_subdirectory(test)
 
+dune_library_add_sources(
+  duneistl
+  SOURCES
+    repartitioningstrategy.cc
+  )
+
 #install headers
 install(FILES
   aggregates.hh
@@ -20,6 +26,7 @@ install(FILES
   pinfo.hh
   properties.hh
   renumberer.hh
+  repartitioningstrategy.hh
   smoother.hh
   transfer.hh
   twolevelmethod.hh
