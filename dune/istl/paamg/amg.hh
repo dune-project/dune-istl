@@ -618,10 +618,12 @@ namespace Dune
         assert(smoothers_->levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
         assert(smoothers_->levels()+1==lhs_->levels() || matrices_->levels()<matrices_->maxlevels());
 
-        if(smoother!=coarsest)
-          for(++smoother, ++lhs, ++rhs; smoother != coarsest; ++smoother, ++lhs, ++rhs)
+        for(;; ++smoother, ++lhs, ++rhs)
+          {
             smoother->pre(*lhs,*rhs);
-        smoother->pre(*lhs,*rhs);
+            if (smoother == coarsest)
+              break;
+          }
       }
 
 
