@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
 #include <dune/istl/paamg/hierarchy.hh>
@@ -169,8 +170,9 @@ namespace Dune
        */
       template<class C>
       AMG(const Operator& fineOperator, const C& criterion,
-          const SmootherArgs& smootherArgs=SmootherArgs(),
-          const ParallelInformation& pinfo=ParallelInformation());
+          const SmootherArgs& smootherArgs,
+          const ParallelInformation& pinfo,
+          const ParameterTree& parameters);
 
       /**
        * @brief Copy constructor.
@@ -337,6 +339,7 @@ namespace Dune
       std::shared_ptr<Smoother> coarseSmoother_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
+      std::shared_ptr<const ParameterTree> _parameters;
     };
 
     template<class M, class X, class S, class PI, class A>
@@ -349,6 +352,7 @@ namespace Dune
       buildHierarchy_(amg.buildHierarchy_),
       additive(amg.additive), coarsesolverconverged(amg.coarsesolverconverged),
       coarseSmoother_(amg.coarseSmoother_), verbosity_(amg.verbosity_)
+      , _parameters(amg._parameters)
     {
       if(amg.rhs_)
         rhs_=new Hierarchy<Range,A>(*amg.rhs_);
@@ -369,6 +373,7 @@ namespace Dune
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(2)
+      , _parameters(std::make_shared<ParameterTree>())
     {
       assert(matrices_->isBuilt());
 
@@ -387,6 +392,7 @@ namespace Dune
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(parms.debugLevel())
+      , _parameters(std::make_shared<ParameterTree>())
     {
       assert(matrices_->isBuilt());
 
@@ -409,6 +415,7 @@ namespace Dune
         preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
         additive(additive_), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(criterion.debugLevel())
+      , _parameters(std::make_shared<ParameterTree>())
     {
       static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
                     "Matrix and Solver must match in terms of category!");
@@ -423,14 +430,16 @@ namespace Dune
     AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
                          const C& criterion,
                          const SmootherArgs& smootherArgs,
-                         const PI& pinfo)
+                         const PI& pinfo,
+                         const ParameterTree& parameters)
       : smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(),
         rhs_(), lhs_(), update_(), scalarProduct_(),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(criterion.debugLevel())
+        coarseSmoother_(), verbosity_(criterion.debugLevel()),
+        _parameters(stackobject_to_shared_ptr(parameters))
     {
       static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
                          "Matrix and Solver must match in terms of category!");
