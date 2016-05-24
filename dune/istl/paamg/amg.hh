@@ -483,7 +483,7 @@ namespace Dune
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
 
-            if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
+      if(buildHierarchy_ && matrices_->hasCoarsest()) {
         // We have the carsest level. Create the coarse Solver
         SmootherArgs sargs(smootherArgs_);
         sargs.iterations = 1;
