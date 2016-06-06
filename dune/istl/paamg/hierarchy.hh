@@ -20,7 +20,14 @@
 #include <dune/istl/bvector.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/istl/matrixutils.hh>
+
+#ifndef AMG_USE_OLD_REPARTITIONING
+#include <dune/istl/commgraphbasedmatrixrepartitioning.hh>
+#include <dune/istl/commgraphbasedvectorredistribute.hh>
+#else
 #include <dune/istl/matrixredistribute.hh>
+#endif
+
 #include <dune/istl/paamg/dependency.hh>
 #include <dune/istl/paamg/graph.hh>
 #include <dune/istl/paamg/indicescoarsener.hh>
@@ -609,8 +616,25 @@ namespace Dune
     template<typename M, typename C, typename C1>
     bool repartitionAndDistributeMatrix(const M& origMatrix, M& newMatrix, C& origComm, C*& newComm,
                                         RedistributeInformation<C>& ri,
-                                        int nparts, C1& criterion)
+                                        int nparts, C1& criterion,
+                                        const ParameterTree& parameters)
     {
+#ifndef AMG_USE_OLD_REPARTITIONING
+
+      bool existentOnRedist = ISTL::commGraphBasedMatrixRepartitioning(
+        origMatrix,
+        origComm,
+        nparts,
+        newComm,
+        newMatrix,
+        ri,
+        parameters
+        );
+
+      return existentOnRedist;
+
+#else //  AMG_USE_OLD_REPARTITIONING
+
       Timer time;
 #ifdef AMG_REPART_ON_COMM_GRAPH
       // Done not repartition the matrix graph, but a graph of the communication scheme.
@@ -663,7 +687,7 @@ namespace Dune
       if(origComm.communicator().rank()==0  && criterion.debugLevel()>1)
         std::cout<<"Redistributing matrix took "<<time.elapsed()<<" seconds."<<std::endl;
       return existentOnRedist;
-
+#endif // AMG_USE_OLD_REPARTITIONING
     }
 
     template<typename M>
@@ -677,9 +701,11 @@ namespace Dune
 
     template<class M, class IS, class A>
     MatrixHierarchy<M,IS,A>::MatrixHierarchy(const MatrixOperator& fineOperator,
-                                             const ParallelInformation& pinfo)
+                                             const ParallelInformation& pinfo,
+                                             const ParameterTree& parameters)
       : matrices_(const_cast<MatrixOperator&>(fineOperator)),
-        parallelInformation_(const_cast<ParallelInformation&>(pinfo))
+        parallelInformation_(const_cast<ParallelInformation&>(pinfo)),
+        _parameters(parameters)
     {
       static_assert((static_cast<int>(MatrixOperator::category) ==
                        static_cast<int>(SolverCategory::sequential)
@@ -714,16 +740,21 @@ namespace Dune
       finenonzeros = infoLevel->communicator().sum(finenonzeros);
       BIGINT allnonzeros = finenonzeros;
 
+      auto repartitioning_strategy = criterion.repartitioningStrategy();
+      if (criterion.accumulate() == successiveAccu and not repartitioning_strategy)
+        DUNE_THROW(ISTLError, "Successive accumulation chosen, but no strategy set");
 
       int level = 0;
       int rank = 0;
 
-      BIGINT unknowns = mlevel->getmat().N();
+      std::size_t unknowns = mlevel->getmat().N();
 
       unknowns = infoLevel->communicator().sum(unknowns);
-      double dunknowns=unknowns.todouble();
+      double dunknowns= unknowns;//.todouble();
       infoLevel->buildGlobalLookup(mlevel->getmat().N());
       redistributes_.push_back(RedistributeInfoType());
+
+      int last_repartitioned_level = 0;
 
       for(; level < criterion.maxLevel(); ++level, ++mlevel) {
         assert(matrices_.levels()==redistributes_.size());
@@ -735,34 +766,48 @@ namespace Dune
         MatrixOperator* matrix=&(*mlevel);
         ParallelInformation* info =&(*infoLevel);
 
-        if((
-#if HAVE_PARMETIS
-             criterion.accumulate()==successiveAccu
-#else
-             false
-#endif
-             || (criterion.accumulate()==atOnceAccu
-                 && dunknowns < 30*infoLevel->communicator().size()))
-           && infoLevel->communicator().size()>1 &&
-           dunknowns/infoLevel->communicator().size() <= criterion.coarsenTarget())
+        bool accumulate = false;
+        std::size_t accumulated_partition_count = 0;
+
+        if (infoLevel->communicator().size() > 1)
+          {
+            if (criterion.accumulate() == successiveAccu)
+              {
+                std::tie(accumulate,accumulated_partition_count) = (*repartitioning_strategy)(
+                  infoLevel->communicator(),
+                  level,
+                  last_repartitioned_level,
+                  dunknowns,
+                  mlevel->getmat().N(),
+                  mlevel->getmat().nonzeroes()
+                  );
+              }
+            else if (criterion.accumulate() == atOnceAccu
+                     && dunknowns < 30*infoLevel->communicator().size()
+                     && dunknowns/infoLevel->communicator().size() <= criterion.coarsenTarget()
+              )
+              {
+                accumulate = true;
+                accumulated_partition_count = 1;
+              }
+          }
+
+        if(accumulate)
         {
           // accumulate to fewer processors
           Matrix* redistMat= new Matrix();
           ParallelInformation* redistComm=0;
-          std::size_t nodomains = (std::size_t)std::ceil(dunknowns/(criterion.minAggregateSize()
-                                                                    *criterion.coarsenTarget()));
-          if( nodomains<=criterion.minAggregateSize()/2 ||
-              dunknowns <= criterion.coarsenTarget() )
-            nodomains=1;
+
+          last_repartitioned_level = level;
 
           bool existentOnNextLevel =
             repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
-                                           redistComm, redistributes_.back(), nodomains,
-                                           criterion);
-          BIGINT unknownsRedist = redistMat->N();
+                                           redistComm, redistributes_.back(), accumulated_partition_count,
+                                           criterion,_parameters.sub("repartition"));
+          BIGINT unknownsRedist = (existentOnNextLevel ? redistMat->N() : 0);
           unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
           dunknowns= unknownsRedist.todouble();
-          if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
+          if(existentOnNextLevel && redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
             std::cout<<"Level "<<level<<" (redistributed) has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
                      <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
           MatrixArgs args(*redistMat, *redistComm);
@@ -1003,7 +1048,7 @@ namespace Dune
         int nodomains = 1;
 
         repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
-                                       redistComm, redistributes_.back(), nodomains,criterion);
+                                       redistComm, redistributes_.back(), nodomains,criterion,_parameters.sub("repartition"));
         MatrixArgs args(*redistMat, *redistComm);
         BIGINT unknownsRedist = redistMat->N();
         unknownsRedist = infoLevel->communicator().sum(unknownsRedist);

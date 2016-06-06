@@ -4,7 +4,13 @@
 #define DUNE_AMGTRANSFER_HH
 
 #include <dune/istl/bvector.hh>
+
+#ifndef AMG_USE_OLD_REPARTITIONING
+#include <dune/istl/commgraphbasedvectorredistribute.hh>
+#else
 #include <dune/istl/matrixredistribute.hh>
+#endif
+
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/aggregates.hh>
