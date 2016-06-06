@@ -1047,13 +1047,14 @@ namespace Dune
         ParallelInformation* redistComm=0;
         int nodomains = 1;
 
-        repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
-                                       redistComm, redistributes_.back(), nodomains,criterion,_parameters.sub("repartition"));
+        bool owning_coarse_matrix = repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
+                                                                   redistComm, redistributes_.back(), nodomains,criterion,_parameters.sub("repartition"));
+
         MatrixArgs args(*redistMat, *redistComm);
-        BIGINT unknownsRedist = redistMat->N();
+        BIGINT unknownsRedist = owning_coarse_matrix ? redistMat->N() : 0;
         unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
 
-        if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1) {
+        if(owning_coarse_matrix and redistComm->communicator().rank()==0 && criterion.debugLevel()>1) {
           double dunknownsRedist = unknownsRedist.todouble();
           std::cout<<"Level "<<level<<" redistributed has "<<dunknownsRedist<<" unknowns, "<<dunknownsRedist/redistComm->communicator().size()
                    <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
