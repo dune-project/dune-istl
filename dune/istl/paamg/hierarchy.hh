@@ -28,6 +28,7 @@
 #include <dune/istl/paamg/construction.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
+#include <dune/istl/paamg/repartitioningstrategy.hh>
 
 namespace Dune
 {
@@ -564,11 +565,26 @@ namespace Dune
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
                        double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
         : AggregationCriterion(Dune::Amg::Parameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate))
+        , _strategy(std::make_shared<RepartitioningStrategy>(DefaultRepartitioningStrategy(*this)))
       {}
 
       CoarsenCriterion(const Dune::Amg::Parameters& parms)
         : AggregationCriterion(parms)
       {}
+
+      void setRepartitioningStrategy(std::unique_ptr<RepartitioningStrategy> strategy)
+      {
+        _strategy = std::move(strategy);
+      }
+
+      const RepartitioningStrategy* repartitioningStrategy() const
+      {
+        return _strategy.get();
+      }
+
+    private:
+
+      std::shared_ptr<RepartitioningStrategy> _strategy;
 
     };
 
