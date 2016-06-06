@@ -16,6 +16,7 @@ install(FILES
    btdmatrix.hh
    bvector.hh
    colcompmatrix.hh
+   commgraphbasedmatrixrepartitioning.hh
    commgraphbasedvectorredistribute.hh
    ellmatrix.hh
    forwarddeclarations.hh
