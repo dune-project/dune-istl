@@ -194,6 +194,9 @@ namespace Dune {
     typedef EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopySet;
     typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
     typedef Dune::AllSet<AttributeSet> AllSet;
+
+    using GlobalID = GlobalIdType;
+
   protected:
 
 
