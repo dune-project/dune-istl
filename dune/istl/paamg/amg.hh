@@ -476,7 +476,7 @@ namespace Dune
                                             const PI& pinfo)
     {
       Timer watch;
-      matrices_.reset(new OperatorHierarchy(matrix, pinfo));
+      matrices_.reset(new OperatorHierarchy(matrix, pinfo, _parameters->sub("hierarchy")));
 
       matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
 

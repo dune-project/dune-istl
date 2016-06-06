@@ -358,7 +358,8 @@ namespace Dune
        * @param pinfo The information about the parallel data decomposition at the first level.
        */
       MatrixHierarchy(const MatrixOperator& fineMatrix,
-                      const ParallelInformation& pinfo=ParallelInformation());
+                      const ParallelInformation& pinfo,
+                      const ParameterTree& parameters);
 
 
       ~MatrixHierarchy();
@@ -471,6 +472,8 @@ namespace Dune
       ParallelMatrixHierarchy matrices_;
       /** @brief The hierarchy of the parallel information. */
       ParallelInformationHierarchy parallelInformation_;
+
+      const ParameterTree& _parameters;
 
       /** @brief Whether the hierarchy was built. */
       bool built_;
