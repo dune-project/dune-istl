@@ -155,10 +155,10 @@ namespace Dune {
         typedef SeqSSOR<M,X,Y> Smoother;
 
         // AMG requires an operator instead of a matrix, need an adapter here
-        typedef MatrixAdapter<M,X,Y> MADAPT;
-        auto matrixadapter = std::make_shared<MADAPT>(A);
+        typedef MatrixOperator<M,X,Y> MADAPT;
+        auto matrixoperator = std::make_shared<MADAPT>(A);
 
-        return std::make_shared<Amg::AMG<MADAPT,X,Smoother> > (matrixadapter, configuration);
+        return std::make_shared<Amg::AMG<MADAPT,X,Smoother> > (matrixoperator, configuration);
       }
       if (id == "Richardson")
         return std::make_shared<Richardson<X,Y> > (configuration);
@@ -352,7 +352,7 @@ namespace Dune {
       solver_id = solverconf.get ("type", solver_id);
 
       // Adapter needed for solvers, pass as shared pointer to ensure sufficient lifetime
-      std::shared_ptr<LinearOperator<X,X> > madapt (new MatrixAdapter<M,X,X>(A));
+      std::shared_ptr<LinearOperator<X,X> > madapt (new MatrixOperator<M,X,X>(A));
 
       // Build precond and solver, return solver
       auto preconditioner = PreconditionerFactory::create<X, X> (precond_id, A, precondconf);
