@@ -114,7 +114,7 @@ namespace Dune
        * instead.
        * All parameters can be set in the criterion!
        */
-      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+      AMG(std::shared_ptr<OperatorHierarchy> matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, std::size_t gamma,
           std::size_t preSmoothingSteps,
           std::size_t postSmoothingSteps,
@@ -129,7 +129,7 @@ namespace Dune
        * for pre and post smoothing.
        * @param parms The parameters for the AMG.
        */
-      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+      AMG(std::shared_ptr<OperatorHierarchy> matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, const Parameters& parms);
 
       /**
@@ -383,11 +383,11 @@ namespace Dune
     }
 
     template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<OperatorHierarchy> matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          std::size_t gamma, std::size_t preSmoothingSteps,
                          std::size_t postSmoothingSteps, bool additive_)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : matrices_(matrices), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
@@ -401,10 +401,10 @@ namespace Dune
     }
 
     template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<OperatorHierarchy> matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : matrices_(matrices), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
