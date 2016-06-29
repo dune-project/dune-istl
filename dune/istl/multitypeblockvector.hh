@@ -32,36 +32,6 @@ namespace Dune {
 
 
   /**
-     @brief Add/subtract second vector to/from the first (v1 += v2)
-
-     This class implements vector addition/subtraction for any MultiTypeBlockVector-Class type.
-   */
-  template<int count, typename T>
-  class MultiTypeBlockVector_Add {
-  public:
-
-    /**
-     * add vector to vector
-     */
-    static void add (T& a, const T& b) {    //add vector elements
-      std::get<(count-1)>(a) += std::get<(count-1)>(b);
-      MultiTypeBlockVector_Add<count-1,T>::add(a,b);
-    }
-
-    /**
-     * Subtract vector from vector
-     */
-    static void sub (T& a, const T& b) {    //sub vector elements
-      std::get<(count-1)>(a) -= std::get<(count-1)>(b);
-      MultiTypeBlockVector_Add<count-1,T>::sub(a,b);
-    }
-  };
-  template<typename T>                                    //recursion end; specialization for count=0
-  class MultiTypeBlockVector_Add<0,T> {public: static void add (T&, const T&) {} static void sub (T&, const T&) {} };
-
-
-
-  /**
      @brief AXPY operation on vectors
 
      calculates x += a * y
@@ -330,12 +300,22 @@ namespace Dune {
     /**
      * operator for MultiTypeBlockVector += MultiTypeBlockVector operations
      */
-    void operator+= (const type& newv) {MultiTypeBlockVector_Add<sizeof...(Args),type>::add(*this,newv);}
+    void operator+= (const type& newv) {
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        (*this)[i] += newv[i];
+      });
+    }
 
     /**
      * operator for MultiTypeBlockVector -= MultiTypeBlockVector operations
      */
-    void operator-= (const type& newv) {MultiTypeBlockVector_Add<sizeof...(Args),type>::sub(*this,newv);}
+    void operator-= (const type& newv) {
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        (*this)[i] -= newv[i];
+      });
+    }
 
     void operator*= (const int& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const int>::mul(*this,w);}
     void operator*= (const float& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const float>::mul(*this,w);}
