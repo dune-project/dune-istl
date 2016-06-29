@@ -226,7 +226,7 @@ namespace Dune {
       using namespace Dune::Hybrid;
       auto size = index_constant<1+sizeof...(Args)>();
       // Since Dune::Hybrid::size(MultiTypeBlockMatrix) is not implemented,
-      // we cannot use a plain forEach(*this, ...). This could be achived,
+      // we cannot use a plain forEach(*this, ...). This could be achieved,
       // e.g., by implementing a static size() method.
       forEach(integralRange(size), [&](auto&& i) {
         (*this)[i] = newval;
