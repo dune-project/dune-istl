@@ -52,27 +52,6 @@ namespace Dune {
   class MultiTypeBlockVector_AXPY<0,TVec,Ta> {public: static void axpy (TVec&, const Ta&, const TVec&) {} };
 
 
-  /** @brief In-place multiplication with a scalar
-   *
-   * Calculates v *= a for each element of the given vector.
-   */
-  template<int count, typename TVec, typename Ta>
-  class MultiTypeBlockVector_Mulscal {
-  public:
-
-    /**
-     * calculates x *= a
-     */
-    static void mul(TVec& x, const Ta& a) {
-      std::get<(count-1)>(x) *= a;
-      MultiTypeBlockVector_Mulscal<count-1,TVec,Ta>::mul(x,a);
-    }
-  };
-  template<typename TVec, typename Ta>                    //specialization for count=0
-  class MultiTypeBlockVector_Mulscal<0,TVec,Ta> {public: static void mul (TVec&, const Ta&) {} };
-
-
-
   /** @brief Scalar products
    *
    * multiplies the current elements of x and y pairwise, and sum up the results.
@@ -317,9 +296,34 @@ namespace Dune {
       });
     }
 
-    void operator*= (const int& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const int>::mul(*this,w);}
-    void operator*= (const float& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const float>::mul(*this,w);}
-    void operator*= (const double& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const double>::mul(*this,w);}
+    // Once we have the IsNumber traits class the following
+    // three implementations could be replaced by:
+    //
+    //    template<class T,
+    //      std::enable_if_t< IsNumber<T>::value, int> = 0>
+    //    void operator*= (const T& w) {
+    //      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+    //        entry *= w;
+    //      });
+    //    }
+
+    void operator*= (const int& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
+
+    void operator*= (const float& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
+
+    void operator*= (const double& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
 
     field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<sizeof...(Args),type>::mul(*this,newv);}
     field_type dot (const type& newv) const {return MultiTypeBlockVector_Mul<sizeof...(Args),type>::dot(*this,newv);}
