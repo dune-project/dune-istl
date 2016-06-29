@@ -34,44 +34,6 @@ namespace Dune {
 
 
   /**
-     @brief prints out a matrix (type MultiTypeBlockMatrix)
-
-     The parameters "crow" and "ccol" are the indices of
-     the element to be printed out. Via recursive calling
-     all other elements are printed, too. This is internally
-     called when a MultiTypeBlockMatrix object is passed to an output stream.
-   */
-
-  template<int crow, int remain_rows, int ccol, int remain_cols,
-      typename TMatrix>
-  class MultiTypeBlockMatrix_Print {
-  public:
-
-    /**
-     * print out a matrix block and all following
-     */
-    static void print(const TMatrix& m) {
-      std::cout << "\t(" << crow << ", " << ccol << "): \n" << std::get<ccol>( std::get<crow>(m));
-      MultiTypeBlockMatrix_Print<crow,remain_rows,ccol+1,remain_cols-1,TMatrix>::print(m);         //next column
-    }
-  };
-  template<int crow, int remain_rows, int ccol, typename TMatrix> //specialization for remain_cols=0
-  class MultiTypeBlockMatrix_Print<crow,remain_rows,ccol,0,TMatrix> {
-  public: static void print(const TMatrix& m) {
-      MultiTypeBlockMatrix_Print<crow+1,remain_rows-1,0,TMatrix::N(),TMatrix>::print(m);                 //next row
-    }
-  };
-
-  template<int crow, int ccol, int remain_cols, typename TMatrix> //recursion end: specialization for remain_rows=0
-  class MultiTypeBlockMatrix_Print<crow,0,ccol,remain_cols,TMatrix> {
-  public:
-    static void print(const TMatrix& m)
-    {std::cout << std::endl;}
-  };
-
-
-
-  /**
       @brief A Matrix class to support different block types
 
       This matrix class combines MultiTypeBlockVector elements as rows.
@@ -216,9 +178,15 @@ namespace Dune {
    */
   template<typename T1, typename... Args>
   std::ostream& operator<< (std::ostream& s, const MultiTypeBlockMatrix<T1,Args...>& m) {
-    static const int N = MultiTypeBlockMatrix<T1,Args...>::N();
-    static const int M = MultiTypeBlockMatrix<T1,Args...>::M();
-    MultiTypeBlockMatrix_Print<0,N,0,M,MultiTypeBlockMatrix<T1,Args...> >::print(m);
+    auto N = index_constant<MultiTypeBlockMatrix<T1,Args...>::N()>();
+    auto M = index_constant<MultiTypeBlockMatrix<T1,Args...>::M()>();
+    using namespace Dune::Hybrid;
+    forEach(integralRange(N), [&](auto&& i) {
+      forEach(integralRange(M), [&](auto&& j) {
+        s << "\t(" << i << ", " << j << "): \n" << m[i][j];
+      });
+    });
+    s << std::endl;
     return s;
   }
 
