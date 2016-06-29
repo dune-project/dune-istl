@@ -31,38 +31,6 @@ namespace Dune {
 
 
 
-  /** @brief Scalar products
-   *
-   * multiplies the current elements of x and y pairwise, and sum up the results.
-   * Provides two variants:
-   * 1) 'mul'  computes the indefinite inner product and
-   * 2) 'dot'  provides an inner product by conjugating the first argument
-   */
-  template<int count, typename TVec>
-  class MultiTypeBlockVector_Mul {
-  public:
-    static typename TVec::field_type mul(const TVec& x, const TVec& y)
-    {
-      return (std::get<count-1>(x) * std::get<count-1>(y)) + MultiTypeBlockVector_Mul<count-1,TVec>::mul(x,y);
-    }
-
-    static typename TVec::field_type dot(const TVec& x, const TVec& y)
-    {
-      return Dune::dot(std::get<count-1>(x),std::get<count-1>(y)) + MultiTypeBlockVector_Mul<count-1,TVec>::dot(x,y);
-    }
-  };
-
-  template<typename TVec>
-  class MultiTypeBlockVector_Mul<0,TVec> {
-  public:
-    static typename TVec::field_type mul(const TVec&, const TVec&) {return 0;}
-    static typename TVec::field_type dot(const TVec&, const TVec&) {return 0;}
-  };
-
-
-
-
-
   /** \brief Calculate the 2-norm
 
      Each element of the vector has to provide the method "two_norm2()"
@@ -304,8 +272,23 @@ namespace Dune {
       });
     }
 
-    field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<sizeof...(Args),type>::mul(*this,newv);}
-    field_type dot (const type& newv) const {return MultiTypeBlockVector_Mul<sizeof...(Args),type>::dot(*this,newv);}
+    field_type operator* (const type& newv) const {
+      using namespace Dune::Hybrid;
+      field_type result = 0;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        result += (*this)[i]*newv[i];
+      });
+      return result;
+    }
+
+    field_type dot (const type& newv) const {
+      using namespace Dune::Hybrid;
+      field_type result = 0;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        result += (*this)[i].dot(newv[i]);
+      });
+      return result;
+    }
 
     /** \brief Compute the squared Euclidean norm
      */
