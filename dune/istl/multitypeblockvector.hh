@@ -32,40 +32,6 @@ namespace Dune {
 
 
   /**
-     @brief prints out a vector (type MultiTypeBlockVector)
-
-     The parameter "current_element" is the index of
-     the element to be printed out. Via recursive calling
-     all other elements (number is "remaining_elements")
-     are printed, too. This is internally called when
-     a MultiTypeBlockVector object is passed to an output stream.
-     Example:
-     \code
-     MultiTypeBlockVector<int,int> CVect;
-     std::cout << CVect;
-     \endcode
-   */
-
-  template<int current_element, int remaining_elements, typename TVec>
-  class MultiTypeBlockVector_Print {
-  public:
-    /**
-     * print out the current vector element and all following
-     */
-    static void print(const TVec& v) {
-      std::cout << "\t(" << current_element << "):\n" << std::get<current_element>(v) << "\n";
-      MultiTypeBlockVector_Print<current_element+1,remaining_elements-1,TVec>::print(v);   //next element
-    }
-  };
-  template<int current_element, typename TVec>            //recursion end (remaining_elements=0)
-  class MultiTypeBlockVector_Print<current_element,0,TVec> {
-  public:
-    static void print(const TVec&) {std::cout << "\n";}
-  };
-
-
-
-  /**
      @brief Add/subtract second vector to/from the first (v1 += v2)
 
      This class implements vector addition/subtraction for any MultiTypeBlockVector-Class type.
@@ -410,7 +376,10 @@ namespace Dune {
    */
   template <typename... Args>
   std::ostream& operator<< (std::ostream& s, const MultiTypeBlockVector<Args...>& v) {
-    MultiTypeBlockVector_Print<0,sizeof...(Args),MultiTypeBlockVector<Args...> >::print(v);
+    using namespace Dune::Hybrid;
+    forEach(integralRange(size(v)), [&](auto&& i) {
+      s << "\t(" << i << "):\n" << v[i] << "\n";
+    });
     return s;
   }
 
