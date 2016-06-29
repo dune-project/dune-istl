@@ -31,27 +31,6 @@ namespace Dune {
 
 
 
-  /**
-     @brief AXPY operation on vectors
-
-     calculates x += a * y
-   */
-  template<int count, typename TVec, typename Ta>
-  class MultiTypeBlockVector_AXPY {
-  public:
-
-    /**
-     * calculates x += a * y
-     */
-    static void axpy(TVec& x, const Ta& a, const TVec& y) {
-      std::get<(count-1)>(x).axpy(a,std::get<(count-1)>(y));
-      MultiTypeBlockVector_AXPY<count-1,TVec,Ta>::axpy(x,a,y);
-    }
-  };
-  template<typename TVec, typename Ta>                    //specialization for count=0
-  class MultiTypeBlockVector_AXPY<0,TVec,Ta> {public: static void axpy (TVec&, const Ta&, const TVec&) {} };
-
-
   /** @brief Scalar products
    *
    * multiplies the current elements of x and y pairwise, and sum up the results.
@@ -349,7 +328,10 @@ namespace Dune {
      */
     template<typename Ta>
     void axpy (const Ta& a, const type& y) {
-      MultiTypeBlockVector_AXPY<sizeof...(Args),type,Ta>::axpy(*this,a,y);
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        (*this)[i].axpy(a, y[i]);
+      });
     }
 
   };
