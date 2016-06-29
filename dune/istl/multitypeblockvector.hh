@@ -184,30 +184,25 @@ namespace Dune {
 
     field_type operator* (const type& newv) const {
       using namespace Dune::Hybrid;
-      field_type result = 0;
-      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
-        result += (*this)[i]*newv[i];
+      return accumulate(integralRange(Hybrid::size(*this)), field_type(0), [&](auto&& a, auto&& i) {
+        return a + (*this)[i]*newv[i];
       });
-      return result;
     }
 
     field_type dot (const type& newv) const {
       using namespace Dune::Hybrid;
-      field_type result = 0;
-      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
-        result += (*this)[i].dot(newv[i]);
+      return accumulate(integralRange(Hybrid::size(*this)), field_type(0), [&](auto&& a, auto&& i) {
+        return a + (*this)[i].dot(newv[i]);
       });
-      return result;
     }
 
     /** \brief Compute the squared Euclidean norm
      */
     typename FieldTraits<field_type>::real_type two_norm2() const {
-      typename FieldTraits<field_type>::real_type result = 0;
-      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-        result += entry.two_norm2();
+      using namespace Dune::Hybrid;
+      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+        return a + entry.two_norm2();
       });
-      return result;
     }
 
     /** \brief Compute the Euclidean norm
