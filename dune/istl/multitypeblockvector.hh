@@ -31,33 +31,6 @@ namespace Dune {
 
 
 
-  /** \brief Calculate the 2-norm
-
-     Each element of the vector has to provide the method "two_norm2()"
-     in order to calculate the whole vector's 2-norm.
-   */
-  template<int count, typename T>
-  class MultiTypeBlockVector_Norm {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-
-    /**
-     * sum up all elements' 2-norms
-     */
-    static real_type result (const T& a) {             //result = sum of all elements' 2-norms
-      return std::get<count-1>(a).two_norm2() + MultiTypeBlockVector_Norm<count-1,T>::result(a);
-    }
-  };
-
-  template<typename T>                                    //recursion end: no more vector elements to add...
-  class MultiTypeBlockVector_Norm<0,T> {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    static real_type result (const T&) {return 0.0;}
-  };
-
   /** \brief Calculate the \infty-norm
 
      Each element of the vector has to provide the method "infinity_norm()"
@@ -292,7 +265,13 @@ namespace Dune {
 
     /** \brief Compute the squared Euclidean norm
      */
-    typename FieldTraits<field_type>::real_type two_norm2() const {return MultiTypeBlockVector_Norm<sizeof...(Args),type>::result(*this);}
+    typename FieldTraits<field_type>::real_type two_norm2() const {
+      typename FieldTraits<field_type>::real_type result = 0;
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        result += entry.two_norm2();
+      });
+      return result;
+    }
 
     /** \brief Compute the Euclidean norm
      */
