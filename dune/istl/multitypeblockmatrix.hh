@@ -7,6 +7,8 @@
 #include <iostream>
 #include <tuple>
 
+#include <dune/common/hybridutilities.hh>
+
 #include "istlexception.hh"
 
 // forward declaration
@@ -68,45 +70,6 @@ namespace Dune {
   };
 
 
-
-  //make MultiTypeBlockVector_Ident known (for MultiTypeBlockMatrix_Ident)
-  template<int count, typename T1, typename T2>
-  class MultiTypeBlockVector_Ident;
-
-
-  /**
-     @brief Set a MultiTypeBlockMatrix to some specific scalar value
-
-     This class is used by the MultiTypeBlockMatrix class' internal assignment operator.
-     Whenever a vector is assigned a scalar value, each block element
-     has to provide operator= for the right side. Example:
-     \code
-     typedef MultiTypeBlockVector<int,int,int> CVect;
-     MultiTypeBlockMatrix<CVect,CVect> CMat;
-     CMat = 3;                   //sets all 3x2 integer elements to 3
-     \endcode
-   */
-  template<int rowcount, typename T1, typename T2>
-  class MultiTypeBlockMatrix_Ident {
-  public:
-
-    /**
-     * equalize two matrix' element
-     * note: uses MultiTypeBlockVector_Ident to equalize each row (which is of MultiTypeBlockVector type)
-     */
-    static void equalize(T1& a, const T2& b) {
-      MultiTypeBlockVector_Ident<T1::M(),T1,T2>::equalize(a,b);              //rows are cvectors
-      MultiTypeBlockMatrix_Ident<rowcount-1,T1,T2>::equalize(a,b);         //iterate over rows
-    }
-  };
-
-  //recursion end for rowcount=0
-  template<typename T1, typename T2>
-  class MultiTypeBlockMatrix_Ident<0,T1,T2> {
-  public:
-    static void equalize (T1&, const T2&)
-    {}
-  };
 
   /**
      @brief Matrix-vector multiplication
@@ -259,7 +222,16 @@ namespace Dune {
      * assignment operator
      */
     template<typename T>
-    void operator= (const T& newval) {MultiTypeBlockMatrix_Ident<N(),type,T>::equalize(*this, newval); }
+    void operator= (const T& newval) {
+      using namespace Dune::Hybrid;
+      auto size = index_constant<1+sizeof...(Args)>();
+      // Since Dune::Hybrid::size(MultiTypeBlockMatrix) is not implemented,
+      // we cannot use a plain forEach(*this, ...). This could be achived,
+      // e.g., by implementing a static size() method.
+      forEach(integralRange(size), [&](auto&& i) {
+        (*this)[i] = newval;
+      });
+    }
 
     /** \brief y = A x
      */

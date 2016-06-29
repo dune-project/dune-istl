@@ -9,6 +9,7 @@
 
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include "istlexception.hh"
 
@@ -61,38 +62,6 @@ namespace Dune {
   public:
     static void print(const TVec&) {std::cout << "\n";}
   };
-
-
-
-  /**
-     @brief Set a MultiTypeBlockVector to some specific value
-
-     This class is used by the MultiTypeBlockVector class' internal = operator.
-     Whenever a vector is assigned to a value, each vector element
-     has to provide the = operator for the right side. Example:
-     \code
-     MultiTypeBlockVector<int,int,int> CVect;
-     CVect = 3;                  //sets all integer elements to 3
-     \endcode
-   */
-  template<int count, typename T1, typename T2>
-  class MultiTypeBlockVector_Ident {
-  public:
-
-    /**
-     * equalize two vectors' element (index is template parameter count)
-     * note: each MultiTypeBlockVector element has to provide the = operator with type T2
-     */
-    static void equalize(T1& a, const T2& b) {
-      std::get<count-1>(a) = b;           //equalize current elements
-      MultiTypeBlockVector_Ident<count-1,T1,T2>::equalize(a,b);    //next elements
-    }
-  };
-  template<typename T1, typename T2>                      //recursion end (count=0)
-  class MultiTypeBlockVector_Ident<0,T1,T2> {public: static void equalize (T1&, const T2&) {} };
-
-
-
 
 
 
@@ -386,7 +355,11 @@ namespace Dune {
     /** \brief Assignment operator
      */
     template<typename T>
-    void operator= (const T& newval) {MultiTypeBlockVector_Ident<sizeof...(Args),type,T>::equalize(*this, newval); }
+    void operator= (const T& newval) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry = newval;
+      });
+    }
 
     /**
      * operator for MultiTypeBlockVector += MultiTypeBlockVector operations
