@@ -9,6 +9,7 @@
 
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include "istlexception.hh"
 
@@ -29,266 +30,6 @@ namespace Dune {
 
 
 
-
-  /**
-     @brief prints out a vector (type MultiTypeBlockVector)
-
-     The parameter "current_element" is the index of
-     the element to be printed out. Via recursive calling
-     all other elements (number is "remaining_elements")
-     are printed, too. This is internally called when
-     a MultiTypeBlockVector object is passed to an output stream.
-     Example:
-     \code
-     MultiTypeBlockVector<int,int> CVect;
-     std::cout << CVect;
-     \endcode
-   */
-
-  template<int current_element, int remaining_elements, typename TVec>
-  class MultiTypeBlockVector_Print {
-  public:
-    /**
-     * print out the current vector element and all following
-     */
-    static void print(const TVec& v) {
-      std::cout << "\t(" << current_element << "):\n" << std::get<current_element>(v) << "\n";
-      MultiTypeBlockVector_Print<current_element+1,remaining_elements-1,TVec>::print(v);   //next element
-    }
-  };
-  template<int current_element, typename TVec>            //recursion end (remaining_elements=0)
-  class MultiTypeBlockVector_Print<current_element,0,TVec> {
-  public:
-    static void print(const TVec&) {std::cout << "\n";}
-  };
-
-
-
-  /**
-     @brief Set a MultiTypeBlockVector to some specific value
-
-     This class is used by the MultiTypeBlockVector class' internal = operator.
-     Whenever a vector is assigned to a value, each vector element
-     has to provide the = operator for the right side. Example:
-     \code
-     MultiTypeBlockVector<int,int,int> CVect;
-     CVect = 3;                  //sets all integer elements to 3
-     \endcode
-   */
-  template<int count, typename T1, typename T2>
-  class MultiTypeBlockVector_Ident {
-  public:
-
-    /**
-     * equalize two vectors' element (index is template parameter count)
-     * note: each MultiTypeBlockVector element has to provide the = operator with type T2
-     */
-    static void equalize(T1& a, const T2& b) {
-      std::get<count-1>(a) = b;           //equalize current elements
-      MultiTypeBlockVector_Ident<count-1,T1,T2>::equalize(a,b);    //next elements
-    }
-  };
-  template<typename T1, typename T2>                      //recursion end (count=0)
-  class MultiTypeBlockVector_Ident<0,T1,T2> {public: static void equalize (T1&, const T2&) {} };
-
-
-
-
-
-
-  /**
-     @brief Add/subtract second vector to/from the first (v1 += v2)
-
-     This class implements vector addition/subtraction for any MultiTypeBlockVector-Class type.
-   */
-  template<int count, typename T>
-  class MultiTypeBlockVector_Add {
-  public:
-
-    /**
-     * add vector to vector
-     */
-    static void add (T& a, const T& b) {    //add vector elements
-      std::get<(count-1)>(a) += std::get<(count-1)>(b);
-      MultiTypeBlockVector_Add<count-1,T>::add(a,b);
-    }
-
-    /**
-     * Subtract vector from vector
-     */
-    static void sub (T& a, const T& b) {    //sub vector elements
-      std::get<(count-1)>(a) -= std::get<(count-1)>(b);
-      MultiTypeBlockVector_Add<count-1,T>::sub(a,b);
-    }
-  };
-  template<typename T>                                    //recursion end; specialization for count=0
-  class MultiTypeBlockVector_Add<0,T> {public: static void add (T&, const T&) {} static void sub (T&, const T&) {} };
-
-
-
-  /**
-     @brief AXPY operation on vectors
-
-     calculates x += a * y
-   */
-  template<int count, typename TVec, typename Ta>
-  class MultiTypeBlockVector_AXPY {
-  public:
-
-    /**
-     * calculates x += a * y
-     */
-    static void axpy(TVec& x, const Ta& a, const TVec& y) {
-      std::get<(count-1)>(x).axpy(a,std::get<(count-1)>(y));
-      MultiTypeBlockVector_AXPY<count-1,TVec,Ta>::axpy(x,a,y);
-    }
-  };
-  template<typename TVec, typename Ta>                    //specialization for count=0
-  class MultiTypeBlockVector_AXPY<0,TVec,Ta> {public: static void axpy (TVec&, const Ta&, const TVec&) {} };
-
-
-  /** @brief In-place multiplication with a scalar
-   *
-   * Calculates v *= a for each element of the given vector.
-   */
-  template<int count, typename TVec, typename Ta>
-  class MultiTypeBlockVector_Mulscal {
-  public:
-
-    /**
-     * calculates x *= a
-     */
-    static void mul(TVec& x, const Ta& a) {
-      std::get<(count-1)>(x) *= a;
-      MultiTypeBlockVector_Mulscal<count-1,TVec,Ta>::mul(x,a);
-    }
-  };
-  template<typename TVec, typename Ta>                    //specialization for count=0
-  class MultiTypeBlockVector_Mulscal<0,TVec,Ta> {public: static void mul (TVec&, const Ta&) {} };
-
-
-
-  /** @brief Scalar products
-   *
-   * multiplies the current elements of x and y pairwise, and sum up the results.
-   * Provides two variants:
-   * 1) 'mul'  computes the indefinite inner product and
-   * 2) 'dot'  provides an inner product by conjugating the first argument
-   */
-  template<int count, typename TVec>
-  class MultiTypeBlockVector_Mul {
-  public:
-    static typename TVec::field_type mul(const TVec& x, const TVec& y)
-    {
-      return (std::get<count-1>(x) * std::get<count-1>(y)) + MultiTypeBlockVector_Mul<count-1,TVec>::mul(x,y);
-    }
-
-    static typename TVec::field_type dot(const TVec& x, const TVec& y)
-    {
-      return Dune::dot(std::get<count-1>(x),std::get<count-1>(y)) + MultiTypeBlockVector_Mul<count-1,TVec>::dot(x,y);
-    }
-  };
-
-  template<typename TVec>
-  class MultiTypeBlockVector_Mul<0,TVec> {
-  public:
-    static typename TVec::field_type mul(const TVec&, const TVec&) {return 0;}
-    static typename TVec::field_type dot(const TVec&, const TVec&) {return 0;}
-  };
-
-
-
-
-
-  /** \brief Calculate the 2-norm
-
-     Each element of the vector has to provide the method "two_norm2()"
-     in order to calculate the whole vector's 2-norm.
-   */
-  template<int count, typename T>
-  class MultiTypeBlockVector_Norm {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-
-    /**
-     * sum up all elements' 2-norms
-     */
-    static real_type result (const T& a) {             //result = sum of all elements' 2-norms
-      return std::get<count-1>(a).two_norm2() + MultiTypeBlockVector_Norm<count-1,T>::result(a);
-    }
-  };
-
-  template<typename T>                                    //recursion end: no more vector elements to add...
-  class MultiTypeBlockVector_Norm<0,T> {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    static real_type result (const T&) {return 0.0;}
-  };
-
-  /** \brief Calculate the \infty-norm
-
-     Each element of the vector has to provide the method "infinity_norm()"
-     in order to calculate the whole vector's norm.
-   */
-  template<int count, typename T,
-           bool hasNaN = has_nan<typename T::field_type>::value>
-  class MultiTypeBlockVector_InfinityNorm {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-
-    /**
-     * Take the maximum over all elements' norms
-     */
-    static real_type result (const T& a)
-    {
-      std::pair<real_type, real_type> const ret = resultHelper(a);
-      return ret.first * (ret.second / ret.second);
-    }
-
-    // Computes the maximum while keeping track of NaN values
-    static std::pair<real_type, real_type> resultHelper(const T& a) {
-      using std::max;
-      auto const rest =
-          MultiTypeBlockVector_InfinityNorm<count - 1, T>::resultHelper(a);
-      real_type const norm = std::get<count - 1>(a).infinity_norm();
-      return {max(norm, rest.first), norm + rest.second};
-    }
-  };
-
-  template <int count, typename T>
-  class MultiTypeBlockVector_InfinityNorm<count, T, false> {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-
-    /**
-     * Take the maximum over all elements' norms
-     */
-    static real_type result (const T& a)
-    {
-      using std::max;
-      return max(std::get<count-1>(a).infinity_norm(), MultiTypeBlockVector_InfinityNorm<count-1,T>::result(a));
-    }
-  };
-
-  template<typename T, bool hasNaN>                       //recursion end
-  class MultiTypeBlockVector_InfinityNorm<0,T, hasNaN> {
-  public:
-    typedef typename T::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    static real_type result (const T&)
-    {
-      return 0.0;
-    }
-
-    static std::pair<real_type,real_type> resultHelper (const T&)
-    {
-      return {0.0, 1.0};
-    }
-  };
 
   /** @addtogroup DenseMatVec
       @{
@@ -386,28 +127,83 @@ namespace Dune {
     /** \brief Assignment operator
      */
     template<typename T>
-    void operator= (const T& newval) {MultiTypeBlockVector_Ident<sizeof...(Args),type,T>::equalize(*this, newval); }
+    void operator= (const T& newval) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry = newval;
+      });
+    }
 
     /**
      * operator for MultiTypeBlockVector += MultiTypeBlockVector operations
      */
-    void operator+= (const type& newv) {MultiTypeBlockVector_Add<sizeof...(Args),type>::add(*this,newv);}
+    void operator+= (const type& newv) {
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        (*this)[i] += newv[i];
+      });
+    }
 
     /**
      * operator for MultiTypeBlockVector -= MultiTypeBlockVector operations
      */
-    void operator-= (const type& newv) {MultiTypeBlockVector_Add<sizeof...(Args),type>::sub(*this,newv);}
+    void operator-= (const type& newv) {
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        (*this)[i] -= newv[i];
+      });
+    }
 
-    void operator*= (const int& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const int>::mul(*this,w);}
-    void operator*= (const float& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const float>::mul(*this,w);}
-    void operator*= (const double& w) {MultiTypeBlockVector_Mulscal<sizeof...(Args),type,const double>::mul(*this,w);}
+    // Once we have the IsNumber traits class the following
+    // three implementations could be replaced by:
+    //
+    //    template<class T,
+    //      std::enable_if_t< IsNumber<T>::value, int> = 0>
+    //    void operator*= (const T& w) {
+    //      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+    //        entry *= w;
+    //      });
+    //    }
 
-    field_type operator* (const type& newv) const {return MultiTypeBlockVector_Mul<sizeof...(Args),type>::mul(*this,newv);}
-    field_type dot (const type& newv) const {return MultiTypeBlockVector_Mul<sizeof...(Args),type>::dot(*this,newv);}
+    void operator*= (const int& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
+
+    void operator*= (const float& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
+
+    void operator*= (const double& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
+
+    field_type operator* (const type& newv) const {
+      using namespace Dune::Hybrid;
+      return accumulate(integralRange(Hybrid::size(*this)), field_type(0), [&](auto&& a, auto&& i) {
+        return a + (*this)[i]*newv[i];
+      });
+    }
+
+    field_type dot (const type& newv) const {
+      using namespace Dune::Hybrid;
+      return accumulate(integralRange(Hybrid::size(*this)), field_type(0), [&](auto&& a, auto&& i) {
+        return a + (*this)[i].dot(newv[i]);
+      });
+    }
 
     /** \brief Compute the squared Euclidean norm
      */
-    typename FieldTraits<field_type>::real_type two_norm2() const {return MultiTypeBlockVector_Norm<sizeof...(Args),type>::result(*this);}
+    typename FieldTraits<field_type>::real_type two_norm2() const {
+      using namespace Dune::Hybrid;
+      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+        return a + entry.two_norm2();
+      });
+    }
 
     /** \brief Compute the Euclidean norm
      */
@@ -417,7 +213,29 @@ namespace Dune {
      */
     typename FieldTraits<field_type>::real_type infinity_norm() const
     {
-      return MultiTypeBlockVector_InfinityNorm<sizeof...(Args),type>::result(*this);
+      using namespace Dune::Hybrid;
+      using std::max;
+      using real_type = typename FieldTraits<field_type>::real_type;
+
+      real_type result = 0.0;
+      // Compute max norm tracking appearing nan values
+      // if the field type supports nan.
+      ifElse(has_nan<field_type>(), [&](auto&& id) {
+        // This variable will preserve any nan value
+        real_type nanTracker = 1.0;
+        forEach(*this, [&](auto&& entry) {
+          real_type entryNorm = entry.infinity_norm();
+          result = max(entryNorm, result);
+          nanTracker += entryNorm;
+        });
+        // Incorporate possible nan value into result
+        result *= (nanTracker / nanTracker);
+      }, [&](auto&& id) {
+        forEach(*this, [&](auto&& entry) {
+          result = max(entry.infinity_norm(), result);
+        });
+      });
+      return result;
     }
 
     /** \brief Axpy operation on this vector (*this += a * y)
@@ -426,7 +244,10 @@ namespace Dune {
      */
     template<typename Ta>
     void axpy (const Ta& a, const type& y) {
-      MultiTypeBlockVector_AXPY<sizeof...(Args),type,Ta>::axpy(*this,a,y);
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(*this)), [&](auto&& i) {
+        (*this)[i].axpy(a, y[i]);
+      });
     }
 
   };
@@ -437,7 +258,10 @@ namespace Dune {
    */
   template <typename... Args>
   std::ostream& operator<< (std::ostream& s, const MultiTypeBlockVector<Args...>& v) {
-    MultiTypeBlockVector_Print<0,sizeof...(Args),MultiTypeBlockVector<Args...> >::print(v);
+    using namespace Dune::Hybrid;
+    forEach(integralRange(size(v)), [&](auto&& i) {
+      s << "\t(" << i << "):\n" << v[i] << "\n";
+    });
     return s;
   }
 
