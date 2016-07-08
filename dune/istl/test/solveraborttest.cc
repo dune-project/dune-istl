@@ -78,8 +78,8 @@ int main()
     Vector b = { 1, 2 };
     Vector x = { 0, 0 };
 
-    Dune::MatrixAdapter<Matrix, Vector, Vector> op(matrix);
-    Dune::Richardson<Vector, Vector> richardson;
+    auto op = std::make_shared<Dune::MatrixOperator<Matrix, Vector, Vector> >(matrix);
+    auto richardson = std::make_shared<Dune::Richardson<Vector, Vector> >();
     Dune::CGSolver<Vector> solver(op, richardson, 1e-10, 5000, verbose);
 
     checkSolverAbort(status, "CGSolver", solver, x, b);
@@ -97,8 +97,8 @@ int main()
     Vector b = { 1, 2 };
     Vector x = { 0, 0 };
 
-    Dune::MatrixAdapter<Matrix, Vector, Vector> op(matrix);
-    Dune::Richardson<Vector, Vector> richardson;
+    auto op = std::make_shared<Dune::MatrixOperator<Matrix, Vector, Vector> >(matrix);
+    auto richardson = std::make_shared<Dune::Richardson<Vector, Vector> >();
     Dune::BiCGSTABSolver<Vector> solver(op, richardson, 1e-10, 5000, verbose);
 
     checkSolverAbort(status, "BiCGSTABSolver", solver, x, b);
