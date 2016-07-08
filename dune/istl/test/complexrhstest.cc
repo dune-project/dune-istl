@@ -126,7 +126,7 @@ int main(int argc, char** argv)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<FIELD_TYPE,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
 
   BCRSMat mat;
   auto fop = std::make_shared<Operator>(mat);

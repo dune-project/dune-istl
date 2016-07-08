@@ -19,7 +19,7 @@
 #include <dune/istl/operators.hh>       // provides Dune::LinearOperator
 #include <dune/istl/solvercategory.hh>  // provides Dune::SolverCategory::sequential
 #include <dune/istl/solvertype.hh>      // provides Dune::IsDirectSolver
-#include <dune/istl/operators.hh>       // provides Dune::MatrixAdapter
+#include <dune/istl/operators.hh>       // provides Dune::MatrixOperator
 #include <dune/istl/istlexception.hh>   // provides Dune::ISTLError
 #include <dune/istl/io.hh>              // provides Dune::printvector(...)
 #include <dune/istl/solvers.hh>         // provides Dune::InverseOperatorResult
@@ -219,7 +219,7 @@ namespace Dune
   {
   protected:
     // Type definitions for type of iteration operator (m_ - mu_*I)
-    typedef typename Dune::MatrixAdapter<BCRSMatrix,BlockVector,BlockVector>
+    typedef typename Dune::MatrixOperator<BCRSMatrix,BlockVector,BlockVector>
       MatrixOperator;
     typedef ScalingLinearOperator<BlockVector> ScalingOperator;
     typedef LinearOperatorSum<MatrixOperator,ScalingOperator> OperatorSum;

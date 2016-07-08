@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
     Dune::FieldVector<std::complex<double>,10> hilbertsol(1.0);
     Dune::FieldVector<std::complex<double>,10> hilbertiter(0.0);
-    auto hilbertadapter = std::make_shared<Dune::MatrixAdapter<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > >(hilbertmatrix);
+    auto hilbertadapter = std::make_shared<Dune::MatrixOperator<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > >(hilbertmatrix);
 
     Dune::FieldVector<std::complex<double>,10> hilbertrhs(0.0);
     hilbertadapter->apply(hilbertsol,hilbertrhs);
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     assemblecomplexsol(complexsol);
     assemblehermitianmatrix(hermitianmatrix);
 
-    typedef Dune::MatrixAdapter<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > COMPLEX_ADAPTER;
+    typedef Dune::MatrixOperator<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > COMPLEX_ADAPTER;
     auto complexadapter = std::make_shared<COMPLEX_ADAPTER>(complexmatrix);
     auto hermitianadapter = std::make_shared<COMPLEX_ADAPTER>(hermitianmatrix);
 

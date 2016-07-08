@@ -32,7 +32,7 @@ int main(int argc, char** argv)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
-  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,BVector,BVector> Operator;
 
   BCRSMat mat;
   auto fop = std::make_shared<Operator>(mat);

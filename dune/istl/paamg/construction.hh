@@ -172,9 +172,9 @@ namespace Dune
     };
 
     template<class M, class X, class Y>
-    struct MatrixAdapterArgs
+    struct MatrixOperatorArgs
     {
-      MatrixAdapterArgs(M& matrix, const SequentialInformation&)
+      MatrixOperatorArgs(M& matrix, const SequentialInformation&)
         : matrix_(&matrix)
       {}
 
@@ -182,17 +182,17 @@ namespace Dune
     };
 
     template<class M, class X, class Y>
-    class ConstructionTraits<MatrixAdapter<M,X,Y> >
+    class ConstructionTraits<MatrixOperator<M,X,Y> >
     {
     public:
-      typedef const MatrixAdapterArgs<M,X,Y> Arguments;
+      typedef const MatrixOperatorArgs<M,X,Y> Arguments;
 
-      static inline MatrixAdapter<M,X,Y>* construct(Arguments& args)
+      static inline MatrixOperator<M,X,Y>* construct(Arguments& args)
       {
-        return new MatrixAdapter<M,X,Y>(*args.matrix_);
+        return new MatrixOperator<M,X,Y>(*args.matrix_);
       }
 
-      static inline void deconstruct(MatrixAdapter<M,X,Y>* m)
+      static inline void deconstruct(MatrixOperator<M,X,Y>* m)
       {
         delete m;
       }

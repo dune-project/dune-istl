@@ -50,7 +50,7 @@ try
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<FIELD_TYPE,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
 
   BCRSMat mat;
   Operator fop(mat);

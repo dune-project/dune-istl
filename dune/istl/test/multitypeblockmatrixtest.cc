@@ -190,7 +190,7 @@ int main(int argc, char** argv) try
   b = 1;
 
   // Set up a variety of solvers, just to make sure they compile
-  auto op = std::make_shared<MatrixAdapter<CM_BCRS,TestVector,TestVector> >(A);             // make linear operator from A
+  auto op = std::make_shared<MatrixOperator<CM_BCRS,TestVector,TestVector> >(A);             // make linear operator from A
   SeqSOR<CM_BCRS,TestVector,TestVector,2> sor(A,1,1.9520932);        // SOR preconditioner
   SeqSSOR<CM_BCRS,TestVector,TestVector,2> ssor(A,1,1.0);      // SSOR preconditioner
 

@@ -489,7 +489,7 @@ void test_Interface ()
     x[i] = i*0.1;
 
   // set up the high-level solver objects
-  auto op = std::make_shared<Dune::MatrixAdapter<Matrix,Vector,Vector> >(A);        // make linear operator from A
+  auto op = std::make_shared<Dune::MatrixOperator<Matrix,Vector,Vector> >(A);        // make linear operator from A
   auto jac = std::make_shared<Dune::SeqJac<Matrix,Vector,Vector> >(A,1,1);          // Jacobi preconditioner
   auto gs = std::make_shared<Dune::SeqGS<Matrix,Vector,Vector> >(A,1,1);            // GS preconditioner
   auto sor = std::make_shared<Dune::SeqSOR<Matrix,Vector,Vector> >(A,1,1.9520932);  // SSOR preconditioner
@@ -583,7 +583,7 @@ void test_MultiTypeBlockVector_MultiTypeBlockMatrix() {                         
   x = 1;
   b = 1;
 
-  auto op = std::make_shared<Dune::MatrixAdapter<CM_BCRS,TestVector,TestVector> >(A);          // make linear operator from A
+  auto op = std::make_shared<Dune::MatrixOperator<CM_BCRS,TestVector,TestVector> >(A);          // make linear operator from A
   auto jac = std::make_shared<Dune::SeqJac<CM_BCRS,TestVector,TestVector,2> >(A,1,1);          // Jacobi preconditioner
   auto gs = std::make_shared<Dune::SeqGS<CM_BCRS,TestVector,TestVector,2> >(A,1,1);            // GS preconditioner
   auto sor = std::make_shared<Dune::SeqSOR<CM_BCRS,TestVector,TestVector,2> >(A,1,1.9520932);  // SOR preconditioner

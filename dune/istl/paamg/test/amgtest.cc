@@ -74,7 +74,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<XREAL,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
   typedef Dune::CollectiveCommunication<void*> Comm;
   int n;
 

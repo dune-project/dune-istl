@@ -31,7 +31,7 @@ typedef Dune::FieldMatrix<XREAL,1,1> MatrixBlock;
 typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
 typedef Dune::FieldVector<XREAL,1> VectorBlock;
 typedef Dune::BlockVector<VectorBlock> Vector;
-typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
 typedef Dune::CollectiveCommunication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
 typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
@@ -106,7 +106,7 @@ void testTwoLevelMethod()
     typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
     typedef Dune::FieldVector<double,BS> VectorBlock;
     typedef Dune::BlockVector<VectorBlock> Vector;
-    typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+    typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
     typedef Dune::CollectiveCommunication<void*> Comm;
     Comm c;
     int n;

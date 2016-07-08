@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     typedef Dune::FieldVector<double, 1> VB;
     typedef Dune::BlockVector<VB> Vector;
     typedef Dune::BCRSMatrix<M> Matrix;
-    Dune::MatrixAdapter<Matrix,Vector,Vector> op(B);        // make linear operator from A
+    Dune::MatrixOperator<Matrix,Vector,Vector> op(B);        // make linear operator from A
     Dune::SeqPardiso<Matrix,Vector,Vector> pardiso(B);        // preconditioner object
     Dune::LoopSolver<Vector> loop(op, pardiso, 1E-14, 2, 1);         // an inverse operator
 
