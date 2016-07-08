@@ -29,10 +29,10 @@
  *
  *      [CGSolver]
  *      reduction=1e-9
- *      maxit = 5000
+ *      maxit = 1000
  *      verbose = 3
  *
- *  \note The preconditioners / solvers are identified by their class names.
+ *  \note By default, the preconditioners / solvers are identified by their class names.
  *
  *  The file can be read by your program like this:
  *
@@ -71,14 +71,23 @@
  *  In the example above, this leads to:
  *
  *      [solver]
- *      precond = MyPrecond42
- *      solver = CGSolver
+ *      precond = SeqSSOR
+ *      solver = StubbornCGSolver
  *
- *      [MyPrecond42]
- *      type = SeqSSOR
+ *      [SeqSSOR]
  *      iterations = 1
  *      relaxation = 1.8
  *
+ *      [CGSolver]
+ *      reduction=1e-9
+ *      maxit = 1000
+ *      verbose = 3
+ *
+ *      [StubbornCGSolver]
+ *      type = CGSolver
+ *      reduction=1e-9
+ *      maxit = 50000
+ *      verbose = 1
  *
  *
  *  Creating a Preconditioner / Solver
@@ -91,7 +100,7 @@
  *
  *  Explicit Constructor Call
  *  -------------------------
- *  All preconditioners and solvers offer constructors that take a specific ParameterTree subsection to read their parameters from.
+ *  All supported preconditioners and solvers offer constructors that take a specific ParameterTree subsection to read their parameters from.
  *
  *  Use this if you want to call the specific constructor yourself and only want configuration parameters to be
  *  read from the ParameterTree.
@@ -111,8 +120,10 @@
  *
  *  Example:
  *
- *      // Create solver including a preconditioner
+ *      // Create preconditioner
  *      auto prec = Dune::PreconditionerFactory::create<VectorType,VectorType> ("SeqSSOR", matrix, configuration.sub("SeqSSOR"));
+ *      // Create solver
+ *      auto solver = Dune::SolverFactory::create<VectorType> (linearoperator, prec, "CGSolver", configuration.sub("CGSolver"));
  *
  *
  *  Fully Automatic
@@ -124,11 +135,28 @@
  *
  *  Example:
  *
- *      // Create preconditioner
+ *      // Create solver including preconditioner
  *      auto solver = SolverPrecondFactory::create<VectorType> (matrix, configuration, "solver");
  *
- *  \note Here, not only a specific subsection but the entire ParameterTree is required!
+ *  \note Parallel versions of the factory calls exist. They additionally require a communicator to be passed.
  *
+ *
+ *  ISTL Library - Speed Up Compile Time
+ *  ==================================
+ *
+ *  The ISTL Library mechanism allows building a separate library with preinstantiated preconditioners and solvers
+ *  to use with your own module. This can speed up compile times significantly especially when using the ISTL factory.
+ *
+ *  In order to activate this, you have to add the following line to your module's CMake code, specifying the
+ *  block sizes of vectors that you pass to the preconditioners and solvers.
+ *
+ *      dune_add_istl_library (BLOCKSIZES 2 10)
+ *
+ *
+ *  Additionally, the library must be registered with the dune_enable_all_packages call of your module. The name of
+ *  the library is the name of your module with the -istl suffix, for example:
+ *
+ *      dune_enable_all_packages(MODULE_LIBRARIES my-module-name-istl)
  *
  */
 
@@ -136,7 +164,7 @@ namespace Dune {
 
   /*!
      \ingroup ISTL_Factory
-     \brief Creates preconditioners from ParameterTrees
+     \brief Creates preconditioners from ParameterTrees.
    */
   class PreconditionerFactory {
   public:
@@ -182,7 +210,7 @@ namespace Dune {
        \param id A string matching the type name of the desired preconditioner.
        \param A The matrix to be preconditioned.
        \param configuration A ParameterTree subsection containing configuration parameters for the preconditioner.
-       \param comm The communicator to be used by the preconditioner.
+       \param comm The MPI communicator to be used by the preconditioner.
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
@@ -200,7 +228,7 @@ namespace Dune {
        \param id A string matching the type name of the desired preconditioner.
        \param A The matrix to be preconditioned.
        \param configuration A ParameterTree subsection containing configuration parameters for the preconditioner.
-       \param comm The communicator to be used by the preconditioner.
+       \param comm The MPI communicator to be used by the preconditioner.
        \param out_linearoperator Returns the linear operator the preconditioner will use.
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
@@ -244,7 +272,7 @@ namespace Dune {
 
   /*!
      \ingroup ISTL_Factory
-     \brief Creates solvers from ParameterTrees, requires preconditioners
+     \brief Creates solvers from ParameterTrees, requires preconditioners.
    */
   class SolverFactory {
   public:
@@ -260,8 +288,8 @@ namespace Dune {
      */
     template <typename X>
     static std::shared_ptr<InverseOperator<X,X> > create (std::shared_ptr<LinearOperator<X,X> > linearoperator,
-                                                           std::shared_ptr<Preconditioner<X,X> > preconditioner,
-                                                           std::string id, const ParameterTree& configuration)
+                                                          std::shared_ptr<Preconditioner<X,X> > preconditioner,
+                                                          std::string id, const ParameterTree& configuration)
     {
       if (id == "BiCGSTABSolver")
         return std::make_shared<BiCGSTABSolver<X> > (linearoperator, preconditioner, configuration);
@@ -286,15 +314,15 @@ namespace Dune {
        \param preconditioner The preconditioner to be given to the solver.
        \param id A string matching the type name of the desired solver.
        \param configuration A ParameterTree subsection containing configuration parameters for the solver.
-       \param comm The communicator to be used by the solver.
+       \param comm The MPI communicator to be used.
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     template <typename X, typename COMM>
     static std::shared_ptr<InverseOperator<X,X> > create (std::shared_ptr<LinearOperator<X,X> > linearoperator,
-                                                                   std::shared_ptr<Preconditioner<X,X> > preconditioner,
-                                                                   std::string id, const ParameterTree& configuration,
-                                                                   const COMM& comm)
+                                                          std::shared_ptr<Preconditioner<X,X> > preconditioner,
+                                                          std::string id, const ParameterTree& configuration,
+                                                          const COMM& comm)
     {
       // Create suitable scalar product
       auto scalarproduct = ScalarProductChooser::construct<X> (preconditioner->category(), comm);
@@ -320,7 +348,7 @@ namespace Dune {
 
   /*!
      \ingroup ISTL_Factory
-     \brief Creates ready-to-use solvers with preconditioners from ParameterTrees
+     \brief Creates ready-to-use solvers with preconditioners from ParameterTrees.
    */
   class SolverPrecondFactory {
   public:
@@ -335,7 +363,7 @@ namespace Dune {
      */
     template <typename X, typename M>
     static std::shared_ptr<InverseOperator<X,X> > create (const M& A, ParameterTree& configuration,
-                                                           std::string group = "solver")
+                                                          std::string group = "solver")
     {
 
       // Read selection of precond and solver
@@ -370,9 +398,9 @@ namespace Dune {
      */
     template <typename X, typename COMM, typename M>
     static std::shared_ptr<InverseOperator<X,X> > create (const M& A,
-                                                           const COMM& comm,
-                                                           ParameterTree& configuration,
-                                                           std::string group = "solver")
+                                                          const COMM& comm,
+                                                          ParameterTree& configuration,
+                                                          std::string group = "solver")
     {
 
       // Read selection of precond and solver
