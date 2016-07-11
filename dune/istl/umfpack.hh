@@ -210,6 +210,12 @@ namespace Dune {
         FieldVector<T,n>,
         typename A::template rebind<FieldVector<T,n> >::other> range_type;
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::Category::sequential;
+    }
+
     /** @brief Construct a solver object from a BCRSMatrix
      *
      * This computes the matrix decomposition, and may take a long time
