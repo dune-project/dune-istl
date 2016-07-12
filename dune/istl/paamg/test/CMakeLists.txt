@@ -55,12 +55,12 @@ if(SUPERLU_FOUND)
 endif()
 
 dune_add_test(NAME umfpackamgtest
-              SOURCES amgtest.cc\
+              SOURCES amgtest.cc
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 
 dune_add_test(NAME umfpackfastamgtest
               SOURCES fastamg.cc
-              SuiteSparse_UMFPACK_FOUND)
+              CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 
 dune_add_test(SOURCES twolevelmethodtest.cc)
 
