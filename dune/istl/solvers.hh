@@ -73,6 +73,52 @@ namespace Dune {
       return _prec->category();
     }
 
+#ifndef DOXYGEN
+    /* enable_if magic to chose the new constructor if a shared_ptr to
+     * a class derived from LinearOperator is passed
+     */
+    template <typename L, typename P>
+    LoopSolver (L& op, P& prec,
+                real_type reduction, int maxit,
+                std::enable_if<
+                  !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                  int
+                > verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+    }
+#else
+    /*!
+       \brief Set up Loop solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to apply in each iteration of the loop.
+       Has to inherit from Preconditioner.
+       \param reduction The relative defect reduction to achieve when applying
+       the operator.
+       \param maxit The maximum number of iteration steps allowed when applying
+       the operator.
+       \param verbose The verbosity level.
+
+       Verbose levels are:
+       <ul>
+       <li> 0 : print nothing </li>
+       <li> 1 : print initial and final defect and statistics </li>
+       <li> 2 : print line for each iteration </li>
+       </ul>
+     */
+    template <typename L, typename P>
+    LoopSolver (L& op, P& prec,
+                real_type reduction, int maxit, int verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != SolverCategory::sequential)
+         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (_op->category() != _prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+#endif
+
     /*!
        \brief Set up Loop solver.
 
@@ -130,6 +176,61 @@ namespace Dune {
       _maxit = configuration.get<int>("maxit");
       _verbose = configuration.get<int>("verbose");
     }
+
+#ifndef DOXYGEN
+    /* enable_if magic to chose the new constructor if a shared_ptr to
+     * a class derived from LinearOperator is passed
+     */
+    template <typename L, typename S, typename P>
+    LoopSolver (L& op,
+                S& sp,
+                P& prec,
+                real_type reduction, int maxit,
+                std::enable_if<
+                  !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                  int
+                > verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != _prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (_op->category() != _sp->category())
+        DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+#else
+    /**
+        \brief Set up loop solver
+
+        \param op The operator we solve.
+        \param sp The scalar product to use, e. g. SeqScalarproduct.
+        \param prec The preconditioner to apply in each iteration of the loop.
+        Has to inherit from Preconditioner.
+        \param reduction The relative defect reduction to achieve when applying
+        the operator.
+        \param maxit The maximum number of iteration steps allowed when applying
+        the operator.
+        \param verbose The verbosity level.
+
+        Verbose levels are:
+        <ul>
+        <li> 0 : print nothing </li>
+        <li> 1 : print initial and final defect and statistics </li>
+        <li> 2 : print line for each iteration </li>
+        </ul>
+     */
+    template <typename L, typename S, typename P>
+    LoopSolver (L& op,
+                S& sp,
+                P& prec,
+                real_type reduction, int maxit, int verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != _prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (_op->category() != _sp->category())
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+#endif
 
     /**
         \brief Set up loop solver
