@@ -80,10 +80,10 @@ namespace Dune {
     template <typename L, typename P>
     LoopSolver (L& op, P& prec,
                 real_type reduction, int maxit,
-                std::enable_if<
+                typename std::enable_if<
                   !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                   int
-                > verbose) :
+                >::type verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
     }
@@ -186,10 +186,10 @@ namespace Dune {
                 S& sp,
                 P& prec,
                 real_type reduction, int maxit,
-                std::enable_if<
+                typename std::enable_if<
                   !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                   int
-                > verbose) :
+                >::type verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
