@@ -78,6 +78,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template <typename L, typename P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
     LoopSolver (L& op, P& prec,
                 real_type reduction, int maxit,
                 typename std::enable_if<
@@ -182,6 +183,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template <typename L, typename S, typename P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
     LoopSolver (L& op,
                 S& sp,
                 P& prec,
