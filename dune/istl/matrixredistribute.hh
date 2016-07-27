@@ -93,7 +93,7 @@ namespace Dune
     void checkInterface(const IS& source,
                         const IS& target, MPI_Comm comm)
     {
-      RemoteIndices<IS> *ri=new RemoteIndices<IS>(source, target, comm);
+      auto ri = std::make_unique<RemoteIndices<IS> >(source, target, comm);
       ri->template rebuild<true>();
       Interface inf;
       typename OwnerOverlapCopyCommunication<int>::OwnerSet flags;
@@ -113,11 +113,8 @@ namespace Dune
         std::cout<<rank<<": redist interface :"<<interface<<std::endl;
 
         throw "autsch!";
-        delete ri;
-      }else
-
+      }
 #endif
-      delete ri;
     }
     void setSetup()
     {
