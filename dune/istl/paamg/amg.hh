@@ -101,60 +101,11 @@ namespace Dune
        * @param coarseSolver The set up solver to use on the coarse
        * grid, must match the coarse matrix in the matrix hierarchy.
        * @param smootherArgs The  arguments needed for thesmoother to use
-       * for pre and post smoothing
-       * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
-       * @param preSmoothingSteps The number of smoothing steps for premoothing.
-       * @param postSmoothingSteps The number of smoothing steps for postmoothing.
-       * @param additive Whether to use additive multigrid.
-       * @deprecated Use constructor
-       * AMG(const OperatorHierarchy&, CoarseSolver&, const SmootherArgs, const Parameters&)
-       * instead.
-       * All parameters can be set in the criterion!
-       */
-      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-          const SmootherArgs& smootherArgs, std::size_t gamma,
-          std::size_t preSmoothingSteps,
-          std::size_t postSmoothingSteps,
-          bool additive=false) DUNE_DEPRECATED;
-
-      /**
-       * @brief Construct a new amg with a specific coarse solver.
-       * @param matrices The already set up matix hierarchy.
-       * @param coarseSolver The set up solver to use on the coarse
-       * grid, must match the coarse matrix in the matrix hierarchy.
-       * @param smootherArgs The  arguments needed for thesmoother to use
        * for pre and post smoothing.
        * @param parms The parameters for the AMG.
        */
       AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, const Parameters& parms);
-
-      /**
-       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
-       *
-       * As coarse solver a preconditioned CG method with the smoother as preconditioner
-       * will be used. The matrix hierarchy is built automatically.
-       * @param fineOperator The operator on the fine level.
-       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
-       * or UnsymmetricCriterion.
-       * @param smootherArgs The arguments for constructing the smoothers.
-       * @param gamma 1 for V-cycle, 2 for W-cycle
-       * @param preSmoothingSteps The number of smoothing steps for premoothing.
-       * @param postSmoothingSteps The number of smoothing steps for postmoothing.
-       * @param additive Whether to use additive multigrid.
-       * @param pinfo The information about the parallel distribution of the data.
-       * @deprecated Use
-       * AMG(const Operator&, const C&, const SmootherArgs, const ParallelInformation)
-       * instead.
-       * All parameters can be set in the criterion!
-       */
-      template<class C>
-      AMG(const Operator& fineOperator, const C& criterion,
-          const SmootherArgs& smootherArgs, std::size_t gamma,
-          std::size_t preSmoothingSteps,
-          std::size_t postSmoothingSteps,
-          bool additive=false,
-          const ParallelInformation& pinfo=ParallelInformation()) DUNE_DEPRECATED;
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -361,24 +312,6 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
-                         std::size_t gamma, std::size_t preSmoothingSteps,
-                         std::size_t postSmoothingSteps, bool additive_)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
-        rhs_(), lhs_(), update_(), scalarProduct_(0),
-        gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
-        additive(additive_), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(2)
-    {
-      assert(matrices_->isBuilt());
-
-      // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
-    }
-
-    template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-                         const SmootherArgs& smootherArgs,
                          const Parameters& parms)
       : matrices_(&matrices), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
@@ -392,30 +325,6 @@ namespace Dune
 
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
-    }
-
-    template<class M, class X, class S, class PI, class A>
-    template<class C>
-    AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
-                         const C& criterion,
-                         const SmootherArgs& smootherArgs,
-                         std::size_t gamma, std::size_t preSmoothingSteps,
-                         std::size_t postSmoothingSteps,
-                         bool additive_,
-                         const PI& pinfo)
-      : smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(),
-        rhs_(), lhs_(), update_(), scalarProduct_(), gamma_(gamma),
-        preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
-        additive(additive_), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(criterion.debugLevel())
-    {
-      static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
-                    "Matrix and Solver must match in terms of category!");
-      // TODO: reestablish compile time checks.
-      //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
-      //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
