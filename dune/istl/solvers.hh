@@ -73,52 +73,6 @@ namespace Dune {
       return _prec->category();
     }
 
-#ifndef DOXYGEN
-    /* enable_if magic to chose the new constructor if a shared_ptr to
-     * a class derived from LinearOperator is passed
-     */
-    template <typename L, typename P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
-    LoopSolver (L& op, P& prec,
-                real_type reduction, int maxit,
-                typename std::enable_if<
-                  !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
-                  int
-                >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-    }
-#else
-    /*!
-       \brief Set up Loop solver.
-
-       \param op The operator we solve.
-       \param prec The preconditioner to apply in each iteration of the loop.
-       Has to inherit from Preconditioner.
-       \param reduction The relative defect reduction to achieve when applying
-       the operator.
-       \param maxit The maximum number of iteration steps allowed when applying
-       the operator.
-       \param verbose The verbosity level.
-
-       Verbose levels are:
-       <ul>
-       <li> 0 : print nothing </li>
-       <li> 1 : print initial and final defect and statistics </li>
-       <li> 2 : print line for each iteration </li>
-       </ul>
-     */
-    template <typename L, typename P>
-    LoopSolver (L& op, P& prec,
-                real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      if (_op->category() != SolverCategory::sequential)
-         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
-      if (_op->category() != _prec->category())
-         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-    }
-#endif
 
     /*!
        \brief Set up Loop solver.
@@ -178,61 +132,6 @@ namespace Dune {
       _verbose = configuration.get<int>("verbose");
     }
 
-#ifndef DOXYGEN
-    /* enable_if magic to chose the new constructor if a shared_ptr to
-     * a class derived from LinearOperator is passed
-     */
-    template <typename L, typename S, typename P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
-    LoopSolver (L& op,
-                S& sp,
-                P& prec,
-                real_type reduction, int maxit,
-                typename std::enable_if<
-                  !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
-                  int
-                >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      if (_op->category() != _prec->category())
-         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (_op->category() != _sp->category())
-        DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
-    }
-#else
-    /**
-        \brief Set up loop solver
-
-        \param op The operator we solve.
-        \param sp The scalar product to use, e. g. SeqScalarproduct.
-        \param prec The preconditioner to apply in each iteration of the loop.
-        Has to inherit from Preconditioner.
-        \param reduction The relative defect reduction to achieve when applying
-        the operator.
-        \param maxit The maximum number of iteration steps allowed when applying
-        the operator.
-        \param verbose The verbosity level.
-
-        Verbose levels are:
-        <ul>
-        <li> 0 : print nothing </li>
-        <li> 1 : print initial and final defect and statistics </li>
-        <li> 2 : print line for each iteration </li>
-        </ul>
-     */
-    template <typename L, typename S, typename P>
-    LoopSolver (L& op,
-                S& sp,
-                P& prec,
-                real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
-    {
-      if (_op->category() != _prec->category())
-         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
-      if (_op->category() != _sp->category())
-         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
-    }
-#endif
 
     /**
         \brief Set up loop solver
@@ -622,6 +521,58 @@ namespace Dune {
       return _prec->category();
     }
 
+#ifndef DOXYGEN
+    /* enable_if magic to choose the new constructor if a shared_ptr to
+     * a class derived from LinearOperator is passed
+     */
+    template <typename L, typename P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    CGSolver (L& op, P& prec,
+              real_type reduction, int maxit,
+              typename std::enable_if<
+                !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                int
+              >::type verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != SolverCategory::sequential)
+         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (_op->category() != _prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+ #else
+    /*!
+       \brief Set up Loop solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to apply in each iteration of the loop.
+       Has to inherit from Preconditioner.
+       \param reduction The relative defect reduction to achieve when applying
+       the operator.
+       \param maxit The maximum number of iteration steps allowed when applying
+       the operator.
+       \param verbose The verbosity level.
+
+       Verbose levels are:
+       <ul>
+       <li> 0 : print nothing </li>
+       <li> 1 : print initial and final defect and statistics </li>
+       <li> 2 : print line for each iteration </li>
+       </ul>
+    */
+    template <typename L, typename P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    CGSolver (L& op, P& prec,
+              real_type reduction, int maxit, int verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (_op->category() != _prec->category())
+        DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+#endif
+
     /*!
        \brief Set up conjugate gradient solver.
 
@@ -653,6 +604,44 @@ namespace Dune {
       _maxit = configuration.get<int>("maxit");
       _verbose = configuration.get<int>("verbose");
     }
+
+#ifndef DOXYGEN
+    /* enable_if magic to choose the new constructor if a shared_ptr to
+     * a class derived from LinearOperator is passed
+     */
+    template <typename L, typename S, typename P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    CGSolver (L& op, S& sp, P& prec,
+              real_type reduction, int maxit,
+              typename std::enable_if<
+                !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                int
+              >::type verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != _prec->category())
+        DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (_op->category() != _sp->category())
+        DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+#else
+    /*!
+       \brief Set up conjugate gradient solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+     */
+    template <typename L, typename S, typename P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    CGSolver (L& op, S& sp, P& prec,
+              real_type reduction, int maxit, int verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != _prec->category())
+        DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+      if (_op->category() != _sp->category())
+        DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+#endif
 
     /*!
        \brief Set up conjugate gradient solver.
@@ -870,6 +859,44 @@ namespace Dune {
       return _prec->category();
     }
 
+#ifndef DOXYGEN
+    /* enable_if magic to choose the new constructor if a shared_ptr to
+     * a class derived from LinearOperator is passed
+     */
+    template<class L, class P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    BiCGSTABSolver (L& op, P& prec,
+                    real_type reduction, int maxit,
+                    typename std::enable_if<
+                      !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                      int
+                    >::type verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (_op->category() != _prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+#else
+    /*!
+       \brief Set up solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+     */
+    template<class L, class P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    BiCGSTABSolver (L& op, P& prec,
+                    real_type reduction, int maxit, int verbose) :
+      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (_op->category() != _prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+#endif
+
     /*!
        \brief Set up solver.
 
@@ -900,6 +927,50 @@ namespace Dune {
       _maxit = configuration.get<int>("maxit");
       _verbose = configuration.get<int>("verbose");
     }
+
+#ifndef DOXYGEN
+     /* enable_if magic to choose the new constructor if a shared_ptr to
+      * a class derived from LinearOperator is passed
+      */
+     template <typename L, typename S, typename P>
+     DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+     BiCGSTABSolver (L& op,
+                     S& sp,
+                     P& prec,
+                     real_type reduction, int maxit,
+                     typename std::enable_if<
+                       !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                       int
+                     >::type verbose) :
+       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+     {
+       if (_op->category() != _prec->category())
+          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+       if (_op->category() != _sp->category())
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+     }
+#else
+     /*!
+       \brief Set up solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
+     */
+     template <typename L, typename S, typename P>
+     DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+     BiCGSTABSolver (L& op,
+                     S& sp,
+                     P& prec,
+                     real_type reduction, int maxit,
+                     int verbose) :
+       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+     {
+       if (_op->category() != _prec->category())
+          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+       if (_op->category() != _sp->category())
+         DUNE_THROW(ISTLError, "Linear operator and scalar product must have the same category!");
+    }
+#endif
+
 
     /*!
        \brief Set up solver.
@@ -1550,6 +1621,47 @@ namespace Dune {
       if (op->category() != prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
     }
+
+#ifndef DOXYGEN
+    /* enable_if magic to choose the new constructor if a shared_ptr to
+     * a class derived from LinearOperator is passed
+     */
+    template<class L, class P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit,
+                          typename std::enable_if<
+                            !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
+                            int
+                          >::type verbose) :
+      _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
+      _sp(new SeqScalarProduct<X>()), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_A->category() != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (_A->category() != _W->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+#else
+    /*!
+       \brief Set up solver.
+
+       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
+       \param restart number of GMRes cycles before restart
+     */
+    template<class L, class P>
+    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) :
+      _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
+      _sp(new SeqScalarProduct<X>()), _restart(restart),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose)
+    {
+      if (_op->category() != SolverCategory::sequential)
+        DUNE_THROW(ISTLError, "Linear operator must be sequential!");
+      if (vop->category() != prec->category())
+         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
+    }
+#endif
 
 
     /*!
