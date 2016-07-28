@@ -78,7 +78,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     LoopSolver (L& op, P& prec,
                 real_type reduction, int maxit,
                 typename std::enable_if<
@@ -113,7 +113,7 @@ namespace Dune {
        </ul>
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     LoopSolver (L& op, P& prec,
                 real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -189,7 +189,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     LoopSolver (L& op, S& sp, P& prec,
                 real_type reduction, int maxit,
                 typename std::enable_if<
@@ -225,7 +225,7 @@ namespace Dune {
         </ul>
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     LoopSolver (L& op, S& sp, P& prec,
                 real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -424,7 +424,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GradientSolver (L& op, P& prec,
                     real_type reduction, int maxit,
                     typename std::enable_if<
@@ -445,7 +445,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GradientSolver (L& op, P& prec,
                     real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -506,7 +506,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GradientSolver (L& op, S& sp, P& prec,
                     real_type reduction, int maxit,
                     typename std::enable_if<
@@ -527,7 +527,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GradientSolver (L& op, S& sp, P& prec,
                     real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -706,7 +706,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template <typename L, typename P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     CGSolver (L& op, P& prec,
               real_type reduction, int maxit,
               typename std::enable_if<
@@ -741,7 +741,7 @@ namespace Dune {
        </ul>
     */
     template <typename L, typename P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     CGSolver (L& op, P& prec,
               real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -790,7 +790,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template <typename L, typename S, typename P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     CGSolver (L& op, S& sp, P& prec,
               real_type reduction, int maxit,
               typename std::enable_if<
@@ -811,7 +811,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template <typename L, typename S, typename P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     CGSolver (L& op, S& sp, P& prec,
               real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -1044,7 +1044,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     BiCGSTABSolver (L& op, P& prec,
                     real_type reduction, int maxit,
                     typename std::enable_if<
@@ -1065,7 +1065,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     BiCGSTABSolver (L& op, P& prec,
                     real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
@@ -1113,7 +1113,7 @@ namespace Dune {
       * a class derived from LinearOperator is passed
       */
      template <typename L, typename S, typename P>
-     DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
      BiCGSTABSolver (L& op,
                      S& sp,
                      P& prec,
@@ -1136,7 +1136,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
      template <typename L, typename S, typename P>
-     DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
      BiCGSTABSolver (L& op,
                      S& sp,
                      P& prec,
@@ -1447,7 +1447,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     MINRESSolver (L& op, P& prec, real_type reduction, int maxit,
                   typename std::enable_if<
                     !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
@@ -1467,7 +1467,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     MINRESSolver (L& op, P& prec, real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
@@ -1515,7 +1515,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     MINRESSolver (L& op, S& sp, P& prec, real_type reduction, int maxit,
                   typename std::enable_if<
                     !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
@@ -1535,7 +1535,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     MINRESSolver (L& op, S& sp, P& prec, real_type reduction, int maxit, int verbose) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
@@ -1879,7 +1879,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit,
                           typename std::enable_if<
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
@@ -1902,7 +1902,7 @@ namespace Dune {
        \param restart number of GMRes cycles before restart
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) :
       _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
       _sp(new SeqScalarProduct<X>()), _restart(restart),
@@ -1992,7 +1992,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     RestartedGMResSolver (L& op, S& sp, P& prec, real_type reduction, int restart, int maxit,
                           typename std::enable_if<
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
@@ -2015,7 +2015,7 @@ namespace Dune {
        \param restart number of GMRes cycles before restart
      */
     template<class L, class S, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     RestartedGMResSolver (L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) :
       _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
       _sp(std::make_shared<S>(sp)), _restart(restart),
@@ -2377,7 +2377,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GeneralizedPCGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose,
                           typename std::enable_if<
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
@@ -2400,7 +2400,7 @@ namespace Dune {
        the Krylov search space.
      */
     template<class L, class P>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GeneralizedPCGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose,
                           int restart=10) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit),
@@ -2468,7 +2468,7 @@ namespace Dune {
      * a class derived from LinearOperator is passed
      */
     template<class L, class P, class S>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GeneralizedPCGSolver (L& op, S& sp, P& prec,
                           real_type reduction, int maxit, int verbose,
                           typename std::enable_if<
@@ -2492,7 +2492,7 @@ namespace Dune {
        the Krylov search space.
      */
     template<class L, class P, class S>
-    DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+    DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GeneralizedPCGSolver (L& op, S& sp, P& prec,
                           real_type reduction, int maxit, int verbose, int restart=10) :
       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose),

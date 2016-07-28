@@ -164,7 +164,7 @@ namespace Dune
        * a class derived from LinearOperator is passed
        */
       template<class C>
-      DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
       AMG(const Operator& fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation(),
@@ -184,7 +184,7 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      DUNE_DEPRECATED_MSG("This constructor is deprecated. Use the new one which expects shared pointers.")
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
       AMG(const Operator& fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation());
