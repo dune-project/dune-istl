@@ -471,6 +471,7 @@ namespace Dune
       createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
     }
 
+    // NOTE: DEPRECATED
     template<class M, class X, class S, class PI, class A>
     template<class C>
     AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
