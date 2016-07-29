@@ -370,6 +370,69 @@ namespace Dune
       rhs_=nullptr;
     }
 
+    template <class Matrix,
+              class Vector>
+    struct DirectSolverSelector
+    {
+      typedef typename Matrix :: field_type field_type;
+      enum SolverType { umfpack, superlu, none };
+
+      static constexpr SolverType solver =
+#if HAVE_SUITESPARSE_UMFPACK
+        UMFPackMethodChooser< field_type > :: valid ? umfpack : none ;
+#elif HAVE_SUPERLU
+        superlu ;
+#else
+        none;
+#endif
+
+      template <class M, SolverType>
+      struct Solver
+      {
+        typedef InverseOperator<Vector,Vector> type;
+        static type* create(const M& mat, bool verbose, bool reusevector )
+        {
+          DUNE_THROW(NotImplemented,"DirectSolver not selected");
+          return nullptr;
+        }
+        static std::string name () { return "None"; }
+      };
+#if HAVE_SUITESPARSE_UMFPACK
+      template <class M>
+      struct Solver< M, umfpack >
+      {
+        typedef UMFPack< M > type;
+        static type* create(const M& mat, bool verbose, bool reusevector )
+        {
+          return new type(mat, verbose, reusevector );
+        }
+        static std::string name () { return "UMFPack"; }
+      };
+#endif
+#if HAVE_SUPERLU
+      template <class M>
+      struct Solver< M, superlu >
+      {
+        typedef SuperLU< M > type;
+        static type* create(const M& mat, bool verbose, bool reusevector )
+        {
+          return new type(mat, verbose, reusevector );
+        }
+        static std::string name () { return "SuperLU"; }
+      };
+#endif
+
+      // define direct solver type to be used
+      typedef Solver< Matrix, solver > SelectedSolver ;
+      typedef typename SelectedSolver :: type   DirectSolver;
+      static constexpr bool isDirectSolver = solver != none;
+      static std::string name() { return SelectedSolver :: name (); }
+      static DirectSolver* create(const Matrix& mat, bool verbose, bool reusevector )
+      {
+        return SelectedSolver :: create( mat, verbose, reusevector );
+      }
+    };
+
     template<class M, class X, class S, class PI, class A>
     template<class C>
     void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, Operator& matrix,
@@ -383,7 +446,8 @@ namespace Dune
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
 
-            if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
+      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels())
+      {
         // We have the carsest level. Create the coarse Solver
         SmootherArgs sargs(smootherArgs_);
         sargs.iterations = 1;
@@ -402,32 +466,35 @@ namespace Dune
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
         scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
 
-#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
-#if HAVE_SUITESPARSE_UMFPACK
-#define DIRECTSOLVER UMFPack
-#else
-#define DIRECTSOLVER SuperLU
-#endif
+        typedef DirectSolverSelector< typename M::matrix_type, X > SolverSelector;
+
         // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+        if( SolverSelector::isDirectSolver &&
+            (std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
            || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
            || (matrices_->parallelInformation().coarsest().isRedistributed()
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
+               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0) )
+          )
+        { // redistribute and 1 proc
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
+            {
               // We are still participating on this level
-              solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+              solver_.reset(SolverSelector::create(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+            }
             else
               solver_.reset();
-          }else
-            solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
+          }
+          else
+          {
+            solver_.reset(SolverSelector::create(matrices_->matrices().coarsest()->getmat(), false, false));
+          }
           if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<< "Using a direct coarse solver (" << static_cast< DIRECTSOLVER<typename M::matrix_type>* >(solver_.get())->name() << ")" << std::endl;
-        }else
-#undef DIRECTSOLVER
-#endif // HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
+            std::cout<< "Using a direct coarse solver (" << SolverSelector::name() << ")" << std::endl;
+        }
+        else
         {
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
