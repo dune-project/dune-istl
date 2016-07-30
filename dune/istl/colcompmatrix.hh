@@ -298,7 +298,7 @@ namespace Dune
 
   template<class T, class A, int n, int m>
   ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::ColCompMatrixInitializer(ColCompMatrix& mat_)
-    : mat(&mat_), cols(mat_.N()), marker(0)
+    : mat(&mat_), cols(mat_.M()), marker(0)
   {
     mat->Nnz_=0;
   }
