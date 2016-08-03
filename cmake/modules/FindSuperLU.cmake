@@ -1,7 +1,7 @@
 # .. cmake_module::
 #
 #    Module that checks whether SuperLU is available and usable.
-#    SuperLU must be a version released after the year 2005.
+#    SuperLU must be 4.0 or newer.
 #
 #    Variables used by this module which you may want to set:
 #
@@ -13,8 +13,14 @@
 #    :code:`SUPERLU_FOUND`
 #       True if SuperLU available and usable.
 #
+#    :code:`SUPERLU_MIN_VERSION_4`
+#       True if SuperLU version >= 4.0.
+#
 #    :code:`SUPERLU_MIN_VERSION_4_3`
 #       True if SuperLU version >= 4.3.
+#
+#    :code:`SUPERLU_MIN_VERSION_5`
+#       True if SuperLU version >= 5.0.
 #
 #    :code:`SUPERLU_WITH_VERSION`
 #       Human readable string containing version information.
@@ -86,8 +92,20 @@ endif(SUPERLU_LIBRARY)
 if(BLAS_LIBRARIES)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
 endif(BLAS_LIBRARIES)
+# check wether version is new enough >= 4.0
+check_c_source_compiles("
+typedef int int_t;
+#include <supermatrix.h>
+#include <slu_util.h>
+int main()
+{
+  SuperLUStat_t stat;
+  stat.expansions=8;
+  return 0;
+}" SUPERLU_MIN_VERSION_4)
+
 # check whether version is at least 4.3
-CHECK_C_SOURCE_COMPILES("
+check_c_source_compiles("
 #include <slu_ddefs.h>
 int main(void)
 {
@@ -95,7 +113,8 @@ int main(void)
 }"
 SUPERLU_MIN_VERSION_4_3)
 
-CHECK_C_SOURCE_COMPILES("
+# check whether version is at least 5.0
+check_c_source_compiles("
 typedef int int_t;
 #include <supermatrix.h>
 #include <slu_util.h>
@@ -108,15 +127,20 @@ SUPERLU_MIN_VERSION_5)
 
 cmake_pop_check_state()
 
-if(SUPERLU_MIN_VERSION_5)
-  set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
-    "Human readable string containing SuperLU version information.")
-elseif(SUPERLU_MIN_VERSION_4_3)
-  set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
+if(NOT SUPERLU_MIN_VERSION_4)
+  set(SUPERLU_WITH_VERSION "SuperLU < 4.0" CACHE STRING
     "Human readable string containing SuperLU version information.")
 else()
-  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
-    "Human readable string containing SuperLU version information.")
+  if(SUPERLU_MIN_VERSION_5)
+    set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
+      "Human readable string containing SuperLU version information.")
+  elseif(SUPERLU_MIN_VERSION_4_3)
+    set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
+      "Human readable string containing SuperLU version information.")
+  else()
+    set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
+      "Human readable string containing SuperLU version information.")
+  endif()
 endif()
 
 # behave like a CMake module is supposed to behave
@@ -127,9 +151,12 @@ find_package_handle_standard_args(
   BLAS_FOUND
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
+  SUPERLU_MIN_VERSION_4
 )
 
 mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY)
+
+set_package_info("SuperLU" "Direct linear solver library")
 
 # if both headers and library are found, store results
 if(SUPERLU_FOUND)
@@ -149,7 +176,8 @@ else(SUPERLU_FOUND)
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n\n")
+    "Library directory: ${SUPERLU_LIBRARIES}\n"
+    "Found unsupported version: ${SUPERLU_WITH_VERSION}\n\n")
 endif(SUPERLU_FOUND)
 
 # set HAVE_SUPERLU for config.h
