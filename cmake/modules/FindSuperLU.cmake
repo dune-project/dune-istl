@@ -1,7 +1,7 @@
 # .. cmake_module::
 #
 #    Module that checks whether SuperLU is available and usable.
-#    SuperLU must be a version released after the year 2005.
+#    SuperLU must be 4.0 or newer.
 #
 #    Variables used by this module which you may want to set:
 #
@@ -13,8 +13,14 @@
 #    :code:`SUPERLU_FOUND`
 #       True if SuperLU available and usable.
 #
+#    :code:`SUPERLU_MIN_VERSION_4`
+#       True if SuperLU version >= 4.0.
+#
 #    :code:`SUPERLU_MIN_VERSION_4_3`
 #       True if SuperLU version >= 4.3.
+#
+#    :code:`SUPERLU_MIN_VERSION_5`
+#       True if SuperLU version >= 5.0.
 #
 #    :code:`SUPERLU_WITH_VERSION`
 #       Human readable string containing version information.
@@ -87,7 +93,7 @@ if(BLAS_LIBRARIES)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
 endif(BLAS_LIBRARIES)
 # check wether version is new enough >= 4.0
-CHECK_C_SOURCE_COMPILES("
+check_c_source_compiles("
 typedef int int_t;
 #include <supermatrix.h>
 #include <slu_util.h>
@@ -99,7 +105,7 @@ int main()
 }" SUPERLU_MIN_VERSION_4)
 
 # check whether version is at least 4.3
-CHECK_C_SOURCE_COMPILES("
+check_c_source_compiles("
 #include <slu_ddefs.h>
 int main(void)
 {
@@ -107,7 +113,8 @@ int main(void)
 }"
 SUPERLU_MIN_VERSION_4_3)
 
-CHECK_C_SOURCE_COMPILES("
+# check whether version is at least 5.0
+check_c_source_compiles("
 typedef int int_t;
 #include <supermatrix.h>
 #include <slu_util.h>
@@ -148,6 +155,8 @@ find_package_handle_standard_args(
 )
 
 mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY)
+
+set_package_info("SuperLU" "Direct linear solver library")
 
 # if both headers and library are found, store results
 if(SUPERLU_FOUND)
