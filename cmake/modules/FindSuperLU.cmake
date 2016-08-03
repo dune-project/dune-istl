@@ -86,6 +86,18 @@ endif(SUPERLU_LIBRARY)
 if(BLAS_LIBRARIES)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
 endif(BLAS_LIBRARIES)
+# check wether version is new enough >= 4.0
+CHECK_C_SOURCE_COMPILES("
+typedef int int_t;
+#include <supermatrix.h>
+#include <slu_util.h>
+int main()
+{
+  SuperLUStat_t stat;
+  stat.expansions=8;
+  return 0;
+}" SUPERLU_MIN_VERSION_4)
+
 # check whether version is at least 4.3
 CHECK_C_SOURCE_COMPILES("
 #include <slu_ddefs.h>
@@ -108,15 +120,20 @@ SUPERLU_MIN_VERSION_5)
 
 cmake_pop_check_state()
 
-if(SUPERLU_MIN_VERSION_5)
-  set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
-    "Human readable string containing SuperLU version information.")
-elseif(SUPERLU_MIN_VERSION_4_3)
-  set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
+if(NOT SUPERLU_MIN_VERSION_4)
+  set(SUPERLU_WITH_VERSION "SuperLU < 4.0" CACHE STRING
     "Human readable string containing SuperLU version information.")
 else()
-  set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
-    "Human readable string containing SuperLU version information.")
+  if(SUPERLU_MIN_VERSION_5)
+    set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
+      "Human readable string containing SuperLU version information.")
+  elseif(SUPERLU_MIN_VERSION_4_3)
+    set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
+      "Human readable string containing SuperLU version information.")
+  else()
+    set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
+      "Human readable string containing SuperLU version information.")
+  endif()
 endif()
 
 # behave like a CMake module is supposed to behave
@@ -127,6 +144,7 @@ find_package_handle_standard_args(
   BLAS_FOUND
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
+  SUPERLU_MIN_VERSION_4
 )
 
 mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY)
@@ -149,7 +167,8 @@ else(SUPERLU_FOUND)
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n\n")
+    "Library directory: ${SUPERLU_LIBRARIES}\n"
+    "Found unsupported version: ${SUPERLU_WITH_VERSION}\n\n")
 endif(SUPERLU_FOUND)
 
 # set HAVE_SUPERLU for config.h
