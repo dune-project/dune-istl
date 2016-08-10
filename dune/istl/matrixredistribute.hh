@@ -812,8 +812,6 @@ namespace Dune
     ri.template redistribute<MatrixRowGatherScatter<M,IndexSet> >(origrow,newrow);
     if (origComm.getSolverCategory() != static_cast<int>(SolverCategory::nonoverlapping))
       newrow.setOverlapRowsToDirichlet();
-    if(newMatrix.N()>0&&newMatrix.N()<20)
-      printmatrix(std::cout, newMatrix, "redist", "row");
   }
 
   /**
