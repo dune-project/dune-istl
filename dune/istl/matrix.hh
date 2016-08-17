@@ -738,9 +738,9 @@ namespace MatrixImp
 
     /** \brief Return the transpose of the matrix */
     Matrix transpose() const {
-      Matrix out(N(), M());
-      for (size_type i=0; i<M(); i++)
-        for (size_type j=0; j<N(); j++)
+      Matrix out(M(), N());
+      for (size_type i=0; i<N(); i++)
+        for (size_type j=0; j<M(); j++)
           out[j][i] = (*this)[i][j];
 
       return out;
