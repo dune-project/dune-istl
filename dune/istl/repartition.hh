@@ -800,25 +800,40 @@ namespace Dune
       os<<*cur<<" ";
   }
 
+  namespace
+  {
+    template<typename T>
+    inline bool isNonNegativeBounded(T val, T max)
+    {
+      return val >= 0 && val <= max;
+    }
+
+    template<>
+    inline bool isNonNegativeBounded<std::size_t>(std::size_t val, std::size_t max)
+    {
+      return val <= max;
+    }
+  }
+
   inline bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, idxtype noEdges, idxtype* xadj,
                            idxtype* adjncy, bool checkSymmetry)
   {
     bool correct=true;
 
     for(idxtype vtx=0; vtx<(idxtype)noVtx; ++vtx) {
-      if(xadj[vtx]>noEdges||xadj[vtx]<0) {
+      if(!isNonNegativeBounded(xadj[vtx], noEdges)) {
         std::cerr <<"Check graph: xadj["<<vtx<<"]="<<xadj[vtx]<<" (>"
                   <<noEdges<<") out of range!"<<std::endl;
         correct=false;
       }
-      if(xadj[vtx+1]>noEdges||xadj[vtx+1]<0) {
+      if(!isNonNegativeBounded(xadj[vtx+1], noEdges)) {
         std::cerr <<"Check graph: xadj["<<vtx+1<<"]="<<xadj[vtx+1]<<" (>"
                   <<noEdges<<") out of range!"<<std::endl;
         correct=false;
       }
       // Check numbers in adjncy
       for(idxtype i=xadj[vtx]; i< xadj[vtx+1]; ++i) {
-        if(adjncy[i]<0||((std::size_t)adjncy[i])>gnoVtx) {
+        if(!isNonNegativeBounded(adjncy[i], gnoVtx)) {
           std::cerr<<" Edge "<<adjncy[i]<<" out of range ["<<0<<","<<noVtx<<")"
                    <<std::endl;
           correct=false;
