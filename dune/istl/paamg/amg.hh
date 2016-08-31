@@ -159,6 +159,37 @@ namespace Dune
           bool additive=false,
           const ParallelInformation& pinfo=ParallelInformation()) DUNE_DEPRECATED;
 
+#ifndef DOXYGEN
+      /* enable_if magic to choose the new constructor if a shared_ptr to
+       * a class derived from LinearOperator is passed
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      AMG(const Operator& fineOperator, const C& criterion,
+          const SmootherArgs& smootherArgs=SmootherArgs(),
+          const ParallelInformation& pinfo=ParallelInformation(),
+          typename std::enable_if<
+            !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+          >::type* enabler=0);
+#else
+      /**
+       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
+       *
+       * As coarse solver a preconditioned CG method with the smoother as preconditioner
+       * will be used. The matrix hierarchy is built automatically.
+       * @param fineOperator The operator on the fine level.
+       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
+       * or UnsymmetricCriterion, and providing the parameters.
+       * @param smootherArgs The arguments for constructing the smoothers.
+       * @param pinfo The information about the parallel distribution of the data.
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      AMG(const Operator& fineOperator, const C& criterion,
+          const SmootherArgs& smootherArgs=SmootherArgs(),
+          const ParallelInformation& pinfo=ParallelInformation());
+#endif
+
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
        *
@@ -438,6 +469,30 @@ namespace Dune
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
       createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
+    }
+
+    // NOTE: DEPRECATED
+    template<class M, class X, class S, class PI, class A>
+    template<class C>
+    AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
+                         const C& criterion,
+                         const SmootherArgs& smootherArgs,
+                         const PI& pinfo,
+                         typename std::enable_if<
+                           !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+                         >::type* enabler)
+      : smootherArgs_(smootherArgs),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(),
+        rhs_(), lhs_(), update_(), scalarProduct_(),
+        gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
+        postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
+        additive(criterion.getAdditive()), coarsesolverconverged(true),
+        coarseSmoother_(), verbosity_(criterion.debugLevel())
+    {
+      // TODO: reestablish compile time checks.
+      //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
+      //             "Matrix and Solver must match in terms of category!");
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(std::make_shared<const Operator>(matrix)), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>

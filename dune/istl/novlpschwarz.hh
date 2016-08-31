@@ -81,10 +81,11 @@ namespace Dune {
     typedef std::multimap<int,std::pair<int,RILIterator> > RIMap;
     typedef typename RIMap::iterator RIMapit;
 
-    enum {
-      //! \brief The solver category.
-      category=SolverCategory::nonoverlapping
-    };
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
+    }
 
     /**
      * @brief constructor: just store a reference to a matrix.
@@ -271,11 +272,11 @@ namespace Dune {
     //! \brief The type of the communication object.
     typedef C communication_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::nonoverlapping
-    };
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
+    }
 
     /*! \brief Constructor.
 
