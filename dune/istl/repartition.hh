@@ -800,8 +800,9 @@ namespace Dune
       os<<*cur<<" ";
   }
 
-  inline bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, idxtype noEdges, idxtype* xadj,
-                           idxtype* adjncy, bool checkSymmetry)
+  template<class S, class T>
+  inline bool isValidGraph(std::size_t noVtx, std::size_t gnoVtx, S noEdges, T* xadj,
+                           T* adjncy, bool checkSymmetry)
   {
     bool correct=true;
 
