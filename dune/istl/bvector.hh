@@ -1101,7 +1101,7 @@ namespace Dune {
     //! construct from base class object with reference semantics!
     CompressedBlockVectorWindow (const compressed_block_vector_unmanaged<B,A>& _a)
     {
-      // cast needed to access protected data (upcast)
+      // cast needed to access protected data (downcast)
       const CompressedBlockVectorWindow& a = static_cast<const CompressedBlockVectorWindow&>(_a);
 
       // make me point to the other's data
