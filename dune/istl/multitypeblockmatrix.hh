@@ -57,6 +57,12 @@ namespace Dune {
       return 1+sizeof...(Args);
     }
 
+    /** \brief Return the number of matrix rows */
+    static constexpr std::size_t size()
+    {
+      return 1+sizeof...(Args);
+    }
+
     /** \brief Return the number of matrix columns */
     static constexpr std::size_t M()
     {
