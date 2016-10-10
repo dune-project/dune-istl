@@ -565,8 +565,10 @@ namespace Dune {
     B& operator[] (size_type i)
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
+#ifndef NDEBUG
       if (lb == j+n || *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
+#endif
       return p[lb-j];
     }
 
@@ -574,8 +576,10 @@ namespace Dune {
     const B& operator[] (size_type i) const
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
+#ifndef NDEBUG
       if (lb == j+n || *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
+#endif
       return p[lb-j];
     }
 
