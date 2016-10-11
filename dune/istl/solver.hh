@@ -87,6 +87,9 @@ namespace Dune
     /** \brief The field type of the operator. */
     typedef typename X::field_type field_type;
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const = 0;
+
     /**
         \brief Apply inverse operator,
 

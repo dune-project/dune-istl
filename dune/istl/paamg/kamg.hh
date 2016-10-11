@@ -35,10 +35,11 @@ namespace Dune
       typedef typename AMG::Range Range;
     public:
 
-      enum {
-        /** @brief The solver category. */
-        category = AMG::category
-      };
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return amg_.category();
+      }
 
       /**
        * @brief Constructor.
@@ -160,13 +161,12 @@ namespace Dune
       typedef typename Amg::Range Range;
       /** @brief The type of the hierarchy of parallel information. */
       typedef typename Amg::ParallelInformationHierarchy ParallelInformationHierarchy;
-      /** @brief The type of the scalar product. */
-      typedef typename Amg::ScalarProduct ScalarProduct;
 
-      enum {
-        /** @brief The solver category. */
-        category = Amg::category
-      };
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return amg.category();
+      }
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -181,7 +181,7 @@ namespace Dune
        * @param minDefectReduction The minimal defect reduction to achieve on each Krylov level.
        */
       KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-           const SmootherArgs& smootherArgs, std::size_t gamma,
+           const SmootherArgs& smootherArgs, std::size_t gamma=1,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1) DUNE_DEPRECATED;
 
@@ -199,6 +199,50 @@ namespace Dune
       KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
            const SmootherArgs& smootherArgs, const Parameters& parms,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1);
+
+#ifndef DOXYGEN
+      /* enable_if magic to choose the new constructor if a shared_ptr to
+       * a class derived from LinearOperator is passed
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      KAMG(const Operator& fineOperator, const C& criterion,
+           const SmootherArgs& smootherArgs, std::size_t gamma,
+           std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
+           std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
+           const ParallelInformation& pinfo=ParallelInformation(),
+           typename std::enable_if<
+             !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+           >::type* enabler=0);
+#else
+      /**
+       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
+       *
+       * As coarse solver a preconditioned CG method with the smoother as preconditioner
+       * will be used. The matrix hierarchy is built automatically.
+       * @param fineOperator The operator on the fine level.
+       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
+       * or UnsymmetricCriterion.
+       * @param smootherArgs The arguments for constructing the smoothers.
+       * @param gamma 1 for V-cycle, 2 for W-cycle
+       * @param preSmoothingSteps The number of smoothing steps for premoothing.
+       * @param postSmoothingSteps The number of smoothing steps for postmoothing.
+       * @param maxLevelKrylovSteps The maximum number of Krylov steps allowed at each level.
+       * @param minDefectReduction The defect reduction to achieve on each krylov level.
+       * @param pinfo The information about the parallel distribution of the data.
+       * @deprecated Use
+       * KAMG(const Operator&, const C&, const SmootherArgs, const ParallelInformation)
+       * instead.
+       * All parameters can be set in the criterion!
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      KAMG(const Operator& fineOperator, const C& criterion,
+           const SmootherArgs& smootherArgs, std::size_t gamma,
+           std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
+           std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
+           const ParallelInformation& pinfo=ParallelInformation());
+#endif
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -221,11 +265,46 @@ namespace Dune
        * All parameters can be set in the criterion!
        */
       template<class C>
-      KAMG(const Operator& fineOperator, const C& criterion,
+      KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
            const SmootherArgs& smootherArgs, std::size_t gamma,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
            const ParallelInformation& pinfo=ParallelInformation()) DUNE_DEPRECATED;
+
+#ifndef DOXYGEN
+      /* enable_if magic to choose the new constructor if a shared_ptr to
+       * a class derived from LinearOperator is passed
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      KAMG(const Operator& fineOperator, const C& criterion,
+           const SmootherArgs& smootherArgs=SmootherArgs(),
+           std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
+           const ParallelInformation& pinfo=ParallelInformation(),
+           typename std::enable_if<
+             !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+           >::type* enabler=0);
+#else
+      /**
+       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
+       *
+       * As coarse solver a preconditioned CG method with the smoother as preconditioner
+       * will be used. The matrix hierarchy is built automatically.
+       * @param fineOperator The operator on the fine level.
+       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
+       * or UnsymmetricCriterion, and providing the parameters.
+       * @param smootherArgs The arguments for constructing the smoothers.
+       * @param maxLevelKrylovSteps maximum of krylov iterations on a particular level (default=3)
+       * @param minDefectReduction minimal defect reduction during the krylov iterations on a particular level (default=1e-1)
+       * @param pinfo The information about the parallel distribution of the data.
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      KAMG(const Operator& fineOperator, const C& criterion,
+           const SmootherArgs& smootherArgs=SmootherArgs(),
+           std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
+           const ParallelInformation& pinfo=ParallelInformation());
+#endif
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -241,7 +320,7 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      KAMG(const Operator& fineOperator, const C& criterion,
+      KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
            const SmootherArgs& smootherArgs=SmootherArgs(),
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
            const ParallelInformation& pinfo=ParallelInformation());
@@ -266,7 +345,7 @@ namespace Dune
       double levelDefectReduction;
 
       /** @brief pointers to the allocated scalar products. */
-      std::vector<std::shared_ptr<typename Amg::ScalarProduct> > scalarproducts;
+      std::vector<std::shared_ptr<ScalarProduct<X> > > scalarproducts;
 
       /** @brief pointers to the allocated krylov solvers. */
       std::vector<std::shared_ptr<KAmgTwoGrid<Amg> > > ksolvers;
@@ -290,9 +369,25 @@ namespace Dune
         maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
+    // NOTE: DEPRECATED
     template<class M, class X, class S, class P, class K, class A>
     template<class C>
     KAMG<M,X,S,P,K,A>::KAMG(const Operator& fineOperator, const C& criterion,
+                            const SmootherArgs& smootherArgs, std::size_t gamma,
+                            std::size_t preSmoothingSteps, std::size_t postSmoothingSteps,
+                            std::size_t ksteps, double reduction,
+                            const ParallelInformation& pinfo,
+                            typename std::enable_if<
+                              !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+                            >::type* enabler)
+
+      : amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
+            postSmoothingSteps, false, pinfo), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
+    {}
+
+    template<class M, class X, class S, class P, class K, class A>
+    template<class C>
+    KAMG<M,X,S,P,K,A>::KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
                             const SmootherArgs& smootherArgs, std::size_t gamma,
                             std::size_t preSmoothingSteps, std::size_t postSmoothingSteps,
                             std::size_t ksteps, double reduction,
@@ -301,9 +396,23 @@ namespace Dune
             postSmoothingSteps, false, pinfo), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
+    // NOTE: DEPRECATED
     template<class M, class X, class S, class P, class K, class A>
     template<class C>
     KAMG<M,X,S,P,K,A>::KAMG(const Operator& fineOperator, const C& criterion,
+                            const SmootherArgs& smootherArgs,
+                            std::size_t ksteps, double reduction,
+                            const ParallelInformation& pinfo,
+                            typename std::enable_if<
+                              !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+                            >::type* enabler)
+      : amg(fineOperator, criterion, smootherArgs, pinfo),
+        maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
+    {}
+
+    template<class M, class X, class S, class P, class K, class A>
+    template<class C>
+    KAMG<M,X,S,P,K,A>::KAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
                             const SmootherArgs& smootherArgs,
                             std::size_t ksteps, double reduction,
                             const ParallelInformation& pinfo)
@@ -338,10 +447,10 @@ namespace Dune
 
       if(matrix!=amg.matrices_->matrices().finest())
         while(true) {
-          scalarproducts.push_back(std::shared_ptr<typename Amg::ScalarProduct>(Amg::ScalarProductChooser::construct(*pinfo)));
+          scalarproducts.push_back(ScalarProductChooser::construct<X>(category(), *pinfo));
           std::shared_ptr<InverseOperator<Domain,Range> > ks =
-            std::shared_ptr<InverseOperator<Domain,Range> >(new KrylovSolver(*matrix, *(scalarproducts.back()),
-                                                                        *(ksolvers.back()), levelDefectReduction,
+            std::shared_ptr<InverseOperator<Domain,Range> >(new KrylovSolver(Dune::stackobject_to_shared_ptr(*matrix), scalarproducts.back(),
+                                                                        ksolvers.back(), levelDefectReduction,
                                                                         maxLevelKrylovSteps, 0));
           ksolvers.push_back(std::shared_ptr<KAmgTwoGrid<Amg> >(new KAmgTwoGrid<Amg>(amg, ks)));
           --matrix;

@@ -265,11 +265,17 @@ private:
    */
   struct AMGInverseOperator : public InverseOperator<X,X>
   {
-    AMGInverseOperator(const typename AMGType::Operator& op,
+    AMGInverseOperator(std::shared_ptr<const typename AMGType::Operator> op,
                        const Criterion& crit,
                        const typename AMGType::SmootherArgs& args)
       : amg_(op, crit,args), first_(true)
     {}
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return amg_.category();
+    }
 
     void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
     {
@@ -319,7 +325,7 @@ public:
   CoarseLevelSolver* createCoarseLevelSolver(P& transferPolicy)
   {
     coarseOperator_=transferPolicy.getCoarseLevelOperator();
-    AMGInverseOperator* inv = new AMGInverseOperator(*coarseOperator_,
+    AMGInverseOperator* inv = new AMGInverseOperator(coarseOperator_,
                                                      criterion_,
                                                      smootherArgs_);
 
@@ -380,11 +386,11 @@ public:
    * @brief The type of the fine level smoother.
    */
   typedef S SmootherType;
-  // define the category
-  enum {
-    //! \brief The category the preconditioner is part of.
-    category=SolverCategory::sequential
-  };
+  //! Category of the preconditioner (see SolverCategory::Category)
+  virtual SolverCategory::Category category() const
+  {
+    return SolverCategory::sequential;
+  }
 
   /**
    * @brief Constructs a two level method.
@@ -400,13 +406,13 @@ public:
    * @param preSteps The number of smoothing steps to apply after the coarse
    * level correction.
    */
-  TwoLevelMethod(const FineOperatorType& op,
+  TwoLevelMethod(std::shared_ptr<const FineOperatorType> op,
                  std::shared_ptr<SmootherType> smoother,
                  const LevelTransferPolicy<FineOperatorType,
                                            CoarseOperatorType>& policy,
                  CoarseLevelSolverPolicy& coarsePolicy,
                  std::size_t preSteps=1, std::size_t postSteps=1)
-    : operator_(&op), smoother_(smoother),
+    : operator_(op), smoother_(smoother),
       preSteps_(preSteps), postSteps_(postSteps)
   {
     policy_ = policy.clone();
@@ -448,7 +454,7 @@ public:
     context.update=&v;
     context.smoother=smoother_;
     context.rhs=&rhs;
-    context.matrix=operator_;
+    context.matrix=&*operator_;
     // Presmoothing
     presmooth(context, preSteps_);
     //Coarse grid correction
@@ -496,7 +502,7 @@ private:
      */
     const FineOperatorType* matrix;
   };
-  const FineOperatorType* operator_;
+  std::shared_ptr<const FineOperatorType> operator_;
   /** @brief The coarse level solver. */
   CoarseLevelSolver* coarseSolver_;
   /** @brief The fine level smoother. */

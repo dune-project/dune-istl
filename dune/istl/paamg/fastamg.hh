@@ -6,6 +6,7 @@
 #include <memory>
 #include <dune/common/exceptions.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/common/unused.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
@@ -79,11 +80,6 @@ namespace Dune
       /** @brief the type of the coarse solver. */
       typedef InverseOperator<X,X> CoarseSolver;
 
-      enum {
-        /** @brief The solver category. */
-        category = SolverCategory::sequential
-      };
-
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -107,7 +103,7 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      FastAMG(const Operator& fineOperator, const C& criterion,
+      FastAMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
               const Parameters& parms=Parameters(),
               bool symmetric=true,
               const ParallelInformation& pinfo=ParallelInformation());
@@ -118,6 +114,12 @@ namespace Dune
       FastAMG(const FastAMG& amg);
 
       ~FastAMG();
+
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return SolverCategory::sequential;
+      }
 
       /** \copydoc Preconditioner::pre */
       void pre(Domain& x, Range& b);
@@ -166,7 +168,7 @@ namespace Dune
        * @param pinfo The fine level parallel information.
        */
       template<class C>
-      void createHierarchies(C& criterion, Operator& matrix,
+      void createHierarchies(C& criterion, std::shared_ptr<Operator> matrix,
                              const PI& pinfo);
 
       /**
@@ -262,13 +264,8 @@ namespace Dune
       /** @brief The current residual. */
       Hierarchy<Domain,A>* residual_;
 
-      /** @brief The type of the chooser of the scalar product. */
-      typedef ScalarProductChooser<X,PI,M::category> ScalarProductChooserType;
-      /** @brief The type of the scalar product for the coarse solver. */
-      typedef typename ScalarProductChooserType::ScalarProduct ScalarProduct;
-      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
       /** @brief Scalar product on the coarse level. */
-      ScalarProductPointer scalarProduct_;
+      std::shared_ptr<ScalarProduct<X> > scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -323,7 +320,7 @@ namespace Dune
     }
     template<class M, class X, class PI, class A>
     template<class C>
-    FastAMG<M,X,PI,A>::FastAMG(const Operator& matrix,
+    FastAMG<M,X,PI,A>::FastAMG(std::shared_ptr<const Operator> matrix,
                                const C& criterion,
                                const Parameters& parms,
                                bool symmetric_,
@@ -344,7 +341,7 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
     }
 
     template<class M, class X, class PI, class A>
@@ -369,7 +366,7 @@ namespace Dune
 
     template<class M, class X, class PI, class A>
     template<class C>
-    void FastAMG<M,X,PI,A>::createHierarchies(C& criterion, Operator& matrix,
+    void FastAMG<M,X,PI,A>::createHierarchies(C& criterion, std::shared_ptr<Operator> matrix,
                                             const PI& pinfo)
     {
       Timer watch;
@@ -398,7 +395,7 @@ namespace Dune
         }
 
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
-        scalarProduct_.reset(ScalarProductChooserType::construct(cargs.getComm()));
+        scalarProduct_ = ScalarProductChooser::construct<X,PI>(matrix->category(), cargs.getComm());
 
 #if HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
 #if HAVE_SUITESPARSE_UMFPACK
@@ -431,15 +428,15 @@ namespace Dune
           {
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
               // We are still participating on this level
-              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
-                                                  *scalarProduct_,
-                                                  *coarseSmoother_, 1E-2, 1000, 0));
+              solver_ = std::make_shared<BiCGSTABSolver<X> >(Dune::stackobject_to_shared_ptr(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed())),
+                                                  scalarProduct_,
+                                                  coarseSmoother_, 1E-2, 1000, 0);
             else
               solver_.reset();
           }else
-            solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
-                                                *scalarProduct_,
-                                                *coarseSmoother_, 1E-2, 1000, 0));
+            solver_ = std::make_shared<BiCGSTABSolver<X> >(Dune::stackobject_to_shared_ptr(const_cast<M&>(*matrices_->matrices().coarsest())),
+                                                scalarProduct_,
+                                                coarseSmoother_, 1E-2, 1000, 0);
         }
       }
 

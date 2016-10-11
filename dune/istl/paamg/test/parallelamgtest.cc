@@ -123,7 +123,7 @@ void testAmg(int N, int coarsenTarget)
   Dune::Timer watch;
 
   watch.reset();
-  Operator fop(cmat, comm);
+  auto fop = std::make_shared<Operator>(cmat, comm);
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
@@ -134,7 +134,7 @@ void testAmg(int N, int coarsenTarget)
   typedef Dune::BlockPreconditioner<Vector,Vector,Communication,Smoother> ParSmoother;
   typedef typename Dune::Amg::SmootherTraits<ParSmoother>::Arguments SmootherArgs;
 
-  Dune::OverlappingSchwarzScalarProduct<Vector,Communication> sp(comm);
+  auto sp = std::make_shared<Dune::OverlappingSchwarzScalarProduct<Vector,Communication> >(comm);
 
   Dune::InverseOperatorResult r, r1;
 
@@ -151,7 +151,7 @@ void testAmg(int N, int coarsenTarget)
 
   typedef Dune::Amg::AMG<Operator,Vector,ParSmoother,Communication> AMG;
 
-  AMG amg(fop, criterion, smootherArgs, comm);
+  auto amg = std::make_shared<AMG>(fop, criterion, smootherArgs, comm);
 
   buildtime = watch.elapsed();
 
@@ -162,7 +162,7 @@ void testAmg(int N, int coarsenTarget)
   watch.reset();
 
   amgCG.apply(x,b,r);
-  amg.recalculateHierarchy();
+  amg->recalculateHierarchy();
 
 
   MPI_Barrier(MPI_COMM_WORLD);

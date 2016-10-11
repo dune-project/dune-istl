@@ -2,6 +2,9 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_ISTL_PRECONDITIONER_HH
 #define DUNE_ISTL_PRECONDITIONER_HH
+
+#include <dune/istl/solvercategory.hh>
+
 namespace Dune {
 /**
  * @addtogroup ISTL_Prec
@@ -25,12 +28,16 @@ namespace Dune {
   template<class X, class Y>
   class Preconditioner {
   public:
+
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const = 0;
 
     /*! \brief Prepare the preconditioner.
 

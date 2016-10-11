@@ -23,10 +23,10 @@ int main(int argc, char** argv)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
-  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,BVector,BVector> Operator;
 
   BCRSMat mat;
-  Operator fop(mat);
+  auto fop = std::make_shared<Operator> (mat);
   BVector b(N*N), x(N*N);
 
   setupLaplacian(mat,N);
@@ -37,11 +37,10 @@ int main(int argc, char** argv)
   x=1;
   mat.mv(x, b);
   x=0;
-  Dune::SeqJac<BCRSMat,BVector,BVector> prec0(mat, 1,1.0);
-  const int category = Dune::SeqJac<BCRSMat,BVector,BVector>::category;
+  auto prec0 = std::make_shared<Dune::SeqJac<BCRSMat,BVector,BVector> >(mat, 1,1.0);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-3,10,0);
-  Dune::InverseOperator2Preconditioner<Dune::LoopSolver<BVector>,category >
-    prec(solver0);
+  auto prec = std::make_shared<Dune::InverseOperator2Preconditioner<Dune::LoopSolver<BVector> > >
+                                                                    (solver0);
   Dune::LoopSolver<BVector> solver(fop, prec, 1e-8,10,2);
   solver.apply(x,b,res);
 

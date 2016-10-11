@@ -150,7 +150,7 @@ protected:
     typedef Dune::SeqGS<BCRSMatrix,
                         typename PIA::IterationOperator::domain_type,
                         typename PIA::IterationOperator::range_type> PIAPC;
-    PIAPC piaPC(pia.getIterationMatrix(),2,1.0);
+    auto piaPC = std::make_shared<PIAPC>(pia.getIterationMatrix(),2,1.0);
     const double piaLS_reduction = 1e-02;
     const unsigned int piaLS_max_iter = 1000;
     const unsigned int piaLS_verbosity = 0;
@@ -279,7 +279,7 @@ protected:
     typedef Dune::SeqGS<BCRSMatrix,
                         typename PIA::IterationOperator::domain_type,
                         typename PIA::IterationOperator::range_type> PIAPC;
-    PIAPC piaPC(pia.getIterationMatrix(),2,1.0);
+    auto piaPC = std::make_shared<PIAPC>(pia.getIterationMatrix(),2,1.0);
     const double piaLS_reduction = 1e-02;
     const unsigned int piaLS_max_iter = 1000;
     const unsigned int piaLS_verbosity = 0;

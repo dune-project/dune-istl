@@ -32,10 +32,10 @@ int main(int argc, char** argv)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
-  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,BVector,BVector> Operator;
 
   BCRSMat mat;
-  Operator fop(mat);
+  auto fop = std::make_shared<Operator>(mat);
   BVector b(N*N), x(N*N);
 
   setupLaplacian(mat,N);
@@ -142,16 +142,15 @@ int main(int argc, char** argv)
   //  setBoundary(x,b,N);
 #if HAVE_SUITESPARSE_UMFPACK
   std::cout << "Do testing with UMFPack" << std::endl;
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-      Dune::UMFPack<BCRSMat> > prec0(mat, domains, 1);
+  auto prec0 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::UMFPack<BCRSMat> > >(mat, domains, 1);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-2,100,2);
   solver0.apply(x,b, res);
 
   b=0;
   x=100;
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-                              Dune::UMFPack<BCRSMat> >
-    prec1(mat, domains, 1, false);
+  auto prec1 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::UMFPack<BCRSMat> > >(mat, domains, 1, false);
   Dune::LoopSolver<BVector> solver1(fop, prec1, 1e-2,100,2);
   solver1.apply(x,b, res);
 #endif // HAVE_SUITESPARSE_UMFPACK
@@ -159,15 +158,15 @@ int main(int argc, char** argv)
   std::cout << "Do testing with SuperLU" << std::endl;
   x=100;
   b=0;
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-      Dune::SuperLU<BCRSMat> > slu_prec0(mat, domains, 1);
+  auto slu_prec0 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+      Dune::SuperLU<BCRSMat> > >(mat, domains, 1);
   Dune::LoopSolver<BVector> slu_solver(fop, slu_prec0, 1e-2,100,2);
   slu_solver.apply(x,b, res);
 
   x=100;
   b=0;
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-                              Dune::SuperLU<BCRSMat> > slu_prec1(mat, domains, 1, false);
+  auto slu_prec1 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::SuperLU<BCRSMat> > >(mat, domains, 1, false);
   Dune::LoopSolver<BVector> slu_solver1(fop, slu_prec1, 1e-2,100,2);
   slu_solver1.apply(x,b, res);
 #endif
@@ -175,8 +174,8 @@ int main(int argc, char** argv)
   b=0;
 
   std::cout << "Do testing with DynamicMatrixSubdomainSolver" << std::endl;
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
-                              Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> > dyn_prec0(mat, domains, 1);
+  auto dyn_prec0 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode,
+                              Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> > >(mat, domains, 1);
   Dune::LoopSolver<BVector> dyn_solver(fop, dyn_prec0, 1e-2,100,2);
   dyn_solver.apply(x,b, res);
 
@@ -185,7 +184,7 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //  setBoundary(x,b,N);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode> prec0o(mat, domains, 1, false);
+  auto prec0o = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode> >(mat, domains, 1, false);
   Dune::LoopSolver<BVector> solver0o(fop, prec0o, 1e-2,100,2);
   solver0o.apply(x,b, res);
   std::cout << "Multiplicative Schwarz (domains vector)"<<std::endl;
@@ -193,7 +192,7 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //setBoundary(x,b,N);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> prec1m(mat, domains, 1);
+  auto prec1m = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> >(mat, domains, 1);
   Dune::LoopSolver<BVector> solver1m(fop, prec1m, 1e-2,100,2);
   solver1m.apply(x,b, res);
 
@@ -215,7 +214,7 @@ int main(int argc, char** argv)
     }
   }
 
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector> prec2(mat, rowToDomain, 1);
+  auto prec2 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector> >(mat, rowToDomain, 1);
   Dune::LoopSolver<BVector> solver2(fop, prec2, 1e-2,100,2);
   solver2.apply(x,b, res);
 
@@ -224,7 +223,7 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //setBoundary(x,b,N);
-  Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> prec3(mat, rowToDomain, 1);
+  auto prec3 = std::make_shared<Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> >(mat, rowToDomain, 1);
   Dune::LoopSolver<BVector> solver3(fop, prec3, 1e-2,100,2);
   solver3.apply(x,b, res);
 
@@ -233,7 +232,7 @@ int main(int argc, char** argv)
   b=0;
   x=100;
   //setBoundary(x,b,N);
-  Dune::SeqSOR<BCRSMat,BVector,BVector> sor(mat, 1,1);
+  auto sor = std::make_shared<Dune::SeqSOR<BCRSMat,BVector,BVector> >(mat, 1,1);
   Dune::LoopSolver<BVector> solver4(fop, sor, 1e-2,100,2);
   solver4.apply(x,b, res);
 

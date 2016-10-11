@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   storeMatrixMarket(mat, std::string("testmat"), comm);
   storeMatrixMarket(bv, std::string("testvec"), comm, false);
 #else
-  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,BVector,BVector> Operator;
   Operator op(mat);
   op.apply(bv, cv);
 
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     ++ret;
   }
 #else
-  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,BVector,BVector> Operator;
   Operator op1(mat1);
   op1.apply(bv1, cv1);
 #endif

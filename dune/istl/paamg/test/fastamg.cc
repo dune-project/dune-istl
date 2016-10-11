@@ -38,7 +38,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
   typedef Dune::CollectiveCommunication<void*> Comm;
   int n;
 
@@ -63,7 +63,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::Timer watch;
 
   watch.reset();
-  Operator fop(mat);
+  auto fop = std::make_shared<Operator>(mat);
 
   typedef Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricMatrixDependency<BCRSMat,Dune::Amg::FirstDiagonal> > CriterionBase;
   typedef Dune::Amg::CoarsenCriterion<CriterionBase> Criterion;
@@ -79,10 +79,10 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::Amg::FastAMG<Operator,Vector> AMG;
   Dune::Amg::Parameters parms;
 
-  AMG amg(fop, criterion, parms);
+  auto amg = std::make_shared<AMG>(fop, criterion, parms);
 
   // check if recalculation of matrix hierarchy works
-  amg.recalculateHierarchy();
+  amg->recalculateHierarchy();
 
   double buildtime = watch.elapsed();
 

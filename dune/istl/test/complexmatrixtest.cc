@@ -51,12 +51,12 @@ int main(int argc, char** argv)
 
     Dune::FieldVector<std::complex<double>,10> hilbertsol(1.0);
     Dune::FieldVector<std::complex<double>,10> hilbertiter(0.0);
-    Dune::MatrixAdapter<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > hilbertadapter(hilbertmatrix);
+    auto hilbertadapter = std::make_shared<Dune::MatrixOperator<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > >(hilbertmatrix);
 
     Dune::FieldVector<std::complex<double>,10> hilbertrhs(0.0);
-    hilbertadapter.apply(hilbertsol,hilbertrhs);
+    hilbertadapter->apply(hilbertsol,hilbertrhs);
 
-    Dune::Richardson<Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > noprec(1.0);
+    auto noprec = std::make_shared<Dune::Richardson<Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > >(1.0);
 
     Dune::RestartedGMResSolver<Dune::FieldVector<std::complex<double>,10> > realgmrestest(hilbertadapter,noprec,reduction,maxIter,maxIter,2);
     Dune::InverseOperatorResult stat;
@@ -81,14 +81,16 @@ int main(int argc, char** argv)
     assemblecomplexsol(complexsol);
     assemblehermitianmatrix(hermitianmatrix);
 
-    Dune::MatrixAdapter<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > complexadapter(complexmatrix), hermitianadapter(hermitianmatrix);
+    typedef Dune::MatrixOperator<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > COMPLEX_ADAPTER;
+    auto complexadapter = std::make_shared<COMPLEX_ADAPTER>(complexmatrix);
+    auto hermitianadapter = std::make_shared<COMPLEX_ADAPTER>(hermitianmatrix);
 
     Dune::SeqJac<Dune::FieldMatrix<std::complex<double>,10,10>,Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10>,0> complexjacprec(complexmatrix,1,1.0);
-    Dune::Richardson<Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > complexnoprec(1.0);
+    auto complexnoprec = std::make_shared<Dune::Richardson<Dune::FieldVector<std::complex<double>,10>,Dune::FieldVector<std::complex<double>,10> > >(1.0);
 
     Dune::RestartedGMResSolver<Dune::FieldVector<std::complex<double>,10> > complexgmrestest(complexadapter,complexnoprec,1e-12,maxIter,maxIter*maxIter,2);
 
-    complexadapter.apply(complexsol,complexrhs);
+    complexadapter->apply(complexsol,complexrhs);
     complexgmrestest.apply(complexiter,complexrhs,stat);
 
     std::cout << complexiter << std::endl;
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
     Dune::MINRESSolver<Dune::FieldVector<std::complex<double>,10> > complexminrestest(hermitianadapter,complexnoprec,1e-12,maxIter,2);
 
     complexiter = 0.0;
-    hermitianadapter.apply(complexsol,complexrhs);
+    hermitianadapter->apply(complexsol,complexrhs);
     hermitiangmrestest.apply(complexiter,complexrhs,stat);
 
     std::cout << complexiter << std::endl;
@@ -114,7 +116,7 @@ int main(int argc, char** argv)
     std::cout << "error of solution with GMRes: " << complexiter.two_norm() << std::endl;
 
     complexiter = 0.0;
-    hermitianadapter.apply(complexsol,complexrhs);
+    hermitianadapter->apply(complexsol,complexrhs);
     complexminrestest.apply(complexiter,complexrhs,stat);
 
     std::cout << complexiter << std::endl;

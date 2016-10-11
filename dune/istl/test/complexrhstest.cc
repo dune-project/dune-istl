@@ -53,7 +53,7 @@ template<class Operator, class Vector>
 class SolverTest
 {
 public:
-  SolverTest(Operator & op, Vector & rhs, Vector & x0, double maxError = 1e-10)
+  SolverTest(std::shared_ptr<const Operator> op, Vector & rhs, Vector & x0, double maxError = 1e-10)
   : m_op(op),
     m_x(rhs),
     m_x0(x0),
@@ -102,7 +102,7 @@ public:
   }
 
 private:
-  const Operator & m_op;
+  std::shared_ptr<const Operator> m_op;
   Vector m_x, m_x0, m_b;
   const Vector m_rhs;
   double m_maxError;
@@ -126,10 +126,10 @@ int main(int argc, char** argv)
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::FieldVector<FIELD_TYPE,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
 
   BCRSMat mat;
-  Operator fop(mat);
+  auto fop = std::make_shared<Operator>(mat);
   Vector b(N*N), b0(N*N), x0(N*N), x(N*N), error(N*N);
 
   setupLaplacian(mat,N);
@@ -169,19 +169,19 @@ int main(int argc, char** argv)
 
   SolverTest<Operator,Vector> solverTest(fop,b0,x0,maxError);
 
-  DummyPreconditioner dummyPrec(1.);
+  auto dummyPrec = std::make_shared<DummyPreconditioner>(1.);
 
   const FIELD_TYPE relaxFactor(1.);
-  JacobiPreconditioner jacobiPrec1(mat,1,relaxFactor);
-  JacobiPreconditioner jacobiPrec2(mat,maxIter,relaxFactor);
+  auto jacobiPrec1 = std::make_shared<JacobiPreconditioner> (mat,1,relaxFactor);
+  auto jacobiPrec2 = std::make_shared<JacobiPreconditioner> (mat,maxIter,relaxFactor);
 
-  GaussSeidelPreconditioner gsPrec1(mat,1,relaxFactor);
-  GaussSeidelPreconditioner gsPrec2(mat,maxIter,relaxFactor);
+  auto gsPrec1 = std::make_shared<GaussSeidelPreconditioner> (mat,1,relaxFactor);
+  auto gsPrec2 = std::make_shared<GaussSeidelPreconditioner> (mat,maxIter,relaxFactor);
 
-  SORPreconditioner sorPrec1(mat,1,relaxFactor);
-  SORPreconditioner sorPrec2(mat,maxIter,relaxFactor);
-  SSORPreconditioner ssorPrec1(mat,1,relaxFactor);
-  SSORPreconditioner ssorPrec2(mat,maxIter,relaxFactor);
+  auto sorPrec1 = std::make_shared<SORPreconditioner> (mat,1,relaxFactor);
+  auto sorPrec2 = std::make_shared<SORPreconditioner> (mat,maxIter,relaxFactor);
+  auto ssorPrec1 = std::make_shared<SSORPreconditioner> (mat,1,relaxFactor);
+  auto ssorPrec2 = std::make_shared<SSORPreconditioner> (mat,maxIter,relaxFactor);
 
 #if HAVE_SUPERLU
   Dune::SuperLU<BCRSMat> solverSuperLU(mat, true);

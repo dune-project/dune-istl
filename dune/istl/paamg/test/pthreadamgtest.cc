@@ -65,7 +65,7 @@ typedef Dune::FieldMatrix<XREAL,1,1> MatrixBlock;
 typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
 typedef Dune::FieldVector<XREAL,1> VectorBlock;
 typedef Dune::BlockVector<VectorBlock> Vector;
-typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
 typedef Dune::CollectiveCommunication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
 typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
@@ -75,7 +75,7 @@ struct thread_arg
   MYAMG *amg;
   Vector *b;
   Vector *x;
-  Operator *fop;
+  std::shared_ptr<Operator> fop;
 };
 
 
@@ -83,7 +83,7 @@ void *solve(void* arg)
 {
   thread_arg *amgarg=(thread_arg*) arg;
 
-  Dune::GeneralizedPCGSolver<Vector> amgCG(*amgarg->fop,*amgarg->amg,1e-6,80,2);
+  Dune::GeneralizedPCGSolver<Vector> amgCG(amgarg->fop,Dune::stackobject_to_shared_ptr(*amgarg->amg),1e-6,80,2);
   //Dune::LoopSolver<Vector> amgCG(fop, amg, 1e-4, 10000, 2);
   Dune::Timer watch;
   Dune::InverseOperatorResult r;
@@ -150,7 +150,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   Dune::Timer watch;
 
   watch.reset();
-  Operator fop(mat);
+  auto fop = std::make_shared<Operator>(mat);
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
@@ -194,7 +194,7 @@ void testAMG(int N, int coarsenTarget, int ml)
     args[i].amg=&amgs[i];
     args[i].b=&bs[i];
     args[i].x=&xs[i];
-    args[i].fop=&fop;
+    args[i].fop=fop;
     pthread_create(&threads[i], NULL, solve, (void*) &args[i]);
   }
   void* retval;
@@ -211,7 +211,7 @@ void testAMG(int N, int coarsenTarget, int ml)
     args[i].amg=&amgs[i];
     args[i].b=&bs[i];
     args[i].x=&xs[i];
-    args[i].fop=&fop;
+    args[i].fop=fop;
     pthread_create(&threads[i], NULL, solve1, (void*) &args[i]);
   }
   for(int i=0; i < NUM_THREADS; ++i)
@@ -226,7 +226,7 @@ void testAMG(int N, int coarsenTarget, int ml)
     args[i].amg=&amgs[i];
     args[i].b=&bs[i];
     args[i].x=&xs[i];
-    args[i].fop=&fop;
+    args[i].fop=fop;
     pthread_create(&threads[i], NULL, solve2, (void*) &args[i]);
   }
   for(int i=0; i < NUM_THREADS; ++i)

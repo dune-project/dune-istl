@@ -42,7 +42,7 @@ void testHierarchy(int N)
   typedef Dune::Amg::MatrixHierarchy<Operator,Communication> Hierarchy;
   typedef Dune::Amg::Hierarchy<Vector> VHierarchy;
 
-  Operator op(mat, pinfo);
+  auto op = std::make_shared<Operator>(mat, pinfo);
   Hierarchy hierarchy(op, pinfo);
   VHierarchy vh(b);
 

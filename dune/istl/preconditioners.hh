@@ -10,6 +10,7 @@
 #include <string>
 
 #include <dune/common/unused.hh>
+#include <dune/common/parametertree.hh>
 
 #include "preconditioner.hh"
 #include "solver.hh"
@@ -63,7 +64,7 @@ namespace Dune {
    * @brief Turns an InverseOperator into a Preconditioner.
    * @tparam O The type of the inverse operator to wrap.
    */
-  template<class O, int c>
+  template<class O>
   class InverseOperator2Preconditioner :
     public Preconditioner<typename O::domain_type, typename O::range_type>
   {
@@ -76,11 +77,11 @@ namespace Dune {
     typedef typename range_type::field_type field_type;
     typedef O InverseOperator;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=c
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return inverse_operator_.category();
+    }
 
     /**
      * @brief Construct the preconditioner from the solver
@@ -135,11 +136,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -151,6 +152,27 @@ namespace Dune {
     SeqSSOR (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       iterations        | The number of iterations to perform.
+       relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqSSOR (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -223,11 +245,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -239,6 +261,17 @@ namespace Dune {
     SeqSOR (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqSOR (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -326,11 +359,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -342,6 +375,17 @@ namespace Dune {
     SeqGS (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqGS (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -410,11 +454,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -426,6 +470,17 @@ namespace Dune {
     SeqJac (const M& A, int n, field_type w)
       : _A_(A), _n(n), _w(w)
     {
+      CheckIfDiagonalPresent<M,l>::check(_A_);
+    }
+
+    /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqJac (const M& A, const ParameterTree& configuration)
+      : _A_(A)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -496,11 +551,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -512,6 +567,25 @@ namespace Dune {
       : ILU(A) // copy A
     {
       _w =w;
+      bilu0_decomposition(ILU);
+    }
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqILU0 (const M& A, const ParameterTree& configuration)
+      : ILU(A) // copy A
+    {
+      _w = configuration.get<field_type>("relaxation");
       bilu0_decomposition(ILU);
     }
 
@@ -580,11 +654,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -599,6 +673,17 @@ namespace Dune {
       _n = n;
       _w = w;
       bilu_decomposition(A,n,ILU);
+    }
+
+    /*!
+       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+     */
+    SeqILUn (const M& A, const ParameterTree& configuration)
+      : ILU(A.N(),A.M(),M::row_wise)
+    {
+      _n = configuration.get<field_type>("iterations");
+      _w = configuration.get<field_type>("relaxation");
+      bilu_decomposition(A,_n,ILU);
     }
 
     /*!
@@ -662,11 +747,11 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 
@@ -676,6 +761,14 @@ namespace Dune {
     Richardson (field_type w=1.0)
     {
       _w = w;
+    }
+
+    /*!
+       \copydoc SeqILU0::SeqILU0(const M&,const ParameterTree&)
+     */
+    Richardson (const ParameterTree& configuration)
+    {
+      _w = configuration.get<field_type>("relaxation");
     }
 
     /*!

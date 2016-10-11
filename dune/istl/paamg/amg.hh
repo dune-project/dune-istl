@@ -15,6 +15,8 @@
 #include <dune/istl/solvertype.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/parametertree.hh>
+#include <dune/common/shared_ptr.hh>
 
 namespace Dune
 {
@@ -90,10 +92,11 @@ namespace Dune
       /** @brief The argument type for the construction of the smoother. */
       typedef typename SmootherTraits<Smoother>::Arguments SmootherArgs;
 
-      enum {
-        /** @brief The solver category. */
-        category = S::category
-      };
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return coarseSmoother_->category();
+      }
 
       /**
        * @brief Construct a new amg with a specific coarse solver.
@@ -104,8 +107,39 @@ namespace Dune
        * for pre and post smoothing.
        * @param parms The parameters for the AMG.
        */
-      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+      AMG(std::shared_ptr<OperatorHierarchy> matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, const Parameters& parms);
+
+#ifndef DOXYGEN
+      /* enable_if magic to choose the new constructor if a shared_ptr to
+       * a class derived from LinearOperator is passed
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      AMG(const Operator& fineOperator, const C& criterion,
+          const SmootherArgs& smootherArgs=SmootherArgs(),
+          const ParallelInformation& pinfo=ParallelInformation(),
+          typename std::enable_if<
+            !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+          >::type* enabler=0);
+#else
+      /**
+       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
+       *
+       * As coarse solver a preconditioned CG method with the smoother as preconditioner
+       * will be used. The matrix hierarchy is built automatically.
+       * @param fineOperator The operator on the fine level.
+       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
+       * or UnsymmetricCriterion, and providing the parameters.
+       * @param smootherArgs The arguments for constructing the smoothers.
+       * @param pinfo The information about the parallel distribution of the data.
+       */
+      template<class C>
+      DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
+      AMG(const Operator& fineOperator, const C& criterion,
+          const SmootherArgs& smootherArgs=SmootherArgs(),
+          const ParallelInformation& pinfo=ParallelInformation());
+#endif
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -119,9 +153,35 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      AMG(const Operator& fineOperator, const C& criterion,
+      AMG(std::shared_ptr<const Operator> fineOperator, const C& criterion,
           const SmootherArgs& smootherArgs=SmootherArgs(),
           const ParallelInformation& pinfo=ParallelInformation());
+
+      /*!
+         \brief Constructor an AMG via ParameterTree.
+
+         \param fineOperator The operator on the fine level.
+         \param configuration ParameterTree containing AMG parameters.
+         \param pinfo Optionally, specify ParallelInformation
+
+         ParameterTree Key         | Meaning
+         --------------------------|------------
+         smootherIterations        | The number of iterations to perform.
+         smootherRelaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+         maxLevel                  | Maximum number of levels allowed in the hierarchy.
+         coarsenTarget             | Maximum number of unknowns on the coarsest level.
+         prolongationDampingFactor | Damping factor for the prolongation.
+         alpha                     | Scaling avlue for marking connections as strong.
+         beta                      | Treshold for marking nodes as isolated.
+         additive                  | Whether to use additive multigrid.
+         gamma                     | 1 for V-cycle, 2 for W-cycle.
+         preSteps                  | Number of presmoothing steps.
+         postSteps                 | Number of postsmoothing steps.
+         verbosity                 | Output verbosity.
+
+         See \ref ISTL_Factory for the ParameterTree layout and examples.
+       */
+      AMG(std::shared_ptr<const Operator> fineOperator, const ParameterTree& configuration, const ParallelInformation& pinfo=ParallelInformation());
 
       /**
        * @brief Copy constructor.
@@ -177,7 +237,7 @@ namespace Dune
        * @param pinfo The fine level parallel information.
        */
       template<class C>
-      void createHierarchies(C& criterion, Operator& matrix,
+      void createHierarchies(C& criterion, std::shared_ptr<Operator> matrix,
                              const PI& pinfo);
       /**
        * @brief A struct that holds the context of the current level.
@@ -269,13 +329,8 @@ namespace Dune
       Hierarchy<Domain,A>* lhs_;
       /** @brief The total update for the outer solver. */
       Hierarchy<Domain,A>* update_;
-      /** @brief The type of the chooser of the scalar product. */
-      typedef Dune::ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
-      /** @brief The type of the scalar product for the coarse solver. */
-      typedef typename ScalarProductChooser::ScalarProduct ScalarProduct;
-      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
       /** @brief Scalar product on the coarse level. */
-      ScalarProductPointer scalarProduct_;
+      std::shared_ptr<ScalarProduct<X> > scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -310,10 +365,10 @@ namespace Dune
     }
 
     template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<OperatorHierarchy> matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : matrices_(matrices), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
@@ -327,9 +382,33 @@ namespace Dune
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
     }
 
+    // NOTE: DEPRECATED
     template<class M, class X, class S, class PI, class A>
     template<class C>
     AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
+                         const C& criterion,
+                         const SmootherArgs& smootherArgs,
+                         const PI& pinfo,
+                         typename std::enable_if<
+                           !std::is_convertible<Operator,std::shared_ptr<Operator> >::value
+                         >::type* enabler)
+      : smootherArgs_(smootherArgs),
+        smoothers_(new Hierarchy<Smoother,A>), solver_(),
+        rhs_(), lhs_(), update_(), scalarProduct_(),
+        gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
+        postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
+        additive(criterion.getAdditive()), coarsesolverconverged(true),
+        coarseSmoother_(), verbosity_(criterion.debugLevel())
+    {
+      // TODO: reestablish compile time checks.
+      //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
+      //             "Matrix and Solver must match in terms of category!");
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(std::make_shared<const Operator>(matrix)), pinfo);
+    }
+
+    template<class M, class X, class S, class PI, class A>
+    template<class C>
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix,
                          const C& criterion,
                          const SmootherArgs& smootherArgs,
                          const PI& pinfo)
@@ -341,14 +420,65 @@ namespace Dune
         additive(criterion.getAdditive()), coarsesolverconverged(true),
         coarseSmoother_(), verbosity_(criterion.debugLevel())
     {
-      static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
-                         "Matrix and Solver must match in terms of category!");
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
     }
 
+    template<class M, class X, class S, class PI, class A>
+    AMG<M,X,S,PI,A>::AMG(std::shared_ptr<const Operator> matrix,
+                         const ParameterTree& configuration,
+                         const ParallelInformation& pinfo)
+      : smoothers_(new Hierarchy<Smoother,A>),
+        solver_(), rhs_(), lhs_(), update_(), scalarProduct_(), buildHierarchy_(true),
+        coarsesolverconverged(true), coarseSmoother_()
+    {
+
+      if (configuration.hasKey ("smootherIterations"))
+        smootherArgs_.iterations = configuration.get<int>("smootherIterations");
+
+      if (configuration.hasKey ("smootherRelaxation"))
+        smootherArgs_.relaxationFactor = configuration.get<typename SmootherArgs::RelaxationFactor>("smootherRelaxation");
+
+      typedef Amg::RowSum Norm;
+      typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> > Criterion;
+
+      Criterion criterion (configuration.get<int>("maxLevel"));
+
+      if (configuration.hasKey ("coarsenTarget"))
+        criterion.setCoarsenTarget (configuration.get<int>("coarsenTarget"));
+      if (configuration.hasKey ("prolongationDampingFactor"))
+        criterion.setProlongationDampingFactor (configuration.get<double>("prolongationDampingFactor"));
+
+      if (configuration.hasKey ("alpha"))
+        criterion.setAlpha (configuration.get<double> ("alpha"));
+
+      if (configuration.hasKey ("beta"))
+        criterion.setBeta (configuration.get<double> ("beta"));
+
+      if (configuration.hasKey ("gamma"))
+        criterion.setGamma (configuration.get<std::size_t> ("gamma"));
+      gamma_ = criterion.getGamma();
+
+
+      if (configuration.hasKey ("additive"))
+        criterion.setAdditive (configuration.get<bool>("additive"));
+      additive = criterion.getAdditive();
+
+      if (configuration.hasKey ("preSteps"))
+        criterion.setNoPreSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+      preSteps_ = criterion.getNoPreSmoothSteps ();
+
+      if (configuration.hasKey ("postSteps"))
+        criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+      postSteps_ = criterion.getNoPostSmoothSteps ();
+
+      verbosity_ = configuration.get<std::size_t> ("verbose");
+      criterion.setDebugLevel (verbosity_);
+
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(matrix), pinfo);
+    }
 
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::~AMG()
@@ -372,7 +502,7 @@ namespace Dune
 
     template<class M, class X, class S, class PI, class A>
     template<class C>
-    void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, Operator& matrix,
+    void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, std::shared_ptr<Operator> matrix,
                                             const PI& pinfo)
     {
       Timer watch;
@@ -400,7 +530,10 @@ namespace Dune
         }
 
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
-        scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
+        scalarProduct_ = ScalarProductChooser::construct<X,PI>(matrix->category(), cargs.getComm());
+
+        if (matrix->category()!=coarseSmoother_->category())
+          DUNE_THROW(ISTLError, "Matrix and Smoother must match in terms of category!");
 
 #if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 #if HAVE_SUITESPARSE_UMFPACK
@@ -433,15 +566,15 @@ namespace Dune
           {
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
               // We are still participating on this level
-              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
-                                                  *scalarProduct_,
-                                                  *coarseSmoother_, 1E-2, 1000, 0));
+              solver_ = std::make_shared<BiCGSTABSolver<X> >(Dune::stackobject_to_shared_ptr(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed())),
+                                                  scalarProduct_,
+                                                  coarseSmoother_, 1E-2, 1000, 0);
             else
               solver_.reset();
           }else
-            solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
-                                                *scalarProduct_,
-                                                *coarseSmoother_, 1E-2, 1000, 0));
+            solver_ = std::make_shared<BiCGSTABSolver<X> >(Dune::stackobject_to_shared_ptr(const_cast<M&>(*matrices_->matrices().coarsest())),
+                                                scalarProduct_,
+                                                coarseSmoother_, 1E-2, 1000, 0);
         }
       }
 

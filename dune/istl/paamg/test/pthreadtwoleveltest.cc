@@ -31,7 +31,7 @@ typedef Dune::FieldMatrix<XREAL,1,1> MatrixBlock;
 typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
 typedef Dune::FieldVector<XREAL,1> VectorBlock;
 typedef Dune::BlockVector<VectorBlock> Vector;
-typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
 typedef Dune::CollectiveCommunication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
 typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
@@ -56,7 +56,7 @@ struct thread_arg
   AMG *amg;
   Vector *b;
   Vector *x;
-  Operator *fop;
+  std::shared_ptr<Operator> fop;
 };
 
 
@@ -64,7 +64,7 @@ void *solve(void* arg)
 {
   thread_arg *amgarg=(thread_arg*) arg;
 
-  Dune::GeneralizedPCGSolver<Vector> amgCG(*amgarg->fop,*amgarg->amg,1e-4,80,2);
+  Dune::GeneralizedPCGSolver<Vector> amgCG(amgarg->fop,Dune::stackobject_to_shared_ptr(*amgarg->amg),1e-4,80,2);
   //Dune::LoopSolver<Vector> amgCG(fop, amg, 1e-4, 10000, 2);
   Dune::Timer watch;
   Dune::InverseOperatorResult r;
@@ -106,7 +106,7 @@ void testTwoLevelMethod()
     typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
     typedef Dune::FieldVector<double,BS> VectorBlock;
     typedef Dune::BlockVector<VectorBlock> Vector;
-    typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+    typedef Dune::MatrixOperator<BCRSMat,Vector,Vector> Operator;
     typedef Dune::CollectiveCommunication<void*> Comm;
     Comm c;
     int n;
@@ -116,7 +116,7 @@ void testTwoLevelMethod()
     randomize(mat, b);
 #ifndef USE_OVERLAPPINGSCHWARZ
     // Smoother used for the finest level
-    FSmoother fineSmoother(mat,1,1.0);
+    auto fineSmoother = std::make_shared<FSmoother>(mat,1,1.0);
 #else
     std::cout << "Use ovlps" << std::endl;
     // Smoother used for the finest level. There is an additional
@@ -134,7 +134,7 @@ void testTwoLevelMethod()
             subdomains[index].insert(i*N+j);
         }
     //create smoother
-    FSmoother fineSmoother(mat,subdomains, 1.0, false);
+    auto fineSmoother = std::make_shared<FSmoother>(mat,subdomains, 1.0, false);
 #endif
     // Create the approximate coarse level solver
     typedef Dune::SeqJac<BCRSMat,Vector,Vector> CSmoother;
@@ -149,12 +149,12 @@ void testTwoLevelMethod()
     Criterion crit;
     CoarsePolicy coarsePolicy=CoarsePolicy(SmootherArgs(), crit);
     TransferPolicy transferPolicy(crit);
-    Operator fop(mat);
+    auto fop = std::make_shared<Operator>(mat);
     Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner(fop,
-                                                                          Dune::stackobject_to_shared_ptr(fineSmoother),
+                                                                          fineSmoother,
                                                                           transferPolicy,
                                                                           coarsePolicy);
-    Dune::GeneralizedPCGSolver<Vector> amgCG(fop,preconditioner,.8,80,2);
+    Dune::GeneralizedPCGSolver<Vector> amgCG(fop,Dune::stackobject_to_shared_ptr(preconditioner),.8,80,2);
     Dune::Amg::TwoLevelMethod<Operator,CoarsePolicy,FSmoother> preconditioner1(preconditioner);
     Dune::InverseOperatorResult res;
 
@@ -168,7 +168,7 @@ void testTwoLevelMethod()
     args[i].amg=&amgs[i];
     args[i].b=&bs[i];
     args[i].x=&xs[i];
-    args[i].fop=&fop;
+    args[i].fop=fop;
     pthread_create(&threads[i], NULL, solve, (void*) &args[i]);
   }
   void* retval;
@@ -185,7 +185,7 @@ void testTwoLevelMethod()
     args[i].amg=&amgs[i];
     args[i].b=&bs[i];
     args[i].x=&xs[i];
-    args[i].fop=&fop;
+    args[i].fop=fop;
     pthread_create(&threads[i], NULL, solve1, (void*) &args[i]);
   }
   for(int i=0; i < NUM_THREADS; ++i)
@@ -200,7 +200,7 @@ void testTwoLevelMethod()
     args[i].amg=&amgs[i];
     args[i].b=&bs[i];
     args[i].x=&xs[i];
-    args[i].fop=&fop;
+    args[i].fop=fop;
     pthread_create(&threads[i], NULL, solve2, (void*) &args[i]);
   }
   for(int i=0; i < NUM_THREADS; ++i)

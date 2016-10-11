@@ -55,6 +55,9 @@
 /* Define to the revision of dune-istl */
 #define DUNE_ISTL_VERSION_REVISION ${DUNE_ISTL_VERSION_REVISION}
 
+/* Includes for istl library */
+#include "solvertemplates.hh"
+
 /* end dune-istl
    Everything below here will be overwritten
 */
