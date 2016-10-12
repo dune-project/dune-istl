@@ -24,6 +24,7 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/parametertree.hh>
+#include <dune/common/shared_ptr.hh>
 
 namespace Dune {
   /** @defgroup ISTL_Solvers Iterative Solvers
@@ -85,7 +86,7 @@ namespace Dune {
                   !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                   int
                 >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
          DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -116,7 +117,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     LoopSolver (L& op, P& prec,
                 real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
          DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -196,7 +197,7 @@ namespace Dune {
                   !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                   int
                 >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -228,7 +229,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     LoopSolver (L& op, S& sp, P& prec,
                 real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -431,7 +432,7 @@ namespace Dune {
                       !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                       int
                     >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -448,7 +449,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GradientSolver (L& op, P& prec,
                     real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -513,7 +514,7 @@ namespace Dune {
                       !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                       int
                     >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -530,7 +531,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GradientSolver (L& op, S& sp, P& prec,
                     real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (op_->category() != prec_->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -713,7 +714,7 @@ namespace Dune {
                 !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                 int
               >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
          DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -744,7 +745,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     CGSolver (L& op, P& prec,
               real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -797,7 +798,7 @@ namespace Dune {
                 !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                 int
               >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -814,7 +815,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     CGSolver (L& op, S& sp, P& prec,
               real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
         DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -1051,7 +1052,7 @@ namespace Dune {
                       !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                       int
                     >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -1068,7 +1069,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     BiCGSTABSolver (L& op, P& prec,
                     real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -1122,7 +1123,7 @@ namespace Dune {
                        !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                        int
                      >::type verbose) :
-       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+       _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
      {
        if (_op->category() != _prec->category())
           DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -1142,7 +1143,7 @@ namespace Dune {
                      P& prec,
                      real_type reduction, int maxit,
                      int verbose) :
-       _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+       _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
      {
        if (_op->category() != _prec->category())
           DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -1453,7 +1454,7 @@ namespace Dune {
                     !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                     int
                   >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -1469,7 +1470,7 @@ namespace Dune {
     template<class L, class P>
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     MINRESSolver (L& op, P& prec, real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != SolverCategory::sequential)
         DUNE_THROW(ISTLError, "Linear operator must be sequential!");
@@ -1521,7 +1522,7 @@ namespace Dune {
                     !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                     int
                   >::type verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -1537,7 +1538,7 @@ namespace Dune {
     template<class L, class S, class P>
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     MINRESSolver (L& op, S& sp, P& prec, real_type reduction, int maxit, int verbose) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_op->category() != _prec->category())
          DUNE_THROW(ISTLError, "Linear operator and preconditioner must have the same category!");
@@ -1885,7 +1886,7 @@ namespace Dune {
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                             int
                           >::type verbose) :
-      _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
+      _A(stackobject_to_shared_ptr(op)), _W(stackobject_to_shared_ptr(prec)),
       _sp(new SeqScalarProduct<X>()), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
@@ -1904,7 +1905,7 @@ namespace Dune {
     template<class L, class P>
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) :
-      _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
+      _A(stackobject_to_shared_ptr(op)), _W(stackobject_to_shared_ptr(prec)),
       _sp(new SeqScalarProduct<X>()), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
@@ -1998,8 +1999,8 @@ namespace Dune {
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                             int
                           >::type verbose) :
-      _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
-      _sp(std::make_shared<S>(sp)), _restart(restart),
+      _A(stackobject_to_shared_ptr(op)), _W(stackobject_to_shared_ptr(prec)),
+      _sp(stackobject_to_shared_ptr(sp)), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_A->category() != _W->category())
@@ -2017,8 +2018,8 @@ namespace Dune {
     template<class L, class S, class P>
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     RestartedGMResSolver (L& op, S& sp, P& prec, real_type reduction, int restart, int maxit, int verbose) :
-      _A(std::make_shared<L>(op)), _W(std::make_shared<P>(prec)),
-      _sp(std::make_shared<S>(sp)), _restart(restart),
+      _A(stackobject_to_shared_ptr(op)), _W(stackobject_to_shared_ptr(prec)),
+      _sp(stackobject_to_shared_ptr(sp)), _restart(restart),
       _reduction(reduction), _maxit(maxit), _verbose(verbose)
     {
       if (_A->category() != _W->category())
@@ -2383,7 +2384,7 @@ namespace Dune {
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                             int
                           >::type restart=10) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit),
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit),
       _verbose(verbose), _restart(std::min(maxit,restart))
     {
       if (_op->category() != SolverCategory::sequential)
@@ -2403,7 +2404,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GeneralizedPCGSolver (L& op, P& prec, real_type reduction, int maxit, int verbose,
                           int restart=10) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit),
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(new SeqScalarProduct<X>()), _reduction(reduction), _maxit(maxit),
       _verbose(verbose), _restart(std::min(maxit,restart))
     {
       if (_op->category() != SolverCategory::sequential)
@@ -2475,7 +2476,7 @@ namespace Dune {
                             !std::is_convertible<L,std::shared_ptr<LinearOperator<X,X> > >::value,
                             int
                           >::type restart=10) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose),
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _restart(std::min(maxit,restart))
     {
       if (_op->category() != _prec->category())
@@ -2495,7 +2496,7 @@ namespace Dune {
     DUNE_DEPRECATED_MSG("This constructor is deprecated and will be removed in dune 3.0. Use the new one which expects shared pointers.")
     GeneralizedPCGSolver (L& op, S& sp, P& prec,
                           real_type reduction, int maxit, int verbose, int restart=10) :
-      _op(std::make_shared<L>(op)), _prec(std::make_shared<P>(prec)), _sp(std::make_shared<S>(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose),
+      _op(stackobject_to_shared_ptr(op)), _prec(stackobject_to_shared_ptr(prec)), _sp(stackobject_to_shared_ptr(sp)), _reduction(reduction), _maxit(maxit), _verbose(verbose),
       _restart(std::min(maxit,restart))
     {
       if (_op->category() != _prec->category())

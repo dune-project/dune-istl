@@ -403,7 +403,7 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, std::const_pointer_cast<Operator>(std::make_shared<const Operator>(matrix)), pinfo);
+      createHierarchies(criterion, std::const_pointer_cast<Operator>(stackobject_to_shared_ptr(matrix)), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
