@@ -37,7 +37,7 @@ namespace Imp {
        are only usable in derived classes.
 
            Error checking: no error checking is provided normally.
-           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
+           Setting the compile time switch DUNE_CHECK_BOUNDS
            enables error checking.
 
    \todo There shouldn't be an allocator argument here, because the array is 'unmanaged'.
@@ -73,18 +73,14 @@ namespace Imp {
     //! random access to blocks
     reference operator[] (size_type i)
     {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if (i>=n) DUNE_THROW(ISTLError,"index out of range");
-#endif
+      DUNE_ASSERT_BOUNDS(i<n);
       return p[i];
     }
 
     //! same for read only access
     const_reference operator[] (size_type i) const
     {
-#ifdef DUNE_ISTL_WITH_CHECKING
-      if (i>=n) DUNE_THROW(ISTLError,"index out of range");
-#endif
+      DUNE_ASSERT_BOUNDS(i<n);
       return p[i];
     }
 
