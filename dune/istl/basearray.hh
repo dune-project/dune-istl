@@ -9,6 +9,7 @@
 #include <memory>
 #include <algorithm>
 
+#include <dune/common/boundschecking.hh>
 #include "istlexception.hh"
 #include <dune/common/iteratorfacades.hh>
 
@@ -559,8 +560,10 @@ namespace Imp {
     B& operator[] (size_type i)
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
+#ifdef DUNE_CHECK_BOUNDS
       if (lb == j+n || *lb != i)
-        DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
+        DUNE_THROW(RangeError,"index "<<i<<" not in compressed array");
+#endif
       return p[lb-j];
     }
 
@@ -568,8 +571,10 @@ namespace Imp {
     const B& operator[] (size_type i) const
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
+#ifdef DUNE_CHECK_BOUNDS
       if (lb == j+n || *lb != i)
-        DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
+        DUNE_THROW(RangeError,"index "<<i<<" not in compressed array");
+#endif
       return p[lb-j];
     }
 
