@@ -10,6 +10,7 @@ Copyright holders:
 2008--2013    Bernd Flemisch
 2005--2013    Carsten Gräser
 2012--2014    Christoph Grüninger
+2016          Stephan Hilb
 2012--2013    Olaf Ippisch
 2013--2014    Dominic Kempf
 2004--2013    Robert Klöfkorn
