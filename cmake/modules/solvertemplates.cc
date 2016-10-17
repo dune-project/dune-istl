@@ -17,12 +17,15 @@ namespace Dune {
     typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,${BLOCKSIZE},${BLOCKSIZE}> > M;
     typedef OwnerOverlapCopyCommunication<int> COMM;
 
-    typedef Dune::OverlappingSchwarzOperator<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::COMM> Operator1;
+    typedef Dune::OverlappingSchwarzOperator<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::COMM> Operator;
     typedef Dune::SeqSSOR<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> Smoother1;
     typedef Dune::BlockPreconditioner<Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::COMM,Smoother1> ParSmoother1;
 
+    typedef Dune::SeqJac<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> Smoother2;
+    typedef Dune::BlockPreconditioner<Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::COMM,Smoother2> ParSmoother2;
   }
-  template class Amg::AMG<Precomp${BLOCKSIZE}::Operator1,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::ParSmoother1,Precomp${BLOCKSIZE}::COMM>;
+  template class Amg::AMG<Precomp${BLOCKSIZE}::Operator,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::ParSmoother1,Precomp${BLOCKSIZE}::COMM>;
+  template class Amg::AMG<Precomp${BLOCKSIZE}::Operator,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::ParSmoother2,Precomp${BLOCKSIZE}::COMM>;
 
   template std::shared_ptr<InverseOperator<Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> > Dune::SolverPrecondFactory::create<Precomp${BLOCKSIZE}::V, Precomp${BLOCKSIZE}::COMM, Precomp${BLOCKSIZE}::M>(const Precomp${BLOCKSIZE}::M& A, const Precomp${BLOCKSIZE}::COMM& comm, ParameterTree& configuration, std::string group);
   template std::shared_ptr<Preconditioner<Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> > Dune::PreconditionerFactory::create<Precomp${BLOCKSIZE}::COMM, Precomp${BLOCKSIZE}::M, Precomp${BLOCKSIZE}::V, Precomp${BLOCKSIZE}::V>(std::string id, const Precomp${BLOCKSIZE}::M& A, const ParameterTree& configuration, const Precomp${BLOCKSIZE}::COMM& comm, std::shared_ptr<LinearOperator<Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> >& out_linearoperator);
@@ -44,6 +47,7 @@ namespace Dune {
   template class Dune::RestartedGMResSolver<Precomp${BLOCKSIZE}::V>;
 
   template class Amg::AMG<MatrixOperator<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V>,Precomp${BLOCKSIZE}::V,SeqSSOR<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> >;
+  template class Amg::AMG<MatrixOperator<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V>,Precomp${BLOCKSIZE}::V,SeqJac<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V> >;
   template class Dune::Richardson<Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V>;
   template class Dune::SeqGS<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V>;
   template class Dune::SeqILU0<Precomp${BLOCKSIZE}::M,Precomp${BLOCKSIZE}::V,Precomp${BLOCKSIZE}::V>;

@@ -180,13 +180,31 @@ namespace Dune {
     template <typename X, typename Y, typename M>
     static std::shared_ptr<Preconditioner<X,Y> > create (std::string id, const M& A, const ParameterTree& configuration) {
       if (id == "AMG") {
-        typedef SeqSSOR<M,X,Y> Smoother;
 
-        // AMG requires an operator instead of a matrix, need an adapter here
-        typedef MatrixOperator<M,X,Y> MADAPT;
-        auto matrixoperator = std::make_shared<MADAPT>(A);
+        std::string smoother = configuration.get<std::string> ("smoother");
+        if (smoother == "SeqSSOR") {
 
-        return std::make_shared<Amg::AMG<MADAPT,X,Smoother> > (matrixoperator, configuration);
+          typedef SeqSSOR<M,X,Y> Smoother;
+
+          // AMG requires an operator instead of a matrix, need an adapter here
+          typedef MatrixOperator<M,X,Y> MADAPT;
+          auto matrixoperator = std::make_shared<MADAPT>(A);
+
+          return std::make_shared<Amg::AMG<MADAPT,X,Smoother> > (matrixoperator, configuration);
+
+        } else if (smoother == "SeqJac") {
+
+          typedef SeqJac<M,X,Y> Smoother;
+
+          // AMG requires an operator instead of a matrix, need an adapter here
+          typedef MatrixOperator<M,X,Y> MADAPT;
+          auto matrixoperator = std::make_shared<MADAPT>(A);
+
+          return std::make_shared<Amg::AMG<MADAPT,X,Smoother> > (matrixoperator, configuration);
+
+        } else {
+          DUNE_THROW(ISTLError, "Factory does not know AMG smoother type '" + smoother + "'!\n");
+        }
       }
       if (id == "Richardson")
         return std::make_shared<Richardson<X,Y> > (configuration);
