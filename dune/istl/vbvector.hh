@@ -34,13 +34,13 @@ namespace Dune {
 
    */
   template<class B, class A=std::allocator<B> >
-  class VariableBlockVector : public block_vector_unmanaged<B,A>
+  class VariableBlockVector : public Imp::block_vector_unmanaged<B,A>
                               // this derivation gives us all the blas level 1 and norms
                               // on the large array. However, access operators have to be
                               // overwritten.
   {
     // just a shorthand
-    typedef BlockVectorWindow<B,A> window_type;
+    typedef Imp::BlockVectorWindow<B,A> window_type;
 
   public:
 
@@ -91,7 +91,7 @@ namespace Dune {
     /** constructor without arguments makes empty vector,
             object cannot be used yet
      */
-    VariableBlockVector () : block_vector_unmanaged<B,A>()
+    VariableBlockVector () : Imp::block_vector_unmanaged<B,A>()
     {
       // nothing is known ...
       nblocks = 0;
@@ -102,7 +102,7 @@ namespace Dune {
     /** make vector with given number of blocks, but size of each block is not yet known,
             object cannot be used yet
      */
-    explicit VariableBlockVector (size_type _nblocks) : block_vector_unmanaged<B,A>()
+    explicit VariableBlockVector (size_type _nblocks) : Imp::block_vector_unmanaged<B,A>()
     {
       // we can allocate the windows now
       nblocks = _nblocks;
@@ -128,7 +128,7 @@ namespace Dune {
             \param _nblocks Number of blocks
             \param m Number of elements in each block
      */
-    VariableBlockVector (size_type _nblocks, size_type m) : block_vector_unmanaged<B,A>()
+    VariableBlockVector (size_type _nblocks, size_type m) : Imp::block_vector_unmanaged<B,A>()
     {
       // and we can allocate the big array in the base class
       this->n = _nblocks*m;
@@ -392,7 +392,7 @@ namespace Dune {
     //! assign from scalar
     VariableBlockVector& operator= (const field_type& k)
     {
-      (static_cast<block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
       return *this;
     }
 

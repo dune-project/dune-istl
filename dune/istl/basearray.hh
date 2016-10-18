@@ -18,6 +18,9 @@
 
 namespace Dune {
 
+/** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
+namespace Imp {
+
   /**  \brief A simple array container for objects of type B
 
      Implement.
@@ -768,6 +771,8 @@ namespace Dune {
     B *p;       // pointer to dynamically allocated built-in array
     size_type* j;     // the index set
   };
+
+} // end namespace Imp
 
 } // end namespace
 

@@ -61,7 +61,7 @@ int testVector()
   for(typename Vector::size_type i=0; i < v.N(); ++i)
     assert(v[i] == w[i]);
 
-  w = static_cast<const Dune::block_vector_unmanaged<VectorBlock,Alloc>&>(v);
+  w = static_cast<const Dune::Imp::block_vector_unmanaged<VectorBlock,Alloc>&>(v);
 
   for(typename Vector::size_type i=0; i < w.N(); ++i)
     assert(v[i] == w[i]);
@@ -74,7 +74,7 @@ int testVector()
   for(typename Vector::size_type i=0; i < w.N(); ++i)
     assert(z[i] == w[i]);
 
-  Vector z1(static_cast<const Dune::block_vector_unmanaged<VectorBlock,Alloc>&>(v2));
+  Vector z1(static_cast<const Dune::Imp::block_vector_unmanaged<VectorBlock,Alloc>&>(v2));
 
   assert(v2.N()==z1.N());
   assert(v2.capacity()==z1.capacity());
