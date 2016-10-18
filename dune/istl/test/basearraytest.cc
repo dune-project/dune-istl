@@ -8,8 +8,8 @@ using namespace Dune;
 
 int main()
 {
-  base_array<double> v1(10);
-  base_array<double> v2 = v1;
+  Imp::base_array<double> v1(10);
+  Imp::base_array<double> v2 = v1;
 
   v1.resize(20);
 
