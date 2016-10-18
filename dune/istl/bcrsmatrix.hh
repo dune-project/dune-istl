@@ -451,7 +451,7 @@ namespace Dune {
     typedef A allocator_type;
 
     //! implement row_type with compressed vector
-    typedef CompressedBlockVectorWindow<B,A> row_type;
+    typedef Imp::CompressedBlockVectorWindow<B,A> row_type;
 
     //! The type for the index access and the size
     typedef typename A::size_type size_type;
