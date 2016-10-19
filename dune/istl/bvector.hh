@@ -524,30 +524,6 @@ namespace Dune {
       for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
     }
 
-    //! construct from base class object
-    BlockVector (const block_vector_unmanaged<B,A>& _a)
-    {
-      // upcast, because protected data inaccessible
-      const BlockVector& a = static_cast<const BlockVector&>(_a);
-
-      // allocate memory with same size as a
-      this->n = a.n;
-      capacity_ = a.capacity_;
-
-      if (capacity_>0) {
-        this->p = this->allocator_.allocate(capacity_);
-        new (this->p)B[capacity_];
-      } else
-      {
-        this->n = 0;
-        this->p = 0;
-        capacity_ = 0;
-      }
-
-      // and copy elements
-      for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
-    }
-
     //! free dynamic memory
     ~BlockVector ()
     {
@@ -589,13 +565,6 @@ namespace Dune {
           this->p[i]=a.p[i];
       }
       return *this;
-    }
-
-    //! assign from base class object
-    BlockVector& operator= (const block_vector_unmanaged<B,A>& a)
-    {
-      // forward to regular assignement operator
-      return this->operator=(static_cast<const BlockVector&>(a));
     }
 
     //! assign from scalar
@@ -706,18 +675,6 @@ namespace Dune {
       this->p = a.p;
     }
 
-    //! construct from base class object with reference semantics!
-    BlockVectorWindow (const block_vector_unmanaged<B,A>& _a)
-    {
-      // cast needed to access protected data
-      const BlockVectorWindow& a = static_cast<const BlockVectorWindow&>(_a);
-
-      // make me point to the other's data
-      this->n = a.n;
-      this->p = a.p;
-    }
-
-
     //! assignment
     BlockVectorWindow& operator= (const BlockVectorWindow& a)
     {
@@ -732,13 +689,6 @@ namespace Dune {
         for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
       }
       return *this;
-    }
-
-    //! assign from base class object
-    BlockVectorWindow& operator= (const block_vector_unmanaged<B,A>& a)
-    {
-      // forward to regular assignment operator
-      return this->operator=(static_cast<const BlockVectorWindow&>(a));
     }
 
     //! assign from scalar
@@ -1098,19 +1048,6 @@ namespace Dune {
       this->j = a.j;
     }
 
-    //! construct from base class object with reference semantics!
-    CompressedBlockVectorWindow (const compressed_block_vector_unmanaged<B,A>& _a)
-    {
-      // cast needed to access protected data (downcast)
-      const CompressedBlockVectorWindow& a = static_cast<const CompressedBlockVectorWindow&>(_a);
-
-      // make me point to the other's data
-      this->n = a.n;
-      this->p = a.p;
-      this->j = a.j;
-    }
-
-
     //! assignment
     CompressedBlockVectorWindow& operator= (const CompressedBlockVectorWindow& a)
     {
@@ -1126,13 +1063,6 @@ namespace Dune {
         for (size_type i=0; i<this->n; i++) this->j[i]=a.j[i];
       }
       return *this;
-    }
-
-    //! assign from base class object
-    CompressedBlockVectorWindow& operator= (const compressed_block_vector_unmanaged<B,A>& a)
-    {
-      // forward to regular assignment operator
-      return this->operator=(static_cast<const CompressedBlockVectorWindow&>(a));
     }
 
     //! assign from scalar
