@@ -331,24 +331,6 @@ void testImplicitMatrixBuilderExtendedConstructor()
   setMatrix(m);
 }
 
-
-void testAverageStorage()
-{
-  using M = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>;
-  for(auto j : {5, 0})
-  {
-    std::cout << j << std::endl;
-    M m(6, 6, 1, 0.0, M::implicit);
-
-    for(std::size_t i=0; i<6; ++i)
-      m.entry(j,i) = i;
-
-    m.compress();
-  }
-}
-
-
-
 int main()
 {
   int ret=0;
@@ -371,7 +353,6 @@ int main()
     ret+=testConstBracketOperatorBeforeCompress();
     testImplicitMatrixBuilder();
     testImplicitMatrixBuilderExtendedConstructor();
-    testAverageStorage();
   }catch(Dune::Exception& e) {
     std::cerr << e <<std::endl;
     return 1;
