@@ -96,10 +96,6 @@ void test_basearray ()
   Type p[13];
   Dune::base_array_window<Type> c(p+4,3); // c contains p[4]...p[6]
 
-  // copy window
-  b = c;
-  Dune::base_array<Type> d(c);
-
   // move window to p[6]...p[10]
   c.move(2,5);
 }
