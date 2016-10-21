@@ -3,12 +3,13 @@
 #ifndef DUNE_AMG_GRAPHCREATOR_HH
 #define DUNE_AMG_GRAPHCREATOR_HH
 
+#include <tuple>
+
 #include "graph.hh"
 #include "dependency.hh"
 #include "pinfo.hh"
 #include <dune/istl/operators.hh>
 #include <dune/istl/bcrsmatrix.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/unused.hh>
 
 namespace Dune
@@ -32,7 +33,7 @@ namespace Dune
           IdentityMap,
           IdentityMap> PropertiesGraph;
 
-      typedef Dune::tuple<MatrixGraph*,PropertiesGraph*> GraphTuple;
+      typedef std::tuple<MatrixGraph*,PropertiesGraph*> GraphTuple;
 
       template<class OF, class T>
       static GraphTuple create(const M& matrix, T& excluded,
@@ -48,7 +49,7 @@ namespace Dune
 
       static void free(GraphTuple& graphs)
       {
-        delete get<1>(graphs);
+        delete std::get<1>(graphs);
       }
 
     };
@@ -67,7 +68,7 @@ namespace Dune
           typename SubGraph::EdgeIndexMap>
       PropertiesGraph;
 
-      typedef Dune::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
+      typedef std::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
 
       template<class OF, class T, class PI>
       static GraphTuple create(const M& matrix, T& excluded,
@@ -88,8 +89,8 @@ namespace Dune
 
       static void free(GraphTuple& graphs)
       {
-        delete get<2>(graphs);
-        delete get<1>(graphs);
+        delete std::get<2>(graphs);
+        delete std::get<1>(graphs);
       }
     };
 
@@ -107,7 +108,7 @@ namespace Dune
           typename SubGraph::EdgeIndexMap>
       PropertiesGraph;
 
-      typedef Dune::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
+      typedef std::tuple<MatrixGraph*,PropertiesGraph*,SubGraph*> GraphTuple;
 
       template<class OF, class T, class PI>
       static GraphTuple create(const M& matrix, T& excluded,
@@ -128,8 +129,8 @@ namespace Dune
 
       static void free(GraphTuple& graphs)
       {
-        delete get<2>(graphs);
-        delete get<1>(graphs);
+        delete std::get<2>(graphs);
+        delete std::get<1>(graphs);
       }
     };
 

@@ -9,11 +9,11 @@
 #include <sstream>
 #include <limits>
 #include <ios>
+#include <tuple>
 #include "matrixutils.hh"
 #include "bcrsmatrix.hh"
 #include "owneroverlapcopy.hh"
 #include <dune/common/fmatrix.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/unused.hh>
 
 namespace Dune
@@ -499,7 +499,7 @@ namespace Dune
     }
 
     template<std::size_t brows, std::size_t bcols>
-    Dune::tuple<std::size_t, std::size_t, std::size_t>
+    std::tuple<std::size_t, std::size_t, std::size_t>
     calculateNNZ(std::size_t rows, std::size_t cols, std::size_t entries, const MMHeader& header)
     {
       std::size_t blockrows=rows/brows;
@@ -520,7 +520,7 @@ namespace Dune
       default :
         throw Dune::NotImplemented();
       }
-      return Dune::make_tuple(blockrows, blockcols, blockentries);
+      return std::make_tuple(blockrows, blockcols, blockentries);
     }
 
     /*
@@ -815,7 +815,7 @@ namespace Dune
 
     std::size_t nnz, blockrows, blockcols;
 
-    Dune::tie(blockrows, blockcols, nnz) = calculateNNZ<brows, bcols>(rows, cols, entries, header);
+    std::tie(blockrows, blockcols, nnz) = calculateNNZ<brows, bcols>(rows, cols, entries, header);
 
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
 
