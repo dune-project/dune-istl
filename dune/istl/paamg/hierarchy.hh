@@ -7,6 +7,7 @@
 #include <memory>
 #include <limits>
 #include <algorithm>
+#include <tuple>
 #include "aggregates.hh"
 #include "graph.hh"
 #include "galerkin.hh"
@@ -15,7 +16,6 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/unused.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/bigunsignedint.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/common/parallel/indexset.hh>
@@ -777,7 +777,7 @@ namespace Dune
 
         GraphTuple graphs = GraphCreator::create(*matrix, excluded, *info, OverlapFlags());
 
-        AggregatesMap* aggregatesMap=new AggregatesMap(get<1>(graphs)->maxVertex()+1);
+        AggregatesMap* aggregatesMap=new AggregatesMap(std::get<1>(graphs)->maxVertex()+1);
 
         aggregatesMaps_.push_back(aggregatesMap);
 
@@ -785,8 +785,8 @@ namespace Dune
         watch.reset();
         int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
-        tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
-          aggregatesMap->buildAggregates(matrix->getmat(), *(get<1>(graphs)), criterion, level==0);
+        std::tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
+          aggregatesMap->buildAggregates(matrix->getmat(), *(std::get<1>(graphs)), criterion, level==0);
 
         if(rank==0 && criterion.debugLevel()>2)
           std::cout<<" Have built "<<noAggregates<<" aggregates totally ("<<isoAggregates<<" isolated aggregates, "<<
@@ -882,12 +882,12 @@ namespace Dune
         ++infoLevel; // parallel information on coarse level
 
         typename PropertyMapTypeSelector<VertexVisitedTag,PropertiesGraph>::Type visitedMap =
-          get(VertexVisitedTag(), *(get<1>(graphs)));
+          get(VertexVisitedTag(), *(std::get<1>(graphs)));
 
         watch.reset();
         int aggregates = IndicesCoarsener<ParallelInformation,OverlapFlags>
                          ::coarsen(*info,
-                                   *(get<1>(graphs)),
+                                   *(std::get<1>(graphs)),
                                    visitedMap,
                                    *aggregatesMap,
                                    *infoLevel,
@@ -925,7 +925,7 @@ namespace Dune
 
         typename MatrixOperator::matrix_type* coarseMatrix;
 
-        coarseMatrix = productBuilder.build(*(get<0>(graphs)), visitedMap2,
+        coarseMatrix = productBuilder.build(*(std::get<0>(graphs)), visitedMap2,
                                             *info,
                                             *aggregatesMap,
                                             aggregates,
@@ -934,7 +934,7 @@ namespace Dune
         watch.reset();
         info->freeGlobalLookup();
 
-        delete get<0>(graphs);
+        delete std::get<0>(graphs);
         productBuilder.calculate(matrix->getmat(), *aggregatesMap, *coarseMatrix, *infoLevel, OverlapFlags());
 
         if(criterion.debugLevel()>2) {

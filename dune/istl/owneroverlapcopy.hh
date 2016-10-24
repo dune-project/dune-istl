@@ -9,6 +9,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <tuple>
 
 #include "cmath"
 
@@ -17,8 +18,6 @@
 #include <mpi.h>
 #endif
 
-
-#include <dune/common/tuples.hh>
 #include <dune/common/enumset.hh>
 
 #if HAVE_MPI
@@ -88,14 +87,14 @@ namespace Dune {
      * The triple consists of the global index and the local
      * index and an attribute
      */
-    typedef tuple<GlobalIdType,LocalIdType,int> IndexTripel;
+    typedef std::tuple<GlobalIdType,LocalIdType,int> IndexTripel;
     /**
      * @brief A triple describing a remote index.
      *
      * The triple consists of a process number and the global index and
      * the attribute of the index at the remote process.
      */
-    typedef tuple<int,GlobalIdType,int> RemoteIndexTripel;
+    typedef std::tuple<int,GlobalIdType,int> RemoteIndexTripel;
 
     /**
      * @brief Add a new index triple to the set of local indices.
@@ -104,9 +103,9 @@ namespace Dune {
      */
     void addLocalIndex (const IndexTripel& x)
     {
-      if (get<2>(x)!=OwnerOverlapCopyAttributeSet::owner &&
-          get<2>(x)!=OwnerOverlapCopyAttributeSet::overlap &&
-          get<2>(x)!=OwnerOverlapCopyAttributeSet::copy)
+      if (std::get<2>(x)!=OwnerOverlapCopyAttributeSet::owner &&
+          std::get<2>(x)!=OwnerOverlapCopyAttributeSet::overlap &&
+          std::get<2>(x)!=OwnerOverlapCopyAttributeSet::copy)
         DUNE_THROW(ISTLError,"OwnerOverlapCopyCommunication: global index not in index set");
       localindices.insert(x);
     }
@@ -118,9 +117,9 @@ namespace Dune {
      */
     void addRemoteIndex (const RemoteIndexTripel& x)
     {
-      if (get<2>(x)!=OwnerOverlapCopyAttributeSet::owner &&
-          get<2>(x)!=OwnerOverlapCopyAttributeSet::overlap &&
-          get<2>(x)!=OwnerOverlapCopyAttributeSet::copy)
+      if (std::get<2>(x)!=OwnerOverlapCopyAttributeSet::owner &&
+          std::get<2>(x)!=OwnerOverlapCopyAttributeSet::overlap &&
+          std::get<2>(x)!=OwnerOverlapCopyAttributeSet::copy)
         DUNE_THROW(ISTLError,"OwnerOverlapCopyCommunication: global index not in index set");
       remoteindices.insert(x);
     }
@@ -598,13 +597,13 @@ namespace Dune {
       pis.beginResize();
       for (localindex_iterator i=indexinfo.localIndices().begin(); i!=indexinfo.localIndices().end(); ++i)
       {
-        if (get<2>(*i)==OwnerOverlapCopyAttributeSet::owner)
-          pis.add(get<0>(*i),LI(get<1>(*i),OwnerOverlapCopyAttributeSet::owner,true));
-        if (get<2>(*i)==OwnerOverlapCopyAttributeSet::overlap)
-          pis.add(get<0>(*i),LI(get<1>(*i),OwnerOverlapCopyAttributeSet::overlap,true));
-        if (get<2>(*i)==OwnerOverlapCopyAttributeSet::copy)
-          pis.add(get<0>(*i),LI(get<1>(*i),OwnerOverlapCopyAttributeSet::copy,true));
-        //                std::cout << cc.rank() << ": adding index " << get<0>(*i) << " " << get<1>(*i) << " " << get<2>(*i) << std::endl;
+        if (std::get<2>(*i)==OwnerOverlapCopyAttributeSet::owner)
+          pis.add(std::get<0>(*i),LI(std::get<1>(*i),OwnerOverlapCopyAttributeSet::owner,true));
+        if (std::get<2>(*i)==OwnerOverlapCopyAttributeSet::overlap)
+          pis.add(std::get<0>(*i),LI(std::get<1>(*i),OwnerOverlapCopyAttributeSet::overlap,true));
+        if (std::get<2>(*i)==OwnerOverlapCopyAttributeSet::copy)
+          pis.add(std::get<0>(*i),LI(std::get<1>(*i),OwnerOverlapCopyAttributeSet::copy,true));
+        //                std::cout << cc.rank() << ": adding index " << std::get<0>(*i) << " " << std::get<1>(*i) << " " << std::get<2>(*i) << std::endl;
       }
       pis.endResize();
 
@@ -614,32 +613,32 @@ namespace Dune {
       if (indexinfo.remoteIndices().size()>0)
       {
         remoteindex_iterator i=indexinfo.remoteIndices().begin();
-        int p = get<0>(*i);
+        int p = std::get<0>(*i);
         RILM modifier = ri.template getModifier<false,true>(p);
         typename PIS::const_iterator pi=pis.begin();
         for ( ; i!=indexinfo.remoteIndices().end(); ++i)
         {
           // handle processor change
-          if (p!=get<0>(*i))
+          if (p!=std::get<0>(*i))
           {
-            p = get<0>(*i);
+            p = std::get<0>(*i);
             modifier = ri.template getModifier<false,true>(p);
             pi=pis.begin();
           }
 
           // position to correct entry in parallel index set
-          while (pi->global()!=get<1>(*i) && pi!=pis.end())
+          while (pi->global()!=std::get<1>(*i) && pi!=pis.end())
             ++pi;
           if (pi==pis.end())
             DUNE_THROW(ISTLError,"OwnerOverlapCopyCommunication: global index not in index set");
 
           // insert entry
-          //                      std::cout << cc.rank() << ": adding remote index " << get<0>(*i) << " " << get<1>(*i) << " " << get<2>(*i) << std::endl;
-          if (get<2>(*i)==OwnerOverlapCopyAttributeSet::owner)
+          //                      std::cout << cc.rank() << ": adding remote index " << std::get<0>(*i) << " " << std::get<1>(*i) << " " << std::get<2>(*i) << std::endl;
+          if (std::get<2>(*i)==OwnerOverlapCopyAttributeSet::owner)
             modifier.insert(RX(OwnerOverlapCopyAttributeSet::owner,&(*pi)));
-          if (get<2>(*i)==OwnerOverlapCopyAttributeSet::overlap)
+          if (std::get<2>(*i)==OwnerOverlapCopyAttributeSet::overlap)
             modifier.insert(RX(OwnerOverlapCopyAttributeSet::overlap,&(*pi)));
-          if (get<2>(*i)==OwnerOverlapCopyAttributeSet::copy)
+          if (std::get<2>(*i)==OwnerOverlapCopyAttributeSet::copy)
             modifier.insert(RX(OwnerOverlapCopyAttributeSet::copy,&(*pi)));
         }
       }else{
