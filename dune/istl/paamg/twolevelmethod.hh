@@ -3,6 +3,8 @@
 #ifndef DUNE_ISTL_TWOLEVELMETHOD_HH
 #define DUNE_ISTL_TWOLEVELMETHOD_HH
 
+#include <tuple>
+
 #include<dune/istl/operators.hh>
 #include"amg.hh"
 #include"galerkin.hh"
@@ -164,7 +166,7 @@ public:
 
     int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
-     tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
+    std::tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
        aggregatesMap_->buildAggregates(fineOperator.getmat(), pg, criterion_, true);
      std::cout<<"no aggregates="<<noAggregates<<" iso="<<isoAggregates<<" one="<<oneAggregates<<" skipped="<<skippedAggregates<<std::endl;
     // misuse coarsener to renumber aggregates

@@ -3,6 +3,7 @@
 #include <config.h>
 
 #include <iostream>
+#include <tuple>
 #include <dune/common/enumset.hh>
 #include <dune/common/propertymap.hh>
 #include <dune/common/parallel/communicator.hh>
@@ -71,7 +72,7 @@ void testCoarsenIndices(int N)
 
   int noAggregates, isoAggregates, oneAggregates, skipped;
 
-  Dune::tie(noAggregates, isoAggregates, oneAggregates,skipped) = aggregatesMap.buildAggregates(mat, pg, Criterion(), false);
+  std::tie(noAggregates, isoAggregates, oneAggregates,skipped) = aggregatesMap.buildAggregates(mat, pg, Criterion(), false);
 
   Dune::Amg::printAggregates2d(aggregatesMap, n, N, std::cout);
 

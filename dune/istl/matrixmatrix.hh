@@ -2,9 +2,11 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_ISTL_MATRIXMATRIX_HH
 #define DUNE_ISTL_MATRIXMATRIX_HH
+
+#include <tuple>
+
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/timer.hh>
 namespace Dune
 {
@@ -435,10 +437,10 @@ namespace Dune
     struct SizeSelector<0>
     {
       template<class M1, class M2>
-      static tuple<typename M1::size_type, typename M2::size_type>
+      static std::tuple<typename M1::size_type, typename M2::size_type>
       size(const M1& m1, const M2& m2)
       {
-        return make_tuple(m1.N(), m2.M());
+        return std::make_tuple(m1.N(), m2.M());
       }
     };
 
@@ -446,10 +448,10 @@ namespace Dune
     struct SizeSelector<1>
     {
       template<class M1, class M2>
-      static tuple<typename M1::size_type, typename M2::size_type>
+      static std::tuple<typename M1::size_type, typename M2::size_type>
       size(const M1& m1, const M2& m2)
       {
-        return make_tuple(m1.M(), m2.M());
+        return std::make_tuple(m1.M(), m2.M());
       }
     };
 
@@ -458,10 +460,10 @@ namespace Dune
     struct SizeSelector<2>
     {
       template<class M1, class M2>
-      static tuple<typename M1::size_type, typename M2::size_type>
+      static std::tuple<typename M1::size_type, typename M2::size_type>
       size(const M1& m1, const M2& m2)
       {
-        return make_tuple(m1.N(), m2.N());
+        return std::make_tuple(m1.N(), m2.N());
       }
     };
 
@@ -471,7 +473,7 @@ namespace Dune
     {
       // First step is to count the number of nonzeros
       typename BCRSMatrix<FieldMatrix<T,n1,m1>,A>::size_type rows, cols;
-      tie(rows,cols)=SizeSelector<transpose>::size(mat1, mat2);
+      std::tie(rows,cols)=SizeSelector<transpose>::size(mat1, mat2);
       MatrixInitializer<transpose,T,A,n1,m1> patternInit(res, rows);
       Timer timer;
       NonzeroPatternTraverser<transpose>::traverse(mat1,mat2,patternInit);
