@@ -25,6 +25,8 @@
 
 namespace Dune {
 
+  template<class B, class A=std::allocator<B> >
+  class BlockVectorWindow;
 
   /**
       \brief An unmanaged vector of blocks.
@@ -574,6 +576,17 @@ namespace Dune {
       (static_cast<block_vector_unmanaged<B,A>&>(*this)) = k;
       return *this;
     }
+
+    //! Assignment from BlockVectorWindow
+    template<class OtherAlloc>
+    BlockVector& operator= (const BlockVectorWindow<B,OtherAlloc>& other)
+    {
+      resize(other.size());
+      for(std::size_t i=0; i<other.size(); ++i)
+        (*this)[i] = other[i];
+      return *this;
+    }
+
   protected:
     size_type capacity_;
 
@@ -624,7 +637,11 @@ namespace Dune {
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
    */
+#ifndef DOXYGEN
+  template<class B, class A>
+#else
   template<class B, class A=std::allocator<B> >
+#endif
   class BlockVectorWindow : public block_vector_unmanaged<B,A>
   {
   public:
