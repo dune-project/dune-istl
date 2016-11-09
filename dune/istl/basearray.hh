@@ -426,27 +426,6 @@ namespace Dune {
       for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
     }
 
-    //! construct from base class object
-    base_array (const base_array_unmanaged<B,A>& _a)
-    {
-      const base_array& a = static_cast<const base_array&>(_a);
-
-      // allocate memory with same size as a
-      this->n = a.n;
-      if (this->n>0) {
-        this->p = allocator_.allocate(this->n);
-        new (this->p)B[this->n];
-      } else
-      {
-        this->n = 0;
-        this->p = 0;
-      }
-
-      // and copy elements
-      for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
-    }
-
-
     //! free dynamic memory
     ~base_array ()
     {
@@ -508,12 +487,6 @@ namespace Dune {
         for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
       }
       return *this;
-    }
-
-    //! assign from base class object
-    base_array& operator= (const base_array_unmanaged<B,A>& a)
-    {
-      return this->operator=(static_cast<const base_array&>(a));
     }
 
   protected:
