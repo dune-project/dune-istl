@@ -39,6 +39,8 @@ namespace Dune {
    \todo There shouldn't be an allocator argument here, because the array is 'unmanaged'.
          And indeed, of the allocator, only its size_type is used.  Hence, the signature
          of this class should be changed to <class B, int stype>
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class base_array_unmanaged
@@ -270,6 +272,7 @@ namespace Dune {
            Error checking: no error checking is provided normally.
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
            enables error checking.
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class base_array_window : public base_array_unmanaged<B,A>
@@ -360,6 +363,7 @@ namespace Dune {
             Error checking: no error checking is provided normally.
             Setting the compile time switch DUNE_ISTL_WITH_CHECKING
             enables error checking.
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class base_array : public base_array_unmanaged<B,A>
@@ -515,6 +519,8 @@ namespace Dune {
            Error checking: no error checking is provided normally.
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
            enables error checking.
+
+    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class compressed_base_array_unmanaged

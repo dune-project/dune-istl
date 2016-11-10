@@ -38,6 +38,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class block_vector_unmanaged : public base_array_unmanaged<B,A>
@@ -636,6 +638,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
 #ifndef DOXYGEN
   template<class B, class A>
@@ -759,6 +763,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class compressed_block_vector_unmanaged : public compressed_base_array_unmanaged<B,A>
@@ -1011,6 +1017,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class CompressedBlockVectorWindow : public compressed_block_vector_unmanaged<B,A>
