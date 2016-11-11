@@ -300,7 +300,7 @@ namespace Dune
       // ignore comment lines
       while(c=='%')
       {
-        /* disgard the rest of the line */
+        /* discard the rest of the line */
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
         c=file.peek();
       }
@@ -319,7 +319,7 @@ namespace Dune
       std::cout<<buffer<<std::endl;
       /* read the banner */
       if(buffer!="%%MatrixMarket") {
-        /* disgard the rest of the line */
+        /* discard the rest of the line */
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
         return false;
       }
@@ -333,7 +333,7 @@ namespace Dune
 
       if(buffer != "matrix")
       {
-        /* disgard the rest of the line */
+        /* discard the rest of the line */
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
         return false;
       }

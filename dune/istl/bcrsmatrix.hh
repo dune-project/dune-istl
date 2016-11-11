@@ -368,7 +368,7 @@ namespace Dune {
      it did not exist yet. Please note that this method may be slightly slower than
      accessing entries via `matrix[row][col]` after the initial assembly because
      of the additional overhead of searching the overflow area.
-     The matrix pattern is created by implicitly by simply accessing nonzero entries
+     The matrix pattern is created implicitly by simply accessing nonzero entries
      during the initial matrix assembly.
 
      After the entry-method has been called for each nonzero matrix entry at least once,

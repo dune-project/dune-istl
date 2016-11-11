@@ -51,7 +51,7 @@ namespace MatrixImp
 
     /** \brief Type of the elements of the outer vector, i.e., dynamic vectors of B
      *
-     * Note that this is *not* the type refered to by the iterators and random access operators,
+     * Note that this is *not* the type referred to by the iterators and random access operators,
      * which return proxy objects.
      */
     typedef BlockVector<B,A> value_type;
