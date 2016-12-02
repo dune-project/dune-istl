@@ -14,36 +14,11 @@
 
 #include "laplacian.hh"
 
-#ifndef SUPERLU_NTYPE
-#define SUPERLU_NTYPE 1
-#endif
-
-#if SUPERLU_NTYPE==1
-typedef double FIELD_TYPE;
-#endif
-
-#if SUPERLU_NTYPE==0
-typedef float FIELD_TYPE;
-#endif
-
-#if SUPERLU_NTYPE==2
-typedef std::complex<float> FIELD_TYPE;
-#endif
-
-#if SUPERLU_NTYPE>=3
-typedef std::complex<double> FIELD_TYPE;
-#endif
-
-int main(int argc, char** argv)
-try
-{
 #if HAVE_SUPERLU
+template<typename FIELD_TYPE>
+void runSuperLU(std::size_t N)
+{
   const int BS=1;
-  std::size_t N=100;
-
-  if(argc>1)
-    N = atoi(argv[1]);
-  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
 
 
   typedef Dune::FieldMatrix<FIELD_TYPE,BS,BS> MatrixBlock;
@@ -83,8 +58,34 @@ try
 
   solver1.apply(x1,b1, res);
   solver1.apply(reinterpret_cast<FIELD_TYPE*>(&x1[0]), reinterpret_cast<FIELD_TYPE*>(&b1[0]));
+}
+#endif
+
+int main(int argc, char** argv)
+try
+{
+
+  std::size_t N=100;
+
+  if(argc>1)
+    N = atoi(argv[1]);
+  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+#if HAVE_SUPERLU
+#if HAVE_SLU_SDEFS_H
+  runSuperLU<float>(N);
+#endif
+#if HAVE_SLU_DDEFS_H
+  runSuperLU<double>(N);
+#endif
+#if HAVE_SLU_CDEFS_H
+  runSuperLU<std::complex<float> >(N);
+#endif
+#if HAVE_SLU_ZDEFS_H
+  runSuperLU<std::complex<double> >(N);
+#endif
 
   return 0;
+
 #else // HAVE_SUPERLU
   std::cerr << "You need SuperLU to run this test." << std::endl;
   return 77;

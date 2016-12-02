@@ -31,6 +31,22 @@
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 
+/* Define to the integer type that SuperLU was compiled for
+   See e.g. what int_t is defined to in slu_sdefs.h */
+#cmakedefine SUPERLU_INT_TYPE @SUPERLU_INT_TYPE@
+
+/* Define to 1 if header slu_sdefs.h is there. */
+#cmakedefine01 HAVE_SLU_SDEFS_H
+
+/* Define to 1 if header slu_ddefs.h is there. */
+#cmakedefine01 HAVE_SLU_DDEFS_H
+
+/* Define to 1 if header slu_cdefs.h is there. */
+#cmakedefine01 HAVE_SLU_CDEFS_H
+
+/* Define to 1 if header slu_zdefs.h is there. */
+#cmakedefine01 HAVE_SLU_ZDEFS_H
+
 /* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
 #cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
 
