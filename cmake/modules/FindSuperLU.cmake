@@ -125,7 +125,19 @@ int main(void)
 }"
 SUPERLU_MIN_VERSION_5)
 
+if(SUPERLU_MIN_VERSION_4_3)
+  include(CheckIncludeFiles)
+  set(HAVE_SLU_DDEFS_H 1)
+  check_include_files(slu_sdefs.h HAVE_SLU_SDEFS_H)
+  check_include_files(slu_cdefs.h HAVE_SLU_CDEFS_H)
+  check_include_files(slu_zdefs.h HAVE_SLU_ZDEFS_H)
+endif(SUPERLU_MIN_VERSION_4_3)
+
 cmake_pop_check_state()
+
+set(SUPERLU_INT_TYPE "int" CACHE STRING
+  "The integer version that SuperLU was compiled for (Default is int.
+  Should be the same as int_t define in e.g. slu_sdefs.h")
 
 if(NOT SUPERLU_MIN_VERSION_4)
   set(SUPERLU_WITH_VERSION "SuperLU < 4.0" CACHE STRING
