@@ -25,9 +25,6 @@
 #include <dune/common/typetraits.hh>
 
 namespace Dune {
-  /** @defgroup ISTL_Solvers Iterative Solvers
-      @ingroup ISTL
-   */
   /** @addtogroup ISTL_Solvers
       @{
    */
