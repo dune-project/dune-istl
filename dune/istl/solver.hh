@@ -155,6 +155,54 @@ namespace Dune
     }
   };
 
+  /**
+   * \brief Helper class for notifying a DUNE-ISTL linear solver about
+   *        a change of the iteration matrix object in a unified way,
+   *        i.e. independent from the solver's type (direct/iterative).
+   *
+   * \author Sebastian Westerheide.
+   */
+  template <typename ISTLLinearSolver, typename BCRSMatrix>
+  class SolverHelper
+  {
+  public:
+    static void setMatrix (ISTLLinearSolver& solver,
+                           const BCRSMatrix& matrix)
+    {
+      static const bool is_direct_solver
+        = Dune::IsDirectSolver<ISTLLinearSolver>::value;
+      SolverHelper<ISTLLinearSolver,BCRSMatrix>::
+        Implementation<is_direct_solver>::setMatrix(solver,matrix);
+    }
+
+  protected:
+    /**
+     * \brief Implementation that works together with iterative ISTL
+     *        solvers, e.g. Dune::CGSolver or Dune::BiCGSTABSolver.
+     */
+    template <bool is_direct_solver, typename Dummy = void>
+    struct Implementation
+    {
+      static void setMatrix (ISTLLinearSolver&,
+                             const BCRSMatrix&)
+      {}
+    };
+
+    /**
+     * \brief Implementation that works together with direct ISTL
+     *        solvers, e.g. Dune::SuperLU or Dune::UMFPack.
+     */
+    template <typename Dummy>
+    struct Implementation<true,Dummy>
+    {
+      static void setMatrix (ISTLLinearSolver& solver,
+                             const BCRSMatrix& matrix)
+      {
+        solver.setMatrix(matrix);
+      }
+    };
+  };
+
 /**
  * @}
  */
