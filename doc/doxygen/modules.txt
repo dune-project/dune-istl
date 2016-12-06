@@ -43,6 +43,9 @@
 /** @defgroup ISTL_Solvers Iterative Solvers
     @ingroup ISTL
 */
+/** @defgroup ISTL_Eigenvalue Eigenvalue Solvers
+    @ingroup ISTL_Solvers
+*/
 /** @defgroup ISTL_Comm Communication Interface
     @ingroup ISTL
 */

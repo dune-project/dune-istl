@@ -24,101 +24,105 @@
 #include <dune/istl/io.hh>              // provides Dune::printvector(...)
 #include <dune/istl/solvers.hh>         // provides Dune::InverseOperatorResult
 
-
 namespace Dune
 {
 
-  /**
-   * \brief A linear operator scaling vectors by a scalar value.
-   *        The scalar value can be changed as it is given in a
-   *        form decomposed into an immutable and a mutable part.
-   *
-   * \author Sebastian Westerheide.
-   */
-  template <class X, class Y = X>
-  class ScalingLinearOperator : public Dune::LinearOperator<X,Y>
-  {
-  public:
-    typedef X domain_type;
-    typedef Y range_type;
-    typedef typename X::field_type field_type;
+  /** @addtogroup ISTL_Eigenvalue
+    @{
+  */
 
-    enum {category = Dune::SolverCategory::sequential};
-
-    ScalingLinearOperator (field_type immutable_scaling,
-                           const field_type& mutable_scaling)
-      : immutable_scaling_(immutable_scaling),
-        mutable_scaling_(mutable_scaling)
-    {}
-
-    virtual void apply (const X& x, Y& y) const
+  namespace Impl {
+    /**
+     * \brief A linear operator scaling vectors by a scalar value.
+     *        The scalar value can be changed as it is given in a
+     *        form decomposed into an immutable and a mutable part.
+     *
+     * \author Sebastian Westerheide.
+     */
+    template <class X, class Y = X>
+    class ScalingLinearOperator : public Dune::LinearOperator<X,Y>
     {
-      y = x;
-      y *= immutable_scaling_*mutable_scaling_;
-    }
+    public:
+      typedef X domain_type;
+      typedef Y range_type;
+      typedef typename X::field_type field_type;
 
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+      enum {category = Dune::SolverCategory::sequential};
+
+      ScalingLinearOperator (field_type immutable_scaling,
+        const field_type& mutable_scaling)
+        : immutable_scaling_(immutable_scaling),
+          mutable_scaling_(mutable_scaling)
+      {}
+
+      virtual void apply (const X& x, Y& y) const
+      {
+        y = x;
+        y *= immutable_scaling_*mutable_scaling_;
+      }
+
+      virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+      {
+        X temp(x);
+        temp *= immutable_scaling_*mutable_scaling_;
+        y.axpy(alpha,temp);
+      }
+
+    protected:
+      const field_type immutable_scaling_;
+      const field_type& mutable_scaling_;
+    };
+
+
+    /**
+     * \brief A linear operator representing the sum of two linear operators.
+     *
+     * \tparam OP1 Type of the first linear operator.
+     * \tparam OP2 Type of the second linear operator.
+     *
+     * \author Sebastian Westerheide.
+     */
+    template <class OP1, class OP2>
+    class LinearOperatorSum
+      : public Dune::LinearOperator<typename OP1::domain_type,
+                                    typename OP1::range_type>
     {
-      X temp(x);
-      temp *= immutable_scaling_*mutable_scaling_;
-      y.axpy(alpha,temp);
-    }
+    public:
+      typedef typename OP1::domain_type domain_type;
+      typedef typename OP1::range_type range_type;
+      typedef typename domain_type::field_type field_type;
 
-  protected:
-    const field_type immutable_scaling_;
-    const field_type& mutable_scaling_;
-  };
+      enum {category = Dune::SolverCategory::sequential};
 
+      LinearOperatorSum (const OP1& op1, const OP2& op2)
+        : op1_(op1), op2_(op2)
+      {
+        static_assert(std::is_same<typename OP2::domain_type,domain_type>::value,
+          "Domain type of both operators doesn't match!");
+        static_assert(std::is_same<typename OP2::range_type,range_type>::value,
+          "Range type of both operators doesn't match!");
+      }
 
-  /**
-   * \brief A linear operator representing the sum of two linear operators.
-   *
-   * \tparam OP1 Type of the first linear operator.
-   * \tparam OP2 Type of the second linear operator.
-   *
-   * \author Sebastian Westerheide.
-   */
-  template <class OP1, class OP2>
-  class LinearOperatorSum
-    : public Dune::LinearOperator<typename OP1::domain_type,
-                                  typename OP1::range_type>
-  {
-  public:
-    typedef typename OP1::domain_type domain_type;
-    typedef typename OP1::range_type range_type;
-    typedef typename domain_type::field_type field_type;
+      virtual void apply (const domain_type& x, range_type& y) const
+      {
+        op1_.apply(x,y);
+        op2_.applyscaleadd(1.0,x,y);
+      }
 
-    enum {category = Dune::SolverCategory::sequential};
+      virtual void applyscaleadd (field_type alpha,
+        const domain_type& x, range_type& y) const
+      {
+        range_type temp(y);
+        op1_.apply(x,temp);
+        op2_.applyscaleadd(1.0,x,temp);
+        y.axpy(alpha,temp);
+      }
 
-    LinearOperatorSum (const OP1& op1, const OP2& op2)
-      : op1_(op1), op2_(op2)
-    {
-      static_assert(std::is_same<typename OP2::domain_type,domain_type>::value,
-                    "Domain type of both operators doesn't match!");
-      static_assert(std::is_same<typename OP2::range_type,range_type>::value,
-                    "Range type of both operators doesn't match!");
-    }
-
-    virtual void apply (const domain_type& x, range_type& y) const
-    {
-      op1_.apply(x,y);
-      op2_.applyscaleadd(1.0,x,y);
-    }
-
-    virtual void applyscaleadd (field_type alpha,
-                                const domain_type& x, range_type& y) const
-    {
-      range_type temp(y);
-      op1_.apply(x,temp);
-      op2_.applyscaleadd(1.0,x,temp);
-      y.axpy(alpha,temp);
-    }
-
-  protected:
-    const OP1& op1_;
-    const OP2& op2_;
-  };
-
+    protected:
+      const OP1& op1_;
+      const OP2& op2_;
+    };
+  } // end namespace Impl
 
   /**
    * \brief Helper class for notifying a DUNE-ISTL linear solver about
@@ -170,8 +174,7 @@ namespace Dune
 
 
   /**
-   * \brief A class template for performing some iterative eigenvalue algorithms
-   *        based on power iteration.
+   * \brief Iterative eigenvalue algorithms based on power iteration.
    *
    * Given a square matrix whose eigenvalues shall be considered, this class
    * template provides methods for performing the power iteration algorithm,
@@ -213,8 +216,8 @@ namespace Dune
     // Type definitions for type of iteration operator (m_ - mu_*I)
     typedef typename Dune::MatrixAdapter<BCRSMatrix,BlockVector,BlockVector>
       MatrixOperator;
-    typedef ScalingLinearOperator<BlockVector> ScalingOperator;
-    typedef LinearOperatorSum<MatrixOperator,ScalingOperator> OperatorSum;
+    typedef Impl::ScalingLinearOperator<BlockVector> ScalingOperator;
+    typedef Impl::LinearOperatorSum<MatrixOperator,ScalingOperator> OperatorSum;
 
   public:
     //! Type of underlying field
@@ -1078,7 +1081,8 @@ namespace Dune
     const std::string blank_;
   };
 
-}  // namespace Dune
+  /** @} */
 
+}  // namespace Dune
 
 #endif  // DUNE_ISTL_EIGENVALUE_POWERITERATION_HH
