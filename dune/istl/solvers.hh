@@ -1087,6 +1087,19 @@ namespace Dune {
 
   private:
 
+    // helper function to extract the real value of a real or complex number
+    inline
+    real_type to_real(const real_type & v)
+    {
+      return v;
+    }
+
+    inline
+    real_type to_real(const std::complex<real_type> & v)
+    {
+      return v.real();
+    }
+
     void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       using std::sqrt;
@@ -1101,14 +1114,14 @@ namespace Dune {
       real_type temp = norm_min/norm_max;
       // we rewrite the code in a vectorizable fashion
       cs = cond(norm_dy < eps,
-        field_type(1.0),
+        real_type(1.0),
         cond(norm_dx < eps,
-          field_type(0.0),
+          real_type(0.0),
           cond(norm_dy > norm_dx,
-            field_type(1.0)/sqrt(1.0 + temp*temp)*temp,
-            // dy is real in exact arithmetic
-            // so we don't need to conjugate here
-            field_type(1.0)/sqrt(1.0 + temp*temp)*dx/norm_dx*dy/norm_dy)));
+            real_type(1.0)/sqrt(1.0 + temp*temp)*temp,
+            // dy and dx are real in exact arithmetic
+            // thus dx*dy is real so we can explicitly enforce it
+            real_type(1.0)/sqrt(1.0 + temp*temp)*to_real(dx*dy)/norm_dx/norm_dy)));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
@@ -1439,6 +1452,19 @@ namespace Dune {
       return conj(t);
     }
 
+    // helper function to extract the real value of a real or complex number
+    inline
+    real_type to_real(const real_type & v)
+    {
+      return v;
+    }
+
+    inline
+    real_type to_real(const std::complex<real_type> & v)
+    {
+      return v.real();
+    }
+
     void
     generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
@@ -1454,12 +1480,12 @@ namespace Dune {
       real_type temp = norm_min/norm_max;
       // we rewrite the code in a vectorizable fashion
       cs = cond(norm_dy < eps,
-        field_type(1.0),
+        real_type(1.0),
         cond(norm_dx < eps,
-          field_type(0.0),
+          real_type(0.0),
           cond(norm_dy > norm_dx,
-            field_type(1.0)/sqrt(1.0 + temp*temp)*temp,
-            field_type(1.0)/sqrt(1.0 + temp*temp)*dx/norm_dx*conjugate(dy)/norm_dy)));
+            real_type(1.0)/sqrt(1.0 + temp*temp)*temp,
+            real_type(1.0)/sqrt(1.0 + temp*temp)*to_real(dx*conjugate(dy))/norm_dx/norm_dy)));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
