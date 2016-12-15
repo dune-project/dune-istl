@@ -1,40 +1,47 @@
 Copyright holders:
 
+2014--2016    Marco Agnese
 2003--2013    Peter Bastian
-2004--2014    Markus Blatt
-2014          Ansgar Burchardt
+2004--2016    Markus Blatt
+2014--2016    Ansgar Burchardt
 2004--2005    Adrian Burri
-2008--2014    Andreas Dedner
-2003--2014    Christian Engwer
-2005--2012    Jorrit Fahlke
-2008--2013    Bernd Flemisch
-2005--2013    Carsten Gräser
-2012--2014    Christoph Grüninger
+2008--2015    Andreas Dedner
+2003--2016    Christian Engwer
+2005--2016    Jorrit Fahlke
+2008--2015    Bernd Flemisch
+2005--2016    Carsten Gräser
+2015--2016    Felix Gruber
+2012--2016    Christoph Grüninger
+2016          René Heß
 2016          Stephan Hilb
 2012--2013    Olaf Ippisch
-2013--2014    Dominic Kempf
-2004--2013    Robert Klöfkorn
-2013--2014    Arne Morten Kvarving (SINTEF)
+2013--2016    Dominic Kempf
+2015          Emmanouil Kiagias
+2004--2016    Robert Klöfkorn
+2016          Timo Koch
+2007          Sreejith Pulloor Kuttanikkad
+2013--2016    Arne Morten Kvarving (SINTEF)
 2009--2013    Andreas Lauser
-2012--2014    Tobias Malkmus
+2012--2016    Tobias Malkmus
 2007--2009    Sven Marnach
-2013          Rene Milk
-2013--2014    Steffen Müthing
+2013          René Milk
+2013--2016    Steffen Müthing
+2016          Maikel Nadolski
 2003--2005    Thimo Neubauer
 2010--2012    Rebecca Neumann
-2012--2014    Andreas Nüßing
 2008--2014    Martin Nolte
-2014          Marian Piatkowski
-2011--2013    Elias Pipping
+2012--2015    Andreas Nüßing
+2013--2014    Marian Piatkowski
+2011--2016    Elias Pipping
 2013          Jurgis Pods
-2007          Sreejith Pulloor Kuttanikkad
 2009          Atgeirr Rasmussen
 2008--2013    Uli Sack
-2004--2014    Oliver Sander
+2004--2016    Oliver Sander
 2013          Bård Skaflestad
 2006--2010    Martin Weiser
+2015          Sebastian Westerheide
 2011--2012    Matthias Wohlmuth
-2014          Jonathan Youett
+2014--2016    Jonathan Youett
 
 The DUNE library and headers are licensed under version 2 of the GNU
 General Public License (see below), with a special exception for
