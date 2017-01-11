@@ -83,8 +83,8 @@ there are many libraries available on the internet for doing sparse matrix/vecto
 computations. A comprehensive overview is given in \cite{LALinks}. 
 
 The
-widely availably Basic Linear Algebra Subprograms (BLAS) standard has
-been extended to cover als sparse matrices \cite{BLASTForum}. BLAS
+widely available Basic Linear Algebra Subprograms (BLAS) standard has
+been extended to cover as sparse matrices \cite{BLASTForum}. BLAS
 divides the available functions into level 1 (vector operations),
 level 2 (vector/matrix operations) and level 3 (matrix/matrix
 operations). BLAS for sparse matrices contains only level 1 and 2
@@ -94,7 +94,7 @@ only a FORTRAN and C interface. As a consequence, the interface is
 ``coarse grained'', meaning that ``small'' functions such as access to
 individual matrix elements is relatively slow. 
 
-Generic programming techniqes in C++ offer the possibility to combine
+Generic programming techniques in C++ offer the possibility to combine
 flexibility and reuse (``efficiency of the programmer'') with fast
 execution (``efficieny of the program'') as has been demonstrated with
 the Standard Template Library (STL), \cite{Stroustrup} or the Blitz++
@@ -174,7 +174,7 @@ In mathemetics vectors are elements of a vector space. A vector space
 $V(\K)$, defined over a field $\K$, is a set of elements with two
 operations: (i) vector space addition $+ : V\times V \to V$ and (ii) scalar
 multiplication $* : \K\times V \to V$. These operations obey certain formal
-rules, see your favourite textbook on linear algebra,
+rules, see your favorite textbook on linear algebra,
 e.~g. \cite{LaBook}. In addition a 
 vector space may be normed, i.~e.~there is a function (obeying certain
 rules) $\|.\| : V \to \R$ which measures distance in the vector
@@ -187,7 +187,7 @@ field, such as $\K=\R$ or $\K=\C$ and take a tensor product:
 V = \K^n = \underbrace{\K\times\K\times\ldots\times\K}_{\text{$n$ times}}.
 \end{equation*} 
 $n\in\N$ is called the dimension of the vector space. There are also
-infinite-dimensional vector spaceswhich are, however, not of interest
+infinite-dimensional vector spaces which are, however, not of interest
 in the context here. The idea of tensor products can be generalized.
 If we have vector spaces $V_1(\K),\ldots,V_n(\K)$ we can construct a
 new vector space by setting
@@ -628,8 +628,8 @@ The base class
 linear maps. The 
 template parameter \lstinline!X! is the type of the domain and
 \lstinline!Y! is the type of the range of the operator.  A linear
-operator provides the methods \lstinline!apply(const X& x, Y& y)! and 
-apply \lstinline!applyscaledadd(const X& x, Y& y)! performing the
+operator provides the methods \lstinline!apply(const X& x, Y& y)! and
+\lstinline!applyscaledadd(const X& x, Y& y)! performing the
 operations $y = A(x)$ and $y = y + \alpha A(x)$, respectively.
 The subclass 
 \lstinline!template<class M, class X, class Y> AssembledLinearOperator!
@@ -726,7 +726,7 @@ providing them with the vector implementation used.
 \hline
     \textbf{class}&\textbf{implements}\\\hline\hline
     \lstinline!LoopSolver!& only apply precoditioner multiple time\\
-    \lstinline!GradientSolver!& preconditioned radient method\\
+    \lstinline!GradientSolver!& preconditioned gradient method\\
     \lstinline!CGSolver!&preconditioned conjugate gradient method\\
     \lstinline!BiCGStab!&preconditioned biconjugate gradient stabilized method\\\hline
   \end{tabular}
@@ -812,10 +812,10 @@ operation ($x = y + \alpha z$) in Tables
           \hline
         \end{tabular}}}
 \end{table}
-The code was comiled with the GNU C++ 
+The code was compiled with the GNU C++
 compiler version 4.0 with -O3 optimization. In the tables $N$ is the
 number of 
-unknown blocks (equals the number of unknows for the scalar cases in
+unknown blocks (equals the number of unknowns for the scalar cases in
 Tables \ref{tab:perf_sp}, \ref{tab:perf_daxpy}, \ref{tab:perf_gs}).
 The performance for the scalarproduct,
 see Table \ref{tab:perf_sp},
