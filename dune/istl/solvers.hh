@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <type_traits>
 
 #include "istlexception.hh"
 #include "operators.hh"
@@ -24,7 +25,6 @@
 #include <dune/common/rangeutilities.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/typetraits.hh>
 
 namespace Dune {
   /** @addtogroup ISTL_Solvers
@@ -1442,12 +1442,12 @@ namespace Dune {
     }
 
     template<typename T>
-    typename enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename std::enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       return t;
     }
 
     template<typename T>
-    typename enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
+    typename std::enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       using std::conj;
       return conj(t);
     }
