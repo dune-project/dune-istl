@@ -70,9 +70,14 @@ int main(int argc, char** argv)
   testWriteVectorToMatlab<Dune::FieldVector<float,5> >();
   testWriteVectorToMatlab<Dune::FieldVector<std::complex<double>,5> >();
   /* testing the test writeMatrixToMatlabHelper for BlockVector */
-  Dune::BlockVector<Dune::FieldVector<double,3> > v1 = {{1.0, 2.0, 3.0}};
+  Dune::BlockVector<Dune::FieldVector<double,3> > v1(1);
+  v1[0][0] = 1.0; v1[0][1] = 2.0; v1[0][2] = 3.0;
   Dune::writeVectorToMatlabHelper(v1, std::cout);
-  Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<double,1> > > v2 = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
+  Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<double,1> > > v2(3);
+  v2[0] = Dune::BlockVector<Dune::FieldVector<double,1> >(2);
+  v2[1] = Dune::BlockVector<Dune::FieldVector<double,1> >(3);
+  v2[2] = Dune::BlockVector<Dune::FieldVector<double,1> >(1);
+  v2[0][0][0] = 1.0; v2[0][1][0] = 2.0; v2[1][0][0] = 3.0; v2[1][1][0] = 4.0; v2[1][2][0] = 5.0; v2[2][0][0] = 6.0;
   Dune::writeVectorToMatlabHelper(v2, std::cout);
   /* testing the test writeMatrixToMatlabHelper for STL containers */
   testWriteVectorToMatlab<std::array<double,5> >();
