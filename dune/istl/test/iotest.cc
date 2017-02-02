@@ -23,6 +23,19 @@ void testWriteMatrixToMatlab(BlockType b=BlockType(0.0))
   writeMatrixToMatlabHelper(A, 0, 0, std::cout);
 }
 
+/* uses the writeVectorToMatlab method, filled with dummy data */
+template <class VectorType>
+void testWriteVectorToMatlab()
+{
+  VectorType v;
+  for (unsigned int i = 0; i < v.size(); ++i)
+  {
+    v[i] = i;
+  }
+
+  Dune::writeVectorToMatlabHelper(v, std::cout);
+}
+
 int main(int argc, char** argv)
 {
   /* testing the writeMatrixToMatlabHelper method for BlockType=FieldMatrix with different field_types */
@@ -50,4 +63,26 @@ int main(int argc, char** argv)
   testWriteMatrixToMatlab<Dune::ScaledIdentityMatrix<std::complex<double>,1> >(Dune::ScaledIdentityMatrix<std::complex<double>,1>(std::complex<double>(0,1)));
   testWriteMatrixToMatlab<Dune::DiagonalMatrix<std::complex<double>,2> >(Dune::DiagonalMatrix<std::complex<double>,2>(std::complex<double>(0,1)));
   testWriteMatrixToMatlab<Dune::ScaledIdentityMatrix<std::complex<double>,2> >(Dune::ScaledIdentityMatrix<std::complex<double>,2>(std::complex<double>(0,1)));
+
+
+  /* testing the test writeMatrixToMatlabHelper for FieldVector */
+  testWriteVectorToMatlab<Dune::FieldVector<double,1> >();
+  testWriteVectorToMatlab<Dune::FieldVector<float,5> >();
+  testWriteVectorToMatlab<Dune::FieldVector<std::complex<double>,5> >();
+  /* testing the test writeMatrixToMatlabHelper for BlockVector */
+  Dune::BlockVector<Dune::FieldVector<double,3> > v1(1);
+  v1[0][0] = 1.0; v1[0][1] = 2.0; v1[0][2] = 3.0;
+  Dune::writeVectorToMatlabHelper(v1, std::cout);
+  Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<double,1> > > v2(3);
+  v2[0] = Dune::BlockVector<Dune::FieldVector<double,1> >(2);
+  v2[1] = Dune::BlockVector<Dune::FieldVector<double,1> >(3);
+  v2[2] = Dune::BlockVector<Dune::FieldVector<double,1> >(1);
+  v2[0][0][0] = 1.0; v2[0][1][0] = 2.0; v2[1][0][0] = 3.0; v2[1][1][0] = 4.0; v2[1][2][0] = 5.0; v2[2][0][0] = 6.0;
+  Dune::writeVectorToMatlabHelper(v2, std::cout);
+  /* testing the test writeMatrixToMatlabHelper for STL containers */
+  testWriteVectorToMatlab<std::array<double,5> >();
+  std::vector<double> v3;
+  v3.push_back(1);
+  v3.push_back(2);
+  Dune::writeVectorToMatlabHelper(v3, std::cout);
 }
