@@ -38,9 +38,8 @@ int main(int argc, char** argv)
   mat.mv(x, b);
   x=0;
   Dune::SeqJac<BCRSMat,BVector,BVector> prec0(mat, 1,1.0);
-  const int category = Dune::SeqJac<BCRSMat,BVector,BVector>::category;
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-3,10,0);
-  Dune::InverseOperator2Preconditioner<Dune::LoopSolver<BVector>,category >
+  Dune::InverseOperator2Preconditioner<Dune::LoopSolver<BVector>>
     prec(solver0);
   Dune::LoopSolver<BVector> solver(fop, prec, 1e-8,10,2);
   solver.apply(x,b,res);
