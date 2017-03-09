@@ -2,6 +2,11 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_ISTL_PRECONDITIONER_HH
 #define DUNE_ISTL_PRECONDITIONER_HH
+
+#include <dune/common/exceptions.hh>
+
+#include "solvercategory.hh"
+
 namespace Dune {
 /**
  * @addtogroup ISTL_Prec
@@ -71,7 +76,10 @@ namespace Dune {
     virtual void post (X& x) = 0;
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const = 0;
+    virtual SolverCategory::Category category() const
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    }
 
     //! every abstract base class has a virtual destructor
     virtual ~Preconditioner () {}
