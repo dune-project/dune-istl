@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <ostream>
 
+#include <dune/common/exceptions.hh>
+
 #include "solvertype.hh"
 #include "preconditioner.hh"
 #include "operators.hh"
@@ -125,7 +127,10 @@ namespace Dune
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) = 0;
 
     //! Category of the solver (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const = 0;
+    virtual SolverCategory::Category category() const
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    }
 
     //! \brief Destructor
     virtual ~InverseOperator () {}
@@ -196,9 +201,9 @@ namespace Dune
     IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int maxit, int verbose) :
       ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::sequential)
     {
-      if(op.category() != SolverCategory::sequential)
+      if(SolverCategory::category(op) != SolverCategory::sequential)
         DUNE_THROW(InvalidSolverCategory, "LinearOperator has to be sequential!");
-      if(op.category() != SolverCategory::sequential)
+      if(SolverCategory::category(prec) != SolverCategory::sequential)
         DUNE_THROW(InvalidSolverCategory, "Preconditioner has to be sequential!");
     }
 
@@ -224,11 +229,11 @@ namespace Dune
      */
     IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
       real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(_op.category())
+      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::category(_op))
     {
-      if(op.category() != prec.category())
+      if(SolverCategory::category(op) != SolverCategory::category(prec))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
-      if(op.category() != sp.category())
+      if(SolverCategory::category(op) != SolverCategory::category(sp))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
 

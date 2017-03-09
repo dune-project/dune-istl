@@ -83,8 +83,8 @@ namespace Dune {
     InverseOperator2Preconditioner(InverseOperator& inverse_operator)
     : inverse_operator_(inverse_operator)
     {
-      if(c != -1)
-        assert(inverse_operator_.category() == c);
+      if(c != -1 && SolverCategory::category(inverse_operator_) != c)
+        DUNE_THROW(InvalidStateException, "User supplied solver category does not match that of the supplied iverser operator");
     }
 
     virtual void pre(domain_type&,range_type&)
@@ -103,7 +103,7 @@ namespace Dune {
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
     {
-      return inverse_operator_.category();
+      return SolverCategory::category(inverse_operator_);
     }
 
   private:
