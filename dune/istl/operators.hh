@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <string>
 
+#include <dune/common/exceptions.hh>
+
 #include "solvercategory.hh"
 
 
@@ -81,7 +83,10 @@ namespace Dune {
     virtual ~LinearOperator () {}
 
     //! Category of the linear operator (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const = 0;
+    virtual SolverCategory::Category category() const
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    };
   };
 
 
