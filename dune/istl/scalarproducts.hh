@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <string>
 
+#include <dune/common/exceptions.hh>
+
 #include "bvector.hh"
 #include "solvercategory.hh"
 
@@ -60,7 +62,10 @@ namespace Dune {
     virtual real_type norm (const X& x) = 0;
 
     //! Category of the scalar product (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const = 0;
+    virtual SolverCategory::Category category() const
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    }
 
     //! every abstract base class has a virtual destructor
     virtual ~ScalarProduct () {}

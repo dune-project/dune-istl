@@ -84,7 +84,7 @@ namespace Dune {
     : inverse_operator_(inverse_operator)
     {
       if(c != -1)
-        assert(inverse_operator_.category() == c);
+        assert(SolverCategory::category(inverse_operator_) == c);
     }
 
     virtual void pre(domain_type&,range_type&)
@@ -103,7 +103,7 @@ namespace Dune {
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
     {
-      return inverse_operator_.category();
+      return SolverCategory::category(inverse_operator_);
     }
 
   private:
