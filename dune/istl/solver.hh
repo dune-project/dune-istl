@@ -8,6 +8,7 @@
 #include <ostream>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
@@ -203,7 +204,10 @@ namespace Dune
        </ul>
      */
     IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int maxit, int verbose) :
-      ssp(), _op(op), _prec(prec), _sp(ssp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::sequential)
+      _op(stackobject_to_shared_ptr(op)),
+      _prec(stackobject_to_shared_ptr(prec)),
+      _sp(new SeqScalarProduct<X>),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::sequential)
     {
       if(SolverCategory::category(op) != SolverCategory::sequential)
         DUNE_THROW(InvalidSolverCategory, "LinearOperator has to be sequential!");
@@ -233,7 +237,10 @@ namespace Dune
      */
     IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
       real_type reduction, int maxit, int verbose) :
-      _op(op), _prec(prec), _sp(sp), _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::category(_op))
+      _op(stackobject_to_shared_ptr(op)),
+      _prec(stackobject_to_shared_ptr(prec)),
+      _sp(stackobject_to_shared_ptr(sp)),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::category(op))
     {
       if(SolverCategory::category(op) != SolverCategory::category(prec))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
@@ -268,10 +275,9 @@ namespace Dune
     }
 
   protected:
-    SeqScalarProduct<X> ssp;
-    LinearOperator<X,Y>& _op;
-    Preconditioner<X,Y>& _prec;
-    ScalarProduct<X>& _sp;
+    std::shared_ptr<LinearOperator<X,Y>> _op;
+    std::shared_ptr<Preconditioner<X,Y>> _prec;
+    std::shared_ptr<ScalarProduct<X>> _sp;
     real_type _reduction;
     int _maxit;
     int _verbose;
