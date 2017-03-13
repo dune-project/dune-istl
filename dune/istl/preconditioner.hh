@@ -86,6 +86,39 @@ namespace Dune {
 
   };
 
+  /**
+   */
+  template<class X, class Y>
+  class PolymorphicPreconditioner : public Preconditioner<X,Y> {
+  public:
+    /*! \copy Preconditioner<X,Y>::pre */
+    virtual void pre (X& x, Y& b) final
+    {
+      _obj->pre(x,b);
+    }
+
+    /*! \copy Preconditioner<X,Y>::apply */
+    virtual void apply (X& v, const Y& d) final
+    {
+      _obj->apply(v,d);
+    }
+
+    /*! \copy Preconditioner<X,Y>::post */
+    virtual void post (X& x) final
+    {
+      _obj->post(x);
+    }
+
+    /*! \copy Preconditioner<X,Y>::category */
+    virtual SolverCategory::Category category() const final
+    {
+      return _obj->category();
+    }
+
+  private:
+    std::shared_ptr<Preconditioner<X,Y>> _obj;
+  };
+
 /**
  * @}
  */
