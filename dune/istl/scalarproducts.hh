@@ -71,29 +71,6 @@ namespace Dune {
     virtual ~ScalarProduct () {}
   };
 
-  /**
-   * \brief Choose the approriate scalar product for a solver category.
-   *
-   * As there is only one scalar product for each solver category it is
-   * possible to choose the appropriate product at compile time.
-   *
-   * In each specialization of the this struct there will be a typedef ScalarProduct
-   * available the defines the type  of the scalar product.
-   */
-  template<class X, class C, int c>
-  struct ScalarProductChooser
-  {
-    /** @brief The type of the communication object. */
-    typedef C communication_type;
-
-    enum {
-      /** @brief The solver category. */
-      solverCategory=c
-    };
-  };
-
-
-
   //=====================================================================
   // Implementation for ISTL-matrix based operator
   //=====================================================================
@@ -133,26 +110,166 @@ namespace Dune {
 
   };
 
+  /**
+   * \brief Nonoverlapping Scalar Product with communication object.
+   *
+   * Consistent vectors in interior and border are assumed.
+   */
   template<class X, class C>
-  struct ScalarProductChooser<X,C,SolverCategory::sequential>
+  class NonoverlappingSchwarzScalarProduct : public ScalarProduct<X>
   {
-    /** @brief The type of the scalar product for the sequential case. */
-    typedef SeqScalarProduct<X> ScalarProduct;
+  public:
+    //! \brief The type of the domain.
+    typedef X domain_type;
+    //!  \brief The type of the range
+    typedef typename X::field_type field_type;
+    //!  \brief The real-type of the range
+    typedef typename FieldTraits<field_type>::real_type real_type;
+    //! \brief The type of the communication object
+    typedef C communication_type;
 
-    enum {
-      /** @brief The solver category. */
-      solverCategory=SolverCategory::sequential
-    };
+    /*! \brief Constructor
+     * \param com The communication object for syncing owner and copy
+     * data points. (E.~g. OwnerOverlapCommunication )
+     */
+    NonoverlappingSchwarzScalarProduct (const communication_type& com)
+      : communication(com)
+    {}
 
-    static ScalarProduct* construct(const C&)
+    /*! \brief Dot product of two vectors.
+       It is assumed that the vectors are consistent on the interior+border
+       partition.
+     */
+    virtual field_type dot (const X& x, const X& y)
     {
-      return new ScalarProduct();
+      field_type result;
+      communication.dot(x,y,result);
+      return result;
     }
+
+    /*! \brief Norm of a right-hand side vector.
+       The vector must be consistent on the interior+border partition
+     */
+    virtual real_type norm (const X& x)
+    {
+      return communication.norm(x);
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
+    }
+
+    /*! \brief make additive vector consistent
+     */
+    void make_consistent (X& x) const
+    {
+      communication.copyOwnerToAll(x,x);
+    }
+
+  private:
+    const communication_type& communication;
   };
 
+  /**
+   * \brief Scalar product for overlapping schwarz methods.
+   *
+   * Consistent vectors in interior and border are assumed.
+   * \tparam  X The type of the sequential vector to use for the left hand side,
+   * e.g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam C The type of the communication object.
+   * This must either be OwnerOverlapCopyCommunication or a type
+   * implementing the same interface.
+   */
+  template<class X, class C>
+  class OverlappingSchwarzScalarProduct : public ScalarProduct<X>
+  {
+  public:
+    //! \brief The type of the vector to compute the scalar product on.
+    //!
+    //! E.g. BlockVector or another type fulfilling the ISTL
+    //! vector interface.
+    typedef X domain_type;
+    //!  \brief The field type used by the vector type domain_type.
+    typedef typename X::field_type field_type;
+    typedef typename FieldTraits<field_type>::real_type real_type;
+    //! \brief The type of the communication object.
+    //!
+    //! This must either be OwnerOverlapCopyCommunication or a type
+    //! implementing the same interface.
+    typedef C communication_type;
+
+    /*! \brief Constructor needs to know the grid
+     * \param com The communication object for syncing overlap and copy
+     * data points. (E.~g. OwnerOverlapCopyCommunication )
+     */
+    OverlappingSchwarzScalarProduct (const communication_type& com)
+      : communication(com)
+    {}
+
+    /*! \brief Dot product of two vectors.
+       It is assumed that the vectors are consistent on the interior+border
+       partition.
+     */
+    virtual field_type dot (const X& x, const X& y)
+    {
+      field_type result;
+      communication.dot(x,y,result);
+      return result;
+    }
+
+    /*! \brief Norm of a right-hand side vector.
+       The vector must be consistent on the interior+border partition
+     */
+    virtual real_type norm (const X& x)
+    {
+      return communication.norm(x);
+    }
+
+    //! Category of the scalar product (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
+    }
+
+  private:
+    const communication_type& communication;
+  };
 
   /** @} end documentation */
 
-} // end namespace
+  /**
+   * \brief Choose the approriate scalar product for a solver category.
+   *
+   * \todo this helper function should be replaced by a proper factory
+   *
+   * As there is only one scalar product for each solver category it is
+   * possible to choose the appropriate product at compile time.
+   *
+   * In each specialization of the this struct there will be a typedef ScalarProduct
+   * available the defines the type  of the scalar product.
+   */
+  template<class X, class Comm>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const Comm& comm, SolverCategory::Category category)
+  {
+    switch(category)
+    {
+      case SolverCategory::sequential:
+        return
+          std::make_shared<SeqScalarProduct<X>>();
+      case SolverCategory::nonoverlapping:
+        return
+          std::make_shared<NonoverlappingSchwarzScalarProduct<X,Comm>>(comm);
+      case SolverCategory::overlapping:
+        return
+          std::make_shared<OverlappingSchwarzScalarProduct<X,Comm>>(comm);
+      default:
+        DUNE_THROW(InvalidStateException, "unknown solver category");
+    }
+  }
+
+} // end namespace Dune
 
 #endif
