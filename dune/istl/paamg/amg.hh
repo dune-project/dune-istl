@@ -48,7 +48,10 @@ namespace Dune
      *
      * \tparam M The matrix type
      * \tparam X The vector type
+     * \tparam S The smoother type
      * \tparam A An allocator for X
+     *
+     * \todo drop the smoother template parameter and replace with dynamic construction
      */
     template<class M, class X, class S, class PI=SequentialInformation,
         class A=std::allocator<X> >
@@ -90,11 +93,6 @@ namespace Dune
       /** @brief The argument type for the construction of the smoother. */
       typedef typename SmootherTraits<Smoother>::Arguments SmootherArgs;
 
-      enum {
-        /** @brief The solver category. */
-        category = S::category
-      };
-
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -135,6 +133,12 @@ namespace Dune
 
       /** \copydoc Preconditioner::apply */
       void apply(Domain& v, const Range& d);
+
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return category_;
+      }
 
       /** \copydoc Preconditioner::post */
       void post(Domain& x);
@@ -269,13 +273,10 @@ namespace Dune
       Hierarchy<Domain,A>* lhs_;
       /** @brief The total update for the outer solver. */
       Hierarchy<Domain,A>* update_;
-      /** @brief The type of the chooser of the scalar product. */
-      typedef Dune::ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
       /** @brief The type of the scalar product for the coarse solver. */
-      typedef typename ScalarProductChooser::ScalarProduct ScalarProduct;
-      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
+      using ScalarProduct = Dune::ScalarProduct<X>;
       /** @brief Scalar product on the coarse level. */
-      ScalarProductPointer scalarProduct_;
+      std::shared_ptr<ScalarProduct> scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -286,6 +287,8 @@ namespace Dune
       bool additive;
       bool coarsesolverconverged;
       std::shared_ptr<Smoother> coarseSmoother_;
+      /** @brief The solver category. */
+      SolverCategory::Category category_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
     };
@@ -299,7 +302,9 @@ namespace Dune
       preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
       buildHierarchy_(amg.buildHierarchy_),
       additive(amg.additive), coarsesolverconverged(amg.coarsesolverconverged),
-      coarseSmoother_(amg.coarseSmoother_), verbosity_(amg.verbosity_)
+      coarseSmoother_(amg.coarseSmoother_),
+      category_(amg.category_),
+      verbosity_(amg.verbosity_)
     {
       if(amg.rhs_)
         rhs_=new Hierarchy<Range,A>(*amg.rhs_);
@@ -313,13 +318,16 @@ namespace Dune
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : matrices_(stackobject_to_shared_ptr(matrices)), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(parms.debugLevel())
+        coarseSmoother_(),
+#warning should category be retrieved from matrices?
+        category_(SolverCategory::category(*smoothers_->coarsest())),
+        verbosity_(parms.debugLevel())
     {
       assert(matrices_->isBuilt());
 
@@ -339,10 +347,12 @@ namespace Dune
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(criterion.debugLevel())
+        coarseSmoother_(),
+        category_(SolverCategory::category(pinfo)),
+        verbosity_(criterion.debugLevel())
     {
-      static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
-                         "Matrix and Solver must match in terms of category!");
+      if(SolverCategory::category(matrix) != SolverCategory::category(pinfo))
+        DUNE_THROW(InvalidSolverCategory, "Matrix and Communication must have the same SolverCategory!");
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
@@ -466,7 +476,7 @@ namespace Dune
         }
 
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
-        scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
+        scalarProduct_ = createScalarProduct<X>(cargs.getComm(),category());
 
         typedef DirectSolverSelector< typename M::matrix_type, X > SolverSelector;
 
