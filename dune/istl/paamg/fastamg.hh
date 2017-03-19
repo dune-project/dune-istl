@@ -79,11 +79,6 @@ namespace Dune
       /** @brief the type of the coarse solver. */
       typedef InverseOperator<X,X> CoarseSolver;
 
-      enum {
-        /** @brief The solver category. */
-        category = SolverCategory::sequential
-      };
-
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -124,6 +119,12 @@ namespace Dune
 
       /** \copydoc Preconditioner::apply */
       void apply(Domain& v, const Range& d);
+
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return SolverCategory::sequential;
+      }
 
       /** \copydoc Preconditioner::post */
       void post(Domain& x);
@@ -262,13 +263,10 @@ namespace Dune
       /** @brief The current residual. */
       Hierarchy<Domain,A>* residual_;
 
-      /** @brief The type of the chooser of the scalar product. */
-      typedef ScalarProductChooser<X,PI,M::category> ScalarProductChooserType;
       /** @brief The type of the scalar product for the coarse solver. */
-      typedef typename ScalarProductChooserType::ScalarProduct ScalarProduct;
-      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
+      using ScalarProduct = Dune::ScalarProduct<X>;
       /** @brief Scalar product on the coarse level. */
-      ScalarProductPointer scalarProduct_;
+      std::shared_ptr<ScalarProduct> scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -398,7 +396,7 @@ namespace Dune
         }
 
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
-        scalarProduct_.reset(ScalarProductChooserType::construct(cargs.getComm()));
+        scalarProduct_ = createScalarProduct<X>(cargs.getComm(),category());
 
 #if HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
 #if HAVE_SUITESPARSE_UMFPACK
