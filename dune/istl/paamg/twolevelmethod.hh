@@ -291,6 +291,12 @@ private:
       return apply(x,b,1e-8,res);
     }
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return amg_.category();
+    }
+
     ~AMGInverseOperator()
     {
       if(!first_)
