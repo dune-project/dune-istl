@@ -267,14 +267,14 @@ namespace Dune
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
 
-    IterativeSolver (LinearOperator<X,Y>& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
-      _op(stackobject_to_shared_ptr(op)),
-      _prec(stackobject_to_shared_ptr(prec)),
+    IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      _op(op),
+      _prec(prec),
       _sp(new SeqScalarProduct<X>),
       _reduction(configuration.get<real_type>("reduction")),
       _maxit(configuration.get<int>("maxit")),
       _verbose(configuration.get<int>("verbose")),
-      _category(SolverCategory::category(*_op))
+      _category(SolverCategory::category(*op))
     {
       if(SolverCategory::category(*op) != SolverCategory::sequential)
         DUNE_THROW(InvalidSolverCategory, "LinearOperator has to be sequential!");
@@ -282,8 +282,8 @@ namespace Dune
         DUNE_THROW(InvalidSolverCategory, "Preconditioner has to be sequential!");
     }
 
-    IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
-      _op(stackobject_to_shared_ptr(op)),
+    IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      _op(op),
       _prec(prec),
       _sp(sp),
       _reduction(configuration.get<real_type>("reduction")),

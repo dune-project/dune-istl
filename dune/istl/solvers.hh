@@ -1060,12 +1060,12 @@ namespace Dune {
       _restart(restart)
     {}
 
-    RestartedGMResSolver (LinearOperator<X,Y>& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
 
-    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
@@ -1388,13 +1388,13 @@ namespace Dune {
     {}
 
 
-    GeneralizedPCGSolver (LinearOperator<X,Y>& op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
-      IterativeSolver<X,Y>::IterativeSolver(op,prec,configuration),
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver<X,X>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
 
-    GeneralizedPCGSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
-      IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,configuration),
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver<X,X>::IterativeSolver(op,sp,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
     /*!
