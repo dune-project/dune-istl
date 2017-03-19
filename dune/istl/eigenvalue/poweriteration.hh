@@ -47,8 +47,6 @@ namespace Dune
       typedef Y range_type;
       typedef typename X::field_type field_type;
 
-      enum {category = Dune::SolverCategory::sequential};
-
       ScalingLinearOperator (field_type immutable_scaling,
         const field_type& mutable_scaling)
         : immutable_scaling_(immutable_scaling),
@@ -66,6 +64,12 @@ namespace Dune
         X temp(x);
         temp *= immutable_scaling_*mutable_scaling_;
         y.axpy(alpha,temp);
+      }
+
+      //! Category of the linear operator (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return SolverCategory::sequential;
       }
 
     protected:
@@ -92,8 +96,6 @@ namespace Dune
       typedef typename OP1::range_type range_type;
       typedef typename domain_type::field_type field_type;
 
-      enum {category = Dune::SolverCategory::sequential};
-
       LinearOperatorSum (const OP1& op1, const OP2& op2)
         : op1_(op1), op2_(op2)
       {
@@ -116,6 +118,12 @@ namespace Dune
         op1_.apply(x,temp);
         op2_.applyscaleadd(1.0,x,temp);
         y.axpy(alpha,temp);
+      }
+
+      //! Category of the linear operator (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return SolverCategory::sequential;
       }
 
     protected:
