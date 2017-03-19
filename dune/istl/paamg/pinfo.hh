@@ -73,6 +73,18 @@ namespace Dune
         DUNE_UNUSED_PARAMETER(v);
       }
 
+      template<class T1, class T2>
+      void dot (const T1& x, const T1& y, T2& result) const
+      {
+        assert(false && "this function should never be called");
+      }
+
+      template<class T1>
+      typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
+      {
+        assert(false && "this function should never be called");
+      }
+
       template<class T>
       SequentialInformation(const CollectiveCommunication<T>&)
       {}
