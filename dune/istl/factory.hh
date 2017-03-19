@@ -297,7 +297,7 @@ namespace Dune {
                                                                    const COMM& comm)
     {
       // Create suitable scalar product
-      auto scalarproduct = ScalarProductChooser::construct<X> (preconditioner->category(), comm);
+      auto scalarproduct = createScalarProduct<X>(comm, preconditioner->category());
 
       if (id == "BiCGSTABSolver")
         return std::make_shared<BiCGSTABSolver<X> > (linearoperator, scalarproduct, preconditioner, configuration);
