@@ -167,7 +167,8 @@ namespace Dune
        * @param pinfo The fine level parallel information.
        */
       template<class C>
-      void createHierarchies(C& criterion, Operator& matrix,
+      void createHierarchies(C& criterion,
+                             const std::shared_ptr<const Operator>& matrixptr,
                              const PI& pinfo);
 
       /**
@@ -342,7 +343,8 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
+      auto matrixptr = stackobject_to_shared_ptr(matrix);
+      createHierarchies(criterion, matrixptr, pinfo);
     }
 
     template<class M, class X, class PI, class A>
@@ -367,11 +369,14 @@ namespace Dune
 
     template<class M, class X, class PI, class A>
     template<class C>
-    void FastAMG<M,X,PI,A>::createHierarchies(C& criterion, Operator& matrix,
-                                            const PI& pinfo)
+    void FastAMG<M,X,PI,A>::createHierarchies(C& criterion,
+      const std::shared_ptr<const Operator>& matrixptr,
+      const PI& pinfo)
     {
       Timer watch;
-      matrices_.reset(new OperatorHierarchy(matrix, pinfo));
+      matrices_ = std::make_shared<OperatorHierarchy>(
+        std::const_pointer_cast<Operator>(matrixptr),
+        stackobject_to_shared_ptr(const_cast<PI&>(pinfo)));
 
       matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
 
@@ -483,16 +488,13 @@ namespace Dune
       watch1.reset();
       // No smoother to make x consistent! Do it by hand
       matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
-      Range* copy = new Range(b);
       if(rhs_)
         delete rhs_;
-      rhs_ = new Hierarchy<Range,A>(copy);
-      Domain* dcopy = new Domain(x);
+      rhs_ = new Hierarchy<Range,A>(std::make_shared<Range>(b));
       if(lhs_)
         delete lhs_;
-      lhs_ = new Hierarchy<Domain,A>(dcopy);
-      dcopy = new Domain(x);
-      residual_ = new Hierarchy<Domain,A>(dcopy);
+      lhs_ = new Hierarchy<Domain,A>(std::make_shared<Domain>(x));
+      residual_ = new Hierarchy<Domain,A>(std::make_shared<Domain>(x));
       matrices_->coarsenVector(*rhs_);
       matrices_->coarsenVector(*lhs_);
       matrices_->coarsenVector(*residual_);
