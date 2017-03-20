@@ -29,10 +29,6 @@ namespace Dune
       typedef EmptySet<int> CopyFlags;
       typedef AllSet<int> OwnerSet;
 
-      enum {
-        category = SolverCategory::sequential
-      };
-
       SolverCategory::Category getSolverCategory () const {
         return SolverCategory::sequential;
       }
