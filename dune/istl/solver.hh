@@ -176,6 +176,14 @@ namespace Dune
     }
   };
 
+  /*!
+     \brief Base class for all implementations of iterative solvers
+
+     This class provides all storage, which is needed by the usual
+     iterative solvers. In additional it provides all the necessary
+     constructors, which are then only imported in the actual solver
+     implementation.
+   */
   template<class X, class Y>
   class IterativeSolver : public InverseOperator<X,Y>{
   public:
