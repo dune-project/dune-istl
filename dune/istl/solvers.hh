@@ -970,10 +970,10 @@ namespace Dune {
       // orthonormal basis vectors (in unpreconditioned case)
       std::array<X,3> q{{b,b,b}};
       q[0] = 0.0;
-      q[1] *= 1.0/beta;
+      q[1] *= field_type(1.0)/beta;
       q[2] = 0.0;
 
-      z *= 1.0/beta;
+      z *= field_type(1.0)/beta;
 
       // the loop
       int i = 1;
@@ -1000,8 +1000,8 @@ namespace Dune {
         // since it is the norm of the basis vectors (in unpreconditioned case)
         beta = sqrt(_sp.dot(q[i2],z));
 
-        q[i2] *= 1.0/beta;
-        z *= 1.0/beta;
+        q[i2] *= field_type(1.0)/beta;
+        z *= field_type(1.0)/beta;
 
         // QR Factorization of recurrence coefficient matrix
         // apply previous givens rotations to last column of T
@@ -1029,7 +1029,7 @@ namespace Dune {
         p[i2] = dummy;
         p[i2].axpy(-T[1],p[i1]);
         p[i2].axpy(-T[0],p[i0]);
-        p[i2] *= 1.0/T[2];
+        p[i2] *= field_type(1.0)/T[2];
 
         // apply correction/update solution
         x.axpy(beta0*xi[(i+1)%2],p[i2]);
@@ -1118,19 +1118,19 @@ namespace Dune {
         cond(norm_dx < eps,
           real_type(0.0),
           cond(norm_dy > norm_dx,
-            real_type(1.0)/sqrt(1.0 + temp*temp)*temp,
+            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             // dy and dx are real in exact arithmetic
             // thus dx*dy is real so we can explicitly enforce it
-            real_type(1.0)/sqrt(1.0 + temp*temp)*to_real(dx*dy)/norm_dx/norm_dy)));
+            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*to_real(dx*dy)/norm_dx/norm_dy)));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
           field_type(1.0),
           cond(norm_dy > norm_dx,
-            field_type(1.0)/sqrt(1.0 + temp*temp),
+            field_type(1.0)/sqrt(real_type(1.0) + temp*temp),
             // dy and dx is real in exact arithmetic
             // so we don't have to conjugate both of them
-            field_type(1.0)/sqrt(1.0 + temp*temp)*dy/dx)));
+            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dy/dx)));
     }
 
     SeqScalarProduct<X> ssp;
@@ -1315,7 +1315,7 @@ namespace Dune {
       while(j <= _maxit && res.converged != true) {
 
         int i = 0;
-        v[0] *= 1.0/norm;
+        v[0] *= field_type(1.0)/norm;
         s[0] = norm;
         for(i=1; i<m+1; i++)
           s[i] = 0.0;
@@ -1342,7 +1342,7 @@ namespace Dune {
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
           // normalize new vector
-          v[i+1] = w; v[i+1] *= 1.0/H[i+1][i];
+          v[i+1] = w; v[i+1] *= field_type(1.0)/H[i+1][i];
 
           // update QR factorization
           for(int k=0; k<i; k++)
@@ -1365,7 +1365,7 @@ namespace Dune {
           norm_old = norm;
 
           // check convergence
-          if(all_true(norm < reduction * norm_0))
+          if(all_true(norm < field_type(reduction) * norm_0))
             res.converged = true;
 
         } // end for
@@ -1484,15 +1484,15 @@ namespace Dune {
         cond(norm_dx < eps,
           real_type(0.0),
           cond(norm_dy > norm_dx,
-            real_type(1.0)/sqrt(1.0 + temp*temp)*temp,
-            real_type(1.0)/sqrt(1.0 + temp*temp)*to_real(dx*conjugate(dy))/norm_dx/norm_dy)));
+            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
+            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*to_real(dx*conjugate(dy))/norm_dx/norm_dy)));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
           field_type(1.0),
           cond(norm_dy > norm_dx,
-            field_type(1.0)/sqrt(1.0 + temp*temp),
-            field_type(1.0)/sqrt(1.0 + temp*temp)*conjugate(dy/dx))));
+            field_type(1.0)/sqrt(real_type(1.0) + temp*temp),
+            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*conjugate(dy/dx))));
     }
 
 
