@@ -6,6 +6,7 @@
 #include <cassert>
 #include <map>
 #include <utility>
+#include <cmath>
 
 #if HAVE_PARMETIS
 // Explicitly use C linkage as scotch does not extern "C" in its headers.
@@ -806,13 +807,15 @@ namespace Dune
   {
     bool correct=true;
 
-    for(idxtype vtx=0; vtx<(idxtype)noVtx; ++vtx) {
-      if(xadj[vtx]>noEdges||xadj[vtx]<0) {
+    using std::signbit;
+
+    for(idxtype vtx=0; vtx<noVtx; ++vtx) {
+      if(xadj[vtx]>noEdges || signbit(xadj[vtx])) {
         std::cerr <<"Check graph: xadj["<<vtx<<"]="<<xadj[vtx]<<" (>"
                   <<noEdges<<") out of range!"<<std::endl;
         correct=false;
       }
-      if(xadj[vtx+1]>noEdges||xadj[vtx+1]<0) {
+      if(xadj[vtx+1]>noEdges || signbit(xadj[vtx+1])) {
         std::cerr <<"Check graph: xadj["<<vtx+1<<"]="<<xadj[vtx+1]<<" (>"
                   <<noEdges<<") out of range!"<<std::endl;
         correct=false;
