@@ -10,7 +10,6 @@
 #include <complex>
 
 #include <cmath>                 // Yes, we do some math here
-#include <sys/times.h>            // for timing measurements
 
 #include <dune/common/indices.hh>
 #include <dune/istl/istlexception.hh>
@@ -30,39 +29,6 @@
 
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
-
-// a simple stop watch
-class Timer
-{
-public:
-  Timer ()
-  {
-    struct tms buf;
-    cstart = times(&buf);
-  }
-
-  void start ()
-  {
-    struct tms buf;
-    cstart = times(&buf);
-  }
-
-  double stop ()
-  {
-    struct tms buf;
-    cend = times(&buf);
-    return ((double)(cend-cstart))/100.0;
-  }
-
-  double gettime ()
-  {
-    return ((double)(cend-cstart))/100.0;
-  }
-
-private:
-  clock_t cstart,cend;
-};
-
 
 // testing codes
 void test_basearray ()
@@ -150,7 +116,7 @@ void test_BlockVector ()
   x[2] = y[7];
 
   // timing the axpy operation
-  Timer watch;
+  Dune::Timer watch;
   double t;
   int i;
 
@@ -345,7 +311,7 @@ void test_IO ()
 
 void test_Iter ()
 {
-  Timer t;
+  Dune::Timer t;
 
   // block types
   const int BlockSize = 6;
@@ -385,7 +351,7 @@ void test_Iter ()
       else
         (*j) = E;
   t.stop();
-  std::cout << "time for build=" << t.gettime() << " seconds." << std::endl;
+  std::cout << "time for build=" << t.elapsed() << " seconds." << std::endl;
   //   printmatrix(std::cout,A,"system matrix","row",8,1);
 
   // set up system
@@ -427,7 +393,7 @@ void test_Iter ()
     if (d.two_norm()<1E-4) break;
   }
   t.stop();
-  std::cout << "time for solve=" << t.gettime() << " seconds." << std::endl;
+  std::cout << "time for solve=" << t.elapsed() << " seconds." << std::endl;
 }
 
 
