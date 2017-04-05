@@ -4,7 +4,9 @@
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
+#if HAVE_MPROTECT
 #include <dune/common/debugallocator.hh>
+#endif
 #include <dune/common/classname.hh>
 
 #include <dune/istl/test/vectortest.hh>
@@ -223,10 +225,14 @@ int main()
 
   ret += testVector<1>();
   //  ret += testVector<1, Dune::PoolAllocator<void,1000000> >();
+#if HAVE_MPROTECT
   ret += testVector<1, Dune::DebugAllocator<void> >();
+#endif
   ret += testVector<3>();
   //  ret += testVector<3, Dune::PoolAllocator<void,1000000> >();
+#if HAVE_MPROTECT
   ret += testVector<3, Dune::DebugAllocator<void> >();
+#endif
 
   testCapacity();
 
