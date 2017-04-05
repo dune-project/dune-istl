@@ -206,8 +206,8 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   //   Test component-wise operations
   // ///////////////////////////////////////////////////////
 
-  matrix *= M_PI;
-  matrix /= M_PI;
+  matrix *= real_type(1.0);
+  matrix /= real_type(1.0);
 
   matrix += secondMatrix;
   matrix -= secondMatrix;
@@ -234,11 +234,11 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
   matrix.mmhv(x,y);
 
-  matrix.usmv(M_PI,x,y);
+  matrix.usmv(field_type(1.0),x,y);
 
-  matrix.usmtv(M_PI,x,y);
+  matrix.usmtv(field_type(1.0),x,y);
 
-  matrix.usmhv(M_PI,x,y);
+  matrix.usmhv(field_type(1.0),x,y);
 
   // //////////////////////////////////////////////////////////////
   //   Test the matrix norms
