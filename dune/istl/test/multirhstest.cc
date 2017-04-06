@@ -17,6 +17,7 @@
 #include <sys/times.h>            // for timing measurements
 
 #include <dune/common/classname.hh>
+#include <dune/common/debugalign.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/simd.hh>
@@ -175,6 +176,9 @@ int main (int argc, char ** argv)
 {
   test_all<float>();
   test_all<double>();
+
+  test_all<Dune::AlignedNumber<double> >();
+
 #if HAVE_VC
   // test_all<Vc::float_v>();
   test_all<Vc::double_v>();
