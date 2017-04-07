@@ -16,6 +16,7 @@
 #include <cmath>                 // Yes, we do some math here
 #include <sys/times.h>            // for timing measurements
 
+#include <dune/common/alignedallocator.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/debugalign.hh>
 #include <dune/common/fvector.hh>
@@ -118,8 +119,10 @@ void test_all(unsigned int Runs = 1)
   typedef typename Dune::SimdScalarTypeTraits<FT>::type MT;
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
-  typedef Dune::BlockVector<VB> Vector;
-  typedef Dune::BCRSMatrix<MB> Matrix;
+  typedef Dune::AlignedAllocator<VB,128> AllocV;
+  typedef Dune::AlignedAllocator<MB,128> AllocM;
+  typedef Dune::BlockVector<VB,AllocV> Vector;
+  typedef Dune::BCRSMatrix<MB,AllocM> Matrix;
 
   // size
   unsigned int size = 100;
