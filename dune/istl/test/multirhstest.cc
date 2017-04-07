@@ -91,7 +91,7 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
 {
   using Vector = decltype(detectVectorType(op));
 
-  double reduction = 1e-4;
+  double reduction = 1e-1;
   int verb = 1;
   Dune::LoopSolver<Vector> loop(op,prec,reduction,18000,verb);
   Dune::CGSolver<Vector> cg(op,prec,reduction,8000,verb);
@@ -114,8 +114,9 @@ template<typename FT>
 void test_all(unsigned int Runs = 1)
 {
   // define Types
+  typedef typename Dune::SimdScalarTypeTraits<FT>::type MT;
   typedef Dune::FieldVector<FT,1> VB;
-  typedef Dune::FieldMatrix<double,1,1> MB;
+  typedef Dune::FieldMatrix<MT,1,1> MB;
   typedef Dune::BlockVector<VB> Vector;
   typedef Dune::BCRSMatrix<MB> Matrix;
 
@@ -176,7 +177,7 @@ int main (int argc, char ** argv)
   test_all<float>();
   test_all<double>();
 #if HAVE_VC
-  // test_all<Vc::float_v>();
+  test_all<Vc::float_v>();
   test_all<Vc::double_v>();
   test_all<Vc::Vector<double, Vc::VectorAbi::Scalar>>();
   test_all<Vc::SimdArray<double,2>>();
