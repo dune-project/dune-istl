@@ -1170,6 +1170,13 @@ namespace Dune {
     //! \brief The field type of the basis vectors
     typedef F basis_type;
 
+  private:
+    //! \bief field_type Allocator retrieved from domain type
+    typedef typename X::allocator_type::template rebind<field_type>::other fAlloc;
+    //! \bief real_type Allocator retrieved from domain type
+    typedef typename X::allocator_type::template rebind<real_type>::other rAlloc;
+  public:
+
     template<class L, class P>
     DUNE_DEPRECATED_MSG("recalc_defect is a unused parameter! Use RestartedGMResSolver(L& op, P& prec, real_type reduction, int restart, int maxit, int verbose) instead")
     RestartedGMResSolver (L& op, P& prec, real_type reduction, int restart, int maxit, int verbose, bool recalc_defect)
@@ -1270,13 +1277,13 @@ namespace Dune {
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
-      std::vector<field_type> s(m+1), sn(m);
-      std::vector<real_type> cs(m);
+      std::vector<field_type,fAlloc> s(m+1), sn(m);
+      std::vector<real_type,rAlloc> cs(m);
       // need copy of rhs if GMRes has to be restarted
       Y b2(b);
       // helper vector
       Y w(b);
-      std::vector< std::vector<field_type> > H(m+1,s);
+      std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
       // start timer
@@ -1422,11 +1429,11 @@ namespace Dune {
     }
 
     void update(X& w, int i,
-                const std::vector<std::vector<field_type> >& H,
-                const std::vector<field_type>& s,
+                const std::vector<std::vector<field_type,fAlloc> >& H,
+                const std::vector<field_type,fAlloc>& s,
                 const std::vector<X>& v) {
       // solution vector of the upper triangular system
-      std::vector<field_type> y(s);
+      std::vector<field_type,fAlloc> y(s);
 
       // backsolve
       for(int a=i-1; a>=0; a--) {
@@ -1541,6 +1548,11 @@ namespace Dune {
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
 
+  private:
+    //! \bief field_type Allocator retrieved from domain type
+    typedef typename X::allocator_type::template rebind<field_type>::other fAlloc;
+  public:
+
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
@@ -1591,7 +1603,7 @@ namespace Dune {
       _op.applyscaleadd(-1,x,b);      // overwrite b with defect
 
       std::vector<std::shared_ptr<X> > p(_restart);
-      std::vector<typename X::field_type> pp(_restart);
+      std::vector<field_type,fAlloc> pp(_restart);
       X q(x);                  // a temporary vector
       X prec_res(x);           // a temporary vector for preconditioner output
 
