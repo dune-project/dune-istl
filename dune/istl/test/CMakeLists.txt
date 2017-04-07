@@ -20,10 +20,8 @@ dune_add_test(SOURCES matrixutilstest.cc)
 
 dune_add_test(SOURCES matrixtest.cc)
 
-if(Vc_FOUND)
 dune_add_test(SOURCES multirhstest.cc)
   add_dune_vc_flags(multirhstest)
-endif(Vc_FOUND)
 
 dune_add_test(SOURCES bvectortest.cc)
 
