@@ -119,8 +119,8 @@ void test_all(unsigned int Runs = 1)
   typedef typename Dune::SimdScalarTypeTraits<FT>::type MT;
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
-  typedef Dune::AlignedAllocator<VB,128> AllocV;
-  typedef Dune::AlignedAllocator<MB,128> AllocM;
+  typedef Dune::AlignedAllocator<VB> AllocV;
+  typedef Dune::AlignedAllocator<MB> AllocM;
   typedef Dune::BlockVector<VB,AllocV> Vector;
   typedef Dune::BCRSMatrix<MB,AllocM> Matrix;
 
@@ -162,7 +162,7 @@ void test_all(unsigned int Runs = 1)
   criterion.setNoPreSmoothSteps(1);
   criterion.setNoPostSmoothSteps(1);
   Dune::SeqScalarProduct<Vector> sp;
-  typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
+  typedef Dune::Amg::AMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation,AllocV> AMG;
   Smoother smoother(A,1,1);
   AMG amg(op, criterion, smootherArgs);
 
