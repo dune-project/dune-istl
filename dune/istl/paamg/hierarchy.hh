@@ -378,8 +378,8 @@ namespace Dune
        * @brief Coarsen the vector hierarchy according to the matrix hierarchy.
        * @param hierarchy The vector hierarchy to coarsen.
        */
-      template<class V, class TA>
-      void coarsenVector(Hierarchy<BlockVector<V,TA> >& hierarchy) const;
+      template<class V, class BA, class TA>
+      void coarsenVector(Hierarchy<BlockVector<V,BA>, TA>& hierarchy) const;
 
       /**
        * @brief Coarsen the smoother hierarchy according to the matrix hierarchy.
@@ -1106,8 +1106,8 @@ namespace Dune
     }
 
     template<class M, class IS, class A>
-    template<class V, class TA>
-    void MatrixHierarchy<M,IS,A>::coarsenVector(Hierarchy<BlockVector<V,TA> >& hierarchy) const
+    template<class V, class BA, class TA>
+    void MatrixHierarchy<M,IS,A>::coarsenVector(Hierarchy<BlockVector<V,BA>, TA>& hierarchy) const
     {
       assert(hierarchy.levels()==1);
       typedef typename ParallelMatrixHierarchy::ConstIterator Iterator;
