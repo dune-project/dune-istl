@@ -435,8 +435,7 @@ namespace Dune
        */
       const RedistributeInfoList& redistributeInformation() const;
 
-
-      typename MatrixOperator::field_type getProlongationDampingFactor() const
+      double getProlongationDampingFactor() const
       {
         return prolongDamp_;
       }
@@ -471,7 +470,7 @@ namespace Dune
       /** @brief The maximum number of level across all processors.*/
       int maxlevels_;
 
-      typename MatrixOperator::field_type prolongDamp_;
+      double prolongDamp_;
 
       /**
        * @brief functor to print matrix statistics.
