@@ -170,6 +170,37 @@ namespace Dune
     template<class T>
     class ConstructionTraits;
 
+    template<typename S, typename... Args>
+    inline S* allocate_smoother(Args&&... args)
+    {
+      //! \bief field_type Allocator retrieved from smoother type
+      using Alloc =
+        typename S::
+        domain_type::
+        allocator_type::
+        template rebind<S>::other;
+      // we have to allocate these types using the rebound allocator
+      // in order to ensure that we fulfill the alignement requirements
+      Alloc alloc;
+      S* p = alloc.allocate(1);
+      alloc.construct(p,std::forward<Args>(args)...);
+      return p;
+    }
+
+    template<typename S>
+    static void delete_smoother(S* p)
+    {
+      //! \bief field_type Allocator retrieved from smoother type
+      using Alloc =
+        typename S::
+        domain_type::
+        allocator_type::
+        template rebind<S>::other;
+      Alloc alloc;
+      alloc.destroy(p);
+      alloc.deallocate(p,1);
+    }
+
     /**
      * @brief Policy for the construction of the SeqSSOR smoother
      */
@@ -180,13 +211,14 @@ namespace Dune
 
       static inline SeqSSOR<M,X,Y,l>* construct(Arguments& args)
       {
-        return new SeqSSOR<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
-                                    args.getArgs().relaxationFactor);
+        return allocate_smoother<SeqSSOR<M,X,Y,l>>(
+          args.getMatrix(), args.getArgs().iterations,
+          args.getArgs().relaxationFactor);
       }
 
       static inline void deconstruct(SeqSSOR<M,X,Y,l>* ssor)
       {
-        delete ssor;
+        delete_smoother(ssor);
       }
 
     };
@@ -202,13 +234,14 @@ namespace Dune
 
       static inline SeqSOR<M,X,Y,l>* construct(Arguments& args)
       {
-        return new SeqSOR<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
-                                   args.getArgs().relaxationFactor);
+        return allocate_smoother<SeqSOR<M,X,Y,l>>(
+          args.getMatrix(), args.getArgs().iterations,
+          args.getArgs().relaxationFactor);
       }
 
       static inline void deconstruct(SeqSOR<M,X,Y,l>* sor)
       {
-        delete sor;
+        delete_smoother(sor);
       }
 
     };
@@ -222,13 +255,14 @@ namespace Dune
 
       static inline SeqJac<M,X,Y,l>* construct(Arguments& args)
       {
-        return new SeqJac<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
-                                   args.getArgs().relaxationFactor);
+        return allocate_smoother<SeqJac<M,X,Y,l>>(
+          args.getMatrix(), args.getArgs().iterations,
+          args.getArgs().relaxationFactor);
       }
 
       static void deconstruct(SeqJac<M,X,Y,l>* jac)
       {
-        delete jac;
+        delete_smoother(jac);
       }
 
     };
@@ -244,13 +278,14 @@ namespace Dune
 
       static inline SeqILU0<M,X,Y>* construct(Arguments& args)
       {
-        return new SeqILU0<M,X,Y>(args.getMatrix(),
-                                  args.getArgs().relaxationFactor);
+        return allocate_smoother<SeqILU0<M,X,Y>>(
+          args.getMatrix(),
+          args.getArgs().relaxationFactor);
       }
 
       static void deconstruct(SeqILU0<M,X,Y>* ilu)
       {
-        delete ilu;
+        delete_smoother(ilu);
       }
 
     };
@@ -288,13 +323,14 @@ namespace Dune
 
       static inline SeqILUn<M,X,Y>* construct(Arguments& args)
       {
-        return new SeqILUn<M,X,Y>(args.getMatrix(), args.getN(),
-                                  args.getArgs().relaxationFactor);
+        return allocate_smoother<SeqILUn<M,X,Y>>(
+          args.getMatrix(), args.getN(),
+          args.getArgs().relaxationFactor);
       }
 
       static void deconstruct(SeqILUn<M,X,Y>* ilu)
       {
-        delete ilu;
+        delete_smoother(ilu);
       }
 
     };
@@ -309,13 +345,14 @@ namespace Dune
 
       static inline ParSSOR<M,X,Y,C>* construct(Arguments& args)
       {
-        return new ParSSOR<M,X,Y,C>(args.getMatrix(), args.getArgs().iterations,
-                                    args.getArgs().relaxationFactor,
-                                    args.getComm());
+        return allocate_smoother<ParSSOR<M,X,Y,C>>(
+          args.getMatrix(), args.getArgs().iterations,
+          args.getArgs().relaxationFactor,
+          args.getComm());
       }
       static inline void deconstruct(ParSSOR<M,X,Y,C>* ssor)
       {
-        delete ssor;
+        delete_smoother(ssor);
       }
     };
 
@@ -858,6 +895,7 @@ namespace Dune
 
       static inline SeqOverlappingSchwarz<M,X,TM,TS,TA>* construct(Arguments& args)
       {
+#warning alignment
         return new SeqOverlappingSchwarz<M,X,TM,TS,TA>(args.getMatrix(),
                                                        args.getSubDomains(),
                                                        args.getArgs().relaxationFactor,
