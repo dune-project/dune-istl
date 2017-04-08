@@ -96,13 +96,6 @@ namespace Dune
         MemberType* redistributed_;
       };
     public:
-      //       enum{
-      //        /**
-      //         * @brief If true only the method addCoarser will be usable
-      //         * otherwise only the method addFiner will be usable.
-      //         */
-      //        coarsen = b
-      //          };
 
       /**
        * @brief The allocator to use for the list elements.
