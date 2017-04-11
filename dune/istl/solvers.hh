@@ -904,6 +904,8 @@ namespace Dune {
     using typename IterativeSolver<X,Y>::real_type;
 
   private:
+    using typename IterativeSolver<X,X>::scalar_real_type;
+
     //! \bief field_type Allocator retrieved from domain type
     using fAlloc =
       typename X::allocator_type::template rebind<field_type>::other;
@@ -919,7 +921,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -930,7 +932,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, real_type reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -1230,6 +1232,8 @@ namespace Dune {
     using typename IterativeSolver<X,X>::real_type;
 
   private:
+    using typename IterativeSolver<X,X>::scalar_real_type;
+
     //! \bief field_type Allocator retrieved from domain type
     typedef typename X::allocator_type::template rebind<field_type>::other fAlloc;
   public:
@@ -1240,7 +1244,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, real_type reduction, int maxit, int verbose, int restart = 10) :
+    GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
       IterativeSolver<X,X>::IterativeSolver(op,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -1252,7 +1256,7 @@ namespace Dune {
        \param restart When to restart the construction of
        the Krylov search space.
      */
-    GeneralizedPCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec, real_type reduction, int maxit, int verbose, int restart = 10) :
+    GeneralizedPCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
       IterativeSolver<X,X>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
