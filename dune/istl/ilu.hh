@@ -190,7 +190,8 @@ namespace Dune {
           {
             // we misuse the storage to store an int. If the field_type is std::complex, we have to access the real part
             // starting from C++11, we can use std::real to always return a real value, even if it is double/float
-            int generation = (int) std::real( firstmatrixelement(*kj) );
+            using std::real;
+            int generation = (int) real( firstmatrixelement(*kj) );
             if (generation<n)
             {
               mapiterator ij = rowpattern.find(kj.index());
