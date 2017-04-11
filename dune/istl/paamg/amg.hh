@@ -515,7 +515,6 @@ namespace Dune
 
               // we have to allocate these types using the rebound allocator
               // in order to ensure that we fulfill the alignement requirements
-#warning alignment
               solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
                                                   *scalarProduct_,
                                                   *coarseSmoother_, 1E-2, 1000, 0));
@@ -523,20 +522,23 @@ namespace Dune
               solver_.reset();
           }else
           {
-            // we have to allocate these types using the rebound allocator
-            // in order to ensure that we fulfill the alignement requirements
-            using Alloc = typename A::template rebind<BiCGSTABSolver<X>>::other;
-            Alloc alloc;
-            auto p = alloc.allocate(1);
-            alloc.construct(p,
-              const_cast<M&>(*matrices_->matrices().coarsest()),
-              *scalarProduct_,
-              *coarseSmoother_, 1E-2, 1000, 0);
-            solver_.reset(p,[](BiCGSTABSolver<X>* p){
-                Alloc alloc;
-                alloc.destroy(p);
-                alloc.deallocate(p,1);
-              });
+              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
+                  *scalarProduct_,
+                  *coarseSmoother_, 1E-2, 1000, 0));
+            // // we have to allocate these types using the rebound allocator
+            // // in order to ensure that we fulfill the alignement requirements
+            // using Alloc = typename A::template rebind<BiCGSTABSolver<X>>::other;
+            // Alloc alloc;
+            // auto p = alloc.allocate(1);
+            // alloc.construct(p,
+            //   const_cast<M&>(*matrices_->matrices().coarsest()),
+            //   *scalarProduct_,
+            //   *coarseSmoother_, 1E-2, 1000, 0);
+            // solver_.reset(p,[](BiCGSTABSolver<X>* p){
+            //     Alloc alloc;
+            //     alloc.destroy(p);
+            //     alloc.deallocate(p,1);
+            //   });
           }
         }
       }

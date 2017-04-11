@@ -162,7 +162,7 @@ void test_all(unsigned int Runs = 1)
   criterion.setNoPreSmoothSteps(1);
   criterion.setNoPostSmoothSteps(1);
   Dune::SeqScalarProduct<Vector> sp;
-  typedef Dune::Amg::AMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation,AllocV> AMG;
+  typedef Dune::Amg::AMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation> AMG;
   Smoother smoother(A,1,1);
   AMG amg(op, criterion, smootherArgs);
 
