@@ -6,7 +6,14 @@
 
 #include <iomanip>
 #include <ostream>
+
+#include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
+
 #include "solvertype.hh"
+#include "preconditioner.hh"
+#include "operators.hh"
+#include "scalarproducts.hh"
 
 namespace Dune
 {
@@ -88,6 +95,9 @@ namespace Dune
     /** \brief The field type of the operator. */
     typedef typename X::field_type field_type;
 
+    //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
+    typedef typename FieldTraits<field_type>::real_type real_type;
+
     /**
         \brief Apply inverse operator,
 
@@ -116,6 +126,16 @@ namespace Dune
                           continue
      */
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) = 0;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+#ifdef DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    }
+#else
+    = 0;
+#endif
 
     //! \brief Destructor
     virtual ~InverseOperator () {}
@@ -154,6 +174,122 @@ namespace Dune
       s << std::setw(iterationSpacing)  << iter << " ";
       s << std::setw(normSpacing) << norm << std::endl;
     }
+  };
+
+  /*!
+     \brief Base class for all implementations of iterative solvers
+
+     This class provides all storage, which is needed by the usual
+     iterative solvers. In additional it provides all the necessary
+     constructors, which are then only imported in the actual solver
+     implementation.
+   */
+  template<class X, class Y>
+  class IterativeSolver : public InverseOperator<X,Y>{
+  public:
+    using typename InverseOperator<X,Y>::domain_type;
+    using typename InverseOperator<X,Y>::range_type;
+    using typename InverseOperator<X,Y>::field_type;
+    using typename InverseOperator<X,Y>::real_type;
+
+    /*!
+       \brief General constructor to initialize an iterative solver.
+
+       \param op The operator we solve.
+       \param prec The preconditioner to apply in each iteration of the loop.
+       Has to inherit from Preconditioner.
+       \param reduction The relative defect reduction to achieve when applying
+       the operator.
+       \param maxit The maximum number of iteration steps allowed when applying
+       the operator.
+       \param verbose The verbosity level.
+
+       Verbose levels are:
+       <ul>
+       <li> 0 : print nothing </li>
+       <li> 1 : print initial and final defect and statistics </li>
+       <li> 2 : print line for each iteration </li>
+       </ul>
+     */
+    IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int maxit, int verbose) :
+      _op(stackobject_to_shared_ptr(op)),
+      _prec(stackobject_to_shared_ptr(prec)),
+      _sp(new SeqScalarProduct<X>),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::sequential)
+    {
+      if(SolverCategory::category(op) != SolverCategory::sequential)
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator has to be sequential!");
+      if(SolverCategory::category(prec) != SolverCategory::sequential)
+        DUNE_THROW(InvalidSolverCategory, "Preconditioner has to be sequential!");
+    }
+
+    /**
+        \brief General constructor to initialize an iterative solver
+
+        \param op The operator we solve.
+        \param sp The scalar product to use, e. g. SeqScalarproduct.
+        \param prec The preconditioner to apply in each iteration of the loop.
+        Has to inherit from Preconditioner.
+        \param reduction The relative defect reduction to achieve when applying
+        the operator.
+        \param maxit The maximum number of iteration steps allowed when applying
+        the operator.
+        \param verbose The verbosity level.
+
+        Verbose levels are:
+        <ul>
+        <li> 0 : print nothing </li>
+        <li> 1 : print initial and final defect and statistics </li>
+        <li> 2 : print line for each iteration </li>
+        </ul>
+     */
+    IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
+      real_type reduction, int maxit, int verbose) :
+      _op(stackobject_to_shared_ptr(op)),
+      _prec(stackobject_to_shared_ptr(prec)),
+      _sp(stackobject_to_shared_ptr(sp)),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose), _category(SolverCategory::category(op))
+    {
+      if(SolverCategory::category(op) != SolverCategory::category(prec))
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
+      if(SolverCategory::category(op) != SolverCategory::category(sp))
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
+    }
+
+#warning actually we want to have this as the default and just implement the second one
+    // //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+    // virtual void apply (X& x, Y& b, InverseOperatorResult& res)
+    // {
+    //   apply(x,b,_reduction,res);
+    // }
+
+    /*!
+       \brief Apply inverse operator with given reduction factor.
+
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+     */
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    {
+      real_type saved_reduction = _reduction;
+      _reduction = reduction;
+      static_cast<InverseOperator<X,Y>*>(this)->apply(x,b,res);
+      _reduction = saved_reduction;
+    }
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return _category;
+    }
+
+  protected:
+    std::shared_ptr<LinearOperator<X,Y>> _op;
+    std::shared_ptr<Preconditioner<X,Y>> _prec;
+    std::shared_ptr<ScalarProduct<X>> _sp;
+    real_type _reduction;
+    int _maxit;
+    int _verbose;
+    SolverCategory::Category _category;
   };
 
   /**

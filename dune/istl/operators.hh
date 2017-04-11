@@ -9,6 +9,8 @@
 #include <iomanip>
 #include <string>
 
+#include <dune/common/exceptions.hh>
+
 #include "solvercategory.hh"
 
 
@@ -79,6 +81,16 @@ namespace Dune {
 
     //! every abstract base class has a virtual destructor
     virtual ~LinearOperator () {}
+
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+#ifdef DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    };
+#else
+    = 0;
+#endif
   };
 
 
@@ -127,9 +139,6 @@ namespace Dune {
     typedef Y range_type;
     typedef typename X::field_type field_type;
 
-    //! define the category
-    enum {category=SolverCategory::sequential};
-
     //! constructor: just store a reference to a matrix
     explicit MatrixAdapter (const M& A) : _A_(A) {}
 
@@ -149,6 +158,12 @@ namespace Dune {
     virtual const M& getmat () const
     {
       return _A_;
+    }
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
     }
 
   private:

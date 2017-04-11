@@ -24,7 +24,30 @@ namespace Dune {
       //! \brief Category for overlapping solvers
       overlapping
     };
+
+    /**  \brief Helperfunction to extract the solver category either from an enum, or from the newly introduced virtual member function */
+    template<typename OP>
+    static Category category(const OP& op, decltype(op.category())* = nullptr)
+    {
+      return op.category();
+    }
+
+#ifndef DOXYGEN
+    template<typename OP>
+    static Category category(const OP& op, decltype(op.getSolverCategory())* = nullptr)
+    {
+      return op.getSolverCategory();
+    }
+
+    template<typename OP>
+    static Category category(const OP& op, decltype(op.category)* = nullptr)
+    {
+      return OP::category;
+    }
+#endif
   };
+
+  class InvalidSolverCategory : public InvalidStateException{};
 
   /** @} end documentation */
 

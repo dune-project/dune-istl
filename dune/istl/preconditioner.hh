@@ -2,6 +2,11 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_ISTL_PRECONDITIONER_HH
 #define DUNE_ISTL_PRECONDITIONER_HH
+
+#include <dune/common/exceptions.hh>
+
+#include "solvercategory.hh"
+
 namespace Dune {
 /**
  * @addtogroup ISTL_Prec
@@ -10,17 +15,16 @@ namespace Dune {
   //=====================================================================
   /*! \brief Base class for matrix free definition of preconditioners.
 
-          Note that the operator, which is the basis for the preconditioning,
-      is supplied to the preconditioner from the outside in the
-      constructor or some other method.
+     Note that the operator, which is the basis for the preconditioning,
+     is supplied to the preconditioner from the outside in the
+     constructor or some other method.
 
-          This interface allows the encapsulation of all parallelization
-          aspects into the preconditioners.
+     This interface allows the encapsulation of all parallelization
+     aspects into the preconditioners.
 
      \tparam X Type of the update
      \tparam Y Type of the defect
-
-   */
+    */
   //=====================================================================
   template<class X, class Y>
   class Preconditioner {
@@ -71,8 +75,19 @@ namespace Dune {
      */
     virtual void post (X& x) = 0;
 
-    // every abstract base class has a virtual destructor
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+#ifdef DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
+    {
+      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
+    }
+#else
+    = 0;
+#endif
+
+    //! every abstract base class has a virtual destructor
     virtual ~Preconditioner () {}
+
   };
 
 /**

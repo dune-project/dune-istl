@@ -662,16 +662,8 @@ namespace Dune
       : matrices_(const_cast<MatrixOperator&>(fineOperator)),
         parallelInformation_(const_cast<ParallelInformation&>(pinfo))
     {
-      static_assert((static_cast<int>(MatrixOperator::category) ==
-                       static_cast<int>(SolverCategory::sequential)
-                     || static_cast<int>(MatrixOperator::category) ==
-                       static_cast<int>(SolverCategory::overlapping)
-                     || static_cast<int>(MatrixOperator::category) ==
-                       static_cast<int>(SolverCategory::nonoverlapping)),
-                    "MatrixOperator must be of category sequential or overlapping or nonoverlapping");
-      if (static_cast<int>(MatrixOperator::category) != static_cast<int>(pinfo.getSolverCategory()))
+      if (SolverCategory::category(fineOperator) != pinfo.getSolverCategory())
         DUNE_THROW(ISTLError, "MatrixOperator and ParallelInformation must belong to the same category!");
-
     }
 
     template<class M, class IS, class A>
@@ -767,7 +759,7 @@ namespace Dune
           // No further coarsening needed
           break;
 
-        typedef PropertiesGraphCreator<MatrixOperator> GraphCreator;
+        typedef PropertiesGraphCreator<MatrixOperator,ParallelInformation> GraphCreator;
         typedef typename GraphCreator::PropertiesGraph PropertiesGraph;
         typedef typename GraphCreator::GraphTuple GraphTuple;
 
