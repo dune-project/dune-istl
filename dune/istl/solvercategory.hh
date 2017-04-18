@@ -3,6 +3,8 @@
 #ifndef DUNE_ISTL_SOLVERCATEGORY_HH
 #define DUNE_ISTL_SOLVERCATEGORY_HH
 
+#include <dune/common/exceptions.hh>
+
 
 namespace Dune {
 
