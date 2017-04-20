@@ -599,7 +599,7 @@ namespace Dune {
   }
 
   // Recursively print all the blocks -- specialization for std::array
-  template<class K, unsigned long n>
+  template<class K, std::size_t n>
   void writeVectorToMatlabHelper (const std::array<K,n>& v, std::ostream& s)
   {
     for (const auto& entry : v)
