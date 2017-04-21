@@ -508,6 +508,314 @@ namespace Dune
   {
     enum { value = true };
   };
+
+  /**
+   * @addtogroup ISTL
+   *
+   * @{
+   */
+  /**
+   * @brief SuperLu ILU preconditioner
+   */
+  template<class M, class X, class Y>
+  class SuperLU_ILU
+  {};
+
+  /**
+   * @brief SuperLu ILU preconditioner
+   *
+   * Uses the well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU
+   * package</a> to create an ILU preconditioner
+   *
+   * SuperLU supports single and double precision floating point and complex
+   * numbers. Unfortunately these cannot be used at the same time.
+   * Therfore users must set SUPERLU_NTYPE (0: float, 1: double,
+   * 2: std::complex<float>, 3: std::complex<double>)
+   * if the numeric type should be different from double.
+   *
+   */
+  template<typename T, typename A, int n, int m>
+  class SuperLU_ILU<BCRSMatrix<FieldMatrix<T,n,m>,A >,
+                    BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other>,
+                    BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> >
+    : public Preconditioner<
+                    BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other>,
+                    BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> >
+  {
+    /** @brief The matrix type. */
+    using Matrix = Dune::BCRSMatrix<FieldMatrix<T,n,m>,A>;
+    /** @brief The corresponding SuperLU Matrix type.*/
+    typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
+    /** @brief Type of an associated initializer class. */
+    typedef SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+
+  public:
+    /** @brief The type of the domain of the solver. */
+    using domain_type = Dune::BlockVector< FieldVector<T,m>,
+                          typename A::template rebind<FieldVector<T,m> >::other >;
+    /** @brief The type of the range of the solver. */
+    using range_type = Dune::BlockVector< FieldVector<T,n>,
+                          typename A::template rebind<FieldVector<T,n> >::other >;
+    /** @brief The field type of the preconditioner. */
+    using field_type = T;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
+    /**
+     * @brief Constructs the SuperLU ILU preconditioner.
+     *
+     * During the construction the matrix will be decomposed
+     * using incomplete LU factorization.
+     * That means that in each apply call forward and backward
+     * substitutions take place (and no decomposition).
+     * @param mat The matrix of the system to solve.
+     * @param verbose If true some statistics are printed.
+     */
+    explicit SuperLU_ILU(const Matrix& mat_, bool verbose_ = false)
+      : work(0), lwork(0), verbose(verbose_)
+    {
+      ilu_set_default_options(&options);
+      setMatrix(mat_);
+    }
+
+    /**
+     * @brief Empty default constructor.
+     *
+     * Use setMatrix to tell SuperLU ILU which matrix to construct the
+     * the preconditioner from.
+     */
+    SuperLU_ILU()
+      : work(0), lwork(0), verbose(false)
+    {
+      ilu_set_default_options(&options);
+    }
+
+    ~SuperLU_ILU()
+    {
+      if(mat.N()+mat.M()>0)
+      {
+        free();
+      }
+    }
+
+    /*!
+       \brief Prepare the preconditioner.
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre (domain_type& x, range_type& b)
+    {
+      DUNE_UNUSED_PARAMETER(x);
+      DUNE_UNUSED_PARAMETER(b);
+    }
+
+    /*!
+       \brief Apply the precondioner.
+       \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply (domain_type& v, const range_type& d)
+    {
+      bsuperlu_ilu_backsolve(v, d);
+    }
+
+    /*!
+       \brief Clean up.
+       \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (domain_type& x)
+    {
+      DUNE_UNUSED_PARAMETER(x);
+    }
+
+    /**
+     * @brief Initialize data from given matrix.
+     * @note This also computes the ILU decomposition
+     */
+    void setMatrix(const Matrix& mat_)
+    {
+      if(mat.N()+mat.M()>0)
+      {
+        free();
+      }
+
+      lwork=0;
+      work=0;
+      mat=mat_;
+      bsuperlu_ilu_decomposition();
+    }
+
+    /** @brief Set the verbosity level */
+    void setVerbosity(bool v)
+    { verbose=v; }
+
+    /** @brief Set options of the SuperLU ILU */
+    void setOptions(const std::function<void(superlu_options_t&)>& setUserOptions)
+    { setUserOptions(options); }
+
+    /**
+     * @brief free allocated space.
+     * @warning later calling apply will result in an error.
+     */
+    void free()
+    {
+      delete[] perm_c;
+      delete[] perm_r;
+      delete[] etree;
+      delete[] R;
+      delete[] C;
+      if(lwork>=0)
+      {
+        Destroy_SuperNode_Matrix(&L);
+        Destroy_CompCol_Matrix(&U);
+      }
+      lwork=0;
+      mat.free();
+    }
+
+  private:
+    /** @brief computes the incomplete LU decomposition */
+    void bsuperlu_ilu_decomposition();
+
+    /** @brief applies the ILU factorization as inverse operator */
+    void bsuperlu_ilu_backsolve(domain_type& x, const range_type& b);
+
+    SuperLUMatrix mat;
+    SuperMatrix L, U, B, X;
+    int *perm_c, *perm_r, *etree;
+    typename GetSuperLUType<T>::float_type *R, *C;
+    T *bstore;
+    superlu_options_t options;
+    char equed;
+    void *work;
+    int lwork;
+    bool verbose;
+  };
+
+  template<typename T, typename A, int n, int m>
+  void SuperLU_ILU<BCRSMatrix<FieldMatrix<T,n,m>,A >,
+                    BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other>,
+                    BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> >
+  ::bsuperlu_ilu_decomposition()
+  {
+
+    perm_c = new int[mat.M()];
+    perm_r = new int[mat.N()];
+    etree  = new int[mat.M()];
+    R = new typename GetSuperLUType<T>::float_type[mat.N()];
+    C = new typename GetSuperLUType<T>::float_type[mat.M()];
+
+    // the default row permutation uses the non-free MC64 routine so we
+    // disable row permutation here
+    options.RowPerm = NOROWPERM;
+
+    // Do the factorization
+    B.ncol=0;
+    B.Stype=SLU_DN;
+    B.Dtype=GetSuperLUType<T>::type;
+    B.Mtype= SLU_GE;
+
+    DNformat fakeFormat;
+    fakeFormat.lda=mat.N();
+    B.Store=&fakeFormat;
+
+    X.Stype=SLU_DN;
+    X.Dtype=GetSuperLUType<T>::type;
+    X.Mtype= SLU_GE;
+    X.ncol=0;
+    X.Store=&fakeFormat;
+
+    typename GetSuperLUType<T>::float_type rpg, rcond;
+    int info;
+    mem_usage_t memusage;
+    SuperLUStat_t stat;
+
+    StatInit(&stat);
+    SuperLUILUSolveChooser<T>::solve(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
+                                     &L, &U, work, lwork, &B, &X, &rpg, &rcond,
+                                     &memusage, &stat, &info);
+
+    if(verbose) {
+      dinfo<<"ILU factorization: dgsisx() returns info "<< info<<std::endl;
+
+      if ( info == 0 || info == n+1 ) {
+
+        if ( options.PivotGrowth )
+          dinfo<<"Recip. pivot growth = "<<rpg<<std::endl;
+        if ( options.ConditionNumber )
+          dinfo<<"Recip. condition number = %e\n"<< rcond<<std::endl;
+        SCformat* Lstore = (SCformat *) L.Store;
+        NCformat* Ustore = (NCformat *) U.Store;
+        dinfo<<"No of nonzeros in factor L = "<< Lstore->nnz<<std::endl;
+        dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
+        dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
+        QuerySpaceChooser<T>::querySpace(&L, &U, &memusage);
+        dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
+             <<" \texpansions ";
+        std::cout<<stat.expansions<<std::endl;
+
+      } else if ( info > 0 && lwork == -1 ) {
+        dinfo<<"** Estimated memory: "<< info - n<<std::endl;
+      }
+      if ( options.PrintStat ) StatPrint(&stat);
+    }
+    StatFree(&stat);
+    // set the factored option to tell SuperLU that the ILU decomposition is done
+    // the next call to the driver (solve method) will apply the decomposition as inverse operator
+    options.Fact = FACTORED;
+  }
+
+  template<typename T, typename A, int n, int m>
+  void SuperLU_ILU<BCRSMatrix<FieldMatrix<T,n,m>,A >,
+                    BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other>,
+                    BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> >
+  ::bsuperlu_ilu_backsolve(domain_type& x, const range_type& bTmp)
+  {
+    if (mat.N() != bTmp.dim())
+      DUNE_THROW(ISTLError, "Size of right-hand-side vector b does not match the number of matrix rows!");
+    if (mat.M() != x.dim())
+      DUNE_THROW(ISTLError, "Size of solution vector x does not match the number of matrix columns!");
+    if (mat.M()+mat.N()==0)
+      DUNE_THROW(ISTLError, "Matrix of SuperLU is null!");
+
+    auto b(bTmp); // TODO is this copy necessary?
+
+    SuperMatrix* mB = &B;
+    SuperMatrix* mX = &X;
+    SuperMatrix rB, rX;
+
+    SuperLUDenseMatChooser<T>::create(&rB, (int)mat.N(), 1,  reinterpret_cast<T*>(&b[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+    SuperLUDenseMatChooser<T>::create(&rX, (int)mat.N(), 1,  reinterpret_cast<T*>(&x[0]), (int)mat.N(), SLU_DN, GetSuperLUType<T>::type, SLU_GE);
+    mB = &rB;
+    mX = &rX;
+
+    typename GetSuperLUType<T>::float_type rpg, rcond;
+    int info;
+    mem_usage_t memusage;
+    SuperLUStat_t stat;
+    /* Initialize the statistics variables. */
+    StatInit(&stat);
+
+#ifdef SUPERLU_MIN_VERSION_4_3
+    options.IterRefine=SLU_DOUBLE;
+#else
+    options.IterRefine=DOUBLE;
+#endif
+
+    SuperLUILUSolveChooser<T>::solve(&options, &static_cast<SuperMatrix&>(mat), perm_c, perm_r, etree, &equed, R, C,
+                                     &L, &U, work, lwork, mB, mX, &rpg, &rcond,
+                                     &memusage, &stat, &info);
+
+    if(verbose) {
+      // TODO more verbose output
+      if ( options.PrintStat ) StatPrint(&stat);
+    }
+    StatFree(&stat);
+    SUPERLU_FREE(rB.Store);
+    SUPERLU_FREE(rX.Store);
+  }
 }
 
 // undefine macros from SuperLU's slu_util.h
