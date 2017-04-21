@@ -45,7 +45,7 @@ extern "C" {
 
   extern void    sPrint_CompCol_Matrix(char *, SuperMatrix *);
 }
-#endif
+#endif // HAVE_SLU_SDEFS_H
 
 #if HAVE_SLU_DDEFS_H
 extern "C" {
@@ -84,7 +84,7 @@ extern "C" {
 
   extern void    dPrint_CompCol_Matrix(char *, SuperMatrix *);
 }
-#endif
+#endif // HAVE_SLU_DDEFS_H
 
 #if HAVE_SLU_CDEFS_H
 #include "slu_scomplex.h"
@@ -127,7 +127,7 @@ extern "C" {
 
   extern void    cPrint_CompCol_Matrix(char *, SuperMatrix *);
 }
-#endif
+#endif // HAVE_SLU_CDEFS_H
 
 #if HAVE_SLU_ZDEFS_H
 #include "slu_dcomplex.h"
@@ -168,8 +168,8 @@ extern "C" {
 
   extern void    zPrint_CompCol_Matrix(char *, SuperMatrix *);
 }
-#endif
+#endif // HAVE_SLU_ZDEFS_H
 
 
-#endif
-#endif
+#endif // HAVE_SUPERLU
+#endif // DUNE_ISTL_SUPERLUFUNCTIONS_HH
