@@ -6,6 +6,7 @@
 #if HAVE_SUPERLU
 
 #include "superlufunctions.hh"
+#include "superluutilities.hh"
 #include "solvers.hh"
 #include "supermatrix.hh"
 #include <algorithm>
@@ -29,7 +30,7 @@ namespace Dune
   /**
    * @file
    * @author Markus Blatt
-   * @brief Classes for using SuperLU with ISTL matrices.
+   * @brief SuperLU Solver
    */
   template<class Matrix>
   class SuperLU
@@ -40,211 +41,6 @@ namespace Dune
 
   template<class T, bool tag>
   struct SeqOverlappingSchwarzAssemblerHelper;
-
-  template<class T>
-  struct SuperLUSolveChooser
-  {};
-
-  template<class T>
-  struct SuperLUDenseMatChooser
-  {};
-
-  template<class T>
-  struct SuperLUQueryChooser
-  {};
-
-  template<class T>
-  struct QuerySpaceChooser
-  {};
-
-#if HAVE_SLU_SDEFS_H
-  template<>
-  struct SuperLUDenseMatChooser<float>
-  {
-    static void create(SuperMatrix *mat, int n, int m, float *dat, int n1,
-                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
-    {
-      sCreate_Dense_Matrix(mat, n, m, dat, n1, stype, dtype, mtype);
-
-    }
-
-    static void destroy(SuperMatrix*)
-    {}
-
-  };
-  template<>
-  struct SuperLUSolveChooser<float>
-  {
-    static void solve(superlu_options_t *options, SuperMatrix *mat, int *perm_c, int *perm_r, int *etree,
-                      char *equed, float *R, float *C, SuperMatrix *L, SuperMatrix *U,
-                      void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
-                      float *rpg, float *rcond, float *ferr, float *berr,
-                      mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
-    {
-#if SUPERLU_MIN_VERSION_5
-      GlobalLU_t gLU;
-      sgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             &gLU, memusage, stat, info);
-#else
-      sgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             memusage, stat, info);
-#endif
-    }
-  };
-
-  template<>
-  struct QuerySpaceChooser<float>
-  {
-    static void querySpace(SuperMatrix* L, SuperMatrix* U, mem_usage_t* memusage)
-    {
-      sQuerySpace(L,U,memusage);
-    }
-  };
-
-#endif
-
-#if HAVE_SLU_DDEFS_H
-
-  template<>
-  struct SuperLUDenseMatChooser<double>
-  {
-    static void create(SuperMatrix *mat, int n, int m, double *dat, int n1,
-                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
-    {
-      dCreate_Dense_Matrix(mat, n, m, dat, n1, stype, dtype, mtype);
-
-    }
-
-    static void destroy(SuperMatrix * /* mat */)
-    {}
-  };
-  template<>
-  struct SuperLUSolveChooser<double>
-  {
-    static void solve(superlu_options_t *options, SuperMatrix *mat, int *perm_c, int *perm_r, int *etree,
-                      char *equed, double *R, double *C, SuperMatrix *L, SuperMatrix *U,
-                      void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
-                      double *rpg, double *rcond, double *ferr, double *berr,
-                      mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
-    {
-#if SUPERLU_MIN_VERSION_5
-      GlobalLU_t gLU;
-      dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             &gLU, memusage, stat, info);
-#else
-      dgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             memusage, stat, info);
-#endif
-    }
-  };
-
-  template<>
-  struct QuerySpaceChooser<double>
-  {
-    static void querySpace(SuperMatrix* L, SuperMatrix* U, mem_usage_t* memusage)
-    {
-      dQuerySpace(L,U,memusage);
-    }
-  };
-#endif
-
-#if HAVE_SLU_ZDEFS_H
-  template<>
-  struct SuperLUDenseMatChooser<std::complex<double> >
-  {
-    static void create(SuperMatrix *mat, int n, int m, std::complex<double> *dat, int n1,
-                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
-    {
-      zCreate_Dense_Matrix(mat, n, m, reinterpret_cast<doublecomplex*>(dat), n1, stype, dtype, mtype);
-
-    }
-
-    static void destroy(SuperMatrix*)
-    {}
-  };
-
-  template<>
-  struct SuperLUSolveChooser<std::complex<double> >
-  {
-    static void solve(superlu_options_t *options, SuperMatrix *mat, int *perm_c, int *perm_r, int *etree,
-                      char *equed, double *R, double *C, SuperMatrix *L, SuperMatrix *U,
-                      void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
-                      double *rpg, double *rcond, double *ferr, double *berr,
-                      mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
-    {
-#if SUPERLU_MIN_VERSION_5
-      GlobalLU_t gLU;
-      zgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             &gLU, memusage, stat, info);
-#else
-      zgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             memusage, stat, info);
-#endif
-    }
-  };
-
-  template<>
-  struct QuerySpaceChooser<std::complex<double> >
-  {
-    static void querySpace(SuperMatrix* L, SuperMatrix* U, mem_usage_t* memusage)
-    {
-      zQuerySpace(L,U,memusage);
-    }
-  };
-#endif
-
-#if HAVE_SLU_CDEFS_H
-  template<>
-  struct SuperLUDenseMatChooser<std::complex<float> >
-  {
-    static void create(SuperMatrix *mat, int n, int m, std::complex<float> *dat, int n1,
-                       Stype_t stype, Dtype_t dtype, Mtype_t mtype)
-    {
-      cCreate_Dense_Matrix(mat, n, m, reinterpret_cast< ::complex*>(dat), n1, stype, dtype, mtype);
-
-    }
-
-    static void destroy(SuperMatrix* /* mat */)
-    {}
-  };
-
-  template<>
-  struct SuperLUSolveChooser<std::complex<float> >
-  {
-    static void solve(superlu_options_t *options, SuperMatrix *mat, int *perm_c, int *perm_r, int *etree,
-                      char *equed, float *R, float *C, SuperMatrix *L, SuperMatrix *U,
-                      void *work, int lwork, SuperMatrix *B, SuperMatrix *X,
-                      float *rpg, float *rcond, float *ferr, float *berr,
-                      mem_usage_t *memusage, SuperLUStat_t *stat, int *info)
-    {
-#if SUPERLU_MIN_VERSION_5
-      GlobalLU_t gLU;
-      cgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             &gLU, memusage, stat, info);
-#else
-      cgssvx(options, mat, perm_c, perm_r, etree, equed, R, C,
-             L, U, work, lwork, B, X, rpg, rcond, ferr, berr,
-             memusage, stat, info);
-#endif
-    }
-  };
-
-  template<>
-  struct QuerySpaceChooser<std::complex<float> >
-  {
-    static void querySpace(SuperMatrix* L, SuperMatrix* U, mem_usage_t* memusage)
-    {
-      cQuerySpace(L,U,memusage);
-    }
-  };
-#endif
 
   /**
    * @brief SuperLu Solver
