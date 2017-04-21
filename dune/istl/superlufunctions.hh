@@ -12,6 +12,19 @@
 
 #if HAVE_SLU_SDEFS_H
 extern "C" {
+
+  //! Driver function for the SuperLU ILU preconditioner
+  extern void
+  sgsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
+         char *, float *, float *, SuperMatrix *, SuperMatrix *,
+         void *, int, SuperMatrix *, SuperMatrix *,
+         float *, float *,
+#if SUPERLU_MIN_VERSION_5
+         GlobalLU_t*,
+#endif
+         mem_usage_t *, SuperLUStat_t *, int *);
+
+  //! Driver function for the SuperLU LU solver
   extern void
   sgssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
          char *, float *, float *, SuperMatrix *, SuperMatrix *,
@@ -36,6 +49,19 @@ extern "C" {
 
 #if HAVE_SLU_DDEFS_H
 extern "C" {
+
+  //! Driver function for the SuperLU ILU preconditioner
+  extern void
+  dgsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
+         char *, double *, double *, SuperMatrix *, SuperMatrix *,
+         void *, int, SuperMatrix *, SuperMatrix *,
+         double *, double *,
+#if SUPERLU_MIN_VERSION_5
+         GlobalLU_t*,
+#endif
+         mem_usage_t *, SuperLUStat_t *, int *);
+
+  //! Driver function for the SuperLU LU solver
   extern void
   dgssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
          char *, double *, double *, SuperMatrix *, SuperMatrix *,
@@ -64,6 +90,19 @@ extern "C" {
 #include "slu_scomplex.h"
 
 extern "C" {
+
+  //! Driver function for the SuperLU ILU preconditioner
+  extern void
+  cgsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
+         char *, float *, float *, SuperMatrix *, SuperMatrix *,
+         void *, int, SuperMatrix *, SuperMatrix *,
+         float *, float *,
+#if SUPERLU_MIN_VERSION_5
+         GlobalLU_t*,
+#endif
+         mem_usage_t *, SuperLUStat_t *, int *);
+
+  //! Driver function for the SuperLU LU solver
   extern void
   cgssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
          char *, float *, float *, SuperMatrix *, SuperMatrix *,
@@ -93,6 +132,19 @@ extern "C" {
 #if HAVE_SLU_ZDEFS_H
 #include "slu_dcomplex.h"
 extern "C" {
+
+  //! Driver function for the SuperLU ILU preconditioner
+  extern void
+  zgsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
+         char *, double *, double *, SuperMatrix *, SuperMatrix *,
+         void *, int, SuperMatrix *, SuperMatrix *,
+         double *, double *,
+#if SUPERLU_MIN_VERSION_5
+         GlobalLU_t*,
+#endif
+         mem_usage_t *, SuperLUStat_t *, int *);
+
+  //! Driver function for the SuperLU LU solver
   extern void
   zgssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
          char *, double *, double *, SuperMatrix *, SuperMatrix *,
