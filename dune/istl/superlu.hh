@@ -574,6 +574,9 @@ namespace Dune
      * substitutions take place (and no decomposition).
      * @param mat The matrix of the system to solve.
      * @param verbose If true some statistics are printed.
+     * @note This constructor always uses the default options for
+     *       the LU decomposition. Use the default constructor and
+     *       the setMatrix + setVerbosity + setOptions method to modify options
      */
     explicit SuperLU_ILU(const Matrix& mat_, bool verbose_ = false)
       : work(0), lwork(0), verbose(verbose_)
