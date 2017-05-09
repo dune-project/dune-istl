@@ -77,7 +77,7 @@ namespace Dune {
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
-#ifdef DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
+#if DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
     {
       DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
     }
