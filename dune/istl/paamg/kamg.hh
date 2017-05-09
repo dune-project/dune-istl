@@ -35,9 +35,10 @@ namespace Dune
       typedef typename AMG::Range Range;
     public:
 
-      enum {
-        /** @brief The solver category. */
-        category = AMG::category
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return amg_.category();
       };
 
       /**
@@ -163,10 +164,12 @@ namespace Dune
       /** @brief The type of the scalar product. */
       typedef typename Amg::ScalarProduct ScalarProduct;
 
-      enum {
-        /** @brief The solver category. */
-        category = Amg::category
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return amg.category();
       };
+
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -338,7 +341,7 @@ namespace Dune
 
       if(matrix!=amg.matrices_->matrices().finest())
         while(true) {
-          scalarproducts.push_back(std::shared_ptr<typename Amg::ScalarProduct>(Amg::ScalarProductChooser::construct(*pinfo)));
+          scalarproducts.push_back(createScalarProduct<X>(*pinfo,category()));
           std::shared_ptr<InverseOperator<Domain,Range> > ks =
             std::shared_ptr<InverseOperator<Domain,Range> >(new KrylovSolver(*matrix, *(scalarproducts.back()),
                                                                         *(ksolvers.back()), levelDefectReduction,

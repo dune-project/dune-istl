@@ -36,11 +36,11 @@ namespace Dune {
     typedef typename M::RowIterator RowIterator;
     typedef typename M::ColIterator ColIterator;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of
-      category=SolverCategory::sequential
-    };
+    //! Category of the linear solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
 
     /*! \brief Constructor.
 

@@ -327,17 +327,27 @@ namespace Dune {
      \endcode
 
      3. implicit scheme
+
      With the above Random Scheme, the sparsity pattern has to be determined
      and stored before the matrix is assembled. This leads to increased memory
      usage and computation time. Often, one has good a priori
      knowledge about the number of entries a row contains on average. `implicit`
      mode tries to make use of that knowledge by allocating memory based on
-     that average. Entries in rows with more non-zeroes than the average value
-     are written to an overflow area during the initial assembly phase, up to a
-     specified maximum number of overflow entries that must not be exceeded.
+     that average. If a row contains more non-zeroes than the average value
+     these are stored in an auxiliary buffer during the initial assembly phase.
      After all indices are added a compression step optimizes the matrix and
-     integrates any entries from the overflow area into the standard BCRS storage
-     scheme.
+     integrates any entries from the buffer into the standard BCRS storage
+     making use of an optional overflow area to allow rows exceeding the
+     average non-zero count. More precisely, if \f$\textrm{nnz}_j\f$ denotes the
+     number of non-zeros in the \f$j\f$-th row, then the maximal number of
+     allowed non-zeros in the \f$i\f$-th row is
+     \f[
+        M_i = \textrm{avg} + A + \sum_{j<i} (\textrm{avg} - \textrm{nnz}_j)
+     \f]
+     where
+     \f$ A = \textrm{avg}(n \cdot \textrm{overflowsize} +4) \f$
+     is the total size of the overflow area determined by the parameters
+     explained below.
 
      To use this mode use the following methods:
 
@@ -349,15 +359,16 @@ namespace Dune {
      Here, the parameter `_avg` denotes the average number of matrix entries per row, while
      `_overflowsize` reserves `_n * _overflowsize * _avg` entries in the overflow area.
 
-     \warning If you exceed this number of overflow entries during the assembly phase, matrix
-              construction fails and an exception will be thrown!
+     \warning If the overflow area is exhausted during the compression step,
+              i.e., if the assertion \f$\textrm{nnz}_i \leq M_i\f$ is not matched,
+              an exception will be thrown during compress().
 
      Start filling your matrix by calling entry(size_type row, size_type col),
      which returns the corresponding matrix entry, creating it on the fly if
      it did not exist yet. Please note that this method may be slightly slower than
      accessing entries via `matrix[row][col]` after the initial assembly because
      of the additional overhead of searching the overflow area.
-     The matrix pattern is created by implicitly by simply accessing nonzero entries
+     The matrix pattern is created implicitly by simply accessing nonzero entries
      during the initial matrix assembly.
 
      After the entry-method has been called for each nonzero matrix entry at least once,
@@ -440,7 +451,7 @@ namespace Dune {
     typedef A allocator_type;
 
     //! implement row_type with compressed vector
-    typedef CompressedBlockVectorWindow<B,A> row_type;
+    typedef Imp::CompressedBlockVectorWindow<B,A> row_type;
 
     //! The type for the index access and the size
     typedef typename A::size_type size_type;

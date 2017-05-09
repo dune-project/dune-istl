@@ -48,7 +48,10 @@ namespace Dune
      *
      * \tparam M The matrix type
      * \tparam X The vector type
+     * \tparam S The smoother type
      * \tparam A An allocator for X
+     *
+     * \todo drop the smoother template parameter and replace with dynamic construction
      */
     template<class M, class X, class S, class PI=SequentialInformation,
         class A=std::allocator<X> >
@@ -90,33 +93,6 @@ namespace Dune
       /** @brief The argument type for the construction of the smoother. */
       typedef typename SmootherTraits<Smoother>::Arguments SmootherArgs;
 
-      enum {
-        /** @brief The solver category. */
-        category = S::category
-      };
-
-      /**
-       * @brief Construct a new amg with a specific coarse solver.
-       * @param matrices The already set up matix hierarchy.
-       * @param coarseSolver The set up solver to use on the coarse
-       * grid, must match the coarse matrix in the matrix hierarchy.
-       * @param smootherArgs The  arguments needed for thesmoother to use
-       * for pre and post smoothing
-       * @param gamma The number of subcycles. 1 for V-cycle, 2 for W-cycle.
-       * @param preSmoothingSteps The number of smoothing steps for premoothing.
-       * @param postSmoothingSteps The number of smoothing steps for postmoothing.
-       * @param additive Whether to use additive multigrid.
-       * @deprecated Use constructor
-       * AMG(const OperatorHierarchy&, CoarseSolver&, const SmootherArgs, const Parameters&)
-       * instead.
-       * All parameters can be set in the criterion!
-       */
-      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-          const SmootherArgs& smootherArgs, std::size_t gamma,
-          std::size_t preSmoothingSteps,
-          std::size_t postSmoothingSteps,
-          bool additive=false) DUNE_DEPRECATED;
-
       /**
        * @brief Construct a new amg with a specific coarse solver.
        * @param matrices The already set up matix hierarchy.
@@ -128,33 +104,6 @@ namespace Dune
        */
       AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, const Parameters& parms);
-
-      /**
-       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
-       *
-       * As coarse solver a preconditioned CG method with the smoother as preconditioner
-       * will be used. The matrix hierarchy is built automatically.
-       * @param fineOperator The operator on the fine level.
-       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
-       * or UnsymmetricCriterion.
-       * @param smootherArgs The arguments for constructing the smoothers.
-       * @param gamma 1 for V-cycle, 2 for W-cycle
-       * @param preSmoothingSteps The number of smoothing steps for premoothing.
-       * @param postSmoothingSteps The number of smoothing steps for postmoothing.
-       * @param additive Whether to use additive multigrid.
-       * @param pinfo The information about the parallel distribution of the data.
-       * @deprecated Use
-       * AMG(const Operator&, const C&, const SmootherArgs, const ParallelInformation)
-       * instead.
-       * All parameters can be set in the criterion!
-       */
-      template<class C>
-      AMG(const Operator& fineOperator, const C& criterion,
-          const SmootherArgs& smootherArgs, std::size_t gamma,
-          std::size_t preSmoothingSteps,
-          std::size_t postSmoothingSteps,
-          bool additive=false,
-          const ParallelInformation& pinfo=ParallelInformation()) DUNE_DEPRECATED;
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -184,6 +133,12 @@ namespace Dune
 
       /** \copydoc Preconditioner::apply */
       void apply(Domain& v, const Range& d);
+
+      //! Category of the preconditioner (see SolverCategory::Category)
+      virtual SolverCategory::Category category() const
+      {
+        return category_;
+      }
 
       /** \copydoc Preconditioner::post */
       void post(Domain& x);
@@ -318,13 +273,10 @@ namespace Dune
       Hierarchy<Domain,A>* lhs_;
       /** @brief The total update for the outer solver. */
       Hierarchy<Domain,A>* update_;
-      /** @brief The type of the chooser of the scalar product. */
-      typedef Dune::ScalarProductChooser<X,PI,M::category> ScalarProductChooser;
       /** @brief The type of the scalar product for the coarse solver. */
-      typedef typename ScalarProductChooser::ScalarProduct ScalarProduct;
-      typedef std::shared_ptr<ScalarProduct> ScalarProductPointer;
+      using ScalarProduct = Dune::ScalarProduct<X>;
       /** @brief Scalar product on the coarse level. */
-      ScalarProductPointer scalarProduct_;
+      std::shared_ptr<ScalarProduct> scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -335,6 +287,8 @@ namespace Dune
       bool additive;
       bool coarsesolverconverged;
       std::shared_ptr<Smoother> coarseSmoother_;
+      /** @brief The solver category. */
+      SolverCategory::Category category_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
     };
@@ -348,7 +302,9 @@ namespace Dune
       preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
       buildHierarchy_(amg.buildHierarchy_),
       additive(amg.additive), coarsesolverconverged(amg.coarsesolverconverged),
-      coarseSmoother_(amg.coarseSmoother_), verbosity_(amg.verbosity_)
+      coarseSmoother_(amg.coarseSmoother_),
+      category_(amg.category_),
+      verbosity_(amg.verbosity_)
     {
       if(amg.rhs_)
         rhs_=new Hierarchy<Range,A>(*amg.rhs_);
@@ -361,61 +317,22 @@ namespace Dune
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
-                         std::size_t gamma, std::size_t preSmoothingSteps,
-                         std::size_t postSmoothingSteps, bool additive_)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
-        rhs_(), lhs_(), update_(), scalarProduct_(0),
-        gamma_(gamma), preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(false),
-        additive(additive_), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(2)
-    {
-      assert(matrices_->isBuilt());
-
-      // build the necessary smoother hierarchies
-      matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
-    }
-
-    template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
-                         const SmootherArgs& smootherArgs,
                          const Parameters& parms)
-      : matrices_(&matrices), smootherArgs_(smootherArgs),
+      : matrices_(stackobject_to_shared_ptr(matrices)), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
         rhs_(), lhs_(), update_(), scalarProduct_(0),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(parms.debugLevel())
+        coarseSmoother_(),
+#warning should category be retrieved from matrices?
+        category_(SolverCategory::category(*smoothers_->coarsest())),
+        verbosity_(parms.debugLevel())
     {
       assert(matrices_->isBuilt());
 
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
-    }
-
-    template<class M, class X, class S, class PI, class A>
-    template<class C>
-    AMG<M,X,S,PI,A>::AMG(const Operator& matrix,
-                         const C& criterion,
-                         const SmootherArgs& smootherArgs,
-                         std::size_t gamma, std::size_t preSmoothingSteps,
-                         std::size_t postSmoothingSteps,
-                         bool additive_,
-                         const PI& pinfo)
-      : smootherArgs_(smootherArgs),
-        smoothers_(new Hierarchy<Smoother,A>), solver_(),
-        rhs_(), lhs_(), update_(), scalarProduct_(), gamma_(gamma),
-        preSteps_(preSmoothingSteps), postSteps_(postSmoothingSteps), buildHierarchy_(true),
-        additive(additive_), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(criterion.debugLevel())
-    {
-      static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
-                    "Matrix and Solver must match in terms of category!");
-      // TODO: reestablish compile time checks.
-      //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
-      //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, const_cast<Operator&>(matrix), pinfo);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -430,10 +347,12 @@ namespace Dune
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(), verbosity_(criterion.debugLevel())
+        coarseSmoother_(),
+        category_(SolverCategory::category(pinfo)),
+        verbosity_(criterion.debugLevel())
     {
-      static_assert(static_cast<int>(M::category)==static_cast<int>(S::category),
-                         "Matrix and Solver must match in terms of category!");
+      if(SolverCategory::category(matrix) != SolverCategory::category(pinfo))
+        DUNE_THROW(InvalidSolverCategory, "Matrix and Communication must have the same SolverCategory!");
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
@@ -461,6 +380,71 @@ namespace Dune
       rhs_=nullptr;
     }
 
+    template <class Matrix,
+              class Vector>
+    struct DirectSolverSelector
+    {
+      typedef typename Matrix :: field_type field_type;
+      enum SolverType { umfpack, superlu, none };
+
+      static constexpr SolverType solver =
+#if DISABLE_AMG_DIRECTSOLVER
+        none;
+#elif HAVE_SUITESPARSE_UMFPACK
+        UMFPackMethodChooser< field_type > :: valid ? umfpack : none ;
+#elif HAVE_SUPERLU
+        superlu ;
+#else
+        none;
+#endif
+
+      template <class M, SolverType>
+      struct Solver
+      {
+        typedef InverseOperator<Vector,Vector> type;
+        static type* create(const M& mat, bool verbose, bool reusevector )
+        {
+          DUNE_THROW(NotImplemented,"DirectSolver not selected");
+          return nullptr;
+        }
+        static std::string name () { return "None"; }
+      };
+#if HAVE_SUITESPARSE_UMFPACK
+      template <class M>
+      struct Solver< M, umfpack >
+      {
+        typedef UMFPack< M > type;
+        static type* create(const M& mat, bool verbose, bool reusevector )
+        {
+          return new type(mat, verbose, reusevector );
+        }
+        static std::string name () { return "UMFPack"; }
+      };
+#endif
+#if HAVE_SUPERLU
+      template <class M>
+      struct Solver< M, superlu >
+      {
+        typedef SuperLU< M > type;
+        static type* create(const M& mat, bool verbose, bool reusevector )
+        {
+          return new type(mat, verbose, reusevector );
+        }
+        static std::string name () { return "SuperLU"; }
+      };
+#endif
+
+      // define direct solver type to be used
+      typedef Solver< Matrix, solver > SelectedSolver ;
+      typedef typename SelectedSolver :: type   DirectSolver;
+      static constexpr bool isDirectSolver = solver != none;
+      static std::string name() { return SelectedSolver :: name (); }
+      static DirectSolver* create(const Matrix& mat, bool verbose, bool reusevector )
+      {
+        return SelectedSolver :: create( mat, verbose, reusevector );
+      }
+    };
+
     template<class M, class X, class S, class PI, class A>
     template<class C>
     void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, Operator& matrix,
@@ -474,7 +458,8 @@ namespace Dune
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
 
-            if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()) {
+      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels())
+      {
         // We have the carsest level. Create the coarse Solver
         SmootherArgs sargs(smootherArgs_);
         sargs.iterations = 1;
@@ -491,34 +476,37 @@ namespace Dune
         }
 
         coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
-        scalarProduct_.reset(ScalarProductChooser::construct(cargs.getComm()));
+        scalarProduct_ = createScalarProduct<X>(cargs.getComm(),category());
 
-#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
-#if HAVE_SUITESPARSE_UMFPACK
-#define DIRECTSOLVER UMFPack
-#else
-#define DIRECTSOLVER SuperLU
-#endif
+        typedef DirectSolverSelector< typename M::matrix_type, X > SolverSelector;
+
         // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if(std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+        if( SolverSelector::isDirectSolver &&
+            (std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
            || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
            || (matrices_->parallelInformation().coarsest().isRedistributed()
                && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0)) { // redistribute and 1 proc
+               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0) )
+          )
+        { // redistribute and 1 proc
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {
             if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
+            {
               // We are still participating on this level
-              solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+              solver_.reset(SolverSelector::create(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
+            }
             else
               solver_.reset();
-          }else
-            solver_.reset(new DIRECTSOLVER<typename M::matrix_type>(matrices_->matrices().coarsest()->getmat(), false, false));
+          }
+          else
+          {
+            solver_.reset(SolverSelector::create(matrices_->matrices().coarsest()->getmat(), false, false));
+          }
           if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<< "Using a direct coarse solver (" << static_cast< DIRECTSOLVER<typename M::matrix_type>* >(solver_.get())->name() << ")" << std::endl;
-        }else
-#undef DIRECTSOLVER
-#endif // HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK
+            std::cout<< "Using a direct coarse solver (" << SolverSelector::name() << ")" << std::endl;
+        }
+        else
         {
           if(matrices_->parallelInformation().coarsest().isRedistributed())
           {

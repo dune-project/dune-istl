@@ -98,11 +98,6 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    enum {
-      //! \brief The solver category.
-      category=SolverCategory::overlapping
-    };
-
     /**
      * @brief constructor: just store a reference to a matrix.
      *
@@ -137,6 +132,12 @@ namespace Dune {
       return _A_;
     }
 
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
+    }
+
   private:
     const matrix_type& _A_;
     const communication_type& communication;
@@ -144,95 +145,7 @@ namespace Dune {
 
   /** @} */
 
-  /**
-   * @addtogroup ISTL_SP
-   * @{
-   */
-  /**
-   * \brief Scalar product for overlapping schwarz methods.
-   *
-   * Consistent vectors in interior and border are assumed.
-   * \tparam  X The type of the sequential vector to use for the left hand side,
-   * e.g. BlockVector or another type fulfilling the ISTL
-   * vector interface.
-   * \tparam C The type of the communication object.
-   * This must either be OwnerOverlapCopyCommunication or a type
-   * implementing the same interface.
-   */
-  template<class X, class C>
-  class OverlappingSchwarzScalarProduct : public ScalarProduct<X>
-  {
-  public:
-    //! \brief The type of the vector to compute the scalar product on.
-    //!
-    //! E.g. BlockVector or another type fulfilling the ISTL
-    //! vector interface.
-    typedef X domain_type;
-    //!  \brief The field type used by the vector type domain_type.
-    typedef typename X::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    //! \brief The type of the communication object.
-    //!
-    //! This must either be OwnerOverlapCopyCommunication or a type
-    //! implementing the same interface.
-    typedef C communication_type;
-
-    //! define the category
-    enum {category=SolverCategory::overlapping};
-
-    /*! \brief Constructor needs to know the grid
-     * \param com The communication object for syncing overlap and copy
-     * data points. (E.~g. OwnerOverlapCopyCommunication )
-     */
-    OverlappingSchwarzScalarProduct (const communication_type& com)
-      : communication(com)
-    {}
-
-    /*! \brief Dot product of two vectors.
-       It is assumed that the vectors are consistent on the interior+border
-       partition.
-     */
-    virtual field_type dot (const X& x, const X& y)
-    {
-      field_type result;
-      communication.dot(x,y,result);
-      return result;
-    }
-
-    /*! \brief Norm of a right-hand side vector.
-       The vector must be consistent on the interior+border partition
-     */
-    virtual real_type norm (const X& x)
-    {
-      return communication.norm(x);
-    }
-
-  private:
-    const communication_type& communication;
-  };
-
-  template<class X, class C>
-  struct ScalarProductChooser<X,C,SolverCategory::overlapping>
-  {
-    /** @brief The type of the scalar product for the overlapping case. */
-    typedef OverlappingSchwarzScalarProduct<X,C> ScalarProduct;
-    /** @brief The type of the communication object to use. */
-    typedef C communication_type;
-
-    enum {
-      /** @brief The solver category. */
-      solverCategory=SolverCategory::overlapping
-    };
-
-    static ScalarProduct* construct(const communication_type& comm)
-    {
-      return new ScalarProduct(comm);
-    }
-  };
-
-  /**
-   * @}
-   *
+  /*
    * @addtogroup ISTL_Prec
    * @{
    */
@@ -262,12 +175,6 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief The type of the communication object.
     typedef C communication_type;
-
-    // define the category
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::overlapping
-    };
 
     /*! \brief Constructor.
 
@@ -312,6 +219,12 @@ namespace Dune {
        \copydoc Preconditioner::post(X&)
      */
     virtual void post (X& x) {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
+    }
 
   private:
     //! \brief The matrix we operate on.
@@ -374,12 +287,6 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    // define the category
-    enum {
-      //! \brief The category the precondtioner is part of.
-      category=SolverCategory::overlapping
-    };
-
     /*! \brief Constructor.
 
        constructor gets all parameters to operate the prec.
@@ -428,6 +335,12 @@ namespace Dune {
     virtual void post (X& x)
     {
       preconditioner.post(x);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::overlapping;
     }
 
   private:

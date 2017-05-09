@@ -49,6 +49,7 @@ install(FILES
    solvertype.hh
    spqr.hh
    superlu.hh
+   superlufunctions.hh
    supermatrix.hh
    umfpack.hh
    vbvector.hh

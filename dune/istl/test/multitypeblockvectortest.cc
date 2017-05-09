@@ -60,6 +60,11 @@ int main(int argc, char** argv) try
   multiVector2 *= (int)2;
   multiVector2 *= (float)0.5;
 
+  // Test assignment from scalar
+  multiVector2 = (double)0.5;
+  multiVector2 = (int)2;
+  multiVector2 = (float)0.5;
+
   // Test axpy
   multiVector2.axpy(-1, multiVector);
 

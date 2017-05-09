@@ -4,32 +4,8 @@
 #define DUNE_ISTL_SUPERLU_HH
 
 #if HAVE_SUPERLU
-#ifdef TRUE
-#undef TRUE
-#endif
-#ifdef FALSE
-#undef FALSE
-#endif
-#ifndef SUPERLU_NTYPE
-#define  SUPERLU_NTYPE 1
-#endif
 
-#if SUPERLU_NTYPE==0
-#include "slu_sdefs.h"
-#endif
-
-#if SUPERLU_NTYPE==1
-#include "slu_ddefs.h"
-#endif
-
-#if SUPERLU_NTYPE==2
-#include "slu_cdefs.h"
-#endif
-
-#if SUPERLU_NTYPE>=3
-#include "slu_zdefs.h"
-#endif
-
+#include "superlufunctions.hh"
 #include "solvers.hh"
 #include "supermatrix.hh"
 #include <algorithm>
@@ -81,7 +57,7 @@ namespace Dune
   struct QuerySpaceChooser
   {};
 
-#if SUPERLU_NTYPE==0
+#if HAVE_SLU_SDEFS_H
   template<>
   struct SuperLUDenseMatChooser<float>
   {
@@ -129,7 +105,7 @@ namespace Dune
 
 #endif
 
-#if SUPERLU_NTYPE==1
+#if HAVE_SLU_DDEFS_H
 
   template<>
   struct SuperLUDenseMatChooser<double>
@@ -176,7 +152,7 @@ namespace Dune
   };
 #endif
 
-#if SUPERLU_NTYPE>=3
+#if HAVE_SLU_ZDEFS_H
   template<>
   struct SuperLUDenseMatChooser<std::complex<double> >
   {
@@ -223,7 +199,7 @@ namespace Dune
   };
 #endif
 
-#if SUPERLU_NTYPE==2
+#if HAVE_SLU_CDEFS_H
   template<>
   struct SuperLUDenseMatChooser<std::complex<float> >
   {
@@ -307,6 +283,13 @@ namespace Dune
     typedef Dune::BlockVector<
         FieldVector<T,n>,
         typename A::template rebind<FieldVector<T,n> >::other> range_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::Category::sequential;
+    }
+
     /**
      * @brief Constructs the SuperLU solver.
      *

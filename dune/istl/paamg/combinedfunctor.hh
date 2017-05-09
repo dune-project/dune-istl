@@ -3,7 +3,10 @@
 #ifndef DUNE_AMG_COMBINEDFUNCTOR_HH
 #define DUNE_AMG_COMBINEDFUNCTOR_HH
 
-#include <dune/common/tuples.hh>
+#include <tuple>
+
+#include <dune/common/unused.hh>
+
 namespace Dune
 {
   namespace Amg
@@ -15,7 +18,7 @@ namespace Dune
       template<class TT, class T>
       static void apply(TT tuple, const T& t)
       {
-        get<i-1>(tuple) (t);
+        std::get<i-1>(tuple) (t);
         ApplyHelper<i-1>::apply(tuple, t);
       }
     };
@@ -42,7 +45,7 @@ namespace Dune
       template<class T1>
       void operator()(const T1& t)
       {
-        ApplyHelper<tuple_size<T>::value>::apply(*this, t);
+        ApplyHelper<std::tuple_size<T>::value>::apply(*this, t);
       }
     };
 

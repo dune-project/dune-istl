@@ -53,11 +53,15 @@ namespace Dune {
   // depending on the template parameter used.
   template<typename T>
   struct UMFPackMethodChooser
-  {};
+  {
+    static constexpr bool valid = false ;
+  };
 
   template<>
   struct UMFPackMethodChooser<double>
   {
+    static constexpr bool valid = true ;
+
     template<typename... A>
     static void defaults(A... args)
     {
@@ -113,6 +117,8 @@ namespace Dune {
   template<>
   struct UMFPackMethodChooser<std::complex<double> >
   {
+    static constexpr bool valid = true ;
+
     template<typename... A>
     static void defaults(A... args)
     {
@@ -203,6 +209,12 @@ namespace Dune {
     typedef Dune::BlockVector<
         FieldVector<T,n>,
         typename A::template rebind<FieldVector<T,n> >::other> range_type;
+
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::Category::sequential;
+    }
 
     /** @brief Construct a solver object from a BCRSMatrix
      *

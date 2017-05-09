@@ -70,7 +70,7 @@ int main(int argc, char** argv)
   mat.mv(x, b);
   x=99;
 
-  Dune::RestartedGMResSolver<BVector> solver3(fop, prec0, 1e-3,5,20,2,false);
+  Dune::RestartedGMResSolver<BVector> solver3(fop, prec0, 1e-3,5,20,2);
   solver3.apply(x,b, res);
 
   return 0;
