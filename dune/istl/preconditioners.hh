@@ -17,6 +17,7 @@
 #include "istlexception.hh"
 #include "matrixutils.hh"
 #include "gsetc.hh"
+#include "ildl.hh"
 #include "ilu.hh"
 
 
@@ -736,6 +737,107 @@ namespace Dune {
   };
 
 
+  /**
+   * \brief   sequential ILDL preconditioner
+   * \author  Martin Nolte
+   *
+   * Wraps the naked ISTL generic ILDL preconditioner into the solver framework.
+   *
+   * \tparam  M  type of matrix to operate on
+   * \tparam  X  type of update
+   * \tparam  Y  type of defect
+   **/
+  template< class M, class X, class Y >
+  class SeqILDL
+    : public Preconditioner< X, Y >
+  {
+    typedef SeqILDL< M, X, Y > This;
+    typedef Preconditioner< X, Y > Base;
+
+  public:
+    /** \brief type of matrix the preconditioner is for **/
+    typedef std::remove_const_t< M > matrix_type;
+    /** \brief domain type of the preconditioner **/
+    typedef X domain_type;
+    /** \brief range type of the preconditioner **/
+    typedef Y range_type;
+    /** \brief field type of the preconditioner **/
+    typedef typename X::field_type field_type;
+
+    /**
+     * \brief constructor
+     *
+     * The constructor copies the matrix A and computes its ILU decomposition.
+     *
+     * \param[in]  A      matrix to operate on
+     * \param[in]  relax  relaxation factor
+     **/
+    explicit SeqILDL ( const matrix_type &A, field_type relax = field_type( 1 ) )
+      : decomposition_( A.N(), A.M(), matrix_type::random ),
+        relax_( relax )
+    {
+      // setup row sizes for lower triangular matrix
+      for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
+      {
+        const auto &A_i = *i;
+        const auto ij = A_i.find( i.index() );
+        if( ij != A_i.end() )
+          decomposition_.setrowsize( i.index(), ij.offset()+1 );
+        else
+          DUNE_THROW( ISTLError, "diagonal entry missing" );
+      }
+      decomposition_.endrowsizes();
+
+      // setup row indices for lower triangular matrix
+      for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
+      {
+        const auto &A_i = *i;
+        for( auto ij = A_i.begin(); ij.index() < i.index() ; ++ij )
+          decomposition_.addindex( i.index(), ij.index() );
+        decomposition_.addindex( i.index(), i.index() );
+      }
+      decomposition_.endindices();
+
+      // copy values of lower triangular matrix
+      auto i = A.begin();
+      for( auto row = decomposition_.begin(), rowend = decomposition_.end(); row != rowend; ++row, ++i )
+      {
+        auto ij = i->begin();
+        for( auto col = row->begin(), colend = row->end(); col != colend; ++col, ++ij )
+          *col = *ij;
+      }
+
+      // perform ILDL decomposition
+      bildl_decompose( decomposition_ );
+    }
+
+    /** \copydoc Preconditioner::pre(X&,Y&) **/
+    void pre ( X &x, Y &b ) override
+    {
+      DUNE_UNUSED_PARAMETER( x );
+      DUNE_UNUSED_PARAMETER( b );
+    }
+
+    /** \copydoc Preconditioner::apply(X&,const Y&) **/
+    void apply ( X &v, const Y &d ) override
+    {
+      bildl_backsolve( decomposition_, v, d, true );
+      v *= relax_;
+    }
+
+    /** \copydoc Preconditioner::post(X&) **/
+    void post ( X &x ) override
+    {
+      DUNE_UNUSED_PARAMETER( x );
+    }
+
+    /** \copydoc Preconditioner::category() **/
+    SolverCategory::Category category () const override { return SolverCategory::sequential; }
+
+  private:
+    matrix_type decomposition_;
+    field_type relax_;
+  };
 
   /** @} end documentation */
 
