@@ -71,15 +71,15 @@ void test_basearray ()
 
   // allocation
   typedef double Type; // any type
-  Dune::base_array<Type> a(20);
+  Dune::Imp::base_array<Type> a(20);
 
   // modifying iterator
-  for (Dune::base_array<Type>::iterator i=a.begin(); i!=a.end(); ++i)
+  for (Dune::Imp::base_array<Type>::iterator i=a.begin(); i!=a.end(); ++i)
     *i = 1.0;
 
   // read only iterator
   Type sum=0;
-  for (Dune::base_array<Type>::const_iterator i=a.begin(); i!=a.end(); ++i)
+  for (Dune::Imp::base_array<Type>::const_iterator i=a.begin(); i!=a.end(); ++i)
     sum += *i;
 
   // random access
@@ -87,18 +87,14 @@ void test_basearray ()
   sum = a[3];
 
   // empty array
-  Dune::base_array<Type> b;
+  Dune::Imp::base_array<Type> b;
 
   // assignment
   b = a;
 
   // window mode
   Type p[13];
-  Dune::base_array_window<Type> c(p+4,3); // c contains p[4]...p[6]
-
-  // copy window
-  b = c;
-  Dune::base_array<Type> d(c);
+  Dune::Imp::base_array_window<Type> c(p+4,3); // c contains p[4]...p[6]
 
   // move window to p[6]...p[10]
   c.move(2,5);
@@ -212,10 +208,6 @@ void test_VariableBlockVector ()
     i.setblocksize((i.index()%10)+1);
 
   x = 1.0;
-
-  Vector::block_type xi;
-
-  xi = x[13];
 
   RN b;
 

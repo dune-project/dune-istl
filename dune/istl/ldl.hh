@@ -83,6 +83,12 @@ namespace Dune {
     /** @brief The type of the range of the solver. */
     typedef Dune::BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> range_type;
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::Category::sequential;
+    }
+
     /**
      * @brief Construct a solver object from a BCRSMatrix.
      *
@@ -286,7 +292,7 @@ namespace Dune {
 
       double Info [AMD_INFO];
       if(amd_order (dimMat, ldlMatrix_.getColStart(), ldlMatrix_.getRowIndex(), P_, (double *) NULL, Info) < AMD_OK)
-        std::cout<<"WARNING: call to AMD failed."<<std::endl;
+        DUNE_THROW(InvalidStateException,"Error: AMD failed!");
       if(verbose_ > 0)
         amd_info (Info);
       // compute the symbolic factorisation
@@ -304,7 +310,7 @@ namespace Dune {
       delete [] Lnz_;
 
       if(rank!=dimMat)
-        std::cout<<"WARNING: matrix is singular."<<std::endl;
+        DUNE_THROW(InvalidStateException,"Error: LDL factorisation failed!");
     }
 
     LDLMatrix ldlMatrix_;

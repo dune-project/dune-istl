@@ -5,26 +5,6 @@
 
 #if HAVE_SUPERLU
 
-#ifndef SUPERLU_NTYPE
-#define SUPERLU_NTYPE 1
-#endif
-
-#if SUPERLU_NTYPE==0
-#include "slu_sdefs.h"
-#endif
-
-#if SUPERLU_NTYPE==1
-#include "slu_ddefs.h"
-#endif
-
-#if SUPERLU_NTYPE==2
-#include "slu_cdefs.h"
-#endif
-
-#if SUPERLU_NTYPE>=3
-#include "slu_zdefs.h"
-#endif
-
 #include "bcrsmatrix.hh"
 #include "bvector.hh"
 #include <dune/common/fmatrix.hh>
@@ -33,6 +13,8 @@
 #include <limits>
 
 #include"colcompmatrix.hh"
+
+#include "superlufunctions.hh"
 
 namespace Dune
 {
@@ -45,7 +27,7 @@ namespace Dune
   struct SuperMatrixPrinter
   {};
 
-#if SUPERLU_NTYPE==0
+#if HAVE_SLU_SDEFS_H
   template<>
   struct SuperMatrixCreateSparseChooser<float>
   {
@@ -68,7 +50,7 @@ namespace Dune
   };
 #endif
 
-#if SUPERLU_NTYPE==1
+#if HAVE_SLU_DDEFS_H
   template<>
   struct SuperMatrixCreateSparseChooser<double>
   {
@@ -91,7 +73,7 @@ namespace Dune
   };
 #endif
 
-#if SUPERLU_NTYPE==2
+#if HAVE_SLU_CDEFS_H
   template<>
   struct SuperMatrixCreateSparseChooser<std::complex<float> >
   {
@@ -114,7 +96,7 @@ namespace Dune
   };
 #endif
 
-#if SUPERLU_NTYPE>=3
+#if HAVE_SLU_ZDEFS_H
   template<>
   struct SuperMatrixCreateSparseChooser<std::complex<double> >
   {

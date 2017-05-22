@@ -10,7 +10,6 @@
 #include "combinedfunctor.hh"
 
 #include <dune/common/timer.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
@@ -23,6 +22,7 @@
 #include <complex>
 #include <limits>
 #include <ostream>
+#include <tuple>
 
 namespace Dune
 {
@@ -617,8 +617,8 @@ namespace Dune
        *         the number of skipped aggregates built.
        */
       template<class M, class G, class C>
-      tuple<int,int,int,int> buildAggregates(const M& matrix, G& graph, const C& criterion,
-                                             bool finestLevel);
+      std::tuple<int,int,int,int> buildAggregates(const M& matrix, G& graph, const C& criterion,
+                                                  bool finestLevel);
 
       /**
        * @brief Breadth first search within an aggregate
@@ -944,9 +944,9 @@ namespace Dune
        *         the number of skipped aggregates built.
        */
       template<class M, class C>
-      tuple<int,int,int,int> build(const M& m, G& graph,
-                                   AggregatesMap<Vertex>& aggregates, const C& c,
-                                   bool finestLevel);
+      std::tuple<int,int,int,int> build(const M& m, G& graph,
+                                        AggregatesMap<Vertex>& aggregates, const C& c,
+                                        bool finestLevel);
     private:
       /**
        * @brief The allocator we use for our lists and the
@@ -1996,7 +1996,7 @@ namespace Dune
     {
       DependencyCounter unused, aggregated;
       typedef AggregateVisitor<DependencyCounter> Counter;
-      typedef tuple<Counter,Counter> CounterTuple;
+      typedef std::tuple<Counter,Counter> CounterTuple;
       CombinedFunctor<CounterTuple> visitors(CounterTuple(Counter(aggregates, AggregatesMap<Vertex>::UNAGGREGATED, unused), Counter(aggregates, aggregate, aggregated)));
       visitNeighbours(*graph_, vertex, visitors);
       return std::make_pair(unused.value(), aggregated.value());
@@ -2369,8 +2369,8 @@ namespace Dune
 
     template<typename V>
     template<typename M, typename G, typename C>
-    tuple<int,int,int,int> AggregatesMap<V>::buildAggregates(const M& matrix, G& graph, const C& criterion,
-                                                             bool finestLevel)
+    std::tuple<int,int,int,int> AggregatesMap<V>::buildAggregates(const M& matrix, G& graph, const C& criterion,
+                                                                  bool finestLevel)
     {
       Aggregator<G> aggregator;
       return aggregator.build(matrix, graph, *this, criterion, finestLevel);
@@ -2378,8 +2378,8 @@ namespace Dune
 
     template<class G>
     template<class M, class C>
-    tuple<int,int,int,int> Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c,
-                                                bool finestLevel)
+    std::tuple<int,int,int,int> Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c,
+                                                     bool finestLevel)
     {
       // Stack for fast vertex access
       Stack stack_(graph, *this, aggregates);
@@ -2519,8 +2519,8 @@ namespace Dune
                    <<" avg="<<avg/(conAggregates+isoAggregates)<<std::endl;
 
       delete aggregate_;
-      return make_tuple(conAggregates+isoAggregates,isoAggregates,
-                        oneAggregates,skippedAggregates);
+      return std::make_tuple(conAggregates+isoAggregates,isoAggregates,
+                             oneAggregates,skippedAggregates);
     }
 
 

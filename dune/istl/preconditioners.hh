@@ -1,4 +1,4 @@
-// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+e// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_ISTL_PRECONDITIONERS_HH
 #define DUNE_ISTL_PRECONDITIONERS_HH
@@ -63,7 +63,7 @@ namespace Dune {
    * @brief Turns an InverseOperator into a Preconditioner.
    * @tparam O The type of the inverse operator to wrap.
    */
-  template<class O, int c>
+  template<class O, int c = -1>
   class InverseOperator2Preconditioner :
     public Preconditioner<typename O::domain_type, typename O::range_type>
   {
@@ -76,32 +76,35 @@ namespace Dune {
     typedef typename range_type::field_type field_type;
     typedef O InverseOperator;
 
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=c
-    };
-
     /**
      * @brief Construct the preconditioner from the solver
      * @param inverse_operator The inverse operator to wrap.
      */
     InverseOperator2Preconditioner(InverseOperator& inverse_operator)
     : inverse_operator_(inverse_operator)
+    {
+      if(c != -1 && SolverCategory::category(inverse_operator_) != c)
+        DUNE_THROW(InvalidStateException, "User supplied solver category does not match that of the supplied iverser operator");
+    }
+
+    virtual void pre(domain_type&,range_type&)
     {}
 
-    void pre(domain_type&,range_type&)
-    {}
-
-    void apply(domain_type& v, const range_type& d)
+    virtual void apply(domain_type& v, const range_type& d)
     {
       InverseOperatorResult res;
       range_type copy(d);
       inverse_operator_.apply(v, copy, res);
     }
 
-    void post(domain_type&)
+    virtual void post(domain_type&)
     {}
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::category(inverse_operator_);
+    }
 
   private:
     InverseOperator& inverse_operator_;
@@ -137,12 +140,6 @@ namespace Dune {
 
     typedef field_type domain_value_type;
     typedef field_type range_value_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -192,6 +189,12 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(x);
     }
 
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   private:
     //! \brief The matrix we operate on.
     const M& _A_;
@@ -225,12 +228,6 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -297,6 +294,12 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(x);
     }
 
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   private:
     //! \brief the matrix we operate on.
     const M& _A_;
@@ -328,12 +331,6 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -381,6 +378,12 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(x);
     }
 
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   private:
     //! \brief The matrix we operate on.
     const M& _A_;
@@ -415,12 +418,6 @@ namespace Dune {
 
     typedef typename X::field_type domain_value_type;
     typedef typename Y::field_type range_value_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -468,6 +465,12 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(x);
     }
 
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   private:
     //! \brief The matrix we operate on.
     const M& _A_;
@@ -501,12 +504,6 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -553,6 +550,12 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(x);
     }
 
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   private:
     //! \brief The relaxation factor to use.
     field_type _w;
@@ -585,12 +588,6 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -639,6 +636,12 @@ namespace Dune {
       DUNE_UNUSED_PARAMETER(x);
     }
 
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
   private:
     //! \brief ILU(n) decomposition of the matrix we operate on.
     matrix_type ILU;
@@ -670,12 +673,6 @@ namespace Dune {
 
     using domain_value_type = field_type;
     using range_value_type = field_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::sequential
-    };
 
     /*! \brief Constructor.
 
@@ -717,6 +714,12 @@ namespace Dune {
     virtual void post (X& x)
     {
       DUNE_UNUSED_PARAMETER(x);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
     }
 
   private:

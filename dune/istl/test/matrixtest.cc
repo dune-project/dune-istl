@@ -280,6 +280,20 @@ void testSolve(const MatrixType& matrix)
     DUNE_THROW(ISTLError, "Solve() method doesn't appear to produce the solution!");
 }
 
+// //////////////////////////////////////////////////////////////
+//   Test transposing the matrix
+// //////////////////////////////////////////////////////////////
+template <class MatrixType>
+void testTranspose(const MatrixType& matrix)
+{
+  MatrixType transposedMatrix = matrix.transpose();
+
+  for(size_t i = 0; i < matrix.N(); i++)
+    for(size_t j = 0; j < matrix.M(); j++)
+      if(fabs(transposedMatrix[j][i] - matrix[i][j]) > 1e-10)
+        DUNE_THROW(ISTLError, "transpose() method produces wrong result!");
+}
+
 int main()
 {
 
@@ -312,6 +326,17 @@ int main()
           matrix[i][j][k][l] = (i+j)/((double)(k*l+1));            // just anything
 
   testSuperMatrix(matrix);
+
+  Matrix<FieldMatrix<double,1,1> > nonquadraticMatrix(1,2);
+  {
+    size_t n = 1;
+    for (size_t i=0; i<1; i++)
+      for (size_t j=0; j<2; j++)
+        nonquadraticMatrix[i][j] = n++;
+  }
+
+  testTranspose(nonquadraticMatrix);
+
 
   // ////////////////////////////////////////////////////////////
   //   Test the BCRSMatrix class -- a sparse dynamic matrix

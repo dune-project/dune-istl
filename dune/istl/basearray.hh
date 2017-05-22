@@ -18,6 +18,9 @@
 
 namespace Dune {
 
+/** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
+namespace Imp {
+
   /**  \brief A simple array container for objects of type B
 
      Implement.
@@ -39,6 +42,8 @@ namespace Dune {
    \todo There shouldn't be an allocator argument here, because the array is 'unmanaged'.
          And indeed, of the allocator, only its size_type is used.  Hence, the signature
          of this class should be changed to <class B, int stype>
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class base_array_unmanaged
@@ -270,6 +275,7 @@ namespace Dune {
            Error checking: no error checking is provided normally.
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
            enables error checking.
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class base_array_window : public base_array_unmanaged<B,A>
@@ -360,6 +366,7 @@ namespace Dune {
             Error checking: no error checking is provided normally.
             Setting the compile time switch DUNE_ISTL_WITH_CHECKING
             enables error checking.
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class base_array : public base_array_unmanaged<B,A>
@@ -426,27 +433,6 @@ namespace Dune {
       for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
     }
 
-    //! construct from base class object
-    base_array (const base_array_unmanaged<B,A>& _a)
-    {
-      const base_array& a = static_cast<const base_array&>(_a);
-
-      // allocate memory with same size as a
-      this->n = a.n;
-      if (this->n>0) {
-        this->p = allocator_.allocate(this->n);
-        new (this->p)B[this->n];
-      } else
-      {
-        this->n = 0;
-        this->p = 0;
-      }
-
-      // and copy elements
-      for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
-    }
-
-
     //! free dynamic memory
     ~base_array ()
     {
@@ -510,12 +496,6 @@ namespace Dune {
       return *this;
     }
 
-    //! assign from base class object
-    base_array& operator= (const base_array_unmanaged<B,A>& a)
-    {
-      return this->operator=(static_cast<const base_array&>(a));
-    }
-
   protected:
 
     A allocator_;
@@ -542,6 +522,8 @@ namespace Dune {
            Error checking: no error checking is provided normally.
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
            enables error checking.
+
+    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class compressed_base_array_unmanaged
@@ -768,6 +750,8 @@ namespace Dune {
     B *p;       // pointer to dynamically allocated built-in array
     size_type* j;     // the index set
   };
+
+} // end namespace Imp
 
 } // end namespace
 

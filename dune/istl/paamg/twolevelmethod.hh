@@ -3,6 +3,8 @@
 #ifndef DUNE_ISTL_TWOLEVELMETHOD_HH
 #define DUNE_ISTL_TWOLEVELMETHOD_HH
 
+#include <tuple>
+
 #include<dune/istl/operators.hh>
 #include"amg.hh"
 #include"galerkin.hh"
@@ -164,7 +166,7 @@ public:
 
     int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
-     tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
+    std::tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
        aggregatesMap_->buildAggregates(fineOperator.getmat(), pg, criterion_, true);
      std::cout<<"no aggregates="<<noAggregates<<" iso="<<isoAggregates<<" one="<<oneAggregates<<" skipped="<<skippedAggregates<<std::endl;
     // misuse coarsener to renumber aggregates
@@ -289,6 +291,12 @@ private:
       return apply(x,b,1e-8,res);
     }
 
+    //! Category of the solver (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return amg_.category();
+    }
+
     ~AMGInverseOperator()
     {
       if(!first_)
@@ -380,11 +388,6 @@ public:
    * @brief The type of the fine level smoother.
    */
   typedef S SmootherType;
-  // define the category
-  enum {
-    //! \brief The category the preconditioner is part of.
-    category=SolverCategory::sequential
-  };
 
   /**
    * @brief Constructs a two level method.
@@ -461,6 +464,12 @@ public:
     // Postsmoothing
     postsmooth(context, postSteps_);
 
+  }
+
+  //! Category of the preconditioner (see SolverCategory::Category)
+  virtual SolverCategory::Category category() const
+  {
+    return SolverCategory::sequential;
   }
 
 private:

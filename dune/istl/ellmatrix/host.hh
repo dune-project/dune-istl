@@ -456,7 +456,7 @@ namespace Dune {
 
 
       template<typename OF, typename OA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           OA
@@ -483,7 +483,7 @@ namespace Dune {
       }
 
       template<typename OF, typename OA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           OA
@@ -505,7 +505,7 @@ namespace Dune {
       }
 
       template<typename OF, typename OA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           OA
@@ -580,7 +580,7 @@ namespace Dune {
       }
 
       template<typename XF, typename XA, typename YF, typename YA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           XA,
@@ -610,7 +610,7 @@ namespace Dune {
       }
 
       template<typename XF, typename XA, typename YF, typename YA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           XA,
@@ -640,7 +640,7 @@ namespace Dune {
       }
 
       template<typename XF, typename XA, typename YF, typename YA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           XA,
@@ -670,7 +670,7 @@ namespace Dune {
       }
 
       template<typename AF, typename XF, typename XA, typename YF, typename YA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           XA,
@@ -703,7 +703,7 @@ namespace Dune {
 
       /*
       template<typename OF, typename OA>
-      typename enable_if<
+      typename std::enable_if<
         Memory::allocators_are_interoperable<
           allocator_type,
           OA

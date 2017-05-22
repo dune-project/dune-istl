@@ -20,6 +20,11 @@ dune_add_test(SOURCES matrixutilstest.cc)
 
 dune_add_test(SOURCES matrixtest.cc)
 
+if(Vc_FOUND)
+dune_add_test(SOURCES multirhstest.cc)
+  add_dune_vc_flags(multirhstest)
+endif(Vc_FOUND)
+
 dune_add_test(SOURCES bvectortest.cc)
 
 dune_add_test(SOURCES vbvectortest.cc)
@@ -45,56 +50,48 @@ dune_add_test(SOURCES inverseoperator2prectest.cc)
 
 dune_add_test(SOURCES scaledidmatrixtest.cc)
 
-dune_add_test(SOURCES solveraborttest.cc
-              SKIP_ON_77)
+dune_add_test(SOURCES solvertest.cc)
+
+dune_add_test(SOURCES solveraborttest.cc)
 
 # Pardiso tests
-dune_add_test(SOURCES test_pardiso.cc
-              SKIP_ON_77)
+  dune_add_test(SOURCES test_pardiso.cc)
 
 # SuperLU tests
-dune_add_test(NAME superlustest
-              SOURCES superlutest.cc
-              COMPILE_DEFINITIONS SUPERLU_NTYPE=0
-              SKIP_ON_77)
+  dune_add_test(NAME superlustest
+                SOURCES superlutest.cc
+                COMPILE_DEFINITIONS SUPERLU_NTYPE=0)
 
-dune_add_test(SOURCES superlutest.cc
-              SKIP_ON_77)
+  dune_add_test(SOURCES superlutest.cc)
 
-dune_add_test(NAME superluctest
-              SOURCES superlutest.cc
-              COMPILE_DEFINITIONS SUPERLU_NTYPE=2
-              SKIP_ON_77)
+  dune_add_test(NAME superluctest
+                SOURCES superlutest.cc
+                COMPILE_DEFINITIONS SUPERLU_NTYPE=2)
 
-dune_add_test(NAME superluztest
-              SOURCES superlutest.cc
-              COMPILE_DEFINITIONS SUPERLU_NTYPE=3
-              SKIP_ON_77)
+  dune_add_test(NAME superluztest
+                SOURCES superlutest.cc
+                COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
 
-dune_add_test(SOURCES complexrhstest.cc
-              COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
+  dune_add_test(SOURCES complexrhstest.cc
+                COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
 
 # SuiteSparse tests
-dune_add_test(SOURCES umfpacktest.cc
-              SKIP_ON_77)
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
+  dune_add_test(SOURCES umfpacktest.cc)
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 
-dune_add_test(SOURCES ldltest.cc
-              SKIP_ON_77)
+dune_add_test(SOURCES ldltest.cc)
 
-dune_add_test(SOURCES spqrtest.cc
-              SKIP_ON_77)
+dune_add_test(SOURCES spqrtest.cc)
 
-dune_add_test(SOURCES overlappingschwarztest.cc
-              SKIP_ON_77)
+  dune_add_test(SOURCES overlappingschwarztest.cc)
 
 # MPI tests
-if(MPI_FOUND)
-  dune_add_test(SOURCES matrixredisttest.cc)
+dune_add_test(SOURCES matrixredisttest.cc
+              CMAKE_GUARD MPI_FOUND)
 
-  dune_add_test(SOURCES vectorcommtest.cc)
-endif()
+dune_add_test(SOURCES vectorcommtest.cc
+              CMAKE_GUARD MPI_FOUND)
 
-dune_add_test(SOURCES matrixmarkettest.cc)
+  dune_add_test(SOURCES matrixmarkettest.cc)
 
 exclude_from_headercheck(complexdata.hh)

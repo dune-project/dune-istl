@@ -2,6 +2,7 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef DUNE_ISTL_MATRIXREDISTRIBUTE_HH
 #define DUNE_ISTL_MATRIXREDISTRIBUTE_HH
+#include <memory>
 #include "repartition.hh"
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/indexset.hh>
@@ -93,7 +94,7 @@ namespace Dune
     void checkInterface(const IS& source,
                         const IS& target, MPI_Comm comm)
     {
-      RemoteIndices<IS> *ri=new RemoteIndices<IS>(source, target, comm);
+      auto ri = std::make_unique<RemoteIndices<IS> >(source, target, comm);
       ri->template rebuild<true>();
       Interface inf;
       typename OwnerOverlapCopyCommunication<int>::OwnerSet flags;
@@ -113,11 +114,8 @@ namespace Dune
         std::cout<<rank<<": redist interface :"<<interface<<std::endl;
 
         throw "autsch!";
-        delete ri;
-      }else
-
+      }
 #endif
-      delete ri;
     }
     void setSetup()
     {
@@ -814,8 +812,6 @@ namespace Dune
     ri.template redistribute<MatrixRowGatherScatter<M,IndexSet> >(origrow,newrow);
     if (origComm.getSolverCategory() != static_cast<int>(SolverCategory::nonoverlapping))
       newrow.setOverlapRowsToDirichlet();
-    if(newMatrix.N()>0&&newMatrix.N()<20)
-      printmatrix(std::cout, newMatrix, "redist", "row");
   }
 
   /**

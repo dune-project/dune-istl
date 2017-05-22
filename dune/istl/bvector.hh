@@ -25,6 +25,11 @@
 
 namespace Dune {
 
+  template<class B, class A=std::allocator<B> >
+  class BlockVectorWindow;
+
+/** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
+namespace Imp {
 
   /**
       \brief An unmanaged vector of blocks.
@@ -36,6 +41,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class block_vector_unmanaged : public base_array_unmanaged<B,A>
@@ -290,6 +297,7 @@ namespace Dune {
     {       }
   };
 
+} // end namespace Imp
   /**
      @addtogroup ISTL_SPMV
      @{
@@ -305,7 +313,7 @@ namespace Dune {
           enables error checking.
    */
   template<class B, class A=std::allocator<B> >
-  class BlockVector : public block_vector_unmanaged<B,A>
+  class BlockVector : public Imp::block_vector_unmanaged<B,A>
   {
   public:
 
@@ -330,15 +338,15 @@ namespace Dune {
     };
 
     //! make iterators available as types
-    typedef typename block_vector_unmanaged<B,A>::Iterator Iterator;
+    typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
 
     //! make iterators available as types
-    typedef typename block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
+    typedef typename Imp::block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
 
     //===== constructors and such
 
     //! makes empty vector
-    BlockVector () : block_vector_unmanaged<B,A>(),
+    BlockVector () : Imp::block_vector_unmanaged<B,A>(),
                      capacity_(0)
     {}
 
@@ -432,7 +440,7 @@ namespace Dune {
      */
     void reserve(size_type capacity, bool copyOldValues=true)
     {
-      if(capacity >= block_vector_unmanaged<B,A>::N() && capacity != capacity_) {
+      if(capacity >= Imp::block_vector_unmanaged<B,A>::N() && capacity != capacity_) {
         // save the old data
         B* pold = this->p;
 
@@ -446,7 +454,7 @@ namespace Dune {
             B* to = this->p;
             B* from = pold;
 
-            for(size_type i=0; i < block_vector_unmanaged<B,A>::N(); ++i, ++from, ++to)
+            for(size_type i=0; i < Imp::block_vector_unmanaged<B,A>::N(); ++i, ++from, ++to)
               *to = *from;
           }
           if(capacity_ > 0) {
@@ -494,7 +502,7 @@ namespace Dune {
      */
     void resize(size_type size, bool copyOldValues=true)
     {
-      if(size > block_vector_unmanaged<B,A>::N())
+      if (size > Imp::block_vector_unmanaged<B,A>::N())
         if(capacity_ < size)
           this->reserve(size, copyOldValues);
       this->n = size;
@@ -505,7 +513,7 @@ namespace Dune {
 
     //! copy constructor
     BlockVector (const BlockVector& a) :
-      block_vector_unmanaged<B,A>(a)
+      Imp::block_vector_unmanaged<B,A>(a)
     {
       // allocate memory with same size as a
       this->n = a.n;
@@ -518,30 +526,6 @@ namespace Dune {
       {
         this->n = 0;
         this->p = 0;
-      }
-
-      // and copy elements
-      for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
-    }
-
-    //! construct from base class object
-    BlockVector (const block_vector_unmanaged<B,A>& _a)
-    {
-      // upcast, because protected data inaccessible
-      const BlockVector& a = static_cast<const BlockVector&>(_a);
-
-      // allocate memory with same size as a
-      this->n = a.n;
-      capacity_ = a.capacity_;
-
-      if (capacity_>0) {
-        this->p = this->allocator_.allocate(capacity_);
-        new (this->p)B[capacity_];
-      } else
-      {
-        this->n = 0;
-        this->p = 0;
-        capacity_ = 0;
       }
 
       // and copy elements
@@ -591,20 +575,24 @@ namespace Dune {
       return *this;
     }
 
-    //! assign from base class object
-    BlockVector& operator= (const block_vector_unmanaged<B,A>& a)
-    {
-      // forward to regular assignement operator
-      return this->operator=(static_cast<const BlockVector&>(a));
-    }
-
     //! assign from scalar
     BlockVector& operator= (const field_type& k)
     {
       // forward to operator= in base class
-      (static_cast<block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
       return *this;
     }
+
+    //! Assignment from BlockVectorWindow
+    template<class OtherAlloc>
+    BlockVector& operator= (const BlockVectorWindow<B,OtherAlloc>& other)
+    {
+      resize(other.size());
+      for(std::size_t i=0; i<other.size(); ++i)
+        (*this)[i] = other[i];
+      return *this;
+    }
+
   protected:
     size_type capacity_;
 
@@ -639,6 +627,9 @@ namespace Dune {
     return s;
   }
 
+/** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
+namespace Imp {
+
   /** BlockVectorWindow adds window manipulation functions
           to the block_vector_unmanaged template.
 
@@ -654,9 +645,15 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
+#ifndef DOXYGEN
+  template<class B, class A>
+#else
   template<class B, class A=std::allocator<B> >
-  class BlockVectorWindow : public block_vector_unmanaged<B,A>
+#endif
+  class BlockVectorWindow : public Imp::block_vector_unmanaged<B,A>
   {
   public:
 
@@ -681,15 +678,15 @@ namespace Dune {
     };
 
     //! make iterators available as types
-    typedef typename block_vector_unmanaged<B,A>::Iterator Iterator;
+    typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
 
     //! make iterators available as types
-    typedef typename block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
+    typedef typename Imp::block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
 
 
     //===== constructors and such
     //! makes empty array
-    BlockVectorWindow () : block_vector_unmanaged<B,A>()
+    BlockVectorWindow () : Imp::block_vector_unmanaged<B,A>()
     {       }
 
     //! make array from given pointer and size
@@ -705,18 +702,6 @@ namespace Dune {
       this->n = a.n;
       this->p = a.p;
     }
-
-    //! construct from base class object with reference semantics!
-    BlockVectorWindow (const block_vector_unmanaged<B,A>& _a)
-    {
-      // cast needed to access protected data
-      const BlockVectorWindow& a = static_cast<const BlockVectorWindow&>(_a);
-
-      // make me point to the other's data
-      this->n = a.n;
-      this->p = a.p;
-    }
-
 
     //! assignment
     BlockVectorWindow& operator= (const BlockVectorWindow& a)
@@ -734,17 +719,10 @@ namespace Dune {
       return *this;
     }
 
-    //! assign from base class object
-    BlockVectorWindow& operator= (const block_vector_unmanaged<B,A>& a)
-    {
-      // forward to regular assignment operator
-      return this->operator=(static_cast<const BlockVectorWindow&>(a));
-    }
-
     //! assign from scalar
     BlockVectorWindow& operator= (const field_type& k)
     {
-      (static_cast<block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
       return *this;
     }
 
@@ -792,6 +770,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class compressed_block_vector_unmanaged : public compressed_base_array_unmanaged<B,A>
@@ -1044,6 +1024,8 @@ namespace Dune {
           Error checking: no error checking is provided normally.
           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
           enables error checking.
+
+   \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
   template<class B, class A=std::allocator<B> >
   class CompressedBlockVectorWindow : public compressed_block_vector_unmanaged<B,A>
@@ -1098,19 +1080,6 @@ namespace Dune {
       this->j = a.j;
     }
 
-    //! construct from base class object with reference semantics!
-    CompressedBlockVectorWindow (const compressed_block_vector_unmanaged<B,A>& _a)
-    {
-      // cast needed to access protected data (upcast)
-      const CompressedBlockVectorWindow& a = static_cast<const CompressedBlockVectorWindow&>(_a);
-
-      // make me point to the other's data
-      this->n = a.n;
-      this->p = a.p;
-      this->j = a.j;
-    }
-
-
     //! assignment
     CompressedBlockVectorWindow& operator= (const CompressedBlockVectorWindow& a)
     {
@@ -1126,13 +1095,6 @@ namespace Dune {
         for (size_type i=0; i<this->n; i++) this->j[i]=a.j[i];
       }
       return *this;
-    }
-
-    //! assign from base class object
-    CompressedBlockVectorWindow& operator= (const compressed_block_vector_unmanaged<B,A>& a)
-    {
-      // forward to regular assignment operator
-      return this->operator=(static_cast<const CompressedBlockVectorWindow&>(a));
     }
 
     //! assign from scalar
@@ -1201,6 +1163,8 @@ namespace Dune {
     }
   };
 
-} // end namespace
+} // end namespace 'Imp'
+
+} // end namespace 'Dune'
 
 #endif

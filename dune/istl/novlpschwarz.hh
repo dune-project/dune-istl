@@ -81,11 +81,6 @@ namespace Dune {
     typedef std::multimap<int,std::pair<int,RILIterator> > RIMap;
     typedef typename RIMap::iterator RIMapit;
 
-    enum {
-      //! \brief The solver category.
-      category=SolverCategory::nonoverlapping
-    };
-
     /**
      * @brief constructor: just store a reference to a matrix.
      *
@@ -231,6 +226,12 @@ namespace Dune {
       }
     }
 
+    //! Category of the linear operator (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
+    }
+
   private:
     const matrix_type& _A_;
     const communication_type& communication;
@@ -241,92 +242,15 @@ namespace Dune {
 
   /** @} */
 
-  /**
-   * @addtogroup ISTL_SP
-   * @{
-   */
-  /**
-   * \brief Nonoverlapping Scalar Product with communication object.
-   *
-   * Consistent vectors in interior and border are assumed.
-   */
-  template<class X, class C>
-  class NonoverlappingSchwarzScalarProduct : public ScalarProduct<X>
-  {
-  public:
-    //! \brief The type of the domain.
-    typedef X domain_type;
-    //!  \brief The type of the range
-    typedef typename X::field_type field_type;
-    //!  \brief The real-type of the range
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    //! \brief The type of the communication object
-    typedef C communication_type;
-
-    //! define the category
-    enum {category=SolverCategory::nonoverlapping};
-
-    /*! \brief Constructor
-     * \param com The communication object for syncing owner and copy
-     * data points. (E.~g. OwnerOverlapCommunication )
-     */
-    NonoverlappingSchwarzScalarProduct (const communication_type& com)
-      : communication(com)
-    {}
-
-    /*! \brief Dot product of two vectors.
-       It is assumed that the vectors are consistent on the interior+border
-       partition.
-     */
-    virtual field_type dot (const X& x, const X& y)
-    {
-      field_type result;
-      communication.dot(x,y,result);
-      return result;
-    }
-
-    /*! \brief Norm of a right-hand side vector.
-       The vector must be consistent on the interior+border partition
-     */
-    virtual real_type norm (const X& x)
-    {
-      return communication.norm(x);
-    }
-
-    /*! \brief make additive vector consistent
-     */
-    void make_consistent (X& x) const
-    {
-      communication.copyOwnerToAll(x,x);
-    }
-
-  private:
-    const communication_type& communication;
-  };
-
-  template<class X, class C>
-  struct ScalarProductChooser<X,C,SolverCategory::nonoverlapping>
-  {
-    /** @brief The type of the scalar product for the nonoverlapping case. */
-    typedef NonoverlappingSchwarzScalarProduct<X,C> ScalarProduct;
-    /** @brief The type of the communication object to use. */
-    typedef C communication_type;
-
-    enum {
-      /** @brief The solver category. */
-      solverCategory=SolverCategory::nonoverlapping
-    };
-
-    static ScalarProduct* construct(const communication_type& comm)
-    {
-      return new ScalarProduct(comm);
-    }
-  };
-
   namespace Amg
   {
     template<class T> class ConstructionTraits;
   }
+
+  /**
+   * @addtogroup ISTL_Prec
+   * @{
+   */
 
   /**
    * @brief Nonoverlapping parallel preconditioner.
@@ -348,12 +272,6 @@ namespace Dune {
     typedef typename P::range_type range_type;
     //! \brief The type of the communication object.
     typedef C communication_type;
-
-    // define the category
-    enum {
-      //! \brief The category the preconditioner is part of.
-      category=SolverCategory::nonoverlapping
-    };
 
     /*! \brief Constructor.
 
@@ -398,6 +316,12 @@ namespace Dune {
     virtual void post (domain_type& x)
     {
       preconditioner.post(x);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::nonoverlapping;
     }
 
   private:

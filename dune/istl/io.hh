@@ -639,6 +639,73 @@ namespace Dune {
     outStream.precision(oldPrecision);
   }
 
+  // Recursively print all the blocks
+  template<class V>
+  void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
+  {
+    for (const auto& entry : v)
+      writeVectorToMatlabHelper(entry, stream);
+  }
+
+  // Recursively print all the blocks -- specialization for FieldVector
+  template<class K, int n>
+  void writeVectorToMatlabHelper (const FieldVector<K,n>& v, std::ostream& s)
+  {
+    for (const auto& entry : v)
+    {
+      s << entry << std::endl;
+    }
+  }
+
+  // Recursively print all the blocks -- specialization for std::vector
+  template<class K>
+  void writeVectorToMatlabHelper (const std::vector<K>& v, std::ostream& s)
+  {
+    for (const auto& entry : v)
+    {
+      s << entry << std::endl;
+    }
+  }
+
+  // Recursively print all the blocks -- specialization for std::array
+  template<class K, std::size_t n>
+  void writeVectorToMatlabHelper (const std::array<K,n>& v, std::ostream& s)
+  {
+    for (const auto& entry : v)
+    {
+      s << entry << std::endl;
+    }
+  }
+
+  /**
+   * \brief Writes vectors in a Matlab-readable format
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   * This routine writes the argument block vector to a file with the name given
+   * by the filename argument. The file format is ASCII, with no header, and
+   * a single data column. Such a file can be read from Matlab using the
+   * command
+   * \code
+   * new_vec = load('filename');
+   * \endcode
+   * \param vector reference to vector to be printed to output file
+   * \param filename filename of output file
+   * \param outputPrecision (number of digits) which is used to write the output file
+   */
+  template <class VectorType>
+  void writeVectorToMatlab(const VectorType& vector,
+                           const std::string& filename, int outputPrecision = 18)
+  {
+    std::ofstream outStream(filename.c_str());
+    int oldPrecision = outStream.precision();
+    outStream.precision(outputPrecision);
+
+    writeVectorToMatlabHelper(vector, outStream);
+    outStream.precision(oldPrecision);
+  }
+
   /** @} end documentation */
 
 } // namespace Dune

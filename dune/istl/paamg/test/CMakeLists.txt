@@ -15,21 +15,22 @@ if(CMAKE_USE_PTHREADS_INIT)
   target_link_libraries(pthreadtwoleveltest ${CMAKE_THREAD_LIBS_INIT} ${DUNE_LIBS})
   dune_add_test(TARGET pthreadtwoleveltest)
 
-  if(SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
-    dune_add_test(NAME pthreaddirectamgtest
-                  SOURCES pthreadamgtest.cc
-                  COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>
-                  LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+  dune_add_test(NAME pthreaddirectamgtest
+                SOURCES pthreadamgtest.cc
+                COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>
+                LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
+                CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
-    dune_add_test(NAME pthreaddirectfastamgtest
-                  SOURCES pthreadamgtest.cc
-                  COMPILE_DEFINITIONS MYAMG=Dune::Amg::FastAMG<Operator,Vector>
-                  LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+  dune_add_test(NAME pthreaddirectfastamgtest
+                SOURCES pthreadamgtest.cc
+                COMPILE_DEFINITIONS MYAMG=Dune::Amg::FastAMG<Operator,Vector>
+                LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
+                CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
-    dune_add_test(NAME pthreaddirecttwoleveltest
-                  SOURCES pthreadtwoleveltest.cc
-                  LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-  endif()
+  dune_add_test(NAME pthreaddirecttwoleveltest
+                SOURCES pthreadtwoleveltest.cc
+                LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
+                CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 endif()
 
 # add an executable without SuperLU/UMFPack
@@ -53,14 +54,13 @@ if(SUPERLU_FOUND)
   dune_add_test(TARGET superlufastamgtest)
 endif()
 
-if(SuiteSparse_UMFPACK_FOUND)
-  dune_add_test(NAME umfpackamgtest
-                SOURCES amgtest.cc)
+dune_add_test(NAME umfpackamgtest
+              SOURCES amgtest.cc
+              CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 
-  dune_add_test(NAME umfpackfastamgtest
-                SOURCES fastamg.cc)
-endif()
-
+dune_add_test(NAME umfpackfastamgtest
+              SOURCES fastamg.cc
+              CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 
 dune_add_test(SOURCES twolevelmethodtest.cc)
 
@@ -75,15 +75,17 @@ dune_add_test(NAME twolevelmethodschwarztest
               COMPILE_DEFINITIONS USE_OVERLAPPINGSCHWARZ)
 
 # These tests need MPI, even though they are only run sequentially
-if(MPI_FOUND)
-  dune_add_test(SOURCES galerkintest.cc)
+dune_add_test(SOURCES galerkintest.cc
+              CMAKE_GUARD MPI_FOUND)
 
-  dune_add_test(SOURCES hierarchytest.cc)
+dune_add_test(SOURCES hierarchytest.cc
+              CMAKE_GUARD MPI_FOUND)
 
-  dune_add_test(NAME pamgtest
-                SOURCES parallelamgtest.cc)
+dune_add_test(NAME pamgtest
+              SOURCES parallelamgtest.cc
+              CMAKE_GUARD MPI_FOUND)
 
-  dune_add_test(NAME pamg_comm_repart_test
-                SOURCES parallelamgtest.cc
-                COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH)
-endif()
+dune_add_test(NAME pamg_comm_repart_test
+              SOURCES parallelamgtest.cc
+              COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH
+              CMAKE_GUARD MPI_FOUND)

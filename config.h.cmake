@@ -31,6 +31,22 @@
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 
+/* Define to the integer type that SuperLU was compiled for
+   See e.g. what int_t is defined to in slu_sdefs.h */
+#cmakedefine SUPERLU_INT_TYPE @SUPERLU_INT_TYPE@
+
+/* Define to 1 if header slu_sdefs.h is there. */
+#cmakedefine01 HAVE_SLU_SDEFS_H
+
+/* Define to 1 if header slu_ddefs.h is there. */
+#cmakedefine01 HAVE_SLU_DDEFS_H
+
+/* Define to 1 if header slu_cdefs.h is there. */
+#cmakedefine01 HAVE_SLU_CDEFS_H
+
+/* Define to 1 if header slu_zdefs.h is there. */
+#cmakedefine01 HAVE_SLU_ZDEFS_H
+
 /* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
 #cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
 
@@ -54,6 +70,9 @@
 
 /* Define to the revision of dune-istl */
 #define DUNE_ISTL_VERSION_REVISION ${DUNE_ISTL_VERSION_REVISION}
+
+/* Enable/Disable the backwards compatibility of the category enum/method in dune-istl solvers, preconditioner, etc. */
+#cmakedefine DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE @DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE@
 
 /* end dune-istl
    Everything below here will be overwritten

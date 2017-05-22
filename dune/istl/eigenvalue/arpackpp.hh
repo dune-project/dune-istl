@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_EIGENVALUE_ARPACKPP_HH
 #define DUNE_ISTL_EIGENVALUE_ARPACKPP_HH
 
-#if HAVE_ARPACKPP
+#if HAVE_ARPACKPP || defined DOXYGEN
 
 #include <cmath>  // provides std::abs, std::pow, std::sqrt
 
@@ -26,176 +26,182 @@
 #endif
 #include "arssym.h"  // provides ARSymStdEig
 
-
 namespace Dune
 {
 
-  /**
-   * \brief Wrapper for a DUNE-ISTL BCRSMatrix which can be used
-   *        together with those algorithms of the ARPACK++ library
-   *        which solely perform the products A*v and/or A^T*A*v
-   *        and/or A*A^T*v.
-   *
-   * \todo The current implementation is limited to DUNE-ISTL
-   *       BCRSMatrix types with blocklevel 2. An extension to
-   *       blocklevel >= 2 might be provided in a future version.
-   *
-   * \tparam BCRSMatrix Type of a DUNE-ISTL BCRSMatrix;
-   *                    is assumed to have blocklevel 2.
-   *
-   * \author Sebastian Westerheide.
-   */
-  template <class BCRSMatrix>
-  class ArPackPlusPlus_BCRSMatrixWrapper
-  {
-  public:
-    //! Type of the underlying field of the matrix
-    typedef typename BCRSMatrix::field_type Real;
+  /** @addtogroup ISTL_Eigenvalue
+    @{
+  */
 
-  public:
-    //! Construct from BCRSMatrix A
-    ArPackPlusPlus_BCRSMatrixWrapper (const BCRSMatrix& A)
-      : A_(A),
-        m_(A_.M() * mBlock), n_(A_.N() * nBlock)
+  namespace Impl {
+    /**
+     *        Wrapper for a DUNE-ISTL BCRSMatrix which can be used
+     *        together with those algorithms of the ARPACK++ library
+     *        which solely perform the products A*v and/or A^T*A*v
+     *        and/or A*A^T*v.
+     *
+     * \todo The current implementation is limited to DUNE-ISTL
+     *       BCRSMatrix types with blocklevel 2. An extension to
+     *       blocklevel >= 2 might be provided in a future version.
+     *
+     * \tparam BCRSMatrix Type of a DUNE-ISTL BCRSMatrix;
+     *                    is assumed to have blocklevel 2.
+     *
+     * \author Sebastian Westerheide.
+     */
+    template <class BCRSMatrix>
+    class ArPackPlusPlus_BCRSMatrixWrapper
     {
-      // assert that BCRSMatrix type has blocklevel 2
-      static_assert
-        (BCRSMatrix::blocklevel == 2,
-         "Only BCRSMatrices with blocklevel 2 are supported.");
+    public:
+      //! Type of the underlying field of the matrix
+      typedef typename BCRSMatrix::field_type Real;
 
-      // allocate memory for auxiliary block vector objects
-      // which are compatible to matrix rows / columns
-      domainBlockVector.resize(A_.N(),false);
-      rangeBlockVector.resize(A_.M(),false);
-    }
+    public:
+      //! Construct from BCRSMatrix A
+      ArPackPlusPlus_BCRSMatrixWrapper (const BCRSMatrix& A)
+        : A_(A),
+          m_(A_.M() * mBlock), n_(A_.N() * nBlock)
+      {
+        // assert that BCRSMatrix type has blocklevel 2
+        static_assert
+          (BCRSMatrix::blocklevel == 2,
+            "Only BCRSMatrices with blocklevel 2 are supported.");
 
-    //! Perform matrix-vector product w = A*v
-    inline void multMv (Real* v, Real* w)
-    {
-      // get vector v as an object of appropriate type
-      arrayToDomainBlockVector(v,domainBlockVector);
+        // allocate memory for auxiliary block vector objects
+        // which are compatible to matrix rows / columns
+        domainBlockVector.resize(A_.N(),false);
+        rangeBlockVector.resize(A_.M(),false);
+      }
 
-      // perform matrix-vector product
-      A_.mv(domainBlockVector,rangeBlockVector);
+      //! Perform matrix-vector product w = A*v
+      inline void multMv (Real* v, Real* w)
+      {
+        // get vector v as an object of appropriate type
+        arrayToDomainBlockVector(v,domainBlockVector);
 
-      // get vector w from object of appropriate type
-      rangeBlockVectorToArray(rangeBlockVector,w);
-    };
+        // perform matrix-vector product
+        A_.mv(domainBlockVector,rangeBlockVector);
 
-    //! Perform matrix-vector product w = A^T*A*v
-    inline void multMtMv (Real* v, Real* w)
-    {
-      // get vector v as an object of appropriate type
-      arrayToDomainBlockVector(v,domainBlockVector);
+        // get vector w from object of appropriate type
+        rangeBlockVectorToArray(rangeBlockVector,w);
+      };
 
-      // perform matrix-vector product
-      A_.mv(domainBlockVector,rangeBlockVector);
-      A_.mtv(rangeBlockVector,domainBlockVector);
+      //! Perform matrix-vector product w = A^T*A*v
+      inline void multMtMv (Real* v, Real* w)
+      {
+        // get vector v as an object of appropriate type
+        arrayToDomainBlockVector(v,domainBlockVector);
 
-      // get vector w from object of appropriate type
-      domainBlockVectorToArray(domainBlockVector,w);
-    };
+        // perform matrix-vector product
+        A_.mv(domainBlockVector,rangeBlockVector);
+        A_.mtv(rangeBlockVector,domainBlockVector);
 
-    //! Perform matrix-vector product w = A*A^T*v
-    inline void multMMtv (Real* v, Real* w)
-    {
-      // get vector v as an object of appropriate type
-      arrayToRangeBlockVector(v,rangeBlockVector);
+        // get vector w from object of appropriate type
+        domainBlockVectorToArray(domainBlockVector,w);
+      };
 
-      // perform matrix-vector product
-      A_.mtv(rangeBlockVector,domainBlockVector);
-      A_.mv(domainBlockVector,rangeBlockVector);
+      //! Perform matrix-vector product w = A*A^T*v
+      inline void multMMtv (Real* v, Real* w)
+      {
+        // get vector v as an object of appropriate type
+        arrayToRangeBlockVector(v,rangeBlockVector);
 
-      // get vector w from object of appropriate type
-      rangeBlockVectorToArray(rangeBlockVector,w);
-    };
+        // perform matrix-vector product
+        A_.mtv(rangeBlockVector,domainBlockVector);
+        A_.mv(domainBlockVector,rangeBlockVector);
 
-    //! Return number of rows in the matrix
-    inline int nrows () const { return m_; }
+        // get vector w from object of appropriate type
+        rangeBlockVectorToArray(rangeBlockVector,w);
+      };
 
-    //! Return number of columns in the matrix
-    inline int ncols () const { return n_; }
+      //! Return number of rows in the matrix
+      inline int nrows () const { return m_; }
 
-  protected:
-    // Number of rows and columns in each block of the matrix
-    constexpr static int mBlock = BCRSMatrix::block_type::rows;
-    constexpr static int nBlock = BCRSMatrix::block_type::cols;
+      //! Return number of columns in the matrix
+      inline int ncols () const { return n_; }
 
-    // Type of vectors in the domain of the linear map associated with
-    // the matrix, i.e. block vectors compatible to matrix rows
-    constexpr static int dbvBlockSize = nBlock;
-    typedef Dune::FieldVector<Real,dbvBlockSize> DomainBlockVectorBlock;
-    typedef Dune::BlockVector<DomainBlockVectorBlock> DomainBlockVector;
+    protected:
+      // Number of rows and columns in each block of the matrix
+      constexpr static int mBlock = BCRSMatrix::block_type::rows;
+      constexpr static int nBlock = BCRSMatrix::block_type::cols;
 
-    // Type of vectors in the range of the linear map associated with
-    // the matrix, i.e. block vectors compatible to matrix columns
-    constexpr static int rbvBlockSize = mBlock;
-    typedef Dune::FieldVector<Real,rbvBlockSize> RangeBlockVectorBlock;
-    typedef Dune::BlockVector<RangeBlockVectorBlock> RangeBlockVector;
+      // Type of vectors in the domain of the linear map associated with
+      // the matrix, i.e. block vectors compatible to matrix rows
+      constexpr static int dbvBlockSize = nBlock;
+      typedef Dune::FieldVector<Real,dbvBlockSize> DomainBlockVectorBlock;
+      typedef Dune::BlockVector<DomainBlockVectorBlock> DomainBlockVector;
 
-    // Types for vector index access
-    typedef typename DomainBlockVector::size_type dbv_size_type;
-    typedef typename RangeBlockVector::size_type rbv_size_type;
-    typedef typename DomainBlockVectorBlock::size_type dbvb_size_type;
-    typedef typename RangeBlockVectorBlock::size_type rbvb_size_type;
+      // Type of vectors in the range of the linear map associated with
+      // the matrix, i.e. block vectors compatible to matrix columns
+      constexpr static int rbvBlockSize = mBlock;
+      typedef Dune::FieldVector<Real,rbvBlockSize> RangeBlockVectorBlock;
+      typedef Dune::BlockVector<RangeBlockVectorBlock> RangeBlockVector;
 
-    // Get vector v from a block vector object which is compatible to
-    // matrix rows
-    static inline void
+      // Types for vector index access
+      typedef typename DomainBlockVector::size_type dbv_size_type;
+      typedef typename RangeBlockVector::size_type rbv_size_type;
+      typedef typename DomainBlockVectorBlock::size_type dbvb_size_type;
+      typedef typename RangeBlockVectorBlock::size_type rbvb_size_type;
+
+      // Get vector v from a block vector object which is compatible to
+      // matrix rows
+      static inline void
       domainBlockVectorToArray (const DomainBlockVector& dbv, Real* v)
-    {
-      for (dbv_size_type block = 0; block < dbv.N(); ++block)
-        for (dbvb_size_type iBlock = 0; iBlock < dbvBlockSize; ++iBlock)
-          v[block*dbvBlockSize + iBlock] = dbv[block][iBlock];
-    }
+      {
+        for (dbv_size_type block = 0; block < dbv.N(); ++block)
+          for (dbvb_size_type iBlock = 0; iBlock < dbvBlockSize; ++iBlock)
+            v[block*dbvBlockSize + iBlock] = dbv[block][iBlock];
+      }
 
-    // Get vector v from a block vector object which is compatible to
-    // matrix columns
-    static inline void
+      // Get vector v from a block vector object which is compatible to
+      // matrix columns
+      static inline void
       rangeBlockVectorToArray (const RangeBlockVector& rbv, Real* v)
-    {
-      for (rbv_size_type block = 0; block < rbv.N(); ++block)
-        for (rbvb_size_type iBlock = 0; iBlock < rbvBlockSize; ++iBlock)
-          v[block*rbvBlockSize + iBlock] = rbv[block][iBlock];
-    }
+      {
+        for (rbv_size_type block = 0; block < rbv.N(); ++block)
+          for (rbvb_size_type iBlock = 0; iBlock < rbvBlockSize; ++iBlock)
+            v[block*rbvBlockSize + iBlock] = rbv[block][iBlock];
+      }
 
-  public:
-    //! Get vector v as a block vector object which is compatible to
-    //! matrix rows
-    static inline void arrayToDomainBlockVector (const Real* v,
-                                                 DomainBlockVector& dbv)
-    {
-      for (dbv_size_type block = 0; block < dbv.N(); ++block)
-        for (dbvb_size_type iBlock = 0; iBlock < dbvBlockSize; ++iBlock)
-          dbv[block][iBlock] = v[block*dbvBlockSize + iBlock];
-    }
+    public:
+      //! Get vector v as a block vector object which is compatible to
+      //! matrix rows
+      static inline void arrayToDomainBlockVector (const Real* v,
+        DomainBlockVector& dbv)
+      {
+        for (dbv_size_type block = 0; block < dbv.N(); ++block)
+          for (dbvb_size_type iBlock = 0; iBlock < dbvBlockSize; ++iBlock)
+            dbv[block][iBlock] = v[block*dbvBlockSize + iBlock];
+      }
 
-    //! Get vector v as a block vector object which is compatible to
-    //! matrix columns
-    static inline void arrayToRangeBlockVector (const Real* v,
-                                                RangeBlockVector& rbv)
-    {
-      for (rbv_size_type block = 0; block < rbv.N(); ++block)
-        for (rbvb_size_type iBlock = 0; iBlock < rbvBlockSize; ++iBlock)
-          rbv[block][iBlock] = v[block*rbvBlockSize + iBlock];
-    }
+      //! Get vector v as a block vector object which is compatible to
+      //! matrix columns
+      static inline void arrayToRangeBlockVector (const Real* v,
+        RangeBlockVector& rbv)
+      {
+        for (rbv_size_type block = 0; block < rbv.N(); ++block)
+          for (rbvb_size_type iBlock = 0; iBlock < rbvBlockSize; ++iBlock)
+            rbv[block][iBlock] = v[block*rbvBlockSize + iBlock];
+      }
 
-  protected:
-    // The DUNE-ISTL BCRSMatrix
-    const BCRSMatrix& A_;
+    protected:
+      // The DUNE-ISTL BCRSMatrix
+      const BCRSMatrix& A_;
 
-    // Number of rows and columns in the matrix
-    const int m_, n_;
+      // Number of rows and columns in the matrix
+      const int m_, n_;
 
-    // Auxiliary block vector objects which are
-    // compatible to matrix rows / columns
-    mutable DomainBlockVector domainBlockVector;
-    mutable RangeBlockVector rangeBlockVector;
-  };
-
+      // Auxiliary block vector objects which are
+      // compatible to matrix rows / columns
+      mutable DomainBlockVector domainBlockVector;
+      mutable RangeBlockVector rangeBlockVector;
+    };
+  } // end namespace Impl
 
   /**
-   * \brief A class template for performing some eigenvalue algorithms
+   * \brief Wrapper to use a range of ARPACK++ eigenvalue solvers
+   *
+   *        A class template for performing some eigenvalue algorithms
    *        provided by the ARPACK++ library which is based on the implicitly
    *        restarted Arnoldi/Lanczos method (IRAM/IRLM), a synthesis of the
    *        Arnoldi/Lanczos process with the implicitily shifted QR technique.
@@ -288,7 +294,7 @@ namespace Dune
 
       // use type ArPackPlusPlus_BCRSMatrixWrapper to store matrix information
       // and to perform the product A*v (LU decomposition is not used)
-      typedef ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
+      typedef Impl::ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
       WrappedMatrix A(m_);
 
       // get number of rows and columns in A
@@ -390,7 +396,7 @@ namespace Dune
 
       // use type ArPackPlusPlus_BCRSMatrixWrapper to store matrix information
       // and to perform the product A*v (LU decomposition is not used)
-      typedef ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
+      typedef Impl::ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
       WrappedMatrix A(m_);
 
       // get number of rows and columns in A
@@ -491,7 +497,7 @@ namespace Dune
 
       // use type ArPackPlusPlus_BCRSMatrixWrapper to store matrix information
       // and to perform the product A*v (LU decomposition is not used)
-      typedef ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
+      typedef Impl::ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
       WrappedMatrix A(m_);
 
       // get number of rows and columns in A
@@ -608,7 +614,7 @@ namespace Dune
 
       // use type ArPackPlusPlus_BCRSMatrixWrapper to store matrix information
       // and to perform the product A^T*A*v (LU decomposition is not used)
-      typedef ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
+      typedef Impl::ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
       WrappedMatrix A(m_);
 
       // get number of rows and columns in A
@@ -720,7 +726,7 @@ namespace Dune
 
       // use type ArPackPlusPlus_BCRSMatrixWrapper to store matrix information
       // and to perform the product A^T*A*v (LU decomposition is not used)
-      typedef ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
+      typedef Impl::ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
       WrappedMatrix A(m_);
 
       // get number of rows and columns in A
@@ -828,7 +834,7 @@ namespace Dune
 
       // use type ArPackPlusPlus_BCRSMatrixWrapper to store matrix information
       // and to perform the product A^T*A*v (LU decomposition is not used)
-      typedef ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
+      typedef Impl::ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix> WrappedMatrix;
       WrappedMatrix A(m_);
 
       // get number of rows and columns in A
@@ -958,8 +964,9 @@ namespace Dune
     const std::string blank_;
   };
 
-}  // namespace Dune
+  /** @} */
 
+}  // namespace Dune
 
 #endif  // HAVE_ARPACKPP
 
