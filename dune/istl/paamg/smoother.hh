@@ -279,7 +279,7 @@ namespace Dune
 
 
     /**
-     * @brief Policy for the construction of the SeqJac smoother
+     * @brief Policy for the construction of the SeqILUn smoother
      */
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqILUn<M,X,Y> >
@@ -293,6 +293,52 @@ namespace Dune
       }
 
       static void deconstruct(SeqILUn<M,X,Y>* ilu)
+      {
+        delete ilu;
+      }
+
+    };
+
+
+    template<class M, class X, class Y>
+    class ConstructionArgs<SeqILU<M,X,Y> >
+      : public DefaultConstructionArgs<SeqILU<M,X,Y> >
+    {
+    public:
+      ConstructionArgs(int n=0)
+        : n_(n)
+      {}
+
+      void setN(int n)
+      {
+        n_ = n;
+      }
+
+      int getN()
+      {
+        return n_;
+      }
+
+    private:
+      int n_;
+    };
+
+
+    /**
+     * @brief Policy for the construction of the SeqILU smoother
+     */
+    template<class M, class X, class Y>
+    struct ConstructionTraits<SeqILU<M,X,Y> >
+    {
+      typedef ConstructionArgs<SeqILU<M,X,Y> > Arguments;
+
+      static inline SeqILU<M,X,Y>* construct(Arguments& args)
+      {
+        return new SeqILU<M,X,Y>(args.getMatrix(), args.getN(),
+                                 args.getArgs().relaxationFactor);
+      }
+
+      static void deconstruct(SeqILU<M,X,Y>* ilu)
       {
         delete ilu;
       }

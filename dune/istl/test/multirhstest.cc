@@ -138,6 +138,9 @@ void test_all(unsigned int Runs = 1)
   Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,0.1);        // preconditioner object
   Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.1);     // preconditioner object
 
+  Dune::SeqILU<Matrix,Vector,Vector> ilu_0(A,0.1);       // preconditioner object
+  Dune::SeqILU<Matrix,Vector,Vector> ilu_1(A,1,0.1);     // preconditioner object
+
   // AMG
   typedef Dune::Amg::RowSum Norm;
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<Matrix,Norm> >
@@ -169,6 +172,8 @@ void test_all(unsigned int Runs = 1)
   test_all_solvers("SSOR",        op,ssor,N,Runs);
   test_all_solvers("ILU0",        op,ilu0,N,Runs);
   test_all_solvers("ILU1",        op,ilu1,N,Runs);
+  test_all_solvers("ILU(0)",      op,ilu_0,N,Runs);
+  test_all_solvers("ILU(1)",      op,ilu_1,N,Runs);
   test_all_solvers("AMG",         op,amg,N,Runs);
 }
 
