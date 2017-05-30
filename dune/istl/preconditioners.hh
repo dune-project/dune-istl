@@ -7,6 +7,7 @@
 #include <complex>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 #include <string>
 
 #include <dune/common/unused.hh>
@@ -485,6 +486,134 @@ namespace Dune {
     scalar_field_type _w;
   };
 
+
+
+  /*!
+     \brief Sequential ILU preconditioner.
+
+     Wraps the naked ISTL generic ILU preconditioner into the solver framework.
+
+     \tparam M The matrix type to operate on
+     \tparam X Type of the update
+     \tparam Y Type of the defect
+     \tparam l Ignored. Just there to have the same number of template arguments
+     as other preconditioners.
+   */
+  template<class M, class X, class Y, int l=1>
+  class SeqILU : public Preconditioner<X,Y> {
+  public:
+    //! \brief The matrix type the preconditioner is for.
+    typedef typename std::remove_const<M>::type matrix_type;
+    //! block type of matrix
+    typedef typename matrix_type :: block_type block_type;
+    //! \brief The domain type of the preconditioner.
+    typedef X domain_type;
+    //! \brief The range type of the preconditioner.
+    typedef Y range_type;
+    //! \brief The field type of the preconditioner.
+    typedef typename X::field_type field_type;
+
+    //! \brief type of ILU storage
+    typedef typename ILU::CRS< block_type > CRS;
+
+    /*! \brief Constructor.
+
+       Constructor invoking ILU(0) gets all parameters to operate the prec.
+       \param A The matrix to operate on.
+       \param w The relaxation factor.
+     */
+    SeqILU (const M& A, field_type w)
+      : SeqILU( A, 0, w ) // construct ILU(0)
+    {
+    }
+
+   /*! \brief Constructor.
+
+       Constructor invoking ILU(n).
+       \param A The matrix to operate on.
+       \param n The number of iterations to perform.
+       \param w The relaxation factor.
+     */
+    SeqILU (const M& A, int n, field_type w)
+      : lower_(),
+        upper_(),
+        inv_(),
+        w_(w),
+        wNotIdentity_( std::abs( w_ - field_type(1) ) > 1e-15 )
+    {
+      std::unique_ptr< matrix_type > ILUA;
+
+      if( n == 0 )
+      {
+        // copy A
+        ILUA.reset( new matrix_type( A ) );
+        // create ILU(0) decomposition
+        bilu0_decomposition( *ILUA );
+      }
+      else
+      {
+        // create matrix in build mode
+        ILUA.reset( new matrix_type(  A.N(), A.M(), matrix_type::row_wise) );
+        // create ILU(n) decomposition
+        bilu_decomposition( A, n, *ILUA );
+      }
+
+      // store ILU in simple CRS format
+      ILU::convertToCRS( *ILUA, lower_, upper_, inv_ );
+    }
+
+    /*!
+       \brief Prepare the preconditioner.
+
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre (X& x, Y& b)
+    {
+      DUNE_UNUSED_PARAMETER(x);
+      DUNE_UNUSED_PARAMETER(b);
+    }
+
+    /*!
+       \brief Apply the preconditoner.
+
+       \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply (X& v, const Y& d)
+    {
+      ILU::bilu_backsolve(lower_, upper_, inv_, v, d);
+      if( wNotIdentity_ )
+      {
+        v *= w_;
+      }
+    }
+
+    /*!
+       \brief Clean up.
+
+       \copydoc Preconditioner::post(X&)
+     */
+    virtual void post (X& x)
+    {
+      DUNE_UNUSED_PARAMETER(x);
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
+  protected:
+    //! \brief The ILU(n) decomposition of the matrix.
+    CRS lower_;
+    CRS upper_;
+    std::vector< block_type > inv_;
+
+    //! \brief The relaxation factor to use.
+    const field_type w_;
+    //! \brief true if w != 1.0
+    const bool wNotIdentity_;
+  };
 
 
   /*!
