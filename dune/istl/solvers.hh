@@ -414,8 +414,15 @@ namespace Dune {
 
        \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
      */
+
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
+      apply(x, b, max_value(_reduction), res);
+    }
+
+    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    {
+
       using std::abs;
       const real_type EPSILON=1e-80;
       using std::abs;
@@ -466,7 +473,7 @@ namespace Dune {
         }
       }
 
-      if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
+      if ( all_true(norm < (reduction * norm_0))  || max_value(norm)<1E-30)
       {
         res.converged = 1;
         _prec->post(x);                  // postprocess preconditioner
@@ -585,7 +592,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
+        if ( all_true(norm < (reduction * norm_0))  || max_value(norm)<1E-30)
         {
           res.converged = 1;
           break;
