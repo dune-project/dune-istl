@@ -995,8 +995,8 @@ namespace Dune {
           }
         }
 
-      if(all_true(norm_0 < EPSILON)) {
-        _prec->post(x);
+      if(all_true(norm_0 < EPSILON))
+      {
         res.converged = true;
         if(_verbose > 0) // final print
           print_result(res);
