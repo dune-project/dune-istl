@@ -1123,8 +1123,8 @@ namespace Dune {
           }
         }
 
-      if(Simd::allTrue(norm_0 < EPSILON)) {
-        _prec->post(x);
+      if(Simd::allTrue(norm_0 < EPSILON))
+      {
         res.converged = true;
         if(_verbose > 0) // final print
           print_result(res);
