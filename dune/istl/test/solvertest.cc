@@ -81,5 +81,13 @@ int main(int argc, char** argv)
   Dune::FCGSolver<BVector> solver4(fop, prec0, 1e-3,10,2,3);
   solver4.apply(x, b, res);
 
+  b = 0;
+  x = 1;
+  mat.mv(x, b);
+  x = 99;
+
+  Dune::RestartedFlexibleGMResSolver<BVector> solver5(fop, prec0, 1e-3, 5, 20, 2);
+  solver5.apply(x,b, res);
+
   return 0;
 }
