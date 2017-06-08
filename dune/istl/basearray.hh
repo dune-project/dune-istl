@@ -247,6 +247,18 @@ namespace Imp {
       return n;
     }
 
+    //! Returns pointer to the underlying array
+    const B* data() const
+    {
+      return p;
+    }
+
+    //! Returns pointer to the underlying array
+    B* data()
+    {
+      return p;
+    }
+
   protected:
     //! makes empty array
     base_array_unmanaged ()
