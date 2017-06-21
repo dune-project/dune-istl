@@ -521,9 +521,10 @@ namespace Dune {
        Constructor invoking ILU(0) gets all parameters to operate the prec.
        \param A The matrix to operate on.
        \param w The relaxation factor.
+       \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, field_type w)
-      : SeqILU( A, 0, w ) // construct ILU(0)
+    SeqILU (const M& A, field_type w, const bool resort = false )
+      : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
 
@@ -533,33 +534,37 @@ namespace Dune {
        \param A The matrix to operate on.
        \param n The number of iterations to perform.
        \param w The relaxation factor.
+       \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, int n, field_type w)
-      : lower_(),
+    SeqILU (const M& A, int n, field_type w, const bool resort = false )
+      : ILU_(),
+        lower_(),
         upper_(),
         inv_(),
         w_(w),
         wNotIdentity_( std::abs( w_ - field_type(1) ) > 1e-15 )
     {
-      std::unique_ptr< matrix_type > ILUA;
-
       if( n == 0 )
       {
         // copy A
-        ILUA.reset( new matrix_type( A ) );
+        ILU_.reset( new matrix_type( A ) );
         // create ILU(0) decomposition
-        bilu0_decomposition( *ILUA );
+        bilu0_decomposition( *ILU_ );
       }
       else
       {
         // create matrix in build mode
-        ILUA.reset( new matrix_type(  A.N(), A.M(), matrix_type::row_wise) );
+        ILU_.reset( new matrix_type(  A.N(), A.M(), matrix_type::row_wise) );
         // create ILU(n) decomposition
-        bilu_decomposition( A, n, *ILUA );
+        bilu_decomposition( A, n, *ILU_ );
       }
 
-      // store ILU in simple CRS format
-      ILU::convertToCRS( *ILUA, lower_, upper_, inv_ );
+      if( resort )
+      {
+        // store ILU in simple CRS format
+        ILU::convertToCRS( *ILU_, lower_, upper_, inv_ );
+        ILU_.reset();
+      }
     }
 
     /*!
@@ -580,7 +585,15 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      ILU::bilu_backsolve(lower_, upper_, inv_, v, d);
+      if( ILU_ )
+      {
+        bilu_backsolve( *ILU_, v, d);
+      }
+      else
+      {
+        ILU::bilu_backsolve(lower_, upper_, inv_, v, d);
+      }
+
       if( wNotIdentity_ )
       {
         v *= w_;
@@ -604,7 +617,10 @@ namespace Dune {
     }
 
   protected:
-    //! \brief The ILU(n) decomposition of the matrix.
+    //! \brief The ILU(n) decomposition of the matrix. As storage a BCRSMatrix is used.
+    std::unique_ptr< matrix_type > ILU_;
+
+    //! \brief The ILU(n) decomposition of the matrix. As storage a CRS structure is used.
     CRS lower_;
     CRS upper_;
     std::vector< block_type > inv_;
