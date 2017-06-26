@@ -308,7 +308,7 @@ namespace Dune
 
       // allocate memory for variables, set parameters
       const int nev = 1;                     // Number of eigenvalues to compute
-      int ncv = std::min(20, nrows)          // Number of Arnoldi vectors generated at each iteration (0 == auto)
+      int ncv = std::min(20, nrows);         // Number of Arnoldi vectors generated at each iteration (0 == auto)
       const Real tol = epsilon;              // Stopping tolerance (relative accuracy of Ritz values) (0 == machine precision)
       const int maxit = nIterationsMax_*nev; // Maximum number of Arnoldi update iterations allowed   (0 == 100*nev)
       Real* ev = new Real[nev];              // Computed eigenvalues of A
@@ -849,7 +849,7 @@ namespace Dune
 
       // allocate memory for variables, set parameters
       const int nev = 2;                     // Number of eigenvalues to compute
-      const int ncv = std::min(20, nrows);   // Number of Arnoldi vectors generated at each iteration (0 == auto)
+      int ncv = std::min(20, nrows);         // Number of Arnoldi vectors generated at each iteration (0 == auto)
       const Real tol = epsilon;              // Stopping tolerance (relative accuracy of Ritz values) (0 == machine precision)
       const int maxit = nIterationsMax_*nev; // Maximum number of Arnoldi update iterations allowed   (0 == 100*nev)
       Real* ev = new Real[nev];              // Computed eigenvalues of A^T*A
