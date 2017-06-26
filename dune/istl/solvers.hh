@@ -26,6 +26,8 @@
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/eigenvalue/arpackpp.hh>
 
 namespace Dune {
   /** @addtogroup ISTL_Solvers
@@ -255,6 +257,27 @@ namespace Dune {
     using IterativeSolver<X,X>::IterativeSolver;
 
     /*!
+      \brief Constructor to initialize a CG solver.
+      \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int)
+      \param condition_estimate Whether to calculate an estimate of the condition number.
+    */
+    CGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+      real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
+      _condition_estimate(condition_estimate)
+    {}
+
+    /*!
+      \brief Constructor to initialize a CG solver.
+      \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int)
+      \param condition_estimate Whether to calculate an estimate of the condition number.
+    */
+    CGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
+      real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
+      _condition_estimate(condition_estimate)
+    {}
+
+
+    /*!
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
@@ -311,6 +334,10 @@ namespace Dune {
         }
       }
 
+      // Remember lambda and beta values for condition estimate
+      std::vector<real_type> lambdas(0);
+      std::vector<real_type> betas(0);
+
       // some local variables
       real_type def=def0;   // loop variables
       field_type rho,rholast,lambda,alpha,beta;
@@ -328,6 +355,8 @@ namespace Dune {
         _op->apply(p,q);             // q=Ap
         alpha = _sp->dot(p,q);       // scalar product
         lambda = rholast/alpha;     // minimization
+        if (_condition_estimate)
+          lambdas.push_back(std::real(lambda));
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
@@ -358,6 +387,8 @@ namespace Dune {
         _prec->apply(q,b);           // apply preconditioner
         rho = _sp->dot(q,b);         // orthogonalization
         beta = rho/rholast;         // scaling factor
+        if (_condition_estimate)
+          betas.push_back(std::real(beta));
         p *= beta;                  // scale old search direction
         p += q;                     // orthogonalization with correction
         rholast = rho;              // remember rho for recurrence
@@ -382,7 +413,68 @@ namespace Dune {
                   << ", TIT=" << res.elapsed/i
                   << ", IT=" << i << std::endl;
       }
+
+
+      if (_condition_estimate) {
+#if HAVE_ARPACKPP
+
+        // Build T matrix which has extreme eigenvalues approximating
+        // those of the original system
+        // (see Y. Saad, Iterative methods for sparse linear systems)
+
+        COND_MAT T(i, i, COND_MAT::row_wise);
+
+        for (auto row = T.createbegin(); row != T.createend(); ++row) {
+          if (row.index() > 0)
+            row.insert(row.index()-1);
+          row.insert(row.index());
+          if (row.index() < T.N() - 1)
+            row.insert(row.index()+1);
+        }
+        for (int row = 0; row < i; ++row) {
+          if (row > 0) {
+            T[row][row-1] = std::sqrt(betas[row-1]) / lambdas[row-1];
+          }
+
+          T[row][row] = 1.0 / lambdas[row];
+          if (row > 0) {
+            T[row][row] += betas[row-1] / lambdas[row-1];
+          }
+
+          if (row < i - 1) {
+            T[row][row+1] = std::sqrt(betas[row]) / lambdas[row];
+          }
+        }
+
+        // Compute largest and smallest eigenvalue of T matrix and return as estimate
+        Dune::ArPackPlusPlus_Algorithms<COND_MAT, COND_VEC> arpack(T);
+
+        real_type eps = 0.0;
+        COND_VEC eigv;
+        real_type min_eigv, max_eigv;
+        arpack.computeSymMinMagnitude (eps, eigv, min_eigv);
+        arpack.computeSymMaxMagnitude (eps, eigv, max_eigv);
+
+        res.condition_estimate = max_eigv / min_eigv;
+
+        if (_verbose > 0) {
+          std::cout << "Min eigv estimate: " << min_eigv << std::endl;
+          std::cout << "Max eigv estimate: " << max_eigv << std::endl;
+          std::cout << "Condition estimate: " << max_eigv / min_eigv << std::endl;
+        }
+
+#else
+      std::cerr << "WARNING: Condition estimate was requested. This requires ARPACK, but ARPACK was not found!" << std::endl;
+#endif
+      }
     }
+
+  private:
+    bool _condition_estimate = false;
+
+    // Matrix and vector types used for condition estimate
+    typedef Dune::BCRSMatrix<Dune::FieldMatrix<real_type,1,1> > COND_MAT;
+    typedef Dune::BlockVector<Dune::FieldVector<real_type,1> > COND_VEC;
 
   protected:
     using IterativeSolver<X,X>::_op;
