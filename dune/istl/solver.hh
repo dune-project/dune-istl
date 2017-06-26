@@ -66,6 +66,9 @@ namespace Dune
     /** \brief Convergence rate (average reduction per step) */
     double conv_rate;
 
+    /** \brief Estimate of condition number */
+    double condition_estimate = -1;
+
     /** \brief Elapsed time in seconds */
     double elapsed;
   };
