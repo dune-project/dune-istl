@@ -14,6 +14,7 @@
 #include <array>
 #include <type_traits>
 
+#include "allocator.hh"
 #include "istlexception.hh"
 #include "operators.hh"
 #include "scalarproducts.hh"
@@ -907,11 +908,9 @@ namespace Dune {
     using typename IterativeSolver<X,X>::scalar_real_type;
 
     //! \bief field_type Allocator retrieved from domain type
-    using fAlloc =
-      typename X::allocator_type::template rebind<field_type>::other;
+    using fAlloc = ReboundAllocatorType<X,field_type>;
     //! \bief real_type Allocator retrieved from domain type
-    using rAlloc =
-      typename X::allocator_type::template rebind<real_type>::other;
+    using rAlloc = ReboundAllocatorType<X,real_type>;
 
   public:
 
@@ -1235,7 +1234,8 @@ namespace Dune {
     using typename IterativeSolver<X,X>::scalar_real_type;
 
     //! \bief field_type Allocator retrieved from domain type
-    typedef typename X::allocator_type::template rebind<field_type>::other fAlloc;
+    using fAlloc = ReboundAllocatorType<X,field_type>;
+
   public:
 
     /*!
