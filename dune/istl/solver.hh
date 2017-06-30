@@ -9,6 +9,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/simd.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
@@ -97,6 +98,9 @@ namespace Dune
 
     //! \brief The real type of the field type (is the same if using real numbers, but differs for std::complex)
     typedef typename FieldTraits<field_type>::real_type real_type;
+
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<real_type> scalar_real_type;
 
     /**
         \brief Apply inverse operator,
@@ -191,6 +195,7 @@ namespace Dune
     using typename InverseOperator<X,Y>::range_type;
     using typename InverseOperator<X,Y>::field_type;
     using typename InverseOperator<X,Y>::real_type;
+    using typename InverseOperator<X,Y>::scalar_real_type;
 
     /*!
        \brief General constructor to initialize an iterative solver.
@@ -211,7 +216,7 @@ namespace Dune
        <li> 2 : print line for each iteration </li>
        </ul>
      */
-    IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int maxit, int verbose) :
+    IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int maxit, int verbose) :
       _op(stackobject_to_shared_ptr(op)),
       _prec(stackobject_to_shared_ptr(prec)),
       _sp(new SeqScalarProduct<X>),
@@ -244,7 +249,7 @@ namespace Dune
         </ul>
      */
     IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
-      real_type reduction, int maxit, int verbose) :
+      scalar_real_type reduction, int maxit, int verbose) :
       _op(stackobject_to_shared_ptr(op)),
       _prec(stackobject_to_shared_ptr(prec)),
       _sp(stackobject_to_shared_ptr(sp)),
@@ -270,7 +275,7 @@ namespace Dune
      */
     virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
     {
-      real_type saved_reduction = _reduction;
+      scalar_real_type saved_reduction = _reduction;
       _reduction = reduction;
       static_cast<InverseOperator<X,Y>*>(this)->apply(x,b,res);
       _reduction = saved_reduction;
@@ -286,7 +291,7 @@ namespace Dune
     std::shared_ptr<LinearOperator<X,Y>> _op;
     std::shared_ptr<Preconditioner<X,Y>> _prec;
     std::shared_ptr<ScalarProduct<X>> _sp;
-    real_type _reduction;
+    scalar_real_type _reduction;
     int _maxit;
     int _verbose;
     SolverCategory::Category _category;

@@ -96,13 +96,6 @@ namespace Dune
         MemberType* redistributed_;
       };
     public:
-      //       enum{
-      //        /**
-      //         * @brief If true only the method addCoarser will be usable
-      //         * otherwise only the method addFiner will be usable.
-      //         */
-      //        coarsen = b
-      //          };
 
       /**
        * @brief The allocator to use for the list elements.
@@ -385,8 +378,8 @@ namespace Dune
        * @brief Coarsen the vector hierarchy according to the matrix hierarchy.
        * @param hierarchy The vector hierarchy to coarsen.
        */
-      template<class V, class TA>
-      void coarsenVector(Hierarchy<BlockVector<V,TA> >& hierarchy) const;
+      template<class V, class BA, class TA>
+      void coarsenVector(Hierarchy<BlockVector<V,BA>, TA>& hierarchy) const;
 
       /**
        * @brief Coarsen the smoother hierarchy according to the matrix hierarchy.
@@ -442,8 +435,7 @@ namespace Dune
        */
       const RedistributeInfoList& redistributeInformation() const;
 
-
-      typename MatrixOperator::field_type getProlongationDampingFactor() const
+      double getProlongationDampingFactor() const
       {
         return prolongDamp_;
       }
@@ -478,7 +470,7 @@ namespace Dune
       /** @brief The maximum number of level across all processors.*/
       int maxlevels_;
 
-      typename MatrixOperator::field_type prolongDamp_;
+      double prolongDamp_;
 
       /**
        * @brief functor to print matrix statistics.
@@ -1114,8 +1106,8 @@ namespace Dune
     }
 
     template<class M, class IS, class A>
-    template<class V, class TA>
-    void MatrixHierarchy<M,IS,A>::coarsenVector(Hierarchy<BlockVector<V,TA> >& hierarchy) const
+    template<class V, class BA, class TA>
+    void MatrixHierarchy<M,IS,A>::coarsenVector(Hierarchy<BlockVector<V,BA>, TA>& hierarchy) const
     {
       assert(hierarchy.levels()==1);
       typedef typename ParallelMatrixHierarchy::ConstIterator Iterator;

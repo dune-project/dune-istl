@@ -14,6 +14,7 @@
 #include <array>
 #include <type_traits>
 
+#include "allocator.hh"
 #include "istlexception.hh"
 #include "operators.hh"
 #include "scalarproducts.hh"
@@ -903,13 +904,23 @@ namespace Dune {
     using typename IterativeSolver<X,Y>::field_type;
     using typename IterativeSolver<X,Y>::real_type;
 
+  private:
+    using typename IterativeSolver<X,X>::scalar_real_type;
+
+    //! \bief field_type Allocator retrieved from domain type
+    using fAlloc = ReboundAllocatorType<X,field_type>;
+    //! \bief real_type Allocator retrieved from domain type
+    using rAlloc = ReboundAllocatorType<X,real_type>;
+
+  public:
+
     /*!
        \brief Set up RestartedGMResSolver solver.
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, real_type reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -920,7 +931,7 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, real_type reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -953,13 +964,13 @@ namespace Dune {
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
-      std::vector<field_type> s(m+1), sn(m);
-      std::vector<real_type> cs(m);
+      std::vector<field_type,fAlloc> s(m+1), sn(m);
+      std::vector<real_type,rAlloc> cs(m);
       // need copy of rhs if GMRes has to be restarted
       Y b2(b);
       // helper vector
       Y w(b);
-      std::vector< std::vector<field_type> > H(m+1,s);
+      std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
       // start timer
@@ -1105,11 +1116,11 @@ namespace Dune {
     }
 
     void update(X& w, int i,
-                const std::vector<std::vector<field_type> >& H,
-                const std::vector<field_type>& s,
+                const std::vector<std::vector<field_type,fAlloc> >& H,
+                const std::vector<field_type,fAlloc>& s,
                 const std::vector<X>& v) {
       // solution vector of the upper triangular system
-      std::vector<field_type> y(s);
+      std::vector<field_type,fAlloc> y(s);
 
       // backsolve
       for(int a=i-1; a>=0; a--) {
@@ -1219,13 +1230,21 @@ namespace Dune {
     using typename IterativeSolver<X,X>::field_type;
     using typename IterativeSolver<X,X>::real_type;
 
+  private:
+    using typename IterativeSolver<X,X>::scalar_real_type;
+
+    //! \bief field_type Allocator retrieved from domain type
+    using fAlloc = ReboundAllocatorType<X,field_type>;
+
+  public:
+
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, real_type reduction, int maxit, int verbose, int restart = 10) :
+    GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
       IterativeSolver<X,X>::IterativeSolver(op,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -1237,7 +1256,7 @@ namespace Dune {
        \param restart When to restart the construction of
        the Krylov search space.
      */
-    GeneralizedPCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec, real_type reduction, int maxit, int verbose, int restart = 10) :
+    GeneralizedPCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
       IterativeSolver<X,X>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -1255,7 +1274,7 @@ namespace Dune {
       _op->applyscaleadd(-1,x,b);      // overwrite b with defect
 
       std::vector<std::shared_ptr<X> > p(_restart);
-      std::vector<typename X::field_type> pp(_restart);
+      std::vector<field_type,fAlloc> pp(_restart);
       X q(x);                  // a temporary vector
       X prec_res(x);           // a temporary vector for preconditioner output
 

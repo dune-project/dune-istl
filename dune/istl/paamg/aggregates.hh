@@ -732,17 +732,9 @@ namespace Dune
       }
     private:
       /** @brief Prevent copying. */
-      AggregatesMap(const AggregatesMap<V>& map)
-      {
-        throw "Auch!";
-      }
-
+      AggregatesMap(const AggregatesMap<V>&) = delete;
       /** @brief Prevent assingment. */
-      AggregatesMap<V>& operator=(const AggregatesMap<V>& map)
-      {
-        throw "Auch!";
-        return this;
-      }
+      AggregatesMap<V>& operator=(const AggregatesMap<V>&) = delete;
 
       /**
        * @brief The aggregates the vertices belong to.

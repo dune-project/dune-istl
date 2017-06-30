@@ -16,7 +16,9 @@
 #include <cmath>                 // Yes, we do some math here
 #include <sys/times.h>            // for timing measurements
 
+#include <dune/common/alignedallocator.hh>
 #include <dune/common/classname.hh>
+#include <dune/common/debugalign.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/simd.hh>
@@ -117,8 +119,10 @@ void test_all(unsigned int Runs = 1)
   typedef typename Dune::SimdScalarTypeTraits<FT>::type MT;
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
-  typedef Dune::BlockVector<VB> Vector;
-  typedef Dune::BCRSMatrix<MB> Matrix;
+  typedef Dune::AlignedAllocator<VB> AllocV;
+  typedef Dune::AlignedAllocator<MB> AllocM;
+  typedef Dune::BlockVector<VB,AllocV> Vector;
+  typedef Dune::BCRSMatrix<MB,AllocM> Matrix;
 
   // size
   unsigned int size = 100;
@@ -158,7 +162,7 @@ void test_all(unsigned int Runs = 1)
   criterion.setNoPreSmoothSteps(1);
   criterion.setNoPostSmoothSteps(1);
   Dune::SeqScalarProduct<Vector> sp;
-  typedef Dune::Amg::AMG<Operator,Vector,Smoother> AMG;
+  typedef Dune::Amg::AMG<Operator,Vector,Smoother,Dune::Amg::SequentialInformation> AMG;
   Smoother smoother(A,1,1);
   AMG amg(op, criterion, smootherArgs);
 
@@ -176,6 +180,9 @@ int main (int argc, char ** argv)
 {
   test_all<float>();
   test_all<double>();
+
+  test_all<Dune::AlignedNumber<double> >();
+
 #if HAVE_VC
   test_all<Vc::float_v>();
   test_all<Vc::double_v>();

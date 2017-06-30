@@ -74,6 +74,9 @@ namespace Dune {
     typedef typename O::range_type range_type;
     //! \brief The field type of the preconditioner.
     typedef typename range_type::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
+    //! \brief type of the wrapped inverse operator
     typedef O InverseOperator;
 
     /**
@@ -137,6 +140,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -145,7 +150,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqSSOR (const M& A, int n, field_type w)
+    SeqSSOR (const M& A, int n, scalar_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -198,7 +203,7 @@ namespace Dune {
     //! \brief The number of steps to do in apply
     int _n;
     //! \brief The relaxation factor to use
-    field_type _w;
+    scalar_field_type _w;
   };
 
 
@@ -225,6 +230,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -233,7 +240,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqSOR (const M& A, int n, field_type w)
+    SeqSOR (const M& A, int n, scalar_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -303,7 +310,7 @@ namespace Dune {
     //! \brief The number of steps to perform in apply.
     int _n;
     //! \brief The relaxation factor to use.
-    field_type _w;
+    scalar_field_type _w;
   };
 
 
@@ -328,6 +335,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -336,7 +345,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqGS (const M& A, int n, field_type w)
+    SeqGS (const M& A, int n, scalar_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -387,7 +396,7 @@ namespace Dune {
     //! \brief The number of iterations to perform in apply.
     int _n;
     //! \brief The relaxation factor to use.
-    field_type _w;
+    scalar_field_type _w;
   };
 
 
@@ -412,6 +421,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -420,7 +431,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqJac (const M& A, int n, field_type w)
+    SeqJac (const M& A, int n, scalar_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -471,7 +482,7 @@ namespace Dune {
     //! \brief The number of steps to perform during apply.
     int _n;
     //! \brief The relaxation parameter to use.
-    field_type _w;
+    scalar_field_type _w;
   };
 
 
@@ -498,6 +509,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -505,10 +518,11 @@ namespace Dune {
        \param A The matrix to operate on.
        \param w The relaxation factor.
      */
-    SeqILU0 (const M& A, field_type w)
-      : ILU(A) // copy A
+    SeqILU0 (const M& A, scalar_field_type w)
+      : _w(w),
+        ILU(A) // copy A
+
     {
-      _w =w;
       bilu0_decomposition(ILU);
     }
 
@@ -552,7 +566,7 @@ namespace Dune {
 
   private:
     //! \brief The relaxation factor to use.
-    field_type _w;
+    scalar_field_type _w;
     //! \brief The ILU0 decomposition of the matrix.
     matrix_type ILU;
   };
@@ -582,6 +596,8 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -590,11 +606,11 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqILUn (const M& A, int n, field_type w)
-      : ILU(A.N(),A.M(),M::row_wise)
+    SeqILUn (const M& A, int n, scalar_field_type w)
+      : ILU(A.N(),A.M(),M::row_wise),
+        _n(n),
+        _w(w)
     {
-      _n = n;
-      _w = w;
       bilu_decomposition(A,n,ILU);
     }
 
@@ -642,7 +658,7 @@ namespace Dune {
     //! \brief The number of steps to perform in apply.
     int _n;
     //! \brief The relaxation factor to use.
-    field_type _w;
+    scalar_field_type _w;
   };
 
 
@@ -664,16 +680,17 @@ namespace Dune {
     typedef Y range_type;
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
        Constructor gets all parameters to operate the prec.
        \param w The relaxation factor.
      */
-    Richardson (field_type w=1.0)
-    {
-      _w = w;
-    }
+    Richardson (scalar_field_type w=1.0) :
+      _w(w)
+    {}
 
     /*!
        \brief Prepare the preconditioner.
@@ -715,7 +732,7 @@ namespace Dune {
 
   private:
     //! \brief The relaxation factor to use.
-    field_type _w;
+    scalar_field_type _w;
   };
 
 
