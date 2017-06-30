@@ -9,6 +9,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/simd.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
