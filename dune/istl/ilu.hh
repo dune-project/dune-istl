@@ -312,7 +312,12 @@ namespace Dune {
       upper.resize( A.N() );
       inv.resize( A.N() );
 
-      lower.reserveAdditional( 2*A.N() );
+      // lower and upper triangular should store half of non zeros minus diagonal
+      const size_t memEstimate = (A.nonzeroes() - A.N())/2;
+
+      assert( A.nonzeros() != 0 );
+      lower.reserveAdditional( memEstimate );
+      upper.reserveAdditional( memEstimate );
 
       const auto endi = A.end();
       size_type row = 0;
@@ -321,7 +326,6 @@ namespace Dune {
       for (auto i=A.begin(); i!=endi; ++i, ++row)
       {
         const size_type iIndex  = i.index();
-        lower.reserveAdditional( (*i).size() );
 
         // store entries left of diagonal
         for (auto j=(*i).begin(); j.index() < iIndex; ++j )
@@ -337,24 +341,22 @@ namespace Dune {
       colcount = 0;
       upper.rows_[ 0 ] = colcount ;
 
-      upper.reserveAdditional( lower.nonZeros() + A.N() );
-
-      // NOTE: upper and inv store entries in reverse order, reverse here
-      // relative to ILU
+      // NOTE: upper and inv store entries in reverse row and col order,
+      // reverse here relative to ILU
       for (auto i=A.beforeEnd(); i!=rendi; --i, ++ row )
       {
-        const auto endij=(*i).end();    // end of row i
+        const auto endij=(*i).beforeBegin();    // end of row i
 
         const size_type iIndex = i.index();
-        upper.reserveAdditional( (*i).size() );
 
         // store in reverse row order for faster access during backsolve
-        for (auto j=(*i).begin(); j != endij; ++j )
+        for (auto j=(*i).beforeEnd(); j != endij; --j )
         {
           const size_type jIndex = j.index();
           if( j.index() == iIndex )
           {
             inv[ row ] = (*j);
+            break; // assuming consecutive ordering of A
           }
           else if ( j.index() >= i.index() )
           {
