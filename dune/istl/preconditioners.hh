@@ -510,8 +510,12 @@ namespace Dune {
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
     typedef Y range_type;
+
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
+
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     //! \brief type of ILU storage
     typedef typename ILU::CRS< block_type > CRS;
@@ -523,7 +527,7 @@ namespace Dune {
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, field_type w, const bool resort = false )
+    SeqILU (const M& A, scalar_field_type w, const bool resort = false )
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
@@ -536,13 +540,13 @@ namespace Dune {
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, int n, field_type w, const bool resort = false )
+    SeqILU (const M& A, int n, scalar_field_type w, const bool resort = false )
       : ILU_(),
         lower_(),
         upper_(),
         inv_(),
         w_(w),
-        wNotIdentity_( std::abs( w_ - field_type(1) ) > 1e-15 )
+        wNotIdentity_( std::abs( w_ - scalar_field_type(1) ) > 1e-15 )
     {
       if( n == 0 )
       {
@@ -626,7 +630,7 @@ namespace Dune {
     std::vector< block_type > inv_;
 
     //! \brief The relaxation factor to use.
-    const field_type w_;
+    const scalar_field_type w_;
     //! \brief true if w != 1.0
     const bool wNotIdentity_;
   };
