@@ -315,7 +315,7 @@ namespace Dune {
       // lower and upper triangular should store half of non zeros minus diagonal
       const size_t memEstimate = (A.nonzeroes() - A.N())/2;
 
-      assert( A.nonzeros() != 0 );
+      assert( A.nonzeroes() != 0 );
       lower.reserveAdditional( memEstimate );
       upper.reserveAdditional( memEstimate );
 
