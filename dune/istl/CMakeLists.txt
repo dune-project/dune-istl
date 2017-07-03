@@ -5,6 +5,7 @@ add_subdirectory(test)
 
 #install headers
 install(FILES
+   allocator.hh
    basearray.hh
    bcrsmatrix.hh
    bdmatrix.hh
