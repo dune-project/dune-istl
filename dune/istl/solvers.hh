@@ -261,22 +261,34 @@ namespace Dune {
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int)
       \param condition_estimate Whether to calculate an estimate of the condition number.
                                 The estimate is given in the InverseOperatorResult returned by apply().
+                                This is only supported for float and double field types.
     */
     CGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
       real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
-    {}
+    {
+      if (condition_estimate && !(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)) {
+        condition_estimate_ = false;
+        std::cerr << "WARNING: Condition estimate was disabled. It is only available for double and float field types!" << std::endl;
+      }
+    }
 
     /*!
       \brief Constructor to initialize a CG solver.
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int)
       \param condition_estimate Whether to calculate an estimate of the condition number.
                                 The estimate is given in the InverseOperatorResult returned by apply().
+                                This is only supported for float and double field types.
     */
     CGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
       real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
-    {}
+    {
+      if (condition_estimate && !(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)) {
+        condition_estimate_ = false;
+        std::cerr << "WARNING: Condition estimate was disabled. It is only available for double and float field types!" << std::endl;
+      }
+    }
 
 
     /*!
