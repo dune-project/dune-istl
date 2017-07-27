@@ -13,6 +13,7 @@ install(FILES
    bvector.hh
    colcompmatrix.hh
    gsetc.hh
+   ildl.hh
    ilu.hh
    ilusubdomainsolver.hh
    io.hh

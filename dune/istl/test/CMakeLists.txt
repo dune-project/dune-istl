@@ -92,4 +92,6 @@ dune_add_test(SOURCES vectorcommtest.cc
 
   dune_add_test(SOURCES matrixmarkettest.cc)
 
+dune_add_test(SOURCES iluildltest.cc)
+
 exclude_from_headercheck(complexdata.hh)
