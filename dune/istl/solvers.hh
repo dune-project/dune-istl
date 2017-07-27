@@ -1321,8 +1321,9 @@ namespace Dune {
 
       // convergence test
       real_type defnew=_sp->norm(b);    // comp defect norm
+      ++i;
       if (_verbose>1)                 // print
-        this->printOutput(std::cout,++i,defnew,def);
+        this->printOutput(std::cout,i,defnew,def);
       def = defnew;                   // update norm
       if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
       {
@@ -1366,8 +1367,9 @@ namespace Dune {
           // convergence test
           defnew=_sp->norm(b);        // comp defect norm
 
+          ++i;
           if (_verbose>1)                     // print
-            this->printOutput(std::cout,++i,defnew,def);
+            this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;                       // update norm
           if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
