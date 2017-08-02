@@ -259,7 +259,7 @@ namespace Dune {
   template <typename... Args>
   std::ostream& operator<< (std::ostream& s, const MultiTypeBlockVector<Args...>& v) {
     using namespace Dune::Hybrid;
-    forEach(integralRange(size(v)), [&](auto&& i) {
+    forEach(integralRange(Dune::Hybrid::size(v)), [&](auto&& i) {
       s << "\t(" << i << "):\n" << v[i] << "\n";
     });
     return s;
