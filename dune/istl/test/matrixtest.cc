@@ -385,6 +385,10 @@ int main()
 
   testSuperMatrix(bdMatrix);
 
+  // Test construction from initializer list
+  BDMatrix<FieldMatrix<double,2,2> > bdMatrix2 = { {{1,0},{0,1}}, {{0,1},{-1,0}}};
+  testSuperMatrix(bdMatrix2);
+
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
   //   a) the scalar case

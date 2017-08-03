@@ -65,6 +65,15 @@ namespace Dune {
 
     }
 
+    /** \brief Construct from a std::initializer_list */
+    BDMatrix (std::initializer_list<B> const &list)
+    : BDMatrix(list.size())
+    {
+      size_t i=0;
+      for (auto it = list.begin(); it != list.end(); ++it, ++i)
+        (*this)[i][i] = *it;
+    }
+
     //! assignment
     BDMatrix& operator= (const BDMatrix& other) {
       this->BCRSMatrix<B,A>::operator=(other);
