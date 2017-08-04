@@ -71,6 +71,32 @@ namespace Dune {
       this->BCRSMatrix<B,A>::endindices();
     }
 
+    /** \brief Resize the matrix.  Invalidates the content! */
+    void setSize(size_type size)
+    {
+      this->BCRSMatrix<B,A>::setSize(size,   // rows
+                                     size,   // columns
+                                     size + 2*(size-1));  // nonzeros
+
+      // Set number of entries for each row
+      // All rows get three entries, except for the first and the last one
+      for (size_t i=0; i<size; i++)
+        this->BCRSMatrix<B,A>::setrowsize(i, 3 - (i==0) - (i==(size-1)));
+
+      this->BCRSMatrix<B,A>::endrowsizes();
+
+      // The actual entries for each row
+      for (size_t i=0; i<size; i++) {
+        if (i>0)
+          this->BCRSMatrix<B,A>::addindex(i, i-1);
+        this->BCRSMatrix<B,A>::addindex(i, i  );
+        if (i<size-1)
+          this->BCRSMatrix<B,A>::addindex(i, i+1);
+      }
+
+      this->BCRSMatrix<B,A>::endindices();
+    }
+
     //! assignment
     BTDMatrix& operator= (const BTDMatrix& other) {
       this->BCRSMatrix<B,A>::operator=(other);
