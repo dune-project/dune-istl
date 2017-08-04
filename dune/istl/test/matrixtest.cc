@@ -376,6 +376,25 @@ int main()
 
   testSuperMatrix(bcrsMatrix);
 
+  // Test whether matrix resizing works
+  int size = 3;
+  bcrsMatrix.setSize(size,size,size);
+
+  for (int i=0; i<size; i++)
+    bcrsMatrix.setrowsize(i, 1);
+
+  bcrsMatrix.endrowsizes();
+
+  for (int i=0; i<size; i++)
+    bcrsMatrix.addindex(i, i);
+
+  bcrsMatrix.endindices();
+
+  for (int i=0; i<size; i++)
+    bcrsMatrix[i][i] = 1.0;
+
+  testSuperMatrix(bcrsMatrix);
+
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BDMatrix class -- a dynamic block-diagonal matrix
   // ////////////////////////////////////////////////////////////////////////
