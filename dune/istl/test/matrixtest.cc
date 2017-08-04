@@ -389,6 +389,11 @@ int main()
   BDMatrix<FieldMatrix<double,2,2> > bdMatrix2 = { {{1,0},{0,1}}, {{0,1},{-1,0}}};
   testSuperMatrix(bdMatrix2);
 
+  // test whether resizing works
+  bdMatrix2.setSize(5);
+  bdMatrix2 = 4.0;
+  testSuperMatrix(bdMatrix);
+
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
   //   a) the scalar case

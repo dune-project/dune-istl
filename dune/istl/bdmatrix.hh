@@ -74,6 +74,24 @@ namespace Dune {
         (*this)[i][i] = *it;
     }
 
+    /** \brief Resize the matrix.  Invalidates the content! */
+    void setSize(size_type size)
+    {
+      this->BCRSMatrix<B,A>::setSize(size,   // rows
+                                     size,   // columns
+                                     size);  // nonzeros
+
+      for (int i=0; i<size; i++)
+        this->BCRSMatrix<B,A>::setrowsize(i, 1);
+
+      this->BCRSMatrix<B,A>::endrowsizes();
+
+      for (int i=0; i<size; i++)
+        this->BCRSMatrix<B,A>::addindex(i, i);
+
+      this->BCRSMatrix<B,A>::endindices();
+    }
+
     //! assignment
     BDMatrix& operator= (const BDMatrix& other) {
       this->BCRSMatrix<B,A>::operator=(other);
