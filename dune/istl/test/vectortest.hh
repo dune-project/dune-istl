@@ -73,6 +73,12 @@ namespace Dune
     static_assert(std::is_same<typename Vector::ConstIterator, typename Vector::const_iterator>::value,
                   "'ConstIterator' and 'const_iterator' are not the same type");
 
+    // Test reference types
+    static_assert(std::is_same<typename Vector::reference, typename Vector::reference>::value,
+                  "Vector does not export 'reference'");
+    static_assert(std::is_same<typename Vector::const_reference, typename Vector::const_reference>::value,
+                  "Vector does not export 'const_reference'");
+
     // Test the const_iterator
     testRandomAccessIterator(v.begin(), v.end(), noop);
 
