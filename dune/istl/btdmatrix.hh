@@ -74,9 +74,10 @@ namespace Dune {
     /** \brief Resize the matrix.  Invalidates the content! */
     void setSize(size_type size)
     {
+      auto nonZeros = (size==0) ? 0 : size + 2*(size-1);
       this->BCRSMatrix<B,A>::setSize(size,   // rows
                                      size,   // columns
-                                     size + 2*(size-1));  // nonzeros
+                                     nonZeros);
 
       // Set number of entries for each row
       // All rows get three entries, except for the first and the last one
