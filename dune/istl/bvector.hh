@@ -593,6 +593,16 @@ namespace Imp {
       return *this;
     }
 
+    B* data()
+    {
+      return this->p;
+    }
+
+    const B* data() const
+    {
+      return this->p;
+    }
+
   protected:
     size_type capacity_;
 

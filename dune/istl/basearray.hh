@@ -247,6 +247,16 @@ namespace Imp {
       return n;
     }
 
+    B* data()
+    {
+      return p;
+    }
+
+    const B* data() const
+    {
+      return p;
+    }
+
   protected:
     //! makes empty array
     base_array_unmanaged ()
