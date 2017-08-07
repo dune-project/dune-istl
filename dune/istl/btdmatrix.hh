@@ -49,46 +49,53 @@ namespace Dune {
     /** \brief Default constructor */
     BTDMatrix() : BCRSMatrix<B,A>() {}
 
-    explicit BTDMatrix(int size)
+    explicit BTDMatrix(size_type size)
       : BCRSMatrix<B,A>(size, size, BCRSMatrix<B,A>::random)
     {
-      // special handling for 1x1 matrices
-      if (size==1) {
-
-        this->BCRSMatrix<B,A>::setrowsize(0, 1);
-        this->BCRSMatrix<B,A>::endrowsizes();
-
-        this->BCRSMatrix<B,A>::addindex(0, 0);
-        this->BCRSMatrix<B,A>::endindices();
-
-        return;
-      }
-
       // Set number of entries for each row
-      this->BCRSMatrix<B,A>::setrowsize(0, 2);
-
-      for (int i=1; i<size-1; i++)
-        this->BCRSMatrix<B,A>::setrowsize(i, 3);
-
-      this->BCRSMatrix<B,A>::setrowsize(size-1, 2);
+      // All rows get three entries, except for the first and the last one
+      for (size_t i=0; i<size; i++)
+        this->BCRSMatrix<B,A>::setrowsize(i, 3 - (i==0) - (i==(size-1)));
 
       this->BCRSMatrix<B,A>::endrowsizes();
 
       // The actual entries for each row
-      this->BCRSMatrix<B,A>::addindex(0, 0);
-      this->BCRSMatrix<B,A>::addindex(0, 1);
-
-      for (int i=1; i<size-1; i++) {
-        this->BCRSMatrix<B,A>::addindex(i, i-1);
+      for (size_t i=0; i<size; i++) {
+        if (i>0)
+          this->BCRSMatrix<B,A>::addindex(i, i-1);
         this->BCRSMatrix<B,A>::addindex(i, i  );
-        this->BCRSMatrix<B,A>::addindex(i, i+1);
+        if (i<size-1)
+          this->BCRSMatrix<B,A>::addindex(i, i+1);
       }
 
-      this->BCRSMatrix<B,A>::addindex(size-1, size-2);
-      this->BCRSMatrix<B,A>::addindex(size-1, size-1);
+      this->BCRSMatrix<B,A>::endindices();
+    }
+
+    /** \brief Resize the matrix.  Invalidates the content! */
+    void setSize(size_type size)
+    {
+      auto nonZeros = (size==0) ? 0 : size + 2*(size-1);
+      this->BCRSMatrix<B,A>::setSize(size,   // rows
+                                     size,   // columns
+                                     nonZeros);
+
+      // Set number of entries for each row
+      // All rows get three entries, except for the first and the last one
+      for (size_t i=0; i<size; i++)
+        this->BCRSMatrix<B,A>::setrowsize(i, 3 - (i==0) - (i==(size-1)));
+
+      this->BCRSMatrix<B,A>::endrowsizes();
+
+      // The actual entries for each row
+      for (size_t i=0; i<size; i++) {
+        if (i>0)
+          this->BCRSMatrix<B,A>::addindex(i, i-1);
+        this->BCRSMatrix<B,A>::addindex(i, i  );
+        if (i<size-1)
+          this->BCRSMatrix<B,A>::addindex(i, i+1);
+      }
 
       this->BCRSMatrix<B,A>::endindices();
-
     }
 
     //! assignment
