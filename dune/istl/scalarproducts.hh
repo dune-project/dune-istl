@@ -146,7 +146,7 @@ namespace Dune {
      */
     virtual field_type dot (const X& x, const X& y)
     {
-      field_type result;
+      field_type result(0);
       communication.dot(x,y,result);
       return result;
     }
@@ -219,7 +219,7 @@ namespace Dune {
      */
     virtual field_type dot (const X& x, const X& y)
     {
-      field_type result;
+      field_type result(0);
       communication.dot(x,y,result);
       return result;
     }

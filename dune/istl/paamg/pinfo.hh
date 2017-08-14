@@ -83,6 +83,7 @@ namespace Dune
       typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
       {
         assert(false && "this function should never be called");
+        return typename FieldTraits<typename T1::field_type>::real_type(0);
       }
 
       template<class T>

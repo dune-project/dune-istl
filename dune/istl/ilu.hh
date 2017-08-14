@@ -10,6 +10,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <vector>
 
 #include <dune/common/fmatrix.hh>
 #include "istlexception.hh"
@@ -169,8 +170,8 @@ namespace Dune {
     createiterator ci=ILU.createbegin();
     for (crowiterator i=A.begin(); i!=endi; ++i)
     {
-      //		std::cout << "in row " << i.index() << std::endl;
-      map rowpattern;           // maps column index to generation
+      // std::cout << "in row " << i.index() << std::endl;
+      map rowpattern; // maps column index to generation
 
       // initialize pattern with row of A
       for (ccoliterator j=(*i).begin(); j!=(*i).end(); ++j)
@@ -218,7 +219,7 @@ namespace Dune {
         firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
     }
 
-    //	printmatrix(std::cout,ILU,"ilu pattern","row",10,2);
+    //  printmatrix(std::cout,ILU,"ilu pattern","row",10,2);
 
     // copy entries of A
     for (crowiterator i=A.begin(); i!=endi; ++i)
@@ -250,6 +251,177 @@ namespace Dune {
     // call decomposition on pattern
     bilu0_decomposition(ILU);
   }
+
+  namespace ILU {
+
+    template <class B>
+    struct CRS
+    {
+      typedef B       block_type;
+      typedef size_t  size_type;
+
+      CRS() : nRows_( 0 ) {}
+
+      size_type rows() const { return nRows_; }
+
+      size_type nonZeros() const
+      {
+        assert( rows_[ rows() ] != size_type(-1) );
+        return rows_[ rows() ];
+      }
+
+      void resize( const size_type nRows )
+      {
+          if( nRows_ != nRows )
+          {
+            nRows_ = nRows ;
+            rows_.resize( nRows_+1, size_type(-1) );
+          }
+      }
+
+      void reserveAdditional( const size_type nonZeros )
+      {
+          const size_type needed = values_.size() + nonZeros ;
+          if( values_.capacity() < needed )
+          {
+              const size_type estimate = needed * 1.1;
+              values_.reserve( estimate );
+              cols_.reserve( estimate );
+          }
+      }
+
+      void push_back( const block_type& value, const size_type index )
+      {
+          values_.push_back( value );
+          cols_.push_back( index );
+      }
+
+      std::vector< size_type  > rows_;
+      std::vector< block_type > values_;
+      std::vector< size_type  > cols_;
+      size_type nRows_;
+    };
+
+    //! convert ILU decomposition into CRS format for lower and upper triangular and inverse.
+    template<class M, class CRS, class InvVector>
+    void convertToCRS(const M& A, CRS& lower, CRS& upper, InvVector& inv )
+    {
+      typedef typename M :: size_type size_type;
+
+      lower.resize( A.N() );
+      upper.resize( A.N() );
+      inv.resize( A.N() );
+
+      // lower and upper triangular should store half of non zeros minus diagonal
+      const size_t memEstimate = (A.nonzeroes() - A.N())/2;
+
+      assert( A.nonzeroes() != 0 );
+      lower.reserveAdditional( memEstimate );
+      upper.reserveAdditional( memEstimate );
+
+      const auto endi = A.end();
+      size_type row = 0;
+      size_type colcount = 0;
+      lower.rows_[ 0 ] = colcount;
+      for (auto i=A.begin(); i!=endi; ++i, ++row)
+      {
+        const size_type iIndex  = i.index();
+
+        // store entries left of diagonal
+        for (auto j=(*i).begin(); j.index() < iIndex; ++j )
+        {
+          lower.push_back( (*j), j.index() );
+          ++colcount;
+        }
+        lower.rows_[ iIndex+1 ] = colcount;
+      }
+
+      const auto rendi = A.beforeBegin();
+      row = 0;
+      colcount = 0;
+      upper.rows_[ 0 ] = colcount ;
+
+      // NOTE: upper and inv store entries in reverse row and col order,
+      // reverse here relative to ILU
+      for (auto i=A.beforeEnd(); i!=rendi; --i, ++ row )
+      {
+        const auto endij=(*i).beforeBegin();    // end of row i
+
+        const size_type iIndex = i.index();
+
+        // store in reverse row order for faster access during backsolve
+        for (auto j=(*i).beforeEnd(); j != endij; --j )
+        {
+          const size_type jIndex = j.index();
+          if( j.index() == iIndex )
+          {
+            inv[ row ] = (*j);
+            break; // assuming consecutive ordering of A
+          }
+          else if ( j.index() >= i.index() )
+          {
+            upper.push_back( (*j), jIndex );
+            ++colcount ;
+          }
+        }
+        upper.rows_[ row+1 ] = colcount;
+      }
+    } // end convertToCRS
+
+
+    //! LU backsolve with stored inverse in CRS format for lower and upper triangular
+    template<class CRS, class mblock, class X, class Y>
+    void bilu_backsolve (const CRS& lower,
+                         const CRS& upper,
+                         const std::vector< mblock >& inv,
+                         X& v, const Y& d)
+    {
+      // iterator types
+      typedef typename Y :: block_type  dblock;
+      typedef typename X :: block_type  vblock;
+      typedef typename X :: size_type   size_type ;
+
+      const size_type iEnd = lower.rows();
+      const size_type lastRow = iEnd - 1;
+      if( iEnd != upper.rows() )
+      {
+        DUNE_THROW(ISTLError,"ILU::bilu_backsolve: lower and upper rows must be the same");
+      }
+
+      // lower triangular solve
+      for( size_type i=0; i<iEnd; ++ i )
+      {
+        dblock rhs( d[ i ] );
+        const size_type rowI     = lower.rows_[ i ];
+        const size_type rowINext = lower.rows_[ i+1 ];
+
+        for( size_type col = rowI; col < rowINext; ++ col )
+        {
+          lower.values_[ col ].mmv( v[ lower.cols_[ col ] ], rhs );
+        }
+
+        v[ i ] = rhs;  // Lii = I
+      }
+
+      // upper triangular solve
+      for( size_type i=0; i<iEnd; ++ i )
+      {
+        vblock& vBlock = v[ lastRow - i ];
+        vblock rhs ( vBlock );
+        const size_type rowI     = upper.rows_[ i ];
+        const size_type rowINext = upper.rows_[ i+1 ];
+
+        for( size_type col = rowI; col < rowINext; ++ col )
+        {
+          upper.values_[ col ].mmv( v[ upper.cols_[ col ] ], rhs );
+        }
+
+        // apply inverse and store result
+        inv[ i ].mv( rhs, vBlock);
+      }
+    }
+
+  } // end namespace ILU
 
 
   /** @} end documentation */
