@@ -61,11 +61,16 @@ namespace Imp {
     //! the type for the index access
     typedef typename A::size_type size_type;
 
+    //! the type used for references
+    using reference = B&;
+
+    //! the type used for const references
+    using const_reference = const B&;
 
     //===== access to components
 
     //! random access to blocks
-    B& operator[] (size_type i)
+    reference operator[] (size_type i)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i>=n) DUNE_THROW(ISTLError,"index out of range");
@@ -74,7 +79,7 @@ namespace Imp {
     }
 
     //! same for read only access
-    const B& operator[] (size_type i) const
+    const_reference operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i>=n) DUNE_THROW(ISTLError,"index out of range");
@@ -147,13 +152,13 @@ namespace Imp {
       }
 
       // Needed for operator[] of the iterator
-      B& elementAt (std::ptrdiff_t offset) const
+      reference elementAt (std::ptrdiff_t offset) const
       {
         return *(i+offset);
       }
 
       //! dereferencing
-      B& dereference () const
+      reference dereference () const
       {
         return *i;
       }
@@ -553,10 +558,16 @@ namespace Imp {
     //! The type used for the index access
     typedef typename A::size_type size_type;
 
+    //! the type used for references
+    using reference = B&;
+
+    //! the type used for const references
+    using const_reference = const B&;
+
     //===== access to components
 
     //! random access to blocks, assumes ascending ordering
-    B& operator[] (size_type i)
+    reference operator[] (size_type i)
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
       if (lb == j+n || *lb != i)
@@ -565,7 +576,7 @@ namespace Imp {
     }
 
     //! same for read only access, assumes ascending ordering
-    const B& operator[] (size_type i) const
+    const_reference operator[] (size_type i) const
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
       if (lb == j+n || *lb != i)
@@ -658,7 +669,7 @@ namespace Imp {
       }
 
       //! dereferencing
-      B& dereference () const
+      reference dereference () const
       {
         return p[i];
       }
