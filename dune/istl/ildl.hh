@@ -32,7 +32,7 @@ namespace Dune
   template< class Matrix >
   inline static void bildl_subtractBCT ( const Matrix &B, const Matrix &CT, Matrix &A )
   {
-    for( auto i = A.begin(), iend = A.end(); i = iend; ++i )
+    for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
     {
       auto &&A_i = *i;
       auto &&B_i = B[ i.index() ];
