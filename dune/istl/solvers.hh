@@ -859,7 +859,7 @@ namespace Dune {
           real_type(0.0),
           cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
-            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)
+            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
           )));
       sn = cond(norm_dy < eps,
         field_type(0.0),
@@ -868,7 +868,7 @@ namespace Dune {
           cond(norm_dy > norm_dx,
             // dy and dx are real in exact arithmetic
             // thus dx*dy is real so we can explicitly enforce it
-            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*to_real(dx*dy)/norm_dx/norm_dy,
+            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*dy/norm_dx/norm_dy,
             // dy and dx is real in exact arithmetic
             // so we don't have to conjugate both of them
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dy/dx
@@ -1181,14 +1181,14 @@ namespace Dune {
           real_type(0.0),
           cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
-            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)
+            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
           )));
       sn = cond(norm_dy < eps,
         field_type(0.0),
         cond(norm_dx < eps,
           field_type(1.0),
           cond(norm_dy > norm_dx,
-            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*to_real(dx*conjugate(dy))/norm_dx/norm_dy,
+            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*conjugate(dy)/norm_dx/norm_dy,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*conjugate(dy/dx)
           )));
     }
