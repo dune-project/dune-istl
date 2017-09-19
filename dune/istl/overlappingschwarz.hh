@@ -896,10 +896,10 @@ namespace Dune
   template<class I, class S, class D>
   void OverlappingSchwarzInitializer<I,S,D>::allocate()
   {
-    std::for_each(initializers->begin(), initializers->end(),
-                  std::mem_fn(&AtomInitializer::allocateMatrixStorage));
-    std::for_each(initializers->begin(), initializers->end(),
-                  std::mem_fn(&AtomInitializer::allocateMarker));
+    for(auto&& i: *initializers)
+      i.allocateMatrixStorage();
+    for(auto&& i: *initializers)
+      i.allocateMarker();
   }
 
   template<class I, class S, class D>
@@ -917,8 +917,8 @@ namespace Dune
   template<class I, class S, class D>
   void OverlappingSchwarzInitializer<I,S,D>::calcColstart() const
   {
-    std::for_each(initializers->begin(), initializers->end(),
-                  std::mem_fn(&AtomInitializer::calcColstart));
+    for(auto&& i : *initializers)
+      i.calcColstart();
   }
 
   template<class I, class S, class D>
@@ -939,8 +939,8 @@ namespace Dune
   void OverlappingSchwarzInitializer<I,S,D>::createMatrix() const
   {
     std::vector<IndexMap>().swap(indexMaps);
-    std::for_each(initializers->begin(), initializers->end(),
-                  std::mem_fn(&AtomInitializer::createMatrix));
+    for(auto&& i: *initializers)
+      i.createMatrix();
   }
 
   template<class I, class S, class D>
@@ -1174,7 +1174,8 @@ namespace Dune
       copyToColCompMatrix(initializer, mat);
 
       // Calculate the LU decompositions
-      std::for_each(solvers.begin(), solvers.end(), std::mem_fn(&S<BCRSMatrix<FieldMatrix<T,m,n>,A> >::decompose));
+      for(auto&& s: solvers)
+        s.decompose();
       for (SolverIterator solverIt = solvers.begin(); solverIt != solvers.end(); ++solverIt)
       {
         assert(solverIt->getInternalMatrix().N() == solverIt->getInternalMatrix().M());
