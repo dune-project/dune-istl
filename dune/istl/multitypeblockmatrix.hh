@@ -131,6 +131,19 @@ namespace Dune {
       });
     }
 
+    template<class K, typename = std::enable_if_t<IsNumber<K>::value>>
+    void operator*= (const K& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry *= w;
+      });
+    }
+
+    template<class K, typename = std::enable_if_t<IsNumber<K>::value>>
+    void operator/= (const K& w) {
+      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+        entry /= w;
+      });
+    }
     /** \brief y = A x
      */
     template<typename X, typename Y>
