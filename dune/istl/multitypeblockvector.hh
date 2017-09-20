@@ -163,30 +163,8 @@ namespace Dune {
       });
     }
 
-    // Once we have the IsNumber traits class the following
-    // three implementations could be replaced by:
-    //
-    //    template<class T,
-    //      std::enable_if_t< IsNumber<T>::value, int> = 0>
-    //    void operator*= (const T& w) {
-    //      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-    //        entry *= w;
-    //      });
-    //    }
-
-    void operator*= (const int& w) {
-      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-        entry *= w;
-      });
-    }
-
-    void operator*= (const float& w) {
-      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-        entry *= w;
-      });
-    }
-
-    void operator*= (const double& w) {
+    template<class K, typename = std::enable_if_t<IsNumber<K>::value>>
+    void operator*= (const K& w) {
       Dune::Hybrid::forEach(*this, [&](auto&& entry) {
         entry *= w;
       });
