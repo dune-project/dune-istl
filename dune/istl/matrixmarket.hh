@@ -349,7 +349,7 @@ namespace Dune
         return false;
 
       std::transform(buffer.begin(), buffer.end(), buffer.begin(),
-                     tolower);
+                     ::tolower);
 
       switch(buffer[0])
       {
@@ -387,7 +387,7 @@ namespace Dune
         return false;
 
       std::transform(buffer.begin(), buffer.end(), buffer.begin(),
-                     tolower);
+                     ::tolower);
       switch(buffer[0])
       {
       case 'i' :
@@ -437,7 +437,7 @@ namespace Dune
       file >> buffer;
 
       std::transform(buffer.begin(), buffer.end(), buffer.begin(),
-                     tolower);
+                     ::tolower);
       switch(buffer[0])
       {
       case 'g' :
