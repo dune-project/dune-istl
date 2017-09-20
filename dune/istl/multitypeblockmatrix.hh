@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/typetraits.hh>
 
 #include "istlexception.hh"
 
@@ -67,6 +68,15 @@ namespace Dune {
     static constexpr std::size_t M()
     {
       return FirstRow::size();
+    }
+
+    /** \brief Default constructor */
+    MultiTypeBlockMatrix() {}
+
+    /** \brief Constructor initializing all blocks with given scalar */
+    template<class K, typename = std::enable_if_t<IsNumber<K>::value>>
+    MultiTypeBlockMatrix(K value) {
+      *this = value;
     }
 
     /** \brief Random-access operator

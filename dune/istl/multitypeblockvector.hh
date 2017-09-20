@@ -10,6 +10,7 @@
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/typetraits.hh>
 
 #include "istlexception.hh"
 
@@ -83,6 +84,15 @@ namespace Dune {
     int count()
     {
       return sizeof...(Args);
+    }
+
+    /** \brief Default constructor */
+    MultiTypeBlockVector() {}
+
+    /** \brief Constructor initializing all blocks with given scalar */
+    template<class K, typename = std::enable_if_t<IsNumber<K>::value>>
+    MultiTypeBlockVector(K value) {
+      *this = value;
     }
 
     /** \brief Random-access operator
