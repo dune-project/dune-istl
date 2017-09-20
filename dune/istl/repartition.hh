@@ -1281,7 +1281,7 @@ namespace Dune
     // MPI variables
     int mype = oocomm.communicator().rank();
 
-    assert(nparts<=oocomm.communicator().size());
+    assert(nparts<=static_cast<idxtype>(oocomm.communicator().size()));
 
     int myDomain = -1;
 
