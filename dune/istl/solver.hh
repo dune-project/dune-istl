@@ -264,7 +264,7 @@ namespace Dune
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
 
-#warning actually we want to have this as the default and just implement the second one
+    // #warning actually we want to have this as the default and just implement the second one
     // //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     // virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     // {
