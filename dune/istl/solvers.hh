@@ -27,6 +27,8 @@
 #include <dune/common/timer.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/type_traits.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/eigenvalue/arpackpp.hh>
 
@@ -257,6 +259,12 @@ namespace Dune {
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
+  protected:
+
+    using enableConditionEstimate_t = Dune::Std::bool_constant<(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)>;
+
+  public:
+
     /*!
       \brief Constructor to initialize a CG solver.
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int)
@@ -268,7 +276,7 @@ namespace Dune {
       real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
     {
-      if (condition_estimate && !(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)) {
+      if (condition_estimate && !(enableConditionEstimate_t{})) {
         condition_estimate_ = false;
         std::cerr << "WARNING: Condition estimate was disabled. It is only available for double and float field types!" << std::endl;
       }
@@ -370,8 +378,10 @@ namespace Dune {
         _op->apply(p,q);             // q=Ap
         alpha = _sp->dot(p,q);       // scalar product
         lambda = rholast/alpha;     // minimization
-        if (condition_estimate_)
-          lambdas.push_back(std::real(lambda));
+        Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
+          if (condition_estimate_)
+            lambdas.push_back(std::real(id(lambda)));
+        });
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
@@ -402,8 +412,10 @@ namespace Dune {
         _prec->apply(q,b);           // apply preconditioner
         rho = _sp->dot(q,b);         // orthogonalization
         beta = rho/rholast;         // scaling factor
-        if (condition_estimate_)
-          betas.push_back(std::real(beta));
+        Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
+          if (condition_estimate_)
+            betas.push_back(std::real(id(beta)));
+        });
         p *= beta;                  // scale old search direction
         p += q;                     // orthogonalization with correction
         rholast = rho;              // remember rho for recurrence
