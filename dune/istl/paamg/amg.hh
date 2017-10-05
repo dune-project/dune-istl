@@ -325,7 +325,7 @@ namespace Dune
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
         coarseSmoother_(),
-#warning should category be retrieved from matrices?
+// #warning should category be retrieved from matrices?
         category_(SolverCategory::category(*smoothers_->coarsest())),
         verbosity_(parms.debugLevel())
     {
