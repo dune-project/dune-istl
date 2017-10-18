@@ -7,6 +7,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dune/corepy/common/fvector.hh>
 #include <dune/corepy/istl/bcrsmatrix.hh>
 #include <dune/corepy/istl/bvector.hh>
 #include <dune/corepy/istl/operators.hh>
