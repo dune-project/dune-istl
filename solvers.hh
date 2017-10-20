@@ -17,7 +17,7 @@
 namespace Dune
 {
 
-  namespace CorePy
+  namespace Python
   {
 
     // registerInverseOperator
@@ -253,7 +253,7 @@ namespace Dune
     }
 #endif // #if HAVE_DUNE_ISTL
 
-  } // namespace CorePy
+  } // namespace Python
 
 } // namespace Dune
 

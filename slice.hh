@@ -8,7 +8,7 @@
 namespace Dune
 {
 
-  namespace CorePy
+  namespace Python
   {
 
     // ArraySlice
@@ -86,7 +86,7 @@ namespace Dune
       size_type start_, step_, size_;
     };
 
-  } // namespace CorePy
+  } // namespace Python
 
 } // namespace Dune
 

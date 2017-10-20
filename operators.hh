@@ -12,7 +12,7 @@
 namespace Dune
 {
 
-  namespace CorePy
+  namespace Python
   {
 
     // registerLinearOperator
@@ -39,7 +39,7 @@ namespace Dune
       cls.def( "asLinearOperator", [] ( pybind11::object self ) { return self; } );
     }
 
-  } // namespace CorePy
+  } // namespace Python
 
 } // namespace Dune
 
