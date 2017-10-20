@@ -7,14 +7,14 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 
-#include <dune/corepy/common/fvector.hh>
-#include <dune/corepy/istl/bcrsmatrix.hh>
-#include <dune/corepy/istl/bvector.hh>
-#include <dune/corepy/istl/operators.hh>
-#include <dune/corepy/istl/preconditioners.hh>
-#include <dune/corepy/istl/solvers.hh>
+#include <dune/python/common/fvector.hh>
+#include <dune/python/istl/bcrsmatrix.hh>
+#include <dune/python/istl/bvector.hh>
+#include <dune/python/istl/operators.hh>
+#include <dune/python/istl/preconditioners.hh>
+#include <dune/python/istl/solvers.hh>
 
-#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/python/pybind11/pybind11.h>
 
 PYBIND11_MODULE( _istl, module )
 {
