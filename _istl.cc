@@ -26,18 +26,18 @@ PYBIND11_MODULE( _istl, module )
 
   // export block vector with block size 1
   typedef Dune::BlockVector< Dune::FieldVector< double, 1 > > Vector;
-  Dune::CorePy::registerBlockVector< Vector >( module );
+  Dune::Python::registerBlockVector< Vector >( module );
 
   // export linear operator, preconditioners, and solvers for blockvectors with block size 1
   pybind11::class_< Dune::LinearOperator< Vector, Vector > > clsLinearOperator( module, "LinearOperator" );
-  Dune::CorePy::registerLinearOperator( clsLinearOperator );
-  Dune::CorePy::registerPreconditioners( module, clsLinearOperator );
-  Dune::CorePy::registerSolvers( module, clsLinearOperator );
+  Dune::Python::registerLinearOperator( clsLinearOperator );
+  Dune::Python::registerPreconditioners( module, clsLinearOperator );
+  Dune::Python::registerSolvers( module, clsLinearOperator );
 
   // export BCRS matrix with block size 1x1
   typedef Dune::BCRSMatrix< Dune::FieldMatrix< double, 1, 1 > > Matrix;
-  Dune::CorePy::registerBCRSMatrix< Matrix >( module );
+  Dune::Python::registerBCRSMatrix< Matrix >( module );
 
   // export matrix-based preconditioners for BCRS matrix with block size 1x1
-  Dune::CorePy::registerMatrixPreconditioners< Matrix >( module, clsLinearOperator );
+  Dune::Python::registerMatrixPreconditioners< Matrix >( module, clsLinearOperator );
 }
