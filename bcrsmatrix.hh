@@ -74,9 +74,11 @@ namespace Dune
     // ------------------
 
 #if HAVE_DUNE_ISTL
-    template< class BCRSMatrix >
-    pybind11::class_< BCRSMatrix > registerBCRSMatrix ( pybind11::handle scope, const char *clsName = "BCRSMatrix" )
+    template <class BCRSMatrix, class... options>
+    void registerBCRSMatrix(pybind11::handle scope,
+                            pybind11::class_<BCRSMatrix, options...> cls)
     {
+      using pybind11::operator""_a;
       typedef typename BCRSMatrix::block_type block_type;
       typedef typename BCRSMatrix::field_type field_type;
       //typedef typename FieldTraits< field_type >::real_type real_type;
@@ -84,10 +86,6 @@ namespace Dune
       typedef typename BCRSMatrix::row_type row_type;
 
       typedef typename BCRSMatrix::BuildMode BuildMode;
-
-      using pybind11::operator""_a;
-
-      pybind11::class_< BCRSMatrix > cls( scope, clsName );
 
       pybind11::class_< row_type > clsRow( scope, "BCRSMatrixRow" );
       registerBlockVector( clsRow );
@@ -313,7 +311,12 @@ namespace Dune
       cls.def( "asLinearOperator", [] ( const BCRSMatrix &self ) -> LinearOperator * {
           return new MatrixAdapter< BCRSMatrix, CorrespondingDomainVector< BCRSMatrix >, CorrespondingRangeVector< BCRSMatrix > >( self );
         }, pybind11::keep_alive< 0, 1 >() );
-
+    }
+    template< class BCRSMatrix >
+    pybind11::class_< BCRSMatrix > registerBCRSMatrix ( pybind11::handle scope, const char *clsName = "BCRSMatrix" )
+    {
+      pybind11::class_< BCRSMatrix > cls( scope, clsName );
+      registerBCRSMatrix( scope, cls );
       return cls;
     }
 #endif // #if HAVE_DUNE_ISTL
