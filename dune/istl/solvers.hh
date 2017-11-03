@@ -259,6 +259,9 @@ namespace Dune {
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
+  private:
+    using typename IterativeSolver<X,X>::scalar_real_type;
+
   protected:
 
     using enableConditionEstimate_t = Dune::Std::bool_constant<(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)>;
@@ -273,7 +276,7 @@ namespace Dune {
                                 This is only supported for float and double field types.
     */
     CGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
-      real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
+      scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
     {
       if (condition_estimate && !(enableConditionEstimate_t{})) {
@@ -290,7 +293,7 @@ namespace Dune {
                                 This is only supported for float and double field types.
     */
     CGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
-      real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
+      scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
     {
       if (condition_estimate && !(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)) {
