@@ -117,7 +117,7 @@ int main(int argc, char **argv)
     for (int row = 0; row < N; ++row) {
       double factor = 0.8 + 0.2 * ((double)row / N);
       for (int i = -10; i <= 10; i++) {
-        if (row+i >= 0 && row+i < T.N())
+        if (row+i >= 0 && row+i < int(T.N()))
           T[row][row+i] = -1.0 * factor;
       }
       T[row][row] = 20.0 * factor;

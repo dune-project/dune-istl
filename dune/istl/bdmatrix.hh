@@ -5,6 +5,8 @@
 
 #include <memory>
 
+#include <dune/common/rangeutilities.hh>
+
 #include <dune/istl/bcrsmatrix.hh>
 
 /** \file
@@ -81,12 +83,12 @@ namespace Dune {
                                      size,   // columns
                                      size);  // nonzeros
 
-      for (int i=0; i<size; i++)
+      for (auto i : range(size))
         this->BCRSMatrix<B,A>::setrowsize(i, 1);
 
       this->BCRSMatrix<B,A>::endrowsizes();
 
-      for (int i=0; i<size; i++)
+      for (auto i : range(size))
         this->BCRSMatrix<B,A>::addindex(i, i);
 
       this->BCRSMatrix<B,A>::endindices();
