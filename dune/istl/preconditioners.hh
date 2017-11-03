@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 
+#include <dune/common/simd.hh>
 #include <dune/common/unused.hh>
 
 #include "preconditioner.hh"
