@@ -912,6 +912,8 @@ namespace Dune {
     typedef Y range_type;
     /** \brief field type of the preconditioner **/
     typedef typename X::field_type field_type;
+    //! \brief scalar type underlying the field_type
+    typedef SimdScalar<field_type> scalar_field_type;
 
     /**
      * \brief constructor
@@ -921,7 +923,7 @@ namespace Dune {
      * \param[in]  A      matrix to operate on
      * \param[in]  relax  relaxation factor
      **/
-    explicit SeqILDL ( const matrix_type &A, field_type relax = field_type( 1 ) )
+    explicit SeqILDL ( const matrix_type &A, scalar_field_type relax = scalar_field_type( 1 ) )
       : decomposition_( A.N(), A.M(), matrix_type::random ),
         relax_( relax )
     {
@@ -985,7 +987,7 @@ namespace Dune {
 
   private:
     matrix_type decomposition_;
-    field_type relax_;
+    scalar_field_type relax_;
   };
 
   /** @} end documentation */
