@@ -478,8 +478,7 @@ namespace Dune
       for(typename std::set<std::size_t>::iterator domain = unassigned.begin(),
             end = unassigned.end(); domain != end; ++domain)
       {
-        using namespace std::placeholders;
-        next_free = std::find_if(next_free, assigned.end(), std::bind(std::less<int>(), _1, 1));
+        next_free = std::find_if(next_free, assigned.end(), std::bind(std::less<int>(), std::placeholders::_1, 1));
         assert(next_free !=  assigned.end());
         domainMapping[*domain] = next_free-assigned.begin();
         *next_free = 1;
@@ -1124,8 +1123,7 @@ namespace Dune
             start+=lprev;
             assert((start+l+offset)-gxadj<=static_cast<idxtype>(gxadjlen));
             increment = *(start-1);
-            using namespace std::placeholders;
-            std::transform(start+offset, start+l+offset, start, std::bind(std::plus<idxtype>(), _1, increment));
+            std::transform(start+offset, start+l+offset, start, std::bind(std::plus<idxtype>(), std::placeholders::_1, increment));
           }
           Dune::dinfo<<std::endl<<"shifted xadj:";
           print_carray(Dune::dinfo, gxadj, noVertices+1);
