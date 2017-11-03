@@ -770,15 +770,7 @@ namespace Dune {
         DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copy-constructed when source matrix is completely empty (size not set) or fully built)");
 
       // deep copy in global array
-      size_type _nnz = Mat.nnz_;
-
-      // in case of row-wise allocation
-      if (_nnz<=0)
-      {
-        _nnz = 0;
-        for (size_type i=0; i<Mat.n; i++)
-          _nnz += Mat.r[i].getsize();
-      }
+      size_type _nnz = Mat.nonzeroes();
 
       j_ = Mat.j_; // enable column index sharing, release array in case of row-wise allocation
       allocate(Mat.n, Mat.m, _nnz, true, true);
@@ -895,12 +887,7 @@ namespace Dune {
         rowAllocator_.deallocate(r,n);
       }
 
-      nnz_ = Mat.nnz_;
-      if (nnz_ <= 0)
-      {
-        for (size_type i=0; i<Mat.n; i++)
-          nnz_ += Mat.r[i].getsize();
-      }
+      nnz_ = Mat.nonzeroes();
 
       // allocate a, share j_
       j_ = Mat.j_;
@@ -1234,6 +1221,7 @@ namespace Dune {
           if (j.index() >= m) {
             dwarn << "WARNING: size of row "<< i.index()<<" is "<<j.offset()<<". But was specified as being "<< (*i).end().offset()
                   <<". This means you are wasting valuable space and creating additional cache misses!"<<std::endl;
+            nnz_ -= ((*i).end().offset() - j.offset());
             r[i.index()].setsize(j.offset());
             break;
           }
@@ -1914,6 +1902,9 @@ namespace Dune {
     //! number of blocks that are stored (the number of blocks that possibly are nonzero)
     size_type nonzeroes () const
     {
+      // in case of row-wise allocation
+      if( nnz_ <= 0 )
+        nnz_ = std::accumulate( begin(), end(), size_type( 0 ), [] ( size_type s, const row_type &row ) { return s+row.getsize(); } );
       return nnz_;
     }
 
@@ -1957,7 +1948,7 @@ namespace Dune {
     // size of the matrix
     size_type n;       // number of rows
     size_type m;       // number of columns
-    size_type nnz_;     // number of nonzeroes contained in the matrix
+    mutable size_type nnz_;     // number of nonzeroes contained in the matrix
     size_type allocationSize_; //allocated size of a and j arrays, except in implicit mode: nnz_==allocationsSize_
     // zero means that memory is allocated separately for each row.
 
