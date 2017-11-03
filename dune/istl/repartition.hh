@@ -26,6 +26,7 @@ extern "C"
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/indicessyncer.hh>
 #include <dune/common/parallel/remoteindices.hh>
+#include <dune/common/rangeutilities.hh>
 
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/graph.hh>
@@ -1442,7 +1443,7 @@ namespace Dune
 #ifdef DEBUG_REPART
     std::cout<<mype<<": myDomain: "<<myDomain<<std::endl;
     std::cout<<mype<<": DomainMapping: ";
-    for(int j=0; j<nparts; j++) {
+    for(auto j : range(nparts)) {
       std::cout<<" do: "<<j<<" pe: "<<domainMapping[j]<<" ";
     }
     std::cout<<std::endl;
