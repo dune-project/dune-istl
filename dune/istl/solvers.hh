@@ -7,22 +7,17 @@
 #include <array>
 #include <cmath>
 #include <complex>
-#include <iomanip>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <type_traits>
 #include <vector>
 
 #include <dune/common/conditional.hh>
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/ftraits.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/rangeutilities.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/typetraits.hh>
 
 #include <dune/istl/allocator.hh>
 #include <dune/istl/bcrsmatrix.hh>
