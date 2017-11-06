@@ -131,7 +131,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = max_value(def/def0);
+      res.reduction = static_cast<double>(max_value(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -1516,7 +1516,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = max_value(def/def0);
+      res.reduction = static_cast<double>(max_value(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
