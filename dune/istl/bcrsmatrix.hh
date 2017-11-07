@@ -203,11 +203,23 @@ namespace Dune {
     //! The number of rows in the matrix.
     size_type N() const
     {
-      return _m.N();
+      return rows();
     }
 
     //! The number of columns in the matrix.
     size_type M() const
+    {
+      return cols();
+    }
+
+    //! The number of rows in the matrix.
+    size_type rows() const
+    {
+      return _m.N();
+    }
+
+    //! The number of columns in the matrix.
+    size_type cols() const
     {
       return _m.M();
     }
@@ -1890,11 +1902,23 @@ namespace Dune {
     //! number of rows (counted in blocks)
     size_type N () const
     {
-      return n;
+      return rows();
     }
 
     //! number of columns (counted in blocks)
     size_type M () const
+    {
+      return cols();
+    }
+
+    //! number of rows (counted in blocks)
+    size_type rows () const
+    {
+      return n;
+    }
+
+    //! number of columns (counted in blocks)
+    size_type cols () const
     {
       return m;
     }

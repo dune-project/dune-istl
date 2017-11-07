@@ -688,11 +688,21 @@ namespace MatrixImp
 
     /** \brief Return the number of rows */
     size_type N() const {
-      return data_.N();
+      return rows();
     }
 
     /** \brief Return the number of columns */
     size_type M() const {
+      return cols();
+    }
+
+    /** \brief Return the number of rows */
+    size_type rows() const {
+      return data_.N();
+    }
+
+    /** \brief Return the number of columns */
+    size_type cols() const {
       return cols_;
     }
 

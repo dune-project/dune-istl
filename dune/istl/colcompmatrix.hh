@@ -192,6 +192,15 @@ namespace Dune
      */
     size_type N() const
     {
+      return rows();
+    }
+
+    /**
+     * @brief Get the number of rows.
+     * @return  The number of rows.
+     */
+    size_type rows() const
+    {
       return N_;
     }
 
@@ -205,6 +214,15 @@ namespace Dune
      * @return  The number of columns.
      */
     size_type M() const
+    {
+      return cols();
+    }
+
+    /**
+     * @brief Get the number of columns.
+     * @return  The number of columns.
+     */
+    size_type cols() const
     {
       return M_;
     }
