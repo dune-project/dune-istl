@@ -66,6 +66,22 @@ namespace Dune
         copy( static_cast< const char * >( info.ptr ), info.shape.data(), info.strides.data(), v );
       }
 
+
+
+      // blockVectorGetItem
+      // ------------------
+
+      template< class BlockVector >
+      inline static pybind11::object blockVectorGetItem ( const pybind11::object &vObj, BlockVector &v, typename BlockVector::size_type index )
+      {
+        auto pos = v.find( index );
+        if( pos == v.end() )
+          throw pybind11::index_error( "Index " + std::to_string( index ) + " does not exist in block vector." );
+        pybind11::object result = pybind11::cast( *pos, pybind11::return_value_policy::reference );
+        pybind11::detail::keep_alive_impl( result, vObj );
+        return result;
+      }
+
     } // namespace detail
 
 
@@ -98,13 +114,17 @@ namespace Dune
 
       cls.def( "copy", [] ( const BlockVector &self ) { return new BlockVector( self ); } );
 
-      cls.def( "__getitem__", [] ( BlockVector &self, size_type index ) -> block_type & {
-          auto pos = self.find( index );
-          if( pos != self.end() )
-            return *pos;
-          else
-            throw pybind11::index_error();
-        }, pybind11::return_value_policy::reference, pybind11::keep_alive< 0, 1 >() );
+      cls.def( "__getitem__", [] ( const pybind11::object &self, size_type index ) {
+          return detail::blockVectorGetItem( self, pybind11::cast< BlockVector & >( self ), index );
+        } );
+      cls.def( "__getitem__", [] ( const pybind11::object &self, pybind11::iterable index ) {
+          BlockVector &v = pybind11::cast< BlockVector & >( self );
+          pybind11::tuple refs( pybind11::len( index ) );
+          std::size_t j = 0;
+          for( pybind11::handle i : index )
+            refs[ j++ ] = detail::blockVectorGetItem( self, v, pybind11::cast< size_type >( i ) );
+          return refs;
+        } );
 
       cls.def( "__setitem__", [] ( BlockVector &self, size_type index, block_type value ) {
           auto pos = self.find( index );
