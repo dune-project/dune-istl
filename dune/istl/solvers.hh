@@ -4,33 +4,29 @@
 #ifndef DUNE_ISTL_SOLVERS_HH
 #define DUNE_ISTL_SOLVERS_HH
 
+#include <array>
 #include <cmath>
 #include <complex>
 #include <iostream>
-#include <iomanip>
 #include <memory>
-#include <string>
-#include <vector>
-#include <array>
 #include <type_traits>
+#include <vector>
 
-#include "allocator.hh"
-#include "istlexception.hh"
-#include "operators.hh"
-#include "scalarproducts.hh"
-#include "solver.hh"
-#include "preconditioner.hh"
-#include <dune/common/deprecated.hh>
-#include <dune/common/exceptions.hh>
 #include <dune/common/conditional.hh>
-#include <dune/common/rangeutilities.hh>
-#include <dune/common/timer.hh>
-#include <dune/common/ftraits.hh>
-#include <dune/common/typetraits.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/rangeutilities.hh>
 #include <dune/common/std/type_traits.hh>
+#include <dune/common/timer.hh>
+
+#include <dune/istl/allocator.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/eigenvalue/arpackpp.hh>
+#include <dune/istl/istlexception.hh>
+#include <dune/istl/operators.hh>
+#include <dune/istl/preconditioner.hh>
+#include <dune/istl/scalarproducts.hh>
+#include <dune/istl/solver.hh>
 
 namespace Dune {
   /** @addtogroup ISTL_Solvers
