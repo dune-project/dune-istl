@@ -208,6 +208,19 @@ namespace Dune
       return cls;
     }
 
+    //for the new bindings and arbitrary block size haven't
+
+    template< class BlockVector, class ... options >
+    void registerBlockVector ( pybind11::handle scope, pybind11::class_<BlockVector, options ... > cls )
+    {
+      typedef typename BlockVector::size_type size_type;
+      using pybind11::operator""_a;
+      registerBlockVector( cls );
+      cls.def( pybind11::init( [] () { return new BlockVector(); } ) );
+      cls.def( pybind11::init( [] ( size_type size ) { return new BlockVector( size ); } ), "size"_a );
+    }
+
+
   } // namespace Python
 
 } // namespace Dune
