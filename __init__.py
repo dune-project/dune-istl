@@ -45,5 +45,6 @@ def BlockVector(blockSize):
     typeName = "Dune::BlockVector< Dune::FieldVector< double," + str(blockSize) + " > >"
     includes = ["dune/istl/bvector.hh"]
     includes = includes + ["dune/common/fmatrix.hh"]
+    print("bindings for bigger than 1 blocksize")
     # todo: provide other constructors
     return loadvec(includes, typeName).BlockVector
