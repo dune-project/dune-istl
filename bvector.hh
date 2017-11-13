@@ -218,6 +218,21 @@ namespace Dune
       registerBlockVector( cls );
       cls.def( pybind11::init( [] () { return new BlockVector(); } ) );
       cls.def( pybind11::init( [] ( size_type size ) { return new BlockVector( size ); } ), "size"_a );
+
+      cls.def( pybind11::init( [] ( pybind11::buffer buffer ) {
+          BlockVector *self = new BlockVector();
+          detail::copy( buffer, *self );
+          return self;
+        } ) );
+
+      //cls.def( "__str__", [] ( const BlockVector &self ) { return to_string( self ); } );
+
+      cls.def( "assign", [] ( BlockVector &self, pybind11::buffer buffer ) { detail::copy( buffer, self ); }, "buffer"_a );
+
+      cls.def_property_readonly( "capacity", [] ( const BlockVector &self ) { return self.capacity(); } );
+
+      cls.def( "resize", [] ( BlockVector &self, size_type size ) { self.resize( size ); }, "size"_a );
+
     }
 
 
