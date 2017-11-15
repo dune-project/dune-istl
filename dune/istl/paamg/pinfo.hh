@@ -76,14 +76,15 @@ namespace Dune
       template<class T1, class T2>
       void dot (const T1& x, const T1& y, T2& result) const
       {
-        assert(false && "this function should never be called");
+        // This function should never be called
+        std::abort();
       }
 
       template<class T1>
       typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
       {
-        assert(false && "this function should never be called");
-        return typename FieldTraits<typename T1::field_type>::real_type(0);
+        // This function should never be called
+        std::abort();
       }
 
       template<class T>
