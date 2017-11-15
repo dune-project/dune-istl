@@ -944,19 +944,6 @@ namespace Dune {
 
   private:
 
-    // helper function to extract the real value of a real or complex number
-    inline
-    real_type to_real(const real_type & v)
-    {
-      return v;
-    }
-
-    inline
-    real_type to_real(const std::complex<real_type> & v)
-    {
-      return v.real();
-    }
-
     void generateGivensRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
     {
       using std::sqrt;
@@ -1263,19 +1250,6 @@ namespace Dune {
     typename std::enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
       using std::conj;
       return conj(t);
-    }
-
-    // helper function to extract the real value of a real or complex number
-    inline
-    real_type to_real(const real_type & v)
-    {
-      return v;
-    }
-
-    inline
-    real_type to_real(const std::complex<real_type> & v)
-    {
-      return v.real();
     }
 
     void
