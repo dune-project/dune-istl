@@ -514,7 +514,7 @@ namespace Dune
               // We are still participating on this level
 
               // we have to allocate these types using the rebound allocator
-              // in order to ensure that we fulfill the alignement requirements
+              // in order to ensure that we fulfill the alignment requirements
               solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
                                                   *scalarProduct_,
                                                   *coarseSmoother_, 1E-2, 1000, 0));
@@ -526,7 +526,7 @@ namespace Dune
                   *scalarProduct_,
                   *coarseSmoother_, 1E-2, 1000, 0));
             // // we have to allocate these types using the rebound allocator
-            // // in order to ensure that we fulfill the alignement requirements
+            // // in order to ensure that we fulfill the alignment requirements
             // using Alloc = typename A::template rebind<BiCGSTABSolver<X>>::other;
             // Alloc alloc;
             // auto p = alloc.allocate(1);
