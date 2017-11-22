@@ -101,7 +101,7 @@ namespace Dune
 
       module.def( "SeqSSOR", [] ( const M &A, int n, field_type w ) {
           return static_cast< Preconditioner * >( new SeqSSOR< M, X, Y >( A, n, w ) );
-        }, "matrix"_a, "iterations"_a, "relaxation"_a = field_type( 1 ),
+        }, "matrix"_a, "iterations"_a = 1, "relaxation"_a = field_type( 1 ),
         R"doc(
           Symmetric successive over-relaxation preconditioner
 
