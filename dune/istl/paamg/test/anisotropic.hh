@@ -147,24 +147,10 @@ void setBoundary(V& lhs, V& rhs, const G& n, Dune::ParallelIndexSet<G,L,s>& indi
 template<class V, class G>
 void setBoundary(V& lhs, V& rhs, const G& N)
 {
-  typedef typename V::block_type Block;
-  typedef typename Block::value_type T;
   for(int j=0; j < N; ++j)
     for(int i=0; i < N; i++)
-      if(i==0 || j ==0 || i==N-1 || j==N-1) {
-        T h = 1.0 / ((double) (N-1));
-        T x, y;
-        if(i==N-1)
-          x=1;
-        else
-          x = ((T) i)*h;
-        if(j==N-1)
-          y = 1;
-        else
-          y = ((T) j)*h;
-
-        lhs[j*N+i]=rhs[j*N+i]=0; //x*y;
-      }
+      if(i==0 || j ==0 || i==N-1 || j==N-1)
+        lhs[j*N+i]=rhs[j*N+i]=0;
 }
 
 template<class M, class G, class L, class C, int s>
