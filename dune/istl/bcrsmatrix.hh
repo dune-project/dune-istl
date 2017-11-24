@@ -2149,6 +2149,9 @@ namespace Dune {
           if (r)
             DUNE_THROW(InvalidStateException,"Rows have already been allocated, cannot allocate a second time");
           r = rowAllocator_.allocate(rows);
+          // initialize row entries
+          for(row_type* ri=r; ri!=r+rows; ++ri)
+            rowAllocator_.construct(ri, row_type());
         }else{
           r = 0;
         }
@@ -2163,8 +2166,6 @@ namespace Dune {
           j_.reset(sizeAllocator_.allocate(allocationSize_),Deallocator(sizeAllocator_));
       }else{
         j_.reset();
-        for(row_type* ri=r; ri!=r+rows; ++ri)
-          rowAllocator_.construct(ri, row_type());
       }
 
       // Mark the matrix as not built.
