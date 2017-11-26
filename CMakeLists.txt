@@ -2,6 +2,7 @@ set(HEADERS
   bcrsmatrix.hh
   bvector.hh
   iterator.hh
+  matrixindexset.hh
   operators.hh
   preconditioners.hh
   slice.hh
