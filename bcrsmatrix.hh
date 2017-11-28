@@ -14,6 +14,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/matrixmarket.hh>
+#include <dune/istl/matrixindexset.hh>
 #include <dune/istl/operators.hh>
 #endif // #if HAVE_DUNE_ISTL
 
@@ -311,6 +312,11 @@ namespace Dune
       cls.def( "asLinearOperator", [] ( const BCRSMatrix &self ) -> LinearOperator * {
           return new MatrixAdapter< BCRSMatrix, CorrespondingDomainVector< BCRSMatrix >, CorrespondingRangeVector< BCRSMatrix > >( self );
         }, pybind11::keep_alive< 0, 1 >() );
+
+        //my functions defined for import and exporting the matrix index set
+        cls.def("exportTo", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.import(self);  } );
+        cls.def("importFrom", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.exportIdx(self);  } );
+
     }
     template< class BCRSMatrix >
     pybind11::class_< BCRSMatrix > registerBCRSMatrix ( pybind11::handle scope, const char *clsName = "BCRSMatrix" )
