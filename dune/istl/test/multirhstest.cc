@@ -120,9 +120,8 @@ void test_all(unsigned int Runs = 1)
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
   typedef Dune::AlignedAllocator<VB> AllocV;
-  typedef Dune::AlignedAllocator<MB> AllocM;
   typedef Dune::BlockVector<VB,AllocV> Vector;
-  typedef Dune::BCRSMatrix<MB,AllocM> Matrix;
+  typedef Dune::BCRSMatrix<MB> Matrix;
 
   // size
   unsigned int size = 100;
