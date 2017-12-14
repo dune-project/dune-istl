@@ -927,6 +927,9 @@ namespace Dune {
           DUNE_THROW(BCRSMatrixError,"creation only allowed for uninitialized matrix");
         if(Mat.build_mode!=row_wise)
           DUNE_THROW(BCRSMatrixError,"creation only allowed if row wise allocation was requested in the constructor");
+        if(i==0 && _Mat.N()==0)
+          // empty Matrix is always built.
+           Mat.ready = built;
       }
 
       //! prefix increment

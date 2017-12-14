@@ -1986,6 +1986,11 @@ namespace Dune
 
       VertexDescriptor* edge=edges_;
 
+      // Cater for the case that there are no vertices.
+      // Otherwise endVertex_ will get 1 below.
+      if ( graph.noVertices() == 0)
+        return;
+
       typedef typename Graph::ConstVertexIterator Iterator;
       Iterator endVertex=graph.end();
 
