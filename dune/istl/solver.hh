@@ -53,6 +53,7 @@ namespace Dune
       converged = false;
       conv_rate = 1;
       elapsed = 0;
+      condition_estimate = -1;
     }
 
     /** \brief Number of iterations */
