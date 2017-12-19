@@ -88,3 +88,8 @@ else()
     "Determing location of ARPACK failed:\n"
     "Libraries to link against: ${ARPACK_LIBRARIES}\n\n")
 endif()
+
+# text for feature summary
+set_package_properties("ARPACK" PROPERTIES
+  DESCRIPTION "ARnoldi PACKage"
+  PURPOSE "Solve large scale eigenvalue problems")

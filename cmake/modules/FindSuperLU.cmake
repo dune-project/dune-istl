@@ -168,8 +168,6 @@ find_package_handle_standard_args(
 
 mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY)
 
-set_package_info("SuperLU" "Direct linear solver library")
-
 # if both headers and library are found, store results
 if(SUPERLU_FOUND)
   set(SUPERLU_INCLUDE_DIRS ${SUPERLU_INCLUDE_DIR})
@@ -201,3 +199,8 @@ if(SUPERLU_FOUND)
                               LIBRARIES "${SUPERLU_DUNE_LIBRARIES}"
                               INCLUDE_DIRS "${SUPERLU_INCLUDE_DIRS}")
 endif()
+
+# text for feature summary
+set_package_properties("SuperLU" PROPERTIES
+  DESCRIPTION "Supernodal LU"
+  PURPOSE "Direct solver for linear system, based on LU decompisition")
