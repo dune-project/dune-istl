@@ -121,3 +121,8 @@ if(ARPACKPP_FOUND)
                               LIBRARIES "${ARPACKPP_LIBRARIES}"
                               INCLUDE_DIRS "${ARPACKPP_INCLUDE_DIRS}")
 endif()
+
+# text for feature summary
+set_package_properties("ARPACKPP" PROPERTIES
+  DESCRIPTION "ARPACK++"
+  PURPOSE "C++ interface for ARPACK")
