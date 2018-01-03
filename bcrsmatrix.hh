@@ -313,15 +313,22 @@ namespace Dune
           return new MatrixAdapter< BCRSMatrix, CorrespondingDomainVector< BCRSMatrix >, CorrespondingRangeVector< BCRSMatrix > >( self );
         }, pybind11::keep_alive< 0, 1 >() );
 
-        //my functions defined for import and exporting the matrix index set
-        cls.def("exportTo", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.import(self);  } );
-        cls.def("importFrom", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.exportIdx(self);  } );
-
+      //my functions defined for import and exporting the matrix index set
+      cls.def("exportTo", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.import(self);  } );
+      cls.def("importFrom", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.exportIdx(self);  } );
     }
     template< class BCRSMatrix >
     pybind11::class_< BCRSMatrix > registerBCRSMatrix ( pybind11::handle scope, const char *clsName = "BCRSMatrix" )
     {
-      pybind11::class_< BCRSMatrix > cls( scope, clsName );
+      //pybind11::class_< BCRSMatrix > cls( scope, clsName );
+      int rows = BCRSMatrix::block_type::rows;
+      int cols = BCRSMatrix::block_type::cols;
+
+      std::string matrixTypename = "Dune::BCRSMatrix< Dune::FieldMatrix< double, "+ std::to_string(rows) + ", " + std::to_string(cols) + " > >";
+
+      auto cls = Dune::Python::insertClass< BCRSMatrix >( scope, clsName, Dune::Python::GenerateTypeName(matrixTypename  ), Dune::Python::IncludeFiles{"dune/istl/bcrsmatrix.hh","dune/python/istl/bcrsmatrix.hh"}).first;
+
+      //here i should insert it properly into the type registry instead of just the class name
       registerBCRSMatrix( scope, cls );
       return cls;
     }

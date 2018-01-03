@@ -184,9 +184,11 @@ namespace Dune
 
       using pybind11::operator""_a;
 
-      pybind11::class_< BlockVector > cls( scope, clsName );
-
-      registerBlockVector( cls );
+      //pybind11::class_< BlockVector > cls( scope, clsName );
+      int rows = BlockVector::block_type::dimension;
+      std::string vectorTypename = "Dune::BlockVector< Dune::FieldVector< double, "+ std::to_string(rows) + " > >";
+      auto cls = Dune::Python::insertClass< BlockVector >( scope, clsName, Dune::Python::GenerateTypeName(vectorTypename  ), Dune::Python::IncludeFiles{"dune/istl/bvector.hh","dune/python/istl/bvector.hh"}).first;
+      registerBlockVector(cls );
 
       cls.def( pybind11::init( [] () { return new BlockVector(); } ) );
       cls.def( pybind11::init( [] ( size_type size ) { return new BlockVector( size ); } ), "size"_a );
