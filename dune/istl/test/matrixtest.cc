@@ -77,7 +77,7 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
   typedef typename MatrixType::ConstColIterator ConstColIterator DUNE_UNUSED;
 
-  assert(MatrixType::blocklevel >= 0);
+  assert(Imp::matrixBlockLevel<MatrixType>() >= 0);
 
   // ////////////////////////////////////////////////////////
   //   Count number of rows, columns, and nonzero entries

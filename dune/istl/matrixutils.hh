@@ -11,6 +11,7 @@
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
+#include <dune/istl/blocklevel.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "istlexception.hh"
 
@@ -152,7 +153,7 @@ namespace Dune
   template<class M>
   inline int countNonZeros(const M& matrix)
   {
-    return NonZeroCounter<M::blocklevel>::count(matrix);
+    return NonZeroCounter<Imp::matrixBlockLevel<M>()>::count(matrix);
   }
   /*
      template<class M>

@@ -9,6 +9,7 @@ install(FILES
    basearray.hh
    bcrsmatrix.hh
    bdmatrix.hh
+   blocklevel.hh
    btdmatrix.hh
    bvector.hh
    colcompmatrix.hh
