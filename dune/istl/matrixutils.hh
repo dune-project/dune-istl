@@ -11,6 +11,7 @@
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
+#include <dune/istl/blocklevel.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "istlexception.hh"
 

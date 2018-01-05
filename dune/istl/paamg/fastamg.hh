@@ -10,6 +10,7 @@
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
 #include <dune/istl/paamg/matrixhierarchy.hh>
+#include <dune/istl/blocklevel.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/superlu.hh>
@@ -643,7 +644,7 @@ namespace Dune
     void FastAMG<M,X,PI,A>
     ::presmooth(LevelContext& levelContext, Domain& x, const Range& b)
     {
-      GaussSeidelPresmoothDefect<M::matrix_type::blocklevel>::apply(levelContext.matrix->getmat(),
+      GaussSeidelPresmoothDefect<Imp::matrixBlockLevel<typename M::matrix_type>()>::apply(levelContext.matrix->getmat(),
                                                                     x,
                                                                     *levelContext.residual,
                                                                     b);
@@ -653,7 +654,7 @@ namespace Dune
     void FastAMG<M,X,PI,A>
     ::postsmooth(LevelContext& levelContext, Domain& x, const Range& b)
     {
-      GaussSeidelPostsmoothDefect<M::matrix_type::blocklevel>
+      GaussSeidelPostsmoothDefect<Imp::matrixBlockLevel<typename M::matrix_type>()>
       ::apply(levelContext.matrix->getmat(), x, *levelContext.residual, b);
     }
 
