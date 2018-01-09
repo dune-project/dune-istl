@@ -35,11 +35,11 @@ namespace Dune {
     }
 
 #ifndef DOXYGEN
-    template<typename OP>
-    static Category category(const OP& op, decltype(op.getSolverCategory())* = nullptr)
-    {
-      return op.getSolverCategory();
-    }
+    // template<typename OP>
+    // static Category category(const OP& op, decltype(op.getSolverCategory())* = nullptr)
+    // {
+    //   return op.getSolverCategory();
+    // }
 
     template<typename OP>
     static Category category(const OP& op, decltype(op.category)* = nullptr)

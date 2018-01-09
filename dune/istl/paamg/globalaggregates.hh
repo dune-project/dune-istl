@@ -172,8 +172,7 @@ namespace Dune
         pinfo.copyOwnerToAll(gmap,gmap);
         // communication only needed for ALU
         // (ghosts with same global id as owners on the same process)
-        if (pinfo.getSolverCategory() ==
-            static_cast<int>(SolverCategory::nonoverlapping))
+        if (SolverCategory::category(pinfo) == static_cast<int>(SolverCategory::nonoverlapping))
           pinfo.copyCopyToAll(gmap,gmap);
 
         typedef typename ParallelInformation::RemoteIndices::const_iterator Lists;

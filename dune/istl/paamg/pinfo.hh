@@ -29,7 +29,13 @@ namespace Dune
       typedef EmptySet<int> CopyFlags;
       typedef AllSet<int> OwnerSet;
 
-      SolverCategory::Category getSolverCategory () const {
+      SolverCategory::Category
+      DUNE_DEPRECATED_MSG("use category()")
+      getSolverCategory () const {
+        return SolverCategory::sequential;
+      }
+
+      SolverCategory::Category category () const {
         return SolverCategory::sequential;
       }
 
