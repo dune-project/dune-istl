@@ -288,15 +288,23 @@ namespace Dune {
     /**
      * @brief Set right Solver Category (default is overlapping).
      */
-    void setSolverCategory (SolverCategory set) {
+    void
+    DUNE_DEPRECATED_MSG("the solver category can only be set in the constructor")
+    setSolverCategory (SolverCategory set) {
       category = set;
+    }
+
+    SolverCategory::Category
+    DUNE_DEPRECATED_MSG("use category()")
+    getSolverCategory () const {
+      return category;
     }
 
     /**
      * @brief Get Solver Category.
      * @return The Solver Category.
      */
-    SolverCategory::Category getSolverCategory () const {
+    SolverCategory::Category category () const {
       return category;
     }
 
@@ -692,7 +700,7 @@ namespace Dune {
     mutable std::vector<double> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;
-    SolverCategory::Category category;
+    const SolverCategory::Category category;
     bool freecomm;
   };
 
