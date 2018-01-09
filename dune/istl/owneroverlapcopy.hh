@@ -288,16 +288,24 @@ namespace Dune {
     /**
      * @brief Set right Solver Category (default is overlapping).
      */
-    void setSolverCategory (SolverCategory set) {
-      category = set;
+    void
+    DUNE_DEPRECATED_MSG("the solver category can only be set in the constructor")
+    setSolverCategory (SolverCategory set) {
+      category_ = set;
+    }
+
+    SolverCategory::Category
+    DUNE_DEPRECATED_MSG("use category()")
+    getSolverCategory () const {
+      return category_;
     }
 
     /**
      * @brief Get Solver Category.
      * @return The Solver Category.
      */
-    SolverCategory::Category getSolverCategory () const {
-      return category;
+    SolverCategory::Category category () const {
+      return category_;
     }
 
     const CollectiveCommunication<MPI_Comm>& communicator() const
@@ -558,7 +566,7 @@ namespace Dune {
       : comm(comm_), cc(comm_), pis(), ri(pis,pis,comm_),
         OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
-        CopyToAllInterfaceBuilt(false), globalLookup_(0), category(cat_),
+        CopyToAllInterfaceBuilt(false), globalLookup_(0), category_(cat_),
         freecomm(freecomm_)
     {}
 
@@ -574,7 +582,7 @@ namespace Dune {
       : comm(MPI_COMM_WORLD), cc(MPI_COMM_WORLD), pis(), ri(pis,pis,MPI_COMM_WORLD),
         OwnerToAllInterfaceBuilt(false), OwnerOverlapToAllInterfaceBuilt(false),
         OwnerCopyToAllInterfaceBuilt(false), OwnerCopyToOwnerCopyInterfaceBuilt(false),
-        CopyToAllInterfaceBuilt(false), globalLookup_(0), category(cat_), freecomm(false)
+        CopyToAllInterfaceBuilt(false), globalLookup_(0), category_(cat_), freecomm(false)
     {}
 
     /**
@@ -591,7 +599,7 @@ namespace Dune {
       : comm(comm_), cc(comm_), OwnerToAllInterfaceBuilt(false),
         OwnerOverlapToAllInterfaceBuilt(false), OwnerCopyToAllInterfaceBuilt(false),
         OwnerCopyToOwnerCopyInterfaceBuilt(false), CopyToAllInterfaceBuilt(false),
-        globalLookup_(0), category(cat_), freecomm(freecomm_)
+        globalLookup_(0), category_(cat_), freecomm(freecomm_)
     {
       // set up an ISTL index set
       pis.beginResize();
@@ -692,7 +700,7 @@ namespace Dune {
     mutable std::vector<double> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;
-    SolverCategory::Category category;
+    const SolverCategory::Category category_;
     bool freecomm;
   };
 
