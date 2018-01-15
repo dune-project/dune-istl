@@ -15,6 +15,13 @@ extern "C"
 {
 #include <parmetis.h>
 }
+
+// Explicitly specify a real_t for older ParMETIS versions that do not 
+// provide this macro
+#if !defined(REALTYPEWIDTH) && !defined(real_t)
+#define real_t MPI_FLOAT
+#endif
+
 #endif
 
 #include <dune/common/timer.hh>
@@ -1336,10 +1343,10 @@ namespace Dune
       //
       idxtype numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
       //float *tpwgts = NULL;
-      float *tpwgts = new float[nparts];
+      real_t *tpwgts = new real_t[nparts];
       for(int i=0; i<nparts; ++i)
         tpwgts[i]=1.0/nparts;
-      float ubvec[1];
+      real_t ubvec[1];
       options[0] = 0; // 0=default, 1=options are defined in [1]+[2]
 #ifdef DEBUG_REPART
       options[1] = 3; // show info: 0=no message
