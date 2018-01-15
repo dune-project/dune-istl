@@ -15,13 +15,6 @@ extern "C"
 {
 #include <parmetis.h>
 }
-
-// Explicitly specify a real_t for older ParMETIS versions that do not 
-// provide this macro
-#if !defined(REALTYPEWIDTH) && !defined(real_t)
-#define real_t MPI_FLOAT
-#endif
-
 #endif
 
 #include <dune/common/timer.hh>
@@ -48,6 +41,26 @@ extern "C"
 
 namespace Dune
 {
+  namespace 
+  {
+    // Explicitly specify a real_t and idx_t for older ParMETIS versions that do not 
+    // provide these typedefs
+#if HAVE_PARMETIS && defined(REALTYPEWIDTH)
+    using realtype = ::real_t;
+#else
+    using realtype = float;
+#endif
+
+#if HAVE_PARMETIS && defined(IDXTYPEWIDTH)
+    using idxtype = ::idx_t;
+#elif HAVE_PARMETIS
+    using idxtype = int;
+#else
+    using idxtype = std::size_t;
+#endif
+  }
+
+
 #if HAVE_MPI
   /**
    * @brief Fills the holes in an index set.
@@ -135,17 +148,6 @@ namespace Dune
     class ParmetisDuneIndexMap
     {
     public:
-      // define index type as provided by ParMETIS
-#if HAVE_PARMETIS
-  #if PARMETIS_MAJOR_VERSION > 3
-      typedef idx_t idxtype;
-  #else
-      typedef int idxtype;
-  #endif // PARMETIS_MAJOR_VERSION > 3
-#else
-      typedef std::size_t idxtype;
-#endif // #if HAVE_PARMETIS
-
       template<class Graph, class OOComm>
       ParmetisDuneIndexMap(const Graph& graph, const OOComm& com);
       int toParmetis(int i) const
@@ -312,9 +314,6 @@ namespace Dune
 
   namespace
   {
-    // idxtype is given by ParMETIS package
-    typedef ParmetisDuneIndexMap :: idxtype idxtype ;
-
     /**
      * @brief Fills send buffer with global indices.
      *
@@ -969,7 +968,7 @@ namespace Dune
 #ifdef USE_WEIGHTS
         wgtflag=3;
 #endif
-        float *tpwgts = new float[nparts];
+        realtype *tpwgts = new realtype[nparts];
         for(int i=0; i<nparts; ++i)
           tpwgts[i]=1.0/nparts;
         int options[5] ={ 0,1,15,0,0};
@@ -995,7 +994,7 @@ namespace Dune
         time.reset();
 
 #ifdef PARALLEL_PARTITION
-        float ubvec = 1.15;
+        realtype ubvec = 1.15;
         int ncon=1;
 
         //=======================================================
@@ -1314,11 +1313,7 @@ namespace Dune
     // Global communications are necessary
     // The parmetis global identifiers for the owner vertices.
     ParmetisDuneIndexMap indexMap(graph,oocomm);
-#if HAVE_PARMETIS
     idxtype *part = new idxtype[indexMap.numOfOwnVtx()];
-#else
-    std::size_t *part = new std::size_t[indexMap.numOfOwnVtx()];
-#endif
     for(std::size_t i=0; i < indexMap.numOfOwnVtx(); ++i)
       part[i]=mype;
 
@@ -1343,10 +1338,10 @@ namespace Dune
       //
       idxtype numflag=0, wgtflag=0, options[3], edgecut=0, ncon=1;
       //float *tpwgts = NULL;
-      real_t *tpwgts = new real_t[nparts];
+      realtype *tpwgts = new realtype[nparts];
       for(int i=0; i<nparts; ++i)
         tpwgts[i]=1.0/nparts;
-      real_t ubvec[1];
+      realtype ubvec[1];
       options[0] = 0; // 0=default, 1=options are defined in [1]+[2]
 #ifdef DEBUG_REPART
       options[1] = 3; // show info: 0=no message
