@@ -139,7 +139,7 @@ namespace Dune {
       static_assert(Y::size() == N(), "length of y does not match row count");
       using namespace Dune::Hybrid;
       forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
-        using namespace Dune::Hybrid;
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
           (*this)[i][j].umv(x[j], y[i]);
         });
@@ -154,7 +154,7 @@ namespace Dune {
       static_assert(Y::size() == N(), "length of y does not match row count");
       using namespace Dune::Hybrid;
       forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
-        using namespace Dune::Hybrid;
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
           (*this)[i][j].mmv(x[j], y[i]);
         });
@@ -169,7 +169,7 @@ namespace Dune {
       static_assert(Y::size() == N(), "length of y does not match row count");
       using namespace Dune::Hybrid;
       forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
-        using namespace Dune::Hybrid;
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
           (*this)[i][j].usmv(alpha, x[j], y[i]);
         });
@@ -191,7 +191,7 @@ namespace Dune {
     auto M = index_constant<MultiTypeBlockMatrix<T1,Args...>::M()>();
     using namespace Dune::Hybrid;
     forEach(integralRange(N), [&](auto&& i) {
-      using namespace Dune::Hybrid;
+      using namespace Dune::Hybrid; // needed for icc, see issue #31
       forEach(integralRange(M), [&](auto&& j) {
         s << "\t(" << i << ", " << j << "): \n" << m[i][j];
       });
