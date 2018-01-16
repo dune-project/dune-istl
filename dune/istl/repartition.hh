@@ -53,6 +53,8 @@ namespace Dune
 
 #if HAVE_PARMETIS && defined(IDXTYPEWIDTH)
     using idxtype = ::idx_t;
+#elif HAVE_PARMETIS && defined(SCOTCH_METIS_PREFIX)
+    using idxtype = SCOTCH_Num;
 #elif HAVE_PARMETIS
     using idxtype = int;
 #else
