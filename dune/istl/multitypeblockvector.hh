@@ -223,6 +223,7 @@ namespace Dune {
       ifElse(has_nan<field_type>(), [&](auto&& id) {
         // This variable will preserve any nan value
         real_type nanTracker = 1.0;
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(*this, [&](auto&& entry) {
           real_type entryNorm = entry.infinity_norm();
           result = max(entryNorm, result);
@@ -231,6 +232,7 @@ namespace Dune {
         // Incorporate possible nan value into result
         result *= (nanTracker / nanTracker);
       }, [&](auto&& id) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(*this, [&](auto&& entry) {
           result = max(entry.infinity_norm(), result);
         });
