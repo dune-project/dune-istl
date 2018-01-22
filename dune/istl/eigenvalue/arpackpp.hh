@@ -24,7 +24,14 @@
                      // ARPACK++ provides a class with a method called
                      // Status)
 #endif
+
+// Arpack++ violate ISO C++ in some places. Given the current maintenance status of
+// Arpack(++) we should not wait for an upstream solution for the resulting warning
+// and just ignore it.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #include "arssym.h"  // provides ARSymStdEig
+#pragma GCC diagnostic pop
 
 namespace Dune
 {
