@@ -10,6 +10,10 @@
 
 #include <dune/common/typeutilities.hh>
 
+//this added otherwise insert class wasn't possible on line ~190
+#include <dune/python/common/typeregistry.hh>
+
+
 #include <dune/python/common/string.hh>
 #include <dune/python/common/vector.hh>
 #include <dune/python/istl/iterator.hh>
@@ -177,6 +181,7 @@ namespace Dune
     // registserBlockVector
     // --------------------
 
+    //the auto class is needed so that run.algorithm can properly work
     template< class BlockVector >
     inline pybind11::class_< BlockVector > registerBlockVector ( pybind11::handle scope, const char *clsName = "BlockVector" )
     {
@@ -188,6 +193,7 @@ namespace Dune
       int rows = BlockVector::block_type::dimension;
       std::string vectorTypename = "Dune::BlockVector< Dune::FieldVector< double, "+ std::to_string(rows) + " > >";
       auto cls = Dune::Python::insertClass< BlockVector >( scope, clsName, Dune::Python::GenerateTypeName(vectorTypename  ), Dune::Python::IncludeFiles{"dune/istl/bvector.hh","dune/python/istl/bvector.hh"}).first;
+      //can't find insertClass not loaded yet?
       registerBlockVector(cls );
 
       cls.def( pybind11::init( [] () { return new BlockVector(); } ) );
@@ -210,14 +216,18 @@ namespace Dune
       return cls;
     }
 
-    //for the new bindings and arbitrary block size haven't
 
+    //for the new bindings and arbitrary block size haven't
+    //the generator acutally takes the scope into account which is why we do nothing with it here
+    //so when doing a dune.istl blockvector it doesn't actually define any of the rest ofthe bindings
     template< class BlockVector, class ... options >
     void registerBlockVector ( pybind11::handle scope, pybind11::class_<BlockVector, options ... > cls )
     {
       typedef typename BlockVector::size_type size_type;
       using pybind11::operator""_a;
+
       registerBlockVector( cls );
+
       cls.def( pybind11::init( [] () { return new BlockVector(); } ) );
       cls.def( pybind11::init( [] ( size_type size ) { return new BlockVector( size ); } ), "size"_a );
 
@@ -226,6 +236,7 @@ namespace Dune
           detail::copy( buffer, *self );
           return self;
         } ) );
+
 
       //cls.def( "__str__", [] ( const BlockVector &self ) { return to_string( self ); } );
 
