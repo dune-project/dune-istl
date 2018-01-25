@@ -181,42 +181,6 @@ namespace Dune
     // registserBlockVector
     // --------------------
 
-    //the auto class is needed so that run.algorithm can properly work
-    template< class BlockVector >
-    inline pybind11::class_< BlockVector > registerBlockVector ( pybind11::handle scope, const char *clsName = "BlockVector" )
-    {
-      typedef typename BlockVector::size_type size_type;
-
-      using pybind11::operator""_a;
-
-      //pybind11::class_< BlockVector > cls( scope, clsName );
-      int rows = BlockVector::block_type::dimension;
-      std::string vectorTypename = "Dune::BlockVector< Dune::FieldVector< double, "+ std::to_string(rows) + " > >";
-      auto cls = Dune::Python::insertClass< BlockVector >( scope, clsName, Dune::Python::GenerateTypeName(vectorTypename  ), Dune::Python::IncludeFiles{"dune/istl/bvector.hh","dune/python/istl/bvector.hh"}).first;
-      //can't find insertClass not loaded yet?
-      registerBlockVector(cls );
-
-      cls.def( pybind11::init( [] () { return new BlockVector(); } ) );
-      cls.def( pybind11::init( [] ( size_type size ) { return new BlockVector( size ); } ), "size"_a );
-
-      cls.def( pybind11::init( [] ( pybind11::buffer buffer ) {
-          BlockVector *self = new BlockVector();
-          detail::copy( buffer, *self );
-          return self;
-        } ) );
-
-      cls.def( "__str__", [] ( const BlockVector &self ) { return to_string( self ); } );
-
-      cls.def( "assign", [] ( BlockVector &self, pybind11::buffer buffer ) { detail::copy( buffer, self ); }, "buffer"_a );
-
-      cls.def_property_readonly( "capacity", [] ( const BlockVector &self ) { return self.capacity(); } );
-
-      cls.def( "resize", [] ( BlockVector &self, size_type size ) { self.resize( size ); }, "size"_a );
-
-      return cls;
-    }
-
-
     //for the new bindings and arbitrary block size haven't
     //the generator acutally takes the scope into account which is why we do nothing with it here
     //so when doing a dune.istl blockvector it doesn't actually define any of the rest ofthe bindings
@@ -238,7 +202,7 @@ namespace Dune
         } ) );
 
 
-      //cls.def( "__str__", [] ( const BlockVector &self ) { return to_string( self ); } );
+      // cls.def( "__str__", [] ( const BlockVector &self ) { return to_string( self ); } );
 
       cls.def( "assign", [] ( BlockVector &self, pybind11::buffer buffer ) { detail::copy( buffer, self ); }, "buffer"_a );
 
@@ -247,6 +211,24 @@ namespace Dune
       cls.def( "resize", [] ( BlockVector &self, size_type size ) { self.resize( size ); }, "size"_a );
 
     }
+
+    //the auto class is needed so that run.algorithm can properly work
+    template< class BlockVector >
+    inline pybind11::class_< BlockVector > registerBlockVector ( pybind11::handle scope, const char *clsName = "BlockVector" )
+    {
+      typedef typename BlockVector::size_type size_type;
+
+      using pybind11::operator""_a;
+
+      int rows = BlockVector::block_type::dimension;
+      std::string vectorTypename = "Dune::BlockVector< Dune::FieldVector< double, "+ std::to_string(rows) + " > >";
+      auto cls = Dune::Python::insertClass< BlockVector >( scope, clsName, Dune::Python::GenerateTypeName(vectorTypename  ), Dune::Python::IncludeFiles{"dune/istl/bvector.hh","dune/python/istl/bvector.hh"});
+      //can't find insertClass not loaded yet?
+      if (cls.second)
+        registerBlockVector( scope, cls.first );
+      return cls.first;
+    }
+
 
 
   } // namespace Python
