@@ -87,7 +87,7 @@ namespace Dune {
     }
 
     /** \brief Default constructor */
-    MultiTypeBlockVector() {}
+    MultiTypeBlockVector() = default;
 
     /** \brief Constructor initializing all blocks with given scalar */
     template<class K, typename = std::enable_if_t<IsNumber<K>::value>>
