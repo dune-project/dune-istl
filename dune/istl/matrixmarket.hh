@@ -488,6 +488,7 @@ namespace Dune
           file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
           return false;
         }
+        break;
       default :
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
         return false;
@@ -604,6 +605,26 @@ namespace Dune
     }
 
     /**
+     * @brief Read IndexData from a stream. Specialization for std::complex
+     * @param is The input stream we read.
+     * @param data Where to store the read data.
+     */
+    template<typename T>
+    std::istream& operator>>(std::istream& is, IndexData<NumericWrapper<std::complex<T>>>& data)
+    {
+      is>>data.index;
+      /* MatrixMarket indices are one based. Decrement for C++ */
+      --data.index;
+      // real and imaginary part needs to be read separately as
+      // complex numbers are not provided in pair form. (x,y)
+      NumericWrapper<T> real, imag;
+      is>>real;
+      is>>imag;
+      data.number = {real.number, imag.number};
+      return is;
+    }
+
+    /**
      * @brief Functor to the data values of the matrix.
      *
      * This is specialized for PatternDummy. The specialization does not
@@ -646,6 +667,20 @@ namespace Dune
       {}
     };
 
+    template<class T> struct is_complex : std::false_type {};
+    template<class T> struct is_complex<std::complex<T>> : std::true_type {};
+
+    // wrapper for std::conj. Returns T if T is not complex.
+    template<class T>
+    std::enable_if_t<!is_complex<T>::value, T> conj(const T& r){
+      return r;
+    }
+
+    template<class T>
+    std::enable_if_t<is_complex<T>::value, T> conj(const T& r){
+      return std::conj(r);
+    }
+
     template<typename T, typename A, int brows, int bcols, typename D>
     void readSparseEntries(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>& matrix,
                            std::istream& file, std::size_t entries,
@@ -667,11 +702,39 @@ namespace Dune
         file>>data;
         assert(data.index/bcols<matrix.M());
         rows[row].insert(data);
+        if(row!=data.index){
+          switch(mmHeader.structure)
+          {
+          case symmetric :
+            {
+              IndexData<D> data_sym(data);
+              data_sym.index = row;
+              rows[data.index].insert(data_sym);
+            }
+            break;
+          case skew_symmetric :
+            {
+              IndexData<D> data_sym;
+              data_sym.number = -data.number;
+              data_sym.index = row;
+              rows[data.index].insert(data_sym);
+            }
+            break;
+          case hermitian :
+            {
+              IndexData<D> data_sym;
+              data_sym.number = conj(data.number);
+              data_sym.index = row;
+              rows[data.index].insert(data_sym);
+            }
+            break;
+          }
+        }
       }
 
-      // TODO extend to capture the nongeneral cases.
-      if(mmHeader.structure!= general)
-        DUNE_THROW(Dune::NotImplemented, "Only general is supported right now!");
+      if(mmHeader.structure== unknown_structure)
+        DUNE_THROW(Dune::NotImplemented,
+                   "Only general, symmetric, skew-symmetric and hermitian is supported right now!");
 
       // Setup the matrix sparsity pattern
       int nnz=0;
