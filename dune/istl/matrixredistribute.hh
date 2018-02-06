@@ -92,7 +92,7 @@ namespace Dune
     }
     template<typename IS>
     void checkInterface(const IS& source,
-                        const IS& target, MPI_Comm comm)
+                        const IS& target, MPIHelper::MPICommunicator comm)
     {
       auto ri = std::make_unique<RemoteIndices<IS> >(source, target, comm);
       ri->template rebuild<true>();

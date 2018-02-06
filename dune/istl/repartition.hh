@@ -265,7 +265,7 @@ namespace Dune
   struct RedistributeInterface
     : public Interface
   {
-    void setCommunicator(MPI_Comm comm)
+    void setCommunicator(MPIHelper::MPICommunicator comm)
     {
       communicator_=comm;
     }
@@ -1269,7 +1269,7 @@ namespace Dune
   {
     Timer time;
 
-    MPI_Comm comm=oocomm.communicator();
+    auto comm=oocomm.communicator();
     oocomm.buildGlobalLookup(graph.noVertices());
     fillIndexSetHoles(graph, oocomm);
 
@@ -1382,9 +1382,10 @@ namespace Dune
       //=======================================================
       // ParMETIS_V3_PartKway
       //=======================================================
+      MPI_Comm c = comm;
       ParMETIS_V3_PartKway(indexMap.vtxDist(), xadj, adjncy,
                            NULL, ef.getWeights(), &wgtflag,
-                           &numflag, &ncon, &nparts, tpwgts, ubvec, options, &edgecut, part, &const_cast<MPI_Comm&>(comm));
+                           &numflag, &ncon, &nparts, tpwgts, ubvec, options, &edgecut, part, &c);
 
 
       delete[] xadj;

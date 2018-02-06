@@ -182,6 +182,7 @@ namespace Dune {
     typedef typename std::set<RemoteIndexTripel>::const_iterator remoteindex_iterator;
     typedef typename OwnerOverlapCopyAttributeSet::AttributeSet AttributeSet;
     typedef Dune::ParallelLocalIndex<AttributeSet> LI;
+    typedef typename MPIHelper::MPICommunicator Comm;
   public:
     typedef Dune::ParallelIndexSet<GlobalIdType,LI,512> PIS;
     typedef Dune::RemoteIndices<PIS> RI;
@@ -300,7 +301,7 @@ namespace Dune {
       return category;
     }
 
-    const CollectiveCommunication<MPI_Comm>& communicator() const
+    const CollectiveCommunication<Comm>& communicator() const
     {
       return cc;
     }
@@ -552,7 +553,7 @@ namespace Dune {
      * @param cat_ The Solver category, default is overlapping
      * @param freecomm_ Whether to free the communicator comm_ in the destructor, default is false
      */
-    OwnerOverlapCopyCommunication (MPI_Comm comm_,
+    OwnerOverlapCopyCommunication (Comm comm_,
                                    SolverCategory::Category cat_ = SolverCategory::overlapping,
                                    bool freecomm_ = false)
       : comm(comm_), cc(comm_), pis(), ri(pis,pis,comm_),
@@ -585,7 +586,7 @@ namespace Dune {
      * @param freecomm_ Whether to free the communicator comm_ in the destructor, default is false
      */
     OwnerOverlapCopyCommunication (const IndexInfoFromGrid<GlobalIdType, LocalIdType>& indexinfo,
-                                   MPI_Comm comm_,
+                                   Comm comm_,
                                    SolverCategory::Category cat_ = SolverCategory::overlapping,
                                    bool freecomm_ = false)
       : comm(comm_), cc(comm_), OwnerToAllInterfaceBuilt(false),
@@ -657,26 +658,13 @@ namespace Dune {
       if (OwnerCopyToOwnerCopyInterfaceBuilt) OwnerCopyToOwnerCopyInterface.free();
       if (CopyToAllInterfaceBuilt) CopyToAllInterface.free();
       if (globalLookup_) delete globalLookup_;
-      if (freecomm==true)
-        if(comm!=MPI_COMM_NULL)
-        {
-#ifdef MPI_2
-          // If it is possible to query whether MPI_Finalize
-          // was called, only free the communicator before
-          // calling MPI_Finalize.
-          int wasFinalized = 0;
-          MPI_Finalized( &wasFinalized );
-          if(!wasFinalized)
-#endif
-          MPI_Comm_free(&comm);
-        }
     }
 
   private:
     OwnerOverlapCopyCommunication (const OwnerOverlapCopyCommunication&)
     {}
-    MPI_Comm comm;
-    CollectiveCommunication<MPI_Comm> cc;
+    Comm comm;
+    CollectiveCommunication<Comm> cc;
     PIS pis;
     RI ri;
     mutable IF OwnerToAllInterface;

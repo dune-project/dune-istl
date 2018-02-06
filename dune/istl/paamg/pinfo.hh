@@ -25,7 +25,7 @@ namespace Dune
     class SequentialInformation
     {
     public:
-      typedef CollectiveCommunication<void*> MPICommunicator;
+      typedef CollectiveCommunication<No_Comm> MPICommunicator;
       typedef EmptySet<int> CopyFlags;
       typedef AllSet<int> OwnerSet;
 
