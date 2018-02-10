@@ -458,7 +458,13 @@ namespace Dune
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
 
-      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels())
+      // test whether we should solve on the coarse level. That is the case if we
+      // have that level and if there was a redistribution on this level then our
+      // communicator has to be valid (size()>0) as the smoother might try to communicate
+      // in the constructor.
+      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()
+         && ( ! matrices_->redistributeInformation().back().isSetup() ||
+              matrices_->parallelInformation().coarsest().getRedistributed().communicator().size() ) )
       {
         // We have the carsest level. Create the coarse Solver
         SmootherArgs sargs(smootherArgs_);
