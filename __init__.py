@@ -21,7 +21,8 @@ def load(includes ,typeName ,constructors=None, methods=None):
 def loadvec(includes ,typeName ,constructors=None, methods=None):
 
     #this contains the registration functions for the class
-    includes = includes + ["dune/python/common/fvector.hh"]
+    includes = includes + ["dune/python/common/fvector.hh",
+                           "dune/python/istl/bvector.hh"]
     typeHash = "istlbvector_" + hashIt(typeName)
     return generatorvec.load(includes ,typeName ,typeHash ,constructors ,methods)
 
@@ -55,7 +56,9 @@ def BCRSMatrix(blockSize):
                 + " > >"
         # todo: provide other constructors
         return load(includes, typeName).BCRSMatrix
-
+def bcrsMatrix(size, *args, **kwargs):
+    blockSize = kwargs.get("blockSize",[1,1])
+    return BCRSMatrix(blockSize)(size,*args)
 
 def BlockVector(blockSize):
     if blockSize == 1:
@@ -64,3 +67,10 @@ def BlockVector(blockSize):
     includes = ["dune/istl/bvector.hh"]
     # todo: provide other constructors
     return loadvec(includes, typeName).BlockVector
+def blockVector(size, blockSize=1):
+    if blockSize == 1:
+        return BlockVector1(size)
+    typeName = "Dune::BlockVector< Dune::FieldVector< double ," + str(blockSize) + " > >"
+    includes = ["dune/istl/bvector.hh"]
+    # todo: provide other constructors
+    return loadvec(includes, typeName).BlockVector(size)
