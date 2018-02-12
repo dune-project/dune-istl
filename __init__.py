@@ -64,7 +64,7 @@ def BlockVector(blockSize):
     if blockSize == 1:
         return BlockVector1
     typeName = "Dune::BlockVector< Dune::FieldVector< double ," + str(blockSize) + " > >"
-    includes = ["dune/istl/bvector.hh"]
+    includes = ["dune/python/istl/bvector.hh"]
     # todo: provide other constructors
     return loadvec(includes, typeName).BlockVector
 def blockVector(size, blockSize=1):
