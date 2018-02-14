@@ -271,6 +271,12 @@ namespace Dune
     //   apply(x,b,_reduction,res);
     // }
 
+#ifndef DOXYGEN
+    // make sure the three-argument apply from the base class does not get shadowed
+    // by the redefined four-argument version below
+    using InverseOperator<X,Y>::apply;
+#endif
+
     /*!
        \brief Apply inverse operator with given reduction factor.
 
@@ -280,7 +286,7 @@ namespace Dune
     {
       scalar_real_type saved_reduction = _reduction;
       _reduction = reduction;
-      static_cast<InverseOperator<X,Y>*>(this)->apply(x,b,res);
+      this->apply(x,b,res);
       _reduction = saved_reduction;
     }
 
