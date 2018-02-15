@@ -63,6 +63,9 @@ namespace Dune {
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
+
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
@@ -164,6 +167,9 @@ namespace Dune {
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
+
     /*!
        \brief Apply inverse operator.
 
@@ -263,6 +269,9 @@ namespace Dune {
     using enableConditionEstimate_t = Dune::Std::bool_constant<(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)>;
 
   public:
+
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
 
     /*!
       \brief Constructor to initialize a CG solver.
@@ -526,6 +535,9 @@ namespace Dune {
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
+
     /*!
        \brief Apply inverse operator.
 
@@ -756,6 +768,9 @@ namespace Dune {
 
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
+
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
 
     /*!
        \brief Apply inverse operator.
@@ -1333,6 +1348,9 @@ namespace Dune {
     using fAlloc = ReboundAllocatorType<X,field_type>;
 
   public:
+
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
 
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
