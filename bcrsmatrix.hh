@@ -87,6 +87,8 @@ namespace Dune
       typedef typename BCRSMatrix::row_type row_type;
 
       typedef typename BCRSMatrix::BuildMode BuildMode;
+      //need one of thses for istl buildmode
+      //typedef typename istl::BuildMode istlBuildMode;
 
       pybind11::class_< row_type > clsRow( scope, "BCRSMatrixRow" );
       registerBlockVector( clsRow );
@@ -107,10 +109,10 @@ namespace Dune
 
       // construction
       cls.def( pybind11::init( [] () { return new BCRSMatrix(); } ) );
-      cls.def( pybind11::init( [] ( Size rows, Size cols, Size nnz, BuildMode buildMode ) { return new BCRSMatrix( rows, cols, nnz, buildMode ); } ), "rows"_a, "cols"_a, "nnz"_a = 0, "buildMode"_a );
-      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size nnz, BuildMode buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), nnz, buildMode ); } ), "shape"_a, "nnz"_a = 0, "buildMode"_a );
-      cls.def( pybind11::init( [] ( Size rows, Size cols, Size average, double overflow, BuildMode buildMode ) { return new BCRSMatrix( rows, cols, average, overflow, buildMode ); } ), "rows"_a, "cols"_a, "average"_a, "overflow"_a, "buildMode"_a );
-      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size average, double overflow, BuildMode buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), average, overflow, buildMode ); } ), "shape"_a, "average"_a, "overflow"_a, "buildMode"_a );
+      cls.def( pybind11::init( [] ( Size rows, Size cols, Size nnz, int buildMode ) { return new BCRSMatrix( rows, cols, nnz, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "nnz"_a = 0, "buildMode"_a );
+      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size nnz, int buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), nnz, static_cast<BuildMode>(buildMode) ); } ), "shape"_a, "nnz"_a = 0, "buildMode"_a );
+      cls.def( pybind11::init( [] ( Size rows, Size cols, Size average, double overflow, int buildMode ) { return new BCRSMatrix( rows, cols, average, overflow, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "average"_a, "overflow"_a, "buildMode"_a );
+      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size average, double overflow, int buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), average, overflow, static_cast<BuildMode>(buildMode) ); } ), "shape"_a, "average"_a, "overflow"_a, "buildMode"_a );
 
       detail::registerISTLIterators( cls );
 
@@ -313,10 +315,12 @@ namespace Dune
           return new MatrixAdapter< BCRSMatrix, CorrespondingDomainVector< BCRSMatrix >, CorrespondingRangeVector< BCRSMatrix > >( self );
         }, pybind11::keep_alive< 0, 1 >() );
 
-      //my functions defined for import and exporting the matrix index set
+      //needed for import and exporting the matrix index set
       cls.def("exportTo", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.import(self);  } );
       cls.def("importFrom", [] ( BCRSMatrix &self, MatrixIndexSet &mis ) {mis.exportIdx(self);  } );
     }
+
+
     template< class BCRSMatrix >
     pybind11::class_< BCRSMatrix > registerBCRSMatrix ( pybind11::handle scope, const char *clsName = "BCRSMatrix" )
     {
@@ -326,9 +330,8 @@ namespace Dune
 
       std::string matrixTypename = "Dune::BCRSMatrix< Dune::FieldMatrix< double, "+ std::to_string(rows) + ", " + std::to_string(cols) + " > >";
 
-      auto cls = Dune::Python::insertClass< BCRSMatrix >( scope, clsName, Dune::Python::GenerateTypeName(matrixTypename  ), Dune::Python::IncludeFiles{"dune/istl/bcrsmatrix.hh","dune/python/istl/bcrsmatrix.hh"}).first;
+      auto cls = Dune::Python::insertClass< BCRSMatrix >( scope, clsName, Dune::Python::GenerateTypeName(matrixTypename), Dune::Python::IncludeFiles{"dune/istl/bcrsmatrix.hh","dune/python/istl/bcrsmatrix.hh"}).first;
 
-      //here i should insert it properly into the type registry instead of just the class name
       registerBCRSMatrix( scope, cls );
       return cls;
     }
