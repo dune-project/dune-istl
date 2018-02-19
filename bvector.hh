@@ -222,8 +222,8 @@ namespace Dune
 
       int rows = BlockVector::block_type::dimension;
       std::string vectorTypename = "Dune::BlockVector< Dune::FieldVector< double, "+ std::to_string(rows) + " > >";
-      auto cls = Dune::Python::insertClass< BlockVector >( scope, clsName, Dune::Python::GenerateTypeName(vectorTypename  ), Dune::Python::IncludeFiles{"dune/istl/bvector.hh","dune/python/istl/bvector.hh"});
-      //can't find insertClass not loaded yet?
+      auto cls = Dune::Python::insertClass< BlockVector >( scope, clsName, Dune::Python::GenerateTypeName(vectorTypename), Dune::Python::IncludeFiles{"dune/istl/bvector.hh","dune/python/istl/bvector.hh"});
+
       if (cls.second)
         registerBlockVector( scope, cls.first );
       return cls.first;

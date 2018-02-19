@@ -330,10 +330,12 @@ namespace Dune
 
       std::string matrixTypename = "Dune::BCRSMatrix< Dune::FieldMatrix< double, "+ std::to_string(rows) + ", " + std::to_string(cols) + " > >";
 
-      auto cls = Dune::Python::insertClass< BCRSMatrix >( scope, clsName, Dune::Python::GenerateTypeName(matrixTypename), Dune::Python::IncludeFiles{"dune/istl/bcrsmatrix.hh","dune/python/istl/bcrsmatrix.hh"}).first;
-
-      registerBCRSMatrix( scope, cls );
-      return cls;
+      auto cls = Dune::Python::insertClass< BCRSMatrix >( scope, clsName, Dune::Python::GenerateTypeName(matrixTypename), Dune::Python::IncludeFiles{"dune/istl/bcrsmatrix.hh","dune/python/istl/bcrsmatrix.hh"});
+      if(cls.second)
+      {
+      registerBCRSMatrix( scope, cls.first );
+      }
+      return cls.first;
     }
 #endif // #if HAVE_DUNE_ISTL
 
