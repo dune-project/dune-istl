@@ -31,7 +31,7 @@ def MatrixIndexSet(rows, cols):
     typeName = "Dune::MatrixIndexSet"
     return loadmatrixindexset(includes, typeName).MatrixIndexSet(rows,cols)
 
-def BCRSMatrix(blockSize=(1,1)):
+def BCRSMatrix(blockSize):
     includes = ["dune/istl/bcrsmatrix.hh"]
     try:
         typeName = "Dune::BCRSMatrix<Dune::" + blockSize._typeName + " >"
@@ -47,9 +47,12 @@ def BCRSMatrix(blockSize=(1,1)):
         # todo: provide other constructors
         return load(includes, typeName).BCRSMatrix
 
-def bcrsMatrix(size, *args, **kwargs):
+def bcrsMatrix(size=0, *args, **kwargs):
     blockSize = kwargs.get("blockSize",[1,1])
-    return BCRSMatrix(blockSize)(size,*args)
+    if size != 0 :
+        return BCRSMatrix(blockSize)(size,*args)
+    return BCRSMatrix(blockSize)()
+
 
 def BlockVector(blockSize):
     if blockSize == 1:
