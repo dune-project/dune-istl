@@ -15,9 +15,7 @@ def load(includes ,typeName ,constructors=None, methods=None):
     typeHash = "istlbcrsmatrix_" + hashIt(typeName)
     return generator.load(includes ,typeName ,typeHash ,constructors ,methods)
 
-
 def loadvec(includes ,typeName ,constructors=None, methods=None):
-    #this contains the registration functions for the class
     includes = includes + ["dune/python/common/fvector.hh",
                            "dune/python/istl/bvector.hh"]
     typeHash = "istlbvector_" + hashIt(typeName)
