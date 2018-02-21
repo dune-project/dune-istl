@@ -93,13 +93,6 @@ namespace Dune
       pybind11::class_< row_type > clsRow( scope, "BCRSMatrixRow" );
       registerBlockVector( clsRow );
 
-      pybind11::enum_< BuildMode > bm( cls, "BuildMode" );
-      bm.value( "row_wise", BCRSMatrix::row_wise );
-      bm.value( "random", BCRSMatrix::random );
-      bm.value( "implicit", BCRSMatrix::implicit );
-      // bm.value( "unknown", BCRSMatrix::unknown );
-      bm.export_values();
-
       pybind11::enum_< typename BCRSMatrix::BuildStage > bs( cls, "BuildStage" );
       bs.value( "notAllocated", BCRSMatrix::notAllocated );
       bs.value( "building", BCRSMatrix::building );
@@ -107,12 +100,26 @@ namespace Dune
       bs.value( "built", BCRSMatrix::built );
       bs.export_values();
 
-      // construction
       cls.def( pybind11::init( [] () { return new BCRSMatrix(); } ) );
-      cls.def( pybind11::init( [] ( Size rows, Size cols, Size nnz, int buildMode ) { return new BCRSMatrix( rows, cols, nnz, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "nnz"_a = 0, "buildMode"_a );
-      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size nnz, int buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), nnz, static_cast<BuildMode>(buildMode) ); } ), "shape"_a, "nnz"_a = 0, "buildMode"_a );
-      cls.def( pybind11::init( [] ( Size rows, Size cols, Size average, double overflow, int buildMode ) { return new BCRSMatrix( rows, cols, average, overflow, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "average"_a, "overflow"_a, "buildMode"_a );
-      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size average, double overflow, int buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), average, overflow, static_cast<BuildMode>(buildMode) ); } ), "shape"_a, "average"_a, "overflow"_a, "buildMode"_a );
+      typedef Dune::BCRSMatrix< Dune::FieldMatrix< double, 1, 1 > > Matrix;
+      using BuildMode11 = Matrix::BuildMode;
+      cls.def( pybind11::init( [] ( Size rows, Size cols, Size nnz, BuildMode11 buildMode ) { return new BCRSMatrix( rows, cols, nnz, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "nnz"_a = 0, "buildMode"_a );
+      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size nnz, BuildMode11 buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), nnz, static_cast<BuildMode>(buildMode) ); } ), "shape"_a, "nnz"_a = 0, "buildMode"_a );
+      cls.def( pybind11::init( [] ( Size rows, Size cols, Size average, double overflow, BuildMode11 buildMode ) { return new BCRSMatrix( rows, cols, average, overflow, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "average"_a, "overflow"_a, "buildMode"_a );
+      cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size average, double overflow, BuildMode11 buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), average, overflow, static_cast<BuildMode>(buildMode) ); } ), "shape"_a, "average"_a, "overflow"_a, "buildMode"_a );
+      if (!std::is_same<Matrix,BCRSMatrix>::value)
+      {
+        pybind11::enum_< BuildMode > bm( cls, "BuildMode" );
+        bm.value( "row_wise", BCRSMatrix::row_wise );
+        bm.value( "random", BCRSMatrix::random );
+        bm.value( "implicit", BCRSMatrix::implicit );
+        // bm.value( "unknown", BCRSMatrix::unknown );
+        bm.export_values();
+        cls.def( pybind11::init( [] ( Size rows, Size cols, Size nnz, BuildMode buildMode ) { return new BCRSMatrix( rows, cols, nnz, static_cast<BuildMode>(buildMode) ); } ), "rows"_a, "cols"_a, "nnz"_a = 0, "buildMode"_a );
+        cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size nnz, BuildMode buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), nnz, buildMode ); } ), "shape"_a, "nnz"_a = 0, "buildMode"_a );
+        cls.def( pybind11::init( [] ( Size rows, Size cols, Size average, double overflow, BuildMode buildMode ) { return new BCRSMatrix( rows, cols, average, overflow, buildMode ); } ), "rows"_a, "cols"_a, "average"_a, "overflow"_a, "buildMode"_a );
+        cls.def( pybind11::init( [] ( std::tuple< Size, Size > shape, Size average, double overflow, BuildMode buildMode ) { return new BCRSMatrix( std::get< 0 >( shape ), std::get< 1 >( shape ), average, overflow, buildMode ); } ), "shape"_a, "average"_a, "overflow"_a, "buildMode"_a );
+      }
 
       detail::registerISTLIterators( cls );
 
