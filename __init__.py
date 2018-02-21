@@ -31,27 +31,26 @@ def MatrixIndexSet(rows, cols):
     typeName = "Dune::MatrixIndexSet"
     return loadmatrixindexset(includes, typeName).MatrixIndexSet(rows,cols)
 
-def BCRSMatrix(blockSize):
+def BCRSMatrix(blockType):
     includes = ["dune/istl/bcrsmatrix.hh"]
     try:
-        typeName = "Dune::BCRSMatrix<Dune::" + blockSize._typeName + " >"
-        return load(includes,typeName).BCRSMatrix(blockSize)
+        typeName = "Dune::BCRSMatrix<" + blockType._typeName + " >"
+        return load(includes,typeName).BCRSMatrix
     except AttributeError:
         #check whether blocksize is 1,1
-        if blockSize[0] == blockSize[1] == 1:
+        if blockType[0] == blockType[1] == 1:
             return BCRSMatrix11
 
         typeName = "Dune::BCRSMatrix< Dune::FieldMatrix< double,"\
-                + str(blockSize[0]) + "," + str(blockSize[1]) \
+                + str(blockType[0]) + "," + str(blockType[1]) \
                 + " > >"
-        # todo: provide other constructors
         return load(includes, typeName).BCRSMatrix
 
 def bcrsMatrix(size=0, *args, **kwargs):
-    blockSize = kwargs.get("blockSize",[1,1])
+    blockType = kwargs.get("blockType",[1,1])
     if size != 0 :
-        return BCRSMatrix(blockSize)(size,*args)
-    return BCRSMatrix(blockSize)()
+        return BCRSMatrix(blockType)(size,*args)
+    return BCRSMatrix(blockType)()
 
 
 def BlockVector(blockSize):
