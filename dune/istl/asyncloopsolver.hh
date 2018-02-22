@@ -66,7 +66,7 @@ namespace Dune {
         _prec.apply(v,b);           // apply preconditioner
         x += v;                     // update solution
         _op.applyscaleadd(-1,v,b);  // update defect
-        if(_crit.check_stop(b, i))
+        if(_crit.check_stop(b, i, watch.elapsed()))
           break;
       }
 

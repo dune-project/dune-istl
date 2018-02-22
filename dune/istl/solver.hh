@@ -160,17 +160,26 @@ namespace Dune
       s << std::setw(normSpacing) << "Rate" << std::endl;
     }
 
-    //! helper function for printing solver output
+    // //! helper function for printing solver output
+    // template <typename CountType, typename DataType>
+    // void printOutput(std::ostream& s,
+    //                  const CountType& iter,
+    //                  const DataType& norm,
+    //                  const DataType& norm_old) const
+    // {
+    //   const DataType rate = norm/norm_old;
+    //   s << std::setw(iterationSpacing)  << iter << " ";
+    //   s << std::setw(normSpacing) << norm << " ";
+    //   s << std::setw(normSpacing) << rate << std::endl;
+    // }
+
     template <typename CountType, typename DataType>
     void printOutput(std::ostream& s,
                      const CountType& iter,
                      const DataType& norm,
-                     const DataType& norm_old) const
+                     const double& time) const
     {
-      const DataType rate = norm/norm_old;
-      s << std::setw(iterationSpacing)  << iter << " ";
-      s << std::setw(normSpacing) << norm << " ";
-      s << std::setw(normSpacing) << rate << std::endl;
+      s << iter << "\t " << time << "\t " << norm << std::endl;
     }
 
     //! helper function for printing solver output

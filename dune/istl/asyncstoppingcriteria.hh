@@ -8,7 +8,7 @@ namespace Dune {
   template<class X>
   class AsyncStoppingCriteria {
   public:
-    virtual bool check_stop(const X&, int) = 0;
+    virtual bool check_stop(const X&, int, double) = 0;
   };
 
   template<class X, class C>
@@ -19,16 +19,25 @@ namespace Dune {
     Future<field_type> future_;
     field_type reduction_;
     int iteration_;
+    int verbose_;
   public:
-    AsyncNormCheck(const C& c, field_type reduction)
+    AsyncNormCheck(const C& c, field_type reduction, int verbose)
       : cc_(c)
       , reduction_(reduction)
-    {}
+      , verbose_(verbose)
+    {
+      if(verbose != 0)
+        std::cout << "% Rank\tIteration\tTime\tResidual" << std::endl;
+    }
 
-    virtual bool check_stop(const X& x, int iter){
+    virtual bool check_stop(const X& x, int iter, double time){
       if(future_.valid() && future_.ready()){
         field_type global_norm = std::sqrt(future_.get());
-        std::cout << cc_.rank() << "\t| Iteration " << iteration_ << "\t| Residual norm:" << global_norm << std::endl;
+        if ( verbose_ != 0 )
+          std::cout << cc_.rank() << "\t "
+                    << iteration_ << "\t "
+                    << time << "\t"
+                    << global_norm << std::endl;
         if(global_norm < reduction_)
           return true;
       }

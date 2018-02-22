@@ -67,7 +67,8 @@ int main(int argc, char** argv)
   auto ooc = redistributeMatrix(world, mat, mat_dist);
   N = mat_dist.M();
 
-  typedef typename std::remove_reference_t<decltype(*ooc)>::PIS PIS;
+  typedef typename std::remove_reference_t<decltype(*ooc)> OOC;
+  typedef typename OOC::PIS PIS;
   typedef Dune::AsyncBufferedExchange<BVector, decltype(world), PIS> EX;
   typedef Dune::OverlappingSchwarzOperator<BCRSMat,BVector,BVector, EX> Operator;
 
@@ -88,9 +89,9 @@ int main(int argc, char** argv)
   Dune::InverseOperatorResult res;
   typedef Dune::SeqGS<BCRSMat,BVector,BVector> SEQ_PREC;
   SEQ_PREC seq_prec(mat_dist, 1,1.0);
-  Dune::AsyncBlockPreconditioner<BVector, BVector, SEQ_PREC> prec0(seq_prec, ex);
-  Dune::AsyncNormCheck<BVector, decltype(world)> anc(world, 1e-7, 1);
-  Dune::AsyncLoopSolver<BVector> solver0(fop, prec0, anc, 5000, 3);
+  Dune::BlockPreconditioner<BVector, BVector, OOC, SEQ_PREC> prec0(seq_prec, *ooc);
+  Dune::OverlappingSchwarzScalarProduct<BVector, OOC> sp(*ooc);
+  Dune::LoopSolver<BVector> solver0(fop, sp, prec0, 1e-7, 5000, 3*(rank==0));
 
   solver0.apply(x, b, res);
 
