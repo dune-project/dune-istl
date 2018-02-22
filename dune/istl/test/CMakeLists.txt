@@ -94,3 +94,10 @@ dune_add_test(SOURCES vectorcommtest.cc
 dune_add_test(SOURCES iluildltest.cc)
 
 exclude_from_headercheck(complexdata.hh)
+
+dune_add_test(SOURCES asyncloopsolvertest.cc
+              LINK_LIBRARIES dunecommon
+              CMAKE_GUARD MPI_FOUND
+              MPI_RANKS  1 2
+              TIMEOUT 300
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/asyncloopsolvertest)
