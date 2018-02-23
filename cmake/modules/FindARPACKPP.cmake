@@ -100,7 +100,15 @@ if(ARPACKPP_FOUND)
     "Determing location of ARPACK++ succeeded:\n"
     "Include directory: ${ARPACKPP_INCLUDE_DIRS}\n"
     "Libraries to link against: ${ARPACKPP_LIBRARIES}\n\n")
-  set(ARPACKPP_DUNE_COMPILE_FLAGS "-I${ARPACKPP_INCLUDE_DIRS}"
+
+  # the following is a pretty roundabout way of setting include directories, but it's the
+  # only way we can force -isystem. And we want the compiler to treat ARPACK++ as a system
+  # library to avoid scaring our users with the horrible warnings triggered by the bitrotted
+  # ARPACK++ sources.
+  #
+  # For this to work, only set the COMPILE_OPTIONS (those replaced COMPILE_FLAGS a while ago), never
+  # the INCLUDE_DIRECTORIES!
+  set(ARPACKPP_DUNE_COMPILE_FLAGS "$<$<BOOL:${ARPACKPP_INCLUDE_DIRS}>:-isystem$<JOIN:${ARPACKPP_INCLUDE_DIRS}, -isystem>>"
     CACHE STRING "Compile flags used by DUNE when compiling ARPACK++ programs")
   set(ARPACKPP_DUNE_LIBRARIES ${ARPACKPP_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking ARPACK++ programs")
@@ -119,5 +127,5 @@ set(HAVE_ARPACKPP ${ARPACKPP_FOUND})
 if(ARPACKPP_FOUND)
   dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_ARPACKPP=1"
                               LIBRARIES "${ARPACKPP_LIBRARIES}"
-                              INCLUDE_DIRS "${ARPACKPP_INCLUDE_DIRS}")
+                              COMPILE_OPTIONS "${ARPACKPP_DUNE_COMPILE_FLAGS}")
 endif()
