@@ -203,4 +203,4 @@ endif()
 # text for feature summary
 set_package_properties("SuperLU" PROPERTIES
   DESCRIPTION "Supernodal LU"
-  PURPOSE "Direct solver for linear system, based on LU decompisition")
+  PURPOSE "Direct solver for linear system, based on LU decomposition")
