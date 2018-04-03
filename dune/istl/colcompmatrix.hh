@@ -214,12 +214,12 @@ namespace Dune
       return values;
     }
 
-    int* getRowIndex() const
+    const long int* getRowIndex() const
     {
       return rowindex;
     }
 
-    int* getColStart() const
+    const long int* getColStart() const
     {
       return colstart;
     }
@@ -242,8 +242,8 @@ namespace Dune
   public:
     int N_, M_, Nnz_;
     B* values;
-    int* rowindex;
-    int* colstart;
+    long int* rowindex;
+    long int* colstart;
   };
 
   template<class T, class A, int n, int m>
@@ -354,8 +354,8 @@ namespace Dune
     mat->Nnz_*=n*m;
     // initialize data
     mat->values=new T[mat->Nnz_];
-    mat->rowindex=new int[mat->Nnz_];
-    mat->colstart=new int[cols+1];
+    mat->rowindex=new long int[mat->Nnz_];
+    mat->colstart=new long int[cols+1];
   }
 
   template<class T, class A, int n, int m>
