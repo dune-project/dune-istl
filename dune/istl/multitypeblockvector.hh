@@ -10,6 +10,7 @@
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/typetraits.hh>
 
 #include "istlexception.hh"
 
@@ -220,7 +221,7 @@ namespace Dune {
       real_type result = 0.0;
       // Compute max norm tracking appearing nan values
       // if the field type supports nan.
-      ifElse(has_nan<field_type>(), [&](auto&& id) {
+      ifElse(HasNaN<field_type>(), [&](auto&& id) {
         // This variable will preserve any nan value
         real_type nanTracker = 1.0;
         using namespace Dune::Hybrid; // needed for icc, see issue #31
