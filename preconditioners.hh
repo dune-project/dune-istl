@@ -171,25 +171,8 @@ namespace Dune
               The Jacobi iteration can only be applied if the matrix diagonal entries are all non-zeros.
         )doc" );
 
-      module.def( "SeqILU0", [] ( const M &A, field_type w ) {
-          return static_cast< Preconditioner * >( new SeqILU0< M, X, Y >( A, w ) );
-        }, "matrix"_a, "relaxation"_a = field_type( 1 ),
-        R"doc(
-          Incomplete LU factorization (without fill-in) preconditioner
-
-          Args:
-              matrix:      matrix to precondition
-              relaxation:  factor to relax the iterations (default: 1)
-
-          Returns:
-              ISTL Sequential incomplete LU factorization preconditioner
-
-          Note:
-              The incomplete LU factorization with fill-in has the same sparsity pattern as the given matrix.
-        )doc" );
-
-      module.def( "SeqILUn", [] ( const M &A, int n, field_type w ) {
-          return static_cast< Preconditioner * >( new SeqILUn< M, X, Y >( A, n, w ) );
+      module.def( "SeqILU", [] ( const M &A, int n, field_type w ) {
+          return static_cast< Preconditioner * >( new SeqILU< M, X, Y >( A, n, w ) );
         }, "matrix"_a, "iterations"_a = 1, "relaxation"_a = field_type( 1 ),
         R"doc(Incomplete LU factorization (with fill-in) preconditioner
 
