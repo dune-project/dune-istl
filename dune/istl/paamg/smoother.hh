@@ -235,7 +235,7 @@ namespace Dune
 
 
     /**
-     * @brief Policy for the construction of the SeqILUn smoother
+     * @brief Policy for the construction of the SeqILU0 smoother
      */
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqILU0<M,X,Y> >
