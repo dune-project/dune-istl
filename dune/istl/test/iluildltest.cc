@@ -1,6 +1,7 @@
 #include <config.h>
 #include <iostream>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
@@ -49,7 +50,10 @@ void testDecomposition ( int n )
 int main(int argc, char** argv)
 try {
   testDecomposition< Dune::SeqILDL, double, 1 >( 4 );
+DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0
   testDecomposition< Dune::SeqILU0, double, 1 >( 4 );
+DUNE_NO_DEPRECATED_END // for deprecated SeqILU0
+  testDecomposition< Dune::SeqILU,  double, 1 >( 4 );
 
   return 0;
 }
