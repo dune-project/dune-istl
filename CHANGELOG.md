@@ -4,6 +4,9 @@
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
 
+- Bounds checking in `base_array` is now controlled by the compile time
+  switch `DUNE_CHECK_BOUNDS` instead of of `DUNE_ISTL_WITH_CHECKING`.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.

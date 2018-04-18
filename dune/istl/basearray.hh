@@ -287,7 +287,7 @@ namespace Imp {
            You can copy such an object to a base_array to make a real copy.
 
            Error checking: no error checking is provided normally.
-           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
+           Setting the compile time switch DUNE_CHECK_BOUNDS
            enables error checking.
    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
@@ -534,7 +534,7 @@ namespace Imp {
        are only usably in derived classes.
 
            Error checking: no error checking is provided normally.
-           Setting the compile time switch DUNE_ISTL_WITH_CHECKING
+           Setting the compile time switch DUNE_CHECK_BOUNDS
            enables error checking.
 
     \internal This class is an implementation detail, and should not be used outside of dune-istl.
