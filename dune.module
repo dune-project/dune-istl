@@ -1,5 +1,5 @@
 Module: dune-istl
-Version: 2.5.2
+Version: 2.5.3-git
 Maintainer: dune-devel@lists.dune-project.org
 Depends: dune-common (>= 2.5.0)
 Whitespace-Hook: Yes
