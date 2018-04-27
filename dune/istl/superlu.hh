@@ -356,7 +356,6 @@ namespace Dune
 
     const char* name() { return "SuperLU"; }
   private:
-    friend class std::mem_fun_ref_t<void,SuperLU>;
     template<class M,class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
     friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>,true>;

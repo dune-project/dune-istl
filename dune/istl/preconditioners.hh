@@ -648,9 +648,11 @@ namespace Dune {
      \tparam Y Type of the defect
      \tparam l Ignored. Just there to have the same number of template arguments
      as other preconditioners.
+
+     \deprecated Use SeqILU instead!
    */
   template<class M, class X, class Y, int l=1>
-  class SeqILU0 : public Preconditioner<X,Y> {
+  class DUNE_DEPRECATED_MSG("Use SeqILU instead of SeqILU0!") SeqILU0: public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
     typedef typename std::remove_const<M>::type matrix_type;
@@ -735,9 +737,11 @@ namespace Dune {
      \tparam Y Type of the defect
      \tparam l Ignored. Just there to have the same number of template arguments
      as other preconditioners.
+
+     \deprecated Use SeqILU instead!
    */
   template<class M, class X, class Y, int l=1>
-  class SeqILUn : public Preconditioner<X,Y> {
+  class DUNE_DEPRECATED_MSG("Use SeqILU instead of SeqILUn!") SeqILUn : public Preconditioner<X,Y> {
   public:
     //! \brief The matrix type the preconditioner is for.
     typedef typename std::remove_const<M>::type matrix_type;

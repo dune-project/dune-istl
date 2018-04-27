@@ -6,15 +6,16 @@
 
 #include <cmath>
 #include <complex>
-#include <memory>
 #include <limits>
+#include <memory>
 
-#include <dune/common/promotiontraits.hh>
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/promotiontraits.hh>
+#include <dune/common/typetraits.hh>
 
-#include "istlexception.hh"
 #include "basearray.hh"
+#include "istlexception.hh"
 
 /*! \file
 
@@ -210,7 +211,7 @@ namespace Imp {
 
     //! infinity norm (maximum of absolute values of entries)
     template <typename ft = field_type,
-              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<!HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -225,7 +226,7 @@ namespace Imp {
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     template <typename ft = field_type,
-              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<!HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm_real() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -240,7 +241,7 @@ namespace Imp {
 
     //! infinity norm (maximum of absolute values of entries)
     template <typename ft = field_type,
-              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -258,7 +259,7 @@ namespace Imp {
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     template <typename ft = field_type,
-              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm_real() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -910,7 +911,7 @@ namespace Imp {
 
     //! infinity norm (maximum of absolute values of entries)
     template <typename ft = field_type,
-              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<!HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -925,7 +926,7 @@ namespace Imp {
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     template <typename ft = field_type,
-              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<!HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm_real() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -940,7 +941,7 @@ namespace Imp {
 
     //! infinity norm (maximum of absolute values of entries)
     template <typename ft = field_type,
-              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
@@ -958,7 +959,7 @@ namespace Imp {
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     template <typename ft = field_type,
-              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm_real() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;

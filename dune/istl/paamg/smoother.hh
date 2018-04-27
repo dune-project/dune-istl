@@ -8,6 +8,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
+#include <dune/common/deprecated.hh>
 #include <dune/common/propertymap.hh>
 #include <dune/common/unused.hh>
 
@@ -234,8 +235,9 @@ namespace Dune
     };
 
 
+DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0
     /**
-     * @brief Policy for the construction of the SeqILUn smoother
+     * @brief Policy for the construction of the SeqILU0 smoother
      */
     template<class M, class X, class Y>
     struct ConstructionTraits<SeqILU0<M,X,Y> >
@@ -254,7 +256,9 @@ namespace Dune
       }
 
     };
+DUNE_NO_DEPRECATED_END // for deprecated SeqILU0
 
+DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILUn
     template<class M, class X, class Y>
     class ConstructionArgs<SeqILUn<M,X,Y> >
       : public DefaultConstructionArgs<SeqILUn<M,X,Y> >
@@ -298,6 +302,7 @@ namespace Dune
       }
 
     };
+DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
 
 
     template<class M, class X, class Y>

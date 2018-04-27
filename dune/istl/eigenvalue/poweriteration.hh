@@ -943,7 +943,7 @@ namespace Dune
     {
       // create iteration matrix on demand
       if (!itMatrix_)
-        itMatrix_ = std::unique_ptr<BCRSMatrix>(new BCRSMatrix(m_));
+        itMatrix_ = std::make_unique<BCRSMatrix>(m_);
 
       // return iteration matrix
       return *itMatrix_;

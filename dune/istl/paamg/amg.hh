@@ -458,7 +458,13 @@ namespace Dune
       // build the necessary smoother hierarchies
       matrices_->coarsenSmoother(*smoothers_, smootherArgs_);
 
-      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels())
+      // test whether we should solve on the coarse level. That is the case if we
+      // have that level and if there was a redistribution on this level then our
+      // communicator has to be valid (size()>0) as the smoother might try to communicate
+      // in the constructor.
+      if(buildHierarchy_ && matrices_->levels()==matrices_->maxlevels()
+         && ( ! matrices_->redistributeInformation().back().isSetup() ||
+              matrices_->parallelInformation().coarsest().getRedistributed().communicator().size() ) )
       {
         // We have the carsest level. Create the coarse Solver
         SmootherArgs sargs(smootherArgs_);
@@ -514,7 +520,7 @@ namespace Dune
               // We are still participating on this level
 
               // we have to allocate these types using the rebound allocator
-              // in order to ensure that we fulfill the alignement requirements
+              // in order to ensure that we fulfill the alignment requirements
               solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
                                                   *scalarProduct_,
                                                   *coarseSmoother_, 1E-2, 1000, 0));
@@ -526,7 +532,7 @@ namespace Dune
                   *scalarProduct_,
                   *coarseSmoother_, 1E-2, 1000, 0));
             // // we have to allocate these types using the rebound allocator
-            // // in order to ensure that we fulfill the alignement requirements
+            // // in order to ensure that we fulfill the alignment requirements
             // using Alloc = typename A::template rebind<BiCGSTABSolver<X>>::other;
             // Alloc alloc;
             // auto p = alloc.allocate(1);

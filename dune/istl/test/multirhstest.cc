@@ -19,6 +19,7 @@
 #include <dune/common/alignedallocator.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/debugalign.hh>
+#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #if HAVE_VC
@@ -122,9 +123,8 @@ void test_all(unsigned int Runs = 1)
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
   typedef Dune::AlignedAllocator<VB> AllocV;
-  typedef Dune::AlignedAllocator<MB> AllocM;
   typedef Dune::BlockVector<VB,AllocV> Vector;
-  typedef Dune::BCRSMatrix<MB,AllocM> Matrix;
+  typedef Dune::BCRSMatrix<MB> Matrix;
 
   // size
   unsigned int size = 100;
@@ -141,8 +141,10 @@ void test_all(unsigned int Runs = 1)
   Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,0.1);          // GS preconditioner
   Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,0.1);  // SOR preconditioner
   Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,0.1);      // SSOR preconditioner
+DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0/n
   Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,0.1);        // preconditioner object
   Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.1);     // preconditioner object
+DUNE_NO_DEPRECATED_END // for deprecated SeqILU0/n
 
   Dune::SeqILU<Matrix,Vector,Vector> ilu_0(A,0.1);       // preconditioner object
   Dune::SeqILU<Matrix,Vector,Vector> ilu_1(A,1,0.1);     // preconditioner object

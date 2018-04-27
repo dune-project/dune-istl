@@ -927,6 +927,9 @@ namespace Dune {
           DUNE_THROW(BCRSMatrixError,"creation only allowed for uninitialized matrix");
         if(Mat.build_mode!=row_wise)
           DUNE_THROW(BCRSMatrixError,"creation only allowed if row wise allocation was requested in the constructor");
+        if(i==0 && _Mat.N()==0)
+          // empty Matrix is always built.
+           Mat.ready = built;
       }
 
       //! prefix increment
@@ -1801,7 +1804,7 @@ namespace Dune {
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
     template <typename ft = field_type,
-              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<!HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
@@ -1821,7 +1824,7 @@ namespace Dune {
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     template <typename ft = field_type,
-              typename std::enable_if<!has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<!HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm_real() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
@@ -1841,7 +1844,7 @@ namespace Dune {
 
     //! infinity norm (row sum norm, how to generalize for blocks?)
     template <typename ft = field_type,
-              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
@@ -1864,7 +1867,7 @@ namespace Dune {
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
     template <typename ft = field_type,
-              typename std::enable_if<has_nan<ft>::value, int>::type = 0>
+              typename std::enable_if<HasNaN<ft>::value, int>::type = 0>
     typename FieldTraits<ft>::real_type infinity_norm_real() const {
       if (ready != built)
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
@@ -2149,6 +2152,9 @@ namespace Dune {
           if (r)
             DUNE_THROW(InvalidStateException,"Rows have already been allocated, cannot allocate a second time");
           r = rowAllocator_.allocate(rows);
+          // initialize row entries
+          for(row_type* ri=r; ri!=r+rows; ++ri)
+            rowAllocator_.construct(ri, row_type());
         }else{
           r = 0;
         }
@@ -2163,8 +2169,6 @@ namespace Dune {
           j_.reset(sizeAllocator_.allocate(allocationSize_),Deallocator(sizeAllocator_));
       }else{
         j_.reset();
-        for(row_type* ri=r; ri!=r+rows; ++ri)
-          rowAllocator_.construct(ri, row_type());
       }
 
       // Mark the matrix as not built.

@@ -54,9 +54,6 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
-# Pardiso tests
-  dune_add_test(SOURCES test_pardiso.cc)
-
 # SuperLU tests
   dune_add_test(NAME superlustest
                 SOURCES superlutest.cc

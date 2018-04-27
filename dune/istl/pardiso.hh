@@ -47,6 +47,7 @@ namespace Dune {
        Constructor gets all parameters to operate the prec.
        \param A The matrix to operate on.
      */
+    DUNE_DEPRECATED_MSG("Pardiso isn't supported anymore. Please use SuperLU or UMFPack.")
     SeqPardiso (const M& A)
       : A_(A)
     {
