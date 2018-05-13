@@ -14,6 +14,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/math.hh>
 #include <dune/common/simd/simd.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/timer.hh>
@@ -320,8 +321,6 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      using std::isfinite;
-
       res.clear();                  // clear solver statistics
       Timer watch;                // start a timer
       _prec->pre(x,b);             // prepare preconditioner
@@ -332,7 +331,7 @@ namespace Dune {
 
       real_type def0 = _sp->norm(b); // compute norm
 
-      if (!Simd::allTrue(isfinite(def0))) // check for inf or NaN
+      if (!Simd::allTrue(isFinite(def0))) // check for inf or NaN
       {
         if (_verbose>0)
           std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
@@ -399,7 +398,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (!Simd::allTrue(isfinite(def))) // check for inf or NaN
+        if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
         {
           if (_verbose>0)
             std::cout << "=== CGSolver: abort due to infinite or NaN defect"
