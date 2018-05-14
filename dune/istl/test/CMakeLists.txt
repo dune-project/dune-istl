@@ -2,8 +2,6 @@
 install(FILES vectortest.hh
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
 
-dune_add_test(SOURCES basearraytest.cc)
-
 dune_add_test(SOURCES bcrsassigntest.cc)
 
 dune_add_test(SOURCES bcrsnormtest.cc)
