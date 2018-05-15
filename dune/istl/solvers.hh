@@ -1657,7 +1657,7 @@ namespace Dune {
           // the loop
           int i=2;
           while(i<=_maxit && !res.converged) {
-            for (int i_bounded = 1; i_bounded <= _mmax; i_bounded++) {
+            for (int i_bounded = 1; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
               d[i_bounded] = {0};                 // reset search direction
               _prec->apply(d[i_bounded], b);     // apply preconditioner
               w = d[i_bounded];                 // copy of current d[i]
@@ -1692,7 +1692,7 @@ namespace Dune {
                            "FCGSolver: defect=" << def << " is infinite or NaN");
               }
 
-              if (all_true(def < def0 * _reduction) || max_value(def) < 1E-30 || i==_maxit)    // convergence check
+              if (all_true(def < def0 * _reduction) || max_value(def) < 1E-30)    // convergence check
               {
                 res.converged = true;
                 break;
