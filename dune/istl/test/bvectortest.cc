@@ -2,6 +2,13 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
 
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+
 #include <dune/common/classname.hh>
 #if HAVE_MPROTECT
 #include <dune/common/debugallocator.hh>
