@@ -26,9 +26,6 @@
 
 namespace Dune {
 
-  template<class B, class A=std::allocator<B> >
-  class BlockVectorWindow;
-
 /** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
 namespace Imp {
 
@@ -581,16 +578,6 @@ namespace Imp {
     {
       // forward to operator= in base class
       (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
-      return *this;
-    }
-
-    //! Assignment from BlockVectorWindow
-    template<class OtherAlloc>
-    BlockVector& operator= (const BlockVectorWindow<B,OtherAlloc>& other)
-    {
-      resize(other.size());
-      for(std::size_t i=0; i<other.size(); ++i)
-        (*this)[i] = other[i];
       return *this;
     }
 
