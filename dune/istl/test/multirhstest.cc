@@ -78,7 +78,7 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
     // set up system
     Vector x(N),b(N);
     for (unsigned int i=0; i<N; i++)
-      x[i] += Random<FT>::gen();
+      x[i] = Random<FT>::gen();
     b=0; op.apply(x,b);    // set right hand side accordingly
     x=1;                   // initial guess
 
