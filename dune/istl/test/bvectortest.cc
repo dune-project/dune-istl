@@ -19,6 +19,7 @@
 #if HAVE_MPROTECT
 #include <dune/common/debugallocator.hh>
 #endif
+#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
 
@@ -72,7 +73,6 @@ int testVector()
   testScalarProduct(v);
 
   assert(w.N()==v.N());
-  assert(w.capacity()==v.capacity());
 
   for(typename Vector::size_type i=0; i < v.N(); ++i)
     assert(v[i] == w[i]);
@@ -97,11 +97,6 @@ int testVector()
     assert(v[i] == b);
   }
 
-  // Try to shrink the vector
-  v.reserve(v.N());
-
-  assert(v.N()==v.capacity());
-
   // check the entries
 
   for(typename Vector::size_type i=0; i < v.N(); ++i) {
@@ -122,12 +117,14 @@ void testCapacity()
   for(int i=0; i<10; ++i)
     vec[i]=Dune::BlockVector<SmallVector>(10);
   ThreeLevelVector vec1=vec;
+DUNE_NO_DEPRECATED_BEGIN
   vec.reserve(20, true);
   vec.reserve(10, true);
   vec.reserve(5, false);
   vec.reserve(20, false);
   vec.reserve(0, true);
   vec1.reserve(0, false);
+DUNE_NO_DEPRECATED_END
 }
 
 template <class V>
