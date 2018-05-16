@@ -2,6 +2,12 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include "config.h"
 
+// hack to ensure assert() does something
+// really, assert() should not be used in unit tests.
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <cassert>
 #include <cmath>
 #include <complex>
