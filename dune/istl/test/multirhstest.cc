@@ -22,7 +22,9 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/simd.hh>
+#if HAVE_VC
+#include <dune/common/simd/vc.hh>
+#endif
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
 #include <dune/istl/basearray.hh>
@@ -117,7 +119,7 @@ template<typename FT>
 void test_all(unsigned int Runs = 1)
 {
   // define Types
-  typedef typename Dune::SimdScalarTypeTraits<FT>::type MT;
+  typedef typename Dune::Simd::Scalar<FT> MT;
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
   typedef Dune::AlignedAllocator<VB> AllocV;

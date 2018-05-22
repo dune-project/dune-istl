@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 
+#include <dune/common/simd/simd.hh>
 #include <dune/common/unused.hh>
 
 #include "preconditioner.hh"
@@ -77,7 +78,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename range_type::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
     //! \brief type of the wrapped inverse operator
     typedef O InverseOperator;
 
@@ -143,7 +144,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -233,7 +234,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -338,7 +339,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -424,7 +425,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -516,7 +517,7 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     //! \brief type of ILU storage
     typedef typename ILU::CRS< block_type > CRS;
@@ -662,7 +663,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -751,7 +752,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -835,7 +836,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -917,7 +918,7 @@ namespace Dune {
     /** \brief field type of the preconditioner **/
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /**
      * \brief constructor

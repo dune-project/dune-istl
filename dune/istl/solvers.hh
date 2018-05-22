@@ -12,10 +12,9 @@
 #include <type_traits>
 #include <vector>
 
-#include <dune/common/conditional.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/rangeutilities.hh>
+#include <dune/common/simd/simd.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/timer.hh>
 
@@ -111,7 +110,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
         def = defnew;               // update norm
-        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
+        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -130,7 +129,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = static_cast<double>(max_value(def/def0));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -213,7 +212,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
+        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -228,7 +227,7 @@ namespace Dune {
 
       _prec->post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(max_value(def/def0));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
@@ -333,7 +332,7 @@ namespace Dune {
 
       real_type def0 = _sp->norm(b); // compute norm
 
-      if (!all_true(isfinite(def0))) // check for inf or NaN
+      if (!Simd::allTrue(isfinite(def0))) // check for inf or NaN
       {
         if (_verbose>0)
           std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
@@ -342,7 +341,7 @@ namespace Dune {
                    << " is infinite or NaN");
       }
 
-      if (max_value(def0)<1E-30)    // convergence check
+      if (Simd::max(def0)<1E-30)    // convergence check
       {
         res.converged  = true;
         res.iterations = 0;               // fill statistics
@@ -400,7 +399,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (!all_true(isfinite(def))) // check for inf or NaN
+        if (!Simd::allTrue(isfinite(def))) // check for inf or NaN
         {
           if (_verbose>0)
             std::cout << "=== CGSolver: abort due to infinite or NaN defect"
@@ -409,7 +408,7 @@ namespace Dune {
                      "CGSolver: defect=" << def << " is infinite or NaN");
         }
 
-        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
+        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -437,7 +436,7 @@ namespace Dune {
 
       _prec->post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(max_value(max_value(def/def0)));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -597,7 +596,7 @@ namespace Dune {
         }
       }
 
-      if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
+      if ( Simd::allTrue(norm < (_reduction * norm_0))  || Simd::max(norm)<1E-30)
       {
         res.converged = 1;
         _prec->post(x);                  // postprocess preconditioner
@@ -622,13 +621,13 @@ namespace Dune {
         rho_new = _sp->dot(rt,r);
 
         // look if breakdown occurred
-        if (all_true(abs(rho) <= EPSILON))
+        if (Simd::allTrue(abs(rho) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
-                     << rho << " <= EPSILON " << max_value(EPSILON)
+                     << rho << " <= EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
-        if (all_true(abs(omega) <= EPSILON))
+        if (Simd::allTrue(abs(omega) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
-                     << omega << " <= EPSILON " << max_value(EPSILON)
+                     << omega << " <= EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
 
 
@@ -652,9 +651,9 @@ namespace Dune {
         // alpha = rho_new / < rt, v >
         h = _sp->dot(rt,v);
 
-        if ( all_true(abs(h) < EPSILON) )
+        if ( Simd::allTrue(abs(h) < EPSILON) )
           DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
-                     << abs(h) << " < EPSILON " << max_value(EPSILON)
+                     << abs(h) << " < EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
 
         alpha = rho_new / h;
@@ -677,7 +676,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( all_true(norm < (_reduction * norm_0)) )
+        if ( Simd::allTrue(norm < (_reduction * norm_0)) )
         {
           res.converged = 1;
           break;
@@ -716,7 +715,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
+        if ( Simd::allTrue(norm < (_reduction * norm_0))  || Simd::max(norm)<1E-30)
         {
           res.converged = 1;
           break;
@@ -733,7 +732,7 @@ namespace Dune {
 
       _prec->post(x);                  // postprocess preconditioner
       res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
-      res.reduction = static_cast<double>(max_value(norm/norm_0));
+      res.reduction = static_cast<double>(Simd::max(norm/norm_0));
       res.conv_rate  = pow(res.reduction,1.0/it);
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
@@ -804,7 +803,7 @@ namespace Dune {
       }
 
       // check for convergence
-      if( max_value(def0) < 1e-30 ) {
+      if( Simd::max(def0) < 1e-30 ) {
         res.converged = true;
         res.iterations = 0;
         res.reduction = 0;
@@ -931,8 +930,8 @@ namespace Dune {
             this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;
-          if(all_true(def < def0*_reduction)
-              || max_value(def) < 1e-30 || i == _maxit ) {
+          if(Simd::allTrue(def < def0*_reduction)
+               || Simd::max(def) < 1e-30 || i == _maxit ) {
             res.converged = true;
             break;
           }
@@ -945,7 +944,7 @@ namespace Dune {
         _prec->post(x);
         // fill statistics
         res.iterations = i;
-        res.reduction = static_cast<double>(max_value(def/def0));
+        res.reduction = static_cast<double>(Simd::max(def/def0));
         res.conv_rate = pow(res.reduction,1.0/i);
         res.elapsed = watch.elapsed();
 
@@ -973,19 +972,19 @@ namespace Dune {
       real_type norm_min = min(norm_dx, norm_dy);
       real_type temp = norm_min/norm_max;
       // we rewrite the code in a vectorizable fashion
-      cs = cond(norm_dy < eps,
+      cs = Simd::cond(norm_dy < eps,
         real_type(1.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           real_type(0.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
           )));
-      sn = cond(norm_dy < eps,
+      sn = Simd::cond(norm_dy < eps,
         field_type(0.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           field_type(1.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             // dy and dx are real in exact arithmetic
             // thus dx*dy is real so we can explicitly enforce it
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*dy/norm_dx/norm_dy,
@@ -1068,7 +1067,7 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
-      apply(x,b,max_value(_reduction),res);
+      apply(x,b,Simd::max(_reduction),res);
     }
 
     /*!
@@ -1121,7 +1120,7 @@ namespace Dune {
           }
         }
 
-      if(all_true(norm_0 < EPSILON)) {
+      if(Simd::allTrue(norm_0 < EPSILON)) {
         _prec->post(x);
         res.converged = true;
         if(_verbose > 0) // final print
@@ -1153,7 +1152,7 @@ namespace Dune {
             w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp->norm(w);
-          if(all_true(abs(H[i+1][i]) < EPSILON))
+          if(Simd::allTrue(abs(H[i+1][i]) < EPSILON))
             DUNE_THROW(SolverAbort,
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
@@ -1181,7 +1180,7 @@ namespace Dune {
           norm_old = norm;
 
           // check convergence
-          if(all_true(norm < real_type(reduction) * norm_0))
+          if(Simd::allTrue(norm < real_type(reduction) * norm_0))
             res.converged = true;
 
         } // end for
@@ -1217,7 +1216,7 @@ namespace Dune {
 
       // save solver statistics
       res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = static_cast<double>(max_value(norm/norm_0));
+      res.reduction = static_cast<double>(Simd::max(norm/norm_0));
       res.conv_rate = pow(res.reduction,1.0/(j-1));
       res.elapsed = watch.elapsed();
 
@@ -1282,19 +1281,19 @@ namespace Dune {
       real_type norm_min = min(norm_dx, norm_dy);
       real_type temp = norm_min/norm_max;
       // we rewrite the code in a vectorizable fashion
-      cs = cond(norm_dy < eps,
+      cs = Simd::cond(norm_dy < eps,
         real_type(1.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           real_type(0.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
           )));
-      sn = cond(norm_dy < eps,
+      sn = Simd::cond(norm_dy < eps,
         field_type(0.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           field_type(1.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*conjugate(dy)/norm_dx/norm_dy,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*conjugate(dy/dx)
           )));
@@ -1395,7 +1394,7 @@ namespace Dune {
       p[0].reset(new X(x));
 
       real_type def0 = _sp->norm(b);    // compute norm
-      if ( max_value(def0) < 1E-30 )   // convergence check
+      if ( Simd::max(def0) < 1E-30 )   // convergence check
       {
         res.converged  = true;
         res.iterations = 0;                     // fill statistics
@@ -1439,7 +1438,7 @@ namespace Dune {
       if (_verbose>1)                 // print
         this->printOutput(std::cout,i,defnew,def);
       def = defnew;                   // update norm
-      if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
+      if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30) // convergence check
       {
         res.converged  = true;
         if (_verbose>0)                       // final print
@@ -1486,7 +1485,7 @@ namespace Dune {
             this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;                       // update norm
-          if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
+          if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30) // convergence check
           {
             res.converged  = true;
             break;
@@ -1505,7 +1504,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = static_cast<double>(max_value(def/def0));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 

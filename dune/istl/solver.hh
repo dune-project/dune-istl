@@ -9,7 +9,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
-#include <dune/common/simd.hh>
+#include <dune/common/simd/simd.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
@@ -104,7 +104,7 @@ namespace Dune
     typedef typename FieldTraits<field_type>::real_type real_type;
 
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<real_type> scalar_real_type;
+    typedef Simd::Scalar<real_type> scalar_real_type;
 
     /**
         \brief Apply inverse operator,
