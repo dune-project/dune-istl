@@ -654,7 +654,7 @@ namespace Dune
       : matrices_(const_cast<MatrixOperator&>(fineOperator)),
         parallelInformation_(const_cast<ParallelInformation&>(pinfo))
     {
-      if (SolverCategory::category(fineOperator) != pinfo.getSolverCategory())
+      if (SolverCategory::category(fineOperator) != SolverCategory::category(pinfo))
         DUNE_THROW(ISTLError, "MatrixOperator and ParallelInformation must belong to the same category!");
     }
 
@@ -860,7 +860,7 @@ namespace Dune
         unknowns =  noAggregates;
         dunknowns = dgnoAggregates;
 
-        CommunicationArgs commargs(info->communicator(),info->getSolverCategory());
+        CommunicationArgs commargs(info->communicator(),info->category());
         parallelInformation_.addCoarser(commargs);
 
         ++infoLevel; // parallel information on coarse level

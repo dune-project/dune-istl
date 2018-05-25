@@ -454,7 +454,7 @@ namespace Dune
 
             // only needed for ALU
             // (ghosts with same global id as owners on the same process)
-            if (pinfo.getSolverCategory() == static_cast<int>(SolverCategory::nonoverlapping)) {
+            if (SolverCategory::category(pinfo) == static_cast<int>(SolverCategory::nonoverlapping)) {
               if(overlapVertices != overlapEnd) {
                 if(*overlapVertices->aggregate!=AggregatesMap<Vertex>::ISOLATED) {
                   constructOverlapConnectivity(row, graph, visitedMap, aggregates, overlapVertices, overlapEnd);

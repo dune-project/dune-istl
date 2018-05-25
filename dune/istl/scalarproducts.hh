@@ -41,6 +41,8 @@ namespace Dune {
       (for convergence test only). These methods have to know about the
           underlying data decomposition. For the sequential case a default implementation
           is provided.
+
+      by default the scalar product is sequential
    */
   template<class X>
   class ScalarProduct {
@@ -51,45 +53,6 @@ namespace Dune {
     typedef typename FieldTraits<field_type>::real_type real_type;
 
     /*! \brief Dot product of two vectors.
-       It is assumed that the vectors are consistent on the interior+border
-       partition.
-     */
-    virtual field_type dot (const X& x, const X& y) = 0;
-
-    /*! \brief Norm of a right-hand side vector.
-       The vector must be consistent on the interior+border partition
-     */
-    virtual real_type norm (const X& x) = 0;
-
-    //! Category of the scalar product (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
-#if DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
-    {
-      DUNE_THROW(Dune::Exception,"It is necessary to implement the category method in a derived classes, in the future this method will pure virtual.");
-    }
-#else
-    = 0;
-#endif
-
-    //! every abstract base class has a virtual destructor
-    virtual ~ScalarProduct () {}
-  };
-
-  //=====================================================================
-  // Implementation for ISTL-matrix based operator
-  //=====================================================================
-
-  //! Default implementation for the scalar case
-  template<class X>
-  class SeqScalarProduct : public ScalarProduct<X>
-  {
-  public:
-    //! export types
-    typedef X domain_type;
-    typedef typename X::field_type field_type;
-    typedef typename FieldTraits<field_type>::real_type real_type;
-
-    /*! \brief Dot product of two vectors. In the complex case, the first argument is conjugated.
        It is assumed that the vectors are consistent on the interior+border
        partition.
      */
@@ -112,68 +75,8 @@ namespace Dune {
       return SolverCategory::sequential;
     }
 
-  };
-
-  /**
-   * \brief Nonoverlapping Scalar Product with communication object.
-   *
-   * Consistent vectors in interior and border are assumed.
-   */
-  template<class X, class C>
-  class NonoverlappingSchwarzScalarProduct : public ScalarProduct<X>
-  {
-  public:
-    //! \brief The type of the domain.
-    typedef X domain_type;
-    //!  \brief The type of the range
-    typedef typename X::field_type field_type;
-    //!  \brief The real-type of the range
-    typedef typename FieldTraits<field_type>::real_type real_type;
-    //! \brief The type of the communication object
-    typedef C communication_type;
-
-    /*! \brief Constructor
-     * \param com The communication object for syncing owner and copy
-     * data points. (E.~g. OwnerOverlapCommunication )
-     */
-    NonoverlappingSchwarzScalarProduct (const communication_type& com)
-      : communication(com)
-    {}
-
-    /*! \brief Dot product of two vectors.
-       It is assumed that the vectors are consistent on the interior+border
-       partition.
-     */
-    virtual field_type dot (const X& x, const X& y)
-    {
-      field_type result(0);
-      communication.dot(x,y,result);
-      return result;
-    }
-
-    /*! \brief Norm of a right-hand side vector.
-       The vector must be consistent on the interior+border partition
-     */
-    virtual real_type norm (const X& x)
-    {
-      return communication.norm(x);
-    }
-
-    //! Category of the scalar product (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
-    {
-      return SolverCategory::nonoverlapping;
-    }
-
-    /*! \brief make additive vector consistent
-     */
-    void make_consistent (X& x) const
-    {
-      communication.copyOwnerToAll(x,x);
-    }
-
-  private:
-    const communication_type& communication;
+    //! every abstract base class has a virtual destructor
+    virtual ~ScalarProduct () {}
   };
 
   /**
@@ -188,7 +91,7 @@ namespace Dune {
    * implementing the same interface.
    */
   template<class X, class C>
-  class OverlappingSchwarzScalarProduct : public ScalarProduct<X>
+  class ParallelScalarProduct : public ScalarProduct<X>
   {
   public:
     //! \brief The type of the vector to compute the scalar product on.
@@ -205,12 +108,13 @@ namespace Dune {
     //! implementing the same interface.
     typedef C communication_type;
 
-    /*! \brief Constructor needs to know the grid
+    /*!
      * \param com The communication object for syncing overlap and copy
-     * data points. (E.~g. OwnerOverlapCopyCommunication )
+     * data points.
+     * \param cat parallel solver category (nonoverlapping or overlapping)
      */
-    OverlappingSchwarzScalarProduct (const communication_type& com)
-      : communication(com)
+    ParallelScalarProduct (const communication_type& com, SolverCategory::Category cat)
+      : _communication(com), _category(cat)
     {}
 
     /*! \brief Dot product of two vectors.
@@ -220,7 +124,7 @@ namespace Dune {
     virtual field_type dot (const X& x, const X& y)
     {
       field_type result(0);
-      communication.dot(x,y,result);
+      _communication.dot(x,y,result); // explicitly loop and apply masking
       return result;
     }
 
@@ -229,17 +133,57 @@ namespace Dune {
      */
     virtual real_type norm (const X& x)
     {
-      return communication.norm(x);
+      return _communication.norm(x);
     }
 
     //! Category of the scalar product (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
     {
-      return SolverCategory::overlapping;
+      return _category;
     }
 
   private:
-    const communication_type& communication;
+    const communication_type& _communication;
+    SolverCategory::Category _category;
+  };
+
+  //! Default implementation for the scalar case
+  template<class X>
+  class SeqScalarProduct : public ScalarProduct<X>
+  {
+    using ScalarProduct<X>::ScalarProduct;
+  };
+
+  /**
+   * \brief Nonoverlapping Scalar Product with communication object.
+   *
+   * Consistent vectors in interior and border are assumed.
+   */
+  template<class X, class C>
+  class NonoverlappingSchwarzScalarProduct : public ParallelScalarProduct<X,C>
+  {
+  public:
+    NonoverlappingSchwarzScalarProduct (const C& comm) :
+      ParallelScalarProduct<X,C>(comm,SolverCategory::nonoverlapping) {}
+  };
+
+  /**
+   * \brief Scalar product for overlapping schwarz methods.
+   *
+   * Consistent vectors in interior and border are assumed.
+   * \tparam  X The type of the sequential vector to use for the left hand side,
+   * e.g. BlockVector or another type fulfilling the ISTL
+   * vector interface.
+   * \tparam C The type of the communication object.
+   * This must either be OwnerOverlapCopyCommunication or a type
+   * implementing the same interface.
+   */
+  template<class X, class C>
+  class OverlappingSchwarzScalarProduct : public ParallelScalarProduct<X,C>
+  {
+  public:
+    OverlappingSchwarzScalarProduct (const C& comm) :
+      ParallelScalarProduct<X,C>(comm,SolverCategory::overlapping) {}
   };
 
   /** @} end documentation */
@@ -262,15 +206,10 @@ namespace Dune {
     {
       case SolverCategory::sequential:
         return
-          std::make_shared<SeqScalarProduct<X>>();
-      case SolverCategory::nonoverlapping:
-        return
-          std::make_shared<NonoverlappingSchwarzScalarProduct<X,Comm>>(comm);
-      case SolverCategory::overlapping:
-        return
-          std::make_shared<OverlappingSchwarzScalarProduct<X,Comm>>(comm);
+          std::make_shared<ScalarProduct<X>>();
       default:
-        DUNE_THROW(InvalidStateException, "unknown solver category");
+        return
+          std::make_shared<ParallelScalarProduct<X,Comm>>(comm,category);
     }
   }
 

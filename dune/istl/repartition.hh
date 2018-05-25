@@ -1468,7 +1468,7 @@ namespace Dune
     oocomm.copyOwnerToAll(setPartition, setPartition);
     // communication only needed for ALU
     // (ghosts with same global id as owners on the same process)
-    if (oocomm.getSolverCategory() ==
+    if (SolverCategory::category(oocomm) ==
         static_cast<int>(SolverCategory::nonoverlapping))
       oocomm.copyCopyToAll(setPartition, setPartition);
     bool ret = buildCommunication(graph, setPartition, oocomm, outcomm, redistInf,
@@ -1757,7 +1757,7 @@ namespace Dune
     MPI_Comm outputComm;
 
     MPI_Comm_split(oocomm.communicator(), color, oocomm.communicator().rank(), &outputComm);
-    outcomm = new OOComm(outputComm,oocomm.getSolverCategory(),true);
+    outcomm = new OOComm(outputComm,SolverCategory::category(oocomm),true);
 
     // translate neighbor ranks.
     int newrank=outcomm->communicator().rank();
