@@ -1593,7 +1593,7 @@ namespace Dune {
           //arrays for interim values:
           std::vector<X> d(_mmax+1, x);              // array for directions
           std::vector<X> Ad(_mmax+1, x);            // array for Ad[i]
-          real_type ddotAd[_mmax+1];               // array for <d[i],Ad[i]>
+          X ddotAd(_mmax+1);                       // array for <d[i],Ad[i]>
           X w(x);
 
           real_type def0 = _sp->norm(b); // compute norm
