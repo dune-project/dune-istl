@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 
+#include <dune/common/simd/simd.hh>
 #include <dune/common/unused.hh>
 
 #include "preconditioner.hh"
@@ -23,29 +24,29 @@
 
 
 namespace Dune {
-  /** @defgroup ISTL_Prec Preconditioners
-   * @ingroup ISTL_Solvers
-   *
-   * All of our \ref ISTL_Solvers "Krylow solvers" are preconditioned versions.
-   * There are sequential preconditioners (e,g. SeqJacobi, SeqSOR, SeqSSOR) as well as parallel preconditioners
-   * (e.g. AMG, BlockPreconditioner) available for plugging them into the solvers
-   * together with matching ScalarProducts.
-   *
-   * Some of the available preconditioners (e.g. SeqJacobi, SeqSOR, SeqSSOR))
-   * may be given an aditional int as a template parameter, the block recursion level.
-   * These preconditioners
-   * can be used on block-recursive matrices with an arbitrary hierarchy depth
-   * (eg. BCRSMatrix<BCRSMatrix<FieldMatrix,n,m> > >. Given a block recursion level
-   * \f$k\f$ those preconditioners work as
-   * normal on the offdiagonal blocks, treating them as traditional matrix
-   * entries. For the diagonal values a special procedure applies:  If
-   * \f$k>1\f$ the diagonal is treated as a matrix itself and the preconditioner
-   * is applied recursively on the matrix representing the diagonal value
-   * \f$D=A_{ii}\f$ with block level \f$k-1\f$. For the case that \f$k=1\f$ the diagonal
-   * is treated as a
-   * matrix entry resulting in a linear solve or an identity operation
-   * depending on the algorithm.
-   */
+    /** @defgroup ISTL_Prec Preconditioners
+     * @ingroup ISTL_Solvers
+     *
+     * All of our \ref ISTL_Solvers "Krylow solvers" are preconditioned versions.
+     * There are sequential preconditioners (e,g. SeqJacobi, SeqSOR, SeqSSOR) as well as parallel preconditioners
+     * (e.g. AMG, BlockPreconditioner) available for plugging them into the solvers
+     * together with matching ScalarProducts.
+     *
+     * Some of the available preconditioners (e.g. SeqJacobi, SeqSOR, SeqSSOR))
+     * may be given an aditional int as a template parameter, the block recursion level.
+     * These preconditioners
+     * can be used on block-recursive matrices with an arbitrary hierarchy depth
+     * (eg. BCRSMatrix<BCRSMatrix<FieldMatrix,n,m> > >. Given a block recursion level
+     * \f$k\f$ those preconditioners work as
+     * normal on the offdiagonal blocks, treating them as traditional matrix
+     * entries. For the diagonal values a special procedure applies:  If
+     * \f$k>1\f$ the diagonal is treated as a matrix itself and the preconditioner
+     * is applied recursively on the matrix representing the diagonal value
+     * \f$D=A_{ii}\f$ with block level \f$k-1\f$. For the case that \f$k=1\f$ the diagonal
+     * is treated as a
+     * matrix entry resulting in a linear solve or an identity operation
+     * depending on the algorithm.
+     */
 
   /** @addtogroup ISTL_Prec
           @{
@@ -77,7 +78,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename range_type::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
     //! \brief type of the wrapped inverse operator
     typedef O InverseOperator;
 
@@ -143,7 +144,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -233,7 +234,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -338,7 +339,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -424,7 +425,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -516,7 +517,7 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     //! \brief type of ILU storage
     typedef typename ILU::CRS< block_type > CRS;
@@ -662,7 +663,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -751,7 +752,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -835,7 +836,7 @@ namespace Dune {
     //! \brief The field type of the preconditioner.
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /*! \brief Constructor.
 
@@ -917,7 +918,7 @@ namespace Dune {
     /** \brief field type of the preconditioner **/
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
-    typedef SimdScalar<field_type> scalar_field_type;
+    typedef Simd::Scalar<field_type> scalar_field_type;
 
     /**
      * \brief constructor

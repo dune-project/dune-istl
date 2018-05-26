@@ -1,6 +1,3 @@
-// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-// vi: set et ts=4 sw=2 sts=2:
-
 #ifndef DUNE_ISTL_SOLVERS_HH
 #define DUNE_ISTL_SOLVERS_HH
 
@@ -12,10 +9,9 @@
 #include <type_traits>
 #include <vector>
 
-#include <dune/common/conditional.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/rangeutilities.hh>
+#include <dune/common/simd/simd.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/timer.hh>
 
@@ -111,7 +107,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
         //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
         def = defnew;               // update norm
-        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
+        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -130,7 +126,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = static_cast<double>(max_value(def/def0));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -213,7 +209,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
+        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -228,7 +224,7 @@ namespace Dune {
 
       _prec->post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(max_value(def/def0));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
@@ -281,8 +277,8 @@ namespace Dune {
                                 This is only supported for float and double field types.
     */
     CGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
-      scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
-      condition_estimate_(condition_estimate)
+              scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
+                                                                                             condition_estimate_(condition_estimate)
     {
       if (condition_estimate && !(enableConditionEstimate_t{})) {
         condition_estimate_ = false;
@@ -298,8 +294,8 @@ namespace Dune {
                                 This is only supported for float and double field types.
     */
     CGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
-      scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
-      condition_estimate_(condition_estimate)
+              scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
+                                                                                             condition_estimate_(condition_estimate)
     {
       if (condition_estimate && !(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)) {
         condition_estimate_ = false;
@@ -333,16 +329,16 @@ namespace Dune {
 
       real_type def0 = _sp->norm(b); // compute norm
 
-      if (!all_true(isfinite(def0))) // check for inf or NaN
+      if (!Simd::allTrue(isfinite(def0))) // check for inf or NaN
       {
         if (_verbose>0)
           std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
                     << std::endl;
         DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << def0
-                   << " is infinite or NaN");
+                                                            << " is infinite or NaN");
       }
 
-      if (max_value(def0)<1E-30)    // convergence check
+      if (Simd::max(def0)<1E-30)    // convergence check
       {
         res.converged  = true;
         res.iterations = 0;               // fill statistics
@@ -400,7 +396,7 @@ namespace Dune {
           this->printOutput(std::cout,i,defnew,def);
 
         def = defnew;               // update norm
-        if (!all_true(isfinite(def))) // check for inf or NaN
+        if (!Simd::allTrue(isfinite(def))) // check for inf or NaN
         {
           if (_verbose>0)
             std::cout << "=== CGSolver: abort due to infinite or NaN defect"
@@ -409,7 +405,7 @@ namespace Dune {
                      "CGSolver: defect=" << def << " is infinite or NaN");
         }
 
-        if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
+        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
         {
           res.converged  = true;
           break;
@@ -437,7 +433,7 @@ namespace Dune {
 
       _prec->post(x);                  // postprocess preconditioner
       res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(max_value(max_value(def/def0)));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -500,7 +496,7 @@ namespace Dune {
           }
         });
 #else
-      std::cerr << "WARNING: Condition estimate was requested. This requires ARPACK, but ARPACK was not found!" << std::endl;
+        std::cerr << "WARNING: Condition estimate was requested. This requires ARPACK, but ARPACK was not found!" << std::endl;
 #endif
       }
     }
@@ -597,7 +593,7 @@ namespace Dune {
         }
       }
 
-      if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
+      if ( Simd::allTrue(norm < (_reduction * norm_0))  || Simd::max(norm)<1E-30)
       {
         res.converged = 1;
         _prec->post(x);                  // postprocess preconditioner
@@ -622,13 +618,13 @@ namespace Dune {
         rho_new = _sp->dot(rt,r);
 
         // look if breakdown occurred
-        if (all_true(abs(rho) <= EPSILON))
+        if (Simd::allTrue(abs(rho) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
-                     << rho << " <= EPSILON " << max_value(EPSILON)
+                     << rho << " <= EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
-        if (all_true(abs(omega) <= EPSILON))
+        if (Simd::allTrue(abs(omega) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
-                     << omega << " <= EPSILON " << max_value(EPSILON)
+                     << omega << " <= EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
 
 
@@ -652,9 +648,9 @@ namespace Dune {
         // alpha = rho_new / < rt, v >
         h = _sp->dot(rt,v);
 
-        if ( all_true(abs(h) < EPSILON) )
+        if ( Simd::allTrue(abs(h) < EPSILON) )
           DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
-                     << abs(h) << " < EPSILON " << max_value(EPSILON)
+                     << abs(h) << " < EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
 
         alpha = rho_new / h;
@@ -677,7 +673,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( all_true(norm < (_reduction * norm_0)) )
+        if ( Simd::allTrue(norm < (_reduction * norm_0)) )
         {
           res.converged = 1;
           break;
@@ -716,7 +712,7 @@ namespace Dune {
           this->printOutput(std::cout,it,norm,norm_old);
         }
 
-        if ( all_true(norm < (_reduction * norm_0))  || max_value(norm)<1E-30)
+        if ( Simd::allTrue(norm < (_reduction * norm_0))  || Simd::max(norm)<1E-30)
         {
           res.converged = 1;
           break;
@@ -733,7 +729,7 @@ namespace Dune {
 
       _prec->post(x);                  // postprocess preconditioner
       res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
-      res.reduction = static_cast<double>(max_value(norm/norm_0));
+      res.reduction = static_cast<double>(Simd::max(norm/norm_0));
       res.conv_rate  = pow(res.reduction,1.0/it);
       res.elapsed = watch.elapsed();
       if (_verbose>0)                 // final print
@@ -804,7 +800,7 @@ namespace Dune {
       }
 
       // check for convergence
-      if( max_value(def0) < 1e-30 ) {
+      if( Simd::max(def0) < 1e-30 ) {
         res.converged = true;
         res.iterations = 0;
         res.reduction = 0;
@@ -931,8 +927,8 @@ namespace Dune {
             this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;
-          if(all_true(def < def0*_reduction)
-              || max_value(def) < 1e-30 || i == _maxit ) {
+          if(Simd::allTrue(def < def0*_reduction)
+             || Simd::max(def) < 1e-30 || i == _maxit ) {
             res.converged = true;
             break;
           }
@@ -945,7 +941,7 @@ namespace Dune {
         _prec->post(x);
         // fill statistics
         res.iterations = i;
-        res.reduction = static_cast<double>(max_value(def/def0));
+        res.reduction = static_cast<double>(Simd::max(def/def0));
         res.conv_rate = pow(res.reduction,1.0/i);
         res.elapsed = watch.elapsed();
 
@@ -973,19 +969,19 @@ namespace Dune {
       real_type norm_min = min(norm_dx, norm_dy);
       real_type temp = norm_min/norm_max;
       // we rewrite the code in a vectorizable fashion
-      cs = cond(norm_dy < eps,
+      cs = Simd::cond(norm_dy < eps,
         real_type(1.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           real_type(0.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
           )));
-      sn = cond(norm_dy < eps,
+      sn = Simd::cond(norm_dy < eps,
         field_type(0.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           field_type(1.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             // dy and dx are real in exact arithmetic
             // thus dx*dy is real so we can explicitly enforce it
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*dy/norm_dx/norm_dy,
@@ -1068,7 +1064,7 @@ namespace Dune {
      */
     virtual void apply (X& x, Y& b, InverseOperatorResult& res)
     {
-      apply(x,b,max_value(_reduction),res);
+      apply(x,b,Simd::max(_reduction),res);
     }
 
     /*!
@@ -1121,7 +1117,7 @@ namespace Dune {
           }
         }
 
-      if(all_true(norm_0 < EPSILON)) {
+      if(Simd::allTrue(norm_0 < EPSILON)) {
         _prec->post(x);
         res.converged = true;
         if(_verbose > 0) // final print
@@ -1153,7 +1149,7 @@ namespace Dune {
             w.axpy(-H[k][i],v[k]);
           }
           H[i+1][i] = _sp->norm(w);
-          if(all_true(abs(H[i+1][i]) < EPSILON))
+          if(Simd::allTrue(abs(H[i+1][i]) < EPSILON))
             DUNE_THROW(SolverAbort,
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
@@ -1181,7 +1177,7 @@ namespace Dune {
           norm_old = norm;
 
           // check convergence
-          if(all_true(norm < real_type(reduction) * norm_0))
+          if(Simd::allTrue(norm < real_type(reduction) * norm_0))
             res.converged = true;
 
         } // end for
@@ -1217,7 +1213,7 @@ namespace Dune {
 
       // save solver statistics
       res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = static_cast<double>(max_value(norm/norm_0));
+      res.reduction = static_cast<double>(Simd::max(norm/norm_0));
       res.conv_rate = pow(res.reduction,1.0/(j-1));
       res.elapsed = watch.elapsed();
 
@@ -1282,19 +1278,19 @@ namespace Dune {
       real_type norm_min = min(norm_dx, norm_dy);
       real_type temp = norm_min/norm_max;
       // we rewrite the code in a vectorizable fashion
-      cs = cond(norm_dy < eps,
+      cs = Simd::cond(norm_dy < eps,
         real_type(1.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           real_type(0.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
           )));
-      sn = cond(norm_dy < eps,
+      sn = Simd::cond(norm_dy < eps,
         field_type(0.0),
-        cond(norm_dx < eps,
+        Simd::cond(norm_dx < eps,
           field_type(1.0),
-          cond(norm_dy > norm_dx,
+          Simd::cond(norm_dy > norm_dx,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*conjugate(dy)/norm_dx/norm_dy,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*conjugate(dy/dx)
           )));
@@ -1359,8 +1355,8 @@ namespace Dune {
        \param restart number of GMRes cycles before restart
      */
     GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
-      IterativeSolver<X,X>::IterativeSolver(op,prec,reduction,maxit,verbose),
-      _restart(restart)
+            IterativeSolver<X,X>::IterativeSolver(op,prec,reduction,maxit,verbose),
+            _restart(restart)
     {}
 
     /*!
@@ -1395,7 +1391,7 @@ namespace Dune {
       p[0].reset(new X(x));
 
       real_type def0 = _sp->norm(b);    // compute norm
-      if ( max_value(def0) < 1E-30 )   // convergence check
+      if ( Simd::max(def0) < 1E-30 )   // convergence check
       {
         res.converged  = true;
         res.iterations = 0;                     // fill statistics
@@ -1439,7 +1435,7 @@ namespace Dune {
       if (_verbose>1)                 // print
         this->printOutput(std::cout,i,defnew,def);
       def = defnew;                   // update norm
-      if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
+      if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30) // convergence check
       {
         res.converged  = true;
         if (_verbose>0)                       // final print
@@ -1486,7 +1482,7 @@ namespace Dune {
             this->printOutput(std::cout,i,defnew,def);
 
           def = defnew;                       // update norm
-          if (all_true(def<def0*_reduction) || max_value(def)<1E-30) // convergence check
+          if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30) // convergence check
           {
             res.converged  = true;
             break;
@@ -1505,7 +1501,7 @@ namespace Dune {
 
       // fill statistics
       res.iterations = i;
-      res.reduction = static_cast<double>(max_value(def/def0));
+      res.reduction = static_cast<double>(Simd::max(def/def0));
       res.conv_rate  = pow(res.reduction,1.0/i);
       res.elapsed = watch.elapsed();
 
@@ -1533,211 +1529,212 @@ namespace Dune {
        Flexible conjugate gradient method as in Y. Notay 'Flexible conjugate Gradients',
        SIAM J. Sci. Comput Vol. 22, No.4, pp. 1444-1460
 
-       */
-    template<class X>
-    class FCGSolver : public IterativeSolver<X,X> {
-    public:
-        using typename IterativeSolver<X,X>::domain_type;
-        using typename IterativeSolver<X,X>::range_type;
-        using typename IterativeSolver<X,X>::field_type;
-        using typename IterativeSolver<X,X>::real_type;
+   */
+  template<class X>
+  class FCGSolver : public IterativeSolver<X,X> {
+  public:
+    using typename IterativeSolver<X,X>::domain_type;
+    using typename IterativeSolver<X,X>::range_type;
+    using typename IterativeSolver<X,X>::field_type;
+    using typename IterativeSolver<X,X>::real_type;
 
-        // copy base class constructors
-        using IterativeSolver<X,X>::IterativeSolver;
+    // copy base class constructors
+    using IterativeSolver<X,X>::IterativeSolver;
 
-    private:
-        using typename IterativeSolver<X,X>::scalar_real_type;
+  private:
+      using typename IterativeSolver<X,X>::scalar_real_type;
 
-    public:
-        // don't shadow four-argument version of apply defined in the base class
-        using IterativeSolver<X,X>::apply;
-        /*!
-          \brief Constructor to initialize a FCG solver.
-          \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int, int)
-          \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
-        */
-        FCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
-                   scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
-        {
+  public:
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,X>::apply;
+    /*!
+      \brief Constructor to initialize a FCG solver.
+      \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int, int)
+      \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
+    */
+    FCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+               scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
+    {
+    }
+
+    /*!
+      \brief Constructor to initialize a FCG solver.
+      \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int,int)
+      \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
+    */
+    FCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
+               scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
+    {
+    }
+
+    /*!
+     \brief Apply inverse operator.
+
+     \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+
+       \note Currently, the FCGSolver aborts when a NaN or infinite defect is
+             detected.  However, -ffinite-math-only (implied by -ffast-math)
+             can inhibit a result from becoming NaN that really should be NaN.
+             E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
+             -ffast-math.
+     */
+    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    {
+      using std::isfinite;
+      using rAlloc = ReboundAllocatorType<X,real_type>;
+      res.clear();                   // clear solver statistics
+      Timer watch;                  // start a timer
+      _prec->pre(x,b);             // prepare preconditioner
+      _op->applyscaleadd(-1,x,b); // overwrite b with defect
+
+      //arrays for interim values:
+      std::vector<X> d(_mmax+1, x);                      // array for directions
+      std::vector<X> Ad(_mmax+1, x);                    // array for Ad[i]
+      std::vector<real_type,rAlloc> ddotAd(_mmax+1);   // array for <d[i],Ad[i]>
+      X w(x);
+
+      real_type def0 = _sp->norm(b); // compute norm
+
+      if (!Simd::allTrue(isfinite(def0))) // check for inf or NaN
+      {
+        if (_verbose>0)
+          std::cout << "=== FCGSolver: abort due to infinite or NaN initial defect"
+                    << std::endl;
+        DUNE_THROW(SolverAbort, "FCGSolver: initial defect=" << def0
+                                                             << " is infinite or NaN");
+      }
+
+      if (Simd::max(def0)<1E-30)         // convergence check
+      {
+        res.converged  = true;
+        res.iterations = 0;              // fill statistics
+        res.reduction = 0;
+        res.conv_rate  = 0;
+        res.elapsed=0;
+        if (_verbose>0)                 // final print
+          std::cout << "=== rate=" << res.conv_rate
+                    << ", T=" << res.elapsed << ", TIT=" << res.elapsed
+                    << ", IT=0" << std::endl;
+        return;
+      }
+
+      if (_verbose>0)             // printing
+      {
+        std::cout << "=== FCGSolver" << std::endl;
+        if (_verbose>1) {
+          this->printHeader(std::cout);
+          this->printOutput(std::cout,0,def0);
         }
+      }
 
-        /*!
-          \brief Constructor to initialize a FCG solver.
-          \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int,int)
-          \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
-        */
-        FCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
-                   scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
-        {
-        }
+      // some local variables
+      real_type def=def0;
+      real_type alpha;
 
-        /*!
-           \brief Apply inverse operator.
+      _prec->apply(d[0], b);       // apply preconditioner
 
-           \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
+      //saving interim values for future calculating
+      _op->apply(d[0], Ad[0]);                  // save Ad[0]
+      ddotAd[0]=_sp->dot(d[0], Ad[0]);         // save <d[0],Ad[0]>
+      alpha = _sp->dot(d[0], b)/ddotAd[0];    // <d[0],b>/<d,Ad[0]>
 
-           \note Currently, the FCGSolver aborts when a NaN or infinite defect is
-                 detected.  However, -ffinite-math-only (implied by -ffast-math)
-                 can inhibit a result from becoming NaN that really should be NaN.
-                 E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
-                 -ffast-math.
-         */
-        virtual void apply (X& x, X& b, InverseOperatorResult& res)
-        {
-          using std::isfinite;
-          res.clear();                   // clear solver statistics
-          Timer watch;                  // start a timer
-          _prec->pre(x,b);             // prepare preconditioner
-          _op->applyscaleadd(-1,x,b); // overwrite b with defect
+      //update solution and defect
+      x.axpy(alpha, d[0]);
+      b.axpy(-alpha, Ad[0]);
 
-          //arrays for interim values:
-          std::vector<X> d(_mmax+1, x);              // array for directions
-          std::vector<X> Ad(_mmax+1, x);            // array for Ad[i]
-          X ddotAd(_mmax+1);                       // array for <d[i],Ad[i]>
-          X w(x);
 
-          real_type def0 = _sp->norm(b); // compute norm
+      // convergence test
+      real_type defnew = _sp->norm(b); // comp defect norm
 
-          if (!all_true(isfinite(def0))) // check for inf or NaN
-          {
-            if (_verbose>0)
-              std::cout << "=== FCGSolver: abort due to infinite or NaN initial defect"
-                        << std::endl;
-            DUNE_THROW(SolverAbort, "FCGSolver: initial defect=" << def0
-                                                                 << " is infinite or NaN");
+      if (_verbose > 1)             // print
+        this->printOutput(std::cout, 1, defnew, def);
+
+      def = defnew;               // update norm
+
+      // the loop
+      int i=2;
+      while(i<=_maxit && !res.converged) {
+        for (int i_bounded = 1; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
+          d[i_bounded] = 0;                 // reset search direction
+          _prec->apply(d[i_bounded], b);     // apply preconditioner
+          w = d[i_bounded];                 // copy of current d[i]
+
+          // orthogonalization with previous directions
+          for (int k = 0; k < i_bounded; k++) {
+            d[i_bounded].axpy( _sp->dot(Ad[k], w)/ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
           }
-
-          if (max_value(def0)<1E-30)         // convergence check
-          {
-            res.converged  = true;
-            res.iterations = 0;              // fill statistics
-            res.reduction = 0;
-            res.conv_rate  = 0;
-            res.elapsed=0;
-            if (_verbose>0)                 // final print
-              std::cout << "=== rate=" << res.conv_rate
-                        << ", T=" << res.elapsed << ", TIT=" << res.elapsed
-                        << ", IT=0" << std::endl;
-            return;
-          }
-
-          if (_verbose>0)             // printing
-          {
-            std::cout << "=== FCGSolver" << std::endl;
-            if (_verbose>1) {
-              this->printHeader(std::cout);
-              this->printOutput(std::cout,0,def0);
-            }
-          }
-
-          // some local variables
-          real_type def=def0;
-          real_type alpha;
-
-          _prec->apply(d[0], b);       // apply preconditioner
 
           //saving interim values for future calculating
-          _op->apply(d[0], Ad[0]);                  // save Ad[0]
-          ddotAd[0]=_sp->dot(d[0], Ad[0]);         // save <d[0],Ad[0]>
-          alpha = _sp->dot(d[0], b)/ddotAd[0];    // <d[0],b>/<d,Ad[0]>
+          _op->apply(d[i_bounded], Ad[i_bounded]);                    // save Ad[i]
+          ddotAd[i_bounded]=_sp->dot(d[i_bounded],Ad[i_bounded]);    // save <d[i],Ad[i]>
+          alpha = _sp->dot(d[i_bounded], b)/ddotAd[i_bounded];      // <d[i],b>/<d[i],Ad[i]>
 
           //update solution and defect
-          x.axpy(alpha, d[0]);
-          b.axpy(-alpha, Ad[0]);
-
+          x.axpy(alpha, d[i_bounded]);
+          b.axpy(-alpha, Ad[i_bounded]);
 
           // convergence test
           real_type defnew = _sp->norm(b); // comp defect norm
 
           if (_verbose > 1)             // print
-            this->printOutput(std::cout, 1, defnew, def);
+            this->printOutput(std::cout, i, defnew, def);
 
           def = defnew;               // update norm
-
-          // the loop
-          int i=2;
-          while(i<=_maxit && !res.converged) {
-            for (int i_bounded = 1; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
-              d[i_bounded] = 0;                 // reset search direction
-              _prec->apply(d[i_bounded], b);     // apply preconditioner
-              w = d[i_bounded];                 // copy of current d[i]
-
-              // orthogonalization with previous directions
-              for (int k = 0; k < i_bounded; k++) {
-                d[i_bounded].axpy(-1.0 * _sp->dot(Ad[k], w)/ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
-              }
-
-              //saving interim values for future calculating
-              _op->apply(d[i_bounded], Ad[i_bounded]);                    // save Ad[i]
-              ddotAd[i_bounded]=_sp->dot(d[i_bounded],Ad[i_bounded]);    // save <d[i],Ad[i]>
-              alpha = _sp->dot(d[i_bounded], b)/ddotAd[i_bounded];      // <d[i],b>/<d[i],Ad[i]>
-
-              //update solution and defect
-              x.axpy(alpha, d[i_bounded]);
-              b.axpy(-alpha, Ad[i_bounded]);
-
-              // convergence test
-              real_type defnew = _sp->norm(b); // comp defect norm
-
-              if (_verbose > 1)             // print
-                this->printOutput(std::cout, i, defnew, def);
-
-              def = defnew;               // update norm
-              if (!all_true(isfinite(def))) // check for inf or NaN
-              {
-                if (_verbose > 0)
-                  std::cout << "=== FCGSolver: abort due to infinite or NaN defect"
-                            << std::endl;
-                DUNE_THROW(SolverAbort,
-                           "FCGSolver: defect=" << def << " is infinite or NaN");
-              }
-
-              if (all_true(def < def0 * _reduction) || max_value(def) < 1E-30)    // convergence check
-              {
-                res.converged = true;
-                break;
-              }
-              i++;
-            }
-            //exchange first and last stored values
-            std::swap(Ad[0], Ad[_mmax]);
-            std::swap(d[0], d[_mmax]);
-            std::swap(ddotAd[0],ddotAd[_mmax]);
-          }
-
-          //correct i which is wrong if convergence was not achieved.
-          i=std::min(_maxit,i);
-
-          if (_verbose==1)                // printing for non verbose
-            this->printOutput(std::cout,i,def);
-
-          _prec->post(x);                  // postprocess preconditioner
-          res.iterations = i;               // fill statistics
-          res.reduction = static_cast<double>(max_value(max_value(def/def0)));
-          res.conv_rate  = pow(res.reduction,1.0/i);
-          res.elapsed = watch.elapsed();
-
-          if (_verbose>0)                 // final print
+          if (!Simd::allTrue(isfinite(def))) // check for inf or NaN
           {
-            std::cout << "=== rate=" << res.conv_rate
-                      << ", T=" << res.elapsed
-                      << ", TIT=" << res.elapsed/i
-                      << ", IT=" << i << std::endl;
+            if (_verbose > 0)
+              std::cout << "=== FCGSolver: abort due to infinite or NaN defect"
+                        << std::endl;
+            DUNE_THROW(SolverAbort,
+                       "FCGSolver: defect=" << def << " is infinite or NaN");
           }
 
+          if (Simd::allTrue(def<def0*_reduction) || Simd::max(def0) < 1E-30)    // convergence check
+          {
+            res.converged = true;
+            break;
+          }
+          i++;
         }
+        //exchange first and last stored values
+        std::swap(Ad[0], Ad[_mmax]);
+        std::swap(d[0], d[_mmax]);
+        std::swap(ddotAd[0],ddotAd[_mmax]);
+      }
 
-    private:
-        int _mmax =1;
+      //correct i which is wrong if convergence was not achieved.
+      i=std::min(_maxit,i);
 
-    protected:
-        using IterativeSolver<X,X>::_op;
-        using IterativeSolver<X,X>::_prec;
-        using IterativeSolver<X,X>::_sp;
-        using IterativeSolver<X,X>::_reduction;
-        using IterativeSolver<X,X>::_maxit;
-        using IterativeSolver<X,X>::_verbose;
-    };
+      if (_verbose==1)                // printing for non verbose
+        this->printOutput(std::cout,i,def);
+
+      _prec->post(x);                  // postprocess preconditioner
+      res.iterations = i;               // fill statistics
+      res.reduction = static_cast<double>(Simd::max(def/def0));
+      res.conv_rate  = pow(res.reduction,1.0/i);
+      res.elapsed = watch.elapsed();
+
+      if (_verbose>0)                 // final print
+      {
+        std::cout << "=== rate=" << res.conv_rate
+                  << ", T=" << res.elapsed
+                  << ", TIT=" << res.elapsed/i
+                  << ", IT=" << i << std::endl;
+      }
+
+    }
+
+  private:
+      int _mmax =1;
+
+  protected:
+      using IterativeSolver<X,X>::_op;
+      using IterativeSolver<X,X>::_prec;
+      using IterativeSolver<X,X>::_sp;
+      using IterativeSolver<X,X>::_reduction;
+      using IterativeSolver<X,X>::_maxit;
+      using IterativeSolver<X,X>::_verbose;
+  };
 
   /** @} end documentation */
 

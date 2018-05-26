@@ -22,7 +22,9 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/simd.hh>
+#if HAVE_VC
+#include <dune/common/simd/vc.hh>
+#endif
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
 #include <dune/istl/basearray.hh>
@@ -78,7 +80,7 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
     // set up system
     Vector x(N),b(N);
     for (unsigned int i=0; i<N; i++)
-      x[i] += Random<FT>::gen();
+      x[i] = Random<FT>::gen();
     b=0; op.apply(x,b);    // set right hand side accordingly
     x=1;                   // initial guess
 
@@ -103,7 +105,7 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
   Dune::RestartedGMResSolver<Vector> gmres(op,prec,reduction,40,8000,verb);
   Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
   Dune::GeneralizedPCGSolver<Vector> gpcg(op,prec,reduction,8000,verb);
-  Dune::FCGSolver<Vector> fcg (op,prec,reduction,8000,verb,5);
+  Dune::FCGSolver<Vector> fcg(op,prec,reduction,8000,verb,5);
 
   // run_test(precName, "Loop",           op,loop,N,Runs);
   run_test(precName, "CG",             op,cg,N,Runs);
@@ -119,7 +121,7 @@ template<typename FT>
 void test_all(unsigned int Runs = 1)
 {
   // define Types
-  typedef typename Dune::SimdScalarTypeTraits<FT>::type MT;
+  typedef typename Dune::Simd::Scalar<FT> MT;
   typedef Dune::FieldVector<FT,1> VB;
   typedef Dune::FieldMatrix<MT,1,1> MB;
   typedef Dune::AlignedAllocator<VB> AllocV;
@@ -141,10 +143,10 @@ void test_all(unsigned int Runs = 1)
   Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,0.1);          // GS preconditioner
   Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,0.1);  // SOR preconditioner
   Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,0.1);      // SSOR preconditioner
-DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0/n
+  DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0/n
   Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,0.1);        // preconditioner object
   Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.1);     // preconditioner object
-DUNE_NO_DEPRECATED_END // for deprecated SeqILU0/n
+  DUNE_NO_DEPRECATED_END // for deprecated SeqILU0/n
 
   Dune::SeqILU<Matrix,Vector,Vector> ilu_0(A,0.1);       // preconditioner object
   Dune::SeqILU<Matrix,Vector,Vector> ilu_1(A,1,0.1);     // preconditioner object
