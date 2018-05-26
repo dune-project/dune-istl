@@ -1593,7 +1593,7 @@ namespace Dune {
           //arrays for interim values:
           std::vector<X> d(_mmax+1, x);              // array for directions
           std::vector<X> Ad(_mmax+1, x);            // array for Ad[i]
-          std::vector<real_type > ddotAd(_mmax+1); // array for <d[i],Ad[i]>
+          real_type ddotAd[_mmax+1];               // array for <d[i],Ad[i]>
           X w(x);
 
           real_type def0 = _sp->norm(b); // compute norm
@@ -1658,7 +1658,7 @@ namespace Dune {
           int i=2;
           while(i<=_maxit && !res.converged) {
             for (int i_bounded = 1; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
-              d[i_bounded] = {0};                 // reset search direction
+              d[i_bounded] = 0;                 // reset search direction
               _prec->apply(d[i_bounded], b);     // apply preconditioner
               w = d[i_bounded];                 // copy of current d[i]
 
