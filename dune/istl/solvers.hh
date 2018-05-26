@@ -1663,7 +1663,7 @@ namespace Dune {
 
           // orthogonalization with previous directions
           for (int k = 0; k < i_bounded; k++) {
-            d[i_bounded].axpy( -1.0* _sp->dot(Ad[k], w)/ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
+            d[i_bounded].axpy( -_sp->dot(Ad[k], w)/ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
           }
 
           //saving interim values for future calculating
