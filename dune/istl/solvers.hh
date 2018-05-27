@@ -1593,7 +1593,7 @@ namespace Dune {
       //arrays for interim values:
       std::vector<X> d(_mmax+1, x);                      // array for directions
       std::vector<X> Ad(_mmax+1, x);                    // array for Ad[i]
-      std::vector<real_type,rAlloc> ddotAd(_mmax+1,0);   // array for <d[i],Ad[i]>
+      std::vector<real_type,rAlloc> ddotAd(_mmax+1,0); // array for <d[i],Ad[i]>
       X w(x);
 
       real_type def0 = _sp->norm(b); // compute norm
@@ -1727,7 +1727,7 @@ namespace Dune {
     }
 
   private:
-    int _mmax =1;
+    int _mmax = 1;
 
   protected:
     using IterativeSolver<X,X>::_op;
