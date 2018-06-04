@@ -80,6 +80,6 @@ int main(int argc, char** argv)
 
   Dune::FCGSolver<BVector> solver4(fop, prec0, 1e-3,10,2,3);
   solver4.apply(x, b, res);
-  
+
   return 0;
 }
