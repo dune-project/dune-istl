@@ -1582,7 +1582,6 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      using std::isfinite;
       using rAlloc = ReboundAllocatorType<X,real_type>;
       res.clear();                   // clear solver statistics
       Timer watch;                  // start a timer
@@ -1597,7 +1596,7 @@ namespace Dune {
 
       real_type def0 = _sp->norm(b); // compute norm
 
-      if (!Simd::allTrue(isfinite(def0))) // check for inf or NaN
+      if (!Simd::allTrue(isFinite(def0))) // check for inf or NaN
       {
         if (_verbose>0)
           std::cout << "=== FCGSolver: abort due to infinite or NaN initial defect"
@@ -1681,7 +1680,7 @@ namespace Dune {
             this->printOutput(std::cout, i, defnew, def);
 
           def = defnew;               // update norm
-          if (!Simd::allTrue(isfinite(def))) // check for inf or NaN
+          if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
           {
             if (_verbose > 0)
               std::cout << "=== FCGSolver: abort due to infinite or NaN defect"
