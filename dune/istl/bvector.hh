@@ -197,6 +197,7 @@ namespace Imp {
     //! two norm sqrt(sum over squared values of entries)
     typename FieldTraits<field_type>::real_type two_norm () const
     {
+      using std::sqrt;
       typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
       return sqrt(sum);
@@ -877,6 +878,7 @@ namespace Imp {
     //! two norm sqrt(sum over squared values of entries)
     typename FieldTraits<field_type>::real_type two_norm () const
     {
+      using std::sqrt;
       typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (this->p)[i].two_norm2();
       return sqrt(sum);
