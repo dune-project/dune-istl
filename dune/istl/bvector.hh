@@ -6,9 +6,13 @@
 
 #include <cmath>
 #include <complex>
+#include <initializer_list>
 #include <limits>
 #include <memory>
+#include <utility>
+#include <vector>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/promotiontraits.hh>
@@ -193,6 +197,7 @@ namespace Imp {
     //! two norm sqrt(sum over squared values of entries)
     typename FieldTraits<field_type>::real_type two_norm () const
     {
+      using std::sqrt;
       typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
       return sqrt(sum);
@@ -295,6 +300,39 @@ namespace Imp {
     {       }
   };
 
+  //! simple scope guard, execute the provided functor on scope exit
+  /**
+   * The guard may not be copied or moved.  This avoids executing the cleanup
+   * function twice.  The cleanup function should not throw, as it may be
+   * called during stack unwinding.
+   */
+  template<class F>
+  class ScopeGuard {
+    F cleanupFunc_;
+  public:
+    ScopeGuard(F cleanupFunc) : cleanupFunc_(std::move(cleanupFunc)) {}
+    ScopeGuard(const ScopeGuard &) = delete;
+    ScopeGuard(ScopeGuard &&) = delete;
+    ScopeGuard &operator=(ScopeGuard) = delete;
+    ~ScopeGuard() { cleanupFunc_(); }
+  };
+
+  //! create a scope guard
+  /**
+   * Use like
+   * ```c++
+   * {
+   *   const auto &guard = makeScopeGuard([&]{ doSomething(); });
+   *   doSomethingThatMightThrow();
+   * }
+   * ```
+   */
+  template<class F>
+  ScopeGuard<F> makeScopeGuard(F cleanupFunc)
+  {
+    return { std::move(cleanupFunc) };
+  }
+
 } // end namespace Imp
   /**
      @addtogroup ISTL_SPMV
@@ -344,44 +382,21 @@ namespace Imp {
     //===== constructors and such
 
     //! makes empty vector
-    BlockVector () : Imp::block_vector_unmanaged<B,A>(),
-                     capacity_(0)
-    {}
+    BlockVector ()
+    {
+      syncBaseArray();
+    }
 
     //! make vector with _n components
-    explicit BlockVector (size_type _n)
+    explicit BlockVector (size_type _n) : storage_(_n)
     {
-      this->n = _n;
-      capacity_ = _n;
-      if (capacity_>0) {
-        this->p = this->allocator_.allocate(capacity_);
-        // actually construct the objects
-        new(this->p)B[capacity_];
-      } else
-      {
-        this->p = 0;
-        this->n = 0;
-        capacity_ = 0;
-      }
+      syncBaseArray();
     }
 
     /** \brief Construct from a std::initializer_list */
-    BlockVector (std::initializer_list<B> const &l)
+    BlockVector (std::initializer_list<B> const &l) : storage_(l)
     {
-      this->n = l.size();
-      capacity_ = l.size();
-      if (capacity_>0) {
-        this->p = this->allocator_.allocate(capacity_);
-        // actually construct the objects
-        new(this->p)B[capacity_];
-
-        std::copy_n(l.begin(), l.size(), this->p);
-      } else
-      {
-        this->p = 0;
-        this->n = 0;
-        capacity_ = 0;
-      }
+      syncBaseArray();
     }
 
 
@@ -401,24 +416,28 @@ namespace Imp {
     {
       static_assert(std::numeric_limits<S>::is_integer,
         "capacity must be an unsigned integral type (be aware, that this constructor does not set the default value!)" );
-      size_type capacity = _capacity;
-      this->n = _n;
-      if(this->n > capacity)
-        capacity_ = _n;
-      else
-        capacity_ = capacity;
-
-      if (capacity_>0) {
-        this->p = this->allocator_.allocate(capacity_);
-        new (this->p)B[capacity_];
-      } else
-      {
-        this->p = 0;
-        this->n = 0;
-        capacity_ = 0;
-      }
+      if(_capacity > _n)
+        storage_.reserve(_capacity);
+      storage_.resize(_n);
+      syncBaseArray();
     }
 
+
+    /**
+     * @brief Reserve space.
+     *
+     * Allocate storage for up to `capacity` blocks.  Resizing won't cause
+     * reallocation until the size exceeds the `capacity`
+     *
+     * @param capacity The maximum number of elements the vector
+     *        needs to hold.
+     */
+    void reserve(size_type capacity)
+    {
+      const auto &guard =
+        Imp::makeScopeGuard([this]{ syncBaseArray(); });
+      storage_.reserve(capacity);
+    }
 
     /**
      * @brief Reserve space.
@@ -433,44 +452,17 @@ namespace Imp {
      *
      * @param capacity The maximum number of elements the vector
      * needs to hold.
-     * @param copyOldValues If false no object will be copied and the data might be
-     * lost. Default value is true.
+     * @param copyOldValues Ignored, values are always copied.
+     *
+     * \deprecated This method is deprecated, since the extra copyOldValues
+     *             parameter is unusual, and the previous implementation did
+     *             not always reduce memory anyway.
      */
-    void reserve(size_type capacity, bool copyOldValues=true)
+    DUNE_DEPRECATED_MSG("Use the overload without the second parameter, "
+                        "values are always copied")
+    void reserve(size_type capacity, bool copyOldValues)
     {
-      if(capacity >= Imp::block_vector_unmanaged<B,A>::N() && capacity != capacity_) {
-        // save the old data
-        B* pold = this->p;
-
-        if(capacity>0) {
-          // create new array with capacity
-          this->p = this->allocator_.allocate(capacity);
-          new (this->p)B[capacity];
-
-          if(copyOldValues) {
-            // copy the old values
-            B* to = this->p;
-            B* from = pold;
-
-            for(size_type i=0; i < Imp::block_vector_unmanaged<B,A>::N(); ++i, ++from, ++to)
-              *to = *from;
-          }
-          if(capacity_ > 0) {
-            // Destruct old objects and free memory
-            int i=capacity_;
-            while (i)
-              pold[--i].~B();
-            this->allocator_.deallocate(pold,capacity_);
-          }
-        }else{
-          if(capacity_ > 0)
-            // free old data
-            this->p = 0;
-          capacity_ = 0;
-        }
-
-        capacity_ = capacity;
-      }
+      reserve(capacity);
     }
 
     /**
@@ -481,7 +473,24 @@ namespace Imp {
      */
     size_type capacity() const
     {
-      return capacity_;
+      return storage_.capacity();
+    }
+
+    /**
+     * @brief Resize the vector.
+     *
+     * Resize the vector to the given number of blocks.  Blocks below the
+     * given size are copied (moved if possible).  Old blocks above the given
+     * size are destructed, new blocks above the given size are
+     * value-initialized.
+     *
+     * @param size The new number of blocks of the vector.
+     */
+    void resize(size_type size)
+    {
+      const auto &guard =
+        Imp::makeScopeGuard([this]{ syncBaseArray(); });
+      storage_.resize(size);
     }
 
     /**
@@ -495,82 +504,65 @@ namespace Imp {
      * will be copied if the capacity changes.  If it is false
      * the old values are lost.
      * @param size The new size of the vector.
-     * @param copyOldValues If false no object will be copied and the data might be
-     * lost.
+     * @param copyOldValues Ignored, values are always copied.
+     *
+     * \deprecated This method is deprecated, since the extra copyOldValues
+     *             parameter is unusual and conflicts with the usual meaning
+     *             (default value for newly created elements).
      */
-    void resize(size_type size, bool copyOldValues=true)
+    DUNE_DEPRECATED_MSG("Use the overload without the second parameter, "
+                        "values are always copied")
+    void resize(size_type size, bool copyOldValues)
     {
-      if (size > Imp::block_vector_unmanaged<B,A>::N())
-        if(capacity_ < size)
-          this->reserve(size, copyOldValues);
-      this->n = size;
+      resize(size);
     }
 
 
 
 
     //! copy constructor
-    BlockVector (const BlockVector& a) :
-      Imp::block_vector_unmanaged<B,A>(a)
+    BlockVector(const BlockVector &a)
+      noexcept(noexcept(std::declval<BlockVector>().storage_ = a.storage_))
     {
-      // allocate memory with same size as a
-      this->n = a.n;
-      capacity_ = a.capacity_;
-
-      if (capacity_>0) {
-        this->p = this->allocator_.allocate(capacity_);
-        new (this->p)B[capacity_];
-      } else
-      {
-        this->n = 0;
-        this->p = 0;
-      }
-
-      // and copy elements
-      for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
+      storage_ = a.storage_;
+      syncBaseArray();
     }
 
-    //! free dynamic memory
-    ~BlockVector ()
+    //! move constructor
+    BlockVector(BlockVector &&a)
+      noexcept(noexcept(std::declval<BlockVector>().swap(a)))
     {
-      if (capacity_>0) {
-        int i=capacity_;
-        while (i)
-          this->p[--i].~B();
-        this->allocator_.deallocate(this->p,capacity_);
-      }
+      swap(a);
     }
 
     //! assignment
     BlockVector& operator= (const BlockVector& a)
+      noexcept(noexcept(std::declval<BlockVector>().storage_ = a.storage_))
     {
-      if (&a!=this)     // check if this and a are different objects
-      {
-        // adjust size of vector
-        if (capacity_!=a.capacity_)           // check if size is different
-        {
-          if (capacity_>0) {
-            int i=capacity_;
-            while (i)
-              this->p[--i].~B();
-            this->allocator_.deallocate(this->p,capacity_);                     // free old memory
-          }
-          capacity_ = a.capacity_;
-          if (capacity_>0) {
-            this->p = this->allocator_.allocate(capacity_);
-            new (this->p)B[capacity_];
-          } else
-          {
-            this->p = 0;
-            capacity_ = 0;
-          }
-        }
-        this->n = a.n;
-        // copy data
-        for (size_type i=0; i<this->n; i++)
-          this->p[i]=a.p[i];
-      }
+      const auto &guard =
+        Imp::makeScopeGuard([this]{ syncBaseArray(); });
+      storage_ = a.storage_;
       return *this;
+    }
+
+    //! move assignment
+    BlockVector& operator= (BlockVector&& a)
+      noexcept(noexcept(std::declval<BlockVector>().swap(a)))
+    {
+      swap(a);
+      return *this;
+    }
+
+    //! swap operation
+    void swap(BlockVector &other)
+      noexcept(noexcept(
+            std::declval<BlockVector&>().storage_.swap(other.storage_)))
+    {
+      const auto &guard = Imp::makeScopeGuard([&]{
+          syncBaseArray();
+          other.syncBaseArray();
+        });
+      storage_.swap(other.storage_);
     }
 
     //! assign from scalar
@@ -581,11 +573,14 @@ namespace Imp {
       return *this;
     }
 
-  protected:
-    size_type capacity_;
+  private:
+    void syncBaseArray() noexcept
+    {
+      this->p = storage_.data();
+      this->n = storage_.size();
+    }
 
-    A allocator_;
-
+    std::vector<B, A> storage_;
   };
 
   /** @} */
@@ -883,6 +878,7 @@ namespace Imp {
     //! two norm sqrt(sum over squared values of entries)
     typename FieldTraits<field_type>::real_type two_norm () const
     {
+      using std::sqrt;
       typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (this->p)[i].two_norm2();
       return sqrt(sum);
