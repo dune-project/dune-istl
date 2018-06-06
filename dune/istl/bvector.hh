@@ -200,7 +200,6 @@ namespace Imp {
       using std::sqrt;
       typename FieldTraits<field_type>::real_type sum=0;
       for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
-      using std::sqrt;
       return sqrt(sum);
     }
 
