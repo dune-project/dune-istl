@@ -501,6 +501,8 @@ namespace Dune {
      \tparam l Ignored. Just there to have the same number of template arguments
      as other preconditioners.
    */
+  using std::abs;
+
   template<class M, class X, class Y, int l=1>
   class SeqILU : public Preconditioner<X,Y> {
   public:
@@ -548,7 +550,7 @@ namespace Dune {
         upper_(),
         inv_(),
         w_(w),
-        wNotIdentity_( std::abs( w_ - scalar_field_type(1) ) > 1e-15 )
+        wNotIdentity_( abs( w_ - scalar_field_type(1) ) > 1e-15 )
     {
       if( n == 0 )
       {

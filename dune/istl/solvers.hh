@@ -465,9 +465,10 @@ namespace Dune {
             if (row.index() < T.N() - 1)
               row.insert(row.index()+1);
           }
+          using std::sqrt;
           for (int row = 0; row < i; ++row) {
             if (row > 0) {
-              T[row][row-1] = std::sqrt(id(betas[row-1])) / lambdas[row-1];
+              T[row][row-1] = sqrt(betas[row-1]) / lambdas[row-1];
             }
 
             T[row][row] = 1.0 / id(lambdas[row]);
@@ -476,7 +477,7 @@ namespace Dune {
             }
 
             if (row < i - 1) {
-              T[row][row+1] = std::sqrt(id(betas[row])) / lambdas[row];
+              T[row][row+1] = sqrt(betas[row]) / lambdas[row];
             }
           }
 
