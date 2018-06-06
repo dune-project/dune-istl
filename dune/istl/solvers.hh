@@ -450,6 +450,8 @@ namespace Dune {
 
       if (condition_estimate_) {
 #if HAVE_ARPACKPP
+        using std::sqrt;
+
         Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
 
           // Build T matrix which has extreme eigenvalues approximating
@@ -467,7 +469,7 @@ namespace Dune {
           }
           for (int row = 0; row < i; ++row) {
             if (row > 0) {
-              T[row][row-1] = std::sqrt(id(betas[row-1])) / lambdas[row-1];
+              T[row][row-1] = sqrt(betas[row-1]) / lambdas[row-1];
             }
 
             T[row][row] = 1.0 / id(lambdas[row]);
@@ -476,7 +478,7 @@ namespace Dune {
             }
 
             if (row < i - 1) {
-              T[row][row+1] = std::sqrt(id(betas[row])) / lambdas[row];
+              T[row][row+1] = sqrt(betas[row]) / lambdas[row];
             }
           }
 

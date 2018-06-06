@@ -198,11 +198,12 @@ namespace Dune
     template<class M, class N>
     inline void SymmetricMatrixDependency<M,N>::initRow(const Row& row, int index)
     {
+      using std::min;
       vals_.assign(row.size(), 0.0);
       assert(vals_.size()==row.size());
       valIter_=vals_.begin();
 
-      maxValue_ = std::min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
+      maxValue_ = min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
       diagonal_=norm_(row[index]);
       row_ = index;
     }
@@ -210,12 +211,13 @@ namespace Dune
     template<class M, class N>
     inline void SymmetricMatrixDependency<M,N>::examine(const ColIter& col)
     {
+      using std::max;
       // skip positive offdiagonals if norm preserves sign of them.
       real_type eij = norm_(*col);
       if(!N::is_sign_preserving || eij<0)  // || eji<0)
       {
         *valIter_ = eij/diagonal_*eij/norm_(matrix_->operator[](col.index())[col.index()]);
-        maxValue_ = std::max(maxValue_, *valIter_);
+        maxValue_ = max(maxValue_, *valIter_);
       }else
         *valIter_ =0;
       ++valIter_;
@@ -1391,8 +1393,9 @@ namespace Dune
     template<class M, class N>
     inline void SymmetricDependency<M,N>::initRow(const Row& row, int index)
     {
+      using std::min;
       DUNE_UNUSED_PARAMETER(row);
-      maxValue_ = std::min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
+      maxValue_ = min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);
     }
@@ -1400,6 +1403,7 @@ namespace Dune
     template<class M, class N>
     inline void SymmetricDependency<M,N>::examine(const ColIter& col)
     {
+      using std::max;
       real_type eij = norm_(*col);
       typename Matrix::ConstColIterator opposite_entry =
         matrix_->operator[](col.index()).find(row_);
@@ -1412,7 +1416,7 @@ namespace Dune
 
       // skip positive offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || eij<0 || eji<0)
-        maxValue_ = std::max(maxValue_,
+        maxValue_ = max(maxValue_,
                              eij /diagonal_ * eji/
                              norm_(matrix_->operator[](col.index())[col.index()]));
     }
@@ -1459,8 +1463,9 @@ namespace Dune
     template<class M, class N>
     inline void Dependency<M,N>::initRow(const Row& row, int index)
     {
+      using std::min;
       DUNE_UNUSED_PARAMETER(row);
-      maxValue_ = std::min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
+      maxValue_ = min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);
     }
@@ -1468,8 +1473,8 @@ namespace Dune
     template<class M, class N>
     inline void Dependency<M,N>::examine(const ColIter& col)
     {
-      maxValue_ = std::max(maxValue_,
-                           -norm_(*col));
+      using std::max;
+      maxValue_ = max(maxValue_, -norm_(*col));
     }
 
     template<class M, class N>
@@ -1811,11 +1816,12 @@ namespace Dune
         ColIterator end = row.end();
         typename FieldTraits<typename Matrix::field_type>::real_type absoffdiag=0.;
 
+        using std::max;
         if(firstlevel) {
           for(ColIterator col = row.begin(); col != end; ++col)
             if(col.index()!=*vertex) {
               criterion.examine(col);
-              absoffdiag=std::max(absoffdiag, col->frobenius_norm());
+              absoffdiag = max(absoffdiag, col->frobenius_norm());
             }
 
           if(absoffdiag==0)
@@ -2255,6 +2261,7 @@ namespace Dune
     template<class C>
     void Aggregator<G>::growAggregate(const Vertex& seed, const AggregatesMap<Vertex>& aggregates, const C& c)
     {
+      using std::min;
 
       std::size_t distance_ =0;
       while(aggregate_->size() < c.minAggregateSize()&& distance_<c.maxDistance()) {
@@ -2353,7 +2360,7 @@ namespace Dune
         if(!candidates.size())
           break; // No more candidates found
         distance_=distance(seed, aggregates);
-        candidates.resize(std::min(candidates.size(), c.maxAggregateSize()-
+        candidates.resize(min(candidates.size(), c.maxAggregateSize()-
                                    aggregate_->size()));
         aggregate_->add(candidates);
       }
@@ -2373,6 +2380,8 @@ namespace Dune
     std::tuple<int,int,int,int> Aggregator<G>::build(const M& m, G& graph, AggregatesMap<Vertex>& aggregates, const C& c,
                                                      bool finestLevel)
     {
+      using std::max;
+      using std::min;
       // Stack for fast vertex access
       Stack stack_(graph, *this, aggregates);
 
@@ -2461,7 +2470,7 @@ namespace Dune
 
           if(!candidates.size()) break; // no more candidates found.
 
-          candidates.resize(std::min(candidates.size(), c.maxAggregateSize()-
+          candidates.resize(min(candidates.size(), c.maxAggregateSize()-
                                      aggregate_->size()));
           aggregate_->add(candidates);
 
@@ -2478,23 +2487,23 @@ namespace Dune
               aggregate_->invalidate();
             }else{
               ++avg;
-              minA=std::min(minA,static_cast<std::size_t>(1));
-              maxA=std::max(maxA,static_cast<std::size_t>(1));
+              minA=min(minA,static_cast<std::size_t>(1));
+              maxA=max(maxA,static_cast<std::size_t>(1));
               ++oneAggregates;
               ++conAggregates;
             }
           }else{
             ++avg;
-            minA=std::min(minA,static_cast<std::size_t>(1));
-            maxA=std::max(maxA,static_cast<std::size_t>(1));
+            minA=min(minA,static_cast<std::size_t>(1));
+            maxA=max(maxA,static_cast<std::size_t>(1));
             ++oneAggregates;
             ++isoAggregates;
           }
           ++avg;
         }else{
           avg+=aggregate_->size();
-          minA=std::min(minA,aggregate_->size());
-          maxA=std::max(maxA,aggregate_->size());
+          minA=min(minA,aggregate_->size());
+          maxA=max(maxA,aggregate_->size());
           if(graph.getVertexProperties(seed).isolated())
             ++isoAggregates;
           else
@@ -2554,18 +2563,20 @@ namespace Dune
     template<class V>
     void printAggregates2d(const AggregatesMap<V>& aggregates, int n, int m,  std::ostream& os)
     {
+      using std::max;
+
       std::ios_base::fmtflags oldOpts=os.flags();
 
       os.setf(std::ios_base::right, std::ios_base::adjustfield);
 
-      V max=0;
+      V maxVal=0;
       int width=1;
 
       for(int i=0; i< n*m; i++)
-        max=std::max(max, aggregates[i]);
+        maxVal=max(maxVal, aggregates[i]);
 
       for(int i=10; i < 1000000; i*=10)
-        if(max/i>0)
+        if(maxVal/i>0)
           width++;
         else
           break;
