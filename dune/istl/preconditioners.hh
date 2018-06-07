@@ -534,7 +534,6 @@ namespace Dune {
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
-
    /*! \brief Constructor.
 
        Constructor invoking ILU(n).
@@ -548,10 +547,9 @@ namespace Dune {
         lower_(),
         upper_(),
         inv_(),
-        w_(w)
+        w_(w),
+        wNotIdentity_([w]{using std::abs; return abs(w - scalar_field_type(1)) > 1e-15;})
     {
-      using std::abs;
-      wNotIdentity_ = abs( w_ - scalar_field_type(1) ) > 1e-15;
 
       if( n == 0 )
       {
