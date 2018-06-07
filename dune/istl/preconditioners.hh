@@ -548,7 +548,7 @@ namespace Dune {
         upper_(),
         inv_(),
         w_(w),
-        wNotIdentity_([w]{using std::abs; return abs(w - scalar_field_type(1)) > 1e-15;})
+        wNotIdentity_([w]{using std::abs; return abs(w - scalar_field_type(1)) > 1e-15;}() )
     {
 
       if( n == 0 )
