@@ -450,9 +450,8 @@ namespace Dune {
 
       if (condition_estimate_) {
 #if HAVE_ARPACKPP
-        using std::sqrt;
-
         Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
+          using std::sqrt;
 
           // Build T matrix which has extreme eigenvalues approximating
           // those of the original system
