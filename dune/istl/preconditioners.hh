@@ -108,7 +108,7 @@ namespace Dune {
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
-    {
+wnot    {
       return SolverCategory::category(inverse_operator_);
     }
 
@@ -534,7 +534,6 @@ namespace Dune {
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
-
    /*! \brief Constructor.
 
        Constructor invoking ILU(n).
@@ -549,7 +548,7 @@ namespace Dune {
         upper_(),
         inv_(),
         w_(w),
-        wNotIdentity_([w]{using std::abs; return = abs(w - scalar_field_type(1)) > 1e-15;})
+        wNotIdentity_([w]{using std::abs; return abs(w - scalar_field_type(1)) > 1e-15;})
     {
 
       if( n == 0 )
