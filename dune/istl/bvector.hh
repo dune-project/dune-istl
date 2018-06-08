@@ -1158,6 +1158,15 @@ namespace Imp {
 
 } // end namespace 'Imp'
 
+
+  //! Specialization for the proxies of `BlockVectorWindow`
+  template<typename B, typename A>
+  struct AutonomousValueType<Imp::BlockVectorWindow<B,A>>
+  {
+    using type = BlockVector<B, A>;
+  };
+
+
 } // end namespace 'Dune'
 
 #endif
