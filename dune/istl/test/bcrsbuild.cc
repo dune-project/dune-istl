@@ -157,20 +157,15 @@ void testDoubleSetSize()
 
 int main()
 {
-  try{
-    Dune::TestSuite testSuite;
+  Dune::TestSuite testSuite;
 
-    Builder<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > > builder;
+  Builder<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > > builder;
 
-    testSuite.subTest(builder.randomBuild(5,4));
-    testSuite.subTest(builder.rowWiseBuild(5,4,13));
-    testSuite.subTest(builder.rowWiseBuild(5,4));
+  testSuite.subTest(builder.randomBuild(5,4));
+  testSuite.subTest(builder.rowWiseBuild(5,4,13));
+  testSuite.subTest(builder.rowWiseBuild(5,4));
 
-    testDoubleSetSize();
+  testDoubleSetSize();
 
-    return testSuite.exit();
-  }catch(Dune::Exception e) {
-    std::cerr << e<<std::endl;
-    return 1;
-  }
+  return testSuite.exit();
 }
