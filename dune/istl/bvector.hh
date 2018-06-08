@@ -4,6 +4,7 @@
 #ifndef DUNE_ISTL_BVECTOR_HH
 #define DUNE_ISTL_BVECTOR_HH
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <initializer_list>
@@ -709,6 +710,14 @@ namespace Imp {
       return *this;
     }
 
+    //! copy into an independent BlockVector object
+    operator BlockVector<B, A>() const {
+      auto bv = BlockVector<B, A>(this->n);
+
+      std::copy(this->begin(), this->end(), bv.begin());
+
+      return bv;
+    }
 
     //===== window manipulation methods
 
@@ -738,7 +747,7 @@ namespace Imp {
     }
 
     //! get size
-    size_type getsize ()
+    size_type getsize () const
     {
       return this->n;
     }
@@ -1148,6 +1157,15 @@ namespace Imp {
   };
 
 } // end namespace 'Imp'
+
+
+  //! Specialization for the proxies of `BlockVectorWindow`
+  template<typename B, typename A>
+  struct AutonomousValueType<Imp::BlockVectorWindow<B,A>>
+  {
+    using type = BlockVector<B, A>;
+  };
+
 
 } // end namespace 'Dune'
 
