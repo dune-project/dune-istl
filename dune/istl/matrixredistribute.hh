@@ -578,7 +578,7 @@ namespace Dune
             cont.sparsity[column].insert(i);
         }
       }
-      catch(Dune::RangeError er) {
+      catch(const Dune::RangeError&) {
         // Entry not present in the new index set. Ignore!
 #ifdef DEBUG_REPART
         typedef typename Container::LookupIndexSet GlobalLookup;
@@ -593,7 +593,7 @@ namespace Dune
           MPI_Comm_rank(MPI_COMM_WORLD,&rank);
           std::cout<<rank<<cont.aggidxset<<std::endl;
           std::cout<<rank<<": row "<<i<<" (global="<<gi <<") not in index set for owner index "<<pi->global()<<std::endl;
-          throw er;
+          throw;
         }
 #endif
       }
@@ -657,7 +657,7 @@ namespace Dune
           cont.matrix[i][column]=data.second;
         }
       }
-      catch(Dune::RangeError er) {
+      catch(const Dune::RangeError&) {
         // This an overlap row and might therefore lack some entries!
       }
 
@@ -752,7 +752,7 @@ namespace Dune
       {
         try{
           newMatrix[col.index()][row.index()];
-        }catch(Dune::ISTLError e) {
+        }catch(const Dune::ISTLError&) {
           std::cerr<<newComm.communicator().rank()<<": entry ("
                    <<col.index()<<","<<row.index()<<") missing! for symmetry!"<<std::endl;
           ret=1;
