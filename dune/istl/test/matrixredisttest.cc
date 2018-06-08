@@ -99,7 +99,7 @@ int testRepart(int N, int coarsenTarget)
       if(col.index()<=row.index())
         try{
           newMat[col.index()][row.index()];
-        }catch(Dune::ISTLError e) {
+        }catch(const Dune::ISTLError&) {
           std::cerr<<coarseComm->communicator().rank()<<": entry ("
                    <<col.index()<<","<<row.index()<<") missing!"<<std::endl;
           ret=1;
