@@ -738,7 +738,7 @@ namespace Imp {
     }
 
     //! get size
-    size_type getsize ()
+    size_type getsize () const
     {
       return this->n;
     }
