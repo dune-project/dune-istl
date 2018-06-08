@@ -965,7 +965,8 @@ namespace Dune
                             vtxdist[oocomm.communicator().size()],
                             noNeighbours, xadj, adjncy, false));
 
-        Metis::idx_t wgtflag=0, numflag=0;
+        DUNE_UNUSED Metis::idx_t wgtflag=0;
+        Metis::idx_t numflag=0;
         Metis::idx_t edgecut;
 #ifdef USE_WEIGHTS
         wgtflag=3;
@@ -973,7 +974,6 @@ namespace Dune
         Metis::real_t *tpwgts = new Metis::real_t[nparts];
         for(int i=0; i<nparts; ++i)
           tpwgts[i]=1.0/nparts;
-        int options[5] ={ 0,1,15,0,0};
         MPI_Comm comm=oocomm.communicator();
 
         Dune::dinfo<<rank<<" vtxdist: ";
@@ -998,6 +998,7 @@ namespace Dune
 #ifdef PARALLEL_PARTITION
         Metis::real_t ubvec = 1.15;
         int ncon=1;
+        int options[5] ={ 0,1,15,0,0};
 
         //=======================================================
         // ParMETIS_V3_PartKway
@@ -1156,7 +1157,6 @@ namespace Dune
           if(verbose && oocomm.communicator().rank()==0)
             std::cout<<"Creating grah one 1 process took "<<time.elapsed()<<std::endl;
           time.reset();
-          options[0]=0; options[1]=1; options[2]=1; options[3]=3; options[4]=3;
 #if METIS_VER_MAJOR >= 5
           Metis::idx_t ncon = 1;
           Metis::idx_t moptions[METIS_NOPTIONS];
@@ -1165,6 +1165,7 @@ namespace Dune
           METIS_PartGraphRecursive(&noVertices, &ncon, gxadj, gadjncy, gvwgt, NULL, gadjwgt,
                          &nparts, NULL, NULL, moptions, &edgecut, gpart);
 #else
+          int options[5] = {0, 1, 1, 3, 3};
           // Call metis
           METIS_PartGraphRecursive(&noVertices, gxadj, gadjncy, gvwgt, gadjwgt, &wgtflag,
                                    &numflag, &nparts, options, &edgecut, gpart);
