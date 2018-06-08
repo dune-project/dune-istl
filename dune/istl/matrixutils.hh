@@ -164,7 +164,7 @@ namespace Dune
   {
     struct CompPair {
       template<class G,class M>
-      bool operator()(const std::pair<G,M>& p1, const std::pair<G,M>& p2)
+      bool operator()(const std::pair<G,M>& p1, const std::pair<G,M>& p2) const
       {
         return p1.first<p2.first;
       }
