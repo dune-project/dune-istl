@@ -3,18 +3,31 @@
 #ifndef DUNE_ISTL_MATRIXMARKET_HH
 #define DUNE_ISTL_MATRIXMARKET_HH
 
-#include <ostream>
-#include <istream>
+#include <algorithm>
+#include <complex>
+#include <cstddef>
 #include <fstream>
-#include <sstream>
-#include <limits>
 #include <ios>
+#include <iostream>
+#include <istream>
+#include <limits>
+#include <ostream>
+#include <set>
+#include <sstream>
+#include <string>
 #include <tuple>
-#include "matrixutils.hh"
-#include "bcrsmatrix.hh"
-#include "owneroverlapcopy.hh"
+#include <type_traits>
+#include <vector>
+
+#include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
 #include <dune/common/unused.hh>
+
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/matrixutils.hh> // countNonZeros()
+#include <dune/istl/owneroverlapcopy.hh>
 
 namespace Dune
 {
