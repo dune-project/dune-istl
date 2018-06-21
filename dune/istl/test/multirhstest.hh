@@ -68,14 +68,17 @@ template <typename V>
 V detectVectorType(Dune::LinearOperator<V,V> &);
 
 template<typename Operator, typename Solver>
-void run_test (std::string precName, std::string solverName, Operator & op, Solver & solver, unsigned int N, unsigned int Runs)
+double run_test (std::string precName, std::string solverName, Operator & op, Solver & solver, unsigned int N, unsigned int Runs,bool verbose = false)
 {
   using Vector = decltype(detectVectorType(op));
   using FT = typename Vector::field_type;
 
-  Dune::Timer t;
+  Dune::Timer t(false);
+  double measuredTime = 0.0;
   std::cout << "Trying " << solverName << "(" << precName << ")"
             << " with " << Dune::className<FT>() << std::endl;
+  if(!verbose)
+    t.start();
   for (unsigned int run = 0; run < Runs; run++) {
     // set up system
     Vector x(N),b(N);
@@ -86,9 +89,20 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
 
     // call the solver
     Dune::InverseOperatorResult r;
+    if(verbose)
+      t.start();
     solver.apply(x,b,r);
+    if(verbose){
+      t.stop();
+      std::cout << "Run " << run+1 << " took " << t.lastElapsed() << std::endl;
+    }
   }
-  std::cout << Runs << " run(s) took " << t.stop() << std::endl;
+
+  measuredTime = t.elapsed();
+
+  std::cout << Runs << " run(s) took " << measuredTime << std::endl;
+
+  return measuredTime;
 }
 
 template<typename Operator, typename Prec>
