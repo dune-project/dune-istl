@@ -705,49 +705,54 @@ namespace Dune
       // data structure
       std::vector<std::set<IndexData<D> > > rows(matrix.N()*brows);
 
-      for(; entries>0; --entries) {
-        std::size_t row;
-        IndexData<D> data;
-        skipComments(file);
-        file>>row;
-        --row; // Index was 1 based.
-        assert(row/bcols<matrix.N());
-        file>>data;
-        assert(data.index/bcols<matrix.M());
-        rows[row].insert(data);
-        if(row!=data.index){
-          switch(mmHeader.structure)
-          {
-          case symmetric :
-            {
-              IndexData<D> data_sym(data);
-              data_sym.index = row;
-              rows[data.index].insert(data_sym);
-            }
-            break;
-          case skew_symmetric :
-            {
-              IndexData<D> data_sym;
-              data_sym.number = -data.number;
-              data_sym.index = row;
-              rows[data.index].insert(data_sym);
-            }
-            break;
-          case hermitian :
-            {
-              IndexData<D> data_sym;
-              data_sym.number = conj(data.number);
-              data_sym.index = row;
-              rows[data.index].insert(data_sym);
-            }
-            break;
-          }
+      auto readloop = [&] (auto symmetryFixup) {
+        for(std::size_t i = 0; i < entries; ++i) {
+          std::size_t row;
+          IndexData<D> data;
+          skipComments(file);
+          file>>row;
+          --row; // Index was 1 based.
+          assert(row/bcols<matrix.N());
+          file>>data;
+          assert(data.index/bcols<matrix.M());
+          rows[row].insert(data);
+          if(row!=data.index)
+            symmetryFixup(row, data);
         }
-      }
+      };
 
-      if(mmHeader.structure== unknown_structure)
+      switch(mmHeader.structure)
+      {
+      case general:
+        readloop([](auto...){});
+        break;
+      case symmetric :
+        readloop([&](auto row, auto data) {
+            IndexData<D> data_sym(data);
+            data_sym.index = row;
+            rows[data.index].insert(data_sym);
+          });
+        break;
+      case skew_symmetric :
+        readloop([&](auto row, auto data) {
+            IndexData<D> data_sym;
+            data_sym.number = -data.number;
+            data_sym.index = row;
+            rows[data.index].insert(data_sym);
+          });
+        break;
+      case hermitian :
+        readloop([&](auto row, auto data) {
+            IndexData<D> data_sym;
+            data_sym.number = conj(data.number);
+            data_sym.index = row;
+            rows[data.index].insert(data_sym);
+          });
+        break;
+      default:
         DUNE_THROW(Dune::NotImplemented,
                    "Only general, symmetric, skew-symmetric and hermitian is supported right now!");
+      }
 
       // Setup the matrix sparsity pattern
       int nnz=0;
