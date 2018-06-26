@@ -90,7 +90,8 @@ std::vector<double> run_test (std::string precName, std::string solverName, Oper
     Dune::InverseOperatorResult r;
     t.start();
     solver.apply(x,b,r);
-    double time = t.stop();
+    t.stop();
+    double time = t.lastElapsed();
     timestamps.push_back(time);
   }
 
