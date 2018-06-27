@@ -68,12 +68,14 @@ template <typename V>
 V detectVectorType(Dune::LinearOperator<V,V> &);
 
 template<typename Operator, typename Solver>
-void run_test (std::string precName, std::string solverName, Operator & op, Solver & solver, unsigned int N, unsigned int Runs)
+std::vector<double> run_test (std::string precName, std::string solverName, Operator & op, Solver & solver, unsigned int N, unsigned int Runs)
 {
   using Vector = decltype(detectVectorType(op));
   using FT = typename Vector::field_type;
 
-  Dune::Timer t;
+  Dune::Timer t(false);
+  std::vector<double> timestamps;
+
   std::cout << "Trying " << solverName << "(" << precName << ")"
             << " with " << Dune::className<FT>() << std::endl;
   for (unsigned int run = 0; run < Runs; run++) {
@@ -86,9 +88,20 @@ void run_test (std::string precName, std::string solverName, Operator & op, Solv
 
     // call the solver
     Dune::InverseOperatorResult r;
+    t.start();
     solver.apply(x,b,r);
+    t.stop();
+    double time = t.lastElapsed();
+    timestamps.push_back(time);
   }
-  std::cout << Runs << " run(s) took " << t.stop() << std::endl;
+
+  double measuredTime = 0.0;
+  for(auto d : timestamps)
+    measuredTime += d;
+
+  std::cout << Runs << " run(s) took " << measuredTime << std::endl;
+
+  return timestamps;
 }
 
 template<typename Operator, typename Prec>
