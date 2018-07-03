@@ -216,7 +216,7 @@ namespace Dune
     template< class BlockVector >
     inline pybind11::class_< BlockVector > registerBlockVector ( pybind11::handle scope, const char *clsName = "BlockVector" )
     {
-      typedef typename BlockVector::size_type size_type;
+      //typedef typename BlockVector::size_type size_type;
 
       using pybind11::operator""_a;
 
