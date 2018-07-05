@@ -5,7 +5,7 @@
 
 #include <cmath>    // provides std::abs and std::sqrt
 #include <cassert>  // provides assert
-
+#include <limits>
 #include <iostream>  // provides std::cout, std::endl
 
 #include <dune/common/exceptions.hh>  // provides DUNE_THROW(...), Dune::Exception
@@ -191,7 +191,7 @@ protected:
     // 7) get smallest magnitude eigenvalue via TLIME iteration
     //    (assume that m_ is symmetric)
     {
-      const Real epsilon = 1e-11;
+      const Real epsilon = std::sqrt(std::numeric_limits<Real>::epsilon());
       x = 1.0;
       // 7.1) perform TLIME iteration for smallest magnitude
       //      eigenvalue
@@ -322,7 +322,7 @@ protected:
     // 9) get smallest singular value as square root of the smallest
     //    magnitude eigenvalue of m^t*m via TLIME iteration
     {
-      const Real epsilon = 1e-11;
+      const Real epsilon = std::sqrt(std::numeric_limits<Real>::epsilon());
       x = 1.0;
       // 9.1) perform TLIME iteration for smallest magnitude
       //      eigenvalue of m^t*m
