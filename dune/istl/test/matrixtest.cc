@@ -533,7 +533,7 @@ int main()
   FieldVector<double,1> fvX1;
   FieldVector<double,1> fvY1;
 
-  testMatrix(fMatrix, fvX, fvY);
+  testMatrix(fMatrix1x1, fvX1, fvY1);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the DiagonalMatrix class
