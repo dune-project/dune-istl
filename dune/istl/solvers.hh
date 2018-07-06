@@ -550,7 +550,7 @@ namespace Dune {
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       using std::abs;
-      const real_type EPSILON=1e-80;
+      const Simd::Scalar<real_type> EPSILON=1e-80;
       using std::abs;
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
@@ -626,11 +626,11 @@ namespace Dune {
         // look if breakdown occurred
         if (Simd::allTrue(abs(rho) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
-                     << Simd::io(rho) << " <= EPSILON " << Simd::max(EPSILON)
+                     << Simd::io(rho) << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
         if (Simd::allTrue(abs(omega) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
-                     << Simd::io(omega) << " <= EPSILON " << Simd::max(EPSILON)
+                     << Simd::io(omega) << " <= EPSILON " << EPSILON
                      << " after " << it << " iterations");
 
 
@@ -656,7 +656,7 @@ namespace Dune {
 
         if ( Simd::allTrue(abs(h) < EPSILON) )
           DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
-                     << Simd::io(abs(h)) << " < EPSILON " << Simd::max(EPSILON)
+                     << Simd::io(abs(h)) << " < EPSILON " << EPSILON
                      << " after " << it << " iterations");
 
         alpha = rho_new / h;
@@ -1084,7 +1084,7 @@ namespace Dune {
     virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
     {
       using std::abs;
-      const real_type EPSILON = 1e-80;
+      const Simd::Scalar<real_type> EPSILON = 1e-80;
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int j = 1;
