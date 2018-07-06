@@ -9,6 +9,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
 
 #include "solvertype.hh"
@@ -169,8 +170,8 @@ namespace Dune
     {
       const DataType rate = norm/norm_old;
       s << std::setw(iterationSpacing)  << iter << " ";
-      s << std::setw(normSpacing) << norm << " ";
-      s << std::setw(normSpacing) << rate << std::endl;
+      s << std::setw(normSpacing) << Simd::io(norm) << " ";
+      s << std::setw(normSpacing) << Simd::io(rate) << std::endl;
     }
 
     //! helper function for printing solver output
@@ -180,7 +181,7 @@ namespace Dune
                      const DataType& norm) const
     {
       s << std::setw(iterationSpacing)  << iter << " ";
-      s << std::setw(normSpacing) << norm << std::endl;
+      s << std::setw(normSpacing) << Simd::io(norm) << std::endl;
     }
   };
 

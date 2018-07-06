@@ -15,6 +15,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/math.hh>
+#include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/timer.hh>
@@ -336,7 +337,7 @@ namespace Dune {
         if (_verbose>0)
           std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
                     << std::endl;
-        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << def0
+        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << Simd::io(def0)
                    << " is infinite or NaN");
       }
 
@@ -404,7 +405,8 @@ namespace Dune {
             std::cout << "=== CGSolver: abort due to infinite or NaN defect"
                       << std::endl;
           DUNE_THROW(SolverAbort,
-                     "CGSolver: defect=" << def << " is infinite or NaN");
+                     "CGSolver: defect=" << Simd::io(def)
+                     << " is infinite or NaN");
         }
 
         if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
@@ -493,9 +495,10 @@ namespace Dune {
           res.condition_estimate = id(max_eigv / min_eigv);
 
           if (this->_verbose > 0) {
-            std::cout << "Min eigv estimate: " << min_eigv << std::endl;
-            std::cout << "Max eigv estimate: " << max_eigv << std::endl;
-            std::cout << "Condition estimate: " << max_eigv / min_eigv << std::endl;
+            std::cout << "Min eigv estimate: " << Simd::io(min_eigv) << '\n';
+            std::cout << "Max eigv estimate: " << Simd::io(max_eigv) << '\n';
+            std::cout << "Condition estimate: "
+                      << Simd::io(max_eigv / min_eigv) << std::endl;
           }
         });
 #else
@@ -623,11 +626,11 @@ namespace Dune {
         // look if breakdown occurred
         if (Simd::allTrue(abs(rho) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
-                     << rho << " <= EPSILON " << Simd::max(EPSILON)
+                     << Simd::io(rho) << " <= EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
         if (Simd::allTrue(abs(omega) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
-                     << omega << " <= EPSILON " << Simd::max(EPSILON)
+                     << Simd::io(omega) << " <= EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
 
 
@@ -653,7 +656,7 @@ namespace Dune {
 
         if ( Simd::allTrue(abs(h) < EPSILON) )
           DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
-                     << abs(h) << " < EPSILON " << Simd::max(EPSILON)
+                     << Simd::io(abs(h)) << " < EPSILON " << Simd::max(EPSILON)
                      << " after " << it << " iterations");
 
         alpha = rho_new / h;
@@ -1602,7 +1605,7 @@ namespace Dune {
         if (_verbose>0)
           std::cout << "=== FCGSolver: abort due to infinite or NaN initial defect"
                     << std::endl;
-        DUNE_THROW(SolverAbort, "FCGSolver: initial defect=" << def0
+        DUNE_THROW(SolverAbort, "FCGSolver: initial defect=" << Simd::io(def0)
                                                              << " is infinite or NaN");
       }
 
@@ -1686,8 +1689,8 @@ namespace Dune {
             if (_verbose > 0)
               std::cout << "=== FCGSolver: abort due to infinite or NaN defect"
                         << std::endl;
-            DUNE_THROW(SolverAbort,
-                       "FCGSolver: defect=" << def << " is infinite or NaN");
+            DUNE_THROW(SolverAbort, "FCGSolver: defect=" << Simd::io(def) <<
+                       " is infinite or NaN");
           }
 
           if (Simd::allTrue(def<def0*_reduction) || Simd::max(def) < 1E-30)    // convergence check
