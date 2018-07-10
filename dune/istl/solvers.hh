@@ -1636,6 +1636,7 @@ namespace Dune {
       real_type def=def0;
       real_type alpha;
 
+      d[0] = 0;
       _prec->apply(d[0], b);       // apply preconditioner
 
       //saving interim values for future calculating
