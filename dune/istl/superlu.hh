@@ -255,7 +255,7 @@ namespace Dune
    *
    * SuperLU supports single and double precision floating point and complex
    * numbers. Unfortunately these cannot be used at the same time.
-   * Therfore users must set SUPERLU_NTYPE (0: float, 1: double,
+   * Therefore users must set SUPERLU_NTYPE (0: float, 1: double,
    * 2: std::complex<float>, 3: std::complex<double>)
    * if the numeric type should be different from double.
    */

@@ -923,7 +923,7 @@ namespace Dune {
     /**
      * \brief constructor
      *
-     * The constructor copies the matrix A and computes its ILU decomposition.
+     * The constructor copies the matrix A and computes its ILDL decomposition.
      *
      * \param[in]  A      matrix to operate on
      * \param[in]  relax  relaxation factor
