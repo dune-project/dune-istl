@@ -6,6 +6,8 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/test/testsuite.hh>
 
+#include <dune/common/test/iteratortest.hh>
+
 #include <dune/istl/test/vectortest.hh>
 
 using namespace Dune;
@@ -28,6 +30,13 @@ int main()
     cIt.setblocksize(3);
 
   v3 = 1.0;
+
+  // Test whether something from <algorithm> can be used to set the block sizes
+  std::fill(v1.createbegin(), v1.createend(), 10);
+
+  // More formally: test whether the CreateIterator is an output iterator in the stl sense
+  v1.resize(5);
+  testOutputIterator(v1.createbegin(), 5, 10);
 
   /* Copy-ing specific blocks with `auto` from a VariableBlockVector is tricky, because
    * the returned object will be a reference:
