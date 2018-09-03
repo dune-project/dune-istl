@@ -5,6 +5,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/test/testsuite.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/io.hh>
 
 template<class M>
@@ -12,7 +13,7 @@ std::size_t computeNNZ(M&& matrix)
 {
   std::size_t nnz = 0;
   for (auto&& row : matrix)
-    for (auto&& entry : row)
+    for (DUNE_UNUSED auto&& entry : row)
       ++nnz;
   return nnz;
 }
@@ -157,20 +158,15 @@ void testDoubleSetSize()
 
 int main()
 {
-  try{
-    Dune::TestSuite testSuite;
+  Dune::TestSuite testSuite;
 
-    Builder<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > > builder;
+  Builder<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > > builder;
 
-    testSuite.subTest(builder.randomBuild(5,4));
-    testSuite.subTest(builder.rowWiseBuild(5,4,13));
-    testSuite.subTest(builder.rowWiseBuild(5,4));
+  testSuite.subTest(builder.randomBuild(5,4));
+  testSuite.subTest(builder.rowWiseBuild(5,4,13));
+  testSuite.subTest(builder.rowWiseBuild(5,4));
 
-    testDoubleSetSize();
+  testDoubleSetSize();
 
-    return testSuite.exit();
-  }catch(Dune::Exception e) {
-    std::cerr << e<<std::endl;
-    return 1;
-  }
+  return testSuite.exit();
 }
