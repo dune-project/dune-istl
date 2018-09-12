@@ -81,7 +81,10 @@ dune_add_test(SOURCES ldltest.cc)
 
 dune_add_test(SOURCES spqrtest.cc)
 
-  dune_add_test(SOURCES overlappingschwarztest.cc)
+dune_add_test(SOURCES overlappingschwarztest.cc)
+
+dune_add_test(SOURCES cholmodtest.cc)
+
 
 # MPI tests
 dune_add_test(SOURCES matrixredisttest.cc
