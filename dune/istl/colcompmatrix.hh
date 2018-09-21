@@ -266,8 +266,8 @@ namespace Dune
     template<typename Iter>
     void addRowNnz(const Iter& row) const;
 
-    template<typename Iter, typename Set>
-    void addRowNnz(const Iter& row, const Set& s) const;
+    template<typename Iter, typename SubMatrixIndexVector>
+    void addRowNnz(const Iter& row, const SubMatrixIndexVector& indices) const;
 
     void allocate();
 
@@ -323,22 +323,15 @@ namespace Dune
   }
 
   template<class T, class A, int n, int m>
-  template<typename Iter, typename Map>
+  template<typename Iter, typename SubMatrixIndexVector>
   void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::addRowNnz(const Iter& row,
-                                                                            const Map& indices) const
+                                                                            const SubMatrixIndexVector& indices) const
   {
-    typedef typename  Iter::value_type::const_iterator RIter;
-    typedef typename Map::const_iterator MIter;
-    MIter siter =indices.begin();
+    using RIter = typename Iter::value_type::const_iterator;
+    using size_type = typename SubMatrixIndexVector::value_type;
     for(RIter entry=row->begin(); entry!=row->end(); ++entry)
-    {
-      for(; siter!=indices.end() && *siter<entry.index(); ++siter) ;
-      if(siter==indices.end())
-        break;
-      if(*siter==entry.index())
-        // index is in subdomain
-        ++mat->Nnz_;
-    }
+      if (entry.index()!=std::numeric_limits<size_type>::max())
+          ++mat->Nnz_;
   }
 
   template<class T, class A, int n, int m>
@@ -461,12 +454,6 @@ namespace Dune
     typedef typename std::iterator_traits<Iter>::value_type row_type;
     typedef typename row_type::const_iterator CIter;
 
-    // Calculate upper Bound for nonzeros
-    for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
-      initializer.addRowNnz(row, mrs.rowIndexSet());
-
-    initializer.allocate();
-
     typedef typename MRS::Matrix::size_type size_type;
 
     // A vector containing the corresponding indices in
@@ -478,6 +465,12 @@ namespace Dune
     size_type s=0;
     for(SIter index = mrs.rowIndexSet().begin(); index!=mrs.rowIndexSet().end(); ++index)
       subMatrixIndex[*index]=s++;
+
+    // Calculate upper Bound for nonzeros
+    for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
+      initializer.addRowNnz(row, subMatrixIndex);
+
+    initializer.allocate();
 
     for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
       for(CIter col=row->begin(); col != row->end(); ++col) {
