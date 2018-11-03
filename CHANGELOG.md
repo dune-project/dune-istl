@@ -4,6 +4,9 @@
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
 
+- Support for SuiteSparse's CHOLMOD providing a sparse Cholesky
+  factorization.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
