@@ -8,6 +8,9 @@
   This means that you can use STL algorithms like `std::fill` or `std::copy`
   to set the block sizes.
 
+- Support for SuiteSparse's CHOLMOD providing a sparse Cholesky
+  factorization.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
