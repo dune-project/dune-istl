@@ -1,4 +1,7 @@
-#include <config.h>
+// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// vi: set et ts=4 sw=2 sts=2:
+#include "config.h"
+
 #include <iostream>
 
 #include <dune/common/fmatrix.hh>
@@ -46,7 +49,7 @@ int main(int argc, char** argv)
 
     InverseOperatorResult res;
 
-  // test without ignore nodes
+    // test without ignore nodes
     Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod;
     cholmod.setMatrix(A);
     cholmod.apply(x,b,res);
@@ -55,12 +58,12 @@ int main(int argc, char** argv)
     A.mmv(x,b);
 
     if ( b.two_norm() > 1e-9 )
-      std::cerr << " Error in CHOLMOD, residual is too large: " << b.two_norm() <<  "\n";
+      std::cerr << " Error in CHOLMOD, residual is too large: " << b.two_norm() << std::endl;
 
     x = 0;
     b = 1;
 
-  // test with ignore nodes
+    // test with ignore nodes
     Ignore ignore;
     Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod2;
     cholmod2.setMatrix(A,&ignore);
@@ -70,7 +73,7 @@ int main(int argc, char** argv)
     A.mmv(x,b);
 
     if ( b.two_norm() > 1e-9 )
-      std::cerr << " Error in CHOLMOD, residual is too large: " << b.two_norm() <<  "\n";
+      std::cerr << " Error in CHOLMOD, residual is too large: " << b.two_norm() << std::endl;
 
   }
   catch (std::exception &e)
