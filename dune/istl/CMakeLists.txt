@@ -10,6 +10,7 @@ install(FILES
    bdmatrix.hh
    btdmatrix.hh
    bvector.hh
+   cholmod.hh
    colcompmatrix.hh
    gsetc.hh
    ildl.hh
