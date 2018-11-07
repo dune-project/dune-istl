@@ -1861,7 +1861,12 @@ namespace Dune {
         norm = max(sum, norm);
         isNaN += sum;
       }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas" // prevents gcc warning about unknown pragma
+#pragma GCC diagnostic ignored "-Wunknown-warning-option" // prevents clang6 warning about unknown pragma
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded" // clang 7
       isNaN /= isNaN;
+#pragma GCC diagnostic pop
       return norm * isNaN;
     }
 
@@ -1884,7 +1889,12 @@ namespace Dune {
         norm = max(sum, norm);
         isNaN += sum;
       }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas" // prevents gcc warning about unknown pragma
+#pragma GCC diagnostic ignored "-Wunknown-warning-option" // prevents clang6 warning about unknown pragma
+#pragma GCC diagnostic ignored "-Wself-assign-overloaded" // clang 7
       isNaN /= isNaN;
+#pragma GCC diagnostic pop
       return norm * isNaN;
     }
 
