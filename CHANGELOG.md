@@ -4,6 +4,10 @@
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
 
+- The class `VariableBlockVector::CreateIterator` is a true STL output iterator now.
+  This means that you can use STL algorithms like `std::fill` or `std::copy`
+  to set the block sizes.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.

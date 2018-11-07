@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <iostream>
+#include <iterator>
 #include <memory>
 
 #include <dune/common/iteratorfacades.hh>
@@ -401,6 +402,10 @@ namespace Dune {
 
     //! Iterator class for sequential creation of blocks
     class CreateIterator
+    : public std::iterator<std::output_iterator_tag,   // iterator category
+                           size_type,                  // value type
+                           size_type*,                 // pointer type
+                           size_type&>                 // reference type
     {
     public:
       //! constructor
@@ -462,6 +467,14 @@ namespace Dune {
         return *this;
       }
 
+      /** \brief postfix increment operator */
+      CreateIterator operator++ (int)
+      {
+        CreateIterator tmp(*this);
+        this->operator++();
+        return tmp;
+      }
+
       //! inequality
       bool operator!= (const CreateIterator& it) const
       {
@@ -484,6 +497,12 @@ namespace Dune {
       void setblocksize (size_type _k)
       {
         k = _k;
+      }
+
+      //! Access size of current block
+      size_type& operator*()
+      {
+        return k;
       }
 
     private:
