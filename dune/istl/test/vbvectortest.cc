@@ -26,6 +26,15 @@ int main()
 
   v3 = v4;
 
+  /*
+    v3 is now fully initialized due to the former copy operation with
+    the initialized vector v4.
+    Calling the create iterator is not allowed, now.
+    We have to un-initialize it first:
+  */
+  v3.resize(20); // this makes v3 unitialized again
+
+  // Set block sizes with CreateIterator:
   for (auto cIt = v3.createbegin(); cIt!=v3.createend(); ++cIt)
     cIt.setblocksize(3);
 
