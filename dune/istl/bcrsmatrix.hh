@@ -1861,8 +1861,7 @@ namespace Dune {
         norm = max(sum, norm);
         isNaN += sum;
       }
-      isNaN /= isNaN;
-      return norm * isNaN;
+      return norm * (isNaN / isNaN);
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
@@ -1884,8 +1883,7 @@ namespace Dune {
         norm = max(sum, norm);
         isNaN += sum;
       }
-      isNaN /= isNaN;
-      return norm * isNaN;
+      return norm * (isNaN / isNaN);
     }
 
     //===== sizes
