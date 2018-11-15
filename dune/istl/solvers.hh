@@ -1530,22 +1530,24 @@ namespace Dune {
     int _restart;
   };
 
-  /*! \brief Flexible conjugate gradient method
+  /*! \brief Accelerated flexible conjugate gradient method
 
      Flexible conjugate gradient method as in Y. Notay 'Flexible conjugate Gradients',
      SIAM J. Sci. Comput Vol. 22, No.4, pp. 1444-1460
 
+     This solver discard cyclic all old directions to speed up computing.
+     In exact arithmetic it is exactly the same as the GeneralizedPCGSolver,
+     but it is much faster, depending on the operator and dimension.
+     On the other hand for large mmax it uses noticeably more memory.
+
  */
   template<class X>
-  class FCGSolver : public IterativeSolver<X,X> {
+  class RestartedFCGSolver : public IterativeSolver<X,X> {
   public:
     using typename IterativeSolver<X,X>::domain_type;
     using typename IterativeSolver<X,X>::range_type;
     using typename IterativeSolver<X,X>::field_type;
     using typename IterativeSolver<X,X>::real_type;
-
-    // copy base class constructors
-    using IterativeSolver<X,X>::IterativeSolver;
 
   private:
     using typename IterativeSolver<X,X>::scalar_real_type;
@@ -1554,22 +1556,22 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
     /*!
-      \brief Constructor to initialize a FCG solver.
+      \brief Constructor to initialize a RestartedFCG solver.
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int, int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    FCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
-               scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
+    RestartedFCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
 
     /*!
-      \brief Constructor to initialize a FCG solver.
+      \brief Constructor to initialize a RestartedFCG solver.
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int,int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    FCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
-               scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
+    RestartedFCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
+                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
 
@@ -1578,12 +1580,13 @@ namespace Dune {
 
      \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
 
-       \note Currently, the FCGSolver aborts when a NaN or infinite defect is
+       \note Currently, the RestartedFCGSolver aborts when a NaN or infinite defect is
              detected.  However, -ffinite-math-only (implied by -ffast-math)
              can inhibit a result from becoming NaN that really should be NaN.
              E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
              -ffast-math.
      */
+
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       using rAlloc = ReboundAllocatorType<X,real_type>;
@@ -1600,14 +1603,7 @@ namespace Dune {
 
       real_type def0 = _sp->norm(b); // compute norm
 
-      if (!Simd::allTrue(isFinite(def0))) // check for inf or NaN
-      {
-        if (_verbose>0)
-          std::cout << "=== FCGSolver: abort due to infinite or NaN initial defect"
-                    << std::endl;
-        DUNE_THROW(SolverAbort, "FCGSolver: initial defect=" << Simd::io(def0)
-                                                             << " is infinite or NaN");
-      }
+      this->CheckSolverAbort(def0,0); // check for inf or NaN
 
       if (Simd::max(def0)<1E-30)         // convergence check
       {
@@ -1625,49 +1621,23 @@ namespace Dune {
 
       if (_verbose>0)             // printing
       {
-        std::cout << "=== FCGSolver" << std::endl;
-        if (_verbose>1) {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
+        this->printSolverHeader(def0);
       }
 
       // some local variables
       real_type def=def0;
       real_type alpha;
 
-      d[0] = 0;
-      _prec->apply(d[0], b);       // apply preconditioner
-
-      //saving interim values for future calculating
-      _op->apply(d[0], Ad[0]);                  // save Ad[0]
-      ddotAd[0]=_sp->dot(d[0], Ad[0]);         // save <d[0],Ad[0]>
-      alpha = _sp->dot(d[0], b)/ddotAd[0];    // <d[0],b>/<d,Ad[0]>
-
-      //update solution and defect
-      x.axpy(alpha, d[0]);
-      b.axpy(-alpha, Ad[0]);
-
-      // convergence test
-      real_type defnew = _sp->norm(b); // comp defect norm
-
-      if (_verbose > 1)             // print
-        this->printOutput(std::cout, 1, defnew, def);
-
-      def = defnew;               // update norm
-
       // the loop
-      int i=2;
+      int i=1;
+      int i_bounded=0;
       while(i<=_maxit && !res.converged) {
-        for (int i_bounded = 1; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
-          d[i_bounded] = 0;                 // reset search direction
+        for (; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
+          d[i_bounded] = 0;                   // reset search direction
           _prec->apply(d[i_bounded], b);     // apply preconditioner
           w = d[i_bounded];                 // copy of current d[i]
-
           // orthogonalization with previous directions
-          for (int k = 0; k < i_bounded; k++) {
-            d[i_bounded].axpy( -_sp->dot(Ad[k], w)/ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
-          }
+          orthogonalizations(i_bounded,Ad,w,ddotAd,d);
 
           //saving interim values for future calculating
           _op->apply(d[i_bounded], Ad[i_bounded]);                    // save Ad[i]
@@ -1685,14 +1655,7 @@ namespace Dune {
             this->printOutput(std::cout, i, defnew, def);
 
           def = defnew;               // update norm
-          if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
-          {
-            if (_verbose > 0)
-              std::cout << "=== FCGSolver: abort due to infinite or NaN defect"
-                        << std::endl;
-            DUNE_THROW(SolverAbort, "FCGSolver: defect=" << Simd::io(def) <<
-                       " is infinite or NaN");
-          }
+          this->CheckSolverAbort(def,i); // check for inf or NaN
 
           if (Simd::allTrue(def<def0*_reduction) || Simd::max(def) < 1E-30)    // convergence check
           {
@@ -1701,10 +1664,8 @@ namespace Dune {
           }
           i++;
         }
-        //exchange first and last stored values
-        std::swap(Ad[0], Ad[_mmax]);
-        std::swap(d[0], d[_mmax]);
-        std::swap(ddotAd[0],ddotAd[_mmax]);
+        //restart: exchange first and last stored values
+        cycle(Ad,d,ddotAd,i_bounded);
       }
 
       //correct i which is wrong if convergence was not achieved.
@@ -1726,19 +1687,141 @@ namespace Dune {
                   << ", TIT=" << res.elapsed/i
                   << ", IT=" << i << std::endl;
       }
-
     }
 
   private:
-    int _mmax = 1;
+    //This function is called every iteration to orthogonalize against the last search directions
+    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) {
+      // The RestartedFCGSolver uses only values with lower array index;
+      for (int k = 0; k < i_bounded; k++) {
+        d[i_bounded].axpy(-_sp->dot(Ad[k], w) / ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
+      }
+    };
+
+    // This function is called every mmax iterations to handle limited array sizes.
+    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) {
+      // Reset loop index and exchange the first and last arrays
+      i_bounded = 1;
+      std::swap(Ad[0], Ad[_mmax]);
+      std::swap(d[0], d[_mmax]);
+      std::swap(ddotAd[0], ddotAd[_mmax]);
+    };
+
+    virtual void printSolverHeader(const real_type& def0) {
+      std::cout << "=== RestartedFCGSolver" << std::endl;
+      if (_verbose > 1) {
+        this->printHeader(std::cout);
+        this->printOutput(std::cout, 0, def0);
+      }
+    };
+
+    virtual void CheckSolverAbort(const real_type& defect, const int& i){
+      if (!Simd::allTrue(isFinite(defect))){ // check for inf or NaN
+        if(i==0) {
+          if (_verbose > 0)
+            std::cout << "=== RestartedFCGSolver: abort due to infinite or NaN initial defect" << std::endl;
+          DUNE_THROW(SolverAbort, "RestartedFCGSolver: initial defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+        else{
+          if (_verbose > 0)
+            std::cout << "=== RestartedFCGSolver: abort due to infinite or NaN defect" << std::endl;
+          DUNE_THROW(SolverAbort, "RestartedFCGSolver: defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+      }
+    };
 
   protected:
+    int _mmax;
     using IterativeSolver<X,X>::_op;
     using IterativeSolver<X,X>::_prec;
     using IterativeSolver<X,X>::_sp;
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+  };
+
+  /*! \brief Complete flexible conjugate gradient method
+
+     This solver is a simple modification of the RestartedFCGSolver and, if possible, uses mmax old directions.
+     It uses noticably more memory, but provides more stability for preconditioner changes.
+
+  */
+  template<class X>
+  class CompleteFCGSolver : public RestartedFCGSolver<X> {
+  public:
+    using typename RestartedFCGSolver<X>::domain_type;
+    using typename RestartedFCGSolver<X>::range_type;
+    using typename RestartedFCGSolver<X>::field_type;
+    using typename RestartedFCGSolver<X>::real_type;
+
+    // copy base class constructors
+    using RestartedFCGSolver<X>::RestartedFCGSolver;
+
+    // don't shadow four-argument version of apply defined in the base class
+    using RestartedFCGSolver<X>::apply;
+
+    // just a minor part of the RestartedFCGSolver apply method will be modified
+    virtual void apply (X& x, X& b, InverseOperatorResult& res) override {
+      // reset limiter of orthogonalization loop
+      _k_limit = 0;
+      this->RestartedFCGSolver<X>::apply(x,b,res);
+    };
+
+  private:
+    virtual void printSolverHeader(const real_type& def0) override {
+      std::cout << "=== CompleteFCGSolver" << std::endl;
+      if (_verbose > 1) {
+        this->printHeader(std::cout);
+        this->printOutput(std::cout, 0, def0);
+      }
+    };
+
+    virtual void CheckSolverAbort(const real_type& defect, const int& i) override {
+      if (!Simd::allTrue(isFinite(defect))){ // check for inf or NaN
+        if(i==0) {
+          if (_verbose > 0)
+            std::cout << "=== CompleteFCGSolver : abort due to infinite or NaN initial defect" << std::endl;
+          DUNE_THROW(SolverAbort, "CompleteFCGSolver : initial defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+        else{
+          if (_verbose > 0)
+            std::cout << "=== CompleteFCGSolver : abort due to infinite or NaN defect" << std::endl;
+          DUNE_THROW(SolverAbort, "CompleteFCGSolver : defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+      }
+    };
+
+    // This function is called every iteration to orthogonalize against the last search directions.
+    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) override {
+      // This FCGSolver uses values with higher array indexes too, if existent.
+      for (int k = 0; k < _k_limit; k++) {
+        if(i_bounded!=k)
+          d[i_bounded].axpy(-_sp->dot(Ad[k], w) / ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
+      }
+      // The loop limit increase, if array is not completely filled.
+      if(_k_limit<=i_bounded)
+        _k_limit++;
+
+    };
+
+    // This function is called every mmax iterations to handle limited array sizes.
+    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) override {
+      // Only the loop index i_bounded return to 0, if it reached mmax.
+      i_bounded = 0;
+      // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.
+      _k_limit = Ad.size();
+    };
+
+    int _k_limit = 0;
+
+  protected:
+    using RestartedFCGSolver<X>::_mmax;
+    using RestartedFCGSolver<X>::_op;
+    using RestartedFCGSolver<X>::_prec;
+    using RestartedFCGSolver<X>::_sp;
+    using RestartedFCGSolver<X>::_reduction;
+    using RestartedFCGSolver<X>::_maxit;
+    using RestartedFCGSolver<X>::_verbose;
   };
   /** @} end documentation */
 
