@@ -118,7 +118,8 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
   Dune::RestartedGMResSolver<Vector> gmres(op,prec,reduction,40,8000,verb);
   Dune::MINRESSolver<Vector> minres(op,prec,reduction,8000,verb);
   Dune::GeneralizedPCGSolver<Vector> gpcg(op,prec,reduction,8000,verb);
-  Dune::FCGSolver<Vector> fcg(op,prec,reduction,8000,verb,5);
+  Dune::RestartedFCGSolver<Vector> rfcg(op,prec,reduction,8000,verb);
+  Dune::CompleteFCGSolver<Vector> cfcg(op,prec,reduction,8000,verb);
 
   // run_test(precName, "Loop",           op,loop,N,Runs);
   run_test(precName, "CG",             op,cg,N,Runs);
@@ -127,7 +128,8 @@ void test_all_solvers(std::string precName, Operator & op, Prec & prec, unsigned
   run_test(precName, "RestartedGMRes", op,gmres,N,Runs);
   run_test(precName, "MINRes",         op,minres,N,Runs);
   run_test(precName, "GeneralizedPCG", op,gpcg,N,Runs);
-  run_test(precName, "FCG",            op,fcg,N,Runs);
+  run_test(precName, "RestartedFCG",   op,rfcg,N,Runs);
+  run_test(precName, "CompleteFCG",    op,cfcg,N,Runs);
 }
 
 template<typename FT>
