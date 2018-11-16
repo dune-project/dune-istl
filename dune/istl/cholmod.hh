@@ -135,7 +135,8 @@ public:
    * This method forwards a nullptr to the setMatrix method
    * with ignore nodes
    */
-  void setMatrix(const Matrix& matrix)
+  template<class MatrixType>
+  void setMatrix(const MatrixType& matrix)
   {
     const Impl::NoIgnore* noIgnore = nullptr;
     setMatrix(matrix, noIgnore);
@@ -150,21 +151,22 @@ public:
    * \param [in] matrix Matrix to be decomposed. In BCRS compatible form
    * \param [in] ignore Pointer to a compatible BitVector
    */
-  template<class Ignore>
-  void setMatrix(const Matrix& matrix, const Ignore* ignore)
+  template<class MatrixType, class Ignore>
+  void setMatrix(const MatrixType& matrix, const Ignore* ignore)
   {
+    const auto blocksize = MatrixType::block_type::rows;
 
     // Total number of rows
-    int N = k * matrix.N();
+    int N = blocksize * matrix.N();
     if ( ignore )
       N -= ignore->count();
 
     // number of nonzeroes
-    const int nnz = k * k * matrix.nonzeroes();
+    const int nnz = blocksize * blocksize * matrix.nonzeroes();
     // number of diagonal entries
-    const int nDiag = k * k * matrix.N();
+    const int nDiag = blocksize * blocksize * matrix.N();
     // number of nonzeroes in the dialgonal
-    const int nnzDiag = (k * (k+1)) / 2 * matrix.N();
+    const int nnzDiag = (blocksize * (blocksize+1)) / 2 * matrix.N();
     // number of nonzeroes in triangular submatrix (including diagonal)
     const int nnzTri = (nnz - nDiag) / 2 + nnzDiag;
 
@@ -191,8 +193,6 @@ public:
     int* Ap = static_cast<int*>(M->p);
     int* Ai = static_cast<int*>(M->i);
     double* Ax = static_cast<double*>(M->x);
-
-    const auto& blocksize = k;
 
     // create a vector that maps each remaining matrix index to it's number in the condensed matrix
     std::vector<size_t> subIndices;
