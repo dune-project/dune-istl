@@ -37,7 +37,7 @@ class Cholmod;
 
 
 template<class T, class A, int k>
-class Cholmod<BCRSMatrix<FieldMatrix<T,k,k>, A>>
+class Cholmod<BlockVector<FieldVector<T,k>, A>>
   : public InverseOperator<
       BlockVector<FieldVector<T,k>,
         typename A::template rebind<FieldVector<T,k>>::other>,
@@ -52,9 +52,6 @@ public:
   // type of rhs
   using B = BlockVector<FieldVector<T,k>,
     typename A::template rebind<FieldVector<T,k>>::other>;
-  // type of external matrix
-  using Matrix = BCRSMatrix<FieldMatrix<T,k,k>, A>;
-
 
   /** @brief Default constructor
    *
@@ -135,6 +132,7 @@ public:
    * This method forwards a nullptr to the setMatrix method
    * with ignore nodes
    */
+  template<class Matrix>
   void setMatrix(const Matrix& matrix)
   {
     const Impl::NoIgnore* noIgnore = nullptr;
@@ -150,21 +148,22 @@ public:
    * \param [in] matrix Matrix to be decomposed. In BCRS compatible form
    * \param [in] ignore Pointer to a compatible BitVector
    */
-  template<class Ignore>
+  template<class Matrix, class Ignore>
   void setMatrix(const Matrix& matrix, const Ignore* ignore)
   {
+    const auto blocksize = Matrix::block_type::rows;
 
     // Total number of rows
-    int N = k * matrix.N();
+    int N = blocksize * matrix.N();
     if ( ignore )
       N -= ignore->count();
 
     // number of nonzeroes
-    const int nnz = k * k * matrix.nonzeroes();
+    const int nnz = blocksize * blocksize * matrix.nonzeroes();
     // number of diagonal entries
-    const int nDiag = k * k * matrix.N();
+    const int nDiag = blocksize * blocksize * matrix.N();
     // number of nonzeroes in the dialgonal
-    const int nnzDiag = (k * (k+1)) / 2 * matrix.N();
+    const int nnzDiag = (blocksize * (blocksize+1)) / 2 * matrix.N();
     // number of nonzeroes in triangular submatrix (including diagonal)
     const int nnzTri = (nnz - nDiag) / 2 + nnzDiag;
 
@@ -191,8 +190,6 @@ public:
     int* Ap = static_cast<int*>(M->p);
     int* Ai = static_cast<int*>(M->i);
     double* Ax = static_cast<double*>(M->x);
-
-    const auto& blocksize = k;
 
     // create a vector that maps each remaining matrix index to it's number in the condensed matrix
     std::vector<size_t> subIndices;

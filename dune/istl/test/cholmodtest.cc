@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     InverseOperatorResult res;
 
     // test without ignore nodes
-    Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod;
+    Cholmod<BlockVector<FieldVector<double,bs>>> cholmod;
     cholmod.setMatrix(A);
     cholmod.apply(x,b,res);
 
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
     // test with ignore nodes
     Ignore ignore;
-    Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod2;
+    Cholmod<BlockVector<FieldVector<double,bs>>> cholmod2;
     cholmod2.setMatrix(A,&ignore);
     cholmod2.apply(x,b,res);
 
