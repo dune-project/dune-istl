@@ -169,7 +169,7 @@ namespace Imp {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (size_type i=0; i<this->n; ++i)
             (*this)[i] += a*id(y[i]);
@@ -229,7 +229,7 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type one_norm () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           using namespace std;
           for (size_type i=0; i<this->n; ++i)
@@ -246,7 +246,7 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type one_norm_real () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (size_type i=0; i<this->n; ++i)
             sum += fvmeta::absreal((*this)[i]);
@@ -269,7 +269,7 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type two_norm2 () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (size_type i=0; i<this->n; ++i)
             sum += fvmeta::abs2((*this)[i]);
@@ -289,7 +289,7 @@ namespace Imp {
       using std::max;
 
       real_type norm = 0;
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (auto const &x : *this) {
             using std::abs;
@@ -314,7 +314,7 @@ namespace Imp {
       using std::max;
 
       real_type norm = 0;
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (auto const &x : *this) {
             real_type const a = fvmeta::absreal(x);
@@ -341,7 +341,7 @@ namespace Imp {
       real_type norm = 0;
       real_type isNaN = 1;
 
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (auto const &x : *this) {
             using std::abs;
@@ -371,7 +371,7 @@ namespace Imp {
       real_type norm = 0;
       real_type isNaN = 1;
 
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (auto const &x : *this) {
             real_type const a = fvmeta::absreal(x);
@@ -403,7 +403,7 @@ namespace Imp {
     {
       size_type d=0;
 
-      Hybrid::ifElse(std::integral_constant<bool,IsNumber<B>::value>(),
+      Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           d = this->n;
         },
