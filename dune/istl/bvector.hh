@@ -16,6 +16,7 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/unused.hh>
@@ -34,6 +35,43 @@ namespace Dune {
 
 /** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
 namespace Imp {
+
+  /** \brief Define some derived types transparently for number types and dune-istl vector types
+   *
+   * This is the actual implementation.  Calling code should use BlockTraits instead.
+   * \tparam isNumber Whether B is a number type (true) or a dune-istl matrix or vector type (false)
+   */
+  template <class B, bool isNumber>
+  class BlockTraitsImp;
+
+  template <class B>
+  class BlockTraitsImp<B,true>
+  {
+  public:
+    using field_type = B;
+
+    static constexpr unsigned int blockLevel()
+    {
+      return 0;
+    }
+  };
+
+  template <class B>
+  class BlockTraitsImp<B,false>
+  {
+  public:
+    using field_type = typename B::field_type;
+
+    static constexpr unsigned int blockLevel()
+    {
+      return B::blocklevel;
+    }
+  };
+
+  /** \brief Define some derived types transparently for number types and dune-istl matrix/vector types
+   */
+  template <class B>
+  using BlockTraits = BlockTraitsImp<B,IsNumber<B>::value>;
 
   /**
       \brief An unmanaged vector of blocks.
@@ -54,9 +92,7 @@ namespace Imp {
   public:
 
     //===== type definitions and constants
-
-    //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -133,7 +169,16 @@ namespace Imp {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
-      for (size_type i=0; i<this->n; ++i) (*this)[i].axpy(a,y[i]);
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            (*this)[i] += a*id(y[i]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            id((*this)[i]).axpy(a,id(y[i]));
+        });
+
       return *this;
     }
 
@@ -146,9 +191,9 @@ namespace Imp {
      * @return
      */
     template<class OtherB, class OtherA>
-    typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
+    auto operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
-      typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
+      typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
       PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
@@ -167,14 +212,25 @@ namespace Imp {
      * @return
      */
     template<class OtherB, class OtherA>
-    typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
+    auto dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
-      typedef typename PromotionTraits<field_type,typename OtherB::field_type>::PromotedType PromotedType;
+      typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
       PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
-      for (size_type i=0; i<this->n; ++i) sum += ((*this)[i]).dot(y[i]);
+
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          using namespace std;
+          for (size_type i=0; i<this->n; ++i)
+            sum += Dune::dot((*this)[i],y[i]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += id((*this)[i]).dot(y[i]);
+        });
+
       return sum;
     }
 
@@ -184,7 +240,16 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type one_norm () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      for (size_type i=0; i<this->n; ++i) sum += (*this)[i].one_norm();
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          using namespace std;
+          for (size_type i=0; i<this->n; ++i)
+            sum += abs(id((*this)[i]));
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += id((*this)[i]).one_norm();
+        });
       return sum;
     }
 
@@ -192,7 +257,15 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type one_norm_real () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      for (size_type i=0; i<this->n; ++i) sum += (*this)[i].one_norm_real();
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += fvmeta::absreal((*this)[i]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += id((*this)[i]).one_norm_real();
+        });
       return sum;
     }
 
@@ -200,16 +273,22 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type two_norm () const
     {
       using std::sqrt;
-      typename FieldTraits<field_type>::real_type sum=0;
-      for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
-      return sqrt(sum);
+      return sqrt(two_norm2());
     }
 
     //! Square of the two-norm (the sum over the squared values of the entries)
     typename FieldTraits<field_type>::real_type two_norm2 () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      for (size_type i=0; i<this->n; ++i) sum += (*this)[i].two_norm2();
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += fvmeta::abs2((*this)[i]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += id((*this)[i]).two_norm2();
+        });
       return sum;
     }
 
@@ -221,10 +300,20 @@ namespace Imp {
       using std::max;
 
       real_type norm = 0;
-      for (auto const &x : *this) {
-        real_type const a = x.infinity_norm();
-        norm = max(a, norm);
-      }
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            using std::abs;
+            real_type const a = abs(x);
+            norm = max(a, norm);
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type const a = x.infinity_norm();
+            norm = max(a, norm);
+          }
+        });
       return norm;
     }
 
@@ -236,10 +325,19 @@ namespace Imp {
       using std::max;
 
       real_type norm = 0;
-      for (auto const &x : *this) {
-        real_type const a = x.infinity_norm_real();
-        norm = max(a, norm);
-      }
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type const a = fvmeta::absreal(x);
+            norm = max(a, norm);
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type const a = x.infinity_norm_real();
+            norm = max(a, norm);
+          }
+        });
       return norm;
     }
 
@@ -249,14 +347,28 @@ namespace Imp {
     typename FieldTraits<ft>::real_type infinity_norm() const {
       using real_type = typename FieldTraits<ft>::real_type;
       using std::max;
+      using std::abs;
 
       real_type norm = 0;
       real_type isNaN = 1;
-      for (auto const &x : *this) {
-        real_type const a = x.infinity_norm();
-        norm = max(a, norm);
-        isNaN += a;
-      }
+
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            using std::abs;
+            real_type const a = abs(x);
+            norm = max(a, norm);
+            isNaN += a;
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type const a = id(x).infinity_norm();
+            norm = max(a, norm);
+            isNaN += a;
+          }
+        });
+
       return norm * (isNaN / isNaN);
     }
 
@@ -269,11 +381,23 @@ namespace Imp {
 
       real_type norm = 0;
       real_type isNaN = 1;
-      for (auto const &x : *this) {
-        real_type const a = x.infinity_norm_real();
-        norm = max(a, norm);
-        isNaN += a;
-      }
+
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type const a = fvmeta::absreal(x);
+            norm = max(a, norm);
+            isNaN += a;
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type const a = id(x).infinity_norm_real();
+            norm = max(a, norm);
+            isNaN += a;
+          }
+        });
+
       return norm * (isNaN / isNaN);
     }
 
@@ -289,8 +413,16 @@ namespace Imp {
     size_type dim () const
     {
       size_type d=0;
-      for (size_type i=0; i<this->n; i++)
-        d += (*this)[i].dim();
+
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          d = this->n;
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; i++)
+            d += (*this)[i].dim();
+        });
+
       return d;
     }
 
@@ -356,7 +488,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -368,10 +500,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {
-      //! The number of blocklevel we contain.
-      blocklevel = B::blocklevel+1
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -655,10 +784,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {
-      //! The number of blocklevels we contain
-      blocklevel = B::blocklevel+1
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -1037,10 +1163,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {
-      //! The number of block level this vector contains.
-      blocklevel = B::blocklevel+1
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! make iterators available as types
     typedef typename compressed_block_vector_unmanaged<B,A>::Iterator Iterator;
