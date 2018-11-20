@@ -108,7 +108,7 @@ namespace Dune {
 
     /** \brief Inverts the matrix */
     void invert() {
-      for (int i=0; i<this->N(); i++)
+      for (size_type i=0; i<this->N(); i++)
         (*this)[i][i].invert();
     }
 
