@@ -55,8 +55,13 @@ namespace Dune {
   : public std::tuple<Args...>
   {
     /** \brief Helper type */
-    typedef std::tuple<Args...> tupleType;
+    typedef std::tuple<Args...> TupleType;
   public:
+
+    /**
+     * \brief Get the constructors from tuple
+     */
+    using TupleType::TupleType;
 
     /**
      * own class' type
@@ -105,7 +110,7 @@ namespace Dune {
      * \endcode
      */
     template< std::size_t index >
-    typename std::tuple_element<index,tupleType>::type&
+    typename std::tuple_element<index,TupleType>::type&
     operator[] ( const std::integral_constant< std::size_t, index > indexVariable )
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
@@ -118,7 +123,7 @@ namespace Dune {
      * explanation of how to use it.
      */
     template< std::size_t index >
-    const typename std::tuple_element<index,tupleType>::type&
+    const typename std::tuple_element<index,TupleType>::type&
     operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) const
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
