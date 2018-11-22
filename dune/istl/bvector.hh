@@ -534,7 +534,7 @@ namespace Imp {
     {
       static_assert(std::numeric_limits<S>::is_integer,
         "capacity must be an unsigned integral type (be aware, that this constructor does not set the default value!)" );
-      if(_capacity > _n)
+      if((size_type)_capacity > _n)
         storage_.reserve(_capacity);
       storage_.resize(_n);
       syncBaseArray();
