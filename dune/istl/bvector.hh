@@ -352,7 +352,7 @@ namespace Imp {
         },
         [&](auto id) {
           for (auto const &x : *this) {
-            real_type const a = x.infinity_norm();
+            real_type const a = id(x).infinity_norm();
             norm = max(a, norm);
             isNaN += a;
           }
@@ -381,7 +381,7 @@ namespace Imp {
         },
         [&](auto id) {
           for (auto const &x : *this) {
-            real_type const a = x.infinity_norm_real();
+            real_type const a = id(x).infinity_norm_real();
             norm = max(a, norm);
             isNaN += a;
           }
