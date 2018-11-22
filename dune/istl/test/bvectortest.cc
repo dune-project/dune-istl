@@ -97,13 +97,6 @@ int testVector()
     assert(v[i] == b);
   }
 
-  // check the entries
-
-  for(typename Vector::size_type i=0; i < v.N(); ++i) {
-    assign(b,(typename VectorBlock::field_type)i);
-    assert(v[i] == b);
-  }
-
   return 0;
 }
 
