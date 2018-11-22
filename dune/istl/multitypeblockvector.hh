@@ -81,7 +81,7 @@ namespace Dune {
     /**
      * number of elements
      */
-    int count()
+    int count() const
     {
       return sizeof...(Args);
     }
