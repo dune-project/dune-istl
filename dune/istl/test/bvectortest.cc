@@ -21,25 +21,29 @@
 #endif
 #include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/poolallocator.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/test/vectortest.hh>
 
-template<typename T, int BS>
-void assign(Dune::FieldVector<T,BS>& b, const T& i)
+template<typename VectorBlock, typename V>
+void assign(VectorBlock& b, const V& i)
 {
-
-  for(int j=0; j < BS; j++)
-    b[j] = i;
+  Dune::Hybrid::ifElse(Dune::IsNumber<VectorBlock>(),
+    [&](auto id) {
+      b = i;
+    },
+    [&](auto id) {
+      for (auto& entry : id(b))
+        entry = i;
+    });
 }
 
 
-template<int BS, class A=std::allocator<void> >
+template<class VectorBlock, class A=std::allocator<void> >
 int testVector()
 {
-
-  typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef typename A::template rebind<VectorBlock>::other Alloc;
   typedef Dune::BlockVector<VectorBlock, Alloc> Vector;
 
@@ -93,7 +97,7 @@ int testVector()
 
   // check the entries
   for(typename Vector::size_type i=0; i < v.N(); ++i) {
-    assign(b, (typename VectorBlock::field_type)i);
+    assign(b, i);
     assert(v[i] == b);
   }
 
@@ -227,16 +231,19 @@ int main()
 
   int ret = 0;
 
-  ret += testVector<1>();
+  ret += testVector<Dune::FieldVector<double,1> >();
   //  ret += testVector<1, Dune::PoolAllocator<void,1000000> >();
 #if HAVE_MPROTECT
-  ret += testVector<1, Dune::DebugAllocator<void> >();
+  ret += testVector<Dune::FieldVector<double,1> , Dune::DebugAllocator<void> >();
 #endif
-  ret += testVector<3>();
+  ret += testVector<Dune::FieldVector<double,3> >();
   //  ret += testVector<3, Dune::PoolAllocator<void,1000000> >();
 #if HAVE_MPROTECT
-  ret += testVector<3, Dune::DebugAllocator<void> >();
+  ret += testVector<Dune::FieldVector<double,1> , Dune::DebugAllocator<void> >();
 #endif
+
+  ret += testVector<double>();
+  ret += testVector<std::complex<double> >();
 
   testCapacity();
 
