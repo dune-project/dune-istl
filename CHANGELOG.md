@@ -11,6 +11,12 @@
 - Support for SuiteSparse's CHOLMOD providing a sparse Cholesky
   factorization.
 
+- `MultiTypeBlockVector<Args...>` now inherits the constructors from its
+  parent type (`std::tuple<Args...>`). This means you can now also construct
+  `MultiTypeBlockVector`s from values or references of BlockVectors.
+
+- `MultiTypeBlockVector::count()` is now `const`
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
