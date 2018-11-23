@@ -219,7 +219,18 @@ namespace Imp {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
-      for (size_type i=0; i<this->n; ++i) sum += ((*this)[i]).dot(y[i]);
+
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          using namespace std;
+          for (size_type i=0; i<this->n; ++i)
+            sum += Dune::dot((*this)[i],y[i]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->n; ++i)
+            sum += id((*this)[i]).dot(y[i]);
+        });
+
       return sum;
     }
 
