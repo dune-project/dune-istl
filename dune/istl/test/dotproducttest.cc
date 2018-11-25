@@ -28,7 +28,13 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   RealBlockVector one(numBlocks,blockSizeOrCapacity);
   ComplexBlockVector iVec(numBlocks,blockSizeOrCapacity);
 
-  const size_type blockSize = one[0].size();
+  const size_type blockSize = Dune::Hybrid::ifElse(Dune::IsNumber<typename RealBlockVector::block_type>(),
+                                                   [&](auto id) {
+                                                     return 1;
+                                                   },
+                                                   [&](auto id) {
+                                                     return id(one[0]).size();
+                                                   });
 
   assert(numBlocks==one.N());
   assert(numBlocks==iVec.N());
@@ -40,25 +46,25 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
 
   // initialize vectors with data
   for(size_type i=0; i < numBlocks; ++i) {
-    for(size_type j=0; j < blockSize; ++j) {
-      one[i][j] = 1.;
-      iVec[i][j] = I;
-    }
+    one[i] = 1.;
+    iVec[i] = I;
   }
 
   ct result = ct();
 
   // blockwise dot tests
+  Dune::Hybrid::ifElse(std::integral_constant<bool,!Dune::IsNumber<typename RealBlockVector::block_type>::value>(),
+  [&](auto id) {
   result = ct();
   for(size_type i=0; i < numBlocks; ++i) {
-    result += dot(one[i],one[i]) + one[i].dot(one[i]);
+    result += dot(id(one[i]),id(one[i])) + (id(one[i])).dot(id(one[i]));
   }
 
   assert(std::abs(result-ct(2)*ctlength)<= myEps);
 
   result = ct();
   for(size_type i=0; i < numBlocks; ++i) {
-    result += dot(iVec[i],iVec[i])+ (iVec[i]).dot(iVec[i]);
+    result += dot(id(iVec[i]),id(iVec[i]))+ (id(iVec[i])).dot(id(iVec[i]));
   }
 
   assert(std::abs(result-ct(2)*ctlength)<= myEps);
@@ -66,17 +72,21 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   // blockwise dotT / operator * tests
   result = ct();
   for(size_type i=0; i < numBlocks; ++i) {
-    result += dotT(one[i],one[i]) + one[i]*one[i];
+    result += dotT(id(one[i]),id(one[i])) + id(one[i])*id(one[i]);
   }
 
   assert(std::abs(result-ct(2)*ctlength)<= myEps);
 
   result = ct();
   for(size_type i=0; i < numBlocks; ++i) {
-    result += dotT(iVec[i],iVec[i]) + iVec[i]*iVec[i];
+    result += dotT(id(iVec[i]),id(iVec[i])) + id(iVec[i])*id(iVec[i]);
   }
 
   assert(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
+  }
+  ,
+  [&](auto id){}
+  );  // end Hybrid::ifElse
 
   // global operator * tests
   result = one*one +  dotT(one,one);
@@ -133,6 +143,8 @@ int main()
 
   ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<double,BlockSize> >, Dune::BlockVector<Dune::FieldVector<double,BlockSize> > >  (numBlocks,capacity);
   ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<double,1> >, Dune::VariableBlockVector<Dune::FieldVector<double,1> > >  (numBlocks,BlockSize);
+
+  ret += DotProductTest<Dune::BlockVector<double>, Dune::BlockVector<double> >  (numBlocks,capacity);
 
   return ret;
 }
