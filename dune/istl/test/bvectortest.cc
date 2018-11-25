@@ -35,7 +35,7 @@ void assign(VectorBlock& b, const V& i)
       b = i;
     },
     [&](auto id) {
-      for (auto& entry : b)
+      for (auto& entry : id(b))
         entry = i;
     });
 }
