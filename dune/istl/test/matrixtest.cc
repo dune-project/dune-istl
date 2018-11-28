@@ -512,6 +512,44 @@ int main()
   //   a) the scalar case
   // ////////////////////////////////////////////////////////////////////////
 
+  {
+    BTDMatrix<double> btdMatrixScalar(4);
+    using size_type = BTDMatrix<double>::size_type;
+
+    btdMatrixScalar = 4.0;
+
+    BlockVector<double> x(4), y(4);
+    testMatrix(btdMatrixScalar, x, y);
+
+    btdMatrixScalar = 0.0;
+    for (size_type i=0; i<btdMatrixScalar.N(); i++)    // diagonal
+      btdMatrixScalar[i][i] = 1+i;
+
+    for (size_type i=0; i<btdMatrixScalar.N()-1; i++)
+      btdMatrixScalar[i][i+1] = 2+i;               // first off-diagonal
+
+    testSolve<BTDMatrix<double>, BlockVector<double> >(btdMatrixScalar);
+
+    // test a 1x1 BTDMatrix, because that is a special case
+    BTDMatrix<double> btdMatrixScalar_1x1(1);
+    btdMatrixScalar_1x1 = 1.0;
+    x.resize(1);
+    y.resize(1);
+    testMatrix(btdMatrixScalar_1x1, x, y);
+
+    // test whether resizing works
+    btdMatrixScalar_1x1.setSize(5);
+    btdMatrixScalar_1x1 = 4.0;
+    x.resize(5);
+    y.resize(5);
+    testMatrix(btdMatrixScalar_1x1, x, y);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
+  //   b) the scalar case with FieldMatrix entries
+  ///////////////////////////////////////////////////////////////////////////
+
   BTDMatrix<FieldMatrix<double,1,1> > btdMatrixScalar(4);
   typedef BTDMatrix<FieldMatrix<double,1,1> >::size_type size_type;
 
@@ -540,7 +578,7 @@ int main()
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
-  //   b) the block-valued case
+  //   c) the block-valued case
   // ////////////////////////////////////////////////////////////////////////
 
   BTDMatrix<FieldMatrix<double,2,2> > btdMatrix(4);
