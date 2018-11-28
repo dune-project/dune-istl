@@ -411,7 +411,7 @@ int main()
   // test whether resizing works
   bdMatrix2.setSize(5);
   bdMatrix2 = 4.0;
-  testSuperMatrix(bdMatrix);
+  testSuperMatrix(bdMatrix2);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
