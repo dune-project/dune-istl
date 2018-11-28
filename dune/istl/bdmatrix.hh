@@ -32,7 +32,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -47,7 +47,7 @@ namespace Dune {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {blocklevel = B::blocklevel+1};
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     /** \brief Default constructor */
     BDMatrix() : BCRSMatrix<B,A>() {}
@@ -108,8 +108,15 @@ namespace Dune {
 
     /** \brief Inverts the matrix */
     void invert() {
-      for (size_type i=0; i<this->N(); i++)
-        (*this)[i][i].invert();
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (size_type i=0; i<this->N(); i++)
+            (*this)[i][i] = 1.0 / id((*this)[i][i]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->N(); i++)
+            id((*this)[i][i]).invert();
+        });
     }
 
   private:

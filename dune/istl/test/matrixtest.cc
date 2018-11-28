@@ -458,8 +458,34 @@ int main()
 
   testSuperMatrix(bcrsMatrix);
 
-  // ////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
   //   Test the BDMatrix class -- a dynamic block-diagonal matrix
+  ///////////////////////////////////////////////////////////////////////////
+
+  {
+    BDMatrix<double> bdMatrix(3);
+    bdMatrix = 4.0;
+
+    BlockVector<double> x(3), y(3);
+    testMatrix(bdMatrix, x, y);
+
+    // Test construction from initializer list
+    BDMatrix<double> bdMatrix2 = {1.0, 2.0, 3.0};
+    testMatrix(bdMatrix2, x, y);
+
+    // test whether resizing works
+    bdMatrix2.setSize(5);
+    bdMatrix2 = 4.0;
+    x.resize(5);
+    y.resize(5);
+    testMatrix(bdMatrix2, x, y);
+
+    // Test whether inversion works
+    bdMatrix2.invert();
+  }
+
+  // ////////////////////////////////////////////////////////////////////////
+  //   Test the BDMatrix class with FieldMatrix entries
   // ////////////////////////////////////////////////////////////////////////
 
   BDMatrix<FieldMatrix<double,4,4> > bdMatrix(2);
@@ -469,6 +495,11 @@ int main()
 
   // Test construction from initializer list
   BDMatrix<FieldMatrix<double,2,2> > bdMatrix2 = { {{1,0},{0,1}}, {{0,1},{-1,0}}};
+
+  // Test whether inversion works
+  bdMatrix2.invert();
+
+  // Run matrix tests on this matrix
   testSuperMatrix(bdMatrix2);
 
   // test whether resizing works
