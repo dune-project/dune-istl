@@ -1783,7 +1783,7 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
 #endif
 
-      double sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
 
       ConstRowIterator endi=end();
       for (ConstRowIterator i=begin(); i!=endi; ++i)
