@@ -342,6 +342,69 @@ int main()
   //   Test the BCRSMatrix class -- a sparse dynamic matrix
   // ////////////////////////////////////////////////////////////
 
+  {
+    BCRSMatrix<double> bcrsMatrix(4,4, BCRSMatrix<double>::random);
+
+    bcrsMatrix.setrowsize(0,2);
+    bcrsMatrix.setrowsize(1,3);
+    bcrsMatrix.setrowsize(2,3);
+    bcrsMatrix.setrowsize(3,2);
+
+    bcrsMatrix.endrowsizes();
+
+    bcrsMatrix.addindex(0, 0);
+    bcrsMatrix.addindex(0, 1);
+
+    bcrsMatrix.addindex(1, 0);
+    bcrsMatrix.addindex(1, 1);
+    bcrsMatrix.addindex(1, 2);
+
+    bcrsMatrix.addindex(2, 1);
+    bcrsMatrix.addindex(2, 2);
+    bcrsMatrix.addindex(2, 3);
+
+    bcrsMatrix.addindex(3, 2);
+    bcrsMatrix.addindex(3, 3);
+
+    bcrsMatrix.endindices();
+
+    typedef BCRSMatrix<double>::RowIterator RowIterator;
+    typedef BCRSMatrix<double>::ColIterator ColIterator;
+
+    for(RowIterator row = bcrsMatrix.begin(); row != bcrsMatrix.end(); ++row)
+      for(ColIterator col = row->begin(); col != row->end(); ++col)
+        *col = 1.0 + (double) row.index() * (double) col.index();
+
+    BlockVector<double> x(4), y(4);
+
+    testMatrix(bcrsMatrix, x, y);
+
+    // Test whether matrix resizing works
+    int size = 3;
+    bcrsMatrix.setSize(size,size,size);
+
+    for (int i=0; i<size; i++)
+      bcrsMatrix.setrowsize(i, 1);
+
+    bcrsMatrix.endrowsizes();
+
+    for (int i=0; i<size; i++)
+      bcrsMatrix.addindex(i, i);
+
+    bcrsMatrix.endindices();
+
+    for (int i=0; i<size; i++)
+      bcrsMatrix[i][i] = 1.0;
+
+    x.resize(size);
+    y.resize(size);
+    testMatrix(bcrsMatrix, x, y);
+  }
+
+  // ////////////////////////////////////////////////////////////
+  //   Test the BCRSMatrix class with FieldMatrix entries
+  // ////////////////////////////////////////////////////////////
+
   BCRSMatrix<FieldMatrix<double,2,2> > bcrsMatrix(4,4, BCRSMatrix<FieldMatrix<double,2,2> >::random);
 
   bcrsMatrix.setrowsize(0,2);
