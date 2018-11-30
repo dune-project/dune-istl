@@ -1399,8 +1399,6 @@ namespace Dune {
       int i, j = 1, k;
       std::vector<field_type> s(m+1), sn(m);
       std::vector<real_type> cs(m);
-      // need copy of rhs if fGMRes has to be restarted
-      Y b2(b);
       // helper vector
       Y tmp(b);
       std::vector< std::vector<field_type> > H(m+1,s);
@@ -1416,9 +1414,10 @@ namespace Dune {
       // setup preconditioner if it does something in pre
       _prec->pre(x, b);
 
-      // calculate residual and overwrite rhs with it
-      _op->applyscaleadd(-1.0, x, b); // b -= Ax
+      // calculate residual and overwrite a copy of the rhs with it
       v[0] = b;
+      _op->applyscaleadd(-1.0, x, v[0]); // b -= Ax
+
       norm = norm_old = norm_0 = _sp->norm(v[0]); // the residual norm
 
       // print header
@@ -1516,12 +1515,11 @@ namespace Dune {
         {
           if (_verbose > 0)
             std::cout << "=== fGMRes::restart" << std::endl;
-          // get saved rhs
-          b = b2;
-          // calculate new defect (overwrite b again)
-          _op->applyscaleadd(-1.0, x, b); // b -= Ax;
-          // calculate preconditioned defect
+          // get rhs
           v[0] = b;
+          // calculate new defect
+          _op->applyscaleadd(-1.0, x,v[0]); // b -= Ax;
+          // calculate preconditioned defect
           norm = norm_old = _sp->norm(v[0]); // update the residual norm
         }
 
