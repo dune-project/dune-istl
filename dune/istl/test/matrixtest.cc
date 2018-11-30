@@ -307,12 +307,15 @@ int main()
   //   Test the Matrix class -- a scalar dense dynamic matrix
   // ////////////////////////////////////////////////////////////
 
-  Matrix<FieldMatrix<double,1,1> > matrixScalar(10,10);
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++)
-      matrixScalar[i][j] = (i+j)/((double)(i*j+1));        // just anything
+  {
+    Matrix<double> matrixScalar(10,10);
+    for (int i=0; i<10; i++)
+      for (int j=0; j<10; j++)
+        matrixScalar[i][j] = (i+j)/((double)(i*j+1));        // just anything
 
-  testSuperMatrix(matrixScalar);
+    BlockVector<double> x(10), y(10);
+    testMatrix(matrixScalar, x, y);
+  }
 
   // ////////////////////////////////////////////////////////////
   //   Test the Matrix class -- a block-valued dense dynamic matrix

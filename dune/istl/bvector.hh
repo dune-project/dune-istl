@@ -772,7 +772,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -784,10 +784,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {
-      //! The number of blocklevels we contain
-      blocklevel = B::blocklevel+1
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel();
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
