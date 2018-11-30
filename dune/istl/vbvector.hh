@@ -48,7 +48,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -82,10 +82,7 @@ namespace Dune {
     /** increment block level counter, yes, it is two levels because
             VariableBlockVector is a container of containers
      */
-    enum {
-      //! The number of blocklevels this vector contains.
-      blocklevel = B::blocklevel+2
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+2;
 
     //===== constructors and such
 

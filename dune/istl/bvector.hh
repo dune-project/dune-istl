@@ -224,7 +224,7 @@ namespace Imp {
         [&](auto id) {
           using namespace std;
           for (size_type i=0; i<this->n; ++i)
-            sum += Dune::dot((*this)[i],y[i]);
+            sum += Dune::dot(id((*this)[i]),y[i]);
         },
         [&](auto id) {
           for (size_type i=0; i<this->n; ++i)
@@ -283,7 +283,7 @@ namespace Imp {
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
           for (size_type i=0; i<this->n; ++i)
-            sum += fvmeta::abs2((*this)[i]);
+            sum += fvmeta::abs2(id((*this)[i]));
         },
         [&](auto id) {
           for (size_type i=0; i<this->n; ++i)
