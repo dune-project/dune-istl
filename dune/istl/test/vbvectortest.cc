@@ -72,5 +72,14 @@ int main()
   testVectorSpaceOperations(v3);
   testScalarProduct(v3);
 
+  // Perform tests with a scalar vector entry
+  VariableBlockVector<double> v5(10);
+
+  testHomogeneousRandomAccessContainer(v5);
+  Dune::testConstructibility<VariableBlockVector<double> >();
+  testNorms(v5);
+  testVectorSpaceOperations(v5);
+  testScalarProduct(v5);
+
   return suite.exit();
 }

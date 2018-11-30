@@ -62,9 +62,9 @@ namespace Imp {
   public:
     using field_type = typename B::field_type;
 
-    static constexpr unsigned int blockLevel()
+    static constexpr unsigned int blockLevel(unsigned int step=1)
     {
-      return B::blocklevel+1;
+      return B::blocklevel+step;
     }
   };
 
