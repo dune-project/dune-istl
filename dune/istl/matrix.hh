@@ -42,7 +42,7 @@ namespace MatrixImp
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -557,7 +557,7 @@ namespace MatrixImp
   public:
 
     /** \brief Export the type representing the underlying field */
-    typedef typename T::field_type field_type;
+    using field_type = typename Imp::BlockTraits<T>::field_type;
 
     /** \brief Export the type representing the components */
     typedef T block_type;
@@ -583,10 +583,8 @@ namespace MatrixImp
     /** \brief Const iterator for the entries of each row */
     typedef typename row_type::const_iterator ConstColIterator;
 
-    enum {
-      //! The number of nesting levels the matrix contains.
-      blocklevel = T::blocklevel+1
-    };
+    //! The number of nesting levels the matrix contains.
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<T>::blockLevel()+1;
 
     /** \brief Create empty matrix */
     Matrix() : data_(0,0), cols_(0)
@@ -788,13 +786,21 @@ namespace MatrixImp
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
-      for (size_type i=0; i<data_.N(); i++) {
-        y[i]=0;
-        for (size_type j=0; j<cols_; j++)
-          (*this)[i][j].umv(x[j], y[i]);
-
-      }
-
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++) {
+            y[i]=0;
+            for (size_type j=0; j<cols_; j++)
+              y[i] += id((*this)[i][j]) * x[j];
+          }
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++) {
+            y[i]=0;
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).umv(x[j], y[i]);
+          }
+        });
     }
 
     //! y = A^T x
@@ -820,13 +826,17 @@ namespace MatrixImp
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
-      for (size_type i=0; i<data_.N(); i++) {
-
-        for (size_type j=0; j<cols_; j++)
-          (*this)[i][j].umv(x[j], y[i]);
-
-      }
-
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[i] += id((*this)[i][j]) * x[j];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).umv(x[j], y[i]);
+        });
     }
 
     //! y -= A x
@@ -837,13 +847,17 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmv(x[j.index()],y[i.index()]);
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[i] -= id((*this)[i][j]) * x[j];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).mmv(x[j], y[i]);
+        });
     }
 
     /** \brief \f$ y += \alpha A x \f$ */
@@ -855,13 +869,17 @@ namespace MatrixImp
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
 
-      for (size_type i=0; i<data_.N(); i++) {
-
-        for (size_type j=0; j<cols_; j++)
-          (*this)[i][j].usmv(alpha, x[j], y[i]);
-
-      }
-
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[i] += alpha * id((*this)[i][j]) * x[j];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).usmv(alpha, x[j], y[i]);
+        });
     }
 
     //! y += A^T x
@@ -872,13 +890,17 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umtv(x[i.index()],y[j.index()]);
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[j] += id((*this)[i][j]) * x[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).umtv(x[i], y[j]);
+        });
     }
 
     //! y -= A^T x
@@ -889,13 +911,17 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmtv(x[i.index()],y[j.index()]);
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[j] -= id((*this)[i][j]) * x[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).mmtv(x[i], y[j]);
+        });
     }
 
     //! y += alpha A^T x
@@ -906,13 +932,17 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmtv(alpha,x[i.index()],y[j.index()]);
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[j] += alpha * id((*this)[i][j]) * x[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).usmtv(alpha, x[i], y[j]);
+        });
     }
 
     //! y += A^H x
@@ -923,13 +953,18 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umhv(x[i.index()],y[j.index()]);
-      }
+
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[j] += conjugateComplex(id((*this)[i][j])) * x[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).umhv(x[i],y[j]);
+        });
     }
 
     //! y -= A^H x
@@ -940,13 +975,18 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmhv(x[i.index()],y[j.index()]);
-      }
+
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[j] -= conjugateComplex(id((*this)[i][j])) * x[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).mmhv(x[i],y[j]);
+        });
     }
 
     //! y += alpha A^H x
@@ -957,13 +997,18 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmhv(alpha,x[i.index()],y[j.index()]);
-      }
+
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              y[j] += alpha * conjugateComplex(id((*this)[i][j])) * x[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<data_.N(); i++)
+            for (size_type j=0; j<cols_; j++)
+              id((*this)[i][j]).usmhv(alpha,x[i],y[j]);
+        });
     }
 
     //===== norms
@@ -977,10 +1022,19 @@ namespace MatrixImp
     //! square of frobenius norm, need for block recursion
     typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
-      double sum=0;
-      for (size_type i=0; i<N(); ++i)
-        for (size_type j=0; j<M(); ++j)
-          sum += data_[i][j].frobenius_norm2();
+      typename FieldTraits<field_type>::real_type sum=0;
+
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (size_type i=0; i<this->N(); i++)
+            for (size_type j=0; j<this->M(); j++)
+              sum += fvmeta::abs2(data_[i][j]);
+        },
+        [&](auto id) {
+          for (size_type i=0; i<this->N(); i++)
+            for (size_type j=0; j<this->M(); j++)
+              sum += id(data_[i][j]).frobenius_norm2();
+        });
       return sum;
     }
 
@@ -992,12 +1046,26 @@ namespace MatrixImp
       using std::max;
 
       real_type norm = 0;
-      for (auto const &x : *this) {
-        real_type sum = 0;
-        for (auto const &y : x)
-          sum += y.infinity_norm();
-        norm = max(sum, norm);
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type sum = 0;
+            for (auto const &y : x)
+              sum += abs(y);
+            norm = max(sum, norm);
+            isNaN += sum;
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type sum = 0;
+            for (auto const &y : x)
+              sum += id(y).infinity_norm();
+            norm = max(sum, norm);
+            isNaN += sum;
+          }
+        });
+
       return norm;
     }
 
@@ -1027,13 +1095,26 @@ namespace MatrixImp
 
       real_type norm = 0;
       real_type isNaN = 1;
-      for (auto const &x : *this) {
-        real_type sum = 0;
-        for (auto const &y : x)
-          sum += y.infinity_norm();
-        norm = max(sum, norm);
-        isNaN += sum;
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type sum = 0;
+            for (auto const &y : x)
+              sum += abs(id(y));
+            norm = max(sum, norm);
+            isNaN += sum;
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type sum = 0;
+            for (auto const &y : x)
+              sum += id(y).infinity_norm();
+            norm = max(sum, norm);
+            isNaN += sum;
+          }
+        });
+
       return norm * (isNaN / isNaN);
     }
 
@@ -1046,13 +1127,26 @@ namespace MatrixImp
 
       real_type norm = 0;
       real_type isNaN = 1;
-      for (auto const &x : *this) {
-        real_type sum = 0;
-        for (auto const &y : x)
-          sum += y.infinity_norm_real();
-        norm = max(sum, norm);
-        isNaN += sum;
-      }
+      Hybrid::ifElse(IsNumber<T>(),
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type sum = 0;
+            for (auto const &y : x)
+              sum += fvmeta::absreal(y);
+            norm = max(sum, norm);
+            isNaN += sum;
+          }
+        },
+        [&](auto id) {
+          for (auto const &x : *this) {
+            real_type sum = 0;
+            for (auto const &y : x)
+              sum += id(y).infinity_norm_real();
+            norm = max(sum, norm);
+            isNaN += sum;
+          }
+        });
+
       return norm * (isNaN / isNaN);
     }
 
