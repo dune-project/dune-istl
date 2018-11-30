@@ -1028,7 +1028,7 @@ namespace Dune {
     using typename IterativeSolver<X,Y>::field_type;
     using typename IterativeSolver<X,Y>::real_type;
 
-  private:
+  protected:
     using typename IterativeSolver<X,X>::scalar_real_type;
 
     //! \bief field_type Allocator retrieved from domain type
@@ -1228,7 +1228,7 @@ namespace Dune {
 
     }
 
-  private :
+  protected :
 
     void print_result(const InverseOperatorResult& res) const {
       int k = res.iterations>0 ? res.iterations : 1;
@@ -1321,11 +1321,11 @@ namespace Dune {
   };
 
 
-/**
-     \brief implements the flexible Generalized Minimal Residual (GMRes) method (right preconditioned)
+  /**
+     \brief implements the Flexible Generalized Minimal Residual (FGMRes) method (right preconditioned)
 
-     fGMRes solves the right-preconditioned unsymmetric linear system Ax = b using the
-     flexible Generalized Minimal Residual method. It is flexible because the preconditioner can change in every iteration,
+     FGMRes solves the right-preconditioned unsymmetric linear system Ax = b using the
+     Flexible Generalized Minimal Residual method. It is flexible because the preconditioner can change in every iteration,
      which allows to use Krylov solvers without fixed number of iterations as preconditioners. Needs more memory than GMRes.
 
      \tparam X trial vector, vector type of the solution
@@ -1335,52 +1335,28 @@ namespace Dune {
    */
 
   template<class X, class Y=X, class F = Y>
-  class RestartedFlexibleGMResSolver : public IterativeSolver<X,Y>
+  class RestartedFlexibleGMResSolver : public RestartedGMResSolver<X,Y>
   {
   public:
-    using typename IterativeSolver<X,Y>::domain_type;
-    using typename IterativeSolver<X,Y>::range_type;
-    using typename IterativeSolver<X,Y>::field_type;
-    using typename IterativeSolver<X,Y>::real_type;
+    using typename RestartedGMResSolver<X,Y>::domain_type;
+    using typename RestartedGMResSolver<X,Y>::range_type;
+    using typename RestartedGMResSolver<X,Y>::field_type;
+    using typename RestartedGMResSolver<X,Y>::real_type;
 
   private:
-    using typename IterativeSolver<X,X>::scalar_real_type;
+    using typename RestartedGMResSolver<X,Y>::scalar_real_type;
+
+    //! \bief field_type Allocator retrieved from domain type
+    using fAlloc = typename RestartedGMResSolver<X,Y>::fAlloc;
+    //! \bief real_type Allocator retrieved from domain type
+    using rAlloc = typename RestartedGMResSolver<X,Y>::rAlloc;
 
   public:
-    /*!
-       \brief Set up RestartedFlexibleGMResSolver solver.
+    // copy base class constructors
+    using RestartedGMResSolver<X,Y>::RestartedGMResSolver;
 
-       \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
-       \param restart number of GMRes cycles before restart
-     */
-    RestartedFlexibleGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
-      IterativeSolver<X,Y>::IterativeSolver(op,prec,reduction,maxit,verbose),
-      _restart(restart)
-    {}
-
-    /*!
-       \brief Set up RestartedFlexibleGMResSolver solver.
-
-       \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
-       \param restart number of GMRes cycles before restart
-     */
-    RestartedFlexibleGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
-      IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
-      _restart(restart)
-    {}
-
-    /*!
-       \brief Apply inverse operator.
-
-       \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
-
-       \note Currently, the RestartedFlexibleGMResSolver aborts when it detects a
-             breakdown.
-     */
-    virtual void apply (X& x, Y& b, InverseOperatorResult& res)
-    {
-      apply(x,b,max_value(_reduction),res);
-    }
+    // don't shadow four-argument version of apply defined in the base class
+    using RestartedGMResSolver<X,Y>::apply;
 
     /*!
        \brief Apply inverse operator.
@@ -1390,18 +1366,18 @@ namespace Dune {
        \note Currently, the RestartedFlexibleGMResSolver aborts when it detects a
              breakdown.
      */
-    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
+    void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) override
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
       const int m = _restart;
       real_type norm, norm_old = 0.0, norm_0;
       int i, j = 1, k;
-      std::vector<field_type> s(m+1), sn(m);
-      std::vector<real_type> cs(m);
+      std::vector<field_type,fAlloc> s(m+1), sn(m);
+      std::vector<real_type,rAlloc> cs(m);
       // helper vector
       Y tmp(b);
-      std::vector< std::vector<field_type> > H(m+1,s);
+      std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
       std::vector<F> v(m+1,b);
       std::vector<X> w(m+1,b);
 
@@ -1432,11 +1408,11 @@ namespace Dune {
       }
 
       // check if we are already converged before we are starting
-      if(all_true(norm_0 < EPSILON))
+      if(Simd::allTrue(norm_0 < EPSILON))
       {
         res.converged = true; // we converged already
         if(_verbose > 0) // final print
-          print_result(res);
+          this->print_result(res);
       }
 
       // start iterations
@@ -1459,13 +1435,16 @@ namespace Dune {
           // do Arnoldi algorithm
           for(int k=0; k<i+1; k++)
           {
-            // \todo complex case?
-            H[k][i] = _sp->dot(v[i+1], v[k]);
+            // notice that _sp->dot(v[k],v[i+1]) = v[k]\adjoint v[i+1]
+            // so one has to pay attention to the order
+            // in the scalar product for the complex case
+            // doing the modified Gram-Schmidt algorithm
+            H[k][i] = _sp->dot(v[k],v[i+1]);
             // w -= H[k][i] * v[k]
             v[i+1].axpy(-H[k][i], v[k]);
           }
           H[i+1][i] = _sp->norm(v[i+1]);
-          if(all_true(abs(H[i+1][i]) < EPSILON))
+          if(Simd::allTrue(abs(H[i+1][i]) < EPSILON))
             DUNE_THROW(SolverAbort, "breakdown in fGMRes - |w| (-> "
                                      << w[i] << ") == 0.0 after "
                                      << j << " iterations");
@@ -1475,14 +1454,14 @@ namespace Dune {
 
           // update QR factorization
           for(k=0; k<i; k++)
-            applyPlaneRotation(H[k][i],H[k+1][i],cs[k],sn[k]);
+            this->applyPlaneRotation(H[k][i],H[k+1][i],cs[k],sn[k]);
 
           // compute new givens rotation
-          generatePlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          this->generatePlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
 
           // finish updating QR factorization
-          applyPlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
-          applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
+          this->applyPlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          this->applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
 
           // norm of the residual is the last component of vector s
           using std::abs;
@@ -1497,14 +1476,14 @@ namespace Dune {
           norm_old = norm;
 
           // check for convergence
-          if(all_true(norm < static_cast<scalar_real_type>(reduction) * norm_0))
+          if(Simd::allTrue(norm < static_cast<scalar_real_type>(reduction) * norm_0))
             res.converged = true;
 
         } // end inner for loop
 
         // calculate update vector
         tmp = 0.0;
-        update(tmp, i, H, s, w);
+        this->update(tmp, i, H, s, w);
         // and update current iterate
         x += tmp;
 
@@ -1530,118 +1509,24 @@ namespace Dune {
 
       // save solver statistics
       res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = static_cast<scalar_real_type>(max_value(norm/norm_0));
+      res.reduction = static_cast<scalar_real_type>(Simd::max(norm/norm_0));
       using std::pow;
       res.conv_rate = pow(res.reduction,1.0/(j-1));
       res.elapsed = watch.elapsed();
 
       if(_verbose>0)
-        print_result(res);
+        this->print_result(res);
 
     }
 
-  private :
-
-    void print_result(const InverseOperatorResult& res) const
-    {
-      int k = res.iterations>0 ? res.iterations : 1;
-      std::cout << "=== rate=" << res.conv_rate
-                << ", T=" << res.elapsed
-                << ", TIT=" << res.elapsed/k
-                << ", IT=" << res.iterations
-                << std::endl;
-    }
-
-    void update(X& w, int i,
-                const std::vector<std::vector<field_type> >& H,
-                const std::vector<field_type>& s,
-                const std::vector<X>& v)
-    {
-      // solution vector of the upper triangular system
-      std::vector<field_type> y(s);
-
-      // backsolve
-      for(int a=i-1; a>=0; a--)
-      {
-        field_type rhs(s[a]);
-        for(int b=a+1; b<i; b++)
-          rhs -= H[a][b]*y[b];
-        y[a] = rhs/H[a][a];
-
-        // compute update on the fly
-        // w += y[a]*v[a]
-        w.axpy(y[a],v[a]);
-      }
-    }
-
-    template<typename T>
-    typename std::enable_if<std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
-      return t;
-    }
-
-    template<typename T>
-    typename std::enable_if<!std::is_same<field_type,real_type>::value,T>::type conjugate(const T& t) {
-      using std::conj;
-      return conj(t);
-    }
-
-    // helper function to extract the real value of a real or complex number
-    inline real_type to_real(const real_type & v)
-    {
-      return v;
-    }
-
-    inline real_type to_real(const std::complex<real_type> & v)
-    {
-      return v.real();
-    }
-
-    void generatePlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
-    {
-      using std::sqrt;
-      using std::abs;
-      using std::max;
-      using std::min;
-      const real_type eps = 1e-15;
-      real_type norm_dx = abs(dx);
-      real_type norm_dy = abs(dy);
-      real_type norm_max = max(norm_dx, norm_dy);
-      real_type norm_min = min(norm_dx, norm_dy);
-      real_type temp = norm_min/norm_max;
-      // we rewrite the code in a vectorizable fashion
-      cs = Simd::cond(norm_dy < eps,
-        real_type(1.0),
-        Simd::cond(norm_dx < eps,
-          real_type(0.0),
-          Simd::cond(norm_dy > norm_dx,
-            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
-            real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
-          )));
-      sn = Simd::cond(norm_dy < eps,
-        field_type(0.0),
-        Simd::cond(norm_dx < eps,
-          field_type(1.0),
-          Simd::cond(norm_dy > norm_dx,
-            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*conjugate(dy)/norm_dx/norm_dy,
-            field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*conjugate(dy/dx)
-          )));
-    }
-
-
-    void applyPlaneRotation(field_type &dx, field_type &dy, real_type &cs, field_type &sn)
-    {
-      field_type temp  =  cs * dx + sn * dy;
-      dy = -conjugate(sn) * dx + cs * dy;
-      dx = temp;
-    }
-
-    using IterativeSolver<X,Y>::_op;
-    using IterativeSolver<X,Y>::_prec;
-    using IterativeSolver<X,Y>::_sp;
-    using IterativeSolver<X,Y>::_reduction;
-    using IterativeSolver<X,Y>::_maxit;
-    using IterativeSolver<X,Y>::_verbose;
-    int _restart;
+private:
+    using RestartedGMResSolver<X,Y>::_op;
+    using RestartedGMResSolver<X,Y>::_prec;
+    using RestartedGMResSolver<X,Y>::_sp;
+    using RestartedGMResSolver<X,Y>::_reduction;
+    using RestartedGMResSolver<X,Y>::_maxit;
+    using RestartedGMResSolver<X,Y>::_verbose;
+    using RestartedGMResSolver<X,Y>::_restart;
   };
 
 
