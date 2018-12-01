@@ -1031,9 +1031,9 @@ namespace Dune {
   private:
     using typename IterativeSolver<X,X>::scalar_real_type;
 
-    //! \bief field_type Allocator retrieved from domain type
+    //! \brief field_type Allocator retrieved from domain type
     using fAlloc = ReboundAllocatorType<X,field_type>;
-    //! \bief real_type Allocator retrieved from domain type
+    //! \brief real_type Allocator retrieved from domain type
     using rAlloc = ReboundAllocatorType<X,real_type>;
 
   public:
@@ -1346,7 +1346,7 @@ namespace Dune {
   private:
     using typename IterativeSolver<X,X>::scalar_real_type;
 
-    //! \bief field_type Allocator retrieved from domain type
+    //! \brief field_type Allocator retrieved from domain type
     using fAlloc = ReboundAllocatorType<X,field_type>;
 
   public:
