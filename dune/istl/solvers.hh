@@ -1196,8 +1196,8 @@ namespace Dune {
 
         // restart GMRes if convergence was not achieved,
         // i.e. linear defect has not reached desired reduction
-        // and if j < _maxit
-        if( res.converged != true && j <= _maxit ) {
+        // and if j < _maxit (do not restart on last iteration)
+        if( res.converged != true && j < _maxit ) {
 
           if(_verbose > 0)
             std::cout << "=== GMRes::restart" << std::endl;
