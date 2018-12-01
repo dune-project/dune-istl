@@ -1489,8 +1489,8 @@ namespace Dune {
 
         // restart fGMRes if convergence was not achieved,
         // i.e. linear residual has not reached desired reduction
-        // and if still j < _maxit
-        if( res.converged != true && j <= _maxit)
+        // and if still j < _maxit (do not restart on last iteration)
+        if( res.converged != true && j < _maxit)
         {
           if (_verbose > 0)
             std::cout << "=== fGMRes::restart" << std::endl;
