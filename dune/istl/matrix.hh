@@ -1026,8 +1026,8 @@ namespace MatrixImp
 
       Hybrid::ifElse(IsNumber<T>(),
         [&](auto id) {
-          for (size_type i=0; i<N(); i++)
-            for (size_type j=0; j<M(); j++)
+          for (size_type i=0; i<this->N(); i++)
+            for (size_type j=0; j<this->M(); j++)
               sum += fvmeta::abs2(data_[i][j]);
         },
         [&](auto id) {

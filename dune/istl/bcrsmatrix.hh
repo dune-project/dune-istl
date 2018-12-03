@@ -1578,7 +1578,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             y[i.index()]=0;
             ConstColIterator endj = (*i).end();
@@ -1610,7 +1610,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1640,7 +1640,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1670,7 +1670,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1715,7 +1715,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1743,7 +1743,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1751,7 +1751,7 @@ namespace Dune {
           }
         },
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1773,7 +1773,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1781,7 +1781,7 @@ namespace Dune {
           }
         },
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1803,7 +1803,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1812,7 +1812,7 @@ namespace Dune {
           }
         },
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1834,7 +1834,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1843,7 +1843,7 @@ namespace Dune {
           }
         },
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1865,7 +1865,7 @@ namespace Dune {
       ConstRowIterator endi=end();
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
