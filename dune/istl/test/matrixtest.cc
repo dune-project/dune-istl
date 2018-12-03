@@ -307,12 +307,15 @@ int main()
   //   Test the Matrix class -- a scalar dense dynamic matrix
   // ////////////////////////////////////////////////////////////
 
-  Matrix<FieldMatrix<double,1,1> > matrixScalar(10,10);
-  for (int i=0; i<10; i++)
-    for (int j=0; j<10; j++)
-      matrixScalar[i][j] = (i+j)/((double)(i*j+1));        // just anything
+  {
+    Matrix<double> matrixScalar(10,10);
+    for (int i=0; i<10; i++)
+      for (int j=0; j<10; j++)
+        matrixScalar[i][j] = (i+j)/((double)(i*j+1));        // just anything
 
-  testSuperMatrix(matrixScalar);
+    BlockVector<double> x(10), y(10);
+    testMatrix(matrixScalar, x, y);
+  }
 
   // ////////////////////////////////////////////////////////////
   //   Test the Matrix class -- a block-valued dense dynamic matrix
@@ -340,6 +343,69 @@ int main()
 
   // ////////////////////////////////////////////////////////////
   //   Test the BCRSMatrix class -- a sparse dynamic matrix
+  // ////////////////////////////////////////////////////////////
+
+  {
+    BCRSMatrix<double> bcrsMatrix(4,4, BCRSMatrix<double>::random);
+
+    bcrsMatrix.setrowsize(0,2);
+    bcrsMatrix.setrowsize(1,3);
+    bcrsMatrix.setrowsize(2,3);
+    bcrsMatrix.setrowsize(3,2);
+
+    bcrsMatrix.endrowsizes();
+
+    bcrsMatrix.addindex(0, 0);
+    bcrsMatrix.addindex(0, 1);
+
+    bcrsMatrix.addindex(1, 0);
+    bcrsMatrix.addindex(1, 1);
+    bcrsMatrix.addindex(1, 2);
+
+    bcrsMatrix.addindex(2, 1);
+    bcrsMatrix.addindex(2, 2);
+    bcrsMatrix.addindex(2, 3);
+
+    bcrsMatrix.addindex(3, 2);
+    bcrsMatrix.addindex(3, 3);
+
+    bcrsMatrix.endindices();
+
+    typedef BCRSMatrix<double>::RowIterator RowIterator;
+    typedef BCRSMatrix<double>::ColIterator ColIterator;
+
+    for(RowIterator row = bcrsMatrix.begin(); row != bcrsMatrix.end(); ++row)
+      for(ColIterator col = row->begin(); col != row->end(); ++col)
+        *col = 1.0 + (double) row.index() * (double) col.index();
+
+    BlockVector<double> x(4), y(4);
+
+    testMatrix(bcrsMatrix, x, y);
+
+    // Test whether matrix resizing works
+    int size = 3;
+    bcrsMatrix.setSize(size,size,size);
+
+    for (int i=0; i<size; i++)
+      bcrsMatrix.setrowsize(i, 1);
+
+    bcrsMatrix.endrowsizes();
+
+    for (int i=0; i<size; i++)
+      bcrsMatrix.addindex(i, i);
+
+    bcrsMatrix.endindices();
+
+    for (int i=0; i<size; i++)
+      bcrsMatrix[i][i] = 1.0;
+
+    x.resize(size);
+    y.resize(size);
+    testMatrix(bcrsMatrix, x, y);
+  }
+
+  // ////////////////////////////////////////////////////////////
+  //   Test the BCRSMatrix class with FieldMatrix entries
   // ////////////////////////////////////////////////////////////
 
   BCRSMatrix<FieldMatrix<double,2,2> > bcrsMatrix(4,4, BCRSMatrix<FieldMatrix<double,2,2> >::random);
@@ -395,8 +461,34 @@ int main()
 
   testSuperMatrix(bcrsMatrix);
 
-  // ////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
   //   Test the BDMatrix class -- a dynamic block-diagonal matrix
+  ///////////////////////////////////////////////////////////////////////////
+
+  {
+    BDMatrix<double> bdMatrix(3);
+    bdMatrix = 4.0;
+
+    BlockVector<double> x(3), y(3);
+    testMatrix(bdMatrix, x, y);
+
+    // Test construction from initializer list
+    BDMatrix<double> bdMatrix2 = {1.0, 2.0, 3.0};
+    testMatrix(bdMatrix2, x, y);
+
+    // test whether resizing works
+    bdMatrix2.setSize(5);
+    bdMatrix2 = 4.0;
+    x.resize(5);
+    y.resize(5);
+    testMatrix(bdMatrix2, x, y);
+
+    // Test whether inversion works
+    bdMatrix2.invert();
+  }
+
+  // ////////////////////////////////////////////////////////////////////////
+  //   Test the BDMatrix class with FieldMatrix entries
   // ////////////////////////////////////////////////////////////////////////
 
   BDMatrix<FieldMatrix<double,4,4> > bdMatrix(2);
@@ -406,6 +498,11 @@ int main()
 
   // Test construction from initializer list
   BDMatrix<FieldMatrix<double,2,2> > bdMatrix2 = { {{1,0},{0,1}}, {{0,1},{-1,0}}};
+
+  // Test whether inversion works
+  bdMatrix2.invert();
+
+  // Run matrix tests on this matrix
   testSuperMatrix(bdMatrix2);
 
   // test whether resizing works
@@ -417,6 +514,44 @@ int main()
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
   //   a) the scalar case
   // ////////////////////////////////////////////////////////////////////////
+
+  {
+    BTDMatrix<double> btdMatrixScalar(4);
+    using size_type = BTDMatrix<double>::size_type;
+
+    btdMatrixScalar = 4.0;
+
+    BlockVector<double> x(4), y(4);
+    testMatrix(btdMatrixScalar, x, y);
+
+    btdMatrixScalar = 0.0;
+    for (size_type i=0; i<btdMatrixScalar.N(); i++)    // diagonal
+      btdMatrixScalar[i][i] = 1+i;
+
+    for (size_type i=0; i<btdMatrixScalar.N()-1; i++)
+      btdMatrixScalar[i][i+1] = 2+i;               // first off-diagonal
+
+    testSolve<BTDMatrix<double>, BlockVector<double> >(btdMatrixScalar);
+
+    // test a 1x1 BTDMatrix, because that is a special case
+    BTDMatrix<double> btdMatrixScalar_1x1(1);
+    btdMatrixScalar_1x1 = 1.0;
+    x.resize(1);
+    y.resize(1);
+    testMatrix(btdMatrixScalar_1x1, x, y);
+
+    // test whether resizing works
+    btdMatrixScalar_1x1.setSize(5);
+    btdMatrixScalar_1x1 = 4.0;
+    x.resize(5);
+    y.resize(5);
+    testMatrix(btdMatrixScalar_1x1, x, y);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
+  //   b) the scalar case with FieldMatrix entries
+  ///////////////////////////////////////////////////////////////////////////
 
   BTDMatrix<FieldMatrix<double,1,1> > btdMatrixScalar(4);
   typedef BTDMatrix<FieldMatrix<double,1,1> >::size_type size_type;
@@ -446,7 +581,7 @@ int main()
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the BTDMatrix class -- a dynamic block-tridiagonal matrix
-  //   b) the block-valued case
+  //   c) the block-valued case
   // ////////////////////////////////////////////////////////////////////////
 
   BTDMatrix<FieldMatrix<double,2,2> > btdMatrix(4);

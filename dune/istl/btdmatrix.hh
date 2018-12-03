@@ -29,7 +29,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -44,7 +44,7 @@ namespace Dune {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {blocklevel = B::blocklevel+1};
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     /** \brief Default constructor */
     BTDMatrix() : BCRSMatrix<B,A>() {}
@@ -120,7 +120,13 @@ namespace Dune {
 
       // special handling for 1x1 matrices.  The generic algorithm doesn't work for them
       if (this->N()==1) {
-        (*this)[0][0].solve(x[0],rhs[0]);
+        Hybrid::ifElse(IsNumber<B>(),
+          [&](auto id) {
+            x[0] = id(rhs[0]) / id((*this)[0][0]);
+          },
+          [&](auto id) {
+            id(*this)[0][0].solve(x[0],rhs[0]);
+          });
         return;
       }
 
@@ -132,46 +138,95 @@ namespace Dune {
 
       /* Modify the coefficients. */
       block_type a_00_inv = (*this)[0][0];
-      a_00_inv.invert();
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          a_00_inv = 1.0 / id(a_00_inv);
+        },
+        [&](auto id) {
+          id(a_00_inv).invert();
+        });
 
       //c[0] /= (*this)[0][0];	/* Division by zero risk. */
       block_type c_0_tmp = c[0];
-      FMatrixHelp::multMatrix(a_00_inv, c_0_tmp, c[0]);
+      Hybrid::ifElse(IsNumber<B>(), /* Division by zero risk. */
+        [&](auto id) {
+          c[0] = a_00_inv * id(c_0_tmp);
+        },
+        [&](auto id) {
+          FMatrixHelp::multMatrix(id(a_00_inv), id(c_0_tmp), id(c[0]));
+        });
 
       // d = a^{-1} d        /* Division by zero would imply a singular matrix. */
-      typename V::block_type d_0_tmp = d[0];
-      a_00_inv.mv(d_0_tmp,d[0]);
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          d[0] *= id(a_00_inv);
+        },
+        [&](auto id) {
+          auto d_0_tmp = d[0];
+          id(a_00_inv).mv(d_0_tmp,d[0]);
+        });
 
       for (unsigned int i = 1; i < this->N(); i++) {
 
         // id = ( a_ii - c_{i-1} a_{i, i-1} ) ^{-1}
         block_type tmp;
-        FMatrixHelp::multMatrix((*this)[i][i-1],c[i-1], tmp);
+        Hybrid::ifElse(IsNumber<B>(),
+          [&](auto metaId) {
+            tmp = metaId((*this)[i][i-1]) * metaId(c[i-1]);
+          },
+          [&](auto metaId) {
+            FMatrixHelp::multMatrix(metaId((*this)[i][i-1]), metaId(c[i-1]), metaId(tmp));
+          });
+
         block_type id = (*this)[i][i];
         id -= tmp;
-        id.invert();         /* Division by zero risk. */
+        Hybrid::ifElse(IsNumber<B>(), /* Division by zero risk. */
+          [&](auto metaId) {
+            id = 1.0 / metaId(id);
+          },
+          [&](auto metaId) {
+            metaId(id).invert();
+          });
 
         if (i<c.size()) {
           // c[i] *= id
-          tmp = c[i];
-          FMatrixHelp::multMatrix(id,tmp, c[i]);                      /* Last value calculated is redundant. */
+          Hybrid::ifElse(IsNumber<B>(),            /* Last value calculated is redundant. */
+            [&](auto metaId) {
+              c[i] *= metaId(id);
+            },
+            [&](auto metaId) {
+              tmp = c[i];
+              FMatrixHelp::multMatrix(metaId(id), metaId(tmp), metaId(c[i]));
+            });
         }
 
         // d[i] = (d[i] - d[i-1] * (*this)[i][i-1]) * id;
-        (*this)[i][i-1].mmv(d[i-1], d[i]);
-        typename V::block_type tmpVec = d[i];
-        id.mv(tmpVec, d[i]);
-        //d[i] *= id;
-
+        Hybrid::ifElse(IsNumber<B>(),
+          [&](auto metaId) {
+            d[i] -= (*this)[i][i-1] * metaId(d[i-1]);
+            d[i] *= metaId(id);
+          },
+          [&](auto metaId) {
+            metaId((*this)[i][i-1]).mmv(d[i-1], d[i]);
+            auto tmpVec = d[i];
+            metaId(id).mv(tmpVec, d[i]);
+          });
       }
 
       /* Now back substitute. */
       x[this->N() - 1] = d[this->N() - 1];
-      for (int i = this->N() - 2; i >= 0; i--) {
-        //x[i] = d[i] - c[i] * x[i + 1];
-        x[i] = d[i];
-        c[i].mmv(x[i+1], x[i]);
-      }
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto metaId) {
+          for (int i = this->N() - 2; i >= 0; i--)
+            x[i] = d[i] - c[i] * metaId(x[i+1]);
+        },
+        [&](auto metaId) {
+          for (int i = this->N() - 2; i >= 0; i--) {
+            //x[i] = d[i] - c[i] * x[i + 1];
+            x[i] = d[i];
+            metaId(c[i]).mmv(x[i+1], x[i]);
+          }
+        });
 
     }
 
