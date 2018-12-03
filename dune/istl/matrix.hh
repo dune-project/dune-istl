@@ -1100,7 +1100,7 @@ namespace MatrixImp
           for (auto const &x : *this) {
             real_type sum = 0;
             for (auto const &y : x)
-              sum += abs(y);
+              sum += abs(id(y));
             norm = max(sum, norm);
             isNaN += sum;
           }
