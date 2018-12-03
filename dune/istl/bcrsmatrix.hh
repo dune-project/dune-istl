@@ -1618,7 +1618,7 @@ namespace Dune {
           }
         },
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
@@ -1678,7 +1678,7 @@ namespace Dune {
           }
         },
         [&](auto id) {
-          for (ConstRowIterator i=begin(); i!=endi; ++i)
+          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
