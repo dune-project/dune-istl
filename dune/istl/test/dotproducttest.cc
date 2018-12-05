@@ -5,6 +5,8 @@
 #include <dune/istl/vbvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/classname.hh>
+#include <dune/common/std/type_traits.hh>
+#include <dune/common/hybridutilities.hh>
 
 // scalar ordering doesn't work for complex numbers
 template <class RealBlockVector, class ComplexBlockVector>
@@ -28,7 +30,9 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   RealBlockVector one(numBlocks,blockSizeOrCapacity);
   ComplexBlockVector iVec(numBlocks,blockSizeOrCapacity);
 
-  const size_type blockSize = Dune::Hybrid::ifElse(Dune::IsNumber<typename RealBlockVector::block_type>(),
+  using RealBlockType = typename RealBlockVector::block_type;
+
+  const size_type blockSize = Dune::Hybrid::ifElse(Dune::IsNumber<RealBlockType>(),
                                                    [&](auto id) {
                                                      return 1;
                                                    },
@@ -53,39 +57,39 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   ct result = ct();
 
   // blockwise dot tests
-  Dune::Hybrid::ifElse(std::integral_constant<bool,!Dune::IsNumber<typename RealBlockVector::block_type>::value>(),
-  [&](auto id) {
-  result = ct();
-  for(size_type i=0; i < numBlocks; ++i) {
-    result += dot(id(one[i]),id(one[i])) + (id(one[i])).dot(id(one[i]));
-  }
+  Dune::Hybrid::ifElse(Dune::Std::negation<Dune::IsNumber<RealBlockType>>(),
+    [&](auto id) {
+      result = ct();
+      for(size_type i=0; i < numBlocks; ++i) {
+        result += dot(id(one[i]),id(one[i])) + (id(one[i])).dot(id(one[i]));
+      }
 
-  assert(std::abs(result-ct(2)*ctlength)<= myEps);
+      assert(std::abs(result-ct(2)*ctlength)<= myEps);
 
-  result = ct();
-  for(size_type i=0; i < numBlocks; ++i) {
-    result += dot(id(iVec[i]),id(iVec[i]))+ (id(iVec[i])).dot(id(iVec[i]));
-  }
+      result = ct();
+      for(size_type i=0; i < numBlocks; ++i) {
+        result += dot(id(iVec[i]),id(iVec[i]))+ (id(iVec[i])).dot(id(iVec[i]));
+      }
 
-  assert(std::abs(result-ct(2)*ctlength)<= myEps);
+      assert(std::abs(result-ct(2)*ctlength)<= myEps);
 
-  // blockwise dotT / operator * tests
-  result = ct();
-  for(size_type i=0; i < numBlocks; ++i) {
-    result += dotT(id(one[i]),id(one[i])) + id(one[i])*id(one[i]);
-  }
+      // blockwise dotT / operator * tests
+      result = ct();
+      for(size_type i=0; i < numBlocks; ++i) {
+        result += dotT(id(one[i]),id(one[i])) + id(one[i])*id(one[i]);
+      }
 
-  assert(std::abs(result-ct(2)*ctlength)<= myEps);
+      assert(std::abs(result-ct(2)*ctlength)<= myEps);
 
-  result = ct();
-  for(size_type i=0; i < numBlocks; ++i) {
-    result += dotT(id(iVec[i]),id(iVec[i])) + id(iVec[i])*id(iVec[i]);
-  }
+      result = ct();
+      for(size_type i=0; i < numBlocks; ++i) {
+        result += dotT(id(iVec[i]),id(iVec[i])) + id(iVec[i])*id(iVec[i]);
+      }
 
-  assert(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
-  }
-  ,
-  [&](auto id){}
+      assert(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
+    }
+    ,
+    [&](auto id){}
   );  // end Hybrid::ifElse
 
   // global operator * tests
