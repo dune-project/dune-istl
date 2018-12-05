@@ -192,19 +192,19 @@ public:
     int* Ai = static_cast<int*>(M->i);
     double* Ax = static_cast<double*>(M->x);
 
-    const auto& blocksize = k;
+    std::size_t blocksize = k;
 
     // create a vector that maps each remaining matrix index to it's number in the condensed matrix
-    std::vector<size_t> subIndices;
+    std::vector<std::size_t> subIndices;
 
     if ( ignore )
     {
       subIndices.resize(matrix.M()*blocksize);
 
-      size_t j=0;
-      for( size_t block=0; block<matrix.N(); block++ )
+      std::size_t j=0;
+      for( std::size_t block=0; block<matrix.N(); block++ )
       {
-        for( size_t i=0; i<blocksize; i++ )
+        for( std::size_t i=0; i<blocksize; i++ )
         {
           if( not (*ignore)[block][i] )
           {
@@ -219,7 +219,7 @@ public:
     for (auto rowIt = matrix.begin(); rowIt != matrix.end(); rowIt++)
     {
       const auto row = rowIt.index();
-      for (auto i=0; i<blocksize; i++)
+      for (std::size_t i=0; i<blocksize; i++)
       {
         if( ignore and (*ignore)[row][i] )
           continue;
