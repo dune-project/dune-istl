@@ -399,7 +399,7 @@ namespace Dune {
 
     //! Iterator class for sequential creation of blocks
     class CreateIterator
-    : public std::iterator<std::output_iterator_tag,   // iterator category
+    : public std::iterator<std::forward_iterator_tag,   // iterator category
                            size_type,                  // value type
                            size_type*,                 // pointer type
                            size_type&>                 // reference type
