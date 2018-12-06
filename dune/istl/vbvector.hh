@@ -397,12 +397,48 @@ namespace Dune {
 
     //===== the creation interface
 
+    class CreateIterator;
+
+#ifndef DOXYGEN
+
+    // The window_type does not hand out a reference to its size,
+    // so in order to provide a valid iterator, we need a workaround
+    // to make assignment possible. This proxy enables just that by
+    // implicitly converting to the stored size for read access and
+    // tunneling assignment to the accessor method of the window.
+    struct SizeProxy
+    {
+
+      operator size_type() const
+      {
+        return target->getsize();
+      }
+
+      SizeProxy& operator=(size_type size)
+      {
+        target->setsize(size);
+        return *this;
+      }
+
+    private:
+
+      friend class CreateIterator;
+
+      SizeProxy(window_type& t)
+        : target(&t)
+      {}
+
+      window_type* target;
+    };
+
+#endif // DOXYGEN
+
     //! Iterator class for sequential creation of blocks
     class CreateIterator
     : public std::iterator<std::output_iterator_tag,   // iterator category
                            size_type,                  // value type
                            size_type*,                 // pointer type
-                           size_type&>                 // reference type
+                           SizeProxy>                 // reference type
     {
     public:
       //! constructor
@@ -463,9 +499,14 @@ namespace Dune {
       }
 
       //! Access size of current block
-      size_type& operator*()
+#ifdef DOXYGEN
+      size_type&
+#else
+      SizeProxy
+#endif
+      operator*()
       {
-        return v.block[i].getsize();
+        return {v.block[i]};
       }
 
     private:
