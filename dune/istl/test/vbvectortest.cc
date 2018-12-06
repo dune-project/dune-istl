@@ -45,7 +45,7 @@ int main()
 
   // More formally: test whether the CreateIterator is an output iterator in the stl sense
   v1.resize(5);
-  testOutputIterator(v1.createbegin(), 5, 10);
+  testForwardIterator(v1.createbegin(), 5, 10);
 
   /* Copy-ing specific blocks with `auto` from a VariableBlockVector is tricky, because
    * the returned object will be a reference:
