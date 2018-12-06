@@ -32,7 +32,8 @@ int main()
     Calling the create iterator is not allowed, now.
     We have to un-initialize it first:
   */
-  v3.resize(20); // this makes v3 unitialized again
+  std::size_t size = 20;
+  v3.resize(size); // this makes v3 unitialized again
 
   // Set block sizes with CreateIterator:
   for (auto cIt = v3.createbegin(); cIt!=v3.createend(); ++cIt)
@@ -41,7 +42,9 @@ int main()
   v3 = 1.0;
 
   // Test whether something from <algorithm> can be used to set the block sizes
-  std::fill(v1.createbegin(), v1.createend(), 10);
+  // We can't use std::fill() here, as that requires a forward iterator, std::fill_n()
+  // is more lenient and settles for an output iterator
+  std::fill_n(v1.createbegin(), size, 10);
 
   // More formally: test whether the CreateIterator is an output iterator in the stl sense
   v1.resize(5);
