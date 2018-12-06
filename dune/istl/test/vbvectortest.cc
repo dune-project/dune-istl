@@ -45,7 +45,10 @@ int main()
 
   // More formally: test whether the CreateIterator is a forward iterator in the stl sense
   v1.resize(5);
-  testForwardIterator(v1.createbegin(), v1.createend(), [](auto& x){});
+  {
+    auto f = [](auto& x){};
+    testForwardIterator(v1.createbegin(), v1.createend(),f);
+  }
 
   /* Copy-ing specific blocks with `auto` from a VariableBlockVector is tricky, because
    * the returned object will be a reference:
