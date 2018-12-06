@@ -44,6 +44,7 @@ int main()
   // Test whether something from <algorithm> can be used to set the block sizes
   // We can't use std::fill() here, as that requires a forward iterator, std::fill_n()
   // is more lenient and settles for an output iterator
+  v1.resize(size);
   std::fill_n(v1.createbegin(), size, 10);
 
   // More formally: test whether the CreateIterator is an output iterator in the stl sense
