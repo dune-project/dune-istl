@@ -47,8 +47,8 @@ void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A, int N)
 
   Dune::Hybrid::ifElse(Dune::IsNumber<B>(),
     [&](auto id) {
-      diagonal = 4;
-      bone = -1.0;
+      diagonal = B(4.0);
+      bone = B(-1.0);
     },
     [&](auto id) {
       for (auto b = id(diagonal).begin(); b != id(diagonal).end(); ++b)
