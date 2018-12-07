@@ -43,6 +43,9 @@ namespace Dune {
     // just a shorthand
     typedef Imp::BlockVectorWindow<B,A> window_type;
 
+    // data-structure holding the windows (butbut  not the actual data)
+    using VectorWindows = std::vector<window_type, typename A::template rebind<window_type>::other>;
+
   public:
 
     //===== type definitions and constants
@@ -90,12 +93,7 @@ namespace Dune {
             object cannot be used yet
      */
     VariableBlockVector () : Imp::block_vector_unmanaged<B,A>()
-    {
-      // nothing is known ...
-      nblocks = 0;
-      block = nullptr;
-      initialized = false;
-    }
+    {}
 
     /** make vector with given number of blocks, but size of each block is not yet known,
             object cannot be used yet
@@ -103,21 +101,7 @@ namespace Dune {
     explicit VariableBlockVector (size_type _nblocks) : Imp::block_vector_unmanaged<B,A>()
     {
       // we can allocate the windows now
-      nblocks = _nblocks;
-      if (nblocks>0)
-      {
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
-      }
-
-      // Note: memory in base class still not allocated
-      // the vector not usable
-      initialized = false;
+      block.resize(_nblocks);
     }
 
     /** make vector with given number of blocks each having a constant size,
@@ -129,133 +113,49 @@ namespace Dune {
     VariableBlockVector (size_type _nblocks, size_type m) : Imp::block_vector_unmanaged<B,A>()
     {
       // and we can allocate the big array in the base class
-      this->n = _nblocks*m;
-      if (this->n>0)
-      {
-        this->p = allocator_.allocate(this->n);
-        new (this->p)B[this->n];
-      }
-      else
-      {
-        this->n = 0;
-        this->p = nullptr;
-      }
+      storage_.resize(_nblocks*m);
+      syncBaseArray();
 
-      // we can allocate the windows now
-      nblocks = _nblocks;
-      if (nblocks>0)
-      {
-        // allocate and construct the windows
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
+      block.resize(_nblocks);
 
-        // set the windows into the big array
-        for (size_type i=0; i<nblocks; ++i)
-          block[i].set(m,this->p+(i*m));
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
-      }
+      // set the windows into the big array
+      for (size_type i=0; i<_nblocks; ++i)
+        block[i].set(m,this->p+(i*m));
 
       // and the vector is usable
       initialized = true;
     }
 
     //! copy constructor, has copy semantics
-    VariableBlockVector (const VariableBlockVector& a)
+    VariableBlockVector (const VariableBlockVector& a) :
+      block(a.block),
+      storage_(a.storage_)
     {
-      // allocate the big array in the base class
-      this->n = a.n;
-      if (this->n>0)
-      {
-        // allocate and construct objects
-        this->p = allocator_.allocate(this->n);
-        new (this->p)B[this->n];
+      syncBaseArray();
 
-        // copy data
-        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
-      }
-      else
-      {
-        this->n = 0;
-        this->p = nullptr;
-      }
-
-      // we can allocate the windows now
-      nblocks = a.nblocks;
-      if (nblocks>0)
-      {
-        // alloc
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-
-        // and we must set the windows
-        block[0].set(a.block[0].getsize(),this->p);           // first block
-        for (size_type i=1; i<nblocks; ++i)                         // and the rest
-          block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
+      // and we must set the windows
+      if(block.size()>0) {
+        block[0].set(block[0].getsize(),this->p);           // first block
+        for (size_type i=1; i<block.size(); ++i)                         // and the rest
+          block[i].set(block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
       }
 
       // and we have a usable vector
-      initialized = true;
+      initialized = a.initialized;
     }
 
-    //! free dynamic memory
-    ~VariableBlockVector ()
-    {
-      if (this->n>0) {
-        size_type i=this->n;
-        while (i)
-          this->p[--i].~B();
-        allocator_.deallocate(this->p,this->n);
-      }
-      if (nblocks>0) {
-        size_type i=nblocks;
-        while (i)
-          block[--i].~window_type();
-        windowAllocator_.deallocate(block,nblocks);
-      }
-
-    }
+    ~VariableBlockVector() = default;
 
 
     //! same effect as constructor with same argument
     void resize (size_type _nblocks)
     {
-      // deconstruct objects and deallocate memory if necessary
-      if (this->n>0) {
-        size_type i=this->n;
-        while (i)
-          this->p[--i].~B();
-        allocator_.deallocate(this->p,this->n);
-      }
-      if (nblocks>0) {
-        size_type i=nblocks;
-        while (i)
-          block[--i].~window_type();
-        windowAllocator_.deallocate(block,nblocks);
-      }
-      this->n = 0;
-      this->p = nullptr;
+      storage_.clear();
+
+      syncBaseArray();
 
       // we can allocate the windows now
-      nblocks = _nblocks;
-      if (nblocks>0)
-      {
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
-      }
+      block.resize(_nblocks);
 
       // and the vector not fully usable
       initialized = false;
@@ -264,50 +164,14 @@ namespace Dune {
     //! same effect as constructor with same argument
     void resize (size_type _nblocks, size_type m)
     {
-      // deconstruct objects and deallocate memory if necessary
-      if (this->n>0) {
-        size_type i=this->n;
-        while (i)
-          this->p[--i].~B();
-        allocator_.deallocate(this->p,this->n);
-      }
-      if (nblocks>0) {
-        size_type i=nblocks;
-        while (i)
-          block[--i].~window_type();
-        windowAllocator_.deallocate(block,nblocks);
-      }
-
       // and we can allocate the big array in the base class
-      this->n = _nblocks*m;
-      if (this->n>0)
-      {
-        this->p = allocator_.allocate(this->n);
-        new (this->p)B[this->n];
-      }
-      else
-      {
-        this->n = 0;
-        this->p = nullptr;
-      }
+      storage_.resize(_nblocks*m);
+      block.resize(_nblocks);
+      syncBaseArray();
 
-      // we can allocate the windows now
-      nblocks = _nblocks;
-      if (nblocks>0)
-      {
-        // allocate and construct objects
-        block = windowAllocator_.allocate(nblocks);
-        new (block) window_type[nblocks];
-
-        // set the windows into the big array
-        for (size_type i=0; i<nblocks; ++i)
-          block[i].set(m,this->p+(i*m));
-      }
-      else
-      {
-        nblocks = 0;
-        block = nullptr;
-      }
+      // set the windows into the big array
+      for (size_type i=0; i<block.size(); ++i)
+        block[i].set(m,this->p+(i*m));
 
       // and the vector is usable
       initialized = true;
@@ -318,70 +182,25 @@ namespace Dune {
     {
       if (&a!=this)     // check if this and a are different objects
       {
-        // reallocate arrays if necessary
-        // Note: still the block sizes may vary !
-        if (this->n!=a.n || nblocks!=a.nblocks)
-        {
-          // deconstruct objects and deallocate memory if necessary
-          if (this->n>0) {
-            size_type i=this->n;
-            while (i)
-              this->p[--i].~B();
-            allocator_.deallocate(this->p,this->n);
-          }
-          if (nblocks>0) {
-            size_type i=nblocks;
-            while (i)
-              block[--i].~window_type();
-            windowAllocator_.deallocate(block,nblocks);
-          }
+        storage_ = a.storage_;
+        syncBaseArray();
 
-          // allocate the big array in the base class
-          this->n = a.n;
-          if (this->n>0)
-          {
-            // allocate and construct objects
-            this->p = allocator_.allocate(this->n);
-            new (this->p)B[this->n];
-          }
-          else
-          {
-            this->n = 0;
-            this->p = nullptr;
-          }
-
-          // we can allocate the windows now
-          nblocks = a.nblocks;
-          if (nblocks>0)
-          {
-            // alloc
-            block = windowAllocator_.allocate(nblocks);
-            new (block) window_type[nblocks];
-          }
-          else
-          {
-            nblocks = 0;
-            block = nullptr;
-          }
-        }
+        block.resize(a.block.size());
 
         // copy block structure, might be different although
         // sizes are the same !
-        if (nblocks>0)
+        if (block.size()>0)
         {
           block[0].set(a.block[0].getsize(),this->p);                 // first block
-          for (size_type i=1; i<nblocks; ++i)                               // and the rest
+          for (size_type i=1; i<block.size(); ++i)                               // and the rest
             block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
         }
 
-        // and copy the data
-        for (size_type i=0; i<this->n; i++) this->p[i]=a.p[i];
+        // and we have a usable vector
+        initialized = a.initialized;;
       }
 
-      // and we have a usable vector
-      initialized = true;
-
-      return *this;     // Gebe Referenz zurueck damit a=b=c; klappt
+      return *this;
     }
 
 
@@ -453,7 +272,7 @@ namespace Dune {
         // 1. the current iterator was not created as enditarator
         // 2. we're at the last block
         // 3. the vector hasn't been initialized earlier
-        if (not isEnd && i==v.nblocks && not v.initialized)
+        if (not isEnd && i==v.block.size() && not v.initialized)
           v.allocate();
       }
 
@@ -530,7 +349,7 @@ namespace Dune {
     //! get create iterator pointing to one after the last block
     CreateIterator createend ()
     {
-      return CreateIterator(*this,nblocks, true);
+      return CreateIterator(*this, block.size(), true);
     }
 
 
@@ -542,7 +361,7 @@ namespace Dune {
     window_type& operator[] (size_type i)
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+      if (i>=block.size()) DUNE_THROW(ISTLError,"index out of range");
 #endif
       return block[i];
     }
@@ -551,113 +370,44 @@ namespace Dune {
     const window_type& operator[] (size_type i) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
-      if (i<0 || i>=nblocks) DUNE_THROW(ISTLError,"index out of range");
+      if (i<0 || i>=block.size()) DUNE_THROW(ISTLError,"index out of range");
 #endif
       return block[i];
     }
 
-    //! Iterator class for sequential access
-    template <class T, class R>
-    class RealIterator
-    : public RandomAccessIteratorFacade<RealIterator<T,R>, T, R>
-    {
-    public:
-      //! constructor, no arguments
-      RealIterator ()
-      {
-        p = nullptr;
-        i = 0;
-      }
-
-      //! constructor
-      RealIterator (window_type* _p, size_type _i)
-      : p(_p), i(_i)
-      {}
-
-      //! prefix increment
-      void increment()
-      {
-        ++i;
-      }
-
-      //! prefix decrement
-      void decrement()
-      {
-        --i;
-      }
-
-      //! equality
-      bool equals (const RealIterator& it) const
-      {
-        return (p+i)==(it.p+it.i);
-      }
-
-      //! dereferencing
-      window_type& dereference () const
-      {
-        return p[i];
-      }
-
-      void advance(std::ptrdiff_t d)
-      {
-        i+=d;
-      }
-
-      std::ptrdiff_t distanceTo(const RealIterator& o) const
-      {
-        return o.i-i;
-      }
-
-      // Needed for operator[] of the iterator
-      window_type& elementAt (std::ptrdiff_t offset) const
-      {
-        return p[i+offset];
-      }
-
-      /** \brief Return the index of the entry this iterator is pointing to */
-      size_type index() const
-      {
-        return i;
-      }
-
-    private:
-      window_type* p;
-      size_type i;
-    };
-
-    using Iterator = RealIterator<value_type,window_type&>;
+    using Iterator = typename VectorWindows::iterator;
 
     //! begin Iterator
     Iterator begin ()
     {
-      return Iterator(block,0);
+      return block.begin();
     }
 
     //! end Iterator
     Iterator end ()
     {
-      return Iterator(block,nblocks);
+      return block.end();
     }
 
     //! @returns an iterator that is positioned before
     //! the end iterator of the vector, i.e. at the last entry.
     Iterator beforeEnd ()
     {
-      return Iterator(block,nblocks-1);
+      return --block.end();
     }
 
     //! @returns an iterator that is positioned before
     //! the first entry of the vector.
     Iterator beforeBegin () const
     {
-      return Iterator(block,-1);
+      return --block.begin();
     }
 
     /** \brief Export the iterator type using std naming rules */
     using iterator = Iterator;
 
     /** \brief Const iterator */
-    using ConstIterator = RealIterator<const value_type, const window_type&>;
+    using ConstIterator = typename VectorWindows::const_iterator;
 
     /** \brief Export the const iterator type using std naming rules */
     using const_iterator = ConstIterator;
@@ -665,38 +415,42 @@ namespace Dune {
     //! begin ConstIterator
     ConstIterator begin () const
     {
-      return ConstIterator(block,0);
+      return block.begin();
     }
 
     //! end ConstIterator
     ConstIterator end () const
     {
-      return ConstIterator(block,nblocks);
+      return block.end();
     }
 
     //! @returns an iterator that is positioned before
     //! the end iterator of the vector. i.e. at the last element.
     ConstIterator beforeEnd() const
     {
-      return ConstIterator(block,nblocks-1);
+      return --block.end();
     }
 
     //! end ConstIterator
     ConstIterator rend () const
     {
-      return ConstIterator(block,-1);
+      return block.rend();
     }
 
     //! random access returning iterator (end if not contained)
     Iterator find (size_type i)
     {
-      return Iterator(block,std::min(i,nblocks));
+        auto tmp = block.begin();
+        tmp+=std::min(i, block.size());
+        return tmp;
     }
 
     //! random access returning iterator (end if not contained)
     ConstIterator find (size_type i) const
     {
-      return ConstIterator(block,std::min(i,nblocks));
+      auto tmp = block.begin();
+      tmp+=std::min(i, block.size());
+      return tmp;
     }
 
     //===== sizes
@@ -704,7 +458,7 @@ namespace Dune {
     //! number of blocks in the vector (are of variable size here)
     size_type N () const
     {
-      return nblocks;
+      return  block.size();
     }
 
     /** Number of blocks in the vector
@@ -713,7 +467,7 @@ namespace Dune {
     */
     size_type size () const
     {
-      return nblocks;
+      return  block.size();
     }
 
 
@@ -724,39 +478,31 @@ namespace Dune {
         DUNE_THROW(ISTLError, "Attempt to re-allocate already initialized VariableBlockVector");
 
       // calculate space needed:
-      this->n=0;
-      for(size_type i = 0; i < nblocks; i++) {
-        this->n += block[i].size();
-      }
+      size_type storageNeeded = 0;
+      for(size_type i = 0; i < block.size(); i++)
+        storageNeeded += block[i].size();
 
-      // now we can allocate the big array in the base class of v
-      if (this->n>0)
-      {
-        // allocate and construct objects
-        this->p = allocator_.allocate(this->n);
-        new (this->p)B[this->n];
-      }
-      else
-      {
-        this->p = nullptr;
-      }
+      storage_.resize(storageNeeded);
+      syncBaseArray();
 
       // and we set the window pointers
-      this->block[0].setptr(this->p); // pointer to first block
-      for (size_type j=1; j<nblocks; ++j) // and the rest
+      block[0].setptr(this->p); // pointer to first block
+      for (size_type j=1; j<block.size(); ++j) // and the rest
         block[j].setptr(block[j-1].getptr()+block[j-1].getsize());
 
       // and the vector is ready
       this->initialized = true;
     }
 
-    size_type nblocks;            // number of blocks in vector
-    window_type* block;     // array of blocks pointing to the array in the base class
-    bool initialized;       // true if vector has been initialized
+    void syncBaseArray() noexcept
+    {
+      this->p = storage_.data();
+      this->n = storage_.size();
+    }
 
-    A allocator_;
-
-    typename A::template rebind<window_type>::other windowAllocator_;
+    VectorWindows block; // vector of blocks pointing to the array in the base class
+    std::vector<B, A> storage_;
+    bool initialized = false; // true if vector has been initialized
   };
 
 
