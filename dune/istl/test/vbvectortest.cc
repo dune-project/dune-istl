@@ -85,5 +85,10 @@ int main()
   testVectorSpaceOperations(v5);
   testScalarProduct(v5);
 
+  // check move construction
+  auto v6 = std::move(v4);
+  suite.check(v6.size()==20, "Check size of moved-constructed object");
+  suite.check(v6[0].size() == 8, "Check if blocksize of move constructed vector survived");
+
   return suite.exit();
 }
