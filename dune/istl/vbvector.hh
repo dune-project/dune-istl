@@ -43,7 +43,7 @@ namespace Dune {
     // just a shorthand
     typedef Imp::BlockVectorWindow<B,A> window_type;
 
-    // data-structure holding the windows (butbut  not the actual data)
+    // data-structure holding the windows (but not the actual data)
     using VectorWindows = std::vector<window_type, typename A::template rebind<window_type>::other>;
 
   public:
