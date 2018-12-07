@@ -146,6 +146,25 @@ namespace Dune {
 
     ~VariableBlockVector() = default;
 
+    void swap(VariableBlockVector& other) {
+      std::swap(storage_, other.storage_);
+      std::swap(block, other.block);
+      std::swap(initialized, other.initialized);
+
+      other.syncBaseArray();
+      syncBaseArray();
+    }
+
+    // move constructor:
+    VariableBlockVector(VariableBlockVector&& tmp) {
+      swap(tmp);
+    }
+
+    // move assignment
+    VariableBlockVector& operator=(VariableBlockVector&& tmp) {
+      swap(tmp);
+      return *this;
+    }
 
     //! same effect as constructor with same argument
     void resize (size_type _nblocks)
