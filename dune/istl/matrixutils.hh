@@ -37,43 +37,6 @@ namespace Dune
    * @brief Some handy generic functions for ISTL matrices.
    * @author Markus Blatt
    */
-  namespace
-  {
-
-    template<int i>
-    struct NonZeroCounter
-    {
-      template<class M>
-      static typename M::size_type count(const M& matrix)
-      {
-        typedef typename M::ConstRowIterator RowIterator;
-
-        RowIterator endRow = matrix.end();
-        typename M::size_type nonZeros = 0;
-
-        for(RowIterator row = matrix.begin(); row != endRow; ++row) {
-          typedef typename M::ConstColIterator Entry;
-          Entry endEntry = row->end();
-          for(Entry entry = row->begin(); entry != endEntry; ++entry) {
-            nonZeros += NonZeroCounter<i-1>::count(*entry);
-          }
-        }
-        return nonZeros;
-      }
-    };
-
-    template<>
-    struct NonZeroCounter<0>
-    {
-      template<class M>
-      static auto count(const M& matrix)
-      {
-        return 1;
-      }
-    };
-
-  }
-
   /**
    * @brief Check whether the a matrix has diagonal values
    * on blocklevel recursion levels.
@@ -150,10 +113,23 @@ namespace Dune
    * number of nonzero blocks time n*m.
    */
   template<class M>
-  inline int countNonZeros(const M& matrix)
+  inline auto countNonZeros(const M& matrix,typename std::enable_if_t<Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
-    return NonZeroCounter<M::blocklevel>::count(matrix);
+    return 1;
   }
+
+  template<class M>
+  inline auto countNonZeros(const M& matrix,typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
+  {
+    typename M::size_type nonZeros = 0;
+
+    for (auto row = matrix.begin(); row != matrix.end(); ++row)
+      for (auto entry = row->begin(); entry != row->end(); ++entry)
+        nonZeros += countNonZeros(*entry);
+
+    return nonZeros;
+  }
+
   /*
      template<class M>
      struct ProcessOnFieldsOfMatrix
