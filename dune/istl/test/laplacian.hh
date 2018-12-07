@@ -43,15 +43,20 @@ void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A, int N)
 
   setupSparsityPattern(A,N);
 
-  B diagonal(static_cast<FieldType>(0)), bone(static_cast<FieldType>(0)),
-  beps(static_cast<FieldType>(0));
-  for(typename B::RowIterator b = diagonal.begin(); b !=  diagonal.end(); ++b)
-    b->operator[](b.index())=4;
+  B diagonal(static_cast<FieldType>(0)), bone(static_cast<FieldType>(0));
 
+  Dune::Hybrid::ifElse(Dune::IsNumber<B>(),
+    [&](auto id) {
+      diagonal = B(4.0);
+      bone = B(-1.0);
+    },
+    [&](auto id) {
+      for (auto b = id(diagonal).begin(); b != id(diagonal).end(); ++b)
+        b->operator[](b.index())=4;
 
-  for(typename B::RowIterator b=bone.begin(); b !=  bone.end(); ++b)
-    b->operator[](b.index())=-1.0;
-
+      for (auto b=id(bone).begin(); b != id(bone).end(); ++b)
+        b->operator[](b.index())=-1.0;
+    });
 
   for (typename Dune::BCRSMatrix<B,Alloc>::RowIterator i = A.begin(); i != A.end(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field

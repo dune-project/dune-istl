@@ -63,12 +63,12 @@ namespace Dune
     };
 
     template<>
-    struct NonZeroCounter<1>
+    struct NonZeroCounter<0>
     {
       template<class M>
-      static typename M::size_type count(const M& matrix)
+      static auto count(const M& matrix)
       {
-        return matrix.N()*matrix.M();
+        return 1;
       }
     };
 
