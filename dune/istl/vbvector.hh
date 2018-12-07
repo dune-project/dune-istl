@@ -398,7 +398,7 @@ namespace Dune {
 
     //! @returns an iterator that is positioned before
     //! the first entry of the vector.
-    Iterator beforeBegin () const
+    Iterator beforeBegin ()
     {
       return --block.begin();
     }
@@ -429,6 +429,13 @@ namespace Dune {
     ConstIterator beforeEnd() const
     {
       return --block.end();
+    }
+
+    //! @returns an iterator that is positioned before
+    //! the first entry of the vector.
+    ConstIterator beforeBegin () const
+    {
+      return --block.begin();
     }
 
     //! end ConstIterator
