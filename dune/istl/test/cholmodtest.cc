@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   try
   {
 
-    int N = 300; // number of nodes
+    int N = 3; // number of nodes
     const int bs = 1; // block size
 
     // fill matrix with external method
@@ -53,6 +53,9 @@ int main(int argc, char** argv)
     Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod;
     cholmod.setMatrix(A);
     cholmod.apply(x,b,res);
+
+    auto L = cholmod.getFactor();
+    Dune::printmatrix(std::cout, L, "L", "");
 
     // test
     A.mmv(x,b);

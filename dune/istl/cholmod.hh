@@ -258,8 +258,55 @@ public:
     L_ = cholmod_analyze(M.get(), &c_);
 
     // Do the factorization (this may take some time)
+    Dune::Timer timer;
     cholmod_factorize(M.get(), L_, &c_);
+    std::cout << "cholmod_factorize: " << timer.elapsed() << std::endl; timer.reset();
+
   }
+
+  Matrix getFactor() {
+
+    const auto deleter = [c = &this->c_](auto* p) {
+      cholmod_free_sparse(&p, c);
+    };
+    auto L_sparse = std::unique_ptr<cholmod_sparse, decltype(deleter)>(
+      cholmod_transpose(cholmod_factor_to_sparse(L_, &c_), 1, &c_), deleter); // TODO: cleanup transpose, transpose optional
+
+    int N = L_sparse->nrow;
+
+    int* Ap = static_cast<int*>(L_sparse->p);
+    int* Ai = static_cast<int*>(L_sparse->i);
+    double* Ax = static_cast<double*>(L_sparse->x);
+
+    Matrix factor(N, N, Matrix::random);
+
+    // Determine target row sizes by incrementing for every CHOLMOD row index we have
+    for (int row = 0; row < N; row++) {
+      factor.setrowsize(row,0);
+    }
+    for (int i = 0; i < Ap[N]; i++) {
+      factor.incrementrowsize(Ai[i]);
+    }
+    factor.endrowsizes();
+
+    // Set up target sparsity pattern from CHOLMOD sparsity pattern
+    for (int col = 0; col < N; col++) {
+      for (int rowi = Ap[col]; rowi < Ap[col+1]; rowi++) {
+        factor.addindex(Ai[rowi],col);
+      }
+    }
+    factor.endindices();
+
+    // Finally, transfer actual cell data
+    for (int col = 0; col < N; col++) {
+      for (int rowi = Ap[col]; rowi < Ap[col+1]; rowi++) {
+        factor[Ai[rowi]][col] = Ax[rowi];
+      }
+    }
+
+    return factor;
+  }
+
 
   virtual SolverCategory::Category category() const
   {
