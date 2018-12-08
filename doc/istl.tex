@@ -16,25 +16,8 @@
 \usepackage{listings}
 \lstset{language=C++, basicstyle=\ttfamily,
   stringstyle=\ttfamily, commentstyle=\it, extendedchars=true}
-
-\newif\ifpdf
-\ifnum\ifx\pdfoutput\undefined0\else\pdfoutput\fi<1
-\pdffalse % we are not running PDFLaTeX
-\else
-\pdftrue % we are running PDFLaTeX
-\fi
-
-\ifpdf
-\usepackage[pdftex]{graphicx}
-\else
 \usepackage{graphicx}
-\fi
 
-\ifpdf
-\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
-\else
-\DeclareGraphicsExtensions{.eps, .jpg}
-\fi
 
 \newcommand{\C}{\mathbb{C}}
 \newcommand{\R}{\mathbb{R}}
@@ -831,7 +814,7 @@ now lack of computational efficiency due to the generic implementation.
 
 % bibtex bibliography
 \bibliographystyle{plain}
-\bibliography{istl.bib}
+\bibliography{istl}
 
 % some links
 % http://www.netlib.org/blas/blast-forum/
