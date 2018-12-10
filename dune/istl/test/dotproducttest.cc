@@ -6,11 +6,14 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/std/type_traits.hh>
+#include <dune/common/test/testsuite.hh>
 #include <dune/common/hybridutilities.hh>
 
 // scalar ordering doesn't work for complex numbers
 template <class RealBlockVector, class ComplexBlockVector>
-int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
+Dune::TestSuite DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
+  Dune::TestSuite t;
+
   typedef typename RealBlockVector::field_type rt;
   typedef typename ComplexBlockVector::field_type ct;
   const rt myEps((rt)1e-6);
@@ -40,8 +43,8 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
                                                      return id(one[0]).size();
                                                    });
 
-  assert(numBlocks==one.N());
-  assert(numBlocks==iVec.N());
+  t.require(numBlocks==one.N());
+  t.require(numBlocks==iVec.N());
   const size_type length = numBlocks * blockSize; // requires innter block size of VariableBlockVector to be 1!
 
   ct ctlength = ct(length);
@@ -64,14 +67,14 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
         result += dot(id(one[i]),id(one[i])) + (id(one[i])).dot(id(one[i]));
       }
 
-      assert(std::abs(result-ct(2)*ctlength)<= myEps);
+      t.check(std::abs(result-ct(2)*ctlength)<= myEps);
 
       result = ct();
       for(size_type i=0; i < numBlocks; ++i) {
         result += dot(id(iVec[i]),id(iVec[i]))+ (id(iVec[i])).dot(id(iVec[i]));
       }
 
-      assert(std::abs(result-ct(2)*ctlength)<= myEps);
+      t.check(std::abs(result-ct(2)*ctlength)<= myEps);
 
       // blockwise dotT / operator * tests
       result = ct();
@@ -79,14 +82,14 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
         result += dotT(id(one[i]),id(one[i])) + id(one[i])*id(one[i]);
       }
 
-      assert(std::abs(result-ct(2)*ctlength)<= myEps);
+      t.check(std::abs(result-ct(2)*ctlength)<= myEps);
 
       result = ct();
       for(size_type i=0; i < numBlocks; ++i) {
         result += dotT(id(iVec[i]),id(iVec[i])) + id(iVec[i])*id(iVec[i]);
       }
 
-      assert(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
+      t.check(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
     }
     ,
     [&](auto id){}
@@ -95,58 +98,58 @@ int  DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
   // global operator * tests
   result = one*one +  dotT(one,one);
 
-  assert(std::abs(result-ct(2)*ctlength)<= myEps);
+  t.check(std::abs(result-ct(2)*ctlength)<= myEps);
 
   result = iVec*iVec + dotT(iVec,iVec);
 
-  assert(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
+  t.check(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
 
   // global operator dot(,) tests
   result = one.dot(one)  +  dot(one,one);
 
-  assert(std::abs(result-ct(2)*ctlength)<= myEps);
+  t.check(std::abs(result-ct(2)*ctlength)<= myEps);
   result = iVec.dot(iVec) + dot(iVec,iVec);
 
-  assert(std::abs(result-ct(2)*ctlength)<= myEps);
+  t.check(std::abs(result-ct(2)*ctlength)<= myEps);
 
   // mixed global dotT tests
   result = iVec*one + one*iVec + dotT(one,iVec) + dotT(iVec,one);
 
-  assert(std::abs(result-ct(4)*ctlength*I)<= myEps);
+  t.check(std::abs(result-ct(4)*ctlength*I)<= myEps);
 
   // mixed global dot tests
   result = iVec.dot(one) + dot(iVec,one);
 
-  assert(std::abs(result-ct(2)*complexSign*ctlength*I)<= myEps);
+  t.check(std::abs(result-ct(2)*complexSign*ctlength*I)<= myEps);
   result = one.dot(iVec) + dot(one,iVec);
 
-  assert(std::abs(result-ct(2)*ctlength*I)<= myEps);
+  t.check(std::abs(result-ct(2)*ctlength*I)<= myEps);
 
-  return 0;
+  return t;
 }
 
 
 int main()
 {
-  int ret = 0;
+  Dune::TestSuite t;
   const size_t BlockSize = 5;
   const size_t numBlocks = 10;
   const size_t capacity = BlockSize * numBlocks * 2; // use capacity here, that we can use the a constructor taking two integers  for both BlockVector and VariableBlockVector
 
-  ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<int,BlockSize> >, Dune::BlockVector<Dune::FieldVector<int,BlockSize> > >  (numBlocks,capacity);
-  ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<int,1> >, Dune::VariableBlockVector<Dune::FieldVector<int,1> > >  (numBlocks,1);
+  t.subTest(DotProductTest<Dune::BlockVector<Dune::FieldVector<int,BlockSize> >, Dune::BlockVector<Dune::FieldVector<int,BlockSize> > >  (numBlocks,capacity));
+  t.subTest(DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<int,1> >, Dune::VariableBlockVector<Dune::FieldVector<int,1> > >  (numBlocks,1));
 
-  ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<float,BlockSize> >, Dune::BlockVector<Dune::FieldVector<std::complex<float>,BlockSize> > >  (numBlocks,capacity);
-  ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<float,1> >, Dune::VariableBlockVector<Dune::FieldVector<std::complex<float>,1> > >  (numBlocks,BlockSize);
+  t.subTest(DotProductTest<Dune::BlockVector<Dune::FieldVector<float,BlockSize> >, Dune::BlockVector<Dune::FieldVector<std::complex<float>,BlockSize> > >  (numBlocks,capacity));
+  t.subTest(DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<float,1> >, Dune::VariableBlockVector<Dune::FieldVector<std::complex<float>,1> > >  (numBlocks,BlockSize));
 
-  ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<float,BlockSize> >, Dune::BlockVector<Dune::FieldVector<float,BlockSize> > >  (numBlocks,capacity);
-  ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<float,1> >, Dune::VariableBlockVector<Dune::FieldVector<float,1> > >  (numBlocks,1);
+  t.subTest(DotProductTest<Dune::BlockVector<Dune::FieldVector<float,BlockSize> >, Dune::BlockVector<Dune::FieldVector<float,BlockSize> > >  (numBlocks,capacity));
+  t.subTest(DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<float,1> >, Dune::VariableBlockVector<Dune::FieldVector<float,1> > >  (numBlocks,1));
 
-  ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<double,BlockSize> >, Dune::BlockVector<Dune::FieldVector<std::complex<double>,BlockSize> > >  (numBlocks,capacity);
-  ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<double,1> >, Dune::VariableBlockVector<Dune::FieldVector<std::complex<double>,1> > >  (numBlocks,BlockSize);
+  t.subTest(DotProductTest<Dune::BlockVector<Dune::FieldVector<double,BlockSize> >, Dune::BlockVector<Dune::FieldVector<std::complex<double>,BlockSize> > >  (numBlocks,capacity));
+  t.subTest(DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<double,1> >, Dune::VariableBlockVector<Dune::FieldVector<std::complex<double>,1> > >  (numBlocks,BlockSize));
 
-  ret += DotProductTest<Dune::BlockVector<Dune::FieldVector<double,BlockSize> >, Dune::BlockVector<Dune::FieldVector<double,BlockSize> > >  (numBlocks,capacity);
-  ret += DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<double,1> >, Dune::VariableBlockVector<Dune::FieldVector<double,1> > >  (numBlocks,BlockSize);
+  t.subTest(DotProductTest<Dune::BlockVector<Dune::FieldVector<double,BlockSize> >, Dune::BlockVector<Dune::FieldVector<double,BlockSize> > >  (numBlocks,capacity));
+  t.subTest(DotProductTest<Dune::VariableBlockVector<Dune::FieldVector<double,1> >, Dune::VariableBlockVector<Dune::FieldVector<double,1> > >  (numBlocks,BlockSize));
 
-  return ret;
+  return t.exit();
 }
