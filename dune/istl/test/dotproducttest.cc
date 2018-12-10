@@ -60,7 +60,7 @@ Dune::TestSuite DotProductTest(const size_t numBlocks,const size_t blockSizeOrCa
 
   t.require(numBlocks==one.N());
   t.require(numBlocks==iVec.N());
-  const size_type length = numBlocks * blockSize; // requires innter block size of VariableBlockVector to be 1!
+  const size_type length = numBlocks * blockSize; // requires inner block size of VariableBlockVector to be 1!
 
   ct ctlength = ct(length);
 
