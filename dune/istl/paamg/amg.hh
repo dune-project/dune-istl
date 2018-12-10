@@ -551,7 +551,7 @@ namespace Dune
 
       if(verbosity_>0 && matrices_->parallelInformation().finest()->communicator().rank()==0)
         std::cout<<"Building hierarchy of "<<matrices_->maxlevels()<<" levels "
-                 <<"(inclusive coarse solver) took "<<watch.elapsed()<<" seconds."<<std::endl;
+                 <<"(including coarse solver) took "<<watch.elapsed()<<" seconds."<<std::endl;
     }
 
 

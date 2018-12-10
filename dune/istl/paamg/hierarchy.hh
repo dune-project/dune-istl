@@ -216,7 +216,7 @@ namespace Dune
 
         /**
          * @brief Check whether there was a redistribution at the current level.
-         * @return True if there is a redistributed version of the conatainer at the current level.
+         * @return True if there is a redistributed version of the container at the current level.
          */
         bool isRedistributed() const
         {
