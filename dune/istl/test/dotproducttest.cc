@@ -9,6 +9,24 @@
 #include <dune/common/test/testsuite.hh>
 #include <dune/common/hybridutilities.hh>
 
+template<typename T>
+struct Sign
+{
+  static T complexSign()
+    { return T(1.0); }
+  static T sqrtComplexSign()
+    { return T(1.0); }
+};
+
+template<typename T>
+struct Sign< std::complex<T> >
+{
+  static std::complex<T> complexSign()
+    { return std::complex<T>(-1.0); }
+  static std::complex<T> sqrtComplexSign()
+    { return std::complex<T>(0.0, 1.0); }
+};
+
 // scalar ordering doesn't work for complex numbers
 template <class RealBlockVector, class ComplexBlockVector>
 Dune::TestSuite DotProductTest(const size_t numBlocks,const size_t blockSizeOrCapacity) {
@@ -21,11 +39,8 @@ Dune::TestSuite DotProductTest(const size_t numBlocks,const size_t blockSizeOrCa
   static_assert(std::is_same< typename Dune::FieldTraits<rt>::real_type, rt>::value,
                 "DotProductTest requires real data type for first block vector!");
 
-  const bool secondBlockIsComplex = !std::is_same< typename Dune::FieldTraits<ct>::real_type, ct>::value;
-
-  const ct complexSign = secondBlockIsComplex ? -1. : 1.;
-  // avoid constructor ct(0.,1.)
-  const ct I = secondBlockIsComplex ? std::sqrt(ct(-1.)) : ct(1.); // imaginary unit
+  const ct complexSign = Sign<ct>::complexSign();
+  const ct I = Sign<ct>::sqrtComplexSign();
 
   typedef typename RealBlockVector::size_type size_type;
 
