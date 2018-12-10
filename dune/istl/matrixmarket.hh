@@ -647,7 +647,7 @@ namespace Dune
     struct MatrixValuesSetter
     {
       /**
-       * @brief Sets the matrixvalues.
+       * @brief Sets the matrix values.
        * @param row The row data as read from file.
        * @param matrix The matrix whose data we set.
        */
@@ -701,7 +701,7 @@ namespace Dune
     {
       typedef Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A> Matrix;
       // First path
-      // store entries together with column index in a speparate
+      // store entries together with column index in a separate
       // data structure
       std::vector<std::set<IndexData<D> > > rows(matrix.N()*brows);
 
