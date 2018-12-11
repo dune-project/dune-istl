@@ -169,13 +169,13 @@ namespace Dune
     template<class M>
     struct mm_header_printer;
 
-    template<typename T, typename A, int i, int j>
-    struct mm_header_printer<BCRSMatrix<FieldMatrix<T,i,j>,A> >
+    template<typename T, typename A>
+    struct mm_header_printer<BCRSMatrix<T,A> >
     {
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix coordinate ";
-        os<<mm_numeric_type<T>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<typename Imp::BlockTraits<T>::field_type>::str()<<" general"<<std::endl;
       }
     };
 
@@ -185,7 +185,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix array ";
-        os<<mm_numeric_type<typename B::field_type>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<typename Imp::BlockTraits<B>::field_type>::str()<<" general"<<std::endl;
       }
     };
 
@@ -220,6 +220,19 @@ namespace Dune
     template<class M>
     struct mm_block_structure_header;
 
+    template<typename T, typename A>
+    struct mm_block_structure_header<BlockVector<T,A> >
+    {
+      typedef BlockVector<T,A> M;
+      static_assert(IsNumber<T>::value, "Only scalar entries are expected here!");
+
+      static void print(std::ostream& os, const M&)
+      {
+        os<<"% ISTL_STRUCT blocked ";
+        os<<"1 1"<<std::endl;
+      }
+    };
+
     template<typename T, typename A, int i>
     struct mm_block_structure_header<BlockVector<FieldVector<T,i>,A> >
     {
@@ -229,6 +242,19 @@ namespace Dune
       {
         os<<"% ISTL_STRUCT blocked ";
         os<<i<<" "<<1<<std::endl;
+      }
+    };
+
+    template<typename T, typename A>
+    struct mm_block_structure_header<BCRSMatrix<T,A> >
+    {
+      typedef BCRSMatrix<T,A> M;
+      static_assert(IsNumber<T>::value, "Only scalar entries are expected here!");
+
+      static void print(std::ostream& os, const M&)
+      {
+        os<<"% ISTL_STRUCT blocked ";
+        os<<"1 1"<<std::endl;
       }
     };
 
@@ -651,19 +677,35 @@ namespace Dune
        * @param row The row data as read from file.
        * @param matrix The matrix whose data we set.
        */
-      template<typename M>
+      template<typename T>
       void operator()(const std::vector<std::set<IndexData<D> > >& rows,
-                      M& matrix)
+                      BCRSMatrix<T>& matrix)
       {
-        for(typename M::RowIterator iter=matrix.begin();
-            iter!= matrix.end(); ++iter)
+        static_assert(IsNumber<T>::value && brows==1 && bcols==1, "Only scalar entries are expected here!");
+        for (auto iter=matrix.begin(); iter!= matrix.end(); ++iter)
         {
-          for(typename M::size_type brow=iter.index()*brows,
+          auto brow=iter.index();
+          for (auto siter=rows[brow].begin(); siter != rows[brow].end(); ++siter)
+            (*iter)[siter->index] = siter->number;
+        }
+      }
+
+      /**
+       * @brief Sets the matrix values.
+       * @param row The row data as read from file.
+       * @param matrix The matrix whose data we set.
+       */
+      template<typename T>
+      void operator()(const std::vector<std::set<IndexData<D> > >& rows,
+                      BCRSMatrix<FieldMatrix<T,brows,bcols> >& matrix)
+      {
+        for (auto iter=matrix.begin(); iter!= matrix.end(); ++iter)
+        {
+          for (auto brow=iter.index()*brows,
               browend=iter.index()*brows+brows;
               brow<browend; ++brow)
           {
-            typedef typename std::set<IndexData<D> >::const_iterator Siter;
-            for(Siter siter=rows[brow].begin(), send=rows[brow].end();
+            for (auto siter=rows[brow].begin(), send=rows[brow].end();
                 siter != send; ++siter)
               (*iter)[siter->index/bcols][brow%brows][siter->index%bcols]=siter->number;
           }
@@ -694,12 +736,39 @@ namespace Dune
       return std::conj(r);
     }
 
-    template<typename T, typename A, int brows, int bcols, typename D>
-    void readSparseEntries(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>& matrix,
+    template<typename M>
+    struct mm_multipliers
+    {};
+
+    template<typename B, typename A>
+    struct mm_multipliers<BCRSMatrix<B,A> >
+    {
+      enum {
+        rows = 1,
+        cols = 1
+      };
+    };
+
+    template<typename B, int i, int j, typename A>
+    struct mm_multipliers<BCRSMatrix<FieldMatrix<B,i,j>,A> >
+    {
+      enum {
+        rows = i,
+        cols = j
+      };
+    };
+
+    template<typename T, typename A, typename D>
+    void readSparseEntries(Dune::BCRSMatrix<T,A>& matrix,
                            std::istream& file, std::size_t entries,
                            const MMHeader& mmHeader, const D&)
     {
-      typedef Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A> Matrix;
+      typedef Dune::BCRSMatrix<T,A> Matrix;
+
+      // Number of rows and columns of T, if it is a matrix (1x1 otherwise)
+      constexpr int brows = mm_multipliers<Matrix>::rows;
+      constexpr int bcols = mm_multipliers<Matrix>::cols;
+
       // First path
       // store entries together with column index in a separate
       // data structure
@@ -810,6 +879,15 @@ namespace Dune
     istr >> cols;
   }
 
+  template<typename T, typename A>
+  void mm_read_vector_entries(Dune::BlockVector<T,A>& vector,
+                              std::size_t size,
+                              std::istream& istr)
+  {
+    for (int i=0; size>0; ++i, --size)
+      istr>>vector[i];
+  }
+
   template<typename T, typename A, int entries>
   void mm_read_vector_entries(Dune::BlockVector<Dune::FieldVector<T,entries>,A>& vector,
                               std::size_t size,
@@ -829,8 +907,8 @@ namespace Dune
    * @param istr The input stream to read the data from.
    * @warning Not all formats are supported!
    */
-  template<typename T, typename A, int entries>
-  void readMatrixMarket(Dune::BlockVector<Dune::FieldVector<T,entries>,A>& vector,
+  template<typename T, typename A>
+  void readMatrixMarket(Dune::BlockVector<T,A>& vector,
                         std::istream& istr)
   {
     using namespace MatrixMarketImpl;
@@ -844,17 +922,24 @@ namespace Dune
     if(header.type!=array_type)
       DUNE_THROW(MatrixMarketFormatError, "Vectors have to be stored in array format!");
 
-    std::size_t size=rows/entries;
-    if(size*entries!=rows)
-      DUNE_THROW(MatrixMarketFormatError, "Block size of vector is not correct!");
 
-    vector.resize(size);
+    Dune::Hybrid::ifElse(Dune::IsNumber<T>(),
+      [&](auto id){
+        vector.resize(rows);
+      },
+      [&](auto id){  // Assume that T is a FieldVector
+        T dummy;
+        auto blocksize = id(dummy).size();
+        std::size_t size=rows/blocksize;
+        if(size*blocksize!=rows)
+          DUNE_THROW(MatrixMarketFormatError, "Block size of vector is not correct!");
+
+        vector.resize(size);
+      });
 
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-
     mm_read_vector_entries(vector, rows, istr);
   }
-
 
   /**
    * @brief Reads a sparse matrix from a matrix market file.
@@ -862,11 +947,12 @@ namespace Dune
    * @param istr The input stream to read the data from.
    * @warning Not all formats are supported!
    */
-  template<typename T, typename A, int brows, int bcols>
-  void readMatrixMarket(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>& matrix,
+  template<typename T, typename A>
+  void readMatrixMarket(Dune::BCRSMatrix<T,A>& matrix,
                         std::istream& istr)
   {
     using namespace MatrixMarketImpl;
+    using Matrix = Dune::BCRSMatrix<T,A>;
 
     MMHeader header;
     if(!readMatrixMarketBanner(istr, header)) {
@@ -896,33 +982,35 @@ namespace Dune
 
     std::size_t nnz, blockrows, blockcols;
 
+    // Number of rows and columns of T, if it is a matrix (1x1 otherwise)
+    constexpr int brows = mm_multipliers<Matrix>::rows;
+    constexpr int bcols = mm_multipliers<Matrix>::cols;
+
     std::tie(blockrows, blockcols, nnz) = calculateNNZ<brows, bcols>(rows, cols, entries, header);
 
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
 
 
     matrix.setSize(blockrows, blockcols);
-    matrix.setBuildMode(Dune::BCRSMatrix<Dune::FieldMatrix<T,brows,bcols>,A>::row_wise);
+    matrix.setBuildMode(Dune::BCRSMatrix<T,A>::row_wise);
 
     if(header.type==array_type)
       DUNE_THROW(Dune::NotImplemented, "Array format currently not supported for matrices!");
 
-    readSparseEntries(matrix, istr, entries, header, NumericWrapper<T>());
+    readSparseEntries(matrix, istr, entries, header, NumericWrapper<typename Matrix::field_type>());
   }
 
-  template<typename M>
-  struct mm_multipliers
-  {};
-
-  template<typename B, int i, int j, typename A>
-  struct mm_multipliers<BCRSMatrix<FieldMatrix<B,i,j>,A> >
+  // Print a scalar entry
+  template<typename B>
+  void mm_print_entry(const B& entry,
+                      std::size_t rowidx,
+                      std::size_t colidx,
+                      std::ostream& ostr)
   {
-    enum {
-      rows = i,
-      cols = j
-    };
-  };
+    ostr << rowidx << " " << colidx << " " << entry << std::endl;
+  }
 
+  // Print a block entry
   template<typename B, int i, int j>
   void mm_print_entry(const FieldMatrix<B,i,j>& entry,
                       typename FieldMatrix<B,i,j>::size_type rowidx,
@@ -963,6 +1051,12 @@ namespace Dune
                             std::integral_constant<int,isnumeric>());
   }
 
+  template<typename T, typename A>
+  std::size_t countEntries(const BlockVector<T,A>& vector)
+  {
+    return vector.size();
+  }
+
   template<typename T, typename A, int i>
   std::size_t countEntries(const BlockVector<FieldVector<T,i>,A>& vector)
   {
@@ -987,8 +1081,8 @@ namespace Dune
                          std::ostream& ostr,
                          const std::integral_constant<int,1>&)
   {
-    ostr<<matrix.N()*mm_multipliers<M>::rows<<" "
-        <<matrix.M()*mm_multipliers<M>::cols<<" "
+    ostr<<matrix.N()*MatrixMarketImpl::mm_multipliers<M>::rows<<" "
+        <<matrix.M()*MatrixMarketImpl::mm_multipliers<M>::cols<<" "
         <<countNonZeros(matrix)<<std::endl;
 
     typedef typename M::const_iterator riterator;
@@ -996,8 +1090,8 @@ namespace Dune
     for(riterator row=matrix.begin(); row != matrix.end(); ++row)
       for(citerator col = row->begin(); col != row->end(); ++col)
         // Matrix Market indexing start with 1!
-        mm_print_entry(*col, row.index()*mm_multipliers<M>::rows+1,
-                       col.index()*mm_multipliers<M>::cols+1, ostr);
+        mm_print_entry(*col, row.index()*MatrixMarketImpl::mm_multipliers<M>::rows+1,
+                       col.index()*MatrixMarketImpl::mm_multipliers<M>::cols+1, ostr);
   }
 
 
