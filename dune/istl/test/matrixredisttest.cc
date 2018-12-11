@@ -55,7 +55,7 @@ int testRepart(int N, int coarsenTarget)
 
   Communication comm(MPI_COMM_WORLD);
 
-  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
 
   MatrixGraph graph(mat);
