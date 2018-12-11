@@ -110,7 +110,7 @@ void testTwoLevelMethod()
     typedef Dune::CollectiveCommunication<void*> Comm;
     Comm c;
     int n;
-    BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, indices, c, &n, 1);
+    BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, c, &n, 1);
     Vector b(mat.N()), x(mat.M());
     x=0;
     randomize(mat, b);
