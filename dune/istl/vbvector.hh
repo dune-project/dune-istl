@@ -435,12 +435,28 @@ namespace Dune {
 
     //! Iterator class for sequential creation of blocks
     class CreateIterator
-    : public std::iterator<std::output_iterator_tag,   // iterator category
-                           size_type,                  // value type
-                           size_type*,                 // pointer type
-                           SizeProxy>                 // reference type
     {
     public:
+      //! iterator category
+      using iterator_category = std::output_iterator_tag;
+
+      //! value type
+      using value_type = size_type;
+
+      /**
+       * \brief difference type (unused)
+       *
+       * This type is required by the C++ standard, but not used for
+       * output iterators.
+       */
+      using difference_type = void;
+
+      //! pointer type
+      using pointer = size_type*;
+
+      //! reference type
+      using reference = SizeProxy;
+
       //! constructor
       CreateIterator (VariableBlockVector& _v, int _i, bool _isEnd) :
         v(_v),
