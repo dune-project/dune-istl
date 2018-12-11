@@ -22,11 +22,6 @@ template<class M>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end);
 
 
-template<class M, class G, class L, class C, int n>
-M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices,
-                     const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps=1.0);
-
-
 template<class M, class G, class L, int s>
 void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int overlapStart, int overlapEnd,
                   int start, int end)
@@ -154,7 +149,7 @@ void setBoundary(V& lhs, V& rhs, const G& N)
 }
 
 template<class M, class G, class L, class C, int s>
-M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps)
+M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps=1.0)
 {
   int procs=p.size(), rank=p.rank();
 
