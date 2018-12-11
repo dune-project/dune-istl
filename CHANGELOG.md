@@ -26,6 +26,8 @@
   a single entry can still be cast to their `field_type`.  Therefore, the
   change is completely backward-compatible.
 
+- Added a right-preconditioned flexible restarted GMRes solver
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
