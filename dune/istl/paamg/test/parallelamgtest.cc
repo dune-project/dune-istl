@@ -94,7 +94,7 @@ void testAmg(int N, int coarsenTarget)
 
   Communication comm(MPI_COMM_WORLD);
 
-  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
 
   const BCRSMat& cmat = mat;
 
