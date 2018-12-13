@@ -338,7 +338,7 @@ namespace Dune {
         if (_verbose>0)
           std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
                     << std::endl;
-        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << def0
+        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << simdIO(def0)
                    << " is infinite or NaN");
       }
 
@@ -406,7 +406,8 @@ namespace Dune {
             std::cout << "=== CGSolver: abort due to infinite or NaN defect"
                       << std::endl;
           DUNE_THROW(SolverAbort,
-                     "CGSolver: defect=" << def << " is infinite or NaN");
+                     "CGSolver: defect=" << simdIO(def)
+                     << " is infinite or NaN");
         }
 
         if (all_true(def<def0*_reduction) || max_value(def)<1E-30)    // convergence check
@@ -494,9 +495,9 @@ namespace Dune {
           res.condition_estimate = id(max_eigv / min_eigv);
 
           if (this->_verbose > 0) {
-            std::cout << "Min eigv estimate: " << min_eigv << std::endl;
-            std::cout << "Max eigv estimate: " << max_eigv << std::endl;
-            std::cout << "Condition estimate: " << max_eigv / min_eigv << std::endl;
+            std::cout << "Min eigv estimate: " << simdIO(min_eigv) << std::endl;
+            std::cout << "Max eigv estimate: " << simdIO(max_eigv) << std::endl;
+            std::cout << "Condition estimate: " << simdIO(max_eigv / min_eigv) << std::endl;
           }
         });
 #else
@@ -624,11 +625,11 @@ namespace Dune {
         // look if breakdown occurred
         if (all_true(abs(rho) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - rho "
-                     << rho << " <= EPSILON " << max_value(EPSILON)
+                     << simdIO(rho) << " <= EPSILON " << max_value(EPSILON)
                      << " after " << it << " iterations");
         if (all_true(abs(omega) <= EPSILON))
           DUNE_THROW(SolverAbort,"breakdown in BiCGSTAB - omega "
-                     << omega << " <= EPSILON " << max_value(EPSILON)
+                     << simdIO(omega) << " <= EPSILON " << max_value(EPSILON)
                      << " after " << it << " iterations");
 
 
@@ -654,7 +655,7 @@ namespace Dune {
 
         if ( all_true(abs(h) < EPSILON) )
           DUNE_THROW(SolverAbort,"abs(h) < EPSILON in BiCGSTAB - abs(h) "
-                     << abs(h) << " < EPSILON " << max_value(EPSILON)
+                     << simdIO(abs(h)) << " < EPSILON " << max_value(EPSILON)
                      << " after " << it << " iterations");
 
         alpha = rho_new / h;

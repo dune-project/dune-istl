@@ -168,8 +168,8 @@ namespace Dune
     {
       const DataType rate = norm/norm_old;
       s << std::setw(iterationSpacing)  << iter << " ";
-      s << std::setw(normSpacing) << norm << " ";
-      s << std::setw(normSpacing) << rate << std::endl;
+      s << std::setw(normSpacing) << simdIO(norm) << " ";
+      s << std::setw(normSpacing) << simdIO(rate) << std::endl;
     }
 
     //! helper function for printing solver output
@@ -179,7 +179,7 @@ namespace Dune
                      const DataType& norm) const
     {
       s << std::setw(iterationSpacing)  << iter << " ";
-      s << std::setw(normSpacing) << norm << std::endl;
+      s << std::setw(normSpacing) << simdIO(norm) << std::endl;
     }
   };
 
