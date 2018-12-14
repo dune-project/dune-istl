@@ -1028,7 +1028,7 @@ namespace Dune {
     using typename IterativeSolver<X,Y>::field_type;
     using typename IterativeSolver<X,Y>::real_type;
 
-  private:
+  protected:
     using typename IterativeSolver<X,X>::scalar_real_type;
 
     //! \brief field_type Allocator retrieved from domain type
@@ -1228,7 +1228,7 @@ namespace Dune {
 
     }
 
-  private :
+  protected :
 
     void print_result(const InverseOperatorResult& res) const {
       int k = res.iterations>0 ? res.iterations : 1;
@@ -1318,6 +1318,215 @@ namespace Dune {
     using IterativeSolver<X,Y>::_maxit;
     using IterativeSolver<X,Y>::_verbose;
     int _restart;
+  };
+
+
+  /**
+     \brief implements the Flexible Generalized Minimal Residual (FGMRes) method (right preconditioned)
+
+     FGMRes solves the right-preconditioned unsymmetric linear system Ax = b using the
+     Flexible Generalized Minimal Residual method. It is flexible because the preconditioner can change in every iteration,
+     which allows to use Krylov solvers without fixed number of iterations as preconditioners. Needs more memory than GMRes.
+
+     \tparam X trial vector, vector type of the solution
+     \tparam Y test vector, vector type of the RHS
+     \tparam F vector type for orthonormal basis of Krylov space
+
+   */
+
+  template<class X, class Y=X, class F = Y>
+  class RestartedFlexibleGMResSolver : public RestartedGMResSolver<X,Y>
+  {
+  public:
+    using typename RestartedGMResSolver<X,Y>::domain_type;
+    using typename RestartedGMResSolver<X,Y>::range_type;
+    using typename RestartedGMResSolver<X,Y>::field_type;
+    using typename RestartedGMResSolver<X,Y>::real_type;
+
+  private:
+    using typename RestartedGMResSolver<X,Y>::scalar_real_type;
+
+    //! \brief field_type Allocator retrieved from domain type
+    using fAlloc = typename RestartedGMResSolver<X,Y>::fAlloc;
+    //! \brief real_type Allocator retrieved from domain type
+    using rAlloc = typename RestartedGMResSolver<X,Y>::rAlloc;
+
+  public:
+    // copy base class constructors
+    using RestartedGMResSolver<X,Y>::RestartedGMResSolver;
+
+    // don't shadow four-argument version of apply defined in the base class
+    using RestartedGMResSolver<X,Y>::apply;
+
+    /*!
+       \brief Apply inverse operator.
+
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the RestartedFlexibleGMResSolver aborts when it detects a
+             breakdown.
+     */
+    void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) override
+    {
+      using std::abs;
+      const Simd::Scalar<real_type> EPSILON = 1e-80;
+      const int m = _restart;
+      real_type norm, norm_old = 0.0, norm_0;
+      int i, j = 1, k;
+      std::vector<field_type,fAlloc> s(m+1), sn(m);
+      std::vector<real_type,rAlloc> cs(m);
+      // helper vector
+      Y tmp(b);
+      std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
+      std::vector<F> v(m+1,b);
+      std::vector<X> w(m+1,b);
+
+      // start timer
+      Dune::Timer watch;
+      watch.reset();
+
+      // clear solver statistics and set res.converged to false
+      res.clear();
+      // setup preconditioner if it does something in pre
+      _prec->pre(x, b);
+
+      // calculate residual and overwrite a copy of the rhs with it
+      v[0] = b;
+      _op->applyscaleadd(-1.0, x, v[0]); // b -= Ax
+
+      norm = norm_old = norm_0 = _sp->norm(v[0]); // the residual norm
+
+      // print header
+      if(_verbose > 0)
+      {
+        std::cout << "=== RestartedFlexibleGMResSolver" << std::endl;
+        if(_verbose > 1)
+        {
+          this->printHeader(std::cout);
+          this->printOutput(std::cout,0,norm_0);
+        }
+      }
+
+      // check if we are already converged before we are starting
+      if(Simd::allTrue(norm_0 < EPSILON))
+      {
+        res.converged = true; // we converged already
+        if(_verbose > 0) // final print
+          this->print_result(res);
+      }
+
+      // start iterations
+      while(j <= _maxit && res.converged != true)
+      {
+        v[0] *= (1.0 / norm);
+        s[0] = norm;
+        for(i=1; i<m+1; ++i)
+          s[i] = 0.0;
+
+        // inner loop
+        for(i=0; i < m && j <= _maxit && res.converged != true; i++, j++)
+        {
+          w[i] = 0.0;
+          // compute wi = M^-1*vi (also called zi)
+          _prec->apply(w[i], v[i]);
+          // compute vi = A*wi
+          // use v[i+1] as temporary vector for w
+          _op->apply(w[i], v[i+1]);
+          // do Arnoldi algorithm
+          for(int k=0; k<i+1; k++)
+          {
+            // notice that _sp->dot(v[k],v[i+1]) = v[k]\adjoint v[i+1]
+            // so one has to pay attention to the order
+            // in the scalar product for the complex case
+            // doing the modified Gram-Schmidt algorithm
+            H[k][i] = _sp->dot(v[k],v[i+1]);
+            // w -= H[k][i] * v[k]
+            v[i+1].axpy(-H[k][i], v[k]);
+          }
+          H[i+1][i] = _sp->norm(v[i+1]);
+          if(Simd::allTrue(abs(H[i+1][i]) < EPSILON))
+            DUNE_THROW(SolverAbort, "breakdown in fGMRes - |w| (-> "
+                                     << w[i] << ") == 0.0 after "
+                                     << j << " iterations");
+
+          // v[i+1] = w*1/H[i+1][i]
+          v[i+1] *= real_type(1.0)/H[i+1][i];
+
+          // update QR factorization
+          for(k=0; k<i; k++)
+            this->applyPlaneRotation(H[k][i],H[k+1][i],cs[k],sn[k]);
+
+          // compute new givens rotation
+          this->generatePlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+
+          // finish updating QR factorization
+          this->applyPlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          this->applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
+
+          // norm of the residual is the last component of vector s
+          using std::abs;
+          norm = abs(s[i+1]);
+
+          // print current iteration statistics
+          if(_verbose > 1) {
+            this->printOutput(std::cout,j,norm,norm_old);
+          }
+
+          // udate the norm
+          norm_old = norm;
+
+          // check for convergence
+          if(Simd::allTrue(norm < static_cast<scalar_real_type>(reduction) * norm_0))
+            res.converged = true;
+
+        } // end inner for loop
+
+        // calculate update vector
+        tmp = 0.0;
+        this->update(tmp, i, H, s, w);
+        // and update current iterate
+        x += tmp;
+
+        // restart fGMRes if convergence was not achieved,
+        // i.e. linear residual has not reached desired reduction
+        // and if still j < _maxit (do not restart on last iteration)
+        if( res.converged != true && j < _maxit)
+        {
+          if (_verbose > 0)
+            std::cout << "=== fGMRes::restart" << std::endl;
+          // get rhs
+          v[0] = b;
+          // calculate new defect
+          _op->applyscaleadd(-1.0, x,v[0]); // b -= Ax;
+          // calculate preconditioned defect
+          norm = norm_old = _sp->norm(v[0]); // update the residual norm
+        }
+
+      } // end outer while loop
+
+      // post-process preconditioner
+      _prec->post(x);
+
+      // save solver statistics
+      res.iterations = j-1; // it has to be j-1!!!
+      res.reduction = static_cast<scalar_real_type>(Simd::max(norm/norm_0));
+      using std::pow;
+      res.conv_rate = pow(res.reduction,1.0/(j-1));
+      res.elapsed = watch.elapsed();
+
+      if(_verbose>0)
+        this->print_result(res);
+
+    }
+
+private:
+    using RestartedGMResSolver<X,Y>::_op;
+    using RestartedGMResSolver<X,Y>::_prec;
+    using RestartedGMResSolver<X,Y>::_sp;
+    using RestartedGMResSolver<X,Y>::_reduction;
+    using RestartedGMResSolver<X,Y>::_maxit;
+    using RestartedGMResSolver<X,Y>::_verbose;
+    using RestartedGMResSolver<X,Y>::_restart;
   };
 
 
