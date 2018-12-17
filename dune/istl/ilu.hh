@@ -5,10 +5,6 @@
 
 #include <cmath>
 #include <complex>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <set>
 #include <map>
 #include <vector>
 
@@ -170,7 +166,6 @@ namespace Dune {
     createiterator ci=ILU.createbegin();
     for (crowiterator i=A.begin(); i!=endi; ++i)
     {
-      // std::cout << "in row " << i.index() << std::endl;
       map rowpattern; // maps column index to generation
 
       // initialize pattern with row of A
@@ -182,9 +177,6 @@ namespace Dune {
       {
         if ((*ik).second<n)
         {
-          //                            std::cout << "  eliminating " << i.index() << "," << (*ik).first
-          //                                              << " level " << (*ik).second << std::endl;
-
           coliterator endk = ILU[(*ik).first].end();                       // end of row k
           coliterator kj = ILU[(*ik).first].find((*ik).first);                       // diagonal in k
           for (++kj; kj!=endk; ++kj)                       // row k eliminates in row i
@@ -198,9 +190,6 @@ namespace Dune {
               mapiterator ij = rowpattern.find(kj.index());
               if (ij==rowpattern.end())
               {
-                //std::cout << "    new entry " << i.index() << "," << kj.index()
-                //                                                << " level " << (*ik).second+1 << std::endl;
-
                 rowpattern[kj.index()] = generation+1;
               }
             }
@@ -218,8 +207,6 @@ namespace Dune {
       for (coliterator ILUij=ILU[i.index()].begin(); ILUij!=endILUij; ++ILUij)
         firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
     }
-
-    //  printmatrix(std::cout,ILU,"ilu pattern","row",10,2);
 
     // copy entries of A
     for (crowiterator i=A.begin(); i!=endi; ++i)
