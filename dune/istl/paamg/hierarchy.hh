@@ -536,7 +536,7 @@ namespace Dune
     public:
       /**
        * @brief The criterion for tagging connections as strong and nodes as isolated.
-       * This might be e.g. SymmetricDependency or UnSymmetricCriterion.
+       * This might be e.g. SymmetricCriterion or UnSymmetricCriterion.
        */
       typedef T AggregationCriterion;
 
