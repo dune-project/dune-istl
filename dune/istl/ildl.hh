@@ -29,8 +29,16 @@ namespace Dune
     }
   }
 
+  template< class K >
+  inline static void bildl_subtractBCT ( const K &B, const K &CT, K &A,
+                                         typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr )
+  {
+    A -= B * CT;
+  }
+
   template< class Matrix >
-  inline static void bildl_subtractBCT ( const Matrix &B, const Matrix &CT, Matrix &A )
+  inline static void bildl_subtractBCT ( const Matrix &B, const Matrix &CT, Matrix &A,
+                                         typename std::enable_if_t<!Dune::IsNumber<Matrix>::value>* sfinae = nullptr )
   {
     for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
     {
@@ -107,6 +115,7 @@ namespace Dune
         DUNE_THROW( ISTLError, "diagonal entry missing" );
 
       // update diagonal and multiply A_ij by D_j^{-1}
+      using mblock = typename Matrix::block_type;
       auto &&A_ii = *ij;
       for( auto ik = A_i.begin(); ik != ij; ++ik )
       {
@@ -114,12 +123,12 @@ namespace Dune
         const auto &A_k = A[ ik.index() ];
 
         auto B = A_ik;
-        A_ik.rightmultiply( *A_k.find( ik.index() ) );
+        Imp::BlockTraits<mblock>::toMatrix(A_ik).rightmultiply( *A_k.find( ik.index() ) );
         bildl_subtractBCT( B, A_ik, A_ii );
       }
       try
       {
-        A_ii.invert();
+        Imp::BlockTraits<mblock>::toMatrix(A_ii).invert();
       }
       catch( const Dune::FMatrixError &e )
       {
@@ -136,13 +145,17 @@ namespace Dune
   template< class Matrix, class X, class Y >
   inline void bildl_backsolve ( const Matrix &A, X &v, const Y &d, bool isLowerTriangular = false )
   {
+    using mblock = typename Matrix::block_type;
+    using vblock = typename X::block_type;
+
     // solve L v = d, note: Lii = I
     for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
     {
       const auto &A_i = *i;
       v[ i.index() ] = d[ i.index() ];
       for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
-        (*ij).mmv( v[ ij.index() ], v[ i.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ij).mmv( Imp::BlockTraits<vblock>::toVector( v[ ij.index() ] ),
+                                                     Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ) );
     }
 
     // solve D w = v, note: diagonal stores Dii^{-1}
@@ -156,7 +169,8 @@ namespace Dune
         const auto ii = A_i.beforeEnd();
         assert( ii.index() == i.index() );
         auto rhs = v[ i.index() ];
-        ii->mv( rhs, v[ i.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ii).mv( Imp::BlockTraits<vblock>::toVector( rhs ),
+                                                    Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ) );
       }
     }
     else
@@ -169,7 +183,8 @@ namespace Dune
         const auto ii = A_i.find( i.index() );
         assert( ii.index() == i.index() );
         auto rhs = v[ i.index() ];
-        ii->mv( rhs, v[ i.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ii).mv( Imp::BlockTraits<vblock>::toVector( rhs ),
+                                                    Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ) );
       }
     }
 
@@ -179,7 +194,8 @@ namespace Dune
     {
       const auto &A_i = *i;
       for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
-        (*ij).mmtv( v[ i.index() ], v[ ij.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ij).mmtv( Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ),
+                                                      Imp::BlockTraits<vblock>::toVector( v[ ij.index() ] ) );
     }
   }
 

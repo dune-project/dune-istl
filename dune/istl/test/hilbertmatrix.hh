@@ -42,4 +42,10 @@ void setupHilbertMatrix ( Dune::BCRSMatrix< Dune::FieldMatrix< T, 1, 1 > >& A, i
   setupHilbertMatrix( A, Dune::FieldMatrix< T, 1, 1 >{ 1.0 }, n );
 }
 
+template< class T >
+void setupHilbertMatrix ( Dune::BCRSMatrix< T >& A, int n  )
+{
+  setupHilbertMatrix( A, T{ 1.0 }, n );
+}
+
 #endif // #ifndef HILBERTMATRIX_HH

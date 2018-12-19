@@ -5,10 +5,6 @@
 
 #include <cmath>
 #include <complex>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <set>
 #include <map>
 #include <vector>
 
@@ -55,7 +51,7 @@ namespace Dune {
         coliterator jj = A[ij.index()].find(ij.index());
 
         // compute L_ij = A_jj^-1 * A_ij
-        (*ij).rightmultiply(*jj);
+        Imp::BlockTraits<block>::toMatrix(*ij).rightmultiply(*jj);
 
         // modify row
         coliterator endjk=A[ij.index()].end();                 // end of row j
@@ -65,7 +61,7 @@ namespace Dune {
           if (ik.index()==jk.index())
           {
             block B(*jk);
-            B.leftmultiply(*ij);
+            Imp::BlockTraits<block>::toMatrix(B).leftmultiply(Imp::BlockTraits<block>::toMatrix(*ij));
             *ik -= B;
             ++ik; ++jk;
           }
@@ -82,7 +78,7 @@ namespace Dune {
       if (ij.index()!=i.index())
         DUNE_THROW(ISTLError,"diagonal entry missing");
       try {
-        (*ij).invert();   // compute inverse of diagonal block
+        Imp::BlockTraits<block>::toMatrix(*ij).invert();   // compute inverse of diagonal block
       }
       catch (Dune::FMatrixError & e) {
         DUNE_THROW(MatrixBlockError, "ILU failed to invert matrix block A["
@@ -99,6 +95,7 @@ namespace Dune {
     // iterator types
     typedef typename M::ConstRowIterator rowiterator;
     typedef typename M::ConstColIterator coliterator;
+    typedef typename M::block_type mblock;
     typedef typename Y::block_type dblock;
     typedef typename X::block_type vblock;
 
@@ -108,7 +105,7 @@ namespace Dune {
     {
       dblock rhs(d[i.index()]);
       for (coliterator j=(*i).begin(); j.index()<i.index(); ++j)
-        (*j).mmv(v[j.index()],rhs);
+        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Imp::BlockTraits<vblock>::toVector(v[j.index()]),Imp::BlockTraits<dblock>::toVector(rhs));
       v[i.index()] = rhs;           // Lii = I
     }
 
@@ -119,9 +116,8 @@ namespace Dune {
       vblock rhs(v[i.index()]);
       coliterator j;
       for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-        (*j).mmv(v[j.index()],rhs);
-      v[i.index()] = 0;
-      (*j).umv(rhs,v[i.index()]);           // diagonal stores inverse!
+        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Imp::BlockTraits<vblock>::toVector(v[j.index()]),Imp::BlockTraits<dblock>::toVector(rhs));
+      Imp::BlockTraits<mblock>::toMatrix(*j).mv(Imp::BlockTraits<dblock>::toVector(rhs),Imp::BlockTraits<vblock>::toVector(v[i.index()]));           // diagonal stores inverse!
     }
   }
 
@@ -129,19 +125,19 @@ namespace Dune {
 
   // recursive function template to access first entry of a matrix
   template<class M>
-  typename M::field_type& firstmatrixelement (M& A)
+  typename M::field_type& firstmatrixelement (M& A, typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     return firstmatrixelement(*(A.begin()->begin()));
   }
 
-  template<class K, int n, int m>
-  K& firstmatrixelement (FieldMatrix<K,n,m>& A)
+  template<class K>
+  K& firstmatrixelement (K& A, typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
   {
-    return A[0][0];
+    return A;
   }
 
-  template<class K>
-  K& firstmatrixelement (FieldMatrix<K,1,1>& A)
+  template<class K, int n, int m>
+  K& firstmatrixelement (FieldMatrix<K,n,m>& A)
   {
     return A[0][0];
   }
@@ -170,7 +166,6 @@ namespace Dune {
     createiterator ci=ILU.createbegin();
     for (crowiterator i=A.begin(); i!=endi; ++i)
     {
-      // std::cout << "in row " << i.index() << std::endl;
       map rowpattern; // maps column index to generation
 
       // initialize pattern with row of A
@@ -182,9 +177,6 @@ namespace Dune {
       {
         if ((*ik).second<n)
         {
-          //                            std::cout << "  eliminating " << i.index() << "," << (*ik).first
-          //                                              << " level " << (*ik).second << std::endl;
-
           coliterator endk = ILU[(*ik).first].end();                       // end of row k
           coliterator kj = ILU[(*ik).first].find((*ik).first);                       // diagonal in k
           for (++kj; kj!=endk; ++kj)                       // row k eliminates in row i
@@ -198,9 +190,6 @@ namespace Dune {
               mapiterator ij = rowpattern.find(kj.index());
               if (ij==rowpattern.end())
               {
-                //std::cout << "    new entry " << i.index() << "," << kj.index()
-                //                                                << " level " << (*ik).second+1 << std::endl;
-
                 rowpattern[kj.index()] = generation+1;
               }
             }
@@ -218,8 +207,6 @@ namespace Dune {
       for (coliterator ILUij=ILU[i.index()].begin(); ILUij!=endILUij; ++ILUij)
         firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
     }
-
-    //  printmatrix(std::cout,ILU,"ilu pattern","row",10,2);
 
     // copy entries of A
     for (crowiterator i=A.begin(); i!=endi; ++i)
@@ -396,9 +383,7 @@ namespace Dune {
         const size_type rowINext = lower.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-        {
-          lower.values_[ col ].mmv( v[ lower.cols_[ col ] ], rhs );
-        }
+          Imp::BlockTraits<mblock>::toMatrix(lower.values_[ col ]).mmv( Imp::BlockTraits<vblock>::toVector(v[ lower.cols_[ col ] ] ), Imp::BlockTraits<dblock>::toVector(rhs) );
 
         v[ i ] = rhs;  // Lii = I
       }
@@ -412,12 +397,10 @@ namespace Dune {
         const size_type rowINext = upper.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-        {
-          upper.values_[ col ].mmv( v[ upper.cols_[ col ] ], rhs );
-        }
+          Imp::BlockTraits<mblock>::toMatrix(upper.values_[ col ]).mmv( Imp::BlockTraits<vblock>::toVector(v[ upper.cols_[ col ] ]), Imp::BlockTraits<dblock>::toVector(rhs) );
 
         // apply inverse and store result
-        inv[ i ].mv( rhs, vBlock);
+        Imp::BlockTraits<mblock>::toMatrix(inv[ i ]).mv( Imp::BlockTraits<dblock>::toVector(rhs), Imp::BlockTraits<vblock>::toVector(vBlock));
       }
     }
 
