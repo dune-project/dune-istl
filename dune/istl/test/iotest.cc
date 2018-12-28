@@ -53,6 +53,9 @@ int main(int argc, char** argv)
   //    testWriteMatrixToMatlab<Dune::FieldMatrix<std::complex<double>,7,4> >(); // commented because setUpLaplacian cannot handle block_types with more rows than cols
   testWriteMatrixToMatlab<Dune::FieldMatrix<std::complex<double>,2,2> >(Dune::FieldMatrix<std::complex<double>,2,2>(std::complex<double>(0, 1)));
 
+  testWriteMatrixToMatlab<double>();
+  testWriteMatrixToMatlab<std::complex<double> >();
+
   /* testing the writeMatrixToMatlabHelper method for BlockType=[Diagonal|ScaledIdentity]Matrix with different field_types */
   testWriteMatrixToMatlab<Dune::DiagonalMatrix<double,1> >();
   testWriteMatrixToMatlab<Dune::ScaledIdentityMatrix<double,1> >();
@@ -65,16 +68,16 @@ int main(int argc, char** argv)
   testWriteMatrixToMatlab<Dune::ScaledIdentityMatrix<std::complex<double>,2> >(Dune::ScaledIdentityMatrix<std::complex<double>,2>(std::complex<double>(0,1)));
 
 
-  /* testing the test writeMatrixToMatlabHelper for FieldVector */
+  /* testing the writeVectorToMatlabHelper method for FieldVector */
   testWriteVectorToMatlab<Dune::FieldVector<double,1> >();
   testWriteVectorToMatlab<Dune::FieldVector<float,5> >();
   testWriteVectorToMatlab<Dune::FieldVector<std::complex<double>,5> >();
-  /* testing the test writeMatrixToMatlabHelper for BlockVector */
+  /* testing the writeVectorToMatlabHelper method for BlockVector */
   Dune::BlockVector<Dune::FieldVector<double,3> > v1 = {{1.0, 2.0, 3.0}};
   Dune::writeVectorToMatlabHelper(v1, std::cout);
   Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<double,1> > > v2 = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
   Dune::writeVectorToMatlabHelper(v2, std::cout);
-  /* testing the test writeMatrixToMatlabHelper for STL containers */
+  /* testing the writeVectorToMatlabHelper method for STL containers */
   testWriteVectorToMatlab<std::array<double,5> >();
   std::vector<double> v3;
   v3.push_back(1);

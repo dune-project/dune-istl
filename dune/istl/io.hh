@@ -15,13 +15,10 @@
 #include "istlexception.hh"
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/dynmatrix.hh>
-#include <dune/common/diagonalmatrix.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/unused.hh>
 
-#include <dune/istl/matrix.hh>
-#include <dune/istl/scaledidmatrix.hh>
-#include "bcrsmatrix.hh"
+#include <dune/istl/bcrsmatrix.hh>
 
 
 namespace Dune {
@@ -419,80 +416,17 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    *
-   * This specialization for DiagonalMatrices ends the recursion
-   */
-  template <class FieldType, int dim>
-  void writeMatrixToMatlabHelper(const ScaledIdentityMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<dim; i++)
-    {
-      //+1 for Matlab numbering
-      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
-      MatlabPODWriter<FieldType>::write(matrix.scalar(), s)<< std::endl;
-    }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for DiagonalMatrices ends the recursion
-   */
-  template <class FieldType, int dim>
-  void writeMatrixToMatlabHelper(const DiagonalMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<dim; i++)
-    {
-      //+1 for Matlab numbering
-      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
-      MatlabPODWriter<FieldType>::write(matrix.diagonal(i), s)<< std::endl;
-    }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for FieldMatrices ends the recursion
-   */
-  template <class FieldType, int rows, int cols>
-  void writeMatrixToMatlabHelper
-    (   const FieldMatrix<FieldType,rows,cols>& matrix, int rowOffset,
-    int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<rows; i++)
-      for (int j=0; j<cols; j++) {
-        //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
-        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
-      }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for DynamicMatrices ends the recursion
+   * This specialization for numbers ends the recursion
    */
   template <class FieldType>
-  void writeMatrixToMatlabHelper(const DynamicMatrix<FieldType>& matrix, int rowOffset,
-                                 int colOffset, std::ostream& s)
+  void writeMatrixToMatlabHelper(const FieldType& value,
+                                 int rowOffset, int colOffset,
+                                 std::ostream& s,
+                                 typename std::enable_if_t<Dune::IsNumber<FieldType>::value>* sfinae = nullptr)
   {
-    for (int i=0; i<matrix.N(); i++)
-      for (int j=0; j<matrix.M(); j++) {
-        //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
-        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
-      }
+    //+1 for Matlab numbering
+    s << rowOffset + 1 << " " << colOffset + 1 << " ";
+    MatlabPODWriter<FieldType>::write(value, s)<< std::endl;
   }
 
   /**
@@ -505,7 +439,8 @@ namespace Dune {
   template <class MatrixType>
   void writeMatrixToMatlabHelper(const MatrixType& matrix,
                                  int externalRowOffset, int externalColOffset,
-                                 std::ostream& s)
+                                 std::ostream& s,
+                                 typename std::enable_if_t<!Dune::IsNumber<MatrixType>::value>* sfinae = nullptr)
   {
     // Precompute the accumulated sizes of the columns
     std::vector<typename MatrixType::size_type> colOffset(matrix.M());
@@ -521,11 +456,8 @@ namespace Dune {
     // Loop over all matrix rows
     for (typename MatrixType::size_type rowIdx=0; rowIdx<matrix.N(); rowIdx++)
     {
-
-      const typename MatrixType::row_type& row = matrix[rowIdx];
-
-      typename MatrixType::row_type::ConstIterator cIt   = row.begin();
-      typename MatrixType::row_type::ConstIterator cEndIt = row.end();
+      auto cIt    = matrix[rowIdx].begin();
+      auto cEndIt = matrix[rowIdx].end();
 
       // Loop over all columns in this row
       for (; cIt!=cEndIt; ++cIt)
@@ -570,42 +502,23 @@ namespace Dune {
     outStream.precision(oldPrecision);
   }
 
-  // Recursively print all the blocks
+  // Write vector entries to a stream
+  // TODO: The writeVectorToMatlab method does not actually need this helper anymore:
+  // As there is no template specialization involved, the code may as well
+  // be simply folded into writeVectorToMatlab.  On the other hand,
+  // writeVectorToMatlabHelper writes the vector content into a stream,
+  // which may be useful to some people.
   template<class V>
   void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
   {
-    for (const auto& entry : v)
-      writeVectorToMatlabHelper(entry, stream);
-  }
-
-  // Recursively print all the blocks -- specialization for FieldVector
-  template<class K, int n>
-  void writeVectorToMatlabHelper (const FieldVector<K,n>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
-  }
-
-  // Recursively print all the blocks -- specialization for std::vector
-  template<class K>
-  void writeVectorToMatlabHelper (const std::vector<K>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
-  }
-
-  // Recursively print all the blocks -- specialization for std::array
-  template<class K, std::size_t n>
-  void writeVectorToMatlabHelper (const std::array<K,n>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
+    Hybrid::ifElse(IsNumber<V>(),
+      [&](auto id) {
+        stream << id(v) << std::endl;
+      },
+      [&](auto id) {
+        for (const auto& entry : id(v))
+          writeVectorToMatlabHelper(entry, stream);
+      });
   }
 
   /**
