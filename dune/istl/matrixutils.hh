@@ -202,9 +202,22 @@ namespace Dune
     while(cur!=ooc.communicator().min(cur)) ;
   }
 
+  // Default implementation for scalar types
   template<typename M>
   struct MatrixDimension
-  {};
+  {
+    static_assert(IsNumber<M>::value, "MatrixDimension is not implemented for this type!");
+
+    static auto rowdim(const M& A)
+    {
+      return 1;
+    }
+
+    static auto coldim(const M& A)
+    {
+      return 1;
+    }
+  };
 
 
   template<typename B, typename TA>
