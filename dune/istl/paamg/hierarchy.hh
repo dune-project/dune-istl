@@ -56,7 +56,7 @@ namespace Dune
     };
 
     /**
-     * @brief A hierarchy of coantainers (e.g. matrices or vectors)
+     * @brief A hierarchy of containers (e.g. matrices or vectors)
      *
      * Because sometimes a redistribution of the parallel data might be
      * advisable one can add redistributed version of the container at

@@ -490,11 +490,8 @@ namespace Dune
     /**
      * @brief Criterion taking advantage of symmetric matrices.
      *
-     * The two template parameters are:
-     * <dl>
-     * <dt>M</dt> <dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
-     * <dt>Norm</dt> <dd>The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.</dd>
-     * </dl>
+     * \tparam M The type of the matrix the amg coarsening works on, e.g. BCRSMatrix
+     * \tparam Norm The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.
      */
     template<class M, class Norm>
     class SymmetricCriterion : public AggregationCriterion<SymmetricDependency<M,Norm> >
@@ -509,15 +506,12 @@ namespace Dune
 
 
     /**
-     * @brief Criterion suited for unsymmetric matrices.
+     * @brief Criterion suitable for unsymmetric matrices.
      *
      * Nevertheless the sparsity pattern has to be symmetric.
      *
-     * The two template parameters are:
-     * <dl>
-     * <dt>M</dt> <dd>The type of the matrix the amg coarsening works on, e. g. BCRSMatrix</dd>
-     * <dt>Norm</dt> <dd>The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.</dd>
-     * </dl>
+     * \tparam M The type of the matrix the amg coarsening works on, e.g. BCRSMatrix
+     * \tparam Norm The norm to use to determine the strong couplings between the nodes, e.g. FirstDiagonal or RowSum.
      */
     template<class M, class Norm>
     class UnSymmetricCriterion : public AggregationCriterion<Dependency<M,Norm> >
@@ -625,13 +619,11 @@ namespace Dune
       /**
        * @brief Breadth first search within an aggregate
        *
-       * The template parameters: <br>
-       * <dl><dt>reset</dt><dd>If true the visited flags of the vertices
-       *  will be reset after
-       * the search</dd>
-       * <dt>G</dt><dd>The type of the graph we perform the search on.</dd>
-       * <dt>F</dt><dd>The type of the visitor to operate on the vertices</dd>
-       * </dl>
+       * \tparam reset If true the visited flags of the vertices
+       *  will be reset after the search
+       * \tparam G The type of the graph we perform the search on
+       * \tparam F The type of the visitor to operate on the vertices
+       *
        * @param start The vertex where the search should start
        * from. This does not need to belong to the aggregate.
        * @param aggregate The aggregate id.
@@ -651,13 +643,13 @@ namespace Dune
       /**
        * @brief Breadth first search within an aggregate
        *
-       * The template parameters: <br>
-       * <dl><dt>L</dt><dd>A container type providing push_back(Vertex), and
-       * pop_front() in case remove is true</dd>
-       * <dt>remove</dt><dd> If true the entries in the visited list
-       * will be removed.</dd>
-       * <dt>reset</dt><dd>If true the visited flag will be reset after
-       * the search</dd></dl>
+       * \tparam L A container type providing push_back(Vertex), and
+       * pop_front() in case remove is true
+       * \tparam remove If true the entries in the visited list
+       * will be removed.
+       * \tparam reset If true the visited flag will be reset after
+       * the search
+       *
        * @param start The vertex where the search should start
        * from. This does not need to belong to the aggregate.
        * @param aggregate The aggregate id.
@@ -924,8 +916,8 @@ namespace Dune
       /**
        * @brief Build the aggregates.
        *
-       * The template parameter C Is the type of the coarsening Criterion to
-       * use.
+       * \tparam C The type of the coarsening Criterion to use
+       *
        * @param m The matrix to build the aggregates accordingly.
        * @param graph A (sub) graph of the matrix.
        * @param aggregates Aggregate map we will build. All entries should be initialized
