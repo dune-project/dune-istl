@@ -521,11 +521,8 @@ namespace Dune {
     // Loop over all matrix rows
     for (typename MatrixType::size_type rowIdx=0; rowIdx<matrix.N(); rowIdx++)
     {
-
-      const typename MatrixType::row_type& row = matrix[rowIdx];
-
-      typename MatrixType::row_type::ConstIterator cIt   = row.begin();
-      typename MatrixType::row_type::ConstIterator cEndIt = row.end();
+      auto cIt    = matrix[rowIdx].begin();
+      auto cEndIt = matrix[rowIdx].end();
 
       // Loop over all columns in this row
       for (; cIt!=cEndIt; ++cIt)
