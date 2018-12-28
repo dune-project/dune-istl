@@ -419,80 +419,17 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    *
-   * This specialization for DiagonalMatrices ends the recursion
-   */
-  template <class FieldType, int dim>
-  void writeMatrixToMatlabHelper(const ScaledIdentityMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<dim; i++)
-    {
-      //+1 for Matlab numbering
-      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
-      MatlabPODWriter<FieldType>::write(matrix.scalar(), s)<< std::endl;
-    }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for DiagonalMatrices ends the recursion
-   */
-  template <class FieldType, int dim>
-  void writeMatrixToMatlabHelper(const DiagonalMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<dim; i++)
-    {
-      //+1 for Matlab numbering
-      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
-      MatlabPODWriter<FieldType>::write(matrix.diagonal(i), s)<< std::endl;
-    }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for FieldMatrices ends the recursion
-   */
-  template <class FieldType, int rows, int cols>
-  void writeMatrixToMatlabHelper
-    (   const FieldMatrix<FieldType,rows,cols>& matrix, int rowOffset,
-    int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<rows; i++)
-      for (int j=0; j<cols; j++) {
-        //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
-        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
-      }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for DynamicMatrices ends the recursion
+   * This specialization for numbers ends the recursion
    */
   template <class FieldType>
-  void writeMatrixToMatlabHelper(const DynamicMatrix<FieldType>& matrix, int rowOffset,
-                                 int colOffset, std::ostream& s)
+  void writeMatrixToMatlabHelper(const FieldType& value,
+                                 int rowOffset, int colOffset,
+                                 std::ostream& s,
+                                 typename std::enable_if_t<Dune::IsNumber<FieldType>::value>* sfinae = nullptr)
   {
-    for (int i=0; i<matrix.N(); i++)
-      for (int j=0; j<matrix.M(); j++) {
-        //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
-        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
-      }
+    //+1 for Matlab numbering
+    s << rowOffset + 1 << " " << colOffset + 1 << " ";
+    MatlabPODWriter<FieldType>::write(value, s)<< std::endl;
   }
 
   /**
@@ -505,7 +442,8 @@ namespace Dune {
   template <class MatrixType>
   void writeMatrixToMatlabHelper(const MatrixType& matrix,
                                  int externalRowOffset, int externalColOffset,
-                                 std::ostream& s)
+                                 std::ostream& s,
+                                 typename std::enable_if_t<!Dune::IsNumber<MatrixType>::value>* sfinae = nullptr)
   {
     // Precompute the accumulated sizes of the columns
     std::vector<typename MatrixType::size_type> colOffset(matrix.M());
