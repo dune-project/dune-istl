@@ -15,13 +15,10 @@
 #include "istlexception.hh"
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/dynmatrix.hh>
-#include <dune/common/diagonalmatrix.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/unused.hh>
 
-#include <dune/istl/matrix.hh>
-#include <dune/istl/scaledidmatrix.hh>
-#include "bcrsmatrix.hh"
+#include <dune/istl/bcrsmatrix.hh>
 
 
 namespace Dune {
@@ -505,42 +502,23 @@ namespace Dune {
     outStream.precision(oldPrecision);
   }
 
-  // Recursively print all the blocks
+  // Write vector entries to a stream
+  // TODO: The writeVectorToMatlab method does not actually need this helper anymore:
+  // As there is no template specialization involved, the code may as well
+  // be simply folded into writeVectorToMatlab.  On the other hand,
+  // writeVectorToMatlabHelper writes the vector content into a stream,
+  // which may be useful to some people.
   template<class V>
   void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
   {
-    for (const auto& entry : v)
-      writeVectorToMatlabHelper(entry, stream);
-  }
-
-  // Recursively print all the blocks -- specialization for FieldVector
-  template<class K, int n>
-  void writeVectorToMatlabHelper (const FieldVector<K,n>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
-  }
-
-  // Recursively print all the blocks -- specialization for std::vector
-  template<class K>
-  void writeVectorToMatlabHelper (const std::vector<K>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
-  }
-
-  // Recursively print all the blocks -- specialization for std::array
-  template<class K, std::size_t n>
-  void writeVectorToMatlabHelper (const std::array<K,n>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
+    Hybrid::ifElse(IsNumber<V>(),
+      [&](auto id) {
+        stream << id(v) << std::endl;
+      },
+      [&](auto id) {
+        for (const auto& entry : id(v))
+          writeVectorToMatlabHelper(entry, stream);
+      });
   }
 
   /**
