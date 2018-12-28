@@ -75,7 +75,7 @@ namespace Dune
     };
 
     /**
-     * @brief Parameters needed for the aggregation process,
+     * @brief Parameters needed for the aggregation process
      */
     class AggregationParameters :
       public DependencyParameters
@@ -118,7 +118,7 @@ namespace Dune
       }
 
       /**
-       * @brief Sets reasonable default values for an aisotropic problem.
+       * @brief Sets reasonable default values for an anisotropic problem.
        *
        * Reasonable means that we should end up with cube aggregates with
        * sides of diameter 2 and sides in one dimension that are longer
