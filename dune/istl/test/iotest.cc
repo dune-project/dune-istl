@@ -53,6 +53,9 @@ int main(int argc, char** argv)
   //    testWriteMatrixToMatlab<Dune::FieldMatrix<std::complex<double>,7,4> >(); // commented because setUpLaplacian cannot handle block_types with more rows than cols
   testWriteMatrixToMatlab<Dune::FieldMatrix<std::complex<double>,2,2> >(Dune::FieldMatrix<std::complex<double>,2,2>(std::complex<double>(0, 1)));
 
+  testWriteMatrixToMatlab<double>();
+  testWriteMatrixToMatlab<std::complex<double> >();
+
   /* testing the writeMatrixToMatlabHelper method for BlockType=[Diagonal|ScaledIdentity]Matrix with different field_types */
   testWriteMatrixToMatlab<Dune::DiagonalMatrix<double,1> >();
   testWriteMatrixToMatlab<Dune::ScaledIdentityMatrix<double,1> >();
