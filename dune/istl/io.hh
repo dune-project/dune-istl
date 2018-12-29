@@ -502,12 +502,7 @@ namespace Dune {
     outStream.precision(oldPrecision);
   }
 
-  // Write vector entries to a stream
-  // TODO: The writeVectorToMatlab method does not actually need this helper anymore:
-  // As there is no template specialization involved, the code may as well
-  // be simply folded into writeVectorToMatlab.  On the other hand,
-  // writeVectorToMatlabHelper writes the vector content into a stream,
-  // which may be useful to some people.
+  // Recursively write vector entries to a stream
   template<class V>
   void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
   {
