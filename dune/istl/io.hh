@@ -152,6 +152,31 @@ namespace Dune {
   }
 
   /**
+   * \brief Print one row of a matrix, specialization for number types
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   */
+  template<class K>
+  void print_row (std::ostream& s, const K& value,
+                  typename FieldMatrix<K,1,1>::size_type I,
+                  typename FieldMatrix<K,1,1>::size_type J,
+                  typename FieldMatrix<K,1,1>::size_type therow,
+                  int width, int precision,
+                  typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
+  {
+    DUNE_UNUSED_PARAMETER(I);
+    DUNE_UNUSED_PARAMETER(J);
+    DUNE_UNUSED_PARAMETER(therow);
+    DUNE_UNUSED_PARAMETER(precision);
+
+    s << " ";         // space in front of each entry
+    s.width(width);   // set width for each entry anew
+    s << value;
+  }
+
+  /**
    * \brief Print one row of a matrix
    *
    * \code
@@ -161,7 +186,8 @@ namespace Dune {
   template<class M>
   void print_row (std::ostream& s, const M& A, typename M::size_type I,
                   typename M::size_type J, typename M::size_type therow,
-                  int width, int precision)
+                  int width, int precision,
+                  typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     typename M::size_type i0=I;
     for (typename M::size_type i=0; i<A.N(); i++)
@@ -187,60 +213,6 @@ namespace Dune {
       }
       // advance rows
       i0 += MatrixDimension<M>::rowdim(A,i);
-    }
-  }
-
-  /**
-   * \brief Print one row of a matrix, specialization for FieldMatrix
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   */
-  template<class K, int n, int m>
-  void print_row (std::ostream& s, const FieldMatrix<K,n,m>& A,
-                  typename FieldMatrix<K,n,m>::size_type I,
-                  typename FieldMatrix<K,n,m>::size_type J,
-                  typename FieldMatrix<K,n,m>::size_type therow, int width,
-                  int precision)
-  {
-    DUNE_UNUSED_PARAMETER(J);
-    DUNE_UNUSED_PARAMETER(precision);
-
-    typedef typename FieldMatrix<K,n,m>::size_type size_type;
-
-    for (size_type i=0; i<n; i++)
-      if (I+i==therow)
-        for (int j=0; j<m; j++)
-        {
-          s << " ";         // space in front of each entry
-          s.width(width);   // set width for each entry anew
-          s << A[i][j];     // yeah, the number !
-        }
-  }
-
-  /**
-   * \brief Print one row of a matrix, specialization for FieldMatrix<K,1,1>
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   */
-  template<class K>
-  void print_row (std::ostream& s, const FieldMatrix<K,1,1>& A,
-                  typename FieldMatrix<K,1,1>::size_type I,
-                  typename FieldMatrix<K,1,1>::size_type J,
-                  typename FieldMatrix<K,1,1>::size_type therow,
-                  int width, int precision)
-  {
-    DUNE_UNUSED_PARAMETER(J);
-    DUNE_UNUSED_PARAMETER(precision);
-
-    if (I==therow)
-    {
-      s << " ";         // space in front of each entry
-      s.width(width);   // set width for each entry anew
-      s << static_cast<K>(A);         // yeah, the number !
     }
   }
 
@@ -502,12 +474,7 @@ namespace Dune {
     outStream.precision(oldPrecision);
   }
 
-  // Write vector entries to a stream
-  // TODO: The writeVectorToMatlab method does not actually need this helper anymore:
-  // As there is no template specialization involved, the code may as well
-  // be simply folded into writeVectorToMatlab.  On the other hand,
-  // writeVectorToMatlabHelper writes the vector content into a stream,
-  // which may be useful to some people.
+  // Recursively write vector entries to a stream
   template<class V>
   void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
   {
