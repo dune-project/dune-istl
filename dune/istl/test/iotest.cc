@@ -83,4 +83,21 @@ int main(int argc, char** argv)
   v3.push_back(1);
   v3.push_back(2);
   Dune::writeVectorToMatlabHelper(v3, std::cout);
+
+  // Test the printmatrix method
+  {
+    Dune::BCRSMatrix<double> matrix;
+    setupLaplacian(matrix, 3);
+    Dune::printmatrix(std::cout, matrix, "matrix", "--");
+  }
+  {
+    Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > matrix;
+    setupLaplacian(matrix, 3);
+    Dune::printmatrix(std::cout, matrix, "matrix", "--");
+  }
+  {
+    Dune::BCRSMatrix<Dune::FieldMatrix<double,2,3> > matrix;
+    setupLaplacian(matrix, 3);
+    Dune::printmatrix(std::cout, matrix, "matrix", "--");
+  }
 }
