@@ -219,6 +219,40 @@ namespace Dune
     }
   };
 
+  // Default implementation for scalar types
+  template<typename B, typename TA>
+  struct MatrixDimension<Matrix<B,TA> >
+  {
+    using block_type = typename Matrix<B,TA>::block_type;
+    using size_type = typename Matrix<B,TA>::size_type;
+
+    static size_type rowdim (const Matrix<B,TA>& A, size_type i)
+    {
+      return MatrixDimension<block_type>::rowdim(A[i][0]);
+    }
+
+    static size_type coldim (const Matrix<B,TA>& A, size_type c)
+    {
+      return MatrixDimension<block_type>::coldim(A[0][c]);
+    }
+
+    static size_type rowdim (const Matrix<B,TA>& A)
+    {
+      size_type nn=0;
+      for (size_type i=0; i<A.N(); i++)
+        nn += rowdim(A,i);
+      return nn;
+    }
+
+    static size_type coldim (const Matrix<B,TA>& A)
+    {
+      size_type nn=0;
+      for (size_type i=0; i<A.M(); i++)
+        nn += coldim(A,i);
+      return nn;
+    }
+  };
+
 
   template<typename B, typename TA>
   struct MatrixDimension<BCRSMatrix<B,TA> >

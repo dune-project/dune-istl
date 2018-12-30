@@ -5,6 +5,7 @@
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/matrix.hh>
 #include <dune/istl/io.hh>
 #include "laplacian.hh"
 
@@ -85,19 +86,37 @@ int main(int argc, char** argv)
   Dune::writeVectorToMatlabHelper(v3, std::cout);
 
   // Test the printmatrix method
+  // BCRSMatrix
   {
     Dune::BCRSMatrix<double> matrix;
     setupLaplacian(matrix, 3);
-    Dune::printmatrix(std::cout, matrix, "matrix", "--");
+    Dune::printmatrix(std::cout, matrix, "BCRSMatrix<double>", "--");
   }
   {
     Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > matrix;
     setupLaplacian(matrix, 3);
-    Dune::printmatrix(std::cout, matrix, "matrix", "--");
+    Dune::printmatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,1,1> >", "--");
   }
   {
     Dune::BCRSMatrix<Dune::FieldMatrix<double,2,3> > matrix;
     setupLaplacian(matrix, 3);
-    Dune::printmatrix(std::cout, matrix, "matrix", "--");
+    Dune::printmatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,2,3> >", "--");
+  }
+
+  // Matrix
+  {
+    Dune::Matrix<double> matrix(3,3);
+    matrix = 0;
+    Dune::printmatrix(std::cout, matrix, "Matrix<double>", "--");
+  }
+  {
+    Dune::Matrix<Dune::FieldMatrix<double,1,1> > matrix(3,3);
+    matrix = 0;
+    Dune::printmatrix(std::cout, matrix, "Matrix<FieldMatrix<double,1,1> >", "--");
+  }
+  {
+    Dune::Matrix<Dune::FieldMatrix<double,2,3> > matrix(3,3);
+    matrix = 0;
+    Dune::printmatrix(std::cout, matrix, "Matrix<FieldMatrix<double,2,3> >", "--");
   }
 }
