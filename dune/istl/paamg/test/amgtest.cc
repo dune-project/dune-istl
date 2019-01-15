@@ -60,7 +60,7 @@ void randomize(const M& mat, V& b)
 }
 
 
-template <int BS>
+template <class Matrix, class Vector>
 void testAMG(int N, int coarsenTarget, int ml)
 {
 
@@ -70,16 +70,12 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
   ParallelIndexSet indices;
-  typedef Dune::FieldMatrix<XREAL,BS,BS> MatrixBlock;
-  typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<XREAL,BS> VectorBlock;
-  typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
   typedef Dune::CollectiveCommunication<void*> Comm;
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, c, &n, 1);
+  Matrix mat = setupAnisotropic2d<typename Matrix::block_type>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
 
@@ -103,9 +99,9 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   typedef typename std::conditional< std::is_convertible<XREAL, typename Dune::FieldTraits<XREAL>::real_type>::value,
                    Dune::Amg::FirstDiagonal, Dune::Amg::RowSum >::type Norm;
-  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<BCRSMat,Norm> >
+  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<Matrix,Norm> >
           Criterion;
-  typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
+  typedef Dune::SeqSSOR<Matrix,Vector,Vector> Smoother;
   //typedef Dune::SeqSOR<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqJac<BCRSMat,Vector,Vector> Smoother;
   //typedef Dune::SeqOverlappingSchwarz<BCRSMat,Vector,Dune::MultiplicativeSchwarzMode> Smoother;
@@ -183,8 +179,19 @@ try
   if(argc>3)
     ml = atoi(argv[3]);
 
-  testAMG<1>(N, coarsenTarget, ml);
-  testAMG<2>(N, coarsenTarget, ml);
+  {
+    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<XREAL,1,1> >;
+    using Vector = Dune::BlockVector<Dune::FieldVector<XREAL,1> >;
+
+    testAMG<Matrix,Vector>(N, coarsenTarget, ml);
+  }
+
+  {
+    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<XREAL,2,2> >;
+    using Vector = Dune::BlockVector<Dune::FieldVector<XREAL,2> >;
+
+    testAMG<Matrix,Vector>(N, coarsenTarget, ml);
+  }
 
   return 0;
 }
