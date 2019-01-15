@@ -83,6 +83,16 @@ void testAllPreconditioners(const Matrix& matrix, const Vector& b)
 int main() try
 {
   {
+    using Matrix = BCRSMatrix<double>;
+    using Vector = BlockVector<double>;
+    Matrix matrix;
+    Vector b,x;
+    setupProblem(matrix, b);
+
+    testAllPreconditioners(matrix, b);
+  }
+
+  {
     using Matrix = BCRSMatrix<FieldMatrix<double,1,1> >;
     using Vector = BlockVector<FieldVector<double,1> >;
     Matrix matrix;
