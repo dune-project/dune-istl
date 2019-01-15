@@ -48,11 +48,10 @@ namespace Dune {
    */
   template<class V>
   void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
-                              int& counter, int columns, int width,
-                              int precision)
+                              int& counter, int columns, int width)
   {
     for (typename V::ConstIterator i=v.begin(); i!=v.end(); ++i)
-      recursive_printvector(s,*i,rowtext,counter,columns,width,precision);
+      recursive_printvector(s,*i,rowtext,counter,columns,width);
   }
 
   /**
@@ -65,9 +64,8 @@ namespace Dune {
   template<class K, int n>
   void recursive_printvector (std::ostream& s, const FieldVector<K,n>& v,
                               std::string rowtext, int& counter, int columns,
-                              int width, int precision)
+                              int width)
   {
-    DUNE_UNUSED_PARAMETER(precision);
     // we now can print n numbers
     for (int i=0; i<n; i++)
     {
@@ -116,7 +114,7 @@ namespace Dune {
       << std::endl;
 
     // print data from all blocks
-    recursive_printvector(s,v,rowtext,counter,columns,width,precision);
+    recursive_printvector(s,v,rowtext,counter,columns,width);
 
     // check if new line is required
     if (counter%columns!=0)
