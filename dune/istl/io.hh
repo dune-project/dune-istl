@@ -40,7 +40,7 @@ namespace Dune {
   //
 
   /**
-   * \brief Recursively print all the blocks
+   * \brief Recursively print a vector
    *
    * \code
    * #include <dune/istl/io.hh>
@@ -50,39 +50,28 @@ namespace Dune {
   void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
                               int& counter, int columns, int width)
   {
-    for (typename V::ConstIterator i=v.begin(); i!=v.end(); ++i)
-      recursive_printvector(s,*i,rowtext,counter,columns,width);
-  }
-
-  /**
-   * \brief Recursively print all the blocks -- specialization for FieldVector
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   */
-  template<class K, int n>
-  void recursive_printvector (std::ostream& s, const FieldVector<K,n>& v,
-                              std::string rowtext, int& counter, int columns,
-                              int width)
-  {
-    // we now can print n numbers
-    for (int i=0; i<n; i++)
-    {
-      if (counter%columns==0)
-      {
-        s << rowtext; // start a new row
-        s << " ";     // space in front of each entry
-        s.width(4);   // set width for counter
-        s << counter; // number of first entry in a line
-      }
-      s << " ";         // space in front of each entry
-      s.width(width);   // set width for each entry anew
-      s << v[i];        // yeah, the number !
-      counter++;        // increment the counter
-      if (counter%columns==0)
-        s << std::endl; // start a new line
-    }
+    Hybrid::ifElse(IsNumber<V>(),
+      [&](auto id) {
+        // Print one number
+        if (counter%columns==0)
+        {
+          s << rowtext; // start a new row
+          s << " ";     // space in front of each entry
+          s.width(4);   // set width for counter
+          s << counter; // number of first entry in a line
+        }
+        s << " ";         // space in front of each entry
+        s.width(width);   // set width for each entry anew
+        s << v;        // yeah, the number !
+        counter++;        // increment the counter
+        if (counter%columns==0)
+          s << std::endl; // start a new line
+      },
+      [&](auto id) {
+        // Recursively print a vector
+        for (const auto& entry : id(v))
+          recursive_printvector(s,id(entry),rowtext,counter,columns,width);
+      });
   }
 
 
