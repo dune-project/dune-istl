@@ -492,7 +492,9 @@ namespace Dune
     if(verbose) {
       dinfo<<"LU factorization: dgssvx() returns info "<< info<<std::endl;
 
-      if ( info == 0 || info == n+1 ) {
+      auto nSuperLUCol = static_cast<SuperMatrix&>(mat).ncol;
+
+      if ( info == 0 || info == nSuperLUCol+1 ) {
 
         if ( options.PivotGrowth )
           dinfo<<"Recip. pivot growth = "<<rpg<<std::endl;
@@ -502,14 +504,14 @@ namespace Dune
         NCformat* Ustore = (NCformat *) U.Store;
         dinfo<<"No of nonzeros in factor L = "<< Lstore->nnz<<std::endl;
         dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
-        dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
+        dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - nSuperLUCol<<std::endl;
         QuerySpaceChooser<T>::querySpace(&L, &U, &memusage);
         dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
              <<" \texpansions ";
         std::cout<<stat.expansions<<std::endl;
 
-      } else if ( info > 0 && lwork == -1 ) {
-        dinfo<<"** Estimated memory: "<< info - n<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {    // Memory allocation failed
+        dinfo<<"** Estimated memory: "<< info - nSuperLUCol<<std::endl;
       }
       if ( options.PrintStat ) StatPrint(&stat);
     }
@@ -613,15 +615,17 @@ namespace Dune
 
       dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
 
-      if ( info == 0 || info == n+1 ) {
+      auto nSuperLUCol = static_cast<SuperMatrix&>(mat).ncol;
+
+      if ( info == 0 || info == nSuperLUCol+1 ) {
 
         if ( options.IterRefine ) {
           std::cout<<"Iterative Refinement: steps="
                    <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
         }else
           std::cout<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
-      } else if ( info > 0 && lwork == -1 ) {
-        std::cout<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {       // Memory allocation failed
+        std::cout<<"** Estimated memory: "<< info - nSuperLUCol<<" bytes"<<std::endl;
       }
 
       if ( options.PrintStat ) StatPrint(&stat);
@@ -679,15 +683,17 @@ namespace Dune
     if(verbose) {
       dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
 
-      if ( info == 0 || info == n+1 ) {
+      auto nSuperLUCol = static_cast<SuperMatrix&>(mat).ncol;
+
+      if ( info == 0 || info == nSuperLUCol+1 ) {  // Factorization has succeeded
 
         if ( options.IterRefine ) {
           dinfo<<"Iterative Refinement: steps="
                <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
         }else
           dinfo<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
-      } else if ( info > 0 && lwork == -1 ) {
-        dinfo<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {  // Memory allocation failed
+        dinfo<<"** Estimated memory: "<< info - nSuperLUCol<<" bytes"<<std::endl;
       }
       if ( options.PrintStat ) StatPrint(&stat);
     }
