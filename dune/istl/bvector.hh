@@ -466,11 +466,11 @@ namespace Imp {
 
       Hybrid::ifElse(IsNumber<B>(),
         [&](auto id) {
-          d = this->n;
+          d = id(this)->n;
         },
         [&](auto id) {
           for (size_type i=0; i<this->n; i++)
-            d += (*this)[i].dim();
+            d += id(*this)[i].dim();
         });
 
       return d;
