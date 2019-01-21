@@ -260,6 +260,15 @@ namespace Dune
                               FieldVector<T,n>,
                               typename A::template rebind<FieldVector<T,n> >::other>;
     };
+
+    template<typename T, typename A>
+    struct SuperLUVectorChooser<BCRSMatrix<T,A> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = BlockVector<T, A>;
+      /** @brief The type of the range of the solver */
+      using range_type  = BlockVector<T, A>;
+    };
   }
 
   /**

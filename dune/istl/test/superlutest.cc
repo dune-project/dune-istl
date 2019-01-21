@@ -65,6 +65,37 @@ try
     N = atoi(argv[1]);
 
   // ------------------------------------------------------------------------------
+  std::cout<<"testing for N="<<N<<" BCRSMatrix<T>"<<std::endl;
+#if HAVE_SLU_SDEFS_H
+  {
+    using Matrix = Dune::BCRSMatrix<float>;
+    using Vector = Dune::BlockVector<float>;
+    runSuperLU<Matrix,Vector>(N);
+  }
+#endif
+#if HAVE_SLU_DDEFS_H
+  {
+    using Matrix = Dune::BCRSMatrix<double>;
+    using Vector = Dune::BlockVector<double>;
+    runSuperLU<Matrix,Vector>(N);
+  }
+#endif
+#if HAVE_SLU_CDEFS_H
+  {
+    using Matrix = Dune::BCRSMatrix<std::complex<float> >;
+    using Vector = Dune::BlockVector<std::complex<float> >;
+    runSuperLU<Matrix,Vector>(N);
+  }
+#endif
+#if HAVE_SLU_ZDEFS_H
+  {
+    using Matrix = Dune::BCRSMatrix<std::complex<double> >;
+    using Vector = Dune::BlockVector<std::complex<double> >;
+    runSuperLU<Matrix,Vector>(N);
+  }
+#endif
+
+  // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<T,1,1> >"<<std::endl;
 #if HAVE_SLU_SDEFS_H
   {
