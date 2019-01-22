@@ -379,7 +379,7 @@ namespace Dune
 
       /**
        * @brief compute the norm of a matrix.
-       * @param m The matrix ro compute the norm of.
+       * @param m The matrix to compute the norm of
        */
       template<class M>
       typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
