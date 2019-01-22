@@ -272,8 +272,6 @@ namespace Dune
 
     ColCompMatrixInitializer();
 
-    virtual ~ColCompMatrixInitializer();
-
     template<typename Iter>
     void addRowNnz(const Iter& row) const;
 
@@ -305,19 +303,20 @@ namespace Dune
 
     void allocateMarker();
 
+    ColCompMatrix* mat;
+    size_type cols;
+
     // Number of rows/columns of the matrix entries
     // (assumed to be scalars or dense matrices)
     unsigned int n, m;
 
-    ColCompMatrix* mat;
-    size_type cols;
-    mutable size_type *marker;
+    mutable std::vector<size_type> marker;
   };
 
   template<class M>
   template <class Block>
   ColCompMatrixInitializer<M>::ColCompMatrixInitializer(ColCompMatrix& mat_,typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae)
-    : mat(&mat_), cols(mat_.M()), marker(0)
+    : mat(&mat_), cols(mat_.M())
   {
     n = 1;
     m = 1;
@@ -328,7 +327,7 @@ namespace Dune
   template<class M>
   template <class Block>
   ColCompMatrixInitializer<M>::ColCompMatrixInitializer(ColCompMatrix& mat_,typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae)
-    : mat(&mat_), cols(mat_.M()), marker(0)
+    : mat(&mat_), cols(mat_.M())
   {
     // WARNING: This assumes that all blocks are dense and identical
     n = M::block_type::rows;
@@ -339,15 +338,8 @@ namespace Dune
 
   template<class M>
   ColCompMatrixInitializer<M>::ColCompMatrixInitializer()
-    : mat(0), cols(0), marker(0), n(0), m(0)
+    : mat(0), cols(0), n(0), m(0)
   {}
-
-  template<class M>
-  ColCompMatrixInitializer<M>::~ColCompMatrixInitializer()
-  {
-    if(marker)
-      delete[] marker;
-  }
 
   template<class M>
   template<typename Iter>
@@ -406,10 +398,8 @@ namespace Dune
   template<class M>
   void ColCompMatrixInitializer<M>::allocateMarker()
   {
-    marker = new typename Matrix::size_type[cols];
-
-    for(size_type i=0; i < cols; ++i)
-      marker[i]=0;
+    marker.resize(cols);
+    std::fill(marker.begin(), marker.end(), 0);
   }
 
   template<class M>
@@ -471,8 +461,7 @@ namespace Dune
   template<class M>
   void ColCompMatrixInitializer<M>::createMatrix() const
   {
-    delete[] marker;
-    marker=0;
+    marker.clear();
   }
 
   template<class F, class MRS>
