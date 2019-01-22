@@ -151,7 +151,7 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
 
-  std::cout<<"AMG building took "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
+  std::cout<<"AMG building took the same time as "<<(buildtime/r.elapsed*r.iterations)<<" iterations"<<std::endl;
   std::cout<<"AMG building together with solving took "<<buildtime+solvetime<<std::endl;
 
   /*
