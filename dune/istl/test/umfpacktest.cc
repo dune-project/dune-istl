@@ -65,6 +65,14 @@ int main(int argc, char** argv) try
     N = atoi(argv[1]);
 
   // ------------------------------------------------------------------------------
+  std::cout<<"testing for N="<<N<<" BCRSMatrix<double>"<<std::endl;
+  {
+    using Matrix = Dune::BCRSMatrix<double>;
+    using Vector = Dune::BlockVector<double>;
+    runUMFPack<Matrix,Vector>(N);
+  }
+
+  // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<double,1,1> >"<<std::endl;
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >;
