@@ -9,6 +9,7 @@
 #include "properties.hh"
 #include "combinedfunctor.hh"
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
@@ -382,13 +383,29 @@ namespace Dune
        * @param m The matrix to compute the norm of
        */
       template<class M>
-      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
+      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m,
+                                                                         typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr) const
       {
         typedef typename M::field_type field_type;
         typedef typename FieldTraits<field_type>::real_type real_type;
         static_assert( std::is_convertible<field_type, real_type >::value,
                   "use of diagonal norm in AMG not implemented for complex field_type");
         return m[N][N];
+        // possible implementation for complex types: return signed_abs(m[N][N]);
+      }
+
+      /**
+       * @brief Compute the norm of a scalar
+       * @param m The scalar to compute the norm of
+       */
+      template<class M>
+      auto operator()(const M& m,
+                      typename std::enable_if_t<Dune::IsNumber<M>::value>* sfinae = nullptr) const
+      {
+        typedef typename FieldTraits<M>::real_type real_type;
+        static_assert( std::is_convertible<M, real_type >::value,
+                  "use of diagonal norm in AMG not implemented for complex field_type");
+        return m;
         // possible implementation for complex types: return signed_abs(m[N][N]);
       }
 
@@ -1813,7 +1830,14 @@ namespace Dune
           for(ColIterator col = row.begin(); col != end; ++col)
             if(col.index()!=*vertex) {
               criterion.examine(col);
-              absoffdiag = max(absoffdiag, col->frobenius_norm());
+              Hybrid::ifElse(IsNumber<typename Matrix::block_type>(),
+                [&](auto id) {
+                  using std::abs;
+                  absoffdiag = max(absoffdiag, abs(*id(col)));
+                },
+                [&](auto id) {
+                  absoffdiag = max(absoffdiag, id(col)->frobenius_norm());
+                });
             }
 
           if(absoffdiag==0)
