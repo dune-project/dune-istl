@@ -180,6 +180,13 @@ try
     ml = atoi(argv[3]);
 
   {
+    using Matrix = Dune::BCRSMatrix<XREAL>;
+    using Vector = Dune::BlockVector<XREAL>;
+
+    testAMG<Matrix,Vector>(N, coarsenTarget, ml);
+  }
+
+  {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<XREAL,1,1> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<XREAL,1> >;
 

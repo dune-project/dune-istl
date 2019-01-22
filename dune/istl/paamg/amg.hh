@@ -584,7 +584,15 @@ namespace Dune
           }
         }
         if(isDirichlet && hasDiagonal)
-          diagonal.solve(x[row.index()], b[row.index()]);
+        {
+          Hybrid::ifElse(IsNumber<Block>(),
+            [&](auto id) {
+              x[row.index()] = id(diagonal) / b[row.index()];
+            },
+            [&](auto id) {
+              id(diagonal).solve(x[row.index()], b[row.index()]);
+            });
+        }
       }
 
       if(smoothers_->levels()>0)
