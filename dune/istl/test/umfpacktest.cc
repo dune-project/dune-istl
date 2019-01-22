@@ -72,6 +72,14 @@ int main(int argc, char** argv) try
     runUMFPack<Matrix,Vector>(N);
   }
 
+  // ------------------------------------------------------------------------------
+  std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<double,2,2> >"<<std::endl;
+  {
+    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
+    using Vector = Dune::BlockVector<Dune::FieldVector<double,2> >;
+    runUMFPack<Matrix,Vector>(N);
+  }
+
   return 0;
 #else // HAVE_SUITESPARSE_UMFPACK
   std::cerr << "You need SuiteSparse's UMFPack to run this test." << std::endl;
