@@ -448,7 +448,7 @@ namespace Dune
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
         Hybrid::ifElse(IsNumber<typename M::block_type>(),
           [&](auto id) {
-            mat->values[marker[colindex*m+j]]=(*col);
+            mat->values[marker[colindex*m+j]]=id(*col);
           },
           [&](auto id) {
             mat->values[marker[colindex*m+j]]=id(*col)[i][j];
