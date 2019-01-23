@@ -587,7 +587,7 @@ namespace Dune
         {
           Hybrid::ifElse(IsNumber<Block>(),
             [&](auto id) {
-              x[row.index()] = id(diagonal) / b[row.index()];
+              x[row.index()] = b[row.index()] / id(diagonal);
             },
             [&](auto id) {
               id(diagonal).solve(x[row.index()], b[row.index()]);
