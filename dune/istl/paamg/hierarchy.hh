@@ -1258,38 +1258,18 @@ namespace Dune
 
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy(MemberType& first)
-      : originalFinest_(stackobject_to_shared_ptr(first)), allocator_()
-    {
-      finest_ = std::allocate_shared<Element>(allocator_);
-      finest_->element_ = originalFinest_;
-      coarsest_ = finest_;
-      levels_ = 1;
-    }
+      : Hierarchy(stackobject_to_shared_ptr(first))
+    {}
 
+    #warning get rid of this constructor
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy(MemberType* first)
-      : originalFinest_(first), allocator_()
-    {
-      finest_ = std::allocate_shared<Element>(allocator_);
-      finest_->element_ = originalFinest_;
-      coarsest_ = finest_;
-      levels_ = 1;
-    }
+      : Hierarchy(std::shared_ptr<MemberType>(first))
+    {}
+
     template<class T, class A>
     Hierarchy<T,A>::~Hierarchy()
-    {
-      while(coarsest_) {
-        std::shared_ptr<Element> current = coarsest_;
-        coarsest_ = coarsest_->finer_;
-        // we changed the internal behaviour
-        // now the finest level is _always_ managed by a shared_ptr
-        if(current != finest_) {
-          if(current->redistributed_)
-            current->redistributed_ = nullptr;
-        }
-        current = nullptr;
-      }
-    }
+    {}
 
     //! \brief deep copy of a given hierarchy
     #warning do we catually want to support this? This might be very expensive?!
