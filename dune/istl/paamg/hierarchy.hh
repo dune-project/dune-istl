@@ -110,29 +110,10 @@ namespace Dune
        */
       Hierarchy(const std::shared_ptr<MemberType> & first);
 
-      /**
-       * @brief Construct a new hierarchy.
-       * @param first The first element in the hierarchy.
-       * @todo remove in 2.6
-       */
-      Hierarchy(MemberType& first) DUNE_DEPRECATED_MSG("Use the constructor taking a shared_ptr");
+      Hierarchy() = default;
 
       /**
-       * @brief Construct a new hierarchy.
-       * @param first Pointer to the first element in the hierarchy.
-       * @warning Hierarchy will be responsible for the memory
-       * management of the pointer.
-       * @todo remove in 2.6
-       */
-      Hierarchy(MemberType* first) DUNE_DEPRECATED_MSG("Use the constructor taking a shared_ptr");
-
-      /**
-       * @brief Construct a new empty hierarchy.
-       */
-      Hierarchy();
-
-      /**
-       * @brief Copy constructor.
+       * @brief Copy constructor (deep copy!).
        */
       Hierarchy(const Hierarchy& other);
       /**
@@ -291,9 +272,6 @@ namespace Dune
        * @return The number of levels.
        */
       std::size_t levels() const;
-
-      /** @brief Destructor. */
-      ~Hierarchy();
 
     private:
       /** @brief fix memory management of the finest element in the hierarchy
@@ -1242,34 +1220,14 @@ namespace Dune
     }
 
     template<class T, class A>
-    Hierarchy<T,A>::Hierarchy()
-      : finest_(0), coarsest_(0), allocator_(), levels_(0)
-    {}
-
-    template<class T, class A>
     Hierarchy<T,A>::Hierarchy(const std::shared_ptr<MemberType> & first)
-      : originalFinest_(first), allocator_()
+      : originalFinest_(first)
     {
       finest_ = std::allocate_shared<Element>(allocator_);
       finest_->element_ = originalFinest_;
       coarsest_ = finest_;
       levels_ = 1;
     }
-
-    template<class T, class A>
-    Hierarchy<T,A>::Hierarchy(MemberType& first)
-      : Hierarchy(stackobject_to_shared_ptr(first))
-    {}
-
-    #warning get rid of this constructor
-    template<class T, class A>
-    Hierarchy<T,A>::Hierarchy(MemberType* first)
-      : Hierarchy(std::shared_ptr<MemberType>(first))
-    {}
-
-    template<class T, class A>
-    Hierarchy<T,A>::~Hierarchy()
-    {}
 
     //! \brief deep copy of a given hierarchy
     #warning do we catually want to support this? This might be very expensive?!
