@@ -106,17 +106,25 @@ namespace Dune
 
       /**
        * @brief Construct a new hierarchy.
-       * @param first The first element in the hierarchy.
+       * @param first std::shared_ptr to the first element in the hierarchy.
        */
-      Hierarchy(MemberType& first);
+      Hierarchy(const std::shared_ptr<MemberType> & first);
+
+      /**
+       * @brief Construct a new hierarchy.
+       * @param first The first element in the hierarchy.
+       * @todo remove in 2.6
+       */
+      Hierarchy(MemberType& first) DUNE_DEPRECATED_MSG("Use the constructor taking a shared_ptr");
 
       /**
        * @brief Construct a new hierarchy.
        * @param first Pointer to the first element in the hierarchy.
        * @warning Hierarchy will be responsible for the memory
        * management of the pointer.
+       * @todo remove in 2.6
        */
-      Hierarchy(MemberType* first);
+      Hierarchy(MemberType* first) DUNE_DEPRECATED_MSG("Use the constructor taking a shared_ptr");
 
       /**
        * @brief Construct a new empty hierarchy.
@@ -287,12 +295,16 @@ namespace Dune
       ~Hierarchy();
 
     private:
+      /** @brief fix memory management of the finest element in the hierarchy
+
+          This object is passed in from outside, so that we have to
+          deal with shared ownership.
+      */
+      std::shared_ptr<MemberType> originalFinest_;
       /** @brief The finest element in the hierarchy. */
       Element* finest_;
       /** @brief The coarsest element in the hierarchy. */
       Element* coarsest_;
-      /** @brief Whether the first element was not allocated by us. */
-      Element* nonAllocated_;
       /** @brief The allocator for the list elements. */
       Allocator allocator_;
       /** @brief The number of levels in the hierarchy. */
@@ -350,9 +362,8 @@ namespace Dune
        * @param fineMatrix The matrix to coarsen.
        * @param pinfo The information about the parallel data decomposition at the first level.
        */
-      MatrixHierarchy(const MatrixOperator& fineMatrix,
-                      const ParallelInformation& pinfo=ParallelInformation());
-
+      MatrixHierarchy(std::shared_ptr<MatrixOperator> fineMatrix,
+        std::shared_ptr<ParallelInformation> pinfo = std::make_shared<ParallelInformation>());
 
       ~MatrixHierarchy();
 
@@ -649,12 +660,12 @@ namespace Dune
     }
 
     template<class M, class IS, class A>
-    MatrixHierarchy<M,IS,A>::MatrixHierarchy(const MatrixOperator& fineOperator,
-                                             const ParallelInformation& pinfo)
-      : matrices_(const_cast<MatrixOperator&>(fineOperator)),
-        parallelInformation_(const_cast<ParallelInformation&>(pinfo))
+    MatrixHierarchy<M,IS,A>::MatrixHierarchy(std::shared_ptr<MatrixOperator> fineMatrix,
+                                             std::shared_ptr<ParallelInformation> pinfo)
+      : matrices_(fineMatrix),
+        parallelInformation_(pinfo)
     {
-      if (SolverCategory::category(fineOperator) != SolverCategory::category(pinfo))
+      if (SolverCategory::category(*fineMatrix) != SolverCategory::category(*pinfo))
         DUNE_THROW(ISTLError, "MatrixOperator and ParallelInformation must belong to the same category!");
     }
 
@@ -1226,17 +1237,28 @@ namespace Dune
 
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy()
-      : finest_(0), coarsest_(0), nonAllocated_(0), allocator_(), levels_(0)
+      : finest_(0), coarsest_(0), allocator_(), levels_(0)
     {}
 
     template<class T, class A>
-    Hierarchy<T,A>::Hierarchy(MemberType& first)
-      : allocator_()
+    Hierarchy<T,A>::Hierarchy(const std::shared_ptr<MemberType> & first)
+      : originalFinest_(first), allocator_()
     {
       finest_ = allocator_.allocate(1,0);
-      finest_->element_ = &first;
+      finest_->element_ = originalFinest_.get();
       finest_->redistributed_ = nullptr;
-      nonAllocated_ = finest_;
+      coarsest_ = finest_;
+      coarsest_->coarser_ = coarsest_->finer_ = nullptr;
+      levels_ = 1;
+    }
+
+    template<class T, class A>
+    Hierarchy<T,A>::Hierarchy(MemberType& first)
+      : originalFinest_(stackobject_to_shared_ptr(first)), allocator_()
+    {
+      finest_ = allocator_.allocate(1,0);
+      finest_->element_ = originalFinest_.get();
+      finest_->redistributed_ = nullptr;
       coarsest_ = finest_;
       coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       levels_ = 1;
@@ -1244,12 +1266,11 @@ namespace Dune
 
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy(MemberType* first)
-      : allocator_()
+      : originalFinest_(first), allocator_()
     {
       finest_ = allocator_.allocate(1,0);
-      finest_->element_ = first;
+      finest_->element_ = originalFinest_.get();
       finest_->redistributed_ = nullptr;
-      nonAllocated_ = nullptr;
       coarsest_ = finest_;
       coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       levels_ = 1;
@@ -1260,7 +1281,9 @@ namespace Dune
       while(coarsest_) {
         Element* current = coarsest_;
         coarsest_ = coarsest_->finer_;
-        if(current != nonAllocated_) {
+        // we changed the internal behaviour
+        // now the finest level is _always_ managedd by a shared_ptr
+        if(current != finest_) {
           if(current->redistributed_)
             ConstructionTraits<T>::deconstruct(current->redistributed_);
           ConstructionTraits<T>::deconstruct(current->element_);
@@ -1273,12 +1296,12 @@ namespace Dune
 
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy(const Hierarchy& other)
-    : nonAllocated_(), allocator_(other.allocator_),
+    : allocator_(other.allocator_),
       levels_(other.levels_)
     {
       if(!other.finest_)
       {
-        finest_=coarsest_=nonAllocated_=nullptr;
+        finest_=coarsest_=nullptr;
         return;
       }
       finest_=allocator_.allocate(1,0);
@@ -1323,9 +1346,14 @@ namespace Dune
     void Hierarchy<T,A>::addCoarser(Arguments& args)
     {
       if(!coarsest_) {
+        // we have no levels at all...
         assert(!finest_);
+        // allocate into the shared_ptr
+        originalFinest_ =
+          std::shared_ptr<MemberType>(
+            ConstructionTraits<MemberType>::construct(args));
         coarsest_ = allocator_.allocate(1,0);
-        coarsest_->element_ = ConstructionTraits<MemberType>::construct(args);
+        coarsest_->element_ = originalFinest_.get();
         finest_ = coarsest_;
         coarsest_->finer_ = nullptr;
       }else{
@@ -1344,9 +1372,14 @@ namespace Dune
     void Hierarchy<T,A>::addFiner(Arguments& args)
     {
       if(!finest_) {
+        // we have no levels at all...
         assert(!coarsest_);
+        // allocate into the shared_ptr
+        originalFinest_ =
+          std::shared_ptr<MemberType>(
+            ConstructionTraits<MemberType>::construct(args));
         finest_ = allocator_.allocate(1,0);
-        finest_->element = ConstructionTraits<T>::construct(args);
+        finest_->element = originalFinest_.get();
         coarsest_ = finest_;
         coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       }else{
