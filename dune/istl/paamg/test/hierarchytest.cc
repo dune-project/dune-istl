@@ -74,6 +74,7 @@ void testHierarchy(int N)
 
 int main(int argc, char** argv)
 {
+  #warning change to use MPI abstractions...
   MPI_Init(&argc, &argv);
 
   const int BS=1;

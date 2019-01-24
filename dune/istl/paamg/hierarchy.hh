@@ -43,7 +43,6 @@ namespace Dune
      * @author Markus Blatt
      * @brief Provides a classes representing the hierarchies in AMG.
      */
-
     enum {
       /**
        * @brief Hard limit for the number of processes allowed.
@@ -62,6 +61,7 @@ namespace Dune
      * advisable one can add redistributed version of the container at
      * each level.
      */
+#warning change to use std::deque
     template<typename T, typename A=std::allocator<T> >
     class Hierarchy
     {
@@ -84,16 +84,16 @@ namespace Dune
         friend class LevelIterator<const Hierarchy<T,A>, const T>;
 
         /** @brief The next coarser element in the list. */
-        Element* coarser_;
+        std::weak_ptr<Element> coarser_;
 
         /** @brief The next finer element in the list. */
-        Element* finer_;
+        std::shared_ptr<Element> finer_;
 
         /** @brief Pointer to the element. */
-        MemberType* element_;
+        std::shared_ptr<MemberType> element_;
 
         /** @brief The redistributed version of the element. */
-        MemberType* redistributed_;
+        std::shared_ptr<MemberType> redistributed_;
       };
     public:
 
@@ -167,10 +167,9 @@ namespace Dune
       public:
         /** @brief Constructor. */
         LevelIterator()
-          : element_(0)
         {}
 
-        LevelIterator(Element* element)
+        LevelIterator(std::shared_ptr<Element> element)
           : element_(element)
         {}
 
@@ -213,7 +212,7 @@ namespace Dune
         /** @brief Move to the next coarser level */
         void increment()
         {
-          element_ = element_->coarser_;
+          element_ = std::shared_ptr<Element>(element_->coarser_);
         }
 
         /** @brief Move to the next fine level */
@@ -226,21 +225,23 @@ namespace Dune
          * @brief Check whether there was a redistribution at the current level.
          * @return True if there is a redistributed version of the container at the current level.
          */
+        #warning TODO get rid of the following function
         bool isRedistributed() const
         {
-          return element_->redistributed_;
+          return (bool)element_->redistributed_;
         }
 
         /**
          * @brief Get the redistributed container.
          * @return The redistributed container.
          */
+        #warning TODO get rid of the following three functions
         T1& getRedistributed() const
         {
           assert(element_->redistributed_);
           return *element_->redistributed_;
         }
-        void addRedistributed(T1* t)
+        void addRedistributed(std::shared_ptr<T1> t)
         {
           element_->redistributed_ = t;
         }
@@ -251,7 +252,7 @@ namespace Dune
         }
 
       private:
-        Element* element_;
+        std::shared_ptr<Element> element_;
       };
 
       /** @brief Type of the mutable iterator. */
@@ -302,9 +303,9 @@ namespace Dune
       */
       std::shared_ptr<MemberType> originalFinest_;
       /** @brief The finest element in the hierarchy. */
-      Element* finest_;
+      std::shared_ptr<Element> finest_;
       /** @brief The coarsest element in the hierarchy. */
-      Element* coarsest_;
+      std::shared_ptr<Element> coarsest_;
       /** @brief The allocator for the list elements. */
       Allocator allocator_;
       /** @brief The number of levels in the hierarchy. */
@@ -573,15 +574,16 @@ namespace Dune
     };
 
     template<typename M, typename C1>
-    bool repartitionAndDistributeMatrix(const M& origMatrix, M& newMatrix,
-                                        SequentialInformation& origSequentialInformationomm,
-                                        SequentialInformation*& newComm,
+    bool repartitionAndDistributeMatrix(const M& origMatrix,
+                                        std::shared_ptr<M> newMatrix,
+                                        SequentialInformation& origComm,
+                                        std::shared_ptr<SequentialInformation>& newComm,
                                         RedistributeInformation<SequentialInformation>& ri,
                                         int nparts, C1& criterion)
     {
       DUNE_UNUSED_PARAMETER(origMatrix);
       DUNE_UNUSED_PARAMETER(newMatrix);
-      DUNE_UNUSED_PARAMETER(origSequentialInformationomm);
+      DUNE_UNUSED_PARAMETER(origComm);
       DUNE_UNUSED_PARAMETER(newComm);
       DUNE_UNUSED_PARAMETER(ri);
       DUNE_UNUSED_PARAMETER(nparts);
@@ -590,8 +592,12 @@ namespace Dune
     }
 
 
+    #warning make origComm const
     template<typename M, typename C, typename C1>
-    bool repartitionAndDistributeMatrix(const M& origMatrix, M& newMatrix, C& origComm, C*& newComm,
+    bool repartitionAndDistributeMatrix(const M& origMatrix,
+                                        std::shared_ptr<M> newMatrix,
+                                        C& origComm,
+                                        std::shared_ptr<C>& newComm,
                                         RedistributeInformation<C>& ri,
                                         int nparts, C1& criterion)
     {
@@ -633,14 +639,14 @@ namespace Dune
       ri.checkInterface(origComm.indexSet(), newComm->indexSet(), origComm.communicator());
 #endif
 
-      redistributeMatrix(const_cast<M&>(origMatrix), newMatrix, origComm, *newComm, ri);
+      redistributeMatrix(const_cast<M&>(origMatrix), *newMatrix, origComm, *newComm, ri);
 
 #ifdef DEBUG_REPART
       if(origComm.communicator().rank()==0)
         std::cout<<"Original matrix"<<std::endl;
       origComm.communicator().barrier();
       if(newComm->communicator().size()>0)
-        printGlobalSparseMatrix(newMatrix, *newComm, std::cout);
+        printGlobalSparseMatrix(*newMatrix, *newComm, std::cout);
       origComm.communicator().barrier();
 #endif
 
@@ -650,14 +656,14 @@ namespace Dune
 
     }
 
-    template<typename M>
-    bool repartitionAndDistributeMatrix(M& origMatrix, M& newMatrix,
-                                        SequentialInformation& origComm,
-                                        SequentialInformation& newComm,
-                                        RedistributeInformation<SequentialInformation>& ri)
-    {
-      return true;
-    }
+    // template<typename M>
+    // bool repartitionAndDistributeMatrix(M& origMatrix, M& newMatrix,
+    //                                     SequentialInformation& origComm,
+    //                                     SequentialInformation& newComm,
+    //                                     RedistributeInformation<SequentialInformation>& ri)
+    // {
+    //   return true;
+    // }
 
     template<class M, class IS, class A>
     MatrixHierarchy<M,IS,A>::MatrixHierarchy(std::shared_ptr<MatrixOperator> fineMatrix,
@@ -723,8 +729,8 @@ namespace Dune
            dunknowns/infoLevel->communicator().size() <= criterion.coarsenTarget())
         {
           // accumulate to fewer processors
-          Matrix* redistMat= new Matrix();
-          ParallelInformation* redistComm=0;
+          std::shared_ptr<Matrix> redistMat = std::make_shared<Matrix>();
+          std::shared_ptr<ParallelInformation> redistComm;
           std::size_t nodomains = (std::size_t)std::ceil(dunknowns/(criterion.minAggregateSize()
                                                                     *criterion.coarsenTarget()));
           if( nodomains<=criterion.minAggregateSize()/2 ||
@@ -732,7 +738,7 @@ namespace Dune
             nodomains=1;
 
           bool existentOnNextLevel =
-            repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
+            repartitionAndDistributeMatrix(mlevel->getmat(), redistMat, *infoLevel,
                                            redistComm, redistributes_.back(), nodomains,
                                            criterion);
           BIGINT unknownsRedist = redistMat->N();
@@ -974,11 +980,11 @@ namespace Dune
 #endif
 
         // accumulate to fewer processors
-        Matrix* redistMat= new Matrix();
-        ParallelInformation* redistComm=0;
+        std::shared_ptr<Matrix> redistMat = std::make_shared<Matrix>();
+        std::shared_ptr<ParallelInformation> redistComm;
         int nodomains = 1;
 
-        repartitionAndDistributeMatrix(mlevel->getmat(), *redistMat, *infoLevel,
+        repartitionAndDistributeMatrix(mlevel->getmat(), redistMat, *infoLevel,
                                        redistComm, redistributes_.back(), nodomains,criterion);
         MatrixArgs args(*redistMat, *redistComm);
         BIGINT unknownsRedist = redistMat->N();
@@ -1244,11 +1250,9 @@ namespace Dune
     Hierarchy<T,A>::Hierarchy(const std::shared_ptr<MemberType> & first)
       : originalFinest_(first), allocator_()
     {
-      finest_ = allocator_.allocate(1,0);
-      finest_->element_ = originalFinest_.get();
-      finest_->redistributed_ = nullptr;
+      finest_ = std::allocate_shared<Element>(allocator_);
+      finest_->element_ = originalFinest_;
       coarsest_ = finest_;
-      coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       levels_ = 1;
     }
 
@@ -1256,11 +1260,9 @@ namespace Dune
     Hierarchy<T,A>::Hierarchy(MemberType& first)
       : originalFinest_(stackobject_to_shared_ptr(first)), allocator_()
     {
-      finest_ = allocator_.allocate(1,0);
-      finest_->element_ = originalFinest_.get();
-      finest_->redistributed_ = nullptr;
+      finest_ = std::allocate_shared<Element>(allocator_);
+      finest_->element_ = originalFinest_;
       coarsest_ = finest_;
-      coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       levels_ = 1;
     }
 
@@ -1268,32 +1270,29 @@ namespace Dune
     Hierarchy<T,A>::Hierarchy(MemberType* first)
       : originalFinest_(first), allocator_()
     {
-      finest_ = allocator_.allocate(1,0);
-      finest_->element_ = originalFinest_.get();
-      finest_->redistributed_ = nullptr;
+      finest_ = std::allocate_shared<Element>(allocator_);
+      finest_->element_ = originalFinest_;
       coarsest_ = finest_;
-      coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       levels_ = 1;
     }
     template<class T, class A>
     Hierarchy<T,A>::~Hierarchy()
     {
       while(coarsest_) {
-        Element* current = coarsest_;
+        std::shared_ptr<Element> current = coarsest_;
         coarsest_ = coarsest_->finer_;
         // we changed the internal behaviour
-        // now the finest level is _always_ managedd by a shared_ptr
+        // now the finest level is _always_ managed by a shared_ptr
         if(current != finest_) {
           if(current->redistributed_)
-            ConstructionTraits<T>::deconstruct(current->redistributed_);
-          ConstructionTraits<T>::deconstruct(current->element_);
+            current->redistributed_ = nullptr;
         }
-        allocator_.deallocate(current, 1);
-        current=nullptr;
-        //coarsest_->coarser_ = nullptr;
+        current = nullptr;
       }
     }
 
+    //! \brief deep copy of a given hierarchy
+    #warning do we catually want to support this? This might be very expensive?!
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy(const Hierarchy& other)
     : allocator_(other.allocator_),
@@ -1304,28 +1303,28 @@ namespace Dune
         finest_=coarsest_=nullptr;
         return;
       }
-      finest_=allocator_.allocate(1,0);
-      Element* finer_         = nullptr;
-      Element* current_      = finest_;
-      Element* otherCurrent_ = other.finest_;
+      finest_ = std::allocate_shared<Element>(allocator_);
+      std::shared_ptr<Element> finer_;
+      std::shared_ptr<Element> current_      = finest_;
+      std::shared_ptr<Element> otherCurrent_ = other.finest_;
 
       while(otherCurrent_)
       {
-        T* t=new T(*(otherCurrent_->element_));
-        current_->element_=t;
+        #warning should we use the allocator?
+        current_->element_ =
+          std::make_shared<MemberType>(*(otherCurrent_->element_));
         current_->finer_=finer_;
         if(otherCurrent_->redistributed_)
-          current_->redistributed_ = new T(*otherCurrent_->redistributed_);
-        else
-          current_->redistributed_= nullptr;
+          current_->redistributed_ =
+            std::make_shared<MemberType>(*(otherCurrent_->redistributed_));
         finer_=current_;
-        if(otherCurrent_->coarser_)
+        if(not otherCurrent_->coarser_.expired())
         {
-          current_->coarser_=allocator_.allocate(1,0);
-          current_=current_->coarser_;
-        }else
-          current_->coarser_=nullptr;
-        otherCurrent_=otherCurrent_->coarser_;
+          auto c = std::allocate_shared<Element>(allocator_);
+          current_->coarser_ = c;
+          current_ = c;
+        }
+        otherCurrent_ = std::shared_ptr<Element>(otherCurrent_->coarser_);
       }
       coarsest_=current_;
     }
@@ -1349,21 +1348,17 @@ namespace Dune
         // we have no levels at all...
         assert(!finest_);
         // allocate into the shared_ptr
-        originalFinest_ =
-          std::shared_ptr<MemberType>(
-            ConstructionTraits<MemberType>::construct(args));
-        coarsest_ = allocator_.allocate(1,0);
-        coarsest_->element_ = originalFinest_.get();
+        originalFinest_ = ConstructionTraits<MemberType>::construct(args);
+        coarsest_ = std::allocate_shared<Element>(allocator_);
+        coarsest_->element_ = originalFinest_;
         finest_ = coarsest_;
-        coarsest_->finer_ = nullptr;
       }else{
-        coarsest_->coarser_ = allocator_.allocate(1,0);
-        coarsest_->coarser_->finer_ = coarsest_;
-        coarsest_ = coarsest_->coarser_;
+        auto old_coarsest = coarsest_;
+        coarsest_ = std::allocate_shared<Element>(allocator_);
+        coarsest_->finer_ = old_coarsest;
         coarsest_->element_ = ConstructionTraits<MemberType>::construct(args);
+        old_coarsest->coarser_ = coarsest_;
       }
-      coarsest_->redistributed_ = nullptr;
-      coarsest_->coarser_=nullptr;
       ++levels_;
     }
 
@@ -1371,22 +1366,19 @@ namespace Dune
     template<class T, class A>
     void Hierarchy<T,A>::addFiner(Arguments& args)
     {
+#warning wouldn't it be better to do this in the constructor?'
       if(!finest_) {
         // we have no levels at all...
         assert(!coarsest_);
         // allocate into the shared_ptr
-        originalFinest_ =
-          std::shared_ptr<MemberType>(
-            ConstructionTraits<MemberType>::construct(args));
-        finest_ = allocator_.allocate(1,0);
-        finest_->element = originalFinest_.get();
+        originalFinest_ = ConstructionTraits<MemberType>::construct(args);
+        finest_ = std::allocate_shared<Element>(allocator_);
+        finest_->element = originalFinest_;
         coarsest_ = finest_;
-        coarsest_->coarser_ = coarsest_->finer_ = nullptr;
       }else{
-        finest_->finer_ = allocator_.allocate(1,0);
+        finest_->finer_ = std::allocate_shared<Element>(allocator_);
         finest_->finer_->coarser_ = finest_;
         finest_ = finest_->finer_;
-        finest_->finer = nullptr;
         finest_->element = ConstructionTraits<T>::construct(args);
       }
       ++levels_;
