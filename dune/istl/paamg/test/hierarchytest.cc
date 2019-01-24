@@ -43,8 +43,11 @@ void testHierarchy(int N)
   typedef Dune::Amg::Hierarchy<Vector> VHierarchy;
 
   Operator op(mat, pinfo);
-  Hierarchy hierarchy(op, pinfo);
-  VHierarchy vh(b);
+  Hierarchy hierarchy(
+    Dune::stackobject_to_shared_ptr(op),
+    Dune::stackobject_to_shared_ptr(pinfo));
+  VHierarchy vh(
+    Dune::stackobject_to_shared_ptr(b));
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
