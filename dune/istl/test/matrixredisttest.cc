@@ -59,7 +59,7 @@ int testRepart(int N, int coarsenTarget)
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
 
   MatrixGraph graph(mat);
-  Communication* coarseComm;
+  std::shared_ptr<Communication> coarseComm;
 
   comm.remoteIndices().template rebuild<false>();
 
@@ -112,7 +112,6 @@ int testRepart(int N, int coarsenTarget)
 
   //if(coarseComm->communicator().rank()==0)
   //Dune::printmatrix(std::cout, newMat, "redist", "row");
-  delete coarseComm;
   return ret;
 }
 

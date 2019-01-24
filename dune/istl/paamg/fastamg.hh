@@ -400,7 +400,7 @@ namespace Dune
           cargs.setComm(*matrices_->parallelInformation().coarsest());
         }
 
-        coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
+        coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
         scalarProduct_ = createScalarProduct<X>(cargs.getComm(),category());
 
 #if HAVE_SUPERLU|| HAVE_SUITESPARSE_UMFPACK

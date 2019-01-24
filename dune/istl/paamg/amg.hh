@@ -486,7 +486,7 @@ namespace Dune
           cargs.setComm(*matrices_->parallelInformation().coarsest());
         }
 
-        coarseSmoother_.reset(ConstructionTraits<Smoother>::construct(cargs));
+        coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
         scalarProduct_ = createScalarProduct<X>(cargs.getComm(),category());
 
         typedef DirectSolverSelector< typename M::matrix_type, X > SolverSelector;
