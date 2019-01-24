@@ -294,8 +294,19 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    BlockPreconditioner (T& p, const communication_type& c)
-      : preconditioner(p), communication(c)
+    BlockPreconditioner (Preconditioner<X,Y>& p, const communication_type& c)
+      : _preconditioner(stackobject_to_shared_ptr(p)), _communication(c)
+    {   }
+
+    /*! \brief Constructor.
+
+       constructor gets all parameters to operate the prec.
+       \param p The sequential preconditioner.
+       \param c The communication object for syncing overlap and copy
+       data points. (E.~g. OwnerOverlapCopyCommunication )
+     */
+    BlockPreconditioner (const std::shared_ptr<Preconditioner<X,Y>>& p, const communication_type& c)
+      : _preconditioner(p), _communication(c)
     {   }
 
     /*!
@@ -305,8 +316,8 @@ namespace Dune {
      */
     virtual void pre (X& x, Y& b)
     {
-      communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
-      preconditioner.pre(x,b);
+      _communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
+      _preconditioner->pre(x,b);
     }
 
     /*!
@@ -316,15 +327,15 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      preconditioner.apply(v,d);
-      communication.copyOwnerToAll(v,v);
+      _preconditioner->apply(v,d);
+      _communication.copyOwnerToAll(v,v);
     }
 
     template<bool forward>
     void apply (X& v, const Y& d)
     {
-      preconditioner.template apply<forward>(v,d);
-      communication.copyOwnerToAll(v,v);
+      _preconditioner->template apply<forward>(v,d);
+      _communication.copyOwnerToAll(v,v);
     }
 
     /*!
@@ -334,7 +345,7 @@ namespace Dune {
      */
     virtual void post (X& x)
     {
-      preconditioner.post(x);
+      _preconditioner->post(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
@@ -345,10 +356,10 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    T& preconditioner;
+    std::shared_ptr<Preconditioner<X,Y>> _preconditioner;
 
     //! \brief the communication object
-    const communication_type& communication;
+    const communication_type& _communication;
   };
 
   /** @} end documentation */

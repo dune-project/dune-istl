@@ -266,6 +266,7 @@ namespace Dune {
     : public Dune::Preconditioner<typename P::domain_type,typename P::range_type> {
     friend struct Amg::ConstructionTraits<NonoverlappingBlockPreconditioner<C,P> >;
   public:
+    typedef Preconditioner<typename P::domain_type,typename P::range_type> Prec;
     //! \brief The domain type of the preconditioner.
     typedef typename P::domain_type domain_type;
     //! \brief The range type of the preconditioner.
@@ -280,9 +281,27 @@ namespace Dune {
        \param c The communication object for syncing owner and copy
        data points. (E.~g. OwnerOverlapCommunication )
      */
-    NonoverlappingBlockPreconditioner (P& prec, const communication_type& c)
-      : preconditioner(prec), communication(c)
-    {}
+    /*! \brief Constructor.
+
+       constructor gets all parameters to operate the prec.
+       \param p The sequential preconditioner.
+       \param c The communication object for syncing overlap and copy
+       data points. (E.~g. OwnerOverlapCopyCommunication )
+     */
+    NonoverlappingBlockPreconditioner (Prec& p, const communication_type& c)
+      : _preconditioner(stackobject_to_shared_ptr(p)), _communication(c)
+    {   }
+
+    /*! \brief Constructor.
+
+       constructor gets all parameters to operate the prec.
+       \param p The sequential preconditioner.
+       \param c The communication object for syncing overlap and copy
+       data points. (E.~g. OwnerOverlapCopyCommunication )
+     */
+    NonoverlappingBlockPreconditioner (const std::shared_ptr<Prec>& p, const communication_type& c)
+      : _preconditioner(p), _communication(c)
+    {   }
 
     /*!
        \brief Prepare the preconditioner.
@@ -291,7 +310,7 @@ namespace Dune {
      */
     virtual void pre (domain_type& x, range_type& b)
     {
-      preconditioner.pre(x,b);
+      _preconditioner->pre(x,b);
     }
 
     /*!
@@ -304,8 +323,8 @@ namespace Dune {
       // block preconditioner equivalent to WrappedPreconditioner from
       // pdelab/backend/ovlpistsolverbackend.hh,
       // but not to BlockPreconditioner from schwarz.hh
-      preconditioner.apply(v,d);
-      communication.addOwnerCopyToOwnerCopy(v,v);
+      _preconditioner->apply(v,d);
+      _communication.addOwnerCopyToOwnerCopy(v,v);
     }
 
     /*!
@@ -315,7 +334,7 @@ namespace Dune {
      */
     virtual void post (domain_type& x)
     {
-      preconditioner.post(x);
+      _preconditioner->post(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
@@ -326,10 +345,10 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    P& preconditioner;
+    std::shared_ptr<Prec>& _preconditioner;
 
     //! \brief the communication object
-    const communication_type& communication;
+    const communication_type& _communication;
   };
 
   /** @} end documentation */
