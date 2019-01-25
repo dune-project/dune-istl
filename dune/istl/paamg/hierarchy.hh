@@ -1243,11 +1243,14 @@ namespace Dune
       }
       finest_ = std::allocate_shared<Element>(allocator_);
       std::shared_ptr<Element> finer_;
-      std::shared_ptr<Element> current_      = finest_;
-      std::shared_ptr<Element> otherCurrent_ = other.finest_;
+      std::shared_ptr<Element> current_ = finest_;
+      std::weak_ptr<Element> otherWeak_ = other.finest_;
 
-      while(otherCurrent_)
+      while(! otherWeak_.expired())
       {
+        // create shared_ptr from weak_ptr, we just checked that this is safe
+        std::shared_ptr<Element> otherCurrent_ = std::shared_ptr<Element>(otherWeak_);
+        // clone current level
         #warning should we use the allocator?
         current_->element_ =
           std::make_shared<MemberType>(*(otherCurrent_->element_));
@@ -1262,7 +1265,8 @@ namespace Dune
           current_->coarser_ = c;
           current_ = c;
         }
-        otherCurrent_ = std::shared_ptr<Element>(otherCurrent_->coarser_);
+        // go to coarser level
+        otherWeak_ = otherCurrent_->coarser_;
       }
       coarsest_=current_;
     }
