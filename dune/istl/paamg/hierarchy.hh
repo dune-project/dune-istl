@@ -110,12 +110,17 @@ namespace Dune
        */
       Hierarchy(const std::shared_ptr<MemberType> & first);
 
-      Hierarchy() = default;
+      /**
+       * @brief Construct an empty hierarchy.
+       */
+      Hierarchy() : levels_(0)
+      {}
 
       /**
        * @brief Copy constructor (deep copy!).
        */
       Hierarchy(const Hierarchy& other);
+
       /**
        * @brief Add an element on a coarser level.
        * @param args The arguments needed for the construction.
