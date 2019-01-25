@@ -157,7 +157,7 @@ namespace Dune
   template<class Mat>
   class ColCompMatrix
   {
-    friend struct ColCompMatrixInitializer<Mat>;
+    friend class ColCompMatrixInitializer<Mat>;
 
     using B = typename Mat::field_type;
 
