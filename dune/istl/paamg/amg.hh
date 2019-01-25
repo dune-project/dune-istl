@@ -126,8 +126,6 @@ namespace Dune
        */
       AMG(const AMG& amg);
 
-      ~AMG();
-
       /** \copydoc Preconditioner::pre */
       void pre(Domain& x, Range& b);
 
@@ -269,11 +267,11 @@ namespace Dune
       /** @brief The solver of the coarsest level. */
       std::shared_ptr<CoarseSolver> solver_;
       /** @brief The right hand side of our problem. */
-      Hierarchy<Range,A>* rhs_;
+      std::shared_ptr<Hierarchy<Range,A>> rhs_;
       /** @brief The left approximate solution of our problem. */
-      Hierarchy<Domain,A>* lhs_;
+      std::shared_ptr<Hierarchy<Domain,A>> lhs_;
       /** @brief The total update for the outer solver. */
-      Hierarchy<Domain,A>* update_;
+      std::shared_ptr<Hierarchy<Domain,A>> update_;
       /** @brief The type of the scalar product for the coarse solver. */
       using ScalarProduct = Dune::ScalarProduct<X>;
       /** @brief Scalar product on the coarse level. */
@@ -307,12 +305,13 @@ namespace Dune
       category_(amg.category_),
       verbosity_(amg.verbosity_)
     {
+#warning why do we need this? The vectors are re-created in AMG::pre(x)
       if(amg.rhs_)
-        rhs_=new Hierarchy<Range,A>(*amg.rhs_);
+        rhs_ = std::make_shared<Hierarchy<Range,A>>(*amg.rhs_);
       if(amg.lhs_)
-        lhs_=new Hierarchy<Domain,A>(*amg.lhs_);
+        lhs_ = std::make_shared<Hierarchy<Domain,A>>(*amg.lhs_);
       if(amg.update_)
-        update_=new Hierarchy<Domain,A>(*amg.update_);
+        update_ = std::make_shared<Hierarchy<Domain,A>>(*amg.update_);
     }
 
     template<class M, class X, class S, class PI, class A>
@@ -359,27 +358,6 @@ namespace Dune
       //             "Matrix and Solver must match in terms of category!");
       auto matrixptr = stackobject_to_shared_ptr(matrix);
       createHierarchies(criterion, matrixptr, pinfo);
-    }
-
-
-    template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::~AMG()
-    {
-      if(buildHierarchy_) {
-        if(solver_)
-          solver_.reset();
-        if(coarseSmoother_)
-          coarseSmoother_.reset();
-      }
-      if(lhs_)
-        delete lhs_;
-      lhs_=nullptr;
-      if(update_)
-        delete update_;
-      update_=nullptr;
-      if(rhs_)
-        delete rhs_;
-      rhs_=nullptr;
     }
 
     template <class Matrix,
@@ -605,15 +583,9 @@ namespace Dune
       else
         // No smoother to make x consistent! Do it by hand
         matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
-      if(rhs_)
-        delete rhs_;
-      rhs_ = new Hierarchy<Range,A>(std::make_shared<Range>(b));
-      if(lhs_)
-        delete lhs_;
-      lhs_ = new Hierarchy<Domain,A>(std::make_shared<Domain>(x));
-      if(update_)
-        delete update_;
-      update_ = new Hierarchy<Domain,A>(std::make_shared<Domain>(x));
+      rhs_ = std::make_shared<Hierarchy<Range,A>>(std::make_shared<Range>(b));
+      lhs_ = std::make_shared<Hierarchy<Domain,A>>(std::make_shared<Domain>(x));
+      update_ = std::make_shared<Hierarchy<Domain,A>>(std::make_shared<Domain>(x));
       matrices_->coarsenVector(*rhs_);
       matrices_->coarsenVector(*lhs_);
       matrices_->coarsenVector(*update_);
@@ -920,15 +892,9 @@ namespace Dune
             smoother->post(*lhs);
         smoother->post(*lhs);
       }
-      //delete &(*lhs_->finest());
-      delete lhs_;
-      lhs_=nullptr;
-      //delete &(*update_->finest());
-      delete update_;
-      update_=nullptr;
-      //delete &(*rhs_->finest());
-      delete rhs_;
-      rhs_=nullptr;
+      lhs_ = nullptr;
+      update_ = nullptr;
+      rhs_ = nullptr;
     }
 
     template<class M, class X, class S, class PI, class A>
