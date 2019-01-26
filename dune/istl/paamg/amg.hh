@@ -7,7 +7,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/paamg/transfer.hh>
-#include <dune/istl/paamg/hierarchy.hh>
+#include <dune/istl/paamg/matrixhierarchy.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/superlu.hh>
