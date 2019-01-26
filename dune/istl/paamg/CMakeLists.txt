@@ -14,6 +14,7 @@ install(FILES
   graph.hh
   graphcreator.hh
   hierarchy.hh
+  matrixhierarchy.hh
   indicescoarsener.hh
   kamg.hh
   parameters.hh
