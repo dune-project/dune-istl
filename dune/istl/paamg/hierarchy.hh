@@ -34,7 +34,6 @@ namespace Dune
      * advisable one can add redistributed version of the container at
      * each level.
      */
-#warning change to use std::deque
     template<typename T, typename A=std::allocator<T> >
     class Hierarchy
     {
@@ -184,7 +183,6 @@ namespace Dune
          * @brief Check whether there was a redistribution at the current level.
          * @return True if there is a redistributed version of the container at the current level.
          */
-        #warning TODO get rid of the following function
         bool isRedistributed() const
         {
           return (bool)element_->redistributed_;
@@ -194,7 +192,6 @@ namespace Dune
          * @brief Get the redistributed container.
          * @return The redistributed container.
          */
-        #warning TODO get rid of the following three functions
         T1& getRedistributed() const
         {
           assert(element_->redistributed_);

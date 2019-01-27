@@ -120,7 +120,6 @@ namespace Dune
         /**
          * @brief The matrix block type we use as weights.
          */
-#warning why should the internal type of the weight change, depending on the constness of the matrix?
         typedef typename std::conditional<isMutable && C::mutableMatrix,typename M::block_type,
             const typename M::block_type>::type
         Weight;
