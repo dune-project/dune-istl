@@ -304,15 +304,7 @@ namespace Dune
       coarseSmoother_(amg.coarseSmoother_),
       category_(amg.category_),
       verbosity_(amg.verbosity_)
-    {
-#warning why do we need this? The vectors are re-created in AMG::pre(x)
-      if(amg.rhs_)
-        rhs_ = std::make_shared<Hierarchy<Range,A>>(*amg.rhs_);
-      if(amg.lhs_)
-        lhs_ = std::make_shared<Hierarchy<Domain,A>>(*amg.lhs_);
-      if(amg.update_)
-        update_ = std::make_shared<Hierarchy<Domain,A>>(*amg.update_);
-    }
+    {}
 
     template<class M, class X, class S, class PI, class A>
     AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
