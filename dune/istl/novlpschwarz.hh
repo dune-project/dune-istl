@@ -263,10 +263,11 @@ namespace Dune {
 
   template<class C, class P>
   class NonoverlappingBlockPreconditioner
-    : public Dune::Preconditioner<typename P::domain_type,typename P::range_type> {
+    : public Preconditioner<typename P::domain_type,typename P::range_type> {
     friend struct Amg::ConstructionTraits<NonoverlappingBlockPreconditioner<C,P> >;
+    using X = typename P::domain_type;
+    using Y = typename P::range_type;
   public:
-    typedef Preconditioner<typename P::domain_type,typename P::range_type> Prec;
     //! \brief The domain type of the preconditioner.
     typedef typename P::domain_type domain_type;
     //! \brief The range type of the preconditioner.
@@ -288,7 +289,7 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    NonoverlappingBlockPreconditioner (Prec& p, const communication_type& c)
+    NonoverlappingBlockPreconditioner (Preconditioner<X,Y>& p, const communication_type& c)
       : _preconditioner(stackobject_to_shared_ptr(p)), _communication(c)
     {   }
 
@@ -299,7 +300,7 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    NonoverlappingBlockPreconditioner (const std::shared_ptr<Prec>& p, const communication_type& c)
+    NonoverlappingBlockPreconditioner (const std::shared_ptr<Preconditioner<X,Y>>& p, const communication_type& c)
       : _preconditioner(p), _communication(c)
     {   }
 
@@ -345,7 +346,7 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    std::shared_ptr<Prec>& _preconditioner;
+    std::shared_ptr<Preconditioner<X,Y>>& _preconditioner;
 
     //! \brief the communication object
     const communication_type& _communication;
