@@ -94,6 +94,7 @@ dune_add_test(NAME pamgmmtest
   SOURCES pamgmmtest.cc
   TIMEOUT 20
   COMMAND "${MPIEXEC}"
-  CMD_ARGS -n 6 ./pamgmmtest)
+  CMD_ARGS -n 6 ./pamgmmtest
+  CMAKE_GUARD PARMETIS_FOUND)
 
 file(COPY gr_30_30.mtx DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
