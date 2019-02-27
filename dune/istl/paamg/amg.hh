@@ -616,7 +616,7 @@ namespace Dune
       Iterator smoother = smoothers_->finest();
       RIterator rhs = rhs_->finest();
       DIterator lhs = lhs_->finest();
-      if(smoothers_->levels()>0) {
+      if(smoothers_->levels()>1) {
 
         assert(lhs_->levels()==rhs_->levels());
         assert(smoothers_->levels()==lhs_->levels() || matrices_->levels()==matrices_->maxlevels());
