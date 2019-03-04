@@ -49,20 +49,10 @@ namespace Dune
        * In the default implementation the copy constructor is called.
        * @param args The arguments for the construction.
        */
-      static inline T* construct(Arguments&  args)
+      static inline std::shared_ptr<T> construct(Arguments&  args)
       {
-        return new T();
+        return std::make_shared<T>();
       }
-
-      /**
-       * @brief Destroys an object.
-       * @param t Pointer to the object to destroy.
-       */
-      static inline void deconstruct(T* t)
-      {
-        delete t;
-      }
-
     };
 
     template<class T, class A>
@@ -70,14 +60,9 @@ namespace Dune
     {
     public:
       typedef const int Arguments;
-      static inline BlockVector<T,A>* construct(Arguments& n)
+      static inline std::shared_ptr<BlockVector<T,A>> construct(Arguments& n)
       {
-        return new BlockVector<T,A>(n);
-      }
-
-      static inline void deconstruct(BlockVector<T,A>* t)
-      {
-        delete t;
+        return std::make_shared<BlockVector<T,A>>(n);
       }
     };
 
@@ -143,14 +128,10 @@ namespace Dune
     public:
       typedef OverlappingSchwarzOperatorArgs<M,C> Arguments;
 
-      static inline OverlappingSchwarzOperator<M,X,Y,C>* construct(const Arguments& args)
+      static inline std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C>> construct(const Arguments& args)
       {
-        return new OverlappingSchwarzOperator<M,X,Y,C>(*args.matrix_, *args.comm_);
-      }
-
-      static inline void deconstruct(OverlappingSchwarzOperator<M,X,Y,C>* t)
-      {
-        delete t;
+        return std::make_shared<OverlappingSchwarzOperator<M,X,Y,C>>
+          (*args.matrix_, *args.comm_);
       }
     };
 
@@ -160,14 +141,10 @@ namespace Dune
     public:
       typedef NonoverlappingOperatorArgs<M,C> Arguments;
 
-      static inline NonoverlappingSchwarzOperator<M,X,Y,C>* construct(const Arguments& args)
+      static inline std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C>> construct(const Arguments& args)
       {
-        return new NonoverlappingSchwarzOperator<M,X,Y,C>(*args.matrix_, *args.comm_);
-      }
-
-      static inline void deconstruct(NonoverlappingSchwarzOperator<M,X,Y,C>* t)
-      {
-        delete t;
+        return std::make_shared<NonoverlappingSchwarzOperator<M,X,Y,C>>
+          (*args.matrix_, *args.comm_);
       }
     };
 
@@ -187,14 +164,9 @@ namespace Dune
     public:
       typedef const MatrixAdapterArgs<M,X,Y> Arguments;
 
-      static inline MatrixAdapter<M,X,Y>* construct(Arguments& args)
+      static inline std::shared_ptr<MatrixAdapter<M,X,Y>> construct(Arguments& args)
       {
-        return new MatrixAdapter<M,X,Y>(*args.matrix_);
-      }
-
-      static inline void deconstruct(MatrixAdapter<M,X,Y>* m)
-      {
-        delete m;
+        return std::make_shared<MatrixAdapter<M,X,Y>>(*args.matrix_);
       }
     };
 
@@ -203,14 +175,9 @@ namespace Dune
     {
     public:
       typedef const SequentialCommunicationArgs Arguments;
-      static inline SequentialInformation* construct(Arguments& args)
+      static inline std::shared_ptr<SequentialInformation> construct(Arguments& args)
       {
-        return new SequentialInformation(args.comm_);
-      }
-
-      static inline void deconstruct(SequentialInformation* si)
-      {
-        delete si;
+        return std::make_shared<SequentialInformation>(args.comm_);
       }
     };
 
@@ -223,14 +190,9 @@ namespace Dune
     public:
       typedef const OwnerOverlapCopyCommunicationArgs Arguments;
 
-      static inline OwnerOverlapCopyCommunication<T1,T2>* construct(Arguments& args)
+      static inline std::shared_ptr<OwnerOverlapCopyCommunication<T1,T2>> construct(Arguments& args)
       {
-        return new OwnerOverlapCopyCommunication<T1,T2>(args.comm_, args.cat_);
-      }
-
-      static inline void deconstruct(OwnerOverlapCopyCommunication<T1,T2>* com)
-      {
-        delete com;
+        return std::make_shared<OwnerOverlapCopyCommunication<T1,T2>>(args.comm_, args.cat_);
       }
     };
 

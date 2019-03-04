@@ -162,7 +162,7 @@ public:
     PropertiesGraph pg(mg,Dune::IdentityMap(),Dune::IdentityMap());
     typedef NegateSet<typename ParallelInformation::OwnerSet> OverlapFlags;
 
-    aggregatesMap_.reset(new AggregatesMap(pg.maxVertex()+1));
+    aggregatesMap_ = std::make_shared<AggregatesMap>(pg.maxVertex()+1);
 
     int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
@@ -194,7 +194,7 @@ public:
     productBuilder.calculate(fineOperator.getmat(), *aggregatesMap_, *matrix_, pinfo, OverlapFlags());
     this->lhs_.resize(this->matrix_->M());
     this->rhs_.resize(this->matrix_->N());
-    this->operator_.reset(new O(*matrix_));
+    this->operator_ = std::make_shared<O>(*matrix_);
   }
 
   void moveToCoarseLevel(const typename FatherType::FineRangeType& fineRhs)

@@ -4,7 +4,7 @@
 
 #include "mpi.h"
 #include <dune/common/parallel/mpicollectivecommunication.hh>
-#include <dune/istl/paamg/hierarchy.hh>
+#include <dune/istl/paamg/matrixhierarchy.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/owneroverlapcopy.hh>
@@ -43,8 +43,11 @@ void testHierarchy(int N)
   typedef Dune::Amg::Hierarchy<Vector> VHierarchy;
 
   Operator op(mat, pinfo);
-  Hierarchy hierarchy(op, pinfo);
-  VHierarchy vh(b);
+  Hierarchy hierarchy(
+    Dune::stackobject_to_shared_ptr(op),
+    Dune::stackobject_to_shared_ptr(pinfo));
+  VHierarchy vh(
+    Dune::stackobject_to_shared_ptr(b));
 
   typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,Dune::Amg::FirstDiagonal> >
   Criterion;
@@ -71,6 +74,7 @@ void testHierarchy(int N)
 
 int main(int argc, char** argv)
 {
+  #warning change to use MPI abstractions...
   MPI_Init(&argc, &argv);
 
   const int BS=1;
