@@ -4,11 +4,11 @@
 #define DUNE_ISTL_OVERLAPPINGSCHWARZ_HH
 #include <cassert>
 #include <algorithm>
+#include <forward_list>
 #include <functional>
 #include <vector>
 #include <set>
 #include <dune/common/dynmatrix.hh>
-#include <dune/common/sllist.hh>
 #include <dune/common/unused.hh>
 #include "preconditioners.hh"
 #include "superlu.hh"
@@ -784,7 +784,7 @@ namespace Dune
     typedef std::vector<subdomain_type, typename TA::template rebind<subdomain_type>::other> subdomain_vector;
 
     /** @brief The type for the row to subdomain mapping. */
-    typedef SLList<size_type, typename TA::template rebind<size_type>::other> subdomain_list;
+    typedef std::forward_list<size_type, typename TA::template rebind<size_type>::other> subdomain_list;
 
     /** @brief The vector type containing the row index to subdomain mapping. */
     typedef std::vector<subdomain_list, typename TA::template rebind<subdomain_list>::other > rowtodomain_vector;
@@ -1078,7 +1078,7 @@ namespace Dune
     for(DomainIterator domain=sd.begin(); domain != sd.end(); ++domain, ++domainId) {
       typedef typename subdomain_type::const_iterator iterator;
       for(iterator row=domain->begin(); row != domain->end(); ++row)
-        rowToDomain[*row].push_back(domainId);
+        rowToDomain[*row].push_front(domainId);
     }
 
     maxlength = SeqOverlappingSchwarzAssembler<slu>

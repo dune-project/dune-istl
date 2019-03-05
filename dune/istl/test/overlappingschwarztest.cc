@@ -9,7 +9,6 @@
 #include <dune/common/fvector.hh>
 #include "laplacian.hh"
 #include <dune/common/timer.hh>
-#include <dune/common/sllist.hh>
 #include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/solvers.hh>
 #include<dune/istl/superlu.hh>
@@ -72,7 +71,7 @@ int main(int argc, char** argv)
       int mainDomain=ydomain*domainsPerDim+xdomain;
       int id=j*N+i;
       domains[mainDomain].insert(id);
-      rowToDomain[id].push_back(mainDomain);
+      rowToDomain[id].push_front(mainDomain);
 
       // check left domain
       int domain = (i-overlap)/domainSize;
@@ -80,7 +79,7 @@ int main(int argc, char** argv)
       if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
         domains[neighbourDomain].insert(id);
-        rowToDomain[id].push_back(neighbourDomain);
+        rowToDomain[id].push_front(neighbourDomain);
       }
 
       //check right domain
@@ -89,7 +88,7 @@ int main(int argc, char** argv)
       if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
         domains[neighbourDomain].insert(id);
-        rowToDomain[id].push_back(neighbourDomain);
+        rowToDomain[id].push_front(neighbourDomain);
       }
 
       // check lower domain
@@ -98,7 +97,7 @@ int main(int argc, char** argv)
       if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
         domains[neighbourDomain].insert(id);
-        rowToDomain[id].push_back(neighbourDomain);
+        rowToDomain[id].push_front(neighbourDomain);
       }
 
       //check upper domain
@@ -107,7 +106,7 @@ int main(int argc, char** argv)
       if(domain>=0 && domain<domainsPerDim && neighbourDomain!=mainDomain)
       {
         domains[neighbourDomain].insert(id);
-        rowToDomain[id].push_back(domain*domainsPerDim+xdomain);
+        rowToDomain[id].push_front(domain*domainsPerDim+xdomain);
       }
     }
 

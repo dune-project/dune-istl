@@ -13,7 +13,6 @@
 #include <dune/common/timer.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
-#include <dune/common/sllist.hh>
 #include <dune/common/unused.hh>
 #include <dune/common/ftraits.hh>
 
@@ -21,6 +20,7 @@
 #include <set>
 #include <algorithm>
 #include <complex>
+#include <forward_list>
 #include <limits>
 #include <ostream>
 #include <tuple>
@@ -585,7 +585,7 @@ namespace Dune
        * @brief The type of a single linked list of vertex
        * descriptors.
        */
-      typedef SLList<VertexDescriptor,Allocator> VertexList;
+      typedef std::forward_list<VertexDescriptor,Allocator> VertexList;
 
       /**
        * @brief A Dummy visitor that does nothing for each visited edge.
@@ -960,7 +960,7 @@ namespace Dune
       /**
        * @brief The single linked list we use.
        */
-      typedef SLList<Vertex,Allocator> VertexList;
+      typedef std::forward_list<Vertex,Allocator> VertexList;
 
       /**
        * @brief The set of vertices we use.
@@ -1236,7 +1236,7 @@ namespace Dune
        * @param aggregates The mapping of the vertices onto the aggregates.
        * @return True if there is a connection to the aggregate.
        */
-      bool connected(const Vertex& vertex, const SLList<AggregateDescriptor>& aggregateList,
+      bool connected(const Vertex& vertex, const std::forward_list<AggregateDescriptor>& aggregateList,
                      const AggregatesMap<Vertex>& aggregates) const;
 
       /**
@@ -1376,7 +1376,7 @@ namespace Dune
        */
       void nonisoNeighbourAggregate(const Vertex& vertex,
                                     const AggregatesMap<Vertex>& aggregates,
-                                    SLList<Vertex>& neighbours) const;
+                                    std::forward_list<Vertex>& neighbours) const;
 
       /**
        * @brief Grows the aggregate from a seed.
@@ -1742,12 +1742,12 @@ namespace Dune
       typedef typename L::const_iterator ListIterator;
       int visitedSpheres = 0;
 
-      visited.push_back(start);
+      visited.push_front(start);
       put(visitedMap, start, true);
 
       ListIterator current = visited.begin();
       ListIterator end = visited.end();
-      std::size_t i=0, size=visited.size();
+      std::size_t i=0, size=std::distance(visited.begin(), visited.end());
 
       // visit the neighbours of all vertices of the
       // current sphere.
@@ -1763,7 +1763,7 @@ namespace Dune
             if(aggregates_[edge.target()]==aggregate) {
               if(!get(visitedMap, edge.target())) {
                 put(visitedMap, edge.target(), true);
-                visited.push_back(edge.target());
+                visited.push_front(edge.target());
                 aggregateVisitor(edge);
               }
             }else
@@ -1771,7 +1771,7 @@ namespace Dune
           }
         }
         end = visited.end();
-        size = visited.size();
+        size = std::distance(visited.begin(), visited.end());
         if(current != end)
           visitedSpheres++;
       }
@@ -2149,7 +2149,7 @@ namespace Dune
     inline void
     Aggregator<G>::nonisoNeighbourAggregate(const Vertex& vertex,
                                             const AggregatesMap<Vertex>& aggregates,
-                                            SLList<Vertex>& neighbours) const
+                                            std::forward_list<Vertex>& neighbours) const
     {
       typedef typename MatrixGraph::ConstEdgeIterator Iterator;
       Iterator end=graph_->beginEdges(vertex);
@@ -2158,7 +2158,7 @@ namespace Dune
       for(Iterator edge=graph_->beginEdges(vertex); edge!=end; ++edge)
       {
         if(aggregates[edge.target()]!=AggregatesMap<Vertex>::UNAGGREGATED && graph_->getVertexProperties(edge.target()).isolated())
-          neighbours.push_back(aggregates[edge.target()]);
+          neighbours.push_front(aggregates[edge.target()]);
       }
     }
 
@@ -2213,10 +2213,10 @@ namespace Dune
     }
     template<class G>
     inline bool Aggregator<G>::connected(const Vertex& vertex,
-                                         const SLList<AggregateDescriptor>& aggregateList,
+                                         const std::forward_list<AggregateDescriptor>& aggregateList,
                                          const AggregatesMap<Vertex>& aggregates) const
     {
-      typedef typename SLList<AggregateDescriptor>::const_iterator Iter;
+      typedef typename std::forward_list<AggregateDescriptor>::const_iterator Iter;
       for(Iter i=aggregateList.begin(); i!=aggregateList.end(); ++i)
         if(connected(vertex, *i, aggregates))
           return true;
@@ -2227,7 +2227,7 @@ namespace Dune
     template<class C>
     void Aggregator<G>::growIsolatedAggregate(const Vertex& seed, const AggregatesMap<Vertex>& aggregates, const C& c)
     {
-      SLList<Vertex> connectedAggregates;
+      std::forward_list<Vertex> connectedAggregates;
       nonisoNeighbourAggregate(seed, aggregates,connectedAggregates);
 
       while(aggregate_->size()< c.minAggregateSize() && aggregate_->connectSize() < c.maxConnectivity()) {
@@ -2242,7 +2242,7 @@ namespace Dune
           if(distance(*vertex, aggregates)>c.maxDistance())
             continue; // distance of proposes aggregate too big
 
-          if(connectedAggregates.size()>0) {
+          if(std::distance(connectedAggregates.begin(), connectedAggregates.end()) > 0) {
             // there is already a neighbour cluster
             // front node must be connected to same neighbour cluster
 
