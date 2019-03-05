@@ -446,10 +446,16 @@ namespace Dune
           {
             *c=0;
             if(c.index()==i->local()) {
-              typedef typename M::block_type::RowIterator RIter;
-              for(RIter r=c->begin(), rend=c->end();
-                  r != rend; ++r)
-                (*r)[r.index()]=1;
+              typedef typename M::block_type Block;
+              Hybrid::ifElse(IsNumber<Block>(),
+                             [&](auto id){
+                               *c = 1;
+                             },
+                             [&](auto id){
+                               for(auto r=c->begin(), rend=c->end();
+                                   r != rend; ++r)
+                                 (*r)[r.index()]=1;
+                             });
             }
           }
         }
