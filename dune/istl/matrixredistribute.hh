@@ -452,7 +452,7 @@ namespace Dune
                                *c = 1;
                              },
                              [&](auto id){
-                               for(auto r=c->begin(), rend=c->end();
+                               for(auto r=id(c)->begin(), rend=id(c)->end();
                                    r != rend; ++r)
                                  (*r)[r.index()]=1;
                              });
