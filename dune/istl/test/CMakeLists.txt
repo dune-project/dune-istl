@@ -1,11 +1,14 @@
-# install the test tools as we want to support testing 3rd-party vectors with an installed dune-istl
+# install the test tools as we want to support testing 3rd-party vectors and matrices with an installed dune-istl
 install(FILES
+        matrixtest.hh
         vectortest.hh
         laplacian.hh
         multirhstest.hh
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
 
 dune_add_test(SOURCES bcrsassigntest.cc)
+
+dune_add_test(SOURCES bcrsmatrixtest.cc)
 
 dune_add_test(SOURCES bcrsnormtest.cc)
 
