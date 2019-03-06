@@ -25,6 +25,9 @@ int testBCRSMatrix(int size)
   // Test the matrix norms
   testNorms(mat);
 
+  // Test whether matrix class has the required constructors
+  testMatrixConstructibility<Matrix>();
+
   return 0;
 }
 

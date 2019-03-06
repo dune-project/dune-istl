@@ -20,6 +20,14 @@
 
 namespace Dune
 {
+  /** \brief Test whether the given type is default- and copy-constructible */
+  template <typename Matrix>
+  void testMatrixConstructibility()
+  {
+    static_assert(std::is_default_constructible<Matrix>::value, "Matrix type is not default constructible");
+    static_assert(std::is_copy_constructible<Matrix>::value, "Matrix type is not copy constructible");
+  }
+
   /** \brief Test whether a given type implements all the norms required from a dune-istl matrix
    */
   template <typename Matrix>
