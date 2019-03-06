@@ -168,6 +168,15 @@ namespace Dune {
       });
     }
 
+    /** \brief Division by a scalar */
+    template<class T,
+             std::enable_if_t< IsNumber<T>::value, int> = 0>
+    void operator/= (const T& w) {
+      Hybrid::forEach(*this, [&](auto&& entry) {
+        entry /= w;
+      });
+    }
+
     field_type operator* (const type& newv) const {
       using namespace Dune::Hybrid;
       return accumulate(integralRange(Hybrid::size(*this)), field_type(0), [&](auto&& a, auto&& i) {
