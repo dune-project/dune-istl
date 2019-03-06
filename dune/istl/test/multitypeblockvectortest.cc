@@ -18,6 +18,7 @@
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/multitypeblockvector.hh>
+#include <dune/istl/test/vectortest.hh>
 
 using namespace Dune;
 
@@ -42,23 +43,12 @@ void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
     multiVector2 = multiVector;
 
     // Test operator+=
-    multiVector2 += multiVector;
-
-    // Test operator-=
-    multiVector2 -= multiVector;
-
-    // Test multiplication with scalar
-    multiVector2 *= (double)0.5;
-    multiVector2 *= (int)2;
-    multiVector2 *= (float)0.5;
+    testVectorSpaceOperations(multiVector);
 
     // Test assignment from scalar
     multiVector2 = (double)0.5;
     multiVector2 = (int)2;
     multiVector2 = (float)0.5;
-
-    // Test axpy
-    multiVector2.axpy(-1, multiVector);
 
     // Test two_norm
     std::cout << "multivector2 has two_norm: " << multiVector2.two_norm() << std::endl;
