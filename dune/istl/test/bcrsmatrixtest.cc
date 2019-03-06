@@ -22,6 +22,9 @@ int testBCRSMatrix(int size)
   // Test vector space operations
   testVectorSpaceOperations(mat);
 
+  // Test the matrix norms
+  testNorms(mat);
+
   return 0;
 }
 

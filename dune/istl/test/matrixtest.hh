@@ -20,6 +20,35 @@
 
 namespace Dune
 {
+  /** \brief Test whether a given type implements all the norms required from a dune-istl matrix
+   */
+  template <typename Matrix>
+  void testNorms(const Matrix& m)
+  {
+    using field_type = typename Matrix::field_type;
+    using real_type = typename FieldTraits<field_type>::real_type;
+
+    // frobenius_norm
+    static_assert(std::is_same<decltype(m.frobenius_norm()),real_type>::value, "'frobenius_norm' does not return 'real_type'");
+    if (m.frobenius_norm() < 0.0)
+      DUNE_THROW(RangeError, "'frobenius_norm' returns negative value");
+
+    // frobenius_norm2
+    static_assert(std::is_same<decltype(m.frobenius_norm2()),real_type>::value, "'frobenius_norm2' does not return 'real_type'");
+    if (m.frobenius_norm2() < 0.0)
+      DUNE_THROW(RangeError, "'frobenius_norm2' returns negative value");
+
+    // infinity_norm
+    static_assert(std::is_same<decltype(m.infinity_norm()),real_type>::value, "'infinity_norm' does not return 'real_type'");
+    if (m.infinity_norm() < 0.0)
+      DUNE_THROW(RangeError, "'infinity_norm' returns negative value");
+
+    // infinity_norm_real
+    static_assert(std::is_same<decltype(m.infinity_norm_real()),real_type>::value, "'infinity_norm_real' does not return 'real_type'");
+    if (m.infinity_norm_real() < 0.0)
+      DUNE_THROW(RangeError, "'infinity_norm_real' returns negative value");
+  }
+
   template <typename Matrix>
   void testVectorSpaceOperations(const Matrix& m)
   {
