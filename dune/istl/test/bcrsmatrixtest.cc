@@ -27,8 +27,11 @@ int testBCRSMatrix(int size)
 
 int main(int argc, char** argv)
 {
+  // Test scalar matrices and vectors
+  int ret = testBCRSMatrix<BCRSMatrix<double>, BlockVector<double> >(10);
+
   // Test block matrices and vectors with trivial blocks
-  int ret = testBCRSMatrix<BCRSMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(10);
+  ret = testBCRSMatrix<BCRSMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(10);
 
   return ret;
 }

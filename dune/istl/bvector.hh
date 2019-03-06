@@ -1006,7 +1006,15 @@ namespace Imp {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (!includesindexset(y)) DUNE_THROW(ISTLError,"index set mismatch");
 #endif
-      for (size_type i=0; i<y.n; ++i) (this->operator[](y.j[i])).axpy(a,y.p[i]);
+      Hybrid::ifElse(IsNumber<B>(),
+        [&](auto id) {
+          for (size_type i=0; i<y.n; ++i)
+            (this->operator[](y.j[i])) += a * y.p[i];
+        },
+        [&](auto id) {
+          for (size_type i=0; i<y.n; ++i)
+            id(this->operator[](y.j[i])).axpy(a,y.p[i]);
+        });
       return *this;
     }
 
