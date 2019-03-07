@@ -346,7 +346,7 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    std::shared_ptr<Preconditioner<X,Y>>& _preconditioner;
+    std::shared_ptr<Preconditioner<X,Y>> _preconditioner;
 
     //! \brief the communication object
     const communication_type& _communication;
