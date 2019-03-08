@@ -276,7 +276,7 @@ namespace Dune
     }
 
     //! \brief deep copy of a given hierarchy
-    #warning do we catually want to support this? This might be very expensive?!
+    //TODO: do we actually want to support this? This might be very expensive?!
     template<class T, class A>
     Hierarchy<T,A>::Hierarchy(const Hierarchy& other)
     : allocator_(other.allocator_),
@@ -297,7 +297,7 @@ namespace Dune
         // create shared_ptr from weak_ptr, we just checked that this is safe
         std::shared_ptr<Element> otherCurrent_ = std::shared_ptr<Element>(otherWeak_);
         // clone current level
-        #warning should we use the allocator?
+        //TODO: should we use the allocator?
         current_->element_ =
           std::make_shared<MemberType>(*(otherCurrent_->element_));
         current_->finer_=finer_;
@@ -354,7 +354,7 @@ namespace Dune
     template<class T, class A>
     void Hierarchy<T,A>::addFiner(Arguments& args)
     {
-#warning wouldn't it be better to do this in the constructor?'
+      //TODO: wouldn't it be better to do this in the constructor?'
       if(!finest_) {
         // we have no levels at all...
         assert(!coarsest_);
