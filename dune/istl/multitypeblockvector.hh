@@ -191,6 +191,24 @@ namespace Dune {
       });
     }
 
+    /** \brief Compute the 1-norm
+     */
+    auto one_norm() const {
+      using namespace Dune::Hybrid;
+      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+        return a + entry.one_norm();
+      });
+    }
+
+    /** \brief Compute the simplified 1-norm (uses 1-norm also for complex values)
+     */
+    auto one_norm_real() const {
+      using namespace Dune::Hybrid;
+      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+        return a + entry.one_norm_real();
+      });
+    }
+
     /** \brief Compute the squared Euclidean norm
      */
     typename FieldTraits<field_type>::real_type two_norm2() const {
@@ -230,6 +248,37 @@ namespace Dune {
         using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(*this, [&](auto&& entry) {
           result = max(entry.infinity_norm(), result);
+        });
+      });
+      return result;
+    }
+
+    /** \brief Compute the simplified maximum norm (uses 1-norm for complex values)
+     */
+    typename FieldTraits<field_type>::real_type infinity_norm_real() const
+    {
+      using namespace Dune::Hybrid;
+      using std::max;
+      using real_type = typename FieldTraits<field_type>::real_type;
+
+      real_type result = 0.0;
+      // Compute max norm tracking appearing nan values
+      // if the field type supports nan.
+      ifElse(HasNaN<field_type>(), [&](auto&& id) {
+        // This variable will preserve any nan value
+        real_type nanTracker = 1.0;
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(*this, [&](auto&& entry) {
+          real_type entryNorm = entry.infinity_norm_real();
+          result = max(entryNorm, result);
+          nanTracker += entryNorm;
+        });
+        // Incorporate possible nan value into result
+        result *= (nanTracker / nanTracker);
+      }, [&](auto&& id) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(*this, [&](auto&& entry) {
+          result = max(entry.infinity_norm_real(), result);
         });
       });
       return result;

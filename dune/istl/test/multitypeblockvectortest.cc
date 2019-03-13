@@ -50,14 +50,8 @@ void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
     multiVector2 = (int)2;
     multiVector2 = (float)0.5;
 
-    // Test two_norm
-    std::cout << "multivector2 has two_norm: " << multiVector2.two_norm() << std::endl;
-
-    // Test two_norm2
-    std::cout << "multivector2 has two_norm2: " << multiVector2.two_norm2() << std::endl;
-
-    // Test infinity_norm
-    std::cout << "multivector2 has infinity_norm: " << multiVector2.infinity_norm() << std::endl;
+    // Test the various vector norms
+    testNorms(multiVector2);
 
     // Test operator*
     std::cout << multiVector * multiVector2 << std::endl;
