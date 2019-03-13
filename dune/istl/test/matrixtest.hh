@@ -28,6 +28,26 @@ namespace Dune
     static_assert(std::is_copy_constructible<Matrix>::value, "Matrix type is not copy constructible");
   }
 
+  template <typename Matrix, typename DomainVector, typename RangeVector>
+  void testMatrixVectorProducts(const Matrix& matrix, const DomainVector& domain, const RangeVector& range)
+  {
+    // Make mutable copies of the vectors
+    DomainVector domainMutable = domain;
+    RangeVector rangeMutable = range;
+
+    matrix.mv(domain,rangeMutable);
+    matrix.umv(domain,rangeMutable);
+    matrix.mmv(domain,rangeMutable);
+    matrix.usmv(1.0,domain,rangeMutable);
+    matrix.mtv(range,domainMutable);
+    matrix.umtv(range,domainMutable);
+    matrix.mmtv(range,domainMutable);
+    matrix.usmtv(1.0,range,domainMutable);
+    matrix.umhv(domain,rangeMutable);
+    matrix.mmhv(domain,rangeMutable);
+    matrix.usmhv(1.0,range,domainMutable);
+  }
+
   /** \brief Test whether a given type implements all the norms required from a dune-istl matrix
    */
   template <typename Matrix>

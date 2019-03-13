@@ -28,6 +28,13 @@ int testBCRSMatrix(int size)
   // Test whether matrix class has the required constructors
   testMatrixConstructibility<Matrix>();
 
+  // Test the matrix vector products
+  Vector domain(mat.M());
+  domain = 0;
+  Vector range(mat.N());
+
+  testMatrixVectorProducts(mat,domain,range);
+
   return 0;
 }
 
