@@ -24,6 +24,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
+#include <dune/istl/test/matrixtest.hh>
 
 using namespace Dune;
 
@@ -56,6 +57,12 @@ int main(int argc, char** argv) try
   printmatrix(std::cout, multiMatrix[_0][_1], "(0,1)", "--");
   printmatrix(std::cout, multiMatrix[_1][_0], "(1,0)", "--");
   printmatrix(std::cout, multiMatrix[_1][_1], "(1,1)", "--");
+
+  // Test vector space operations
+  testVectorSpaceOperations(multiMatrix);
+
+  // Test whether matrix class has the required constructors
+  testMatrixConstructibility<decltype(multiMatrix)>();
 
   // set up a test vector
   MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;

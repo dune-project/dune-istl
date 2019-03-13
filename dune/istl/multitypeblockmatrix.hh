@@ -121,6 +121,61 @@ namespace Dune {
       });
     }
 
+    //===== vector space arithmetic
+
+    //! vector space multiplication with scalar
+    MultiTypeBlockMatrix& operator*= (const field_type& k)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] *= k;
+      });
+
+      return *this;
+    }
+
+    //! vector space division by scalar
+    MultiTypeBlockMatrix& operator/= (const field_type& k)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] /= k;
+      });
+
+      return *this;
+    }
+
+
+    /*! \brief Add the entries of another matrix to this one.
+     *
+     * \param b The matrix to add to this one. Its sparsity pattern
+     * has to be subset of the sparsity pattern of this matrix.
+     */
+    MultiTypeBlockMatrix& operator+= (const MultiTypeBlockMatrix& b)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] += b[i];
+      });
+
+      return *this;
+    }
+
+    /*! \brief Subtract the entries of another matrix from this one.
+     *
+     * \param b The matrix to subtract from this one. Its sparsity pattern
+     * has to be subset of the sparsity pattern of this matrix.
+     */
+    MultiTypeBlockMatrix& operator-= (const MultiTypeBlockMatrix& b)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] -= b[i];
+      });
+
+      return *this;
+    }
+
     /** \brief y = A x
      */
     template<typename X, typename Y>
