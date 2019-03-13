@@ -83,17 +83,8 @@ int main(int argc, char** argv) try
   multiMatrix[_1][_0] = 4210;
   multiMatrix[_1][_1] = 4211;
 
-  multiMatrix.mv(multiVector,result);
-  std::cout << "mv result" << std::endl << result << std::endl;
-
-  multiMatrix.umv(multiVector,result);
-  std::cout << "umv result" << std::endl << result << std::endl;
-
-  multiMatrix.mmv(multiVector,result);
-  std::cout << "mmv result" << std::endl << result << std::endl;
-
-  multiMatrix.usmv(3.14,multiVector,result);
-  std::cout << "usmv result" << std::endl << result << std::endl;
+  auto rangeVector = result;   // Range == Domain, because the matrix nesting pattern is symmetric
+  testMatrixVectorProducts(multiMatrix, result, rangeVector);
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   //  Next test: Set up a linear system with a matrix consisting of 2x2 sparse scalar matrices.

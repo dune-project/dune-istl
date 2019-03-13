@@ -231,6 +231,106 @@ namespace Dune {
       });
     }
 
+    /** \brief y = A^T x
+     */
+    template<typename X, typename Y>
+    void mtv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      y = 0;
+      umtv(x,y);
+    }
+
+    /** \brief y += A^T x
+     */
+    template<typename X, typename Y>
+    void umtv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].umtv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y -= A^T x
+     */
+    template<typename X, typename Y>
+    void mmtv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].mmtv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += alpha A^T x
+     */
+    template<typename X, typename Y>
+    void usmtv (const field_type& alpha, const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].usmtv(alpha, x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += A^H x
+     */
+    template<typename X, typename Y>
+    void umhv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].umhv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y -= A^H x
+     */
+    template<typename X, typename Y>
+    void mmhv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].mmhv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += alpha A^H x
+     */
+    template<typename X, typename Y>
+    void usmhv (const field_type& alpha, const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].usmhv(alpha, x[j], y[i]);
+        });
+      });
+    }
+
 
     //===== norms
 
