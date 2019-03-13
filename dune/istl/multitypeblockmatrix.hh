@@ -231,9 +231,32 @@ namespace Dune {
       });
     }
 
+
+    //===== norms
+
+    //! square of frobenius norm, need for block recursion
+    auto frobenius_norm2 () const
+    {
+      using field_type = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
+      typename FieldTraits<field_type>::real_type sum=0;
+
+      auto rows = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
+        auto cols = index_constant<M()>();
+        Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
+          sum += (*this)[i][j].frobenius_norm2();
+        });
+      });
+
+      return sum;
+    }
+
+    //! frobenius norm: sqrt(sum over squared values of entries)
+    typename FieldTraits<field_type>::real_type frobenius_norm () const
+    {
+      return sqrt(frobenius_norm2());
+    }
   };
-
-
 
   /**
      @brief << operator for a MultiTypeBlockMatrix
