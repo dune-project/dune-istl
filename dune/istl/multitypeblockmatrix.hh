@@ -356,6 +356,49 @@ namespace Dune {
     {
       return sqrt(frobenius_norm2());
     }
+
+    //! Bastardized version of the infinity-norm / row-sum norm
+    auto infinity_norm () const
+    {
+      using field_type = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
+      using std::max;
+      typename FieldTraits<field_type>::real_type norm=0;
+
+      auto rows = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
+
+        typename FieldTraits<field_type>::real_type sum=0;
+        auto cols = index_constant<M()>();
+        Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
+          sum += (*this)[i][j].infinity_norm();
+        });
+        norm = max(sum, norm);
+      });
+
+      return norm;
+    }
+
+    //! Bastardized version of the infinity-norm / row-sum norm
+    auto infinity_norm_real () const
+    {
+      using field_type = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
+      using std::max;
+      typename FieldTraits<field_type>::real_type norm=0;
+
+      auto rows = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
+
+        typename FieldTraits<field_type>::real_type sum=0;
+        auto cols = index_constant<M()>();
+        Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
+          sum += (*this)[i][j].infinity_norm_real();
+        });
+        norm = max(sum, norm);
+      });
+
+      return norm;
+    }
+
   };
 
   /**

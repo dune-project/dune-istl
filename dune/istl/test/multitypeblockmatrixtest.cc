@@ -71,6 +71,9 @@ void testInterfaceMethods()
     // Test vector space operations
     testVectorSpaceOperations(multiMatrix);
 
+    // Test matrix norms
+    testNorms(multiMatrix);
+
     // Test whether matrix class has the required constructors
     testMatrixConstructibility<decltype(multiMatrix)>();
 
