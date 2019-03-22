@@ -342,7 +342,7 @@ namespace Dune {
 
       auto rows = index_constant<N()>();
       Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
-        auto cols = index_constant<this->M()>();
+        auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
         Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
           sum += (*this)[i][j].frobenius_norm2();
         });
@@ -368,7 +368,7 @@ namespace Dune {
       Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
 
         typename FieldTraits<field_type>::real_type sum=0;
-        auto cols = index_constant<this->M()>();
+        auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
         Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
           sum += (*this)[i][j].infinity_norm();
         });
@@ -389,7 +389,7 @@ namespace Dune {
       Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
 
         typename FieldTraits<field_type>::real_type sum=0;
-        auto cols = index_constant<this->M()>();
+        auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
         Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
           sum += (*this)[i][j].infinity_norm_real();
         });
