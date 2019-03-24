@@ -159,32 +159,21 @@ namespace Dune {
       });
     }
 
-    // Once we have the IsNumber traits class the following
-    // three implementations could be replaced by:
-    //
-    //    template<class T,
-    //      std::enable_if_t< IsNumber<T>::value, int> = 0>
-    //    void operator*= (const T& w) {
-    //      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-    //        entry *= w;
-    //      });
-    //    }
-
-    void operator*= (const int& w) {
-      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
+    /** \brief Multiplication with a scalar */
+    template<class T,
+             std::enable_if_t< IsNumber<T>::value, int> = 0>
+    void operator*= (const T& w) {
+      Hybrid::forEach(*this, [&](auto&& entry) {
         entry *= w;
       });
     }
 
-    void operator*= (const float& w) {
-      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-        entry *= w;
-      });
-    }
-
-    void operator*= (const double& w) {
-      Dune::Hybrid::forEach(*this, [&](auto&& entry) {
-        entry *= w;
+    /** \brief Division by a scalar */
+    template<class T,
+             std::enable_if_t< IsNumber<T>::value, int> = 0>
+    void operator/= (const T& w) {
+      Hybrid::forEach(*this, [&](auto&& entry) {
+        entry /= w;
       });
     }
 
@@ -199,6 +188,24 @@ namespace Dune {
       using namespace Dune::Hybrid;
       return accumulate(integralRange(Hybrid::size(*this)), field_type(0), [&](auto&& a, auto&& i) {
         return a + (*this)[i].dot(newv[i]);
+      });
+    }
+
+    /** \brief Compute the 1-norm
+     */
+    auto one_norm() const {
+      using namespace Dune::Hybrid;
+      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+        return a + entry.one_norm();
+      });
+    }
+
+    /** \brief Compute the simplified 1-norm (uses 1-norm also for complex values)
+     */
+    auto one_norm_real() const {
+      using namespace Dune::Hybrid;
+      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+        return a + entry.one_norm_real();
       });
     }
 
@@ -241,6 +248,37 @@ namespace Dune {
         using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(*this, [&](auto&& entry) {
           result = max(entry.infinity_norm(), result);
+        });
+      });
+      return result;
+    }
+
+    /** \brief Compute the simplified maximum norm (uses 1-norm for complex values)
+     */
+    typename FieldTraits<field_type>::real_type infinity_norm_real() const
+    {
+      using namespace Dune::Hybrid;
+      using std::max;
+      using real_type = typename FieldTraits<field_type>::real_type;
+
+      real_type result = 0.0;
+      // Compute max norm tracking appearing nan values
+      // if the field type supports nan.
+      ifElse(HasNaN<field_type>(), [&](auto&& id) {
+        // This variable will preserve any nan value
+        real_type nanTracker = 1.0;
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(*this, [&](auto&& entry) {
+          real_type entryNorm = entry.infinity_norm_real();
+          result = max(entryNorm, result);
+          nanTracker += entryNorm;
+        });
+        // Incorporate possible nan value into result
+        result *= (nanTracker / nanTracker);
+      }, [&](auto&& id) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(*this, [&](auto&& entry) {
+          result = max(entry.infinity_norm_real(), result);
         });
       });
       return result;
