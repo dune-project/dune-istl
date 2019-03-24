@@ -80,6 +80,51 @@ void testInterfaceMethods()
     // Test matrix-vector products
     testMatrixVectorProducts(multiMatrix, domainVector, rangeVector);
   }
+
+  {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  First, we test a MultiTypeBlockMatrix consisting of an array of 2x2 sparse matrices.
+    //  The upper left matrix has dense 3x3 blocks, the lower right matrix has scalar entries
+    //  the off-set diagonal matrix block sizes are set accordingly.
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // set up the test matrix
+    typedef MultiTypeBlockVector<BCRSMatrix<FieldMatrix<double,3,3> >, BCRSMatrix<FieldMatrix<double,3,1> > > RowType0;
+    typedef MultiTypeBlockVector<BCRSMatrix<FieldMatrix<double,1,3> >, BCRSMatrix<double> > RowType1;
+
+    MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
+
+    multiMatrix[_0][_0].setSize(3,3);
+    multiMatrix[_0][_1].setSize(3,2);
+    multiMatrix[_1][_0].setSize(2,3);
+    multiMatrix[_1][_1].setSize(2,2);
+
+    // Init with scalar values
+    multiMatrix[_0][_0] = 4200;
+    multiMatrix[_0][_1] = 4201;
+    multiMatrix[_1][_0] = 4210;
+    multiMatrix[_1][_1] = 4211;
+
+    // Set up a test vector
+    MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<double> > domainVector;
+
+    domainVector[_0] = {{1,0,0},
+                        {0,1,0},
+                        {0,0,1}};
+
+    domainVector[_1] = {3.14, 42};
+
+    auto rangeVector = domainVector;   // Range == Domain, because the matrix nesting pattern is symmetric
+
+    // Test vector space operations
+    testVectorSpaceOperations(multiMatrix);
+
+    // Test whether matrix class has the required constructors
+    testMatrixConstructibility<decltype(multiMatrix)>();
+
+    // Test matrix-vector products
+    testMatrixVectorProducts(multiMatrix, domainVector, rangeVector);
+  }
 }
 
 int main(int argc, char** argv) try
