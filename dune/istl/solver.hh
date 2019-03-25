@@ -11,6 +11,7 @@
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
+#include <dune/common/timer.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
@@ -296,6 +297,80 @@ namespace Dune
     virtual SolverCategory::Category category() const
     {
       return _category;
+    }
+
+    template<class CountType>
+    class Iteration {
+    public:
+      Iteration(const char* solvername, const IterativeSolver<X,Y>& parent, InverseOperatorResult& res)
+        : _solvername(solvername)
+        , _parent(parent)
+        , _res(res)
+        , _i(0)
+      {
+        res.clear();
+        if(_parent._verbose>0){
+          std::cout << "=== " << solvername << std::endl;
+          if(_parent._verbose > 1)
+            _parent.printHeader(std::cout);
+        }
+      }
+
+      ~Iteration(){
+        finalize();
+      }
+
+      bool step(CountType i, real_type def){
+        if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
+        {
+          if (_parent._verbose>0)
+            std::cout << "=== " << _solvername << ": abort due to infinite or NaN defect"
+                      << std::endl;
+          DUNE_THROW(SolverAbort,
+                     _solvername << ": defect=" << Simd::io(def)
+                     << " is infinite or NaN");
+        }
+        if(i == 0)
+          _def0 = def;
+        if(_parent._verbose > 1){
+          if(i!=0)
+            _parent.printOutput(std::cout,i,def,_def);
+          else
+            _parent.printOutput(std::cout,i,def);
+        }
+        _def = def;
+        _i = i;
+        _res.converged = (Simd::allTrue(def<_def0*_parent._reduction) || Simd::max(def)<1E-30);    // convergence check
+        return _res.converged;
+      }
+
+    protected:
+      void finalize(){
+        _res.converged = (Simd::allTrue(_def<_def0*_parent._reduction) || Simd::max(_def)<1E-30);
+        _res.iterations = _i;
+        _res.reduction = static_cast<double>(Simd::max(_def/_def0));
+        _res.conv_rate  = pow(_res.reduction,1.0/_i);
+        _res.elapsed = _watch.elapsed();
+        if (_parent._verbose>0)                 // final print
+          {
+            std::cout << "=== rate=" << _res.conv_rate
+                      << ", T=" << _res.elapsed
+                      << ", TIT=" << _res.elapsed/_res.iterations
+                      << ", IT=" << _res.iterations << std::endl;
+          }
+      }
+
+      real_type _def0 = 0.0, _def = 0.0;
+      CountType _i;
+      Timer _watch;
+      const char* _solvername;
+      InverseOperatorResult& _res;
+      const IterativeSolver<X,Y>& _parent;
+    };
+
+    template<class CountType = unsigned int>
+    Iteration<CountType> startIteration(const char * solvername, InverseOperatorResult& res){
+      return Iteration<CountType>(solvername, *this, res);
     }
 
   protected:

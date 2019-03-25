@@ -70,12 +70,7 @@ namespace Dune {
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      // clear solver statistics
-      res.clear();
-
-      // start a timer
-      Timer watch;
-
+      auto iteration = this->startIteration("LoopSolver", res);
       // prepare preconditioner
       _prec->pre(x,b);
 
@@ -83,66 +78,30 @@ namespace Dune {
       _op->applyscaleadd(-1,x,b);
 
       // compute norm, \todo parallelization
-      real_type def0 = _sp->norm(b);
-
-      // printing
-      if (_verbose>0)
-      {
-        std::cout << "=== LoopSolver" << std::endl;
-        if (_verbose>1)
-        {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
+      real_type def = _sp->norm(b);
+      if(iteration.step(0, def)){
+        _prec->post(x);
+        return;
       }
 
       // allocate correction vector
       X v(x);
 
       // iteration loop
-      int i=1; real_type def=def0;
+      int i=1;
       for ( ; i<=_maxit; i++ )
       {
         v = 0;                      // clear correction
         _prec->apply(v,b);           // apply preconditioner
         x += v;                     // update solution
         _op->applyscaleadd(-1,v,b);  // update defect
-        real_type defnew=_sp->norm(b);  // comp defect norm
-        if (_verbose>1)             // print
-          this->printOutput(std::cout,i,defnew,def);
-        //std::cout << i << " " << defnew << " " << defnew/def << std::endl;
-        def = defnew;               // update norm
-        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
-        {
-          res.converged  = true;
+        def=_sp->norm(b);  // comp defect norm
+        if(iteration.step(i, def))
           break;
-        }
       }
-
-      //correct i which is wrong if convergence was not achieved.
-      i=std::min(_maxit,i);
-
-      // print
-      if (_verbose==1)
-        this->printOutput(std::cout,i,def);
 
       // postprocess preconditioner
       _prec->post(x);
-
-      // fill statistics
-      res.iterations = i;
-      res.reduction = static_cast<double>(Simd::max(def/def0));
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-
-      // final print
-      if (_verbose>0)
-      {
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i << std::endl;
-      }
     }
 
   protected:
@@ -178,27 +137,20 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      res.clear();                  // clear solver statistics
-      Timer watch;                // start a timer
+      auto iteration = this->startIteration("GradientSolver", res);
       _prec->pre(x,b);             // prepare preconditioner
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);                     // create local vectors
       X q(b);
 
-      real_type def0 = _sp->norm(b); // compute norm
-
-      if (_verbose>0)             // printing
-      {
-        std::cout << "=== GradientSolver" << std::endl;
-        if (_verbose>1)
-        {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
+      real_type def = _sp->norm(b); // compute norm
+      if(iteration.step(0, def)){
+        _prec->post(x);
+        return;
       }
 
-      int i=1; real_type def=def0;   // loop variables
+      int i=1;   // loop variables
       field_type lambda;
       for ( ; i<=_maxit; i++ )
       {
@@ -209,34 +161,12 @@ namespace Dune {
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
-        real_type defnew=_sp->norm(b); // comp defect norm
-        if (_verbose>1)             // print
-          this->printOutput(std::cout,i,defnew,def);
-
-        def = defnew;               // update norm
-        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
-        {
-          res.converged  = true;
+        def =_sp->norm(b); // comp defect norm
+        if(iteration.step(i, def))
           break;
-        }
       }
-
-      //correct i which is wrong if convergence was not achieved.
-      i=std::min(_maxit,i);
-
-      if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,i,def);
-
-      _prec->post(x);                  // postprocess preconditioner
-      res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(Simd::max(def/def0));
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-      if (_verbose>0)                 // final print
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i << std::endl;
+      // postprocess preconditioner
+      _prec->post(x);
     }
 
   protected:
@@ -322,46 +252,17 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      res.clear();                  // clear solver statistics
-      Timer watch;                // start a timer
+      auto iteration = this->startIteration("CGSolver", res);
       _prec->pre(x,b);             // prepare preconditioner
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);              // the search direction
       X q(x);              // a temporary vector
 
-      real_type def0 = _sp->norm(b); // compute norm
-
-      if (!Simd::allTrue(isFinite(def0))) // check for inf or NaN
-      {
-        if (_verbose>0)
-          std::cout << "=== CGSolver: abort due to infinite or NaN initial defect"
-                    << std::endl;
-        DUNE_THROW(SolverAbort, "CGSolver: initial defect=" << Simd::io(def0)
-                   << " is infinite or NaN");
-      }
-
-      if (Simd::max(def0)<1E-30)    // convergence check
-      {
-        res.converged  = true;
-        res.iterations = 0;               // fill statistics
-        res.reduction = 0;
-        res.conv_rate  = 0;
-        res.elapsed=0;
-        if (_verbose>0)                 // final print
-          std::cout << "=== rate=" << res.conv_rate
-                    << ", T=" << res.elapsed << ", TIT=" << res.elapsed
-                    << ", IT=0" << std::endl;
+      real_type def = _sp->norm(b); // compute norm
+      if(iteration.step(0, def)){
+        _prec->post(x);
         return;
-      }
-
-      if (_verbose>0)             // printing
-      {
-        std::cout << "=== CGSolver" << std::endl;
-        if (_verbose>1) {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
       }
 
       // Remember lambda and beta values for condition estimate
@@ -369,7 +270,6 @@ namespace Dune {
       std::vector<real_type> betas(0);
 
       // some local variables
-      real_type def=def0;   // loop variables
       field_type rho,rholast,lambda,alpha,beta;
 
       // determine initial search direction
@@ -393,27 +293,9 @@ namespace Dune {
         b.axpy(-lambda,q);          // update defect
 
         // convergence test
-        real_type defnew=_sp->norm(b); // comp defect norm
-
-        if (_verbose>1)             // print
-          this->printOutput(std::cout,i,defnew,def);
-
-        def = defnew;               // update norm
-        if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
-        {
-          if (_verbose>0)
-            std::cout << "=== CGSolver: abort due to infinite or NaN defect"
-                      << std::endl;
-          DUNE_THROW(SolverAbort,
-                     "CGSolver: defect=" << Simd::io(def)
-                     << " is infinite or NaN");
-        }
-
-        if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30)    // convergence check
-        {
-          res.converged  = true;
+        def=_sp->norm(b); // comp defect norm
+        if(iteration.step(i, def))
           break;
-        }
 
         // determine new search direction
         q = 0;                      // clear correction
@@ -429,26 +311,7 @@ namespace Dune {
         rholast = rho;              // remember rho for recurrence
       }
 
-      //correct i which is wrong if convergence was not achieved.
-      i=std::min(_maxit,i);
-
-      if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,i,def);
-
       _prec->post(x);                  // postprocess preconditioner
-      res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(Simd::max(def/def0));
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-
-      if (_verbose>0)                 // final print
-      {
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i << std::endl;
-      }
-
 
       if (condition_estimate_) {
 #if HAVE_ARPACKPP
@@ -554,7 +417,7 @@ namespace Dune {
       using std::abs;
       double it;
       field_type rho, rho_new, alpha, beta, h, omega;
-      real_type norm, norm_old, norm_0;
+      real_type norm;
 
       //
       // get vectors and matrix
@@ -571,44 +434,23 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      res.clear();                // clear solver statistics
-      Timer watch;                // start a timer
+      auto iteration = this->template startIteration<double>("BiCGSTABSolver", res);
       _prec->pre(x,r);             // prepare preconditioner
       _op->applyscaleadd(-1,x,r);  // overwrite b with defect
 
       rt=r;
 
-      norm = norm_old = norm_0 = _sp->norm(r);
-
+      norm = _sp->norm(r);
+      if(iteration.step(0, norm)){
+        _prec->post(x);
+        return;
+      }
       p=0;
       v=0;
 
       rho   = 1;
       alpha = 1;
       omega = 1;
-
-      if (_verbose>0)             // printing
-      {
-        std::cout << "=== BiCGSTABSolver" << std::endl;
-        if (_verbose>1)
-        {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,norm_0);
-          //std::cout << " Iter       Defect         Rate" << std::endl;
-          //std::cout << "    0" << std::setw(14) << norm_0 << std::endl;
-        }
-      }
-
-      if ( Simd::allTrue(norm < (_reduction * norm_0))  || Simd::max(norm)<1E-30)
-      {
-        res.converged = 1;
-        _prec->post(x);                  // postprocess preconditioner
-        res.iterations = 0;             // fill statistics
-        res.reduction = 0;
-        res.conv_rate  = 0;
-        res.elapsed = watch.elapsed();
-        return;
-      }
 
       //
       // iteration
@@ -673,20 +515,11 @@ namespace Dune {
         //
 
         norm = _sp->norm(r);
-
-        if (_verbose>1) // print
-        {
-          this->printOutput(std::cout,it,norm,norm_old);
-        }
-
-        if ( Simd::allTrue(norm < (_reduction * norm_0)) )
-        {
-          res.converged = 1;
+        if(iteration.step(it, norm)){
           break;
         }
-        it+=.5;
 
-        norm_old = norm;
+        it+=.5;
 
         // y = W^-1 * r
         y = 0;
@@ -712,37 +545,12 @@ namespace Dune {
         //
 
         norm = _sp->norm(r);
-
-        if (_verbose > 1)             // print
-        {
-          this->printOutput(std::cout,it,norm,norm_old);
-        }
-
-        if ( Simd::allTrue(norm < (_reduction * norm_0))  || Simd::max(norm)<1E-30)
-        {
-          res.converged = 1;
+        if(iteration.step(it, norm)){
           break;
         }
-
-        norm_old = norm;
       } // end for
 
-      //correct i which is wrong if convergence was not achieved.
-      it=std::min(static_cast<double>(_maxit),it);
-
-      if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,it,norm);
-
       _prec->post(x);                  // postprocess preconditioner
-      res.iterations = static_cast<int>(std::ceil(it));              // fill statistics
-      res.reduction = static_cast<double>(Simd::max(norm/norm_0));
-      res.conv_rate  = pow(res.reduction,1.0/it);
-      res.elapsed = watch.elapsed();
-      if (_verbose>0)                 // final print
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/it
-                  << ", IT=" << it << std::endl;
     }
 
   protected:
@@ -783,47 +591,19 @@ namespace Dune {
     {
       using std::sqrt;
       using std::abs;
-      // clear solver statistics
-      res.clear();
-      // start a timer
-      Dune::Timer watch;
-      watch.reset();
+      auto iteration = this->startIteration("MINRESSolver",res);
       // prepare preconditioner
       _prec->pre(x,b);
       // overwrite rhs with defect
       _op->applyscaleadd(-1,x,b);
 
       // compute residual norm
-      real_type def0 = _sp->norm(b);
-
-      // printing
-      if(_verbose > 0) {
-        std::cout << "=== MINRESSolver" << std::endl;
-        if(_verbose > 1) {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
-      }
-
-      // check for convergence
-      if( Simd::max(def0) < 1e-30 ) {
-        res.converged = true;
-        res.iterations = 0;
-        res.reduction = 0;
-        res.conv_rate = 0;
-        res.elapsed = 0.0;
-        // final print
-        if(_verbose > 0)
-          std::cout << "=== rate=" << res.conv_rate
-                    << ", T=" << res.elapsed
-                    << ", TIT=" << res.elapsed
-                    << ", IT=" << res.iterations
-                    << std::endl;
+      real_type def = _sp->norm(b);
+      if(iteration.step(0, def)){
+        _prec->post(x);
         return;
       }
 
-      // the defect norm
-      real_type def = def0;
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
         // diagonal entries of givens rotation
@@ -927,37 +707,14 @@ namespace Dune {
 
         // check for convergence
         // the last entry in the rhs of the min-problem is the residual
-        real_type defnew = abs(beta0*xi[i%2]);
-
-          if(_verbose > 1)
-            this->printOutput(std::cout,i,defnew,def);
-
-          def = defnew;
-          if(Simd::allTrue(def < def0*_reduction)
-               || Simd::max(def) < 1e-30 || i == _maxit ) {
-            res.converged = true;
-            break;
-          }
-        } // end for
-
-        if(_verbose == 1)
-          this->printOutput(std::cout,i,def);
+        def = abs(beta0*xi[i%2]);
+        if(iteration.step(i, def)){
+          break;
+        }
+      } // end for
 
         // postprocess preconditioner
         _prec->post(x);
-        // fill statistics
-        res.iterations = i;
-        res.reduction = static_cast<double>(Simd::max(def/def0));
-        res.conv_rate = pow(res.reduction,1.0/i);
-        res.elapsed = watch.elapsed();
-
-        // final print
-        if(_verbose > 0) {
-          std::cout << "=== rate=" << res.conv_rate
-                    << ", T=" << res.elapsed
-                    << ", TIT=" << res.elapsed/i
-                    << ", IT=" << i << std::endl;
-        }
     }
 
   private:
@@ -1086,7 +843,7 @@ namespace Dune {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
       const int m = _restart;
-      real_type norm, norm_old = 0.0, norm_0;
+      real_type norm = 0.0;
       int j = 1;
       std::vector<field_type,fAlloc> s(m+1), sn(m);
       std::vector<real_type,rAlloc> cs(m);
@@ -1097,37 +854,19 @@ namespace Dune {
       std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
-      // start timer
-      Dune::Timer watch;
-      watch.reset();
+      auto iteration = this->startIteration("RestartedGMResSolver", res);
 
       // clear solver statistics and set res.converged to false
-      res.clear();
       _prec->pre(x,b);
 
       // calculate defect and overwrite rhs with it
       _op->applyscaleadd(-1.0,x,b); // b -= Ax
       // calculate preconditioned defect
       v[0] = 0.0; _prec->apply(v[0],b); // r = W^-1 b
-      norm_0 = _sp->norm(v[0]);
-      norm = norm_0;
-      norm_old = norm;
-
-      // print header
-      if(_verbose > 0)
-        {
-          std::cout << "=== RestartedGMResSolver" << std::endl;
-          if(_verbose > 1) {
-            this->printHeader(std::cout);
-            this->printOutput(std::cout,0,norm_0);
-          }
-        }
-
-      if(Simd::allTrue(norm_0 < EPSILON))
-      {
-        res.converged = true;
-        if(_verbose > 0) // final print
-          print_result(res);
+      norm = _sp->norm(v[0]);
+      if(iteration.step(0, norm)){
+        _prec->post(x);
+        return;
       }
 
       while(j <= _maxit && res.converged != true) {
@@ -1175,16 +914,7 @@ namespace Dune {
           // norm of the defect is the last component the vector s
           norm = abs(s[i+1]);
 
-          // print current iteration statistics
-          if(_verbose > 1) {
-            this->printOutput(std::cout,j,norm,norm_old);
-          }
-
-          norm_old = norm;
-
-          // check convergence
-          if(Simd::allTrue(norm < real_type(reduction) * norm_0))
-            res.converged = true;
+          iteration.step(j, norm);
 
         } // end for
 
@@ -1209,35 +939,15 @@ namespace Dune {
           v[0] = 0.0;
           _prec->apply(v[0],b);
           norm = _sp->norm(v[0]);
-          norm_old = norm;
         }
 
       } //end while
 
       // postprocess preconditioner
       _prec->post(x);
-
-      // save solver statistics
-      res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = static_cast<double>(Simd::max(norm/norm_0));
-      res.conv_rate = pow(res.reduction,1.0/(j-1));
-      res.elapsed = watch.elapsed();
-
-      if(_verbose>0)
-        print_result(res);
-
     }
 
   protected :
-
-    void print_result(const InverseOperatorResult& res) const {
-      int k = res.iterations>0 ? res.iterations : 1;
-      std::cout << "=== rate=" << res.conv_rate
-                << ", T=" << res.elapsed
-                << ", TIT=" << res.elapsed/k
-                << ", IT=" << res.iterations
-                << std::endl;
-    }
 
     void update(X& w, int i,
                 const std::vector<std::vector<field_type,fAlloc> >& H,
@@ -1371,7 +1081,7 @@ namespace Dune {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
       const int m = _restart;
-      real_type norm, norm_old = 0.0, norm_0;
+      real_type norm = 0.0;
       int i, j = 1, k;
       std::vector<field_type,fAlloc> s(m+1), sn(m);
       std::vector<real_type,rAlloc> cs(m);
@@ -1381,12 +1091,7 @@ namespace Dune {
       std::vector<F> v(m+1,b);
       std::vector<X> w(m+1,b);
 
-      // start timer
-      Dune::Timer watch;
-      watch.reset();
-
-      // clear solver statistics and set res.converged to false
-      res.clear();
+      auto iteration = this->startIteration("RestartedFlexibleGMResSolver", res);
       // setup preconditioner if it does something in pre
       _prec->pre(x, b);
 
@@ -1394,28 +1099,14 @@ namespace Dune {
       v[0] = b;
       _op->applyscaleadd(-1.0, x, v[0]); // b -= Ax
 
-      norm = norm_old = norm_0 = _sp->norm(v[0]); // the residual norm
-
-      // print header
-      if(_verbose > 0)
-      {
-        std::cout << "=== RestartedFlexibleGMResSolver" << std::endl;
-        if(_verbose > 1)
-        {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,norm_0);
-        }
-      }
-
-      // check if we are already converged before we are starting
-      if(Simd::allTrue(norm_0 < EPSILON))
-      {
-        res.converged = true; // we converged already
-        if(_verbose > 0) // final print
-          this->print_result(res);
+      norm = _sp->norm(v[0]); // the residual norm
+      if(iteration.step(0, norm)){
+        _prec->post(x);
+        return;
       }
 
       // start iterations
+      res.converged = false;;
       while(j <= _maxit && res.converged != true)
       {
         v[0] *= (1.0 / norm);
@@ -1466,19 +1157,7 @@ namespace Dune {
           // norm of the residual is the last component of vector s
           using std::abs;
           norm = abs(s[i+1]);
-
-          // print current iteration statistics
-          if(_verbose > 1) {
-            this->printOutput(std::cout,j,norm,norm_old);
-          }
-
-          // udate the norm
-          norm_old = norm;
-
-          // check for convergence
-          if(Simd::allTrue(norm < static_cast<scalar_real_type>(reduction) * norm_0))
-            res.converged = true;
-
+          iteration.step(j, norm);
         } // end inner for loop
 
         // calculate update vector
@@ -1499,24 +1178,13 @@ namespace Dune {
           // calculate new defect
           _op->applyscaleadd(-1.0, x,v[0]); // b -= Ax;
           // calculate preconditioned defect
-          norm = norm_old = _sp->norm(v[0]); // update the residual norm
+          norm = _sp->norm(v[0]); // update the residual norm
         }
 
       } // end outer while loop
 
       // post-process preconditioner
       _prec->post(x);
-
-      // save solver statistics
-      res.iterations = j-1; // it has to be j-1!!!
-      res.reduction = static_cast<scalar_real_type>(Simd::max(norm/norm_0));
-      using std::pow;
-      res.conv_rate = pow(res.reduction,1.0/(j-1));
-      res.elapsed = watch.elapsed();
-
-      if(_verbose>0)
-        this->print_result(res);
-
     }
 
 private:
@@ -1593,8 +1261,7 @@ private:
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      res.clear();                      // clear solver statistics
-      Timer watch;                    // start a timer
+      auto iteration = this->startIteration("GeneralizedPCGSolver", res);
       _prec->pre(x,b);                 // prepare preconditioner
       _op->applyscaleadd(-1,x,b);      // overwrite b with defect
 
@@ -1605,31 +1272,12 @@ private:
 
       p[0].reset(new X(x));
 
-      real_type def0 = _sp->norm(b);    // compute norm
-      if ( Simd::max(def0) < 1E-30 )   // convergence check
-      {
-        res.converged  = true;
-        res.iterations = 0;                     // fill statistics
-        res.reduction = 0;
-        res.conv_rate  = 0;
-        res.elapsed=0;
-        if (_verbose>0)                       // final print
-          std::cout << "=== rate=" << res.conv_rate
-                    << ", T=" << res.elapsed << ", TIT=" << res.elapsed
-                    << ", IT=0" << std::endl;
+      real_type def = _sp->norm(b);    // compute norm
+      if(iteration.step(0, def)){
+        _prec->post(x);
         return;
       }
-
-      if (_verbose>0)                 // printing
-      {
-        std::cout << "=== GeneralizedPCGSolver" << std::endl;
-        if (_verbose>1) {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
-      }
       // some local variables
-      real_type def=def0;       // loop variables
       field_type rho, lambda;
 
       int i=0;
@@ -1645,21 +1293,10 @@ private:
       b.axpy(-lambda,q);              // update defect
 
       // convergence test
-      real_type defnew=_sp->norm(b);    // comp defect norm
+      def=_sp->norm(b);    // comp defect norm
       ++i;
-      if (_verbose>1)                 // print
-        this->printOutput(std::cout,i,defnew,def);
-      def = defnew;                   // update norm
-      if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30) // convergence check
-      {
-        res.converged  = true;
-        if (_verbose>0)                       // final print
-        {
-          std::cout << "=== rate=" << res.conv_rate
-                    << ", T=" << res.elapsed
-                    << ", TIT=" << res.elapsed
-                    << ", IT=" << 1 << std::endl;
-        }
+      if(iteration.step(i, def)){
+        _prec->post(x);
         return;
       }
 
@@ -1690,18 +1327,10 @@ private:
           b.axpy(-lambda,q);                  // update defect
 
           // convergence test
-          defnew=_sp->norm(b);        // comp defect norm
+          def = _sp->norm(b);        // comp defect norm
 
           ++i;
-          if (_verbose>1)                     // print
-            this->printOutput(std::cout,i,defnew,def);
-
-          def = defnew;                       // update norm
-          if (Simd::allTrue(def<def0*_reduction) || Simd::max(def)<1E-30) // convergence check
-          {
-            res.converged  = true;
-            break;
-          }
+          iteration.step(i, def);
         }
         if(res.converged)
           break;
@@ -1714,19 +1343,6 @@ private:
       // postprocess preconditioner
       _prec->post(x);
 
-      // fill statistics
-      res.iterations = i;
-      res.reduction = static_cast<double>(Simd::max(def/def0));
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-
-      if (_verbose>0)                     // final print
-      {
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i+1 << std::endl;
-      }
     }
 
   private:
@@ -1799,8 +1415,8 @@ private:
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       using rAlloc = ReboundAllocatorType<X,real_type>;
-      res.clear();                   // clear solver statistics
-      Timer watch;                  // start a timer
+      res.clear();
+      auto iteration = this->startIteration("RestartedFCGSolver", res);
       _prec->pre(x,b);             // prepare preconditioner
       _op->applyscaleadd(-1,x,b); // overwrite b with defect
 
@@ -1810,31 +1426,13 @@ private:
       std::vector<real_type,rAlloc> ddotAd(_mmax+1,0); // array for <d[i],Ad[i]>
       X w(x);
 
-      real_type def0 = _sp->norm(b); // compute norm
-
-      this->CheckSolverAbort(def0,0); // check for inf or NaN
-
-      if (Simd::max(def0)<1E-30)         // convergence check
-      {
-        res.converged  = true;
-        res.iterations = 0;              // fill statistics
-        res.reduction = 0;
-        res.conv_rate  = 0;
-        res.elapsed=0;
-        if (_verbose>0)                 // final print
-          std::cout << "=== rate=" << res.conv_rate
-                    << ", T=" << res.elapsed << ", TIT=" << res.elapsed
-                    << ", IT=0" << std::endl;
+      real_type def = _sp->norm(b); // compute norm
+      if(iteration.step(0, def)){
+        _prec->post(x);
         return;
       }
 
-      if (_verbose>0)             // printing
-      {
-        this->printSolverHeader(def0);
-      }
-
       // some local variables
-      real_type def=def0;
       real_type alpha;
 
       // the loop
@@ -1858,19 +1456,9 @@ private:
           b.axpy(-alpha, Ad[i_bounded]);
 
           // convergence test
-          real_type defnew = _sp->norm(b); // comp defect norm
+          def = _sp->norm(b); // comp defect norm
 
-          if (_verbose > 1)             // print
-            this->printOutput(std::cout, i, defnew, def);
-
-          def = defnew;               // update norm
-          this->CheckSolverAbort(def,i); // check for inf or NaN
-
-          if (Simd::allTrue(def<def0*_reduction) || Simd::max(def) < 1E-30)    // convergence check
-          {
-            res.converged = true;
-            break;
-          }
+          iteration.step(i, def);
           i++;
         }
         //restart: exchange first and last stored values
@@ -1880,22 +1468,7 @@ private:
       //correct i which is wrong if convergence was not achieved.
       i=std::min(_maxit,i);
 
-      if (_verbose==1)                // printing for non verbose
-        this->printOutput(std::cout,i,def);
-
       _prec->post(x);                  // postprocess preconditioner
-      res.iterations = i;               // fill statistics
-      res.reduction = static_cast<double>(Simd::max(def/def0));
-      res.conv_rate  = pow(res.reduction,1.0/i);
-      res.elapsed = watch.elapsed();
-
-      if (_verbose>0)                 // final print
-      {
-        std::cout << "=== rate=" << res.conv_rate
-                  << ", T=" << res.elapsed
-                  << ", TIT=" << res.elapsed/i
-                  << ", IT=" << i << std::endl;
-      }
     }
 
   private:
@@ -1905,7 +1478,7 @@ private:
       for (int k = 0; k < i_bounded; k++) {
         d[i_bounded].axpy(-_sp->dot(Ad[k], w) / ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
       }
-    };
+    }
 
     // This function is called every mmax iterations to handle limited array sizes.
     virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) {
@@ -1914,30 +1487,7 @@ private:
       std::swap(Ad[0], Ad[_mmax]);
       std::swap(d[0], d[_mmax]);
       std::swap(ddotAd[0], ddotAd[_mmax]);
-    };
-
-    virtual void printSolverHeader(const real_type& def0) {
-      std::cout << "=== RestartedFCGSolver" << std::endl;
-      if (_verbose > 1) {
-        this->printHeader(std::cout);
-        this->printOutput(std::cout, 0, def0);
-      }
-    };
-
-    virtual void CheckSolverAbort(const real_type& defect, const int& i){
-      if (!Simd::allTrue(isFinite(defect))){ // check for inf or NaN
-        if(i==0) {
-          if (_verbose > 0)
-            std::cout << "=== RestartedFCGSolver: abort due to infinite or NaN initial defect" << std::endl;
-          DUNE_THROW(SolverAbort, "RestartedFCGSolver: initial defect=" << Simd::io(defect) << " is infinite or NaN");
-        }
-        else{
-          if (_verbose > 0)
-            std::cout << "=== RestartedFCGSolver: abort due to infinite or NaN defect" << std::endl;
-          DUNE_THROW(SolverAbort, "RestartedFCGSolver: defect=" << Simd::io(defect) << " is infinite or NaN");
-        }
-      }
-    };
+    }
 
   protected:
     int _mmax;
@@ -1977,29 +1527,6 @@ private:
     };
 
   private:
-    virtual void printSolverHeader(const real_type& def0) override {
-      std::cout << "=== CompleteFCGSolver" << std::endl;
-      if (_verbose > 1) {
-        this->printHeader(std::cout);
-        this->printOutput(std::cout, 0, def0);
-      }
-    };
-
-    virtual void CheckSolverAbort(const real_type& defect, const int& i) override {
-      if (!Simd::allTrue(isFinite(defect))){ // check for inf or NaN
-        if(i==0) {
-          if (_verbose > 0)
-            std::cout << "=== CompleteFCGSolver : abort due to infinite or NaN initial defect" << std::endl;
-          DUNE_THROW(SolverAbort, "CompleteFCGSolver : initial defect=" << Simd::io(defect) << " is infinite or NaN");
-        }
-        else{
-          if (_verbose > 0)
-            std::cout << "=== CompleteFCGSolver : abort due to infinite or NaN defect" << std::endl;
-          DUNE_THROW(SolverAbort, "CompleteFCGSolver : defect=" << Simd::io(defect) << " is infinite or NaN");
-        }
-      }
-    };
-
     // This function is called every iteration to orthogonalize against the last search directions.
     virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) override {
       // This FCGSolver uses values with higher array indexes too, if existent.
