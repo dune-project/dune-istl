@@ -318,10 +318,10 @@ namespace Dune
     class Iteration {
       friend class IterativeSolver;
       Iteration(const char* solvername, const IterativeSolver& parent, InverseOperatorResult& res)
-        : _solvername(solvername)
-        , _parent(parent)
+        : _i(0)
         , _res(res)
-        , _i(0)
+        , _parent(parent)
+        , _solvername(solvername)
       {
         res.clear();
         if(_parent._verbose>0){
@@ -379,9 +379,9 @@ namespace Dune
       real_type _def0 = 0.0, _def = 0.0;
       CountType _i;
       Timer _watch;
-      const char* _solvername;
       InverseOperatorResult& _res;
       const IterativeSolver& _parent;
+      const char* _solvername;
     };
 
     virtual Iteration startIteration(const char * solvername, InverseOperatorResult& res){
