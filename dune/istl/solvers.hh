@@ -390,18 +390,18 @@ namespace Dune {
   // Ronald Kriemanns BiCG-STAB implementation from Sumo
   //! \brief Bi-conjugate Gradient Stabilized (BiCG-STAB)
   template<class X>
-  class BiCGSTABSolver : public IterativeSolver<X,X> {
+  class BiCGSTABSolver : public IterativeSolver<X,X, double> {
   public:
-    using typename IterativeSolver<X,X>::domain_type;
-    using typename IterativeSolver<X,X>::range_type;
-    using typename IterativeSolver<X,X>::field_type;
-    using typename IterativeSolver<X,X>::real_type;
+    using typename IterativeSolver<X,X, double>::domain_type;
+    using typename IterativeSolver<X,X, double>::range_type;
+    using typename IterativeSolver<X,X, double>::field_type;
+    using typename IterativeSolver<X,X, double>::real_type;
 
     // copy base class constructors
-    using IterativeSolver<X,X>::IterativeSolver;
+    using IterativeSolver<X,X, double>::IterativeSolver;
 
     // don't shadow four-argument version of apply defined in the base class
-    using IterativeSolver<X,X>::apply;
+    using IterativeSolver<X,X, double>::apply;
 
     /*!
        \brief Apply inverse operator.
@@ -434,7 +434,7 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      auto iteration = this->template startIteration<double>("BiCGSTABSolver", res);
+      auto iteration = this->startIteration("BiCGSTABSolver", res);
       _prec->pre(x,r);             // prepare preconditioner
       _op->applyscaleadd(-1,x,r);  // overwrite b with defect
 
@@ -554,12 +554,12 @@ namespace Dune {
     }
 
   protected:
-    using IterativeSolver<X,X>::_op;
-    using IterativeSolver<X,X>::_prec;
-    using IterativeSolver<X,X>::_sp;
-    using IterativeSolver<X,X>::_reduction;
-    using IterativeSolver<X,X>::_maxit;
-    using IterativeSolver<X,X>::_verbose;
+    using IterativeSolver<X,X, double>::_op;
+    using IterativeSolver<X,X, double>::_prec;
+    using IterativeSolver<X,X, double>::_sp;
+    using IterativeSolver<X,X, double>::_reduction;
+    using IterativeSolver<X,X, double>::_maxit;
+    using IterativeSolver<X,X, double>::_verbose;
   };
 
   /*! \brief Minimal Residual Method (MINRES)
@@ -1547,6 +1547,11 @@ private:
       // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.
       _k_limit = Ad.size();
     };
+
+    virtual typename IterativeSolver<X,X>::Iteration startIteration(const char* solvername, InverseOperatorResult& res){
+      DUNE_UNUSED_PARAMETER(solvername);
+      return IterativeSolver<X,X>::startIteration("CompleteFCGSolver", res);
+    }
 
     int _k_limit = 0;
 

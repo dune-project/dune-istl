@@ -194,7 +194,7 @@ namespace Dune
      constructors, which are then only imported in the actual solver
      implementation.
    */
-  template<class X, class Y>
+  template<class X, class Y, class CountType = unsigned int>
   class IterativeSolver : public InverseOperator<X,Y>{
   public:
     using typename InverseOperator<X,Y>::domain_type;
@@ -315,9 +315,9 @@ namespace Dune
      During the iteration in every step Iteration::step should be called with
      the current iteration count and norm of the residual.
    */
-    template<class CountType>
     class Iteration {
-      Iteration(const char* solvername, const IterativeSolver<X,Y>& parent, InverseOperatorResult& res)
+      friend class IterativeSolver;
+      Iteration(const char* solvername, const IterativeSolver& parent, InverseOperatorResult& res)
         : _solvername(solvername)
         , _parent(parent)
         , _res(res)
@@ -381,12 +381,11 @@ namespace Dune
       Timer _watch;
       const char* _solvername;
       InverseOperatorResult& _res;
-      const IterativeSolver<X,Y>& _parent;
+      const IterativeSolver& _parent;
     };
 
-    template<class CountType = unsigned int>
-    Iteration<CountType> startIteration(const char * solvername, InverseOperatorResult& res){
-      return Iteration<CountType>(solvername, *this, res);
+    virtual Iteration startIteration(const char * solvername, InverseOperatorResult& res){
+      return Iteration(solvername, *this, res);
     }
 
   protected:
