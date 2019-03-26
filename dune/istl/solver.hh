@@ -299,9 +299,24 @@ namespace Dune
       return _category;
     }
 
+      /*!
+     \brief Class for controlling iterative methods
+
+     This class provides building blocks for a iterative method. It does all
+     things that have to do with output, residual checking (NaN, infinite,
+     convergence) and sets also the fields of InverseOperatorResult.
+
+     Instances of this class are meant to create with
+     IterativeSolver::startIteration and stored as a local variable in the apply
+     method. If the scope of the apply method is left the destructor of this
+     class sets all the solver statistics in the InverseOperatorResult and
+     prints the final output.
+
+     During the iteration in every step Iteration::step should be called with
+     the current iteration count and norm of the residual.
+   */
     template<class CountType>
     class Iteration {
-    public:
       Iteration(const char* solvername, const IterativeSolver<X,Y>& parent, InverseOperatorResult& res)
         : _solvername(solvername)
         , _parent(parent)
@@ -316,6 +331,7 @@ namespace Dune
         }
       }
 
+    public:
       ~Iteration(){
         finalize();
       }
