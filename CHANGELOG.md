@@ -28,6 +28,8 @@
 
 - Added a right-preconditioned flexible restarted GMRes solver
 
+- Deprecated support for SuperLU 4.x. It will be removed after Dune 2.7.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
