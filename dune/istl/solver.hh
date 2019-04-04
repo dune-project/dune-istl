@@ -313,7 +313,8 @@ namespace Dune
      prints the final output.
 
      During the iteration in every step Iteration::step should be called with
-     the current iteration count and norm of the residual.
+     the current iteration count and norm of the residual. It returns true if
+     convergence is achieved.
    */
     class Iteration {
       friend class IterativeSolver;
@@ -336,6 +337,16 @@ namespace Dune
         finalize();
       }
 
+      /*! \brief registers the iteration step, checks for invalid defect norm
+          and convergence.
+
+        \param i The current iteration count
+        \param def The current norm of the defect
+
+        \return true is convergence is achieved
+
+        \throw SolverAbort when `def` contains inf or NaN
+       */
       bool step(CountType i, real_type def){
         if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
         {
@@ -384,6 +395,9 @@ namespace Dune
       const char* _solvername;
     };
 
+    /*! \brief Initializes the iteration. This function can be overridden for
+      setting the `solvername`.
+     */
     virtual Iteration startIteration(const char * solvername, InverseOperatorResult& res){
       return Iteration(solvername, *this, res);
     }
