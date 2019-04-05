@@ -326,6 +326,7 @@ namespace Dune
         : _i(0)
         , _res(res)
         , _parent(parent)
+        , _valid(true)
       {
         res.clear();
         if(_parent._verbose>0){
@@ -336,8 +337,22 @@ namespace Dune
       }
 
     public:
+      Iteration(const Iteration&) = delete;
+      Iteration(Iteration&& other)
+        : _def0(other._def0)
+        , _def(other._def)
+        , _i(other._i)
+        , _watch(other._watch)
+        , _res(other._res)
+        , _parent(other._parent)
+        , _valid(other._valid)
+      {
+        other._valid = false;
+      }
+
       ~Iteration(){
-        finalize();
+        if(_valid)
+          finalize();
       }
 
       /*! \brief registers the iteration step, checks for invalid defect norm
@@ -395,6 +410,7 @@ namespace Dune
       Timer _watch;
       InverseOperatorResult& _res;
       const IterativeSolver& _parent;
+      bool _valid;
     };
 
     /*! \brief Initializes the iteration.
