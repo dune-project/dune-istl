@@ -61,7 +61,7 @@ namespace Dune {
     using typename IterativeSolver<X,X>::field_type;
     using typename IterativeSolver<X,X>::real_type;
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "LoopSolver";
     }
@@ -134,7 +134,7 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "GradientSolver";
     }
@@ -246,7 +246,7 @@ namespace Dune {
       }
     }
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "CGSolver";
     }
@@ -414,7 +414,7 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X, double>::apply;
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "BiCGSTABSolver";
     }
@@ -597,7 +597,7 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "MINRESSolver";
     }
@@ -836,7 +836,7 @@ namespace Dune {
       _restart(restart)
     {}
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "RestartedGMResSolver";
     }
@@ -1093,7 +1093,7 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using RestartedGMResSolver<X,Y>::apply;
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "RestartedFlexibleGMResSolver";
     }
@@ -1284,7 +1284,7 @@ private:
       _restart(restart)
     {}
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "GeneralizedPCGSolver";
     }
@@ -1436,7 +1436,7 @@ private:
     }
 
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "RestartedFCGSolver";
     }
@@ -1567,7 +1567,7 @@ private:
       this->RestartedFCGSolver<X>::apply(x,b,res);
     };
 
-    virtual const char* name() const override
+    virtual std::string name() const override
     {
       return "CompleteFCGSolver";
     }
