@@ -321,7 +321,7 @@ namespace Dune
      convergence is achieved.
    */
     class Iteration {
-      friend class IterativeSolver;
+    public:
       Iteration(const IterativeSolver& parent, InverseOperatorResult& res)
         : _i(0)
         , _res(res)
@@ -336,7 +336,6 @@ namespace Dune
         }
       }
 
-    public:
       Iteration(const Iteration&) = delete;
       Iteration(Iteration&& other)
         : _def0(other._def0)
@@ -412,12 +411,6 @@ namespace Dune
       const IterativeSolver& _parent;
       bool _valid;
     };
-
-    /*! \brief Initializes the iteration.
-     */
-    Iteration startIteration(InverseOperatorResult& res){
-      return Iteration(*this, res);
-    }
 
   protected:
     std::shared_ptr<LinearOperator<X,Y>> _op;

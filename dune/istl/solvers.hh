@@ -75,7 +75,7 @@ namespace Dune {
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this, res);
 
       // overwrite b with defect
       _op->applyscaleadd(-1,x,b);
@@ -114,6 +114,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
   };
 
 
@@ -145,7 +146,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this, res);
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);                     // create local vectors
@@ -182,6 +183,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
   };
 
 
@@ -249,7 +251,6 @@ namespace Dune {
       return "CGSolver";
     }
 
-
     /*!
        \brief Apply inverse operator.
 
@@ -263,7 +264,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this,res);
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);              // the search direction
@@ -393,6 +394,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
   };
 
 
@@ -448,7 +450,7 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this,res);
       _op->applyscaleadd(-1,x,r);  // overwrite b with defect
 
       rt=r;
@@ -572,6 +574,7 @@ namespace Dune {
     using IterativeSolver<X,X, double>::_reduction;
     using IterativeSolver<X,X, double>::_maxit;
     using IterativeSolver<X,X, double>::_verbose;
+    using typename IterativeSolver<X,X, double>::Iteration;
   };
 
   /*! \brief Minimal Residual Method (MINRES)
@@ -608,7 +611,7 @@ namespace Dune {
     {
       using std::sqrt;
       using std::abs;
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this, res);
       // overwrite rhs with defect
       _op->applyscaleadd(-1,x,b);
 
@@ -776,6 +779,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
   };
 
   /**
@@ -874,7 +878,7 @@ namespace Dune {
       std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this,res);
 
       // clear solver statistics and set res.converged to false
       _prec->pre(x,b);
@@ -1047,6 +1051,7 @@ namespace Dune {
     using IterativeSolver<X,Y>::_reduction;
     using IterativeSolver<X,Y>::_maxit;
     using IterativeSolver<X,Y>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
     int _restart;
   };
 
@@ -1116,7 +1121,7 @@ namespace Dune {
       std::vector<F> v(m+1,b);
       std::vector<X> w(m+1,b);
 
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this,res);
       // setup preconditioner if it does something in pre
 
       // calculate residual and overwrite a copy of the rhs with it
@@ -1219,6 +1224,7 @@ private:
     using RestartedGMResSolver<X,Y>::_maxit;
     using RestartedGMResSolver<X,Y>::_verbose;
     using RestartedGMResSolver<X,Y>::_restart;
+    using typename IterativeSolver<X,X>::Iteration;
   };
 
 
@@ -1290,7 +1296,7 @@ private:
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this, res);
       _op->applyscaleadd(-1,x,b);      // overwrite b with defect
 
       std::vector<std::shared_ptr<X> > p(_restart);
@@ -1380,6 +1386,7 @@ private:
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
     int _restart;
   };
 
@@ -1450,7 +1457,7 @@ private:
     {
       using rAlloc = ReboundAllocatorType<X,real_type>;
       res.clear();
-      auto iteration = this->startIteration(res);
+      Iteration iteration(*this,res);
       _op->applyscaleadd(-1,x,b); // overwrite b with defect
 
       //arrays for interim values:
@@ -1530,6 +1537,7 @@ private:
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+    using typename IterativeSolver<X,X>::Iteration;
   };
 
   /*! \brief Complete flexible conjugate gradient method
