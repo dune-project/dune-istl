@@ -61,6 +61,11 @@ namespace Dune {
     using typename IterativeSolver<X,X>::field_type;
     using typename IterativeSolver<X,X>::real_type;
 
+    virtual const char* name() const override
+    {
+      return "LoopSolver";
+    }
+
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
@@ -70,7 +75,7 @@ namespace Dune {
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration("LoopSolver", res);
+      auto iteration = this->startIteration(res);
 
       // overwrite b with defect
       _op->applyscaleadd(-1,x,b);
@@ -128,6 +133,11 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
 
+    virtual const char* name() const override
+    {
+      return "GradientSolver";
+    }
+
     /*!
        \brief Apply inverse operator.
 
@@ -135,7 +145,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration("GradientSolver", res);
+      auto iteration = this->startIteration(res);
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);                     // create local vectors
@@ -234,6 +244,11 @@ namespace Dune {
       }
     }
 
+    virtual const char* name() const override
+    {
+      return "CGSolver";
+    }
+
 
     /*!
        \brief Apply inverse operator.
@@ -248,7 +263,7 @@ namespace Dune {
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration("CGSolver", res);
+      auto iteration = this->startIteration(res);
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       X p(x);              // the search direction
@@ -397,6 +412,11 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X, double>::apply;
 
+    virtual const char* name() const override
+    {
+      return "BiCGSTABSolver";
+    }
+
     /*!
        \brief Apply inverse operator.
 
@@ -428,7 +448,7 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      auto iteration = this->startIteration("BiCGSTABSolver", res);
+      auto iteration = this->startIteration(res);
       _op->applyscaleadd(-1,x,r);  // overwrite b with defect
 
       rt=r;
@@ -574,6 +594,11 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
 
+    virtual const char* name() const override
+    {
+      return "MINRESSolver";
+    }
+
     /*!
        \brief Apply inverse operator.
 
@@ -583,7 +608,7 @@ namespace Dune {
     {
       using std::sqrt;
       using std::abs;
-      auto iteration = this->startIteration("MINRESSolver",res);
+      auto iteration = this->startIteration(res);
       // overwrite rhs with defect
       _op->applyscaleadd(-1,x,b);
 
@@ -807,6 +832,11 @@ namespace Dune {
       _restart(restart)
     {}
 
+    virtual const char* name() const override
+    {
+      return "RestartedGMResSolver";
+    }
+
     /*!
        \brief Apply inverse operator.
 
@@ -844,7 +874,7 @@ namespace Dune {
       std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
       std::vector<F> v(m+1,b);
 
-      auto iteration = this->startIteration("RestartedGMResSolver", res);
+      auto iteration = this->startIteration(res);
 
       // clear solver statistics and set res.converged to false
       _prec->pre(x,b);
@@ -1058,6 +1088,11 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using RestartedGMResSolver<X,Y>::apply;
 
+    virtual const char* name() const override
+    {
+      return "RestartedFlexibleGMResSolver";
+    }
+
     /*!
        \brief Apply inverse operator.
 
@@ -1081,7 +1116,7 @@ namespace Dune {
       std::vector<F> v(m+1,b);
       std::vector<X> w(m+1,b);
 
-      auto iteration = this->startIteration("RestartedFlexibleGMResSolver", res);
+      auto iteration = this->startIteration(res);
       // setup preconditioner if it does something in pre
 
       // calculate residual and overwrite a copy of the rhs with it
@@ -1243,6 +1278,11 @@ private:
       _restart(restart)
     {}
 
+    virtual const char* name() const override
+    {
+      return "GeneralizedPCGSolver";
+    }
+
     /*!
        \brief Apply inverse operator.
 
@@ -1250,7 +1290,7 @@ private:
      */
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      auto iteration = this->startIteration("GeneralizedPCGSolver", res);
+      auto iteration = this->startIteration(res);
       _op->applyscaleadd(-1,x,b);      // overwrite b with defect
 
       std::vector<std::shared_ptr<X> > p(_restart);
@@ -1388,6 +1428,12 @@ private:
     {
     }
 
+
+    virtual const char* name() const override
+    {
+      return "RestartedFCGSolver";
+    }
+
     /*!
      \brief Apply inverse operator.
 
@@ -1404,7 +1450,7 @@ private:
     {
       using rAlloc = ReboundAllocatorType<X,real_type>;
       res.clear();
-      auto iteration = this->startIteration("RestartedFCGSolver", res);
+      auto iteration = this->startIteration(res);
       _op->applyscaleadd(-1,x,b); // overwrite b with defect
 
       //arrays for interim values:
@@ -1513,6 +1559,11 @@ private:
       this->RestartedFCGSolver<X>::apply(x,b,res);
     };
 
+    virtual const char* name() const override
+    {
+      return "CompleteFCGSolver";
+    }
+
   private:
     // This function is called every iteration to orthogonalize against the last search directions.
     virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) override {
@@ -1534,11 +1585,6 @@ private:
       // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.
       _k_limit = Ad.size();
     };
-
-    virtual typename IterativeSolver<X,X>::Iteration startIteration(const char* solvername, InverseOperatorResult& res){
-      DUNE_UNUSED_PARAMETER(solvername);
-      return IterativeSolver<X,X>::startIteration("CompleteFCGSolver", res);
-    }
 
     int _k_limit = 0;
 

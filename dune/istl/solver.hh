@@ -299,6 +299,10 @@ namespace Dune
       return _category;
     }
 
+    virtual const char* name() const{
+      return "IterativeSolver";
+    }
+
       /*!
      \brief Class for controlling iterative methods
 
@@ -318,15 +322,14 @@ namespace Dune
    */
     class Iteration {
       friend class IterativeSolver;
-      Iteration(const char* solvername, const IterativeSolver& parent, InverseOperatorResult& res)
+      Iteration(const IterativeSolver& parent, InverseOperatorResult& res)
         : _i(0)
         , _res(res)
         , _parent(parent)
-        , _solvername(solvername)
       {
         res.clear();
         if(_parent._verbose>0){
-          std::cout << "=== " << solvername << std::endl;
+          std::cout << "=== " << parent.name() << std::endl;
           if(_parent._verbose > 1)
             _parent.printHeader(std::cout);
         }
@@ -351,10 +354,10 @@ namespace Dune
         if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
         {
           if (_parent._verbose>0)
-            std::cout << "=== " << _solvername << ": abort due to infinite or NaN defect"
+            std::cout << "=== " << _parent.name() << ": abort due to infinite or NaN defect"
                       << std::endl;
           DUNE_THROW(SolverAbort,
-                     _solvername << ": defect=" << Simd::io(def)
+                     _parent.name() << ": defect=" << Simd::io(def)
                      << " is infinite or NaN");
         }
         if(i == 0)
@@ -392,14 +395,12 @@ namespace Dune
       Timer _watch;
       InverseOperatorResult& _res;
       const IterativeSolver& _parent;
-      const char* _solvername;
     };
 
-    /*! \brief Initializes the iteration. This function can be overridden for
-      setting the `solvername`.
+    /*! \brief Initializes the iteration.
      */
-    virtual Iteration startIteration(const char * solvername, InverseOperatorResult& res){
-      return Iteration(solvername, *this, res);
+    Iteration startIteration(InverseOperatorResult& res){
+      return Iteration(*this, res);
     }
 
   protected:
