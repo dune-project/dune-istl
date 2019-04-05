@@ -83,7 +83,9 @@ dune_add_test(SOURCES hierarchytest.cc
 
 dune_add_test(NAME pamgtest
               SOURCES parallelamgtest.cc
-              CMAKE_GUARD MPI_FOUND)
+              CMAKE_GUARD MPI_FOUND
+              MPI_RANKS 1 2 4
+              TIMEOUT 300)
 
 dune_add_test(NAME pamg_comm_repart_test
               SOURCES parallelamgtest.cc
