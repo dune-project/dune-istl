@@ -1,6 +1,7 @@
 #ifndef DUNE_ISTL_ILDL_HH
 #define DUNE_ISTL_ILDL_HH
 
+#include <dune/common/scalarvectorview.hh>
 #include "ilu.hh"
 
 /**
@@ -146,7 +147,6 @@ namespace Dune
   inline void bildl_backsolve ( const Matrix &A, X &v, const Y &d, bool isLowerTriangular = false )
   {
     using mblock = typename Matrix::block_type;
-    using vblock = typename X::block_type;
 
     // solve L v = d, note: Lii = I
     for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
@@ -154,8 +154,10 @@ namespace Dune
       const auto &A_i = *i;
       v[ i.index() ] = d[ i.index() ];
       for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
-        Imp::BlockTraits<mblock>::toMatrix(*ij).mmv( Imp::BlockTraits<vblock>::toVector( v[ ij.index() ] ),
-                                                     Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ) );
+      {
+        auto&& vi = Impl::asVector( v[ i.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ij).mmv(Impl::asVector( v[ ij.index() ] ), vi);
+      }
     }
 
     // solve D w = v, note: diagonal stores Dii^{-1}
@@ -168,9 +170,16 @@ namespace Dune
         const auto &A_i = *i;
         const auto ii = A_i.beforeEnd();
         assert( ii.index() == i.index() );
-        auto rhs = v[ i.index() ];
-        Imp::BlockTraits<mblock>::toMatrix(*ii).mv( Imp::BlockTraits<vblock>::toVector( rhs ),
-                                                    Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ) );
+        // We need to be careful here: Directly using
+        // auto rhs = Impl::asVector(v[ i.index() ]);
+        // is not OK in case this is a proxy. Hence
+        // we firts have to copy the value. Notice that
+        // this is still not OK, if the vector type itself returns
+        // proxy references.
+        auto rhsValue = v[ i.index() ];
+        auto&& rhs = Impl::asVector(rhsValue);
+        auto&& vi = Impl::asVector( v[ i.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ii).mv(rhs, vi);
       }
     }
     else
@@ -182,9 +191,16 @@ namespace Dune
         const auto &A_i = *i;
         const auto ii = A_i.find( i.index() );
         assert( ii.index() == i.index() );
-        auto rhs = v[ i.index() ];
-        Imp::BlockTraits<mblock>::toMatrix(*ii).mv( Imp::BlockTraits<vblock>::toVector( rhs ),
-                                                    Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ) );
+        // We need to be careful here: Directly using
+        // auto rhs = Impl::asVector(v[ i.index() ]);
+        // is not OK in case this is a proxy. Hence
+        // we firts have to copy the value. Notice that
+        // this is still not OK, if the vector type itself returns
+        // proxy references.
+        auto rhsValue = v[ i.index() ];
+        auto&& rhs = Impl::asVector(rhsValue);
+        auto&& vi = Impl::asVector( v[ i.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ii).mv(rhs, vi);
       }
     }
 
@@ -194,8 +210,10 @@ namespace Dune
     {
       const auto &A_i = *i;
       for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
-        Imp::BlockTraits<mblock>::toMatrix(*ij).mmtv( Imp::BlockTraits<vblock>::toVector( v[ i.index() ] ),
-                                                      Imp::BlockTraits<vblock>::toVector( v[ ij.index() ] ) );
+      {
+        auto&& vij = Impl::asVector( v[ ij.index() ] );
+        Imp::BlockTraits<mblock>::toMatrix(*ij).mmtv(Impl::asVector( v[ i.index() ] ), vij);
+      }
     }
   }
 
