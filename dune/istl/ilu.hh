@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/scalarvectorview.hh>
 #include "istlexception.hh"
 
 /** \file
@@ -103,21 +104,36 @@ namespace Dune {
     rowiterator endi=A.end();
     for (rowiterator i=A.begin(); i!=endi; ++i)
     {
-      dblock rhs(d[i.index()]);
+      // We need to be careful here: Directly using
+      // auto rhs = Impl::asVector(d[ i.index() ]);
+      // is not OK in case this is a proxy. Hence
+      // we first have to copy the value. Notice that
+      // this is still not OK, if the vector type itself returns
+      // proxy references.
+      dblock rhsValue(d[i.index()]);
+      auto&& rhs = Impl::asVector(rhsValue);
       for (coliterator j=(*i).begin(); j.index()<i.index(); ++j)
-        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Imp::BlockTraits<vblock>::toVector(v[j.index()]),Imp::BlockTraits<dblock>::toVector(rhs));
-      v[i.index()] = rhs;           // Lii = I
+        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+      Impl::asVector(v[i.index()]) = rhs;           // Lii = I
     }
 
     // upper triangular solve
     rowiterator rendi=A.beforeBegin();
     for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
     {
-      vblock rhs(v[i.index()]);
+      // We need to be careful here: Directly using
+      // auto rhs = Impl::asVector(v[ i.index() ]);
+      // is not OK in case this is a proxy. Hence
+      // we first have to copy the value. Notice that
+      // this is still not OK, if the vector type itself returns
+      // proxy references.
+      vblock rhsValue(v[i.index()]);
+      auto&& rhs = Impl::asVector(rhsValue);
       coliterator j;
       for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Imp::BlockTraits<vblock>::toVector(v[j.index()]),Imp::BlockTraits<dblock>::toVector(rhs));
-      Imp::BlockTraits<mblock>::toMatrix(*j).mv(Imp::BlockTraits<dblock>::toVector(rhs),Imp::BlockTraits<vblock>::toVector(v[i.index()]));           // diagonal stores inverse!
+        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+      auto&& vi = Impl::asVector(v[i.index()]);
+      Imp::BlockTraits<mblock>::toMatrix(*j).mv(rhs,vi);           // diagonal stores inverse!
     }
   }
 
@@ -378,29 +394,31 @@ namespace Dune {
       // lower triangular solve
       for( size_type i=0; i<iEnd; ++ i )
       {
-        dblock rhs( d[ i ] );
+        dblock rhsValue( d[ i ] );
+        auto&& rhs = Impl::asVector(rhsValue);
         const size_type rowI     = lower.rows_[ i ];
         const size_type rowINext = lower.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-          Imp::BlockTraits<mblock>::toMatrix(lower.values_[ col ]).mmv( Imp::BlockTraits<vblock>::toVector(v[ lower.cols_[ col ] ] ), Imp::BlockTraits<dblock>::toVector(rhs) );
+          Imp::BlockTraits<mblock>::toMatrix(lower.values_[ col ]).mmv( Impl::asVector(v[ lower.cols_[ col ] ] ), rhs );
 
-        v[ i ] = rhs;  // Lii = I
+        Impl::asVector(v[ i ]) = rhs;  // Lii = I
       }
 
       // upper triangular solve
       for( size_type i=0; i<iEnd; ++ i )
       {
-        vblock& vBlock = v[ lastRow - i ];
-        vblock rhs ( vBlock );
+        auto&& vBlock = Impl::asVector(v[ lastRow - i ]);
+        vblock rhsValue ( v[ lastRow - i ] );
+        auto&& rhs = Impl::asVector(rhsValue);
         const size_type rowI     = upper.rows_[ i ];
         const size_type rowINext = upper.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-          Imp::BlockTraits<mblock>::toMatrix(upper.values_[ col ]).mmv( Imp::BlockTraits<vblock>::toVector(v[ upper.cols_[ col ] ]), Imp::BlockTraits<dblock>::toVector(rhs) );
+          Imp::BlockTraits<mblock>::toMatrix(upper.values_[ col ]).mmv( Impl::asVector(v[ upper.cols_[ col ] ]), rhs );
 
         // apply inverse and store result
-        Imp::BlockTraits<mblock>::toMatrix(inv[ i ]).mv( Imp::BlockTraits<dblock>::toVector(rhs), Imp::BlockTraits<vblock>::toVector(vBlock));
+        Imp::BlockTraits<mblock>::toMatrix(inv[ i ]).mv(rhs, vBlock);
       }
     }
 

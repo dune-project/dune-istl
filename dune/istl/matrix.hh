@@ -12,6 +12,7 @@
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/istlexception.hh>
