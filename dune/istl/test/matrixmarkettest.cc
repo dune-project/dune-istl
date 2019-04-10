@@ -39,16 +39,9 @@ int testMatrixMarket(int N)
   Vector bv(mat.N()), cv(mat.N());
 
   int i=0;
-  Dune::Hybrid::ifElse(Dune::IsNumber<typename Vector::block_type>(),
-    [&](auto id) {
-      for(auto entry=bv.begin(); bv.end() != entry; ++entry, ++i)
-        *entry=i;
-    },
-    [&](auto id) {
-      for(auto entry=bv.begin(); bv.end() != entry; ++entry)
-        for (auto sentry=id(entry)->begin(); sentry != id(entry)->end(); ++sentry,++i)
-          *sentry=i;
-    });
+  for(auto&& block : bv)
+    for(auto&& entry : Dune::Impl::asVector(block))
+      entry = (i++);
 
 #if HAVE_MPI
   comm.remoteIndices().rebuild<false>();
