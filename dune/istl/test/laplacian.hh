@@ -4,6 +4,7 @@
 #define LAPLACIAN_HH
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/hybridutilities.hh>
 
 template<class B, class Alloc>
 void setupSparsityPattern(Dune::BCRSMatrix<B,Alloc>& A, int N)

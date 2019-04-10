@@ -4,6 +4,7 @@
 #define DUNE_ISTL_BTDMATRIX_HH
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
 /** \file
