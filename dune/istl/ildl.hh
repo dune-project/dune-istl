@@ -2,6 +2,7 @@
 #define DUNE_ISTL_ILDL_HH
 
 #include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include "ilu.hh"
 
 /**
@@ -116,7 +117,6 @@ namespace Dune
         DUNE_THROW( ISTLError, "diagonal entry missing" );
 
       // update diagonal and multiply A_ij by D_j^{-1}
-      using mblock = typename Matrix::block_type;
       auto &&A_ii = *ij;
       for( auto ik = A_i.begin(); ik != ij; ++ik )
       {
@@ -124,12 +124,12 @@ namespace Dune
         const auto &A_k = A[ ik.index() ];
 
         auto B = A_ik;
-        Imp::BlockTraits<mblock>::toMatrix(A_ik).rightmultiply( *A_k.find( ik.index() ) );
+        Impl::asMatrix(A_ik).rightmultiply( Impl::asMatrix(*A_k.find( ik.index() )) );
         bildl_subtractBCT( B, A_ik, A_ii );
       }
       try
       {
-        Imp::BlockTraits<mblock>::toMatrix(A_ii).invert();
+        Impl::asMatrix(A_ii).invert();
       }
       catch( const Dune::FMatrixError &e )
       {
@@ -146,8 +146,6 @@ namespace Dune
   template< class Matrix, class X, class Y >
   inline void bildl_backsolve ( const Matrix &A, X &v, const Y &d, bool isLowerTriangular = false )
   {
-    using mblock = typename Matrix::block_type;
-
     // solve L v = d, note: Lii = I
     for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
     {
@@ -156,7 +154,7 @@ namespace Dune
       for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
       {
         auto&& vi = Impl::asVector( v[ i.index() ] );
-        Imp::BlockTraits<mblock>::toMatrix(*ij).mmv(Impl::asVector( v[ ij.index() ] ), vi);
+        Impl::asMatrix(*ij).mmv(Impl::asVector( v[ ij.index() ] ), vi);
       }
     }
 
@@ -179,7 +177,7 @@ namespace Dune
         auto rhsValue = v[ i.index() ];
         auto&& rhs = Impl::asVector(rhsValue);
         auto&& vi = Impl::asVector( v[ i.index() ] );
-        Imp::BlockTraits<mblock>::toMatrix(*ii).mv(rhs, vi);
+        Impl::asMatrix(*ii).mv(rhs, vi);
       }
     }
     else
@@ -200,7 +198,7 @@ namespace Dune
         auto rhsValue = v[ i.index() ];
         auto&& rhs = Impl::asVector(rhsValue);
         auto&& vi = Impl::asVector( v[ i.index() ] );
-        Imp::BlockTraits<mblock>::toMatrix(*ii).mv(rhs, vi);
+        Impl::asMatrix(*ii).mv(rhs, vi);
       }
     }
 
@@ -212,7 +210,7 @@ namespace Dune
       for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
       {
         auto&& vij = Impl::asVector( v[ ij.index() ] );
-        Imp::BlockTraits<mblock>::toMatrix(*ij).mmtv(Impl::asVector( v[ i.index() ] ), vij);
+        Impl::asMatrix(*ij).mmtv(Impl::asVector( v[ i.index() ] ), vij);
       }
     }
   }
