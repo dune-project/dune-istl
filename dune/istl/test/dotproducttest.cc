@@ -8,6 +8,7 @@
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/test/testsuite.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/scalarvectorview.hh>
 
 template<typename T>
 struct Sign
@@ -50,13 +51,7 @@ Dune::TestSuite DotProductTest(const size_t numBlocks,const size_t blockSizeOrCa
 
   using RealBlockType = typename RealBlockVector::block_type;
 
-  const size_type blockSize = Dune::Hybrid::ifElse(Dune::IsNumber<RealBlockType>(),
-                                                   [&](auto id) {
-                                                     return 1;
-                                                   },
-                                                   [&](auto id) {
-                                                     return id(one[0]).size();
-                                                   });
+  const size_type blockSize = Dune::Impl::asVector(one[0]).size();
 
   t.require(numBlocks==one.N());
   t.require(numBlocks==iVec.N());

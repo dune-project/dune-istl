@@ -21,8 +21,8 @@
 #endif
 #include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/hybridutilities.hh>
 #include <dune/common/poolallocator.hh>
+#include <dune/common/scalarvectorview.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/test/vectortest.hh>
@@ -30,14 +30,8 @@
 template<typename VectorBlock, typename V>
 void assign(VectorBlock& b, const V& i)
 {
-  Dune::Hybrid::ifElse(Dune::IsNumber<VectorBlock>(),
-    [&](auto id) {
-      b = i;
-    },
-    [&](auto id) {
-      for (auto& entry : id(b))
-        entry = i;
-    });
+  for (auto& entry : Dune::Impl::asVector(b))
+    entry = i;
 }
 
 
