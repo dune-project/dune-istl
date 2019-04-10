@@ -56,18 +56,6 @@ namespace Imp {
     {
       return 0;
     }
-
-    // Interpret a scalar as a 1x1 matrix
-    static FieldMatrix<B,1,1>& toMatrix(B& value)
-    {
-      return *reinterpret_cast<FieldMatrix<B,1,1>*>(&value);
-    }
-
-    // Interpret a scalar as a 1x1 matrix
-    static const FieldMatrix<B,1,1>& toMatrix(const B& value)
-    {
-      return *reinterpret_cast<const FieldMatrix<B,1,1>*>(&value);
-    }
   };
 
   template <class B>
@@ -79,18 +67,6 @@ namespace Imp {
     static constexpr unsigned int blockLevel()
     {
       return B::blocklevel;
-    }
-
-    // This method does nothing: only its counterpart for scalar values does something
-    static B& toMatrix(B& value)
-    {
-      return value;
-    }
-
-    // This method does nothing: only its counterpart for scalar values does something
-    static const B& toMatrix(const B& value)
-    {
-      return value;
     }
   };
 
