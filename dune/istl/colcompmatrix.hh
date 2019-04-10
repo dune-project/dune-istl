@@ -8,6 +8,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/hybridutilities.hh>
 #include <limits>
 
 namespace Dune
