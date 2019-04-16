@@ -10,6 +10,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include "istlexception.hh"
 
 /** \file
@@ -52,7 +53,7 @@ namespace Dune {
         coliterator jj = A[ij.index()].find(ij.index());
 
         // compute L_ij = A_jj^-1 * A_ij
-        Imp::BlockTraits<block>::toMatrix(*ij).rightmultiply(*jj);
+        Impl::asMatrix(*ij).rightmultiply(Impl::asMatrix(*jj));
 
         // modify row
         coliterator endjk=A[ij.index()].end();                 // end of row j
@@ -62,7 +63,7 @@ namespace Dune {
           if (ik.index()==jk.index())
           {
             block B(*jk);
-            Imp::BlockTraits<block>::toMatrix(B).leftmultiply(Imp::BlockTraits<block>::toMatrix(*ij));
+            Impl::asMatrix(B).leftmultiply(Impl::asMatrix(*ij));
             *ik -= B;
             ++ik; ++jk;
           }
@@ -79,7 +80,7 @@ namespace Dune {
       if (ij.index()!=i.index())
         DUNE_THROW(ISTLError,"diagonal entry missing");
       try {
-        Imp::BlockTraits<block>::toMatrix(*ij).invert();   // compute inverse of diagonal block
+        Impl::asMatrix(*ij).invert();   // compute inverse of diagonal block
       }
       catch (Dune::FMatrixError & e) {
         DUNE_THROW(MatrixBlockError, "ILU failed to invert matrix block A["
@@ -96,7 +97,6 @@ namespace Dune {
     // iterator types
     typedef typename M::ConstRowIterator rowiterator;
     typedef typename M::ConstColIterator coliterator;
-    typedef typename M::block_type mblock;
     typedef typename Y::block_type dblock;
     typedef typename X::block_type vblock;
 
@@ -113,7 +113,7 @@ namespace Dune {
       dblock rhsValue(d[i.index()]);
       auto&& rhs = Impl::asVector(rhsValue);
       for (coliterator j=(*i).begin(); j.index()<i.index(); ++j)
-        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+        Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
       Impl::asVector(v[i.index()]) = rhs;           // Lii = I
     }
 
@@ -131,9 +131,9 @@ namespace Dune {
       auto&& rhs = Impl::asVector(rhsValue);
       coliterator j;
       for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+        Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
       auto&& vi = Impl::asVector(v[i.index()]);
-      Imp::BlockTraits<mblock>::toMatrix(*j).mv(rhs,vi);           // diagonal stores inverse!
+      Impl::asMatrix(*j).mv(rhs,vi);           // diagonal stores inverse!
     }
   }
 
@@ -400,7 +400,7 @@ namespace Dune {
         const size_type rowINext = lower.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-          Imp::BlockTraits<mblock>::toMatrix(lower.values_[ col ]).mmv( Impl::asVector(v[ lower.cols_[ col ] ] ), rhs );
+          Impl::asMatrix(lower.values_[ col ]).mmv( Impl::asVector(v[ lower.cols_[ col ] ] ), rhs );
 
         Impl::asVector(v[ i ]) = rhs;  // Lii = I
       }
@@ -415,10 +415,10 @@ namespace Dune {
         const size_type rowINext = upper.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-          Imp::BlockTraits<mblock>::toMatrix(upper.values_[ col ]).mmv( Impl::asVector(v[ upper.cols_[ col ] ]), rhs );
+          Impl::asMatrix(upper.values_[ col ]).mmv( Impl::asVector(v[ upper.cols_[ col ] ]), rhs );
 
         // apply inverse and store result
-        Imp::BlockTraits<mblock>::toMatrix(inv[ i ]).mv(rhs, vBlock);
+        Impl::asMatrix(inv[ i ]).mv(rhs, vBlock);
       }
     }
 

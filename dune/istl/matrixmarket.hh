@@ -23,6 +23,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>

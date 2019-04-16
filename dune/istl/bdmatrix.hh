@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <dune/common/rangeutilities.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 
@@ -108,15 +109,8 @@ namespace Dune {
 
     /** \brief Inverts the matrix */
     void invert() {
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (size_type i=0; i<this->N(); i++)
-            (*this)[i][i] = 1.0 / id((*this)[i][i]);
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->N(); i++)
-            id((*this)[i][i]).invert();
-        });
+      for (size_type i=0; i<this->N(); i++)
+        Impl::asMatrix((*this)[i][i]).invert();
     }
 
   private:

@@ -4,6 +4,7 @@
 #define LAPLACIAN_HH
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 template<class B, class Alloc>
 void setupSparsityPattern(Dune::BCRSMatrix<B,Alloc>& A, int N)
@@ -45,18 +46,14 @@ void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A, int N)
 
   B diagonal(static_cast<FieldType>(0)), bone(static_cast<FieldType>(0));
 
-  Dune::Hybrid::ifElse(Dune::IsNumber<B>(),
-    [&](auto id) {
-      diagonal = B(4.0);
-      bone = B(-1.0);
-    },
-    [&](auto id) {
-      for (auto b = id(diagonal).begin(); b != id(diagonal).end(); ++b)
-        b->operator[](b.index())=4;
+  auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
+    auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
+    for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+      (*rowIt)[rowIt.index()] = value;
+  };
 
-      for (auto b=id(bone).begin(); b != id(bone).end(); ++b)
-        b->operator[](b.index())=-1.0;
-    });
+  setDiagonal(diagonal, 4.0);
+  setDiagonal(bone, -1.0);
 
   for (typename Dune::BCRSMatrix<B,Alloc>::RowIterator i = A.begin(); i != A.end(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field

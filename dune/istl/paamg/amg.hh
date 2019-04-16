@@ -15,6 +15,8 @@
 #include <dune/istl/solvertype.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 namespace Dune
 {
@@ -560,13 +562,9 @@ namespace Dune
         }
         if(isDirichlet && hasDiagonal)
         {
-          Hybrid::ifElse(IsNumber<Block>(),
-            [&](auto id) {
-              x[row.index()] = b[row.index()] / id(diagonal);
-            },
-            [&](auto id) {
-              id(diagonal).solve(x[row.index()], b[row.index()]);
-            });
+          auto&& xEntry = Impl::asVector(x[row.index()]);
+          auto&& bEntry = Impl::asVector(b[row.index()]);
+          Impl::asMatrix(diagonal).solve(xEntry, bEntry);
         }
       }
 

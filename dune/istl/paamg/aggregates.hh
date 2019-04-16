@@ -9,13 +9,13 @@
 #include "properties.hh"
 #include "combinedfunctor.hh"
 
-#include <dune/common/hybridutilities.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
 #include <dune/common/unused.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 #include <utility>
 #include <set>
@@ -1830,14 +1830,7 @@ namespace Dune
           for(ColIterator col = row.begin(); col != end; ++col)
             if(col.index()!=*vertex) {
               criterion.examine(col);
-              Hybrid::ifElse(IsNumber<typename Matrix::block_type>(),
-                [&](auto id) {
-                  using std::abs;
-                  absoffdiag = max(absoffdiag, abs(*id(col)));
-                },
-                [&](auto id) {
-                  absoffdiag = max(absoffdiag, id(col)->frobenius_norm());
-                });
+              absoffdiag = max(absoffdiag, Impl::asMatrix(*col).frobenius_norm());
             }
 
           if(absoffdiag==0)

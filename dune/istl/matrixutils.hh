@@ -122,11 +122,9 @@ namespace Dune
   inline auto countNonZeros(const M& matrix,typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     typename M::size_type nonZeros = 0;
-
-    for (auto row = matrix.begin(); row != matrix.end(); ++row)
-      for (auto entry = row->begin(); entry != row->end(); ++entry)
-        nonZeros += countNonZeros(*entry);
-
+    for(auto&& row : matrix)
+      for(auto&& entry : row)
+        nonZeros += countNonZeros(entry);
     return nonZeros;
   }
 

@@ -8,6 +8,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <limits>
 
 namespace Dune
@@ -446,13 +447,7 @@ namespace Dune
         assert(colindex*m+j<cols-1 || (int)marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
         assert((int)marker[colindex*m+j]<mat->Nnz_);
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
-        Hybrid::ifElse(IsNumber<typename M::block_type>(),
-          [&](auto id) {
-            mat->values[marker[colindex*m+j]]=id(*col);
-          },
-          [&](auto id) {
-            mat->values[marker[colindex*m+j]]=id(*col)[i][j];
-          });
+        mat->values[marker[colindex*m+j]]=Impl::asMatrix(*col)[i][j];
         ++marker[colindex*m+j]; // index for next entry in column
       }
     }
