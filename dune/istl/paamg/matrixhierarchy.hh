@@ -840,9 +840,6 @@ namespace Dune
       for(Iterator level=matrices_.coarsest(), finest=matrices_.finest(); level != finest;  --level, --info, ++amap) {
         (*amap)->free();
         delete *amap;
-        delete &level->getmat();
-        if(level.isRedistributed())
-          delete &(level.getRedistributed().getmat());
       }
       delete *amap;
     }
