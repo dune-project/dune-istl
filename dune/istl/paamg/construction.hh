@@ -67,25 +67,14 @@ namespace Dune
     };
 
     template<class M, class C>
-    struct OverlappingSchwarzOperatorArgs
+    struct ParallelOperatorArgs
     {
-      OverlappingSchwarzOperatorArgs(M& matrix, C& comm)
-        : matrix_(&matrix), comm_(&comm)
+      ParallelOperatorArgs(std::shared_ptr<M> matrix, const C& comm)
+        : matrix_(matrix), comm_(comm)
       {}
 
-      M* matrix_;
-      C* comm_;
-    };
-
-    template<class M, class C>
-    struct NonoverlappingOperatorArgs
-    {
-      NonoverlappingOperatorArgs(M& matrix, C& comm)
-        : matrix_(&matrix), comm_(&comm)
-      {}
-
-      M* matrix_;
-      C* comm_;
+      std::shared_ptr<M> matrix_;
+      const C& comm_;
     };
 
 #if HAVE_MPI
@@ -126,12 +115,12 @@ namespace Dune
     class ConstructionTraits<OverlappingSchwarzOperator<M,X,Y,C> >
     {
     public:
-      typedef OverlappingSchwarzOperatorArgs<M,C> Arguments;
+      typedef ParallelOperatorArgs<M,C> Arguments;
 
       static inline std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C>> construct(const Arguments& args)
       {
         return std::make_shared<OverlappingSchwarzOperator<M,X,Y,C>>
-          (*args.matrix_, *args.comm_);
+          (args.matrix_, args.comm_);
       }
     };
 
@@ -139,23 +128,23 @@ namespace Dune
     class ConstructionTraits<NonoverlappingSchwarzOperator<M,X,Y,C> >
     {
     public:
-      typedef NonoverlappingOperatorArgs<M,C> Arguments;
+      typedef ParallelOperatorArgs<M,C> Arguments;
 
       static inline std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C>> construct(const Arguments& args)
       {
         return std::make_shared<NonoverlappingSchwarzOperator<M,X,Y,C>>
-          (*args.matrix_, *args.comm_);
+          (args.matrix_, args.comm_);
       }
     };
 
     template<class M, class X, class Y>
     struct MatrixAdapterArgs
     {
-      MatrixAdapterArgs(M& matrix, const SequentialInformation&)
-        : matrix_(&matrix)
+      MatrixAdapterArgs(std::shared_ptr<M> matrix, const SequentialInformation)
+        : matrix_(matrix)
       {}
 
-      M* matrix_;
+      std::shared_ptr<M> matrix_;
     };
 
     template<class M, class X, class Y>
@@ -166,7 +155,7 @@ namespace Dune
 
       static inline std::shared_ptr<MatrixAdapter<M,X,Y>> construct(Arguments& args)
       {
-        return std::make_shared<MatrixAdapter<M,X,Y>>(*args.matrix_);
+        return std::make_shared<MatrixAdapter<M,X,Y>>(args.matrix_);
       }
     };
 

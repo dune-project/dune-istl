@@ -89,6 +89,10 @@ namespace Dune {
      * data points. (E.~g. OwnerOverlapCommunication )
      */
     NonoverlappingSchwarzOperator (const matrix_type& A, const communication_type& com)
+      : _A_(stackobject_to_shared_ptr(A)), communication(com), buildcomm(true)
+    {}
+
+    NonoverlappingSchwarzOperator (const std::shared_ptr<matrix_type> A, const communication_type& com)
       : _A_(A), communication(com), buildcomm(true)
     {}
 
@@ -115,7 +119,7 @@ namespace Dune {
     //! get matrix via *
     virtual const matrix_type& getmat () const
     {
-      return _A_;
+      return *_A_;
     }
 
     void novlp_op_apply (const X& x, Y& y, field_type alpha) const
@@ -149,7 +153,7 @@ namespace Dune {
 
         // for each local index make multimap rimap:
         // key: local index i, data: pair of process that knows i and pointer to RI entry
-        for (RowIterator i = _A_.begin(); i != _A_.end(); ++i)
+        for (RowIterator i = _A_->begin(); i != _A_->end(); ++i)
           if (mask[i.index()] == 0)
             for (RIIterator remote = ri.begin(); remote != ri.end(); ++remote) {
               RIL& ril = *(remote->second.first);
@@ -165,12 +169,12 @@ namespace Dune {
             }
 
         int iowner = 0;
-        for (RowIterator i = _A_.begin(); i != _A_.end(); ++i) {
+        for (RowIterator i = _A_->begin(); i != _A_->end(); ++i) {
           if (mask[i.index()] == 0) {
             std::map<int,int>::iterator it = owner.find(i.index());
             iowner = it->second;
             std::pair<RIMapit, RIMapit> foundiit = rimap.equal_range(i.index());
-            for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j) {
+            for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j) {
               if (mask[j.index()] == 0) {
                 bool flag = true;
                 for (RIMapit foundi = foundiit.first; foundi != foundiit.second; ++foundi) {
@@ -203,10 +207,10 @@ namespace Dune {
       }
 
       //compute alpha*A*x nonoverlapping case
-      for (RowIterator i = _A_.begin(); i != _A_.end(); ++i) {
+      for (RowIterator i = _A_->begin(); i != _A_->end(); ++i) {
         if (mask[i.index()] == 0) {
           //dof doesn't belong to process but is border (not ghost)
-          for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j) {
+          for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j) {
             if (mask[j.index()] == 1) //j is owner => then sum entries
               (*j).usmv(alpha,x[j.index()],y[i.index()]);
             else if (mask[j.index()] == 0) {
@@ -219,7 +223,7 @@ namespace Dune {
           }
         }
         else if (mask[i.index()] == 1) {
-          for (ColIterator j = _A_[i.index()].begin(); j != _A_[i.index()].end(); ++j)
+          for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j)
             if (mask[j.index()] != 2)
               (*j).usmv(alpha,x[j.index()],y[i.index()]);
         }
@@ -233,7 +237,7 @@ namespace Dune {
     }
 
   private:
-    const matrix_type& _A_;
+    const std::shared_ptr<matrix_type> _A_;
     const communication_type& communication;
     mutable bool buildcomm;
     mutable std::vector<double> mask;
