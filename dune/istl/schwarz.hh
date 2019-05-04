@@ -106,6 +106,10 @@ namespace Dune {
      * data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     OverlappingSchwarzOperator (const matrix_type& A, const communication_type& com)
+      : _A_(stackobject_to_shared_ptr(A)), communication(com)
+    {}
+
+    OverlappingSchwarzOperator (const std::shared_ptr<matrix_type> A, const communication_type& com)
       : _A_(A), communication(com)
     {}
 
@@ -113,7 +117,7 @@ namespace Dune {
     virtual void apply (const X& x, Y& y) const
     {
       y = 0;
-      _A_.umv(x,y);     // result is consistent on interior+border
+      _A_->umv(x,y);     // result is consistent on interior+border
       communication.project(y);     // we want this here to avoid it before the preconditioner
                                     // since there d is const!
     }
@@ -121,7 +125,7 @@ namespace Dune {
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
     {
-      _A_.usmv(alpha,x,y);     // result is consistent on interior+border
+      _A_->usmv(alpha,x,y);     // result is consistent on interior+border
       communication.project(y);     // we want this here to avoid it before the preconditioner
                                     // since there d is const!
     }
@@ -129,7 +133,7 @@ namespace Dune {
     //! get the sequential assembled linear operator.
     virtual const matrix_type& getmat () const
     {
-      return _A_;
+      return *_A_;
     }
 
     //! Category of the linear operator (see SolverCategory::Category)
@@ -139,7 +143,7 @@ namespace Dune {
     }
 
   private:
-    const matrix_type& _A_;
+    const std::shared_ptr<const matrix_type>_A_;
     const communication_type& communication;
   };
 
