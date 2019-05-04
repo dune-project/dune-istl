@@ -56,52 +56,52 @@ namespace Dune {
     template<typename... A>
     static void defaults(A... args)
     {
-      umfpack_di_defaults(args...);
+      umfpack_dl_defaults(args...);
     }
     template<typename... A>
     static void free_numeric(A... args)
     {
-      umfpack_di_free_numeric(args...);
+      umfpack_dl_free_numeric(args...);
     }
     template<typename... A>
     static void free_symbolic(A... args)
     {
-      umfpack_di_free_symbolic(args...);
+      umfpack_dl_free_symbolic(args...);
     }
     template<typename... A>
     static int load_numeric(A... args)
     {
-      return umfpack_di_load_numeric(args...);
+      return umfpack_dl_load_numeric(args...);
     }
     template<typename... A>
     static void numeric(A... args)
     {
-      umfpack_di_numeric(args...);
+      umfpack_dl_numeric(args...);
     }
     template<typename... A>
     static void report_info(A... args)
     {
-      umfpack_di_report_info(args...);
+      umfpack_dl_report_info(args...);
     }
     template<typename... A>
     static void report_status(A... args)
     {
-      umfpack_di_report_status(args...);
+      umfpack_dl_report_status(args...);
     }
     template<typename... A>
     static int save_numeric(A... args)
     {
-      return umfpack_di_save_numeric(args...);
+      return umfpack_dl_save_numeric(args...);
     }
     template<typename... A>
     static void solve(A... args)
     {
-      umfpack_di_solve(args...);
+      umfpack_dl_solve(args...);
     }
     template<typename... A>
     static void symbolic(A... args)
     {
-      umfpack_di_symbolic(args...);
+      umfpack_dl_symbolic(args...);
     }
   };
 
@@ -218,9 +218,9 @@ namespace Dune {
     using Matrix = M;
     using matrix_type = M;
     /** @brief The corresponding UMFPack matrix type.*/
-    typedef Dune::ColCompMatrix<Matrix> UMFPackMatrix;
+    typedef Dune::ColCompMatrix<Matrix, long int> UMFPackMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ColCompMatrixInitializer<M> MatrixInitializer;
+    typedef ColCompMatrixInitializer<M, long int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     using domain_type = typename Impl::UMFPackVectorChooser<M>::domain_type;
     /** @brief The type of the range of the solver. */
