@@ -10,6 +10,7 @@
 #include <string>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include "solvercategory.hh"
 
