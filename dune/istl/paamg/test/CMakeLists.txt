@@ -76,16 +76,24 @@ dune_add_test(NAME twolevelmethodschwarztest
 
 # These tests need MPI, even though they are only run sequentially
 dune_add_test(SOURCES galerkintest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
 dune_add_test(SOURCES hierarchytest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
 dune_add_test(NAME pamgtest
               SOURCES parallelamgtest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
 dune_add_test(NAME pamg_comm_repart_test
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               SOURCES parallelamgtest.cc
               COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH
               CMAKE_GUARD MPI_FOUND)
