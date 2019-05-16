@@ -92,7 +92,7 @@ namespace Dune {
       : _A_(stackobject_to_shared_ptr(A)), communication(com), buildcomm(true)
     {}
 
-    NonoverlappingSchwarzOperator (const std::shared_ptr<matrix_type> A, const communication_type& com)
+    NonoverlappingSchwarzOperator (std::shared_ptr<const matrix_type> A, const communication_type& com)
       : _A_(A), communication(com), buildcomm(true)
     {}
 
@@ -237,7 +237,7 @@ namespace Dune {
     }
 
   private:
-    const std::shared_ptr<matrix_type> _A_;
+    std::shared_ptr<const matrix_type> _A_;
     const communication_type& communication;
     mutable bool buildcomm;
     mutable std::vector<double> mask;
