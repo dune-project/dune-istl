@@ -76,16 +76,18 @@ namespace Dune {
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       Iteration iteration(*this, res);
+      _prec->pre(x,b);
 
       // overwrite b with defect
       _op->applyscaleadd(-1,x,b);
 
       // compute norm, \todo parallelization
       real_type def = _sp->norm(b);
-      if(iteration.step(0, def))
+      if(iteration.step(0, def)){
+        _prec->post(x);
         return;
+      }
       // prepare preconditioner
-      _prec->pre(x,b);
 
       // allocate correction vector
       X v(x);
@@ -147,15 +149,18 @@ namespace Dune {
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       Iteration iteration(*this, res);
-      _op->applyscaleadd(-1,x,b);  // overwrite b with defect
+      _prec->pre(x,b);             // prepare preconditioner
+
+      _op->applyscaleadd(-1,x,b);  // overwrite b with defec
+
+      real_type def = _sp->norm(b); // compute norm
+      if(iteration.step(0, def)){
+        _prec->post(x);
+        return;
+      }
 
       X p(x);                     // create local vectors
       X q(b);
-
-      real_type def = _sp->norm(b); // compute norm
-      if(iteration.step(0, def))
-        return;
-      _prec->pre(x,b);             // prepare preconditioner
 
       int i=1;   // loop variables
       field_type lambda;
@@ -265,15 +270,18 @@ namespace Dune {
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       Iteration iteration(*this,res);
+      _prec->pre(x,b);             // prepare preconditioner
+
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
+
+      real_type def = _sp->norm(b); // compute norm
+      if(iteration.step(0, def)){
+        _prec->post(x);
+        return;
+      }
 
       X p(x);              // the search direction
       X q(x);              // a temporary vector
-
-      real_type def = _sp->norm(b); // compute norm
-      if(iteration.step(0, def))
-        return;
-      _prec->pre(x,b);             // prepare preconditioner
 
       // Remember lambda and beta values for condition estimate
       std::vector<real_type> lambdas(0);
@@ -451,14 +459,17 @@ namespace Dune {
 
       // r = r - Ax; rt = r
       Iteration iteration(*this,res);
+      _prec->pre(x,r);             // prepare preconditioner
+
       _op->applyscaleadd(-1,x,r);  // overwrite b with defect
 
       rt=r;
 
       norm = _sp->norm(r);
-      if(iteration.step(0, norm))
+      if(iteration.step(0, norm)){
+        _prec->post(x);
         return;
-      _prec->pre(x,r);             // prepare preconditioner
+      }
       p=0;
       v=0;
 
@@ -612,15 +623,18 @@ namespace Dune {
       using std::sqrt;
       using std::abs;
       Iteration iteration(*this, res);
+      // prepare preconditioner
+      _prec->pre(x,b);
+
       // overwrite rhs with defect
       _op->applyscaleadd(-1,x,b);
 
       // compute residual norm
       real_type def = _sp->norm(b);
-      if(iteration.step(0, def))
+      if(iteration.step(0, def)){
+        _prec->post(x);
         return;
-      // prepare preconditioner
-      _prec->pre(x,b);
+      }
 
       // recurrence coefficients as computed in Lanczos algorithm
       field_type alpha, beta;
@@ -1125,14 +1139,15 @@ namespace Dune {
       // setup preconditioner if it does something in pre
 
       // calculate residual and overwrite a copy of the rhs with it
+      _prec->pre(x, b);
       v[0] = b;
       _op->applyscaleadd(-1.0, x, v[0]); // b -= Ax
 
       norm = _sp->norm(v[0]); // the residual norm
       if(iteration.step(0, norm)){
+        _prec->post(x);
         return;
       }
-      _prec->pre(x, b);
 
       // start iterations
       res.converged = false;;
@@ -1297,6 +1312,7 @@ private:
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       Iteration iteration(*this, res);
+      _prec->pre(x,b);                 // prepare preconditioner
       _op->applyscaleadd(-1,x,b);      // overwrite b with defect
 
       std::vector<std::shared_ptr<X> > p(_restart);
@@ -1308,9 +1324,9 @@ private:
 
       real_type def = _sp->norm(b);    // compute norm
       if(iteration.step(0, def)){
+        _prec->post(x);
         return;
       }
-      _prec->pre(x,b);                 // prepare preconditioner
       // some local variables
       field_type rho, lambda;
 
@@ -1458,6 +1474,7 @@ private:
       using rAlloc = ReboundAllocatorType<X,real_type>;
       res.clear();
       Iteration iteration(*this,res);
+      _prec->pre(x,b);             // prepare preconditioner
       _op->applyscaleadd(-1,x,b); // overwrite b with defect
 
       //arrays for interim values:
@@ -1468,9 +1485,9 @@ private:
 
       real_type def = _sp->norm(b); // compute norm
       if(iteration.step(0, def)){
+        _prec->post(x);
         return;
       }
-      _prec->pre(x,b);             // prepare preconditioner
 
       // some local variables
       real_type alpha;
