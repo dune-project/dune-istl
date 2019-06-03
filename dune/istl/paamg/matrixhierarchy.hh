@@ -473,7 +473,7 @@ namespace Dune
           if(redistComm->communicator().rank()==0 && criterion.debugLevel()>1)
             std::cout<<"Level "<<level<<" (redistributed) has "<<dunknowns<<" unknowns, "<<dunknowns/redistComm->communicator().size()
                      <<" unknowns per proc (procs="<<redistComm->communicator().size()<<")"<<std::endl;
-          MatrixArgs args(*redistMat, *redistComm);
+          MatrixArgs args(redistMat, *redistComm);
           mlevel.addRedistributed(ConstructionTraits<MatrixOperator>::construct(args));
           assert(mlevel.isRedistributed());
           infoLevel.addRedistributed(redistComm);
@@ -650,13 +650,12 @@ namespace Dune
 
         VisitedMap2 visitedMap2(visited.begin(), Dune::IdentityMap());
 
-        typename MatrixOperator::matrix_type* coarseMatrix;
-
-        coarseMatrix = productBuilder.build(*(std::get<0>(graphs)), visitedMap2,
+        std::shared_ptr<typename MatrixOperator::matrix_type>
+          coarseMatrix(productBuilder.build(*(std::get<0>(graphs)), visitedMap2,
                                             *info,
                                             *aggregatesMap,
                                             aggregates,
-                                            OverlapFlags());
+                                            OverlapFlags()));
         dverb<<"Building of sparsity pattern took "<<watch.elapsed()<<std::endl;
         watch.reset();
         info->freeGlobalLookup();
@@ -671,7 +670,7 @@ namespace Dune
 
         BIGINT nonzeros = countNonZeros(*coarseMatrix);
         allnonzeros = allnonzeros + infoLevel->communicator().sum(nonzeros);
-        MatrixArgs args(*coarseMatrix, *infoLevel);
+        MatrixArgs args(coarseMatrix, *infoLevel);
 
         matrices_.addCoarser(args);
         redistributes_.push_back(RedistributeInfoType());
@@ -712,7 +711,7 @@ namespace Dune
 
         repartitionAndDistributeMatrix(mlevel->getmat(), redistMat, *infoLevel,
                                        redistComm, redistributes_.back(), nodomains,criterion);
-        MatrixArgs args(*redistMat, *redistComm);
+        MatrixArgs args(redistMat, *redistComm);
         BIGINT unknownsRedist = redistMat->N();
         unknownsRedist = infoLevel->communicator().sum(unknownsRedist);
 
@@ -841,9 +840,6 @@ namespace Dune
       for(Iterator level=matrices_.coarsest(), finest=matrices_.finest(); level != finest;  --level, --info, ++amap) {
         (*amap)->free();
         delete *amap;
-        delete &level->getmat();
-        if(level.isRedistributed())
-          delete &(level.getRedistributed().getmat());
       }
       delete *amap;
     }
