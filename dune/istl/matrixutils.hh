@@ -11,6 +11,7 @@
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "istlexception.hh"
 
@@ -59,8 +60,10 @@ namespace Dune
         if(diagonal==row->end())
           DUNE_THROW(ISTLError, "Missing diagonal value in row "<<row.index()
                                                                 <<" at block recursion level "<<l-blocklevel);
-        else
-          CheckIfDiagonalPresent<typename Matrix::block_type,blocklevel-1,l>::check(*diagonal);
+        else{
+          auto m = Impl::asMatrix(*diagonal);
+          CheckIfDiagonalPresent<decltype(m),blocklevel-1,l>::check(m);
+        }
       }
 #endif
     }
