@@ -476,6 +476,10 @@ int main()
     BDMatrix<double> bdMatrix2 = {1.0, 2.0, 3.0};
     testMatrix(bdMatrix2, x, y);
 
+    // Test equation-solving
+    BDMatrix<double> bdMatrix3 = {1.0, 2.0, 3.0};
+    testSolve<BDMatrix<double>, BlockVector<double> >(bdMatrix3);
+
     // test whether resizing works
     bdMatrix2.setSize(5);
     bdMatrix2 = 4.0;
@@ -498,6 +502,9 @@ int main()
 
   // Test construction from initializer list
   BDMatrix<FieldMatrix<double,2,2> > bdMatrix2 = { {{1,0},{0,1}}, {{0,1},{-1,0}}};
+
+  // Test equation-solving
+  testSolve<BDMatrix<FieldMatrix<double,2,2> >, BlockVector<FieldVector<double,2> > >(bdMatrix2);
 
   // Test whether inversion works
   bdMatrix2.invert();
