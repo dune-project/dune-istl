@@ -107,6 +107,21 @@ namespace Dune {
       return *this;
     }
 
+    /** \brief Solve the system Ax=b in O(n) time
+     *
+     * \exception ISTLError if the matrix is singular
+     *
+     */
+    template <class V>
+    void solve (V& x, const V& rhs) const {
+      for (size_type i=0; i<this->N(); i++)
+      {
+        auto&& xv = Impl::asVector(x[i]);
+        auto&& rhsv = Impl::asVector(rhs[i]);
+        Impl::asMatrix((*this)[i][i]).solve(xv,rhsv);
+      }
+    }
+
     /** \brief Inverts the matrix */
     void invert() {
       for (size_type i=0; i<this->N(); i++)
