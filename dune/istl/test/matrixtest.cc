@@ -476,6 +476,8 @@ int main()
     BDMatrix<double> bdMatrix2 = {1.0, 2.0, 3.0};
     testMatrix(bdMatrix2, x, y);
 
+    bdMatrix2 = {1.0, 2.0, 3.0};
+
     // test whether resizing works
     bdMatrix2.setSize(5);
     bdMatrix2 = 4.0;

@@ -2085,7 +2085,7 @@ namespace Dune {
       for (size_type i=0; i<n; i++) r[i] = Mat.r[i];
 
       // finish off
-      build_mode = row_wise; // dummy
+      build_mode = Mat.build_mode;
       ready = built;
     }
 
