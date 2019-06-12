@@ -1,5 +1,8 @@
 # Master (will become release 2.7)
 
+- `BDMatrix` objects now have the method `solve`, which implements that
+  canonical way to solve block-diagonal linear systems.
+
 - Deprecated the preconditioner implementations `SeqILU0` and `SeqILUn`.
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
