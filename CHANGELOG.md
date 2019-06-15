@@ -31,6 +31,10 @@
 
 - Added a right-preconditioned flexible restarted GMRes solver
 
+- The UMFPack binding use the long int functions to compute larger systems.
+  With the \*_dl_\* versions instead of the \*_di_\* versions UMFPACK will not
+  have a memory limit of just 2 GiB.
+
 - Deprecated support for SuperLU 4.x. It will be removed after Dune 2.7.
 
 # Release 2.6
