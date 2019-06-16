@@ -264,7 +264,7 @@ namespace Dune
     };
 
     /**
-     * @brief Policy for the construction of the SeqJac smoother
+     * @brief Policy for the construction of the Richardson smoother
      */
     template<class X, class Y>
     struct ConstructionTraits<Richardson<X,Y> >
