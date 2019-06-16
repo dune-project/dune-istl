@@ -289,7 +289,7 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    NonoverlappingBlockPreconditioner (Preconditioner<X,Y>& p, const communication_type& c)
+    NonoverlappingBlockPreconditioner (P& p, const communication_type& c)
       : _preconditioner(stackobject_to_shared_ptr(p)), _communication(c)
     {   }
 
@@ -300,7 +300,7 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    NonoverlappingBlockPreconditioner (const std::shared_ptr<Preconditioner<X,Y>>& p, const communication_type& c)
+    NonoverlappingBlockPreconditioner (const std::shared_ptr<P>& p, const communication_type& c)
       : _preconditioner(p), _communication(c)
     {   }
 
@@ -328,6 +328,13 @@ namespace Dune {
       _communication.addOwnerCopyToOwnerCopy(v,v);
     }
 
+    template<bool forward>
+    void apply (X& v, const Y& d)
+    {
+      _preconditioner->template apply<forward>(v,d);
+      _communication.copyOwnerToAll(v,v);
+    }
+
     /*!
        \brief Clean up.
 
@@ -346,7 +353,7 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    std::shared_ptr<Preconditioner<X,Y>> _preconditioner;
+    std::shared_ptr<P> _preconditioner;
 
     //! \brief the communication object
     const communication_type& _communication;
