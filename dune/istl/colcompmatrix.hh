@@ -198,8 +198,9 @@ namespace Dune
     {
       // TODO: The following code assumes that the blocks are dense
       // and that they all have the same dimensions.
-      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim();
-      const auto m = MatrixDimension<typename Matrix::block_type>::coldim();
+      typename Matrix::block_type dummy;
+      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
+      const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
       return Nnz_/n/m;
     }
 
