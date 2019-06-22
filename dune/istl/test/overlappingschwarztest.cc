@@ -17,7 +17,8 @@
 
 #include <iterator>
 
-int main(int argc, char** argv)
+template<class MatrixBlock, class VectorBlock>
+int test(int argc, char** argv)
 {
 #if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   const int BS=1;
@@ -28,9 +29,7 @@ int main(int argc, char** argv)
   std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
 
 
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
   typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
 
@@ -56,12 +55,12 @@ int main(int argc, char** argv)
 
   // set up the overlapping domains
   typedef Dune::SeqOverlappingSchwarz<BCRSMat,BVector> Schwarz;
-  typedef Schwarz::subdomain_vector subdomain_vector;
+  typedef typename Schwarz::subdomain_vector subdomain_vector;
 
   subdomain_vector domains(domainsPerDim*domainsPerDim);
 
   // set up the rowToDomain vector
-  typedef Schwarz::rowtodomain_vector rowtodomain_vector;
+  typedef typename Schwarz::rowtodomain_vector rowtodomain_vector;
   rowtodomain_vector rowToDomain(N*N);
 
   for(int j=0; j < N; ++j)
@@ -111,12 +110,12 @@ int main(int argc, char** argv)
       }
     }
 
-  typedef subdomain_vector::const_iterator iterator;
+  typedef typename subdomain_vector::const_iterator iterator;
 
   if(N<10) {
     int i=0;
     for(iterator iter=domains.begin(); iter != domains.end(); ++iter) {
-      typedef std::iterator_traits<iterator>::value_type
+      typedef typename std::iterator_traits<iterator>::value_type
       ::const_iterator entry_iterator;
       std::cout<<"domain "<<i++<<":";
       for(entry_iterator entry = iter->begin(); entry != iter->end(); ++entry) {
@@ -203,12 +202,12 @@ int main(int argc, char** argv)
   x=100;
   //  setBoundary(x,b,N);
   if(N<10) {
-    typedef rowtodomain_vector::const_iterator rt_iter;
+    typedef typename rowtodomain_vector::const_iterator rt_iter;
     int row=0;
     std::cout<<" row to domain"<<std::endl;
     for(rt_iter i= rowToDomain.begin(); i!= rowToDomain.end(); ++i, ++row) {
       std::cout<<"row="<<row<<": ";
-      typedef rowtodomain_vector::value_type::const_iterator diter;
+      typedef typename rowtodomain_vector::value_type::const_iterator diter;
       for(diter d=i->begin(); d!=i->end(); ++d)
         std::cout<<*d<<" ";
       std::cout<<std::endl;
@@ -242,4 +241,11 @@ int main(int argc, char** argv)
   std::cerr << "You need SuperLU or SuiteSparse's UMFPack to run this test." << std::endl;
   return 77;
 #endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
+}
+
+int main(int argc, char** argv){
+  int re = 0;
+  re |= test<Dune::FieldMatrix<double, 1, 1>, Dune::FieldVector<double, 1>>(argc, argv);
+  re |= test<double, double>(argc, argv);
+  return re;
 }
