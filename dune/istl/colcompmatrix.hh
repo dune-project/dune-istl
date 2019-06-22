@@ -198,8 +198,9 @@ namespace Dune
     {
       // TODO: The following code assumes that the blocks are dense
       // and that they all have the same dimensions.
-      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim();
-      const auto m = MatrixDimension<typename Matrix::block_type>::coldim();
+      typename Matrix::block_type dummy;
+      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
+      const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
       return Nnz_/n/m;
     }
 
@@ -550,8 +551,9 @@ namespace Dune
   ::ColCompMatrix(const Matrix& mat)
   {
     // WARNING: This assumes that all blocks are dense and identical
-    const size_type n = MatrixDimension<typename Mat::block_type>::rowdim();
-    const size_type m = MatrixDimension<typename Mat::block_type>::coldim();
+    typename Matrix::block_type dummy;
+    const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
+    const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
     N_ = n*mat.N();
     M_ = m*mat.N();
     Nnz_ = n*m*mat.nonzeroes();
