@@ -279,14 +279,14 @@ namespace Dune {
     SuiteSparseQR_factorization<T>* spqrfactorization_;
   };
 
-  template<typename T, typename A, int n, int m>
-  struct IsDirectSolver<SPQR<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename T, typename A>
+  struct IsDirectSolver<SPQR<BCRSMatrix<T,A> > >
   {
     enum {value = true};
   };
 
-  template<typename T, typename A, int n, int m>
-  struct StoresColumnCompressed<SPQR<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename T, typename A>
+  struct StoresColumnCompressed<SPQR<BCRSMatrix<T,A> > >
   {
     enum {value = true};
   };
