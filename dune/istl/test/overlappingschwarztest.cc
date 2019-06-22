@@ -145,6 +145,8 @@ int test(int argc, char** argv)
       Dune::UMFPack<BCRSMat> > prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> solver0(fop, prec0, 1e-2,100,2);
   solver0.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   b=0;
   x=100;
@@ -153,6 +155,9 @@ int test(int argc, char** argv)
     prec1(mat, domains, 1, false);
   Dune::LoopSolver<BVector> solver1(fop, prec1, 1e-2,100,2);
   solver1.apply(x,b, res);
+  if(!res.converged)
+    return 666;
+
 #endif // HAVE_SUITESPARSE_UMFPACK
 #if HAVE_SUPERLU
   std::cout << "Do testing with SuperLU" << std::endl;
@@ -162,6 +167,8 @@ int test(int argc, char** argv)
       Dune::SuperLU<BCRSMat> > slu_prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> slu_solver(fop, slu_prec0, 1e-2,100,2);
   slu_solver.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   x=100;
   b=0;
@@ -169,6 +176,9 @@ int test(int argc, char** argv)
                               Dune::SuperLU<BCRSMat> > slu_prec1(mat, domains, 1, false);
   Dune::LoopSolver<BVector> slu_solver1(fop, slu_prec1, 1e-2,100,2);
   slu_solver1.apply(x,b, res);
+  if(!res.converged)
+    return 666;
+
 #endif
   x=100;
   b=0;
@@ -178,6 +188,8 @@ int test(int argc, char** argv)
                               Dune::DynamicMatrixSubdomainSolver<BCRSMat,BVector,BVector> > dyn_prec0(mat, domains, 1);
   Dune::LoopSolver<BVector> dyn_solver(fop, dyn_prec0, 1e-2,100,2);
   dyn_solver.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   std::cout<<"Additive Schwarz not on the fly (domains vector)"<<std::endl;
 
@@ -187,6 +199,9 @@ int test(int argc, char** argv)
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::AdditiveSchwarzMode> prec0o(mat, domains, 1, false);
   Dune::LoopSolver<BVector> solver0o(fop, prec0o, 1e-2,100,2);
   solver0o.apply(x,b, res);
+  if(!res.converged)
+    return 666;
+
   std::cout << "Multiplicative Schwarz (domains vector)"<<std::endl;
 
   b=0;
@@ -195,6 +210,8 @@ int test(int argc, char** argv)
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> prec1m(mat, domains, 1);
   Dune::LoopSolver<BVector> solver1m(fop, prec1m, 1e-2,100,2);
   solver1m.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   std::cout<<"Additive Schwarz (rowToDomain vector)"<<std::endl;
 
@@ -217,6 +234,8 @@ int test(int argc, char** argv)
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector> prec2(mat, rowToDomain, 1);
   Dune::LoopSolver<BVector> solver2(fop, prec2, 1e-2,100,2);
   solver2.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   std::cout << "Multiplicative Schwarz (rowToDomain vector)"<<std::endl;
 
@@ -226,6 +245,8 @@ int test(int argc, char** argv)
   Dune::SeqOverlappingSchwarz<BCRSMat,BVector,Dune::MultiplicativeSchwarzMode> prec3(mat, rowToDomain, 1);
   Dune::LoopSolver<BVector> solver3(fop, prec3, 1e-2,100,2);
   solver3.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   std::cout << "SOR"<<std::endl;
 
@@ -235,6 +256,8 @@ int test(int argc, char** argv)
   Dune::SeqSOR<BCRSMat,BVector,BVector> sor(mat, 1,1);
   Dune::LoopSolver<BVector> solver4(fop, sor, 1e-2,100,2);
   solver4.apply(x,b, res);
+  if(!res.converged)
+    return 666;
 
   return 0;
 #else // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
