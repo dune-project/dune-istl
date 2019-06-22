@@ -565,8 +565,8 @@ namespace Dune {
     enum { value=true};
   };
 
-  template<typename T, typename A, int n, int m>
-  struct StoresColumnCompressed<UMFPack<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename T, typename A>
+  struct StoresColumnCompressed<UMFPack<BCRSMatrix<T,A> > >
   {
     enum { value = true };
   };
