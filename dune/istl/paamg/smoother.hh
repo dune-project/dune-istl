@@ -202,6 +202,22 @@ namespace Dune
       }
     };
 
+
+    /**
+     * @brief Policy for the construction of the SeqGS smoother
+     */
+    template<class M, class X, class Y, int l>
+    struct ConstructionTraits<SeqGS<M,X,Y,l> >
+    {
+      typedef DefaultConstructionArgs<SeqGS<M,X,Y,l> > Arguments;
+
+      static inline std::shared_ptr<SeqGS<M,X,Y,l>> construct(Arguments& args)
+      {
+        return std::make_shared<SeqGS<M,X,Y,l>>
+          (args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor);
+      }
+    };
+
     /**
      * @brief Policy for the construction of the SeqJac smoother
      */
