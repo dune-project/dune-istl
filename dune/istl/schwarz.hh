@@ -269,9 +269,9 @@ namespace Dune {
    * for approximately solving the local matrix block consisting of unknowns
    * owned by the process. Has to implement the Preconditioner interface.
    */
-  template<class X, class Y, class C, class T=Preconditioner<X,Y> >
+  template<class X, class Y, class C, class P=Preconditioner<X,Y> >
   class BlockPreconditioner : public Preconditioner<X,Y> {
-    friend struct Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,T> >;
+    friend struct Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,P> >;
   public:
     //! \brief The domain type of the preconditioner.
     //!
@@ -298,7 +298,7 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    BlockPreconditioner (Preconditioner<X,Y>& p, const communication_type& c)
+    BlockPreconditioner (P& p, const communication_type& c)
       : _preconditioner(stackobject_to_shared_ptr(p)), _communication(c)
     {   }
 
@@ -309,7 +309,7 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    BlockPreconditioner (const std::shared_ptr<Preconditioner<X,Y>>& p, const communication_type& c)
+    BlockPreconditioner (const std::shared_ptr<P>& p, const communication_type& c)
       : _preconditioner(p), _communication(c)
     {   }
 
@@ -360,7 +360,7 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    std::shared_ptr<Preconditioner<X,Y>> _preconditioner;
+    std::shared_ptr<P> _preconditioner;
 
     //! \brief the communication object
     const communication_type& _communication;
