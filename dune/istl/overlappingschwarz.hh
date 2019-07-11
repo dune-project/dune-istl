@@ -110,7 +110,7 @@ namespace Dune
   };
 
   /**
-   * @brief Tag that the tells the schwarz method to be additive.
+   * @brief Tag that the tells the Schwarz method to be additive.
    */
   struct AdditiveSchwarzMode
   {};
@@ -579,9 +579,9 @@ namespace Dune
   };
 
   /**
-   * @brief Helper template meta program for application of overlapping schwarz.
+   * @brief Helper template meta program for application of overlapping Schwarz.
    *
-   * The is needed because when using the multiplicative schwarz version one
+   * The is needed because when using the multiplicative Schwarz version one
    * might still want to make multigrid symmetric, i.e. forward sweep when pre-
    * and backward sweep when post-smoothing.
    *
@@ -646,9 +646,9 @@ namespace Dune
   };
 
   /**
-   * @brief Helper template meta program for application of overlapping schwarz.
+   * @brief Helper template meta program for application of overlapping Schwarz.
    *
-   * The is needed because when using the multiplicative schwarz version one
+   * The is needed because when using the multiplicative Schwarz version one
    * might still want to make multigrid symmetric, i.e. forward sweep when pre-
    * and backward sweep when post-smoothing.
    * @tparam T The smoother to apply.

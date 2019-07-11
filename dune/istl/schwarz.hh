@@ -53,7 +53,7 @@ namespace Dune {
    */
 
   /**
-   * \brief An overlapping schwarz operator.
+   * \brief An overlapping Schwarz operator.
    *
    * This operator represents a parallel matrix product using
    * sequential data structures together with a parallel index set

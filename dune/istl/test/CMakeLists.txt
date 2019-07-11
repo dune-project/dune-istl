@@ -54,6 +54,8 @@ dune_add_test(SOURCES inverseoperator2prectest.cc)
 
 dune_add_test(SOURCES preconditionerstest.cc)
 
+dune_add_test(SOURCES scalarproductstest.cc)
+
 dune_add_test(SOURCES scaledidmatrixtest.cc)
 
 dune_add_test(SOURCES solvertest.cc)
