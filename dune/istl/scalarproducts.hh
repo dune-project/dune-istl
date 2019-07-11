@@ -80,7 +80,7 @@ namespace Dune {
   };
 
   /**
-   * \brief Scalar product for overlapping schwarz methods.
+   * \brief Scalar product for overlapping Schwarz methods.
    *
    * Consistent vectors in interior and border are assumed.
    * \tparam  X The type of the sequential vector to use for the left hand side,
@@ -168,7 +168,7 @@ namespace Dune {
   };
 
   /**
-   * \brief Scalar product for overlapping schwarz methods.
+   * \brief Scalar product for overlapping Schwarz methods.
    *
    * Consistent vectors in interior and border are assumed.
    * \tparam  X The type of the sequential vector to use for the left hand side,

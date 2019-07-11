@@ -51,7 +51,7 @@ namespace Dune {
    */
 
   /**
-   * @brief Attribute set for overlapping schwarz.
+   * @brief Attribute set for overlapping Schwarz.
    */
   struct OwnerOverlapCopyAttributeSet
   {
@@ -428,10 +428,10 @@ namespace Dune {
     }
 
     /**
-     * @brief Compute the global euclidian norm of a vector.
+     * @brief Compute the global Euclidean norm of a vector.
      *
      * @param x The vector to compute the norm of.
-     * @return The global euclidian norm of that vector.
+     * @return The global Euclidean norm of that vector.
      */
     template<class T1>
     typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
