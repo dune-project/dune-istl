@@ -121,7 +121,7 @@ namespace Dune {
        It is assumed that the vectors are consistent on the interior+border
        partition.
      */
-    virtual field_type dot (const X& x, const X& y) const
+    virtual field_type dot (const X& x, const X& y) const override
     {
       field_type result(0);
       _communication.dot(x,y,result); // explicitly loop and apply masking
@@ -131,13 +131,13 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual real_type norm (const X& x) const
+    virtual real_type norm (const X& x) const override
     {
       return _communication.norm(x);
     }
 
     //! Category of the scalar product (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    virtual SolverCategory::Category category() const override
     {
       return _category;
     }
