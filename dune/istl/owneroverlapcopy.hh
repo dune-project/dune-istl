@@ -424,7 +424,6 @@ namespace Dune {
       for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i]*(y[i])*mask[i];
       result = cc.sum(result);
-      return;
     }
 
     /**
