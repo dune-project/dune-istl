@@ -1,11 +1,14 @@
-# install the test tools as we want to support testing 3rd-party vectors with an installed dune-istl
+# install the test tools as we want to support testing 3rd-party vectors and matrices with an installed dune-istl
 install(FILES
+        matrixtest.hh
         vectortest.hh
         laplacian.hh
         multirhstest.hh
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
 
 dune_add_test(SOURCES bcrsassigntest.cc)
+
+dune_add_test(SOURCES bcrsmatrixtest.cc)
 
 dune_add_test(SOURCES bcrsnormtest.cc)
 
@@ -52,6 +55,10 @@ dune_add_test(SOURCES iotest.cc)
 
 dune_add_test(SOURCES inverseoperator2prectest.cc)
 
+dune_add_test(SOURCES preconditionerstest.cc)
+
+dune_add_test(SOURCES scalarproductstest.cc)
+
 dune_add_test(SOURCES scaledidmatrixtest.cc)
 
 dune_add_test(SOURCES solvertest.cc)
@@ -84,16 +91,23 @@ dune_add_test(SOURCES ldltest.cc)
 
 dune_add_test(SOURCES spqrtest.cc)
 
-  dune_add_test(SOURCES overlappingschwarztest.cc)
+dune_add_test(SOURCES overlappingschwarztest.cc)
+
+dune_add_test(SOURCES cholmodtest.cc)
+
 
 # MPI tests
 dune_add_test(SOURCES matrixredisttest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
 dune_add_test(SOURCES vectorcommtest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
-  dune_add_test(SOURCES matrixmarkettest.cc)
+dune_add_test(SOURCES matrixmarkettest.cc)
 
 dune_add_test(SOURCES iluildltest.cc)
 

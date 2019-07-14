@@ -20,6 +20,15 @@ int main(int argc, char** argv)
 
   const int N=4;
 
+  // Test sparse matrix with scalar entries
+  Dune::BCRSMatrix<double> slaplace;
+  setupLaplacian(slaplace, N);
+
+  if(N*N*5-4*2-(N-2)*4!=countNonZeros(slaplace)) {
+    ++ret;
+    Dune::derr<<"Counting nonzeros of BCRSMatrix<double> failed!"<<std::endl;
+  }
+
   typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > BMatrix;
 
   BMatrix laplace;

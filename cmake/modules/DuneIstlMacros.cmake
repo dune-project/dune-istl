@@ -29,7 +29,7 @@ find_package(SuperLU)
 include(AddSuperLUFlags)
 find_package(ARPACKPP)
 include(AddARPACKPPFlags)
-find_package(SuiteSparse OPTIONAL_COMPONENTS LDL SPQR UMFPACK)
+find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD LDL SPQR UMFPACK)
 include(AddSuiteSparseFlags)
 
 # enable / disable backwards compatibility w.r.t. category

@@ -1,8 +1,41 @@
 # Master (will become release 2.7)
 
+- `BDMatrix` objects now have the method `solve`, which implements that
+  canonical way to solve block-diagonal linear systems.
+
 - Deprecated the preconditioner implementations `SeqILU0` and `SeqILUn`.
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
+
+- The class `VariableBlockVector::CreateIterator` is a true STL output iterator now.
+  This means that you can use STL algorithms like `std::fill` or `std::copy`
+  to set the block sizes.
+
+- Support for SuiteSparse's CHOLMOD providing a sparse Cholesky
+  factorization.
+
+- `MultiTypeBlockVector<Args...>` now inherits the constructors from its
+  parent type (`std::tuple<Args...>`). This means you can now also construct
+  `MultiTypeBlockVector`s from values or references of BlockVectors.
+
+- `MultiTypeBlockVector::count()` is now `const`
+
+- All matrix and vector classes can now be instantiated with number types
+  directly (A number type is any type for which `Dune::IsNumber<T>::value`
+  is true).  For example, you can now use `BlockVector<double>` instead of
+  the more cumbersome `BlockVector<FieldVector<double,1> >`.  Similarly, you can use
+  `BCRSMatrix<double>` instead of `BCRSMatrix<FieldMatrix<double,1,1>>`.
+  The old forms still work, and `FieldVector` and `FieldMatrix` types with
+  a single entry can still be cast to their `field_type`.  Therefore, the
+  change is completely backward-compatible.
+
+- Added a right-preconditioned flexible restarted GMRes solver
+
+- The UMFPack binding use the long int functions to compute larger systems.
+  With the \*_dl_\* versions instead of the \*_di_\* versions UMFPACK will not
+  have a memory limit of just 2 GiB.
+
+- Deprecated support for SuperLU 4.x. It will be removed after Dune 2.7.
 
 # Release 2.6
 

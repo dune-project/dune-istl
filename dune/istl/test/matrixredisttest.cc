@@ -34,32 +34,29 @@ void MPI_err_handler(MPI_Comm *, int *err_code, ...){
   throw MPIError(s, *err_code);
 }
 
-template<int BS>
+template<class MatrixBlock>
 int testRepart(int N, int coarsenTarget)
 {
 
   std::cout<<"==================================================="<<std::endl;
-  std::cout<<"BS="<<BS<<" N="<<N<<" coarsenTarget="<<coarsenTarget<<std::endl;
+  std::cout<<" N="<<N<<" coarsenTarget="<<coarsenTarget<<std::endl;
 
   int procs, rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &procs);
 
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
   typedef Dune::bigunsignedint<56> GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<GlobalId> Communication;
   int n;
 
-  N/=BS;
-
   Communication comm(MPI_COMM_WORLD);
 
-  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
 
   MatrixGraph graph(mat);
-  Communication* coarseComm;
+  std::shared_ptr<Communication> coarseComm;
 
   comm.remoteIndices().template rebuild<false>();
 
@@ -112,7 +109,6 @@ int testRepart(int N, int coarsenTarget)
 
   //if(coarseComm->communicator().rank()==0)
   //Dune::printmatrix(std::cout, newMat, "redist", "row");
-  delete coarseComm;
   return ret;
 }
 
@@ -139,6 +135,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  testRepart<1>(N,coarsenTarget);
+  testRepart<Dune::FieldMatrix<double, 1, 1>>(N,coarsenTarget);
+  testRepart<Dune::FieldMatrix<double, 2, 2>>(N/2,coarsenTarget);
+  testRepart<double>(N,coarsenTarget);
   MPI_Finalize();
 }

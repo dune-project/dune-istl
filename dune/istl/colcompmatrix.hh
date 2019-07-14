@@ -8,6 +8,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <limits>
 
 namespace Dune
@@ -137,21 +138,13 @@ namespace Dune
   };
 
   /**
-   * @brief Utility class for converting an ISTL Matrix into a column-compressed matrix
-   * @tparam M the matrix type
-   */
-  template<class M>
-  struct ColCompMatrix
-  {};
-
-  /**
    * @brief Inititializer for the ColCompMatrix
    * as needed by OverlappingSchwarz
    * @tparam M the matrix type
+   * @tparam I the internal index type
    */
-  template<class M>
-  struct ColCompMatrixInitializer
-  {};
+  template<class M, class I = int>
+  class ColCompMatrixInitializer;
 
   template<class M, class X, class TM, class TD, class T1>
   class SeqOverlappingSchwarz;
@@ -160,20 +153,26 @@ namespace Dune
   struct SeqOverlappingSchwarzAssemblerHelper;
 
   /**
-   * @brief Converter for BCRSMatrix to column-compressed Matrix.
-   * specialization for BCRSMatrix
+   * @brief Utility class for converting an ISTL Matrix into a column-compressed matrix
+   * @tparam M The matrix type
+   * @tparam I the internal index type
    */
-  template<class B, class TA, int n, int m>
-  class ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
+  template<class Mat, class I = int>
+  class ColCompMatrix
   {
-    friend struct ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
+    friend class ColCompMatrixInitializer<Mat, I>;
+
+    using B = typename Mat::field_type;
 
   public:
     /** @brief The type of the matrix to convert. */
-    typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
+    using Matrix = Mat;
+
     friend struct SeqOverlappingSchwarzAssemblerHelper<ColCompMatrix<Matrix>, true>;
 
     typedef typename Matrix::size_type size_type;
+
+    using Index = I;
 
     /**
      * @brief Constructor that initializes the data.
@@ -197,6 +196,10 @@ namespace Dune
 
     size_type nnz() const
     {
+      // TODO: The following code assumes that the blocks are dense
+      // and that they all have the same dimensions.
+      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim();
+      const auto m = MatrixDimension<typename Matrix::block_type>::coldim();
       return Nnz_/n/m;
     }
 
@@ -214,12 +217,12 @@ namespace Dune
       return values;
     }
 
-    int* getRowIndex() const
+    Index* getRowIndex() const
     {
       return rowindex;
     }
 
-    int* getColStart() const
+    Index* getColStart() const
     {
       return colstart;
     }
@@ -240,34 +243,50 @@ namespace Dune
     virtual void setMatrix(const Matrix& mat);
 
   public:
-    int N_, M_, Nnz_;
+    size_type N_, M_, Nnz_;
     B* values;
-    int* rowindex;
-    int* colstart;
+    Index* rowindex;
+    Index* colstart;
   };
 
-  template<class T, class A, int n, int m>
-  class ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  template<class M, class I>
+  class ColCompMatrixInitializer
   {
-    template<class I, class S, class D>
+    template<class IList, class S, class D>
     friend class OverlappingSchwarzInitializer;
   public:
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    typedef Dune::ColCompMatrix<Matrix> ColCompMatrix;
+    using Matrix = M;
+    using Index = I;
+    typedef Dune::ColCompMatrix<Matrix, Index> ColCompMatrix;
     typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;
 
-    ColCompMatrixInitializer(ColCompMatrix& lum);
+    /** \brief Constructor for scalar-valued matrices
+     *
+     * \tparam Block Dummy parameter to make SFINAE work
+     */
+    template <class Block=typename M::block_type>
+    ColCompMatrixInitializer(ColCompMatrix& lum,
+                             typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae = nullptr);
+
+    /** \brief Constructor for dense matrix-valued matrices
+     *
+     * \tparam Block Dummy parameter to make SFINAE work
+     */
+    template <class Block=typename M::block_type>
+    ColCompMatrixInitializer(ColCompMatrix& lum,
+                             typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae = nullptr);
 
     ColCompMatrixInitializer();
-
-    virtual ~ColCompMatrixInitializer();
 
     template<typename Iter>
     void addRowNnz(const Iter& row) const;
 
-    template<typename Iter, typename Set>
-    void addRowNnz(const Iter& row, const Set& s) const;
+    template<typename Iter, typename FullMatrixIndex>
+    void addRowNnz(const Iter& row, const std::set<FullMatrixIndex>& indices) const;
+
+    template<typename Iter, typename SubMatrixIndex>
+    void addRowNnz(const Iter& row, const std::vector<SubMatrixIndex>& indices) const;
 
     void allocate();
 
@@ -293,42 +312,56 @@ namespace Dune
 
     ColCompMatrix* mat;
     size_type cols;
-    mutable size_type *marker;
+
+    // Number of rows/columns of the matrix entries
+    // (assumed to be scalars or dense matrices)
+    size_type n, m;
+
+    mutable std::vector<size_type> marker;
   };
 
-  template<class T, class A, int n, int m>
-  ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::ColCompMatrixInitializer(ColCompMatrix& mat_)
-    : mat(&mat_), cols(mat_.M()), marker(0)
+  template<class M, class I>
+  template <class Block>
+  ColCompMatrixInitializer<M, I>::ColCompMatrixInitializer(ColCompMatrix& mat_,typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae)
+    : mat(&mat_), cols(mat_.M())
   {
+    n = 1;
+    m = 1;
+
     mat->Nnz_=0;
   }
 
-  template<class T, class A, int n, int m>
-  ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::ColCompMatrixInitializer()
-    : mat(0), cols(0), marker(0)
-  {}
-
-  template<class T, class A, int n, int m>
-  ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::~ColCompMatrixInitializer()
+  template<class M, class I>
+  template <class Block>
+  ColCompMatrixInitializer<M, I>::ColCompMatrixInitializer(ColCompMatrix& mat_,typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae)
+    : mat(&mat_), cols(mat_.M())
   {
-    if(marker)
-      delete[] marker;
+    // WARNING: This assumes that all blocks are dense and identical
+    n = M::block_type::rows;
+    m = M::block_type::cols;
+
+    mat->Nnz_=0;
   }
 
-  template<class T, class A, int n, int m>
+  template<class M, class I>
+  ColCompMatrixInitializer<M, I>::ColCompMatrixInitializer()
+    : mat(0), cols(0), n(0), m(0)
+  {}
+
+  template<class M, class I>
   template<typename Iter>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::addRowNnz(const Iter& row) const
+  void ColCompMatrixInitializer<M, I>::addRowNnz(const Iter& row) const
   {
     mat->Nnz_+=row->getsize();
   }
 
-  template<class T, class A, int n, int m>
-  template<typename Iter, typename Map>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::addRowNnz(const Iter& row,
-                                                                            const Map& indices) const
+  template<class M, class I>
+  template<typename Iter, typename FullMatrixIndex>
+  void ColCompMatrixInitializer<M, I>::addRowNnz(const Iter& row,
+                                                                            const std::set<FullMatrixIndex>& indices) const
   {
     typedef typename  Iter::value_type::const_iterator RIter;
-    typedef typename Map::const_iterator MIter;
+    typedef typename std::set<FullMatrixIndex>::const_iterator MIter;
     MIter siter =indices.begin();
     for(RIter entry=row->begin(); entry!=row->end(); ++entry)
     {
@@ -341,42 +374,51 @@ namespace Dune
     }
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocate()
+  template<class M, class I>
+  template<typename Iter, typename SubMatrixIndex>
+  void ColCompMatrixInitializer<M, I>::addRowNnz(const Iter& row,
+                                                                            const std::vector<SubMatrixIndex>& indices) const
+  {
+    using RIter = typename Iter::value_type::const_iterator;
+    for(RIter entry=row->begin(); entry!=row->end(); ++entry)
+      if (indices[entry.index()]!=std::numeric_limits<SubMatrixIndex>::max())
+          ++mat->Nnz_;
+  }
+
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::allocate()
   {
     allocateMatrixStorage();
     allocateMarker();
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocateMatrixStorage() const
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::allocateMatrixStorage() const
   {
     mat->Nnz_*=n*m;
     // initialize data
-    mat->values=new T[mat->Nnz_];
-    mat->rowindex=new int[mat->Nnz_];
-    mat->colstart=new int[cols+1];
+    mat->values=new typename M::field_type[mat->Nnz_];
+    mat->rowindex=new I[mat->Nnz_];
+    mat->colstart=new I[cols+1];
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::allocateMarker()
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::allocateMarker()
   {
-    marker = new typename Matrix::size_type[cols];
-
-    for(size_type i=0; i < cols; ++i)
-      marker[i]=0;
+    marker.resize(cols);
+    std::fill(marker.begin(), marker.end(), 0);
   }
 
-  template<class T, class A, int n, int m>
+  template<class M, class I>
   template<typename Iter>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::countEntries(const Iter& row, const CIter& col) const
+  void ColCompMatrixInitializer<M, I>::countEntries(const Iter& row, const CIter& col) const
   {
     DUNE_UNUSED_PARAMETER(row);
     countEntries(col.index());
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::countEntries(size_type colindex) const
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::countEntries(size_type colindex) const
   {
     for(size_type i=0; i < m; ++i)
     {
@@ -385,8 +427,8 @@ namespace Dune
     }
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::calcColstart() const
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::calcColstart() const
   {
     mat->colstart[0]=0;
     for(size_type i=0; i < cols; ++i) {
@@ -396,32 +438,31 @@ namespace Dune
     }
   }
 
-  template<class T, class A, int n, int m>
+  template<class M, class I>
   template<typename Iter>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::copyValue(const Iter& row, const CIter& col) const
+  void ColCompMatrixInitializer<M, I>::copyValue(const Iter& row, const CIter& col) const
   {
     copyValue(col, row.index(), col.index());
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::copyValue(const CIter& col, size_type rowindex, size_type colindex) const
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::copyValue(const CIter& col, size_type rowindex, size_type colindex) const
   {
     for(size_type i=0; i<n; i++) {
       for(size_type j=0; j<m; j++) {
-        assert(colindex*m+j<cols-1 || (int)marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
-        assert((int)marker[colindex*m+j]<mat->Nnz_);
+        assert(colindex*m+j<cols-1 || (size_type)marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
+        assert((size_type)marker[colindex*m+j]<mat->Nnz_);
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
-        mat->values[marker[colindex*m+j]]=(*col)[i][j];
+        mat->values[marker[colindex*m+j]]=Impl::asMatrix(*col)[i][j];
         ++marker[colindex*m+j]; // index for next entry in column
       }
     }
   }
 
-  template<class T, class A, int n, int m>
-  void ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::createMatrix() const
+  template<class M, class I>
+  void ColCompMatrixInitializer<M, I>::createMatrix() const
   {
-    delete[] marker;
-    marker=0;
+    marker.clear();
   }
 
   template<class F, class MRS>
@@ -461,12 +502,6 @@ namespace Dune
     typedef typename std::iterator_traits<Iter>::value_type row_type;
     typedef typename row_type::const_iterator CIter;
 
-    // Calculate upper Bound for nonzeros
-    for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
-      initializer.addRowNnz(row, mrs.rowIndexSet());
-
-    initializer.allocate();
-
     typedef typename MRS::Matrix::size_type size_type;
 
     // A vector containing the corresponding indices in
@@ -478,6 +513,12 @@ namespace Dune
     size_type s=0;
     for(SIter index = mrs.rowIndexSet().begin(); index!=mrs.rowIndexSet().end(); ++index)
       subMatrixIndex[*index]=s++;
+
+    // Calculate upper Bound for nonzeros
+    for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
+      initializer.addRowNnz(row, subMatrixIndex);
+
+    initializer.allocate();
 
     for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
       for(CIter col=row->begin(); col != row->end(); ++col) {
@@ -499,20 +540,26 @@ namespace Dune
 
 #ifndef DOXYGEN
 
-  template<class B, class TA, int n, int m>
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::ColCompMatrix()
+  template<class Mat, class I>
+  ColCompMatrix<Mat, I>::ColCompMatrix()
     : N_(0), M_(0), Nnz_(0), values(0), rowindex(0), colstart(0)
   {}
 
-  template<class B, class TA, int n, int m>
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
+  template<class Mat, class I>
+  ColCompMatrix<Mat, I>
   ::ColCompMatrix(const Matrix& mat)
-    : N_(n*mat.N()), M_(m*mat.M()), Nnz_(n*m*mat.nonzeroes())
-  {}
+  {
+    // WARNING: This assumes that all blocks are dense and identical
+    const size_type n = MatrixDimension<typename Mat::block_type>::rowdim();
+    const size_type m = MatrixDimension<typename Mat::block_type>::coldim();
+    N_ = n*mat.N();
+    M_ = m*mat.N();
+    Nnz_ = n*m*mat.nonzeroes();
+  }
 
-  template<class B, class TA, int n, int m>
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >&
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator=(const Matrix& mat)
+  template<class Mat, class I>
+  ColCompMatrix<Mat, I>&
+  ColCompMatrix<Mat, I>::operator=(const Matrix& mat)
   {
     if(N_+M_+Nnz_!=0)
       free();
@@ -520,9 +567,9 @@ namespace Dune
     return *this;
   }
 
-  template<class B, class TA, int n, int m>
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >&
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator=(const ColCompMatrix& mat)
+  template<class Mat, class I>
+  ColCompMatrix<Mat, I>&
+  ColCompMatrix<Mat, I>::operator=(const ColCompMatrix& mat)
   {
     if(N_+M_+Nnz_!=0)
       free();
@@ -530,57 +577,58 @@ namespace Dune
     M_=mat.M_;
     Nnz_= mat.Nnz_;
     if(M_>0) {
-      colstart=new int[M_+1];
-      for(int i=0; i<=M_; ++i)
+      colstart=new size_type[M_+1];
+      for(size_type i=0; i<=M_; ++i)
         colstart[i]=mat.colstart[i];
     }
 
     if(Nnz_>0) {
       values = new B[Nnz_];
-      rowindex = new int[Nnz_];
+      rowindex = new size_type[Nnz_];
 
-      for(int i=0; i<Nnz_; ++i)
+      for(size_type i=0; i<Nnz_; ++i)
         values[i]=mat.values[i];
 
-      for(int i=0; i<Nnz_; ++i)
+      for(size_type i=0; i<Nnz_; ++i)
         rowindex[i]=mat.rowindex[i];
     }
     return *this;
   }
 
-  template<class B, class TA, int n, int m>
-  void ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
+  template<class Mat, class I>
+  void ColCompMatrix<Mat, I>
   ::setMatrix(const Matrix& mat)
   {
-    N_=n*mat.N();
-    M_=m*mat.M();
-    ColCompMatrixInitializer<Matrix> initializer(*this);
+    N_=MatrixDimension<Mat>::rowdim(mat);
+    M_=MatrixDimension<Mat>::coldim(mat);
+    ColCompMatrixInitializer<Mat, I> initializer(*this);
 
     copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
   }
 
-  template<class B, class TA, int n, int m>
-  void ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
+  template<class Mat, class I>
+  void ColCompMatrix<Mat, I>
   ::setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs)
   {
     if(N_+M_+Nnz_!=0)
       free();
-    N_=mrs.size()*n;
-    M_=mrs.size()*m;
-    ColCompMatrixInitializer<Matrix> initializer(*this);
 
-    copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(mat,mrs));
+    N_=mrs.size()*MatrixDimension<Mat>::rowdim(mat) / mat.N();
+    M_=mrs.size()*MatrixDimension<Mat>::coldim(mat) / mat.M();
+    ColCompMatrixInitializer<Mat, I> initializer(*this);
+
+    copyToColCompMatrix(initializer, MatrixRowSubset<Mat,std::set<std::size_t> >(mat,mrs));
   }
 
-  template<class B, class TA, int n, int m>
-  ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::~ColCompMatrix()
+  template<class Mat, class I>
+  ColCompMatrix<Mat, I>::~ColCompMatrix()
   {
     if(N_+M_+Nnz_!=0)
       free();
   }
 
-  template<class B, class TA, int n, int m>
-  void ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::free()
+  template<class Mat, class I>
+  void ColCompMatrix<Mat, I>::free()
   {
     delete[] values;
     delete[] rowindex;

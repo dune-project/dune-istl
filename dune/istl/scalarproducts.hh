@@ -56,7 +56,7 @@ namespace Dune {
        It is assumed that the vectors are consistent on the interior+border
        partition.
      */
-    virtual field_type dot (const X& x, const X& y)
+    virtual field_type dot (const X& x, const X& y) const
     {
       return x.dot(y);
     }
@@ -64,7 +64,7 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual real_type norm (const X& x)
+    virtual real_type norm (const X& x) const
     {
       return x.two_norm();
     }
@@ -80,7 +80,7 @@ namespace Dune {
   };
 
   /**
-   * \brief Scalar product for overlapping schwarz methods.
+   * \brief Scalar product for overlapping Schwarz methods.
    *
    * Consistent vectors in interior and border are assumed.
    * \tparam  X The type of the sequential vector to use for the left hand side,
@@ -121,7 +121,7 @@ namespace Dune {
        It is assumed that the vectors are consistent on the interior+border
        partition.
      */
-    virtual field_type dot (const X& x, const X& y)
+    virtual field_type dot (const X& x, const X& y) const override
     {
       field_type result(0);
       _communication.dot(x,y,result); // explicitly loop and apply masking
@@ -131,13 +131,13 @@ namespace Dune {
     /*! \brief Norm of a right-hand side vector.
        The vector must be consistent on the interior+border partition
      */
-    virtual real_type norm (const X& x)
+    virtual real_type norm (const X& x) const override
     {
       return _communication.norm(x);
     }
 
     //! Category of the scalar product (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    virtual SolverCategory::Category category() const override
     {
       return _category;
     }
@@ -168,7 +168,7 @@ namespace Dune {
   };
 
   /**
-   * \brief Scalar product for overlapping schwarz methods.
+   * \brief Scalar product for overlapping Schwarz methods.
    *
    * Consistent vectors in interior and border are assumed.
    * \tparam  X The type of the sequential vector to use for the left hand side,

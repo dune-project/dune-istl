@@ -4,6 +4,8 @@
 #define DUNE_ISTL_BTDMATRIX_HH
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
 /** \file
@@ -29,7 +31,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -44,7 +46,7 @@ namespace Dune {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {blocklevel = B::blocklevel+1};
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     /** \brief Default constructor */
     BTDMatrix() : BCRSMatrix<B,A>() {}
@@ -120,7 +122,9 @@ namespace Dune {
 
       // special handling for 1x1 matrices.  The generic algorithm doesn't work for them
       if (this->N()==1) {
-        (*this)[0][0].solve(x[0],rhs[0]);
+        auto&& x0 = Impl::asVector(x[0]);
+        auto&& rhs0 = Impl::asVector(rhs[0]);
+        Impl::asMatrix((*this)[0][0]).solve(x0, rhs0);
         return;
       }
 
@@ -132,37 +136,38 @@ namespace Dune {
 
       /* Modify the coefficients. */
       block_type a_00_inv = (*this)[0][0];
-      a_00_inv.invert();
+      Impl::asMatrix(a_00_inv).invert();
 
-      //c[0] /= (*this)[0][0];	/* Division by zero risk. */
-      block_type c_0_tmp = c[0];
-      FMatrixHelp::multMatrix(a_00_inv, c_0_tmp, c[0]);
+      //c[0] /= (*this)[0][0]; /* Division by zero risk. */
+      block_type tmp = a_00_inv;
+      Impl::asMatrix(tmp).rightmultiply(Impl::asMatrix(c[0]));
+      c[0] = tmp;
 
       // d = a^{-1} d        /* Division by zero would imply a singular matrix. */
-      typename V::block_type d_0_tmp = d[0];
-      a_00_inv.mv(d_0_tmp,d[0]);
+      auto d_0_tmp = d[0];
+      auto&& d_0 = Impl::asVector(d[0]);
+      Impl::asMatrix(a_00_inv).mv(Impl::asVector(d_0_tmp),d_0);
 
       for (unsigned int i = 1; i < this->N(); i++) {
 
         // id = ( a_ii - c_{i-1} a_{i, i-1} ) ^{-1}
         block_type tmp;
-        FMatrixHelp::multMatrix((*this)[i][i-1],c[i-1], tmp);
+        tmp = (*this)[i][i-1];
+        Impl::asMatrix(tmp).rightmultiply(Impl::asMatrix(c[i-1]));
+
         block_type id = (*this)[i][i];
         id -= tmp;
-        id.invert();         /* Division by zero risk. */
+        Impl::asMatrix(id).invert(); /* Division by zero risk. */
 
         if (i<c.size()) {
-          // c[i] *= id
-          tmp = c[i];
-          FMatrixHelp::multMatrix(id,tmp, c[i]);                      /* Last value calculated is redundant. */
+          Impl::asMatrix(c[i]).leftmultiply(Impl::asMatrix(id));            /* Last value calculated is redundant. */
         }
 
         // d[i] = (d[i] - d[i-1] * (*this)[i][i-1]) * id;
-        (*this)[i][i-1].mmv(d[i-1], d[i]);
-        typename V::block_type tmpVec = d[i];
-        id.mv(tmpVec, d[i]);
-        //d[i] *= id;
-
+        auto&& d_i = Impl::asVector(d[i]);
+        Impl::asMatrix((*this)[i][i-1]).mmv(Impl::asVector(d[i-1]), d_i);
+        auto tmpVec = d[i];
+        Impl::asMatrix(id).mv(Impl::asVector(tmpVec), d_i);
       }
 
       /* Now back substitute. */
@@ -170,7 +175,8 @@ namespace Dune {
       for (int i = this->N() - 2; i >= 0; i--) {
         //x[i] = d[i] - c[i] * x[i + 1];
         x[i] = d[i];
-        c[i].mmv(x[i+1], x[i]);
+        auto&& x_i = Impl::asVector(x[i]);
+        Impl::asMatrix(c[i]).mmv(Impl::asVector(x[i+1]), x_i);
       }
 
     }

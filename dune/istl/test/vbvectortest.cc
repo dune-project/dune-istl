@@ -6,6 +6,8 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/test/testsuite.hh>
 
+#include <dune/common/test/iteratortest.hh>
+
 #include <dune/istl/test/vectortest.hh>
 
 using namespace Dune;
@@ -24,10 +26,30 @@ int main()
 
   v3 = v4;
 
+  /*
+    v3 is now fully initialized due to the former copy operation with
+    the initialized vector v4.
+    Calling the create iterator is not allowed, now.
+    We have to un-initialize it first:
+  */
+  std::size_t size = 20;
+  v3.resize(size); // this makes v3 unitialized again
+
+  // Set block sizes with CreateIterator:
   for (auto cIt = v3.createbegin(); cIt!=v3.createend(); ++cIt)
     cIt.setblocksize(3);
 
   v3 = 1.0;
+
+  // Test whether something from <algorithm> can be used to set the block sizes
+  // We can't use std::fill() here, as that requires a forward iterator, std::fill_n()
+  // is more lenient and settles for an output iterator
+  v1.resize(size);
+  std::fill_n(v1.createbegin(), size, 10);
+
+  // More formally: test whether the CreateIterator is an output iterator in the stl sense
+  v1.resize(5);
+  testOutputIterator(v1.createbegin(), 5, 10);
 
   /* Copy-ing specific blocks with `auto` from a VariableBlockVector is tricky, because
    * the returned object will be a reference:
@@ -53,6 +75,15 @@ int main()
   testNorms(v3);
   testVectorSpaceOperations(v3);
   testScalarProduct(v3);
+
+  // Perform tests with a scalar vector entry
+  VariableBlockVector<double> v5(10);
+
+  testHomogeneousRandomAccessContainer(v5);
+  Dune::testConstructibility<VariableBlockVector<double> >();
+  testNorms(v5);
+  testVectorSpaceOperations(v5);
+  testScalarProduct(v5);
 
   return suite.exit();
 }
