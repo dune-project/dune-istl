@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <iostream>
+#include <iterator>
 #include <memory>
 
 #include <dune/common/iteratorfacades.hh>
@@ -47,7 +48,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -81,10 +82,7 @@ namespace Dune {
     /** increment block level counter, yes, it is two levels because
             VariableBlockVector is a container of containers
      */
-    enum {
-      //! The number of blocklevels this vector contains.
-      blocklevel = B::blocklevel+2
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+2;
 
     //===== constructors and such
 
@@ -399,67 +397,97 @@ namespace Dune {
 
     //===== the creation interface
 
+    class CreateIterator;
+
+#ifndef DOXYGEN
+
+    // The window_type does not hand out a reference to its size,
+    // so in order to provide a valid iterator, we need a workaround
+    // to make assignment possible. This proxy enables just that by
+    // implicitly converting to the stored size for read access and
+    // tunneling assignment to the accessor method of the window.
+    struct SizeProxy
+    {
+
+      operator size_type() const
+      {
+        return target->getsize();
+      }
+
+      SizeProxy& operator=(size_type size)
+      {
+        target->setsize(size);
+        return *this;
+      }
+
+    private:
+
+      friend class CreateIterator;
+
+      SizeProxy(window_type& t)
+        : target(&t)
+      {}
+
+      window_type* target;
+    };
+
+#endif // DOXYGEN
+
     //! Iterator class for sequential creation of blocks
     class CreateIterator
     {
     public:
+      //! iterator category
+      using iterator_category = std::output_iterator_tag;
+
+      //! value type
+      using value_type = size_type;
+
+      /**
+       * \brief difference type (unused)
+       *
+       * This type is required by the C++ standard, but not used for
+       * output iterators.
+       */
+      using difference_type = void;
+
+      //! pointer type
+      using pointer = size_type*;
+
+      //! reference type
+      using reference = SizeProxy;
+
       //! constructor
-      CreateIterator (VariableBlockVector& _v, int _i) : v(_v)
-      {
-        i = _i;
-        k = 0;
-        n = 0;
+      CreateIterator (VariableBlockVector& _v, int _i, bool _isEnd) :
+        v(_v),
+        i(_i),
+        isEnd(_isEnd) {}
+
+      ~CreateIterator() {
+        // When the iterator gets destructed, we allocate the memory
+        // for the VariableBlockVector if
+        // 1. the current iterator was not created as enditarator
+        // 2. we're at the last block
+        // 3. the vector hasn't been initialized earlier
+        if (not isEnd && i==v.nblocks && not v.initialized)
+          v.allocate();
       }
 
       //! prefix increment
       CreateIterator& operator++()
       {
-        // we are at block i and the blocks size is known
-
-        // set the blocks size to current k
-        v.block[i].setsize(k);
-
-        // accumulate total size
-        n += k;
-
         // go to next block
         ++i;
 
-        // reset block size
-        k = 0;
-
-        // if we are past the last block, finish off
-        if (i==v.nblocks)
-        {
-          // now we can allocate the big array in the base class of v
-          v.n = n;
-          if (n>0)
-          {
-            // allocate and construct objects
-            v.p = v.allocator_.allocate(n);
-            new (v.p)B[n];
-          }
-          else
-          {
-            v.n = 0;
-            v.p = nullptr;
-          }
-
-          // and we set the window pointer
-          if (v.nblocks>0)
-          {
-            v.block[0].setptr(v.p);                       // pointer tofirst block
-            for (size_type j=1; j<v.nblocks; ++j)               // and the rest
-              v.block[j].setptr(v.block[j-1].getptr()+v.block[j-1].getsize());
-          }
-
-          // and the vector is ready
-          v.initialized = true;
-
-          //std::cout << "made vbvector with " << v.n << " components" << std::endl;
-        }
-
         return *this;
+      }
+
+      /** \brief postfix increment operator */
+      CreateIterator operator++ (int)
+      {
+        CreateIterator tmp(*this);
+        this->operator++();
+        return tmp;
       }
 
       //! inequality
@@ -483,14 +511,24 @@ namespace Dune {
       //! set size of current block
       void setblocksize (size_type _k)
       {
-        k = _k;
+        v.block[i].setsize(_k);
+      }
+
+      //! Access size of current block
+#ifdef DOXYGEN
+      size_type&
+#else
+      SizeProxy
+#endif
+      operator*()
+      {
+        return {v.block[i]};
       }
 
     private:
       VariableBlockVector& v;     // my vector
       size_type i;                      // current block to be defined
-      size_type k;                      // size of current block to be defined
-      size_type n;                      // total number of elements to be allocated
+      const bool isEnd; // flag if this object was created as the end iterator.
     };
 
     // CreateIterator wants to set all the arrays ...
@@ -502,13 +540,13 @@ namespace Dune {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (initialized) DUNE_THROW(ISTLError,"no CreateIterator in initialized state");
 #endif
-      return CreateIterator(*this,0);
+      return CreateIterator(*this,0, false);
     }
 
     //! get create iterator pointing to one after the last block
     CreateIterator createend ()
     {
-      return CreateIterator(*this,nblocks);
+      return CreateIterator(*this,nblocks, true);
     }
 
 
@@ -696,6 +734,38 @@ namespace Dune {
 
 
   private:
+
+    void allocate() {
+      if (this->initialized)
+        DUNE_THROW(ISTLError, "Attempt to re-allocate already initialized VariableBlockVector");
+
+      // calculate space needed:
+      this->n=0;
+      for(size_type i = 0; i < nblocks; i++) {
+        this->n += block[i].size();
+      }
+
+      // now we can allocate the big array in the base class of v
+      if (this->n>0)
+      {
+        // allocate and construct objects
+        this->p = allocator_.allocate(this->n);
+        new (this->p)B[this->n];
+      }
+      else
+      {
+        this->p = nullptr;
+      }
+
+      // and we set the window pointers
+      this->block[0].setptr(this->p); // pointer to first block
+      for (size_type j=1; j<nblocks; ++j) // and the rest
+        block[j].setptr(block[j-1].getptr()+block[j-1].getsize());
+
+      // and the vector is ready
+      this->initialized = true;
+    }
+
     size_type nblocks;            // number of blocks in vector
     window_type* block;     // array of blocks pointing to the array in the base class
     bool initialized;       // true if vector has been initialized

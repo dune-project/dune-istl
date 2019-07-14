@@ -179,17 +179,11 @@ namespace Dune
     {
       typedef DefaultConstructionArgs<SeqSSOR<M,X,Y,l> > Arguments;
 
-      static inline SeqSSOR<M,X,Y,l>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqSSOR<M,X,Y,l>> construct(Arguments& args)
       {
-        return new SeqSSOR<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
-                                    args.getArgs().relaxationFactor);
+        return std::make_shared<SeqSSOR<M,X,Y,l>>
+          (args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor);
       }
-
-      static inline void deconstruct(SeqSSOR<M,X,Y,l>* ssor)
-      {
-        delete ssor;
-      }
-
     };
 
 
@@ -201,18 +195,29 @@ namespace Dune
     {
       typedef DefaultConstructionArgs<SeqSOR<M,X,Y,l> > Arguments;
 
-      static inline SeqSOR<M,X,Y,l>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqSOR<M,X,Y,l>> construct(Arguments& args)
       {
-        return new SeqSOR<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
-                                   args.getArgs().relaxationFactor);
+        return std::make_shared<SeqSOR<M,X,Y,l>>
+          (args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor);
       }
-
-      static inline void deconstruct(SeqSOR<M,X,Y,l>* sor)
-      {
-        delete sor;
-      }
-
     };
+
+
+    /**
+     * @brief Policy for the construction of the SeqGS smoother
+     */
+    template<class M, class X, class Y, int l>
+    struct ConstructionTraits<SeqGS<M,X,Y,l> >
+    {
+      typedef DefaultConstructionArgs<SeqGS<M,X,Y,l> > Arguments;
+
+      static inline std::shared_ptr<SeqGS<M,X,Y,l>> construct(Arguments& args)
+      {
+        return std::make_shared<SeqGS<M,X,Y,l>>
+          (args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor);
+      }
+    };
+
     /**
      * @brief Policy for the construction of the SeqJac smoother
      */
@@ -221,17 +226,11 @@ namespace Dune
     {
       typedef DefaultConstructionArgs<SeqJac<M,X,Y,l> > Arguments;
 
-      static inline SeqJac<M,X,Y,l>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqJac<M,X,Y,l>> construct(Arguments& args)
       {
-        return new SeqJac<M,X,Y,l>(args.getMatrix(), args.getArgs().iterations,
-                                   args.getArgs().relaxationFactor);
+        return std::make_shared<SeqJac<M,X,Y,l>>
+          (args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor);
       }
-
-      static void deconstruct(SeqJac<M,X,Y,l>* jac)
-      {
-        delete jac;
-      }
-
     };
 
 
@@ -244,17 +243,11 @@ DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0
     {
       typedef DefaultConstructionArgs<SeqILU0<M,X,Y> > Arguments;
 
-      static inline SeqILU0<M,X,Y>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqILU0<M,X,Y>> construct(Arguments& args)
       {
-        return new SeqILU0<M,X,Y>(args.getMatrix(),
-                                  args.getArgs().relaxationFactor);
+        return std::make_shared<SeqILU0<M,X,Y>>
+          (args.getMatrix(), args.getArgs().relaxationFactor);
       }
-
-      static void deconstruct(SeqILU0<M,X,Y>* ilu)
-      {
-        delete ilu;
-      }
-
     };
 DUNE_NO_DEPRECATED_END // for deprecated SeqILU0
 
@@ -290,17 +283,11 @@ DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILUn
     {
       typedef ConstructionArgs<SeqILUn<M,X,Y> > Arguments;
 
-      static inline SeqILUn<M,X,Y>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqILUn<M,X,Y>> construct(Arguments& args)
       {
-        return new SeqILUn<M,X,Y>(args.getMatrix(), args.getN(),
-                                  args.getArgs().relaxationFactor);
+        return std::make_shared<SeqILUn<M,X,Y>>
+          (args.getMatrix(), args.getN(), args.getArgs().relaxationFactor);
       }
-
-      static void deconstruct(SeqILUn<M,X,Y>* ilu)
-      {
-        delete ilu;
-      }
-
     };
 DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
 
@@ -337,17 +324,11 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
     {
       typedef ConstructionArgs<SeqILU<M,X,Y> > Arguments;
 
-      static inline SeqILU<M,X,Y>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqILU<M,X,Y>> construct(Arguments& args)
       {
-        return new SeqILU<M,X,Y>(args.getMatrix(), args.getN(),
-                                 args.getArgs().relaxationFactor);
+        return std::make_shared<SeqILU<M,X,Y>>
+          (args.getMatrix(), args.getN(), args.getArgs().relaxationFactor);
       }
-
-      static void deconstruct(SeqILU<M,X,Y>* ilu)
-      {
-        delete ilu;
-      }
-
     };
 
     /**
@@ -358,15 +339,11 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
     {
       typedef DefaultParallelConstructionArgs<M,C> Arguments;
 
-      static inline ParSSOR<M,X,Y,C>* construct(Arguments& args)
+      static inline std::shared_ptr<ParSSOR<M,X,Y,C>> construct(Arguments& args)
       {
-        return new ParSSOR<M,X,Y,C>(args.getMatrix(), args.getArgs().iterations,
-                                    args.getArgs().relaxationFactor,
-                                    args.getComm());
-      }
-      static inline void deconstruct(ParSSOR<M,X,Y,C>* ssor)
-      {
-        delete ssor;
+        return std::make_shared<ParSSOR<M,X,Y,C>>
+          (args.getMatrix(), args.getArgs().iterations,
+           args.getArgs().relaxationFactor, args.getComm());
       }
     };
 
@@ -375,18 +352,11 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
     {
       typedef DefaultParallelConstructionArgs<T,C> Arguments;
       typedef ConstructionTraits<T> SeqConstructionTraits;
-      static inline BlockPreconditioner<X,Y,C,T>* construct(Arguments& args)
+      static inline std::shared_ptr<BlockPreconditioner<X,Y,C,T>> construct(Arguments& args)
       {
-        return new BlockPreconditioner<X,Y,C,T>(*SeqConstructionTraits::construct(args),
-                                                args.getComm());
+        auto seqPrec = SeqConstructionTraits::construct(args);
+        return std::make_shared<BlockPreconditioner<X,Y,C,T>> (seqPrec, args.getComm());
       }
-
-      static inline void deconstruct(BlockPreconditioner<X,Y,C,T>* bp)
-      {
-        SeqConstructionTraits::deconstruct(static_cast<T*>(&bp->preconditioner));
-        delete bp;
-      }
-
     };
 
     template<class C, class T>
@@ -394,18 +364,11 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
     {
       typedef DefaultParallelConstructionArgs<T,C> Arguments;
       typedef ConstructionTraits<T> SeqConstructionTraits;
-      static inline NonoverlappingBlockPreconditioner<C,T>* construct(Arguments& args)
+      static inline std::shared_ptr<NonoverlappingBlockPreconditioner<C,T>> construct(Arguments& args)
       {
-        return new NonoverlappingBlockPreconditioner<C,T>(*SeqConstructionTraits::construct(args),
-                                                          args.getComm());
+        auto seqPrec = SeqConstructionTraits::construct(args);
+        return std::make_shared<NonoverlappingBlockPreconditioner<C,T>> (seqPrec, args.getComm());
       }
-
-      static inline void deconstruct(NonoverlappingBlockPreconditioner<C,T>* bp)
-      {
-        SeqConstructionTraits::deconstruct(static_cast<T*>(&bp->preconditioner));
-        delete bp;
-      }
-
     };
 
     /**
@@ -907,17 +870,13 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
     {
       typedef ConstructionArgs<SeqOverlappingSchwarz<M,X,TM,TS,TA> > Arguments;
 
-      static inline SeqOverlappingSchwarz<M,X,TM,TS,TA>* construct(Arguments& args)
+      static inline std::shared_ptr<SeqOverlappingSchwarz<M,X,TM,TS,TA>> construct(Arguments& args)
       {
-        return new SeqOverlappingSchwarz<M,X,TM,TS,TA>(args.getMatrix(),
-                                                       args.getSubDomains(),
-                                                       args.getArgs().relaxationFactor,
-                                                       args.getArgs().onthefly);
-      }
-
-      static void deconstruct(SeqOverlappingSchwarz<M,X,TM,TS,TA>* schwarz)
-      {
-        delete schwarz;
+        return std::make_shared<SeqOverlappingSchwarz<M,X,TM,TS,TA>>
+          (args.getMatrix(),
+           args.getSubDomains(),
+           args.getArgs().relaxationFactor,
+           args.getArgs().onthefly);
       }
     };
 

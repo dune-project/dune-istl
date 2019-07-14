@@ -20,6 +20,8 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -442,7 +444,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -460,10 +462,7 @@ namespace Dune {
     typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;
 
     //! increment block level counter
-    enum {
-      //! The number of blocklevels the matrix contains.
-      blocklevel = B::blocklevel+1
-    };
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! we support two modes
     enum BuildMode {
@@ -1579,12 +1578,16 @@ namespace Dune {
                                  "Size mismatch: M: " << N() << "x" << M() << " y: " << y.N());
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         y[i.index()]=0;
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umv(x[j.index()],y[i.index()]);
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).umv(xj, yi);
+        }
       }
     }
 
@@ -1599,11 +1602,15 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umv(x[j.index()],y[i.index()]);
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).umv(xj,yi);
+        }
       }
     }
 
@@ -1618,11 +1625,15 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmv(x[j.index()],y[i.index()]);
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).mmv(xj,yi);
+        }
       }
     }
 
@@ -1637,11 +1648,15 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmv(alpha,x[j.index()],y[i.index()]);
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).usmv(alpha,xj,yi);
+        }
       }
     }
 
@@ -1671,11 +1686,15 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umtv(x[i.index()],y[j.index()]);
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).umtv(xi,yj);
+        }
       }
     }
 
@@ -1688,11 +1707,15 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmtv(x[i.index()],y[j.index()]);
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).mmtv(xi,yj);
+        }
       }
     }
 
@@ -1707,11 +1730,15 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmtv(alpha,x[i.index()],y[j.index()]);
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).usmtv(alpha,xi,yj);
+        }
       }
     }
 
@@ -1726,11 +1753,15 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umhv(x[i.index()],y[j.index()]);
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).umhv(xi,yj);
+        }
       }
     }
 
@@ -1745,11 +1776,15 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmhv(x[i.index()],y[j.index()]);
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).mmhv(xi,yj);
+        }
       }
     }
 
@@ -1764,11 +1799,15 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
       {
         ConstColIterator endj = (*i).end();
         for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmhv(alpha,x[i.index()],y[j.index()]);
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).usmhv(alpha,xi,yj);
+        }
       }
     }
 
@@ -1783,15 +1822,11 @@ namespace Dune {
         DUNE_THROW(BCRSMatrixError,"You can only call arithmetic operations on fully built BCRSMatrix instances");
 #endif
 
-      double sum=0;
+      typename FieldTraits<field_type>::real_type sum=0;
 
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          sum += (*j).frobenius_norm2();
-      }
+      for (auto&& row : (*this))
+        for (auto&& entry : row)
+          sum += Impl::asMatrix(entry).frobenius_norm2();
 
       return sum;
     }
@@ -1816,7 +1851,7 @@ namespace Dune {
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm();
+          sum += Impl::asMatrix(y).infinity_norm();
         norm = max(sum, norm);
       }
       return norm;
@@ -1836,7 +1871,7 @@ namespace Dune {
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm_real();
+          sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
       }
       return norm;
@@ -1857,12 +1892,12 @@ namespace Dune {
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm();
+          sum += Impl::asMatrix(y).infinity_norm();
         norm = max(sum, norm);
         isNaN += sum;
       }
-      isNaN /= isNaN;
-      return norm * isNaN;
+
+      return norm * (isNaN / isNaN);
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
@@ -1877,15 +1912,16 @@ namespace Dune {
 
       real_type norm = 0;
       real_type isNaN = 1;
+
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm_real();
+          sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
         isNaN += sum;
       }
-      isNaN /= isNaN;
-      return norm * isNaN;
+
+      return norm * (isNaN / isNaN);
     }
 
     //===== sizes

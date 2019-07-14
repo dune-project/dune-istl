@@ -182,16 +182,16 @@ namespace Dune
   /**
    * @brief Converter for BCRSMatrix to SuperLU Matrix.
    */
-  template<class B, class TA, int n, int m>
-  class SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
-    : public ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >
+  template<class B, class TA>
+  class SuperLUMatrix<BCRSMatrix<B,TA> >
+    : public ColCompMatrix<BCRSMatrix<B,TA> >
   {
     template<class M, class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
-    friend struct SuperMatrixInitializer<BCRSMatrix<FieldMatrix<B,n,m>,TA> >;
+    friend struct SuperMatrixInitializer<BCRSMatrix<B,TA> >;
   public:
     /** @brief The type of the matrix to convert. */
-    typedef BCRSMatrix<FieldMatrix<B,n,m>,TA> Matrix;
+    typedef BCRSMatrix<B,TA> Matrix;
 
     friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>, true>;
 
@@ -201,10 +201,10 @@ namespace Dune
      * @brief Constructor that initializes the data.
      * @param mat The matrix to convert.
      */
-    explicit SuperLUMatrix(const Matrix& mat) : ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >(mat)
+    explicit SuperLUMatrix(const Matrix& mat) : ColCompMatrix<BCRSMatrix<B,TA> >(mat)
     {}
 
-    SuperLUMatrix() : ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >()
+    SuperLUMatrix() : ColCompMatrix<BCRSMatrix<B,TA> >()
     {}
 
     /** @brief Destructor */
@@ -226,19 +226,19 @@ namespace Dune
       return A;
     }
 
-    SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >& operator=(const BCRSMatrix<FieldMatrix<B,n,m>,TA>& mat)
+    SuperLUMatrix<BCRSMatrix<B,TA> >& operator=(const BCRSMatrix<B,TA>& mat)
     {
-      this->ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator=(mat);
-      SuperMatrixCreateSparseChooser<B>
+      this->ColCompMatrix<BCRSMatrix<B,TA> >::operator=(mat);
+      SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
              this->values,this->rowindex, this->colstart, SLU_NC,
-             static_cast<Dtype_t>(GetSuperLUType<B>::type), SLU_GE);
+             static_cast<Dtype_t>(GetSuperLUType<typename Matrix::field_type>::type), SLU_GE);
       return *this;
     }
 
-    SuperLUMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >& operator=(const SuperLUMatrix <BCRSMatrix<FieldMatrix<B,n,m>,TA> >& mat)
+    SuperLUMatrix<BCRSMatrix<B,TA> >& operator=(const SuperLUMatrix <BCRSMatrix<B,TA> >& mat)
     {
-      this->ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::operator=(mat);
+      this->ColCompMatrix<BCRSMatrix<B,TA> >::operator=(mat);
       SuperMatrixCreateSparseChooser<B>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
              this->values,this->rowindex, this->colstart, SLU_NC,
@@ -256,8 +256,8 @@ namespace Dune
     {
       if(this->N_+this->M_+this->Nnz_!=0)
         free();
-      this->N_=mrs.size()*n;
-      this->M_=mrs.size()*m;
+      this->N_=mrs.size()*MatrixDimension<typename Matrix::block_type>::rowdim(*(mat[0].begin()));
+      this->M_=mrs.size()*MatrixDimension<typename Matrix::block_type>::coldim(*(mat[0].begin()));
       SuperMatrixInitializer<Matrix> initializer(*this);
 
       copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(mat,mrs));
@@ -266,8 +266,8 @@ namespace Dune
     /** @brief Initialize data from given matrix. */
     virtual void setMatrix(const Matrix& mat)
     {
-      this->N_=n*mat.N();
-      this->M_=m*mat.M();
+      this->N_=MatrixDimension<Matrix>::rowdim(mat);
+      this->M_=MatrixDimension<Matrix>::coldim(mat);
       SuperMatrixInitializer<Matrix> initializer(*this);
 
       copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
@@ -276,37 +276,37 @@ namespace Dune
     /** @brief free allocated space. */
     virtual void free()
     {
-      ColCompMatrix<BCRSMatrix<FieldMatrix<B,n,m>,TA> >::free();
+      ColCompMatrix<BCRSMatrix<B,TA> >::free();
       SUPERLU_FREE(A.Store);
     }
   private:
     SuperMatrix A;
   };
 
-  template<class T, class A, int n, int m>
-  class SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >
-    : public ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  template<class B, class A>
+  class SuperMatrixInitializer<BCRSMatrix<B,A> >
+    : public ColCompMatrixInitializer<BCRSMatrix<B,A> >
   {
     template<class I, class S, class D>
     friend class OverlappingSchwarzInitializer;
   public:
-    typedef BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
+    typedef BCRSMatrix<B,A> Matrix;
     typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
 
-    SuperMatrixInitializer(SuperLUMatrix& lum) : ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >(lum)
+    SuperMatrixInitializer(SuperLUMatrix& lum) : ColCompMatrixInitializer<BCRSMatrix<B,A> >(lum)
       ,slumat(&lum)
     {}
 
-    SuperMatrixInitializer() : ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >()
+    SuperMatrixInitializer() : ColCompMatrixInitializer<BCRSMatrix<B,A> >()
     {}
 
     virtual void createMatrix() const
     {
-      ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> >::createMatrix();
-      SuperMatrixCreateSparseChooser<T>
+      ColCompMatrixInitializer<BCRSMatrix<B,A> >::createMatrix();
+      SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&slumat->A, slumat->N_, slumat->M_, slumat->colstart[this->cols],
              slumat->values,slumat->rowindex, slumat->colstart, SLU_NC,
-             static_cast<Dtype_t>(GetSuperLUType<T>::type), SLU_GE);
+             static_cast<Dtype_t>(GetSuperLUType<typename Matrix::field_type>::type), SLU_GE);
     }
     private:
     SuperLUMatrix* slumat;

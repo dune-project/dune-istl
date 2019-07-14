@@ -5,14 +5,12 @@
 
 #include <cmath>
 #include <complex>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <set>
 #include <map>
 #include <vector>
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include "istlexception.hh"
 
 /** \file
@@ -55,7 +53,7 @@ namespace Dune {
         coliterator jj = A[ij.index()].find(ij.index());
 
         // compute L_ij = A_jj^-1 * A_ij
-        (*ij).rightmultiply(*jj);
+        Impl::asMatrix(*ij).rightmultiply(Impl::asMatrix(*jj));
 
         // modify row
         coliterator endjk=A[ij.index()].end();                 // end of row j
@@ -65,7 +63,7 @@ namespace Dune {
           if (ik.index()==jk.index())
           {
             block B(*jk);
-            B.leftmultiply(*ij);
+            Impl::asMatrix(B).leftmultiply(Impl::asMatrix(*ij));
             *ik -= B;
             ++ik; ++jk;
           }
@@ -82,7 +80,7 @@ namespace Dune {
       if (ij.index()!=i.index())
         DUNE_THROW(ISTLError,"diagonal entry missing");
       try {
-        (*ij).invert();   // compute inverse of diagonal block
+        Impl::asMatrix(*ij).invert();   // compute inverse of diagonal block
       }
       catch (Dune::FMatrixError & e) {
         DUNE_THROW(MatrixBlockError, "ILU failed to invert matrix block A["
@@ -106,22 +104,36 @@ namespace Dune {
     rowiterator endi=A.end();
     for (rowiterator i=A.begin(); i!=endi; ++i)
     {
-      dblock rhs(d[i.index()]);
+      // We need to be careful here: Directly using
+      // auto rhs = Impl::asVector(d[ i.index() ]);
+      // is not OK in case this is a proxy. Hence
+      // we first have to copy the value. Notice that
+      // this is still not OK, if the vector type itself returns
+      // proxy references.
+      dblock rhsValue(d[i.index()]);
+      auto&& rhs = Impl::asVector(rhsValue);
       for (coliterator j=(*i).begin(); j.index()<i.index(); ++j)
-        (*j).mmv(v[j.index()],rhs);
-      v[i.index()] = rhs;           // Lii = I
+        Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+      Impl::asVector(v[i.index()]) = rhs;           // Lii = I
     }
 
     // upper triangular solve
     rowiterator rendi=A.beforeBegin();
     for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
     {
-      vblock rhs(v[i.index()]);
+      // We need to be careful here: Directly using
+      // auto rhs = Impl::asVector(v[ i.index() ]);
+      // is not OK in case this is a proxy. Hence
+      // we first have to copy the value. Notice that
+      // this is still not OK, if the vector type itself returns
+      // proxy references.
+      vblock rhsValue(v[i.index()]);
+      auto&& rhs = Impl::asVector(rhsValue);
       coliterator j;
       for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-        (*j).mmv(v[j.index()],rhs);
-      v[i.index()] = 0;
-      (*j).umv(rhs,v[i.index()]);           // diagonal stores inverse!
+        Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+      auto&& vi = Impl::asVector(v[i.index()]);
+      Impl::asMatrix(*j).mv(rhs,vi);           // diagonal stores inverse!
     }
   }
 
@@ -129,19 +141,19 @@ namespace Dune {
 
   // recursive function template to access first entry of a matrix
   template<class M>
-  typename M::field_type& firstmatrixelement (M& A)
+  typename M::field_type& firstmatrixelement (M& A, typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     return firstmatrixelement(*(A.begin()->begin()));
   }
 
-  template<class K, int n, int m>
-  K& firstmatrixelement (FieldMatrix<K,n,m>& A)
+  template<class K>
+  K& firstmatrixelement (K& A, typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
   {
-    return A[0][0];
+    return A;
   }
 
-  template<class K>
-  K& firstmatrixelement (FieldMatrix<K,1,1>& A)
+  template<class K, int n, int m>
+  K& firstmatrixelement (FieldMatrix<K,n,m>& A)
   {
     return A[0][0];
   }
@@ -170,7 +182,6 @@ namespace Dune {
     createiterator ci=ILU.createbegin();
     for (crowiterator i=A.begin(); i!=endi; ++i)
     {
-      // std::cout << "in row " << i.index() << std::endl;
       map rowpattern; // maps column index to generation
 
       // initialize pattern with row of A
@@ -182,9 +193,6 @@ namespace Dune {
       {
         if ((*ik).second<n)
         {
-          //                            std::cout << "  eliminating " << i.index() << "," << (*ik).first
-          //                                              << " level " << (*ik).second << std::endl;
-
           coliterator endk = ILU[(*ik).first].end();                       // end of row k
           coliterator kj = ILU[(*ik).first].find((*ik).first);                       // diagonal in k
           for (++kj; kj!=endk; ++kj)                       // row k eliminates in row i
@@ -198,9 +206,6 @@ namespace Dune {
               mapiterator ij = rowpattern.find(kj.index());
               if (ij==rowpattern.end())
               {
-                //std::cout << "    new entry " << i.index() << "," << kj.index()
-                //                                                << " level " << (*ik).second+1 << std::endl;
-
                 rowpattern[kj.index()] = generation+1;
               }
             }
@@ -218,8 +223,6 @@ namespace Dune {
       for (coliterator ILUij=ILU[i.index()].begin(); ILUij!=endILUij; ++ILUij)
         firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
     }
-
-    //  printmatrix(std::cout,ILU,"ilu pattern","row",10,2);
 
     // copy entries of A
     for (crowiterator i=A.begin(); i!=endi; ++i)
@@ -391,33 +394,31 @@ namespace Dune {
       // lower triangular solve
       for( size_type i=0; i<iEnd; ++ i )
       {
-        dblock rhs( d[ i ] );
+        dblock rhsValue( d[ i ] );
+        auto&& rhs = Impl::asVector(rhsValue);
         const size_type rowI     = lower.rows_[ i ];
         const size_type rowINext = lower.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-        {
-          lower.values_[ col ].mmv( v[ lower.cols_[ col ] ], rhs );
-        }
+          Impl::asMatrix(lower.values_[ col ]).mmv( Impl::asVector(v[ lower.cols_[ col ] ] ), rhs );
 
-        v[ i ] = rhs;  // Lii = I
+        Impl::asVector(v[ i ]) = rhs;  // Lii = I
       }
 
       // upper triangular solve
       for( size_type i=0; i<iEnd; ++ i )
       {
-        vblock& vBlock = v[ lastRow - i ];
-        vblock rhs ( vBlock );
+        auto&& vBlock = Impl::asVector(v[ lastRow - i ]);
+        vblock rhsValue ( v[ lastRow - i ] );
+        auto&& rhs = Impl::asVector(rhsValue);
         const size_type rowI     = upper.rows_[ i ];
         const size_type rowINext = upper.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-        {
-          upper.values_[ col ].mmv( v[ upper.cols_[ col ] ], rhs );
-        }
+          Impl::asMatrix(upper.values_[ col ]).mmv( Impl::asVector(v[ upper.cols_[ col ] ]), rhs );
 
         // apply inverse and store result
-        inv[ i ].mv( rhs, vBlock);
+        Impl::asMatrix(inv[ i ]).mv(rhs, vBlock);
       }
     }
 

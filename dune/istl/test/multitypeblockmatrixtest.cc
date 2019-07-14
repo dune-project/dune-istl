@@ -24,69 +24,68 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
+#include <dune/istl/test/matrixtest.hh>
 
 using namespace Dune;
 
+// Import the static constants _0, _1, etc
+using namespace Indices;
+
+void testInterfaceMethods()
+{
+  {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //  First, we test a MultiTypeBlockMatrix consisting of an array of 2x2 dense matrices.
+    //  The upper left dense matrix has dense 3x3 blocks, the lower right matrix has 1x1 blocks,
+    //  the off-set diagonal matrix block sizes are set accordingly.
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // set up the test matrix
+    typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,3,3> >, Matrix<FieldMatrix<double,3,1> > > RowType0;
+    typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,1,3> >, Matrix<FieldMatrix<double,1,1> > > RowType1;
+
+    MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
+
+    multiMatrix[_0][_0].setSize(3,3);
+    multiMatrix[_0][_1].setSize(3,2);
+    multiMatrix[_1][_0].setSize(2,3);
+    multiMatrix[_1][_1].setSize(2,2);
+
+    // Init with scalar values
+    multiMatrix[_0][_0] = 4200;
+    multiMatrix[_0][_1] = 4201;
+    multiMatrix[_1][_0] = 4210;
+    multiMatrix[_1][_1] = 4211;
+
+    // Set up a test vector
+    MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > domainVector;
+
+    domainVector[_0] = {{1,0,0},
+                        {0,1,0},
+                        {0,0,1}};
+
+    domainVector[_1] = {3.14, 42};
+
+    auto rangeVector = domainVector;   // Range == Domain, because the matrix nesting pattern is symmetric
+
+    // Test vector space operations
+    testVectorSpaceOperations(multiMatrix);
+
+    // Test matrix norms
+    testNorms(multiMatrix);
+
+    // Test whether matrix class has the required constructors
+    testMatrixConstructibility<decltype(multiMatrix)>();
+
+    // Test matrix-vector products
+    testMatrixVectorProducts(multiMatrix, domainVector, rangeVector);
+  }
+}
+
 int main(int argc, char** argv) try
 {
-  // Import the static constants _0, _1, etc
-  using namespace Indices;
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //  First, we test a MultiTypeBlockMatrix consisting of an array of 2x2 dense matrices.
-  //  The upper left dense matrix has dense 3x3 blocks, the lower right matrix has 1x1 blocks,
-  //  the off-set diagonal matrix block sizes are set accordingly.
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  // set up the test matrix
-  typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,3,3> >, Matrix<FieldMatrix<double,3,1> > > RowType0;
-  typedef MultiTypeBlockVector<Matrix<FieldMatrix<double,1,3> >, Matrix<FieldMatrix<double,1,1> > > RowType1;
-
-  MultiTypeBlockMatrix<RowType0,RowType1> multiMatrix;
-
-  multiMatrix[_0][_0].setSize(3,3);
-  multiMatrix[_0][_1].setSize(3,2);
-  multiMatrix[_1][_0].setSize(2,3);
-  multiMatrix[_1][_1].setSize(2,2);
-
-  // lazy solution: initialize the entire matrix with zeros
-  multiMatrix = 0;
-
-  printmatrix(std::cout, multiMatrix[_0][_0], "(0,0)", "--");
-  printmatrix(std::cout, multiMatrix[_0][_1], "(0,1)", "--");
-  printmatrix(std::cout, multiMatrix[_1][_0], "(1,0)", "--");
-  printmatrix(std::cout, multiMatrix[_1][_1], "(1,1)", "--");
-
-  // set up a test vector
-  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
-
-  multiVector[_0] = {{1,0,0},
-                     {0,1,0},
-                     {0,0,1}};
-
-  multiVector[_1] = {3.14, 42};
-
-  // Test matrix-vector products
-  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > result;
-  result[_0].resize(3);
-  result[_1].resize(2);
-
-  multiMatrix[_0][_0] = 4200;
-  multiMatrix[_0][_1] = 4201;
-  multiMatrix[_1][_0] = 4210;
-  multiMatrix[_1][_1] = 4211;
-
-  multiMatrix.mv(multiVector,result);
-  std::cout << "mv result" << std::endl << result << std::endl;
-
-  multiMatrix.umv(multiVector,result);
-  std::cout << "umv result" << std::endl << result << std::endl;
-
-  multiMatrix.mmv(multiVector,result);
-  std::cout << "mmv result" << std::endl << result << std::endl;
-
-  multiMatrix.usmv(3.14,multiVector,result);
-  std::cout << "usmv result" << std::endl << result << std::endl;
+  // Run the standard tests for the dune-istl matrix interface
+  testInterfaceMethods();
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   //  Next test: Set up a linear system with a matrix consisting of 2x2 sparse scalar matrices.

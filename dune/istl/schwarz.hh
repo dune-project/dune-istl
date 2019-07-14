@@ -53,7 +53,7 @@ namespace Dune {
    */
 
   /**
-   * \brief An overlapping schwarz operator.
+   * \brief An overlapping Schwarz operator.
    *
    * This operator represents a parallel matrix product using
    * sequential data structures together with a parallel index set
@@ -106,6 +106,10 @@ namespace Dune {
      * data points. (E.~g. OwnerOverlapCopyCommunication )
      */
     OverlappingSchwarzOperator (const matrix_type& A, const communication_type& com)
+      : _A_(stackobject_to_shared_ptr(A)), communication(com)
+    {}
+
+    OverlappingSchwarzOperator (const std::shared_ptr<matrix_type> A, const communication_type& com)
       : _A_(A), communication(com)
     {}
 
@@ -113,7 +117,7 @@ namespace Dune {
     virtual void apply (const X& x, Y& y) const
     {
       y = 0;
-      _A_.umv(x,y);     // result is consistent on interior+border
+      _A_->umv(x,y);     // result is consistent on interior+border
       communication.project(y);     // we want this here to avoid it before the preconditioner
                                     // since there d is const!
     }
@@ -121,7 +125,7 @@ namespace Dune {
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
     {
-      _A_.usmv(alpha,x,y);     // result is consistent on interior+border
+      _A_->usmv(alpha,x,y);     // result is consistent on interior+border
       communication.project(y);     // we want this here to avoid it before the preconditioner
                                     // since there d is const!
     }
@@ -129,7 +133,7 @@ namespace Dune {
     //! get the sequential assembled linear operator.
     virtual const matrix_type& getmat () const
     {
-      return _A_;
+      return *_A_;
     }
 
     //! Category of the linear operator (see SolverCategory::Category)
@@ -139,7 +143,7 @@ namespace Dune {
     }
 
   private:
-    const matrix_type& _A_;
+    const std::shared_ptr<const matrix_type>_A_;
     const communication_type& communication;
   };
 
@@ -265,9 +269,9 @@ namespace Dune {
    * for approximately solving the local matrix block consisting of unknowns
    * owned by the process. Has to implement the Preconditioner interface.
    */
-  template<class X, class Y, class C, class T=Preconditioner<X,Y> >
+  template<class X, class Y, class C, class P=Preconditioner<X,Y> >
   class BlockPreconditioner : public Preconditioner<X,Y> {
-    friend struct Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,T> >;
+    friend struct Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,P> >;
   public:
     //! \brief The domain type of the preconditioner.
     //!
@@ -294,8 +298,19 @@ namespace Dune {
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )
      */
-    BlockPreconditioner (T& p, const communication_type& c)
-      : preconditioner(p), communication(c)
+    BlockPreconditioner (P& p, const communication_type& c)
+      : _preconditioner(stackobject_to_shared_ptr(p)), _communication(c)
+    {   }
+
+    /*! \brief Constructor.
+
+       constructor gets all parameters to operate the prec.
+       \param p The sequential preconditioner.
+       \param c The communication object for syncing overlap and copy
+       data points. (E.~g. OwnerOverlapCopyCommunication )
+     */
+    BlockPreconditioner (const std::shared_ptr<P>& p, const communication_type& c)
+      : _preconditioner(p), _communication(c)
     {   }
 
     /*!
@@ -305,8 +320,8 @@ namespace Dune {
      */
     virtual void pre (X& x, Y& b)
     {
-      communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
-      preconditioner.pre(x,b);
+      _communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
+      _preconditioner->pre(x,b);
     }
 
     /*!
@@ -316,15 +331,15 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      preconditioner.apply(v,d);
-      communication.copyOwnerToAll(v,v);
+      _preconditioner->apply(v,d);
+      _communication.copyOwnerToAll(v,v);
     }
 
     template<bool forward>
     void apply (X& v, const Y& d)
     {
-      preconditioner.template apply<forward>(v,d);
-      communication.copyOwnerToAll(v,v);
+      _preconditioner->template apply<forward>(v,d);
+      _communication.copyOwnerToAll(v,v);
     }
 
     /*!
@@ -334,7 +349,7 @@ namespace Dune {
      */
     virtual void post (X& x)
     {
-      preconditioner.post(x);
+      _preconditioner->post(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
@@ -345,10 +360,10 @@ namespace Dune {
 
   private:
     //! \brief a sequential preconditioner
-    T& preconditioner;
+    std::shared_ptr<P> _preconditioner;
 
     //! \brief the communication object
-    const communication_type& communication;
+    const communication_type& _communication;
   };
 
   /** @} end documentation */

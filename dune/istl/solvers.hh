@@ -1028,12 +1028,12 @@ namespace Dune {
     using typename IterativeSolver<X,Y>::field_type;
     using typename IterativeSolver<X,Y>::real_type;
 
-  private:
+  protected:
     using typename IterativeSolver<X,X>::scalar_real_type;
 
-    //! \bief field_type Allocator retrieved from domain type
+    //! \brief field_type Allocator retrieved from domain type
     using fAlloc = ReboundAllocatorType<X,field_type>;
-    //! \bief real_type Allocator retrieved from domain type
+    //! \brief real_type Allocator retrieved from domain type
     using rAlloc = ReboundAllocatorType<X,real_type>;
 
   public:
@@ -1133,8 +1133,8 @@ namespace Dune {
           }
         }
 
-      if(Simd::allTrue(norm_0 < EPSILON)) {
-        _prec->post(x);
+      if(Simd::allTrue(norm_0 < EPSILON))
+      {
         res.converged = true;
         if(_verbose > 0) // final print
           print_result(res);
@@ -1206,8 +1206,8 @@ namespace Dune {
 
         // restart GMRes if convergence was not achieved,
         // i.e. linear defect has not reached desired reduction
-        // and if j < _maxit
-        if( res.converged != true && j <= _maxit ) {
+        // and if j < _maxit (do not restart on last iteration)
+        if( res.converged != true && j < _maxit ) {
 
           if(_verbose > 0)
             std::cout << "=== GMRes::restart" << std::endl;
@@ -1238,7 +1238,7 @@ namespace Dune {
 
     }
 
-  private :
+  protected :
 
     void print_result(const InverseOperatorResult& res) const {
       int k = res.iterations>0 ? res.iterations : 1;
@@ -1332,6 +1332,215 @@ namespace Dune {
 
 
   /**
+     \brief implements the Flexible Generalized Minimal Residual (FGMRes) method (right preconditioned)
+
+     FGMRes solves the right-preconditioned unsymmetric linear system Ax = b using the
+     Flexible Generalized Minimal Residual method. It is flexible because the preconditioner can change in every iteration,
+     which allows to use Krylov solvers without fixed number of iterations as preconditioners. Needs more memory than GMRes.
+
+     \tparam X trial vector, vector type of the solution
+     \tparam Y test vector, vector type of the RHS
+     \tparam F vector type for orthonormal basis of Krylov space
+
+   */
+
+  template<class X, class Y=X, class F = Y>
+  class RestartedFlexibleGMResSolver : public RestartedGMResSolver<X,Y>
+  {
+  public:
+    using typename RestartedGMResSolver<X,Y>::domain_type;
+    using typename RestartedGMResSolver<X,Y>::range_type;
+    using typename RestartedGMResSolver<X,Y>::field_type;
+    using typename RestartedGMResSolver<X,Y>::real_type;
+
+  private:
+    using typename RestartedGMResSolver<X,Y>::scalar_real_type;
+
+    //! \brief field_type Allocator retrieved from domain type
+    using fAlloc = typename RestartedGMResSolver<X,Y>::fAlloc;
+    //! \brief real_type Allocator retrieved from domain type
+    using rAlloc = typename RestartedGMResSolver<X,Y>::rAlloc;
+
+  public:
+    // copy base class constructors
+    using RestartedGMResSolver<X,Y>::RestartedGMResSolver;
+
+    // don't shadow four-argument version of apply defined in the base class
+    using RestartedGMResSolver<X,Y>::apply;
+
+    /*!
+       \brief Apply inverse operator.
+
+       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+
+       \note Currently, the RestartedFlexibleGMResSolver aborts when it detects a
+             breakdown.
+     */
+    void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) override
+    {
+      using std::abs;
+      const Simd::Scalar<real_type> EPSILON = 1e-80;
+      const int m = _restart;
+      real_type norm, norm_old = 0.0, norm_0;
+      int i, j = 1, k;
+      std::vector<field_type,fAlloc> s(m+1), sn(m);
+      std::vector<real_type,rAlloc> cs(m);
+      // helper vector
+      Y tmp(b);
+      std::vector< std::vector<field_type,fAlloc> > H(m+1,s);
+      std::vector<F> v(m+1,b);
+      std::vector<X> w(m+1,b);
+
+      // start timer
+      Dune::Timer watch;
+      watch.reset();
+
+      // clear solver statistics and set res.converged to false
+      res.clear();
+      // setup preconditioner if it does something in pre
+      _prec->pre(x, b);
+
+      // calculate residual and overwrite a copy of the rhs with it
+      v[0] = b;
+      _op->applyscaleadd(-1.0, x, v[0]); // b -= Ax
+
+      norm = norm_old = norm_0 = _sp->norm(v[0]); // the residual norm
+
+      // print header
+      if(_verbose > 0)
+      {
+        std::cout << "=== RestartedFlexibleGMResSolver" << std::endl;
+        if(_verbose > 1)
+        {
+          this->printHeader(std::cout);
+          this->printOutput(std::cout,0,norm_0);
+        }
+      }
+
+      // check if we are already converged before we are starting
+      if(Simd::allTrue(norm_0 < EPSILON))
+      {
+        res.converged = true; // we converged already
+        if(_verbose > 0) // final print
+          this->print_result(res);
+      }
+
+      // start iterations
+      while(j <= _maxit && res.converged != true)
+      {
+        v[0] *= (1.0 / norm);
+        s[0] = norm;
+        for(i=1; i<m+1; ++i)
+          s[i] = 0.0;
+
+        // inner loop
+        for(i=0; i < m && j <= _maxit && res.converged != true; i++, j++)
+        {
+          w[i] = 0.0;
+          // compute wi = M^-1*vi (also called zi)
+          _prec->apply(w[i], v[i]);
+          // compute vi = A*wi
+          // use v[i+1] as temporary vector for w
+          _op->apply(w[i], v[i+1]);
+          // do Arnoldi algorithm
+          for(int k=0; k<i+1; k++)
+          {
+            // notice that _sp->dot(v[k],v[i+1]) = v[k]\adjoint v[i+1]
+            // so one has to pay attention to the order
+            // in the scalar product for the complex case
+            // doing the modified Gram-Schmidt algorithm
+            H[k][i] = _sp->dot(v[k],v[i+1]);
+            // w -= H[k][i] * v[k]
+            v[i+1].axpy(-H[k][i], v[k]);
+          }
+          H[i+1][i] = _sp->norm(v[i+1]);
+          if(Simd::allTrue(abs(H[i+1][i]) < EPSILON))
+            DUNE_THROW(SolverAbort, "breakdown in fGMRes - |w| (-> "
+                                     << w[i] << ") == 0.0 after "
+                                     << j << " iterations");
+
+          // v[i+1] = w*1/H[i+1][i]
+          v[i+1] *= real_type(1.0)/H[i+1][i];
+
+          // update QR factorization
+          for(k=0; k<i; k++)
+            this->applyPlaneRotation(H[k][i],H[k+1][i],cs[k],sn[k]);
+
+          // compute new givens rotation
+          this->generatePlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+
+          // finish updating QR factorization
+          this->applyPlaneRotation(H[i][i],H[i+1][i],cs[i],sn[i]);
+          this->applyPlaneRotation(s[i],s[i+1],cs[i],sn[i]);
+
+          // norm of the residual is the last component of vector s
+          using std::abs;
+          norm = abs(s[i+1]);
+
+          // print current iteration statistics
+          if(_verbose > 1) {
+            this->printOutput(std::cout,j,norm,norm_old);
+          }
+
+          // udate the norm
+          norm_old = norm;
+
+          // check for convergence
+          if(Simd::allTrue(norm < static_cast<scalar_real_type>(reduction) * norm_0))
+            res.converged = true;
+
+        } // end inner for loop
+
+        // calculate update vector
+        tmp = 0.0;
+        this->update(tmp, i, H, s, w);
+        // and update current iterate
+        x += tmp;
+
+        // restart fGMRes if convergence was not achieved,
+        // i.e. linear residual has not reached desired reduction
+        // and if still j < _maxit (do not restart on last iteration)
+        if( res.converged != true && j < _maxit)
+        {
+          if (_verbose > 0)
+            std::cout << "=== fGMRes::restart" << std::endl;
+          // get rhs
+          v[0] = b;
+          // calculate new defect
+          _op->applyscaleadd(-1.0, x,v[0]); // b -= Ax;
+          // calculate preconditioned defect
+          norm = norm_old = _sp->norm(v[0]); // update the residual norm
+        }
+
+      } // end outer while loop
+
+      // post-process preconditioner
+      _prec->post(x);
+
+      // save solver statistics
+      res.iterations = j-1; // it has to be j-1!!!
+      res.reduction = static_cast<scalar_real_type>(Simd::max(norm/norm_0));
+      using std::pow;
+      res.conv_rate = pow(res.reduction,1.0/(j-1));
+      res.elapsed = watch.elapsed();
+
+      if(_verbose>0)
+        this->print_result(res);
+
+    }
+
+private:
+    using RestartedGMResSolver<X,Y>::_op;
+    using RestartedGMResSolver<X,Y>::_prec;
+    using RestartedGMResSolver<X,Y>::_sp;
+    using RestartedGMResSolver<X,Y>::_reduction;
+    using RestartedGMResSolver<X,Y>::_maxit;
+    using RestartedGMResSolver<X,Y>::_verbose;
+    using RestartedGMResSolver<X,Y>::_restart;
+  };
+
+
+  /**
    * @brief Generalized preconditioned conjugate gradient solver.
    *
    * A preconditioned conjugate gradient that allows
@@ -1356,7 +1565,7 @@ namespace Dune {
   private:
     using typename IterativeSolver<X,X>::scalar_real_type;
 
-    //! \bief field_type Allocator retrieved from domain type
+    //! \brief field_type Allocator retrieved from domain type
     using fAlloc = ReboundAllocatorType<X,field_type>;
 
   public:
@@ -1550,22 +1759,24 @@ namespace Dune {
     int _restart;
   };
 
-  /*! \brief Flexible conjugate gradient method
+  /*! \brief Accelerated flexible conjugate gradient method
 
      Flexible conjugate gradient method as in Y. Notay 'Flexible conjugate Gradients',
      SIAM J. Sci. Comput Vol. 22, No.4, pp. 1444-1460
 
+     This solver discard cyclic all old directions to speed up computing.
+     In exact arithmetic it is exactly the same as the GeneralizedPCGSolver,
+     but it is much faster, depending on the operator and dimension.
+     On the other hand for large mmax it uses noticeably more memory.
+
  */
   template<class X>
-  class FCGSolver : public IterativeSolver<X,X> {
+  class RestartedFCGSolver : public IterativeSolver<X,X> {
   public:
     using typename IterativeSolver<X,X>::domain_type;
     using typename IterativeSolver<X,X>::range_type;
     using typename IterativeSolver<X,X>::field_type;
     using typename IterativeSolver<X,X>::real_type;
-
-    // copy base class constructors
-    using IterativeSolver<X,X>::IterativeSolver;
 
   private:
     using typename IterativeSolver<X,X>::scalar_real_type;
@@ -1574,22 +1785,22 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
     /*!
-      \brief Constructor to initialize a FCG solver.
+      \brief Constructor to initialize a RestartedFCG solver.
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int, int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    FCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
-               scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
+    RestartedFCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
 
     /*!
-      \brief Constructor to initialize a FCG solver.
+      \brief Constructor to initialize a RestartedFCG solver.
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int,int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    FCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
-               scalar_real_type reduction, int maxit, int verbose, int mmax) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
+    RestartedFCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
+                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
 
@@ -1598,12 +1809,13 @@ namespace Dune {
 
      \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
 
-       \note Currently, the FCGSolver aborts when a NaN or infinite defect is
+       \note Currently, the RestartedFCGSolver aborts when a NaN or infinite defect is
              detected.  However, -ffinite-math-only (implied by -ffast-math)
              can inhibit a result from becoming NaN that really should be NaN.
              E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
              -ffast-math.
      */
+
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
       using rAlloc = ReboundAllocatorType<X,real_type>;
@@ -1620,14 +1832,7 @@ namespace Dune {
 
       real_type def0 = _sp->norm(b); // compute norm
 
-      if (!Simd::allTrue(isFinite(def0))) // check for inf or NaN
-      {
-        if (_verbose>0)
-          std::cout << "=== FCGSolver: abort due to infinite or NaN initial defect"
-                    << std::endl;
-        DUNE_THROW(SolverAbort, "FCGSolver: initial defect=" << Simd::io(def0)
-                                                             << " is infinite or NaN");
-      }
+      this->CheckSolverAbort(def0,0); // check for inf or NaN
 
       if (Simd::max(def0)<1E-30)         // convergence check
       {
@@ -1645,49 +1850,23 @@ namespace Dune {
 
       if (_verbose>0)             // printing
       {
-        std::cout << "=== FCGSolver" << std::endl;
-        if (_verbose>1) {
-          this->printHeader(std::cout);
-          this->printOutput(std::cout,0,def0);
-        }
+        this->printSolverHeader(def0);
       }
 
       // some local variables
       real_type def=def0;
       real_type alpha;
 
-      d[0] = 0;
-      _prec->apply(d[0], b);       // apply preconditioner
-
-      //saving interim values for future calculating
-      _op->apply(d[0], Ad[0]);                  // save Ad[0]
-      ddotAd[0]=_sp->dot(d[0], Ad[0]);         // save <d[0],Ad[0]>
-      alpha = _sp->dot(d[0], b)/ddotAd[0];    // <d[0],b>/<d,Ad[0]>
-
-      //update solution and defect
-      x.axpy(alpha, d[0]);
-      b.axpy(-alpha, Ad[0]);
-
-      // convergence test
-      real_type defnew = _sp->norm(b); // comp defect norm
-
-      if (_verbose > 1)             // print
-        this->printOutput(std::cout, 1, defnew, def);
-
-      def = defnew;               // update norm
-
       // the loop
-      int i=2;
+      int i=1;
+      int i_bounded=0;
       while(i<=_maxit && !res.converged) {
-        for (int i_bounded = 1; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
-          d[i_bounded] = 0;                 // reset search direction
+        for (; i_bounded <= _mmax && i<= _maxit; i_bounded++) {
+          d[i_bounded] = 0;                   // reset search direction
           _prec->apply(d[i_bounded], b);     // apply preconditioner
           w = d[i_bounded];                 // copy of current d[i]
-
           // orthogonalization with previous directions
-          for (int k = 0; k < i_bounded; k++) {
-            d[i_bounded].axpy( -_sp->dot(Ad[k], w)/ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
-          }
+          orthogonalizations(i_bounded,Ad,w,ddotAd,d);
 
           //saving interim values for future calculating
           _op->apply(d[i_bounded], Ad[i_bounded]);                    // save Ad[i]
@@ -1705,14 +1884,7 @@ namespace Dune {
             this->printOutput(std::cout, i, defnew, def);
 
           def = defnew;               // update norm
-          if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
-          {
-            if (_verbose > 0)
-              std::cout << "=== FCGSolver: abort due to infinite or NaN defect"
-                        << std::endl;
-            DUNE_THROW(SolverAbort, "FCGSolver: defect=" << Simd::io(def) <<
-                       " is infinite or NaN");
-          }
+          this->CheckSolverAbort(def,i); // check for inf or NaN
 
           if (Simd::allTrue(def<def0*_reduction) || Simd::max(def) < 1E-30)    // convergence check
           {
@@ -1721,10 +1893,8 @@ namespace Dune {
           }
           i++;
         }
-        //exchange first and last stored values
-        std::swap(Ad[0], Ad[_mmax]);
-        std::swap(d[0], d[_mmax]);
-        std::swap(ddotAd[0],ddotAd[_mmax]);
+        //restart: exchange first and last stored values
+        cycle(Ad,d,ddotAd,i_bounded);
       }
 
       //correct i which is wrong if convergence was not achieved.
@@ -1746,19 +1916,141 @@ namespace Dune {
                   << ", TIT=" << res.elapsed/i
                   << ", IT=" << i << std::endl;
       }
-
     }
 
   private:
-    int _mmax = 1;
+    //This function is called every iteration to orthogonalize against the last search directions
+    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) {
+      // The RestartedFCGSolver uses only values with lower array index;
+      for (int k = 0; k < i_bounded; k++) {
+        d[i_bounded].axpy(-_sp->dot(Ad[k], w) / ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
+      }
+    };
+
+    // This function is called every mmax iterations to handle limited array sizes.
+    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) {
+      // Reset loop index and exchange the first and last arrays
+      i_bounded = 1;
+      std::swap(Ad[0], Ad[_mmax]);
+      std::swap(d[0], d[_mmax]);
+      std::swap(ddotAd[0], ddotAd[_mmax]);
+    };
+
+    virtual void printSolverHeader(const real_type& def0) {
+      std::cout << "=== RestartedFCGSolver" << std::endl;
+      if (_verbose > 1) {
+        this->printHeader(std::cout);
+        this->printOutput(std::cout, 0, def0);
+      }
+    };
+
+    virtual void CheckSolverAbort(const real_type& defect, const int& i){
+      if (!Simd::allTrue(isFinite(defect))){ // check for inf or NaN
+        if(i==0) {
+          if (_verbose > 0)
+            std::cout << "=== RestartedFCGSolver: abort due to infinite or NaN initial defect" << std::endl;
+          DUNE_THROW(SolverAbort, "RestartedFCGSolver: initial defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+        else{
+          if (_verbose > 0)
+            std::cout << "=== RestartedFCGSolver: abort due to infinite or NaN defect" << std::endl;
+          DUNE_THROW(SolverAbort, "RestartedFCGSolver: defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+      }
+    };
 
   protected:
+    int _mmax;
     using IterativeSolver<X,X>::_op;
     using IterativeSolver<X,X>::_prec;
     using IterativeSolver<X,X>::_sp;
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
+  };
+
+  /*! \brief Complete flexible conjugate gradient method
+
+     This solver is a simple modification of the RestartedFCGSolver and, if possible, uses mmax old directions.
+     It uses noticably more memory, but provides more stability for preconditioner changes.
+
+  */
+  template<class X>
+  class CompleteFCGSolver : public RestartedFCGSolver<X> {
+  public:
+    using typename RestartedFCGSolver<X>::domain_type;
+    using typename RestartedFCGSolver<X>::range_type;
+    using typename RestartedFCGSolver<X>::field_type;
+    using typename RestartedFCGSolver<X>::real_type;
+
+    // copy base class constructors
+    using RestartedFCGSolver<X>::RestartedFCGSolver;
+
+    // don't shadow four-argument version of apply defined in the base class
+    using RestartedFCGSolver<X>::apply;
+
+    // just a minor part of the RestartedFCGSolver apply method will be modified
+    virtual void apply (X& x, X& b, InverseOperatorResult& res) override {
+      // reset limiter of orthogonalization loop
+      _k_limit = 0;
+      this->RestartedFCGSolver<X>::apply(x,b,res);
+    };
+
+  private:
+    virtual void printSolverHeader(const real_type& def0) override {
+      std::cout << "=== CompleteFCGSolver" << std::endl;
+      if (_verbose > 1) {
+        this->printHeader(std::cout);
+        this->printOutput(std::cout, 0, def0);
+      }
+    };
+
+    virtual void CheckSolverAbort(const real_type& defect, const int& i) override {
+      if (!Simd::allTrue(isFinite(defect))){ // check for inf or NaN
+        if(i==0) {
+          if (_verbose > 0)
+            std::cout << "=== CompleteFCGSolver : abort due to infinite or NaN initial defect" << std::endl;
+          DUNE_THROW(SolverAbort, "CompleteFCGSolver : initial defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+        else{
+          if (_verbose > 0)
+            std::cout << "=== CompleteFCGSolver : abort due to infinite or NaN defect" << std::endl;
+          DUNE_THROW(SolverAbort, "CompleteFCGSolver : defect=" << Simd::io(defect) << " is infinite or NaN");
+        }
+      }
+    };
+
+    // This function is called every iteration to orthogonalize against the last search directions.
+    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) override {
+      // This FCGSolver uses values with higher array indexes too, if existent.
+      for (int k = 0; k < _k_limit; k++) {
+        if(i_bounded!=k)
+          d[i_bounded].axpy(-_sp->dot(Ad[k], w) / ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
+      }
+      // The loop limit increase, if array is not completely filled.
+      if(_k_limit<=i_bounded)
+        _k_limit++;
+
+    };
+
+    // This function is called every mmax iterations to handle limited array sizes.
+    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) override {
+      // Only the loop index i_bounded return to 0, if it reached mmax.
+      i_bounded = 0;
+      // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.
+      _k_limit = Ad.size();
+    };
+
+    int _k_limit = 0;
+
+  protected:
+    using RestartedFCGSolver<X>::_mmax;
+    using RestartedFCGSolver<X>::_op;
+    using RestartedFCGSolver<X>::_prec;
+    using RestartedFCGSolver<X>::_sp;
+    using RestartedFCGSolver<X>::_reduction;
+    using RestartedFCGSolver<X>::_maxit;
+    using RestartedFCGSolver<X>::_verbose;
   };
   /** @} end documentation */
 

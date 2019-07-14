@@ -4,6 +4,7 @@
 #define LAPLACIAN_HH
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 template<class B, class Alloc>
 void setupSparsityPattern(Dune::BCRSMatrix<B,Alloc>& A, int N)
@@ -43,15 +44,16 @@ void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A, int N)
 
   setupSparsityPattern(A,N);
 
-  B diagonal(static_cast<FieldType>(0)), bone(static_cast<FieldType>(0)),
-  beps(static_cast<FieldType>(0));
-  for(typename B::RowIterator b = diagonal.begin(); b !=  diagonal.end(); ++b)
-    b->operator[](b.index())=4;
+  B diagonal(static_cast<FieldType>(0)), bone(static_cast<FieldType>(0));
 
+  auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
+    auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
+    for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+      (*rowIt)[rowIt.index()] = value;
+  };
 
-  for(typename B::RowIterator b=bone.begin(); b !=  bone.end(); ++b)
-    b->operator[](b.index())=-1.0;
-
+  setDiagonal(diagonal, 4.0);
+  setDiagonal(bone, -1.0);
 
   for (typename Dune::BCRSMatrix<B,Alloc>::RowIterator i = A.begin(); i != A.end(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field

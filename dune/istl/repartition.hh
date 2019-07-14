@@ -783,7 +783,7 @@ namespace Dune
   template<class G, class T1, class T2>
   bool buildCommunication(const G& graph, std::vector<int>& realparts,
                           Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
-                          Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                          std::shared_ptr<Dune::OwnerOverlapCopyCommunication<T1,T2>>& outcomm,
                           RedistributeInterface& redistInf,
                           bool verbose=false);
 #if HAVE_PARMETIS
@@ -855,7 +855,7 @@ namespace Dune
   template<class M, class T1, class T2>
   bool commGraphRepartition(const M& mat, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
                             Metis::idx_t nparts,
-                            Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                            std::shared_ptr<Dune::OwnerOverlapCopyCommunication<T1,T2>>& outcomm,
                             RedistributeInterface& redistInf,
                             bool verbose=false)
   {
@@ -1264,7 +1264,7 @@ namespace Dune
    */
   template<class G, class T1, class T2>
   bool graphRepartition(const G& graph, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm, Metis::idx_t nparts,
-                        Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                        std::shared_ptr<Dune::OwnerOverlapCopyCommunication<T1,T2>>& outcomm,
                         RedistributeInterface& redistInf,
                         bool verbose=false)
   {
@@ -1487,7 +1487,7 @@ namespace Dune
   template<class G, class T1, class T2>
   bool buildCommunication(const G& graph,
                           std::vector<int>& setPartition, Dune::OwnerOverlapCopyCommunication<T1,T2>& oocomm,
-                          Dune::OwnerOverlapCopyCommunication<T1,T2>*& outcomm,
+                          std::shared_ptr<Dune::OwnerOverlapCopyCommunication<T1,T2>>& outcomm,
                           RedistributeInterface& redistInf,
                           bool verbose)
   {
@@ -1758,7 +1758,7 @@ namespace Dune
     MPI_Comm outputComm;
 
     MPI_Comm_split(oocomm.communicator(), color, oocomm.communicator().rank(), &outputComm);
-    outcomm = new OOComm(outputComm,SolverCategory::category(oocomm),true);
+    outcomm = std::make_shared<OOComm>(outputComm,SolverCategory::category(oocomm),true);
 
     // translate neighbor ranks.
     int newrank=outcomm->communicator().rank();
@@ -1919,7 +1919,7 @@ namespace Dune
 #else
   template<class G, class P,class T1, class T2, class R>
   bool graphRepartition(const G& graph, P& oocomm, int nparts,
-                        P*& outcomm,
+                        std::shared_ptr<P>& outcomm,
                         R& redistInf,
                         bool v=false)
   {
@@ -1930,7 +1930,7 @@ namespace Dune
 
   template<class G, class P,class T1, class T2, class R>
   bool commGraphRepartition(const G& graph, P& oocomm, int nparts,
-                            P*& outcomm,
+                            std::shared_ptr<P>& outcomm,
                             R& redistInf,
                             bool v=false)
   {

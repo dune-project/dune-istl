@@ -7,6 +7,7 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/plocalindex.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 
@@ -20,11 +21,6 @@ void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,n>& indices, int ove
 
 template<class M>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end);
-
-
-template<class M, class G, class L, class C, int n>
-M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices,
-                     const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps=1.0);
 
 
 template<class M, class G, class L, int s>
@@ -83,17 +79,16 @@ void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int 
   typedef typename M::block_type Block;
   Block dval(0), bone(0), bmone(0), beps(0);
 
-  for(typename Block::RowIterator b = dval.begin(); b !=  dval.end(); ++b)
-    b->operator[](b.index())=2.0+2.0*eps;
+  auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
+    auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
+    for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+      (*rowIt)[rowIt.index()] = value;
+  };
 
-  for(typename Block::RowIterator b=bone.begin(); b !=  bone.end(); ++b)
-    b->operator[](b.index())=1.0;
-
-  for(typename Block::RowIterator b=bmone.begin(); b !=  bmone.end(); ++b)
-    b->operator[](b.index())=-1.0;
-
-  for(typename Block::RowIterator b=beps.begin(); b !=  beps.end(); ++b)
-    b->operator[](b.index())=-eps;
+  setDiagonal(dval, 2.0+2.0*eps);
+  setDiagonal(bone, 1.0);
+  setDiagonal(bmone, -1.0);
+  setDiagonal(beps, -eps);
 
   int n = overlapEnd-overlapStart;
   typedef typename M::ColIterator ColIterator;
@@ -153,12 +148,15 @@ void setBoundary(V& lhs, V& rhs, const G& N)
         lhs[j*N+i]=rhs[j*N+i]=0;
 }
 
-template<class M, class G, class L, class C, int s>
-M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::CollectiveCommunication<C>& p, int *nout, typename M::block_type::value_type eps)
+/**
+ * \tparam M A matrix type
+ */
+template<class MatrixEntry, class G, class L, class C, int s>
+Dune::BCRSMatrix<MatrixEntry> setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::CollectiveCommunication<C>& p, int *nout, typename Dune::BCRSMatrix<MatrixEntry>::field_type eps=1.0)
 {
   int procs=p.size(), rank=p.rank();
 
-  typedef M BCRSMat;
+  using BCRSMat = Dune::BCRSMatrix<MatrixEntry>;
 
   // calculate size of local matrix in the distributed direction
   int start, end, overlapStart, overlapEnd;

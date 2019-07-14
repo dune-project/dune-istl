@@ -75,7 +75,7 @@ namespace Dune
     };
 
     /**
-     * @brief Parameters needed for the aggregation process,
+     * @brief Parameters needed for the aggregation process
      */
     class AggregationParameters :
       public DependencyParameters
@@ -118,7 +118,7 @@ namespace Dune
       }
 
       /**
-       * @brief Sets reasonable default values for an aisotropic problem.
+       * @brief Sets reasonable default values for an anisotropic problem.
        *
        * Reasonable means that we should end up with cube aggregates with
        * sides of diameter 2 and sides in one dimension that are longer
@@ -133,7 +133,7 @@ namespace Dune
         maxDistance_+=dim-1;
       }
       /**
-       * @brief Get the maximal distance allowed between to nodes in a aggregate.
+       * @brief Get the maximal distance allowed between two nodes in a aggregate.
        *
        * The distance between two nodes in a aggregate is the minimal number of edges
        * it takes to travel from one node to the other without leaving the aggregate.
@@ -142,7 +142,7 @@ namespace Dune
       std::size_t maxDistance() const { return maxDistance_;}
 
       /**
-       * @brief Set the maximal distance allowed between to nodes in a aggregate.
+       * @brief Set the maximal distance allowed between two nodes in a aggregate.
        *
        * The distance between two nodes in a aggregate is the minimal number of edges
        * it takes to travel from one node to the other without leaving the aggregate.
