@@ -450,7 +450,7 @@ namespace Dune
   {
     for(size_type i=0; i<n; i++) {
       for(size_type j=0; j<m; j++) {
-        assert(colindex*m+j<cols-1 || (size_type)marker[colindex*m+j]<mat->colstart[colindex*m+j+1]);
+        assert(colindex*m+j<cols-1 || (size_type)marker[colindex*m+j]<(size_type)mat->colstart[colindex*m+j+1]);
         assert((size_type)marker[colindex*m+j]<mat->Nnz_);
         mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
         mat->values[marker[colindex*m+j]]=Impl::asMatrix(*col)[i][j];
