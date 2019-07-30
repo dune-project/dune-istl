@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <ostream>
 #include <string>
+#include <functional>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
@@ -300,8 +301,9 @@ namespace Dune
       return _category;
     }
 
-    virtual std::string name() const{
-      return "IterativeSolver";
+    std::string name() const{
+      std::string name = className(*this);
+      return name.substr(0, name.find("<"));
     }
 
       /*!

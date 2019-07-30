@@ -61,11 +61,6 @@ namespace Dune {
     using typename IterativeSolver<X,X>::field_type;
     using typename IterativeSolver<X,X>::real_type;
 
-    virtual std::string name() const override
-    {
-      return "LoopSolver";
-    }
-
     // copy base class constructors
     using IterativeSolver<X,X>::IterativeSolver;
 
@@ -135,11 +130,6 @@ namespace Dune {
 
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
-
-    virtual std::string name() const override
-    {
-      return "GradientSolver";
-    }
 
     /*!
        \brief Apply inverse operator.
@@ -249,11 +239,6 @@ namespace Dune {
         condition_estimate_ = false;
         std::cerr << "WARNING: Condition estimate was disabled. It is only available for double and float field types!" << std::endl;
       }
-    }
-
-    virtual std::string name() const override
-    {
-      return "CGSolver";
     }
 
     /*!
@@ -421,11 +406,6 @@ namespace Dune {
 
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X, double>::apply;
-
-    virtual std::string name() const override
-    {
-      return "BiCGSTABSolver";
-    }
 
     /*!
        \brief Apply inverse operator.
@@ -607,11 +587,6 @@ namespace Dune {
 
     // don't shadow four-argument version of apply defined in the base class
     using IterativeSolver<X,X>::apply;
-
-    virtual std::string name() const override
-    {
-      return "MINRESSolver";
-    }
 
     /*!
        \brief Apply inverse operator.
@@ -849,11 +824,6 @@ namespace Dune {
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
-
-    virtual std::string name() const override
-    {
-      return "RestartedGMResSolver";
-    }
 
     /*!
        \brief Apply inverse operator.
@@ -1107,11 +1077,6 @@ namespace Dune {
     // don't shadow four-argument version of apply defined in the base class
     using RestartedGMResSolver<X,Y>::apply;
 
-    virtual std::string name() const override
-    {
-      return "RestartedFlexibleGMResSolver";
-    }
-
     /*!
        \brief Apply inverse operator.
 
@@ -1299,11 +1264,6 @@ private:
       _restart(restart)
     {}
 
-    virtual std::string name() const override
-    {
-      return "GeneralizedPCGSolver";
-    }
-
     /*!
        \brief Apply inverse operator.
 
@@ -1451,12 +1411,6 @@ private:
     {
     }
 
-
-    virtual std::string name() const override
-    {
-      return "RestartedFCGSolver";
-    }
-
     /*!
      \brief Apply inverse operator.
 
@@ -1583,11 +1537,6 @@ private:
       _k_limit = 0;
       this->RestartedFCGSolver<X>::apply(x,b,res);
     };
-
-    virtual std::string name() const override
-    {
-      return "CompleteFCGSolver";
-    }
 
   private:
     // This function is called every iteration to orthogonalize against the last search directions.
