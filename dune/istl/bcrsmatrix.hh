@@ -20,6 +20,8 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 /*! \file
  * \brief Implementation of the BCRSMatrix class
@@ -1576,25 +1578,17 @@ namespace Dune {
                                  "Size mismatch: M: " << N() << "x" << M() << " y: " << y.N());
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            y[i.index()]=0;
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[i.index()] += id(*j) * x[j.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            y[i.index()]=0;
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).umv(x[j.index()],y[i.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        y[i.index()]=0;
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).umv(xj, yi);
+        }
+      }
     }
 
     //! y += A x
@@ -1608,23 +1602,16 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[i.index()] += id(*j) * x[j.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).umv(x[j.index()],y[i.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).umv(xj,yi);
+        }
+      }
     }
 
     //! y -= A x
@@ -1638,23 +1625,16 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[i.index()] -= id(*j) * x[j.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).mmv(x[j.index()],y[i.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).mmv(xj,yi);
+        }
+      }
     }
 
     //! y += alpha A x
@@ -1668,23 +1648,16 @@ namespace Dune {
       if (y.N()!=N()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[i.index()] += alpha * id(*j) * x[j.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).usmv(alpha,x[j.index()],y[i.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xj = Impl::asVector(x[j.index()]);
+          auto&& yi = Impl::asVector(y[i.index()]);
+          Impl::asMatrix(*j).usmv(alpha,xj,yi);
+        }
+      }
     }
 
     //! y = A^T x
@@ -1713,23 +1686,16 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[j.index()] += id(*j) * x[i.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).umtv(x[i.index()],y[j.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).umtv(xi,yj);
+        }
+      }
     }
 
     //! y -= A^T x
@@ -1741,23 +1707,16 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[j.index()] -= id(*j) * x[i.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).mmtv(x[i.index()],y[j.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).mmtv(xi,yj);
+        }
+      }
     }
 
     //! y += alpha A^T x
@@ -1771,23 +1730,16 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[j.index()] += alpha * id(*j) * x[i.index()];
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).usmtv(alpha,x[i.index()],y[j.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).usmtv(alpha,xi,yj);
+        }
+      }
     }
 
     //! y += A^H x
@@ -1801,24 +1753,16 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[j.index()] += conjugateComplex(id(*j)) * x[i.index()];
-
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).umhv(x[i.index()],y[j.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).umhv(xi,yj);
+        }
+      }
     }
 
     //! y -= A^H x
@@ -1832,24 +1776,16 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[j.index()] -= conjugateComplex(id(*j)) * x[i.index()];
-
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).mmhv(x[i.index()],y[j.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).mmhv(xi,yj);
+        }
+      }
     }
 
     //! y += alpha A^H x
@@ -1863,24 +1799,16 @@ namespace Dune {
       if (y.N()!=M()) DUNE_THROW(BCRSMatrixError,"index out of range");
 #endif
       ConstRowIterator endi=end();
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              y[j.index()] += alpha * conjugateComplex(id(*j)) * x[i.index()];
-
-          }
-        },
-        [&](auto id) {
-          for (ConstRowIterator i=this->begin(); i!=endi; ++i)
-          {
-            ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-              id(*j).usmhv(alpha,x[i.index()],y[j.index()]);
-          }
-        });
+      for (ConstRowIterator i=this->begin(); i!=endi; ++i)
+      {
+        ConstColIterator endj = (*i).end();
+        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+        {
+          auto&& xi = Impl::asVector(x[i.index()]);
+          auto&& yj = Impl::asVector(y[j.index()]);
+          Impl::asMatrix(*j).usmhv(alpha,xi,yj);
+        }
+      }
     }
 
 
@@ -1896,17 +1824,9 @@ namespace Dune {
 
       typename FieldTraits<field_type>::real_type sum=0;
 
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto&& row : (*this))
-            for (auto&& entry : row)
-              sum += fvmeta::abs2(entry);
-        },
-        [&](auto id) {
-          for (auto&& row : (*this))
-            for (auto&& entry : row)
-              sum += id(entry).frobenius_norm2();
-        });
+      for (auto&& row : (*this))
+        for (auto&& entry : row)
+          sum += Impl::asMatrix(entry).frobenius_norm2();
 
       return sum;
     }
@@ -1931,7 +1851,7 @@ namespace Dune {
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm();
+          sum += Impl::asMatrix(y).infinity_norm();
         norm = max(sum, norm);
       }
       return norm;
@@ -1951,7 +1871,7 @@ namespace Dune {
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm_real();
+          sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
       }
       return norm;
@@ -1969,25 +1889,13 @@ namespace Dune {
 
       real_type norm = 0;
       real_type isNaN = 1;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += abs(id(y));
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += id(y).infinity_norm();
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        });
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += Impl::asMatrix(y).infinity_norm();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
 
       return norm * (isNaN / isNaN);
     }
@@ -2004,25 +1912,14 @@ namespace Dune {
 
       real_type norm = 0;
       real_type isNaN = 1;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += fvmeta::absreal(y);
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += id(y).infinity_norm_real();
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        });
+
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += Impl::asMatrix(y).infinity_norm_real();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
 
       return norm * (isNaN / isNaN);
     }

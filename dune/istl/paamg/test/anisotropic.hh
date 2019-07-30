@@ -7,6 +7,7 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/plocalindex.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 
@@ -78,26 +79,16 @@ void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int 
   typedef typename M::block_type Block;
   Block dval(0), bone(0), bmone(0), beps(0);
 
-  Dune::Hybrid::ifElse(Dune::IsNumber<Block>(),
-    [&](auto id) {
-      dval = 2.0+2.0*eps;
-      bone = 1.0;
-      bmone = -1.0;
-      beps = -eps;
-    },
-    [&](auto id) {
-      for (auto b = id(dval).begin(); b != id(dval).end(); ++b)
-        (*b)[b.index()] = 2.0+2.0*eps;
+  auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
+    auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
+    for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+      (*rowIt)[rowIt.index()] = value;
+  };
 
-      for (auto b = id(bone).begin(); b != id(bone).end(); ++b)
-        (*b)[b.index()] = 1.0;
-
-      for (auto b = id(bmone).begin(); b != id(bmone).end(); ++b)
-        (*b)[b.index()] = -1.0;
-
-      for (auto b = id(beps).begin(); b != id(beps).end(); ++b)
-        (*b)[b.index()] = -eps;
-    });
+  setDiagonal(dval, 2.0+2.0*eps);
+  setDiagonal(bone, 1.0);
+  setDiagonal(bmone, -1.0);
+  setDiagonal(beps, -eps);
 
   int n = overlapEnd-overlapStart;
   typedef typename M::ColIterator ColIterator;

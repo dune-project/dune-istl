@@ -18,10 +18,10 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/hybridutilities.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/scalarvectorview.hh>
 
 #include "basearray.hh"
 #include "istlexception.hh"
@@ -56,30 +56,6 @@ namespace Imp {
     {
       return 0;
     }
-
-    // Interpret a scalar as a length-1 vector
-    static FieldVector<B,1>& toVector(B& value)
-    {
-      return *reinterpret_cast<FieldVector<B,1>*>(&value);
-    }
-
-    // Interpret a scalar as a length-1 vector
-    static const FieldVector<B,1>& toVector(const B& value)
-    {
-      return *static_cast<FieldVector<B,1>*>(&value);
-    }
-
-    // Interpret a scalar as a 1x1 matrix
-    static FieldMatrix<B,1,1>& toMatrix(B& value)
-    {
-      return *reinterpret_cast<FieldMatrix<B,1,1>*>(&value);
-    }
-
-    // Interpret a scalar as a 1x1 matrix
-    static const FieldMatrix<B,1,1>& toMatrix(const B& value)
-    {
-      return *reinterpret_cast<const FieldMatrix<B,1,1>*>(&value);
-    }
   };
 
   template <class B>
@@ -91,30 +67,6 @@ namespace Imp {
     static constexpr unsigned int blockLevel()
     {
       return B::blocklevel;
-    }
-
-    // This method does nothing: only its counterpart for scalar values does something
-    static B& toVector(B& value)
-    {
-      return value;
-    }
-
-    // This method does nothing: only its counterpart for scalar values does something
-    static const B& toVector(const B& value)
-    {
-      return value;
-    }
-
-    // This method does nothing: only its counterpart for scalar values does something
-    static B& toMatrix(B& value)
-    {
-      return value;
-    }
-
-    // This method does nothing: only its counterpart for scalar values does something
-    static const B& toMatrix(const B& value)
-    {
-      return value;
     }
   };
 
@@ -219,15 +171,8 @@ namespace Imp {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            (*this)[i] += a*id(y[i]);
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            id((*this)[i]).axpy(a,id(y[i]));
-        });
+      for (size_type i=0; i<this->n; ++i)
+        Impl::asVector((*this)[i]).axpy(a,Impl::asVector(y[i]));
 
       return *this;
     }
@@ -270,16 +215,8 @@ namespace Imp {
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
 #endif
 
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          using namespace std;
-          for (size_type i=0; i<this->n; ++i)
-            sum += Dune::dot(id((*this)[i]),y[i]);
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            sum += id((*this)[i]).dot(y[i]);
-        });
+      for (size_type i=0; i<this->n; ++i)
+        sum += Impl::asVector((*this)[i]).dot(Impl::asVector(y[i]));
 
       return sum;
     }
@@ -290,16 +227,8 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type one_norm () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          using namespace std;
-          for (size_type i=0; i<this->n; ++i)
-            sum += abs(id((*this)[i]));
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            sum += id((*this)[i]).one_norm();
-        });
+      for (size_type i=0; i<this->n; ++i)
+        sum += Impl::asVector((*this)[i]).one_norm();
       return sum;
     }
 
@@ -307,15 +236,8 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type one_norm_real () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            sum += fvmeta::absreal((*this)[i]);
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            sum += id((*this)[i]).one_norm_real();
-        });
+      for (size_type i=0; i<this->n; ++i)
+        sum += Impl::asVector((*this)[i]).one_norm_real();
       return sum;
     }
 
@@ -330,15 +252,8 @@ namespace Imp {
     typename FieldTraits<field_type>::real_type two_norm2 () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            sum += fvmeta::abs2(id((*this)[i]));
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->n; ++i)
-            sum += id((*this)[i]).two_norm2();
-        });
+      for (size_type i=0; i<this->n; ++i)
+        sum += Impl::asVector((*this)[i]).two_norm2();
       return sum;
     }
 
@@ -350,20 +265,10 @@ namespace Imp {
       using std::max;
 
       real_type norm = 0;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            using std::abs;
-            real_type const a = abs(x);
-            norm = max(a, norm);
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type const a = x.infinity_norm();
-            norm = max(a, norm);
-          }
-        });
+      for (auto const &xi : *this) {
+        real_type const a = Impl::asVector(xi).infinity_norm();
+        norm = max(a, norm);
+      }
       return norm;
     }
 
@@ -375,19 +280,10 @@ namespace Imp {
       using std::max;
 
       real_type norm = 0;
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type const a = fvmeta::absreal(x);
-            norm = max(a, norm);
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type const a = x.infinity_norm_real();
-            norm = max(a, norm);
-          }
-        });
+      for (auto const &xi : *this) {
+        real_type const a = Impl::asVector(xi).infinity_norm_real();
+        norm = max(a, norm);
+      }
       return norm;
     }
 
@@ -402,23 +298,11 @@ namespace Imp {
       real_type norm = 0;
       real_type isNaN = 1;
 
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            using std::abs;
-            real_type const a = abs(x);
-            norm = max(a, norm);
-            isNaN += a;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type const a = id(x).infinity_norm();
-            norm = max(a, norm);
-            isNaN += a;
-          }
-        });
-
+      for (auto const &xi : *this) {
+        real_type const a = Impl::asVector(xi).infinity_norm();
+        norm = max(a, norm);
+        isNaN += a;
+      }
       return norm * (isNaN / isNaN);
     }
 
@@ -432,21 +316,11 @@ namespace Imp {
       real_type norm = 0;
       real_type isNaN = 1;
 
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type const a = fvmeta::absreal(x);
-            norm = max(a, norm);
-            isNaN += a;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type const a = id(x).infinity_norm_real();
-            norm = max(a, norm);
-            isNaN += a;
-          }
-        });
+      for (auto const &xi : *this) {
+        real_type const a = Impl::asVector(xi).infinity_norm_real();
+        norm = max(a, norm);
+        isNaN += a;
+      }
 
       return norm * (isNaN / isNaN);
     }
@@ -464,14 +338,8 @@ namespace Imp {
     {
       size_type d=0;
 
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          d = id(this)->n;
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->n; i++)
-            d += id(*this)[i].dim();
-        });
+      for (size_type i=0; i<this->n; i++)
+        d += Impl::asVector((*this)[i]).dim();
 
       return d;
     }
@@ -1006,15 +874,8 @@ namespace Imp {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (!includesindexset(y)) DUNE_THROW(ISTLError,"index set mismatch");
 #endif
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          for (size_type i=0; i<y.n; ++i)
-            (this->operator[](y.j[i])) += a * y.p[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<y.n; ++i)
-            id(this->operator[](y.j[i])).axpy(a,y.p[i]);
-        });
+      for (size_type i=0; i<y.n; ++i)
+        Impl::asVector((*this)[y.j[i]]).axpy(a,Impl::asVector(y.p[i]));
       return *this;
     }
 

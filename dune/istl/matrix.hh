@@ -12,6 +12,8 @@
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/istlexception.hh>
@@ -785,22 +787,15 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++) {
-            y[i]=0;
-            for (size_type j=0; j<cols_; j++)
-              y[i] += id((*this)[i][j]) * x[j];
-          }
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++) {
-            y[i]=0;
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).umv(x[j], y[i]);
-          }
-        });
+      for (size_type i=0; i<data_.N(); i++) {
+        y[i]=0;
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).umv(xj, yi);
+        }
+      }
     }
 
     //! y = A^T x
@@ -811,7 +806,6 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
 #endif
-
       for(size_type i=0; i<y.N(); ++i)
         y[i]=0;
       umtv(x,y);
@@ -825,18 +819,13 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[i] += id((*this)[i][j]) * x[j];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).umv(x[j], y[i]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).umv(xj, yi);
+        }
     }
 
     //! y -= A x
@@ -847,17 +836,13 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[i] -= id((*this)[i][j]) * x[j];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).mmv(x[j], y[i]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).mmv(xj, yi);
+        }
     }
 
     /** \brief \f$ y += \alpha A x \f$ */
@@ -868,18 +853,13 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[i] += alpha * id((*this)[i][j]) * x[j];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).usmv(alpha, x[j], y[i]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).usmv(alpha, xj, yi);
+        }
     }
 
     //! y += A^T x
@@ -890,17 +870,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[j] += id((*this)[i][j]) * x[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).umtv(x[i], y[j]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).umtv(xi, yj);
+        }
     }
 
     //! y -= A^T x
@@ -911,17 +887,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[j] -= id((*this)[i][j]) * x[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).mmtv(x[i], y[j]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).mmtv(xi, yj);
+        }
     }
 
     //! y += alpha A^T x
@@ -932,17 +904,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[j] += alpha * id((*this)[i][j]) * x[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).usmtv(alpha, x[i], y[j]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).usmtv(alpha, xi, yj);
+        }
     }
 
     //! y += A^H x
@@ -953,18 +921,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[j] += conjugateComplex(id((*this)[i][j])) * x[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).umhv(x[i],y[j]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).umhv(xi,yj);
+        }
     }
 
     //! y -= A^H x
@@ -975,18 +938,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[j] -= conjugateComplex(id((*this)[i][j])) * x[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).mmhv(x[i],y[j]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).mmhv(xi,yj);
+        }
     }
 
     //! y += alpha A^H x
@@ -997,18 +955,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              y[j] += alpha * conjugateComplex(id((*this)[i][j])) * x[i];
-        },
-        [&](auto id) {
-          for (size_type i=0; i<data_.N(); i++)
-            for (size_type j=0; j<cols_; j++)
-              id((*this)[i][j]).usmhv(alpha,x[i],y[j]);
-        });
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).usmhv(alpha,xi,yj);
+        }
     }
 
     //===== norms
@@ -1023,18 +976,9 @@ namespace MatrixImp
     typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
       typename FieldTraits<field_type>::real_type sum=0;
-
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (size_type i=0; i<this->N(); i++)
-            for (size_type j=0; j<this->M(); j++)
-              sum += fvmeta::abs2(data_[i][j]);
-        },
-        [&](auto id) {
-          for (size_type i=0; i<this->N(); i++)
-            for (size_type j=0; j<this->M(); j++)
-              sum += id(data_[i][j]).frobenius_norm2();
-        });
+      for (size_type i=0; i<this->N(); i++)
+        for (size_type j=0; j<this->M(); j++)
+          sum += Impl::asMatrix(data_[i][j]).frobenius_norm2();
       return sum;
     }
 
@@ -1046,25 +990,13 @@ namespace MatrixImp
       using std::max;
 
       real_type norm = 0;
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += abs(y);
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += id(y).infinity_norm();
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        });
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += Impl::asMatrix(y).infinity_norm();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
 
       return norm;
     }
@@ -1080,7 +1012,7 @@ namespace MatrixImp
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm_real();
+          sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
       }
       return norm;
@@ -1095,25 +1027,13 @@ namespace MatrixImp
 
       real_type norm = 0;
       real_type isNaN = 1;
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += abs(id(y));
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += id(y).infinity_norm();
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        });
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += Impl::asMatrix(y).infinity_norm();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
 
       return norm * (isNaN / isNaN);
     }
@@ -1127,25 +1047,13 @@ namespace MatrixImp
 
       real_type norm = 0;
       real_type isNaN = 1;
-      Hybrid::ifElse(IsNumber<T>(),
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += fvmeta::absreal(y);
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        },
-        [&](auto id) {
-          for (auto const &x : *this) {
-            real_type sum = 0;
-            for (auto const &y : x)
-              sum += id(y).infinity_norm_real();
-            norm = max(sum, norm);
-            isNaN += sum;
-          }
-        });
+      for (auto const &x : *this) {
+        real_type sum = 0;
+        for (auto const &y : x)
+          sum += Impl::asMatrix(y).infinity_norm_real();
+        norm = max(sum, norm);
+        isNaN += sum;
+      }
 
       return norm * (isNaN / isNaN);
     }

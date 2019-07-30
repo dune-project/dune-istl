@@ -10,6 +10,7 @@
 #include <string>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include "solvercategory.hh"
 
@@ -140,24 +141,27 @@ namespace Dune {
     typedef typename X::field_type field_type;
 
     //! constructor: just store a reference to a matrix
-    explicit MatrixAdapter (const M& A) : _A_(A) {}
+    explicit MatrixAdapter (const M& A) : _A_(stackobject_to_shared_ptr(A)) {}
+
+    //! constructor: store an std::shared_ptr to a matrix
+    explicit MatrixAdapter (std::shared_ptr<const M> A) : _A_(A) {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
     virtual void apply (const X& x, Y& y) const
     {
-      _A_.mv(x,y);
+      _A_->mv(x,y);
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
     {
-      _A_.usmv(alpha,x,y);
+      _A_->usmv(alpha,x,y);
     }
 
     //! get matrix via *
     virtual const M& getmat () const
     {
-      return _A_;
+      return *_A_;
     }
 
     //! Category of the solver (see SolverCategory::Category)
@@ -167,7 +171,7 @@ namespace Dune {
     }
 
   private:
-    const M& _A_;
+    const std::shared_ptr<const M> _A_;
   };
 
   /** @} end documentation */

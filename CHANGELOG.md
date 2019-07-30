@@ -1,5 +1,8 @@
 # Master (will become release 2.7)
 
+- `BDMatrix` objects now have the method `solve`, which implements that
+  canonical way to solve block-diagonal linear systems.
+
 - Deprecated the preconditioner implementations `SeqILU0` and `SeqILUn`.
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
@@ -27,6 +30,15 @@
   change is completely backward-compatible.
 
 - Added a right-preconditioned flexible restarted GMRes solver
+
+- The UMFPack binding use the long int functions to compute larger systems.
+  With the \*_dl_\* versions instead of the \*_di_\* versions UMFPACK will not
+  have a memory limit of just 2 GiB.
+
+- Deprecated support for SuperLU 4.x. It will be removed after Dune 2.7.
+
+- The interface methods `dot()` and `norm()` of ScalarProduct are now `const`. You will
+  have to adjust the method signatures in your own scalar product implementations.
 
 # Release 2.6
 

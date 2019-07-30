@@ -4,6 +4,8 @@
 #define DUNE_ISTL_BTDMATRIX_HH
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
 /** \file
@@ -120,13 +122,9 @@ namespace Dune {
 
       // special handling for 1x1 matrices.  The generic algorithm doesn't work for them
       if (this->N()==1) {
-        Hybrid::ifElse(IsNumber<B>(),
-          [&](auto id) {
-            x[0] = id(rhs[0]) / id((*this)[0][0]);
-          },
-          [&](auto id) {
-            id(*this)[0][0].solve(x[0],rhs[0]);
-          });
+        auto&& x0 = Impl::asVector(x[0]);
+        auto&& rhs0 = Impl::asVector(rhs[0]);
+        Impl::asMatrix((*this)[0][0]).solve(x0, rhs0);
         return;
       }
 
@@ -138,95 +136,48 @@ namespace Dune {
 
       /* Modify the coefficients. */
       block_type a_00_inv = (*this)[0][0];
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          a_00_inv = 1.0 / id(a_00_inv);
-        },
-        [&](auto id) {
-          id(a_00_inv).invert();
-        });
+      Impl::asMatrix(a_00_inv).invert();
 
-      //c[0] /= (*this)[0][0];	/* Division by zero risk. */
-      block_type c_0_tmp = c[0];
-      Hybrid::ifElse(IsNumber<B>(), /* Division by zero risk. */
-        [&](auto id) {
-          c[0] = a_00_inv * id(c_0_tmp);
-        },
-        [&](auto id) {
-          FMatrixHelp::multMatrix(id(a_00_inv), id(c_0_tmp), id(c[0]));
-        });
+      //c[0] /= (*this)[0][0]; /* Division by zero risk. */
+      block_type tmp = a_00_inv;
+      Impl::asMatrix(tmp).rightmultiply(Impl::asMatrix(c[0]));
+      c[0] = tmp;
 
       // d = a^{-1} d        /* Division by zero would imply a singular matrix. */
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto id) {
-          d[0] *= id(a_00_inv);
-        },
-        [&](auto id) {
-          auto d_0_tmp = d[0];
-          id(a_00_inv).mv(d_0_tmp,d[0]);
-        });
+      auto d_0_tmp = d[0];
+      auto&& d_0 = Impl::asVector(d[0]);
+      Impl::asMatrix(a_00_inv).mv(Impl::asVector(d_0_tmp),d_0);
 
       for (unsigned int i = 1; i < this->N(); i++) {
 
         // id = ( a_ii - c_{i-1} a_{i, i-1} ) ^{-1}
         block_type tmp;
-        Hybrid::ifElse(IsNumber<B>(),
-          [&](auto metaId) {
-            tmp = metaId((*this)[i][i-1]) * metaId(c[i-1]);
-          },
-          [&](auto metaId) {
-            FMatrixHelp::multMatrix(metaId((*this)[i][i-1]), metaId(c[i-1]), metaId(tmp));
-          });
+        tmp = (*this)[i][i-1];
+        Impl::asMatrix(tmp).rightmultiply(Impl::asMatrix(c[i-1]));
 
         block_type id = (*this)[i][i];
         id -= tmp;
-        Hybrid::ifElse(IsNumber<B>(), /* Division by zero risk. */
-          [&](auto metaId) {
-            id = 1.0 / metaId(id);
-          },
-          [&](auto metaId) {
-            metaId(id).invert();
-          });
+        Impl::asMatrix(id).invert(); /* Division by zero risk. */
 
         if (i<c.size()) {
-          // c[i] *= id
-          Hybrid::ifElse(IsNumber<B>(),            /* Last value calculated is redundant. */
-            [&](auto metaId) {
-              c[i] *= metaId(id);
-            },
-            [&](auto metaId) {
-              tmp = c[i];
-              FMatrixHelp::multMatrix(metaId(id), metaId(tmp), metaId(c[i]));
-            });
+          Impl::asMatrix(c[i]).leftmultiply(Impl::asMatrix(id));            /* Last value calculated is redundant. */
         }
 
         // d[i] = (d[i] - d[i-1] * (*this)[i][i-1]) * id;
-        Hybrid::ifElse(IsNumber<B>(),
-          [&](auto metaId) {
-            d[i] -= (*this)[i][i-1] * metaId(d[i-1]);
-            d[i] *= metaId(id);
-          },
-          [&](auto metaId) {
-            metaId((*this)[i][i-1]).mmv(d[i-1], d[i]);
-            auto tmpVec = d[i];
-            metaId(id).mv(tmpVec, d[i]);
-          });
+        auto&& d_i = Impl::asVector(d[i]);
+        Impl::asMatrix((*this)[i][i-1]).mmv(Impl::asVector(d[i-1]), d_i);
+        auto tmpVec = d[i];
+        Impl::asMatrix(id).mv(Impl::asVector(tmpVec), d_i);
       }
 
       /* Now back substitute. */
       x[this->N() - 1] = d[this->N() - 1];
-      Hybrid::ifElse(IsNumber<B>(),
-        [&](auto metaId) {
-          for (int i = this->N() - 2; i >= 0; i--)
-            x[i] = d[i] - c[i] * metaId(x[i+1]);
-        },
-        [&](auto metaId) {
-          for (int i = this->N() - 2; i >= 0; i--) {
-            //x[i] = d[i] - c[i] * x[i + 1];
-            x[i] = d[i];
-            metaId(c[i]).mmv(x[i+1], x[i]);
-          }
-        });
+      for (int i = this->N() - 2; i >= 0; i--) {
+        //x[i] = d[i] - c[i] * x[i + 1];
+        x[i] = d[i];
+        auto&& x_i = Impl::asVector(x[i]);
+        Impl::asMatrix(c[i]).mmv(Impl::asVector(x[i+1]), x_i);
+      }
 
     }
 

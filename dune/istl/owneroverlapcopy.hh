@@ -51,7 +51,7 @@ namespace Dune {
    */
 
   /**
-   * @brief Attribute set for overlapping schwarz.
+   * @brief Attribute set for overlapping Schwarz.
    */
   struct OwnerOverlapCopyAttributeSet
   {
@@ -424,18 +424,19 @@ namespace Dune {
       for (typename T1::size_type i=0; i<x.size(); i++)
         result += x[i]*(y[i])*mask[i];
       result = cc.sum(result);
-      return;
     }
 
     /**
-     * @brief Compute the global euclidian norm of a vector.
+     * @brief Compute the global Euclidean norm of a vector.
      *
      * @param x The vector to compute the norm of.
-     * @return The global euclidian norm of that vector.
+     * @return The global Euclidean norm of that vector.
      */
     template<class T1>
     typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
     {
+      using real_type = typename FieldTraits<typename T1::field_type>::real_type;
+
       // set up mask vector
       if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size()))
       {
@@ -446,10 +447,10 @@ namespace Dune {
           if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
             mask[i->local().local()] = 0;
       }
-      typename T1::field_type result = typename T1::field_type(0.0);
+      auto result = real_type(0.0);
       for (typename T1::size_type i=0; i<x.size(); i++)
-        result += x[i].two_norm2()*mask[i];
-      return static_cast<double>(sqrt(cc.sum(result)));
+        result += Impl::asVector(x[i]).two_norm2()*mask[i];
+      return sqrt(cc.sum(result));
     }
 
     typedef Dune::EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopyFlags;

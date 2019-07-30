@@ -9,6 +9,8 @@
 #include <vector>
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include "istlexception.hh"
 
 /** \file
@@ -51,7 +53,7 @@ namespace Dune {
         coliterator jj = A[ij.index()].find(ij.index());
 
         // compute L_ij = A_jj^-1 * A_ij
-        Imp::BlockTraits<block>::toMatrix(*ij).rightmultiply(*jj);
+        Impl::asMatrix(*ij).rightmultiply(Impl::asMatrix(*jj));
 
         // modify row
         coliterator endjk=A[ij.index()].end();                 // end of row j
@@ -61,7 +63,7 @@ namespace Dune {
           if (ik.index()==jk.index())
           {
             block B(*jk);
-            Imp::BlockTraits<block>::toMatrix(B).leftmultiply(Imp::BlockTraits<block>::toMatrix(*ij));
+            Impl::asMatrix(B).leftmultiply(Impl::asMatrix(*ij));
             *ik -= B;
             ++ik; ++jk;
           }
@@ -78,7 +80,7 @@ namespace Dune {
       if (ij.index()!=i.index())
         DUNE_THROW(ISTLError,"diagonal entry missing");
       try {
-        Imp::BlockTraits<block>::toMatrix(*ij).invert();   // compute inverse of diagonal block
+        Impl::asMatrix(*ij).invert();   // compute inverse of diagonal block
       }
       catch (Dune::FMatrixError & e) {
         DUNE_THROW(MatrixBlockError, "ILU failed to invert matrix block A["
@@ -95,7 +97,6 @@ namespace Dune {
     // iterator types
     typedef typename M::ConstRowIterator rowiterator;
     typedef typename M::ConstColIterator coliterator;
-    typedef typename M::block_type mblock;
     typedef typename Y::block_type dblock;
     typedef typename X::block_type vblock;
 
@@ -103,21 +104,36 @@ namespace Dune {
     rowiterator endi=A.end();
     for (rowiterator i=A.begin(); i!=endi; ++i)
     {
-      dblock rhs(d[i.index()]);
+      // We need to be careful here: Directly using
+      // auto rhs = Impl::asVector(d[ i.index() ]);
+      // is not OK in case this is a proxy. Hence
+      // we first have to copy the value. Notice that
+      // this is still not OK, if the vector type itself returns
+      // proxy references.
+      dblock rhsValue(d[i.index()]);
+      auto&& rhs = Impl::asVector(rhsValue);
       for (coliterator j=(*i).begin(); j.index()<i.index(); ++j)
-        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Imp::BlockTraits<vblock>::toVector(v[j.index()]),Imp::BlockTraits<dblock>::toVector(rhs));
-      v[i.index()] = rhs;           // Lii = I
+        Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+      Impl::asVector(v[i.index()]) = rhs;           // Lii = I
     }
 
     // upper triangular solve
     rowiterator rendi=A.beforeBegin();
     for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
     {
-      vblock rhs(v[i.index()]);
+      // We need to be careful here: Directly using
+      // auto rhs = Impl::asVector(v[ i.index() ]);
+      // is not OK in case this is a proxy. Hence
+      // we first have to copy the value. Notice that
+      // this is still not OK, if the vector type itself returns
+      // proxy references.
+      vblock rhsValue(v[i.index()]);
+      auto&& rhs = Impl::asVector(rhsValue);
       coliterator j;
       for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-        Imp::BlockTraits<mblock>::toMatrix(*j).mmv(Imp::BlockTraits<vblock>::toVector(v[j.index()]),Imp::BlockTraits<dblock>::toVector(rhs));
-      Imp::BlockTraits<mblock>::toMatrix(*j).mv(Imp::BlockTraits<dblock>::toVector(rhs),Imp::BlockTraits<vblock>::toVector(v[i.index()]));           // diagonal stores inverse!
+        Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
+      auto&& vi = Impl::asVector(v[i.index()]);
+      Impl::asMatrix(*j).mv(rhs,vi);           // diagonal stores inverse!
     }
   }
 
@@ -378,29 +394,31 @@ namespace Dune {
       // lower triangular solve
       for( size_type i=0; i<iEnd; ++ i )
       {
-        dblock rhs( d[ i ] );
+        dblock rhsValue( d[ i ] );
+        auto&& rhs = Impl::asVector(rhsValue);
         const size_type rowI     = lower.rows_[ i ];
         const size_type rowINext = lower.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-          Imp::BlockTraits<mblock>::toMatrix(lower.values_[ col ]).mmv( Imp::BlockTraits<vblock>::toVector(v[ lower.cols_[ col ] ] ), Imp::BlockTraits<dblock>::toVector(rhs) );
+          Impl::asMatrix(lower.values_[ col ]).mmv( Impl::asVector(v[ lower.cols_[ col ] ] ), rhs );
 
-        v[ i ] = rhs;  // Lii = I
+        Impl::asVector(v[ i ]) = rhs;  // Lii = I
       }
 
       // upper triangular solve
       for( size_type i=0; i<iEnd; ++ i )
       {
-        vblock& vBlock = v[ lastRow - i ];
-        vblock rhs ( vBlock );
+        auto&& vBlock = Impl::asVector(v[ lastRow - i ]);
+        vblock rhsValue ( v[ lastRow - i ] );
+        auto&& rhs = Impl::asVector(rhsValue);
         const size_type rowI     = upper.rows_[ i ];
         const size_type rowINext = upper.rows_[ i+1 ];
 
         for( size_type col = rowI; col < rowINext; ++ col )
-          Imp::BlockTraits<mblock>::toMatrix(upper.values_[ col ]).mmv( Imp::BlockTraits<vblock>::toVector(v[ upper.cols_[ col ] ]), Imp::BlockTraits<dblock>::toVector(rhs) );
+          Impl::asMatrix(upper.values_[ col ]).mmv( Impl::asVector(v[ upper.cols_[ col ] ]), rhs );
 
         // apply inverse and store result
-        Imp::BlockTraits<mblock>::toMatrix(inv[ i ]).mv( Imp::BlockTraits<dblock>::toVector(rhs), Imp::BlockTraits<vblock>::toVector(vBlock));
+        Impl::asMatrix(inv[ i ]).mv(rhs, vBlock);
       }
     }
 

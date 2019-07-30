@@ -170,7 +170,7 @@ namespace Dune
         /** @brief Move to the next coarser level */
         void increment()
         {
-          element_ = std::shared_ptr<Element>(element_->coarser_);
+          element_ = element_->coarser_.lock();
         }
 
         /** @brief Move to the next fine level */

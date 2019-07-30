@@ -54,6 +54,8 @@ dune_add_test(SOURCES inverseoperator2prectest.cc)
 
 dune_add_test(SOURCES preconditionerstest.cc)
 
+dune_add_test(SOURCES scalarproductstest.cc)
+
 dune_add_test(SOURCES scaledidmatrixtest.cc)
 
 dune_add_test(SOURCES solvertest.cc)
@@ -93,12 +95,16 @@ dune_add_test(SOURCES cholmodtest.cc)
 
 # MPI tests
 dune_add_test(SOURCES matrixredisttest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
 dune_add_test(SOURCES vectorcommtest.cc
+              MPI_RANKS 1 2 4
+              TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
-  dune_add_test(SOURCES matrixmarkettest.cc)
+dune_add_test(SOURCES matrixmarkettest.cc)
 
 dune_add_test(SOURCES iluildltest.cc)
 
