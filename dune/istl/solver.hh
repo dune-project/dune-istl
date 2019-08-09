@@ -294,7 +294,7 @@ namespace Dune
       _prec(prec),
       _sp(sp),
       _reduction(reduction), _maxit(maxit), _verbose(verbose),
-      _category(SolverCategory::category(op))
+      _category(SolverCategory::category(*op))
     {
       if(SolverCategory::category(*op) != SolverCategory::category(*prec))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
