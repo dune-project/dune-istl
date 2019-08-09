@@ -62,6 +62,10 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
+dune_add_test(SOURCES solverrepositorytest.cc)
+
+dune_symlink_to_source_files(FILES solverrepositorytest.ini)
+
 # SuperLU tests
   dune_add_test(NAME superlustest
                 SOURCES superlutest.cc
