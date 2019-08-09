@@ -4,32 +4,31 @@
 #ifndef DUNE_ISTL_SOLVERFACTORIES_HH
 #define DUNE_ISTL_SOLVERFACTORIES_HH
 
+#include <dune/istl/solvers.hh>
+
 namespace Dune {
+
   namespace SolverFactories {
-#if !__cpp_inline_variables
+#ifndef __cpp_inline_variables
     namespace {
 #endif
 
-      DUNE_INLINE_VARIABLE constexpr auto cgsolver =
-        [](auto lin_op, const ParameterTree& config, auto comm) {
+      DUNE_INLINE_VARIABLE const auto cgsolver =
+        [](auto lin_op, const ParameterTree& config, auto comm, auto prec) {
           using Domain = typename std::decay_t<decltype(*lin_op)>::domain_type;
           using Range = typename std::decay_t<decltype(*lin_op)>::range_type;
 
           double reduction = config.get("reduction",1e-10);
           int max_iterations = config.get("max-iterations",1000);
-          int verbose = logLevelToVerbosity(log.level());
+          int verbose = config.get("verbose", 0);
 
           auto scalarProduct = createScalarProduct<Domain>(comm, lin_op->category());
 
-          return std::make_shared<
-            Dune::CGSolver<
-              typename LinearOperator::Domain
-              >
-            >(*lin_op, ,*prec,reduction,max_iterations,verbose);
+          return std::make_shared<Dune::CGSolver<Domain>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
         };
 
 
-#if !__cpp_inline_variables
+#ifndef __cpp_inline_variables
     }
 #endif
   }
