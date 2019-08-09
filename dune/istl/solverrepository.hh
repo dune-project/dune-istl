@@ -76,7 +76,16 @@ namespace Dune{
 
     static RepositoryType repositoryInstance(){
       static RepositoryType repository = {
-                                          {"cgsolver", SolverFactories::cgsolver}
+                                          {"loopsolver", SolverFactories::loopsolver},
+                                          {"gradientsolver", SolverFactories::gradientsolver},
+                                          {"cgsolver", SolverFactories::cgsolver},
+                                          {"bicgstabsolver", SolverFactories::bicgstabsolver},
+                                          {"minressolver", SolverFactories::minressolver},
+                                          {"restartedgmressolver", SolverFactories::restartedgmressolver},
+                                          {"restartedflexiblegmressolver", SolverFactories::restartedflexiblegmressolver},
+                                          {"generalizedpcgsolver", SolverFactories::generalizedpcgsolver},
+                                          {"restartedfcgsolver", SolverFactories::restartedfcgsolver},
+                                          {"completefcgsolver", SolverFactories::completefcgsolver},
       };
       return repository;
     }
