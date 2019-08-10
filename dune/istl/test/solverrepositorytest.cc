@@ -27,9 +27,9 @@ int main(int argc, char** argv){
   Vector x(mat.M()), b(mat.N());
 
   using Operator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
-  std::shared_ptr<Operator> op = std::make_shared<Operator>(mat);
+  std::shared_ptr<Dune::LinearOperator<Vector, Vector>> op = std::make_shared<Operator>(mat);
 
-  auto solver = Dune::SolverRepository<Operator>::get(op, config.sub("solver"), {});
+  auto solver = Dune::SolverRepository<Dune::LinearOperator<Vector, Vector>>::get(op, config.sub("solver"), {});
 
   x = 0;
   b = 1;

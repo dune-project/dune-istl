@@ -86,6 +86,11 @@ namespace Dune{
                                           {"generalizedpcgsolver", SolverFactories::generalizedpcgsolver},
                                           {"restartedfcgsolver", SolverFactories::restartedfcgsolver},
                                           {"completefcgsolver", SolverFactories::completefcgsolver},
+                                          {"umfpack", SolverFactories::umfpack},
+                                          {"ldl", SolverFactories::ldl},
+                                          {"spqr", SolverFactories::spqr},
+                                          {"superlu", SolverFactories::superlu},
+                                          {"cholmod", SolverFactories::cholmod}
       };
       return repository;
     }

@@ -5,6 +5,11 @@
 #define DUNE_ISTL_SOLVERFACTORIES_HH
 
 #include <dune/istl/solvers.hh>
+#include <dune/istl/umfpack.hh>
+#include <dune/istl/ldl.hh>
+#include <dune/istl/spqr.hh>
+#include <dune/istl/superlu.hh>
+#include <dune/istl/cholmod.hh>
 
 namespace Dune {
 
@@ -146,6 +151,77 @@ namespace Dune {
           auto scalarProduct = createScalarProduct<Domain>(comm, lin_op->category());
 
           return std::make_shared<Dune::CompleteFCGSolver<Domain>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
+        };
+
+      template<class O>
+      using _matrix_type = typename O::matrix_type;
+
+      template<class Operator>
+      auto getmat(std::shared_ptr<Operator>& op){
+        typedef typename Operator::domain_type X;
+        typedef typename Operator::range_type Y;
+        using matrix_type = Std::detected_or_t<BCRSMatrix<FieldMatrix<double, 1, 1>>, _matrix_type, Operator>;
+        std::shared_ptr<AssembledLinearOperator<matrix_type, X, Y>> assembled_op = std::dynamic_pointer_cast<AssembledLinearOperator<matrix_type, X, Y>>(op);
+        if(!assembled_op)
+          DUNE_THROW(Exception, "The passed solver is not of type AssembledLinearOperator");
+        return assembled_op->getmat();
+      }
+
+      DUNE_INLINE_VARIABLE const auto umfpack =
+        [](auto lin_op, const ParameterTree& config, auto comm, auto prec) {
+          typedef std::decay_t<decltype(*lin_op)> Operator;
+          typedef typename Operator::domain_type X;
+          typedef typename Operator::range_type Y;
+          auto mat = getmat(lin_op);
+          typedef std::decay_t<decltype(mat)> MatrixType;
+          int verbose = config.get("verbose", 0);
+          return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<UMFPack<MatrixType>>(mat, verbose));
+        };
+
+      DUNE_INLINE_VARIABLE const auto ldl =
+        [](auto lin_op, const ParameterTree& config, auto comm, auto prec) {
+          typedef std::decay_t<decltype(*lin_op)> Operator;
+          typedef typename Operator::domain_type X;
+          typedef typename Operator::range_type Y;
+          auto mat = getmat(lin_op);
+          typedef std::decay_t<decltype(mat)> MatrixType;
+          int verbose = config.get("verbose", 0);
+          return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<LDL<MatrixType>>(mat, verbose));
+        };
+
+      DUNE_INLINE_VARIABLE const auto spqr =
+        [](auto lin_op, const ParameterTree& config, auto comm, auto prec) {
+          typedef std::decay_t<decltype(*lin_op)> Operator;
+          typedef typename Operator::domain_type X;
+          typedef typename Operator::range_type Y;
+          auto mat = getmat(lin_op);
+          typedef std::decay_t<decltype(mat)> MatrixType;
+          int verbose = config.get("verbose", 0);
+          return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SPQR<MatrixType>>(mat, verbose));
+        };
+
+      DUNE_INLINE_VARIABLE const auto superlu =
+        [](auto lin_op, const ParameterTree& config, auto comm, auto prec) {
+          typedef std::decay_t<decltype(*lin_op)> Operator;
+          typedef typename Operator::domain_type X;
+          typedef typename Operator::range_type Y;
+          auto mat = getmat(lin_op);
+          typedef std::decay_t<decltype(mat)> MatrixType;
+          int verbose = config.get("verbose", 0);
+          bool reusevector = config.get("reusevector", true);
+          return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SuperLU<MatrixType>>(mat, verbose, reusevector));
+        };
+
+      DUNE_INLINE_VARIABLE const auto cholmod =
+        [](auto lin_op, const ParameterTree& config, auto comm, auto prec) {
+          typedef std::decay_t<decltype(*lin_op)> Operator;
+          typedef typename Operator::domain_type X;
+          typedef typename Operator::range_type Y;
+          auto mat = getmat(lin_op);
+          typedef std::decay_t<decltype(mat)> MatrixType;
+          auto iop = std::make_shared<Cholmod<MatrixType>>();
+          iop->setMatrix(mat);
+          return std::dynamic_pointer_cast<InverseOperator<X,Y>>(iop);
         };
 #ifndef __cpp_inline_variables
     }
