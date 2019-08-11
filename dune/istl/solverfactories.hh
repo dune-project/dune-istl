@@ -42,168 +42,296 @@ namespace Dune {
 
 
   public:
+    /** \brief LoopSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto loopsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-
-               return std::make_shared<Dune::LoopSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
-             };
+      return [](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<LoopSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
+      };
     }
+
+    /** \brief GradientSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
 
     static auto gradientsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::GradientSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
-             };
+      return [](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<GradientSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
+      };
     }
 
+    /** \brief CGSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto cgsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::CGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
-             };
+      return [](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<CGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
+      };
     }
 
+    /** \brief BiCGSTABSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto bicgstabsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::BiCGSTABSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
-             };
+      return [](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<BiCGSTABSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
+      };
     }
 
+    /** \brief MINRESSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto minressolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::MINRESSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
-             };
+      return [](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<MINRESSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
+      };
     }
 
+    /** \brief RestartedGMResSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - restart (default: 10)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto restartedgmressolver(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int restart = config.get("restart", 10);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::RestartedGMResSolver<X>>(lin_op, scalarProduct, prec, reduction, restart, max_iterations, verbose);
-             };
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int restart = config.get("restart", 10);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<RestartedGMResSolver<X>>(lin_op, scalarProduct, prec, reduction, restart, max_iterations, verbose);
+      };
     }
 
+    /** \brief RestartedFlexibleGMResSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - restart (default: 10)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto restartedflexiblegmressolver(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int restart = config.get("restart", 10);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::RestartedFlexibleGMResSolver<X>>(lin_op, scalarProduct, prec, reduction, restart, max_iterations, verbose);
-             };
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int restart = config.get("restart", 10);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<RestartedFlexibleGMResSolver<X>>(lin_op, scalarProduct, prec, reduction, restart, max_iterations, verbose);
+      };
     }
 
+    /** \brief GeneralizedPCGSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - restart (default: 10)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto generalizedpcgsolver(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int restart = config.get("restart", 10);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::GeneralizedPCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
-             };
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int restart = config.get("restart", 10);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<GeneralizedPCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
+      };
     }
 
+    /** \brief RestartedFCGSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - restart (default: 10)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto restartedfcgsolver(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int restart = config.get("restart", 10);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::RestartedFCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
-             };
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int restart = config.get("restart", 10);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<RestartedFCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
+      };
     }
 
+    /** \brief CompleteFCGSolver factory
+
+        Parameters:
+        - reduction (default: 1e-10)
+        - max_iterations (default: 1000)
+        - restart (default: 10)
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto completefcgsolver(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
-               double reduction = config.get("reduction",1e-10);
-               int max_iterations = config.get("max-iterations",1000);
-               int restart = config.get("restart", 10);
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
-               return std::make_shared<Dune::CompleteFCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
-             };
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
+        double reduction = config.get("reduction",1e-10);
+        int max_iterations = config.get("max-iterations",1000);
+        int restart = config.get("restart", 10);
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
+        return std::make_shared<CompleteFCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
+      };
     }
 
+    /** \brief UMFPack factory
+
+        Parameters:
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto umfpack(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
 #if HAVE_SUITESPARSE_UMFPACK
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<UMFPack<matrix_type>>(SolverFactories::getmat(lin_op), verbose));
+          int verbose = SolverFactories::getVerbose(lin_op, config);
+          return std::make_shared<UMFPack<matrix_type>>(SolverFactories::getmat(lin_op), verbose);
 #else
-               DUNE_THROW(Exception, "UMFPack is not available.");
+          DUNE_THROW(Exception, "UMFPack is not available.");
 #endif
-             };
+        };
     }
 
+    /** \brief LDL factory
+
+        Parameters:
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto ldl(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
 #if HAVE_SUITESPARSE_LDL
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<LDL<matrix_type>>(SolverFactories::getmat(lin_op), verbose));
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        return std::make_shared<LDL<matrix_type>>(SolverFactories::getmat(lin_op), verbose);
 #else
-               DUNE_THROW(Exception, "LDL is not available.");
+        DUNE_THROW(Exception, "LDL is not available.");
 #endif
-             };
+      };
     }
 
+    /** \brief SPQR factory
+
+        Parameters:
+        - verbose (default: 1)
+        - verboserank (default: 0)
+     */
     static auto spqr(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
 #if HAVE_SUITESPARSE_SPQR
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SPQR<matrix_type>>(SolverFactories::getmat(lin_op), verbose));
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        return std::make_shared<SPQR<matrix_type>>(SolverFactories::getmat(lin_op), verbose);
 #else
-               DUNE_THROW(Exception, "SPQR is not available.");
+        DUNE_THROW(Exception, "SPQR is not available.");
 #endif
-             };
+      };
     }
 
+    /** \brief SuperLU factory
+
+        Parameters:
+        - verbose (default: 1)
+        - verboserank (default: 0)
+        - reusevector (default: true)
+     */
     static auto superlu(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
 #if HAVE_SUPERLU
-               int verbose = SolverFactories::getVerbose(lin_op, config);
-               bool reusevector = config.get("reusevector", true);
-               return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SuperLU<matrix_type>>(SolverFactories::getmat(lin_op), verbose, reusevector));
+        int verbose = SolverFactories::getVerbose(lin_op, config);
+        bool reusevector = config.get("reusevector", true);
+        return std::make_shared<SuperLU<matrix_type>>(SolverFactories::getmat(lin_op), verbose, reusevector);
 #else
-               DUNE_THROW(Exception, "SuperLU is not available.");
+        DUNE_THROW(Exception, "SuperLU is not available.");
 #endif
-             };
+      };
     }
 
+    /** \brief Cholmod factory
+
+        Parameters:
+     */
     static auto cholmod(){
-      return [&](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec)
+        -> std::shared_ptr<InverseOperator<X,Y>> {
 #if HAVE_SUITESPARSE_CHOLMOD
-               auto iop = std::make_shared<Cholmod<matrix_type>>();
-               iop->setMatrix(SolverFactories::getmat(lin_op));
-               return std::dynamic_pointer_cast<InverseOperator<X,Y>>(iop);
+        auto iop = std::make_shared<Cholmod<matrix_type>>();
+        iop->setMatrix(SolverFactories::getmat(lin_op));
+        return iop;
 #else
-               DUNE_THROW(Exception, "Cholmod is not available.");
+        DUNE_THROW(Exception, "Cholmod is not available.");
 #endif
-             };
+      };
     }
   };
 }

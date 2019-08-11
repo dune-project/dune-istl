@@ -7,12 +7,17 @@
 #include <unordered_map>
 #include <functional>
 
+#include <dune/common/parametertree.hh>
+
 #include <dune/istl/preconditionerfactories.hh>
 #include <dune/istl/solverfactories.hh>
 #include <dune/istl/paamg/pinfo.hh>
 
 namespace Dune{
-
+  /**
+   * @addtogroup ISTL_Solver_Repository
+   * @{
+   */
   template<class Operator>
   class PreconditionerRepository {
     using Domain = typename Operator::domain_type;
@@ -126,6 +131,16 @@ namespace Dune{
     }
   };
 
+  /**
+     \brief Instanciates an `InverseOperator` from an Operator and a
+     configuration given in a ParameterTree.
+     \param op Operator
+     \param config `ParamerTree` with configuration
+     \param prec Custom `Preconditioner` (optional). If not given it will be
+     created with the `PreconditionerRepository` and the configuration given in
+     subKey "preconditioner".
+
+   */
   template<class Operator>
   std::shared_ptr<InverseOperator<typename Operator::domain_type,
                                   typename Operator::range_type>> getSolverFromRepository(std::shared_ptr<Operator> op,
@@ -134,6 +149,10 @@ namespace Dune{
                                typename Operator::range_type>> prec = nullptr){
     return SolverRepository<Operator>::get(op, config, prec);
   }
+
+  /**
+ * @}
+ */
 }
 
 
