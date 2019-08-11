@@ -29,7 +29,7 @@ int main(int argc, char** argv){
   using Operator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
   std::shared_ptr<Dune::LinearOperator<Vector, Vector>> op = std::make_shared<Operator>(mat);
 
-  auto solver = Dune::SolverRepository<Dune::LinearOperator<Vector, Vector>>::get(op, config.sub("solver"), {});
+  auto solver = Dune::SolverRepository<Dune::LinearOperator<Vector, Vector>>::get(op, config.sub("solver"));
 
   x = 0;
   b = 1;
