@@ -228,16 +228,16 @@ namespace Dune {
 
         Parameters:
         - relaxation (default: 1.0)
-        - iterations (default: 1)
+        - order (default: 0)
         - resort (default: false)
      */
     static auto seqilu(){
       return [&](auto lin_op, const ParameterTree& config)
         -> std::shared_ptr<Preconditioner<X,Y>>{
         field_type relaxation = config.get("relaxation", 1.0);
-        int iterations = config.get("iterations", 1);
+        int order = config.get("order", 0);
         bool resort = config.get("resort", false);
-        return std::make_shared<SeqILU<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, resort);
+        return std::make_shared<SeqILU<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), order, relaxation, resort);
       };
     }
 
