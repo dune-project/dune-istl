@@ -329,45 +329,55 @@ namespace Dune {
         - gamma (1: V-cycle, 2: W-cycle)
         - additive (true: Additive, false: Multiplicative)
         - critrion (default: symmetric, values:symmetric, unsymmetric)
-        - smoother (default: ssor, values: ssor)
+        - smoother (default: ssor, values: ssor, sor, gs, jac, ilu)
         - smoother.iterations (default: 1)
         - smoother.relaxation (default: 1.0)
-     */
+    */
     static auto amg(){
-      auto buildForSmoother = [&](auto lin_op, const ParameterTree& config, auto criterion_type, auto smoother_type){
-                                using Criterion = typename decltype(criterion_type)::type;
-                                using Smoother = typename decltype(smoother_type)::type;
-                                using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
-                                SmootherArgs smoother_args;
-                                smoother_args.iterations = config.get("smoother.iterations",1);
-                                smoother_args.relaxationFactor = config.get("smoother.relaxation",1.0);
-                                auto parameters = PreconditionerFactories::getAMGParameter(config);
-                                Criterion criterion(parameters);
-                                using AMGOP = typename AMGCompatibleOperator<Operator>::type;
-                                using AMG = Amg::AMG<AMGOP, X, Smoother, typename AMGOP::communication_type>;
-                                auto amgop = std::dynamic_pointer_cast<AMGOP>(lin_op);
-                                if(!amgop)
-                                  DUNE_THROW(Exception, "The operator is not AMG compatible");
-                                return std::make_shared<AMG>(*amgop, criterion, smoother_args, amgop->comm());
-                              };
-      auto buildForCriterion = [&, buildForSmoother](auto lin_op, const ParameterTree& config, auto criterion_type){
-                                 auto smoother = config.get("smoother", "ssor");
-                                 if(smoother == "ssor"){
-                                   return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqSSOR<matrix_type, X, Y>>{});
-                                 }else{
-                                   DUNE_THROW(Dune::Exception, "Unknown smoother " << smoother);
-                                 }
-                               };
-      return [&, buildForCriterion](auto lin_op, const ParameterTree& config){
-               auto criterion = config.get("criterion","symmetric");
-               if(criterion == "symmetric"){
-                 return buildForCriterion(lin_op, config, MetaType<Dune::Amg::SymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
-               }else if(criterion == "unsymmetric"){
-                 return buildForCriterion(lin_op, config, MetaType<Dune::Amg::UnSymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
-               }else{
-                 DUNE_THROW(Exception,"Unknown criterion: " << criterion);
-               }
-             };
+      auto buildForSmoother = [&](auto lin_op, const ParameterTree& config, auto criterion_type, auto smoother_type)
+        -> std::shared_ptr<Preconditioner<X,Y>> {
+        using Criterion = typename decltype(criterion_type)::type;
+        using Smoother = typename decltype(smoother_type)::type;
+        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+        SmootherArgs smoother_args;
+        smoother_args.iterations = config.get("smoother.iterations",1);
+        smoother_args.relaxationFactor = config.get("smoother.relaxation",1.0);
+        auto parameters = PreconditionerFactories::getAMGParameter(config);
+        Criterion criterion(parameters);
+        using AMGOP = typename AMGCompatibleOperator<Operator>::type;
+        using AMG = Amg::AMG<AMGOP, X, Smoother, typename AMGOP::communication_type>;
+        auto amgop = std::dynamic_pointer_cast<AMGOP>(lin_op);
+        if(!amgop)
+          DUNE_THROW(Exception, "The operator is not AMG compatible");
+        return std::make_shared<AMG>(*amgop, criterion, smoother_args, amgop->comm());
+      };
+      auto buildForCriterion = [&, buildForSmoother](auto lin_op, const ParameterTree& config, auto criterion_type)
+        -> std::shared_ptr<Preconditioner<X,Y>> {
+        auto smoother = config.get("smoother", "ssor");
+        if(smoother == "ssor")
+          return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqSSOR<matrix_type, X, Y>>{});
+        else if(smoother == "sor")
+          return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqSOR<matrix_type, X, Y>>{});
+        else if(smoother == "gs")
+          return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqGS<matrix_type, X, Y>>{});
+        else if(smoother == "jac")
+          return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqJac<matrix_type, X, Y>>{});
+        else if(smoother == "ilu")
+          return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqILU<matrix_type, X, Y>>{});
+        else
+          DUNE_THROW(Dune::Exception, "Unknown smoother " << smoother);
+      };
+      return [&, buildForCriterion](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>> {
+        auto criterion = config.get("criterion","symmetric");
+        if(criterion == "symmetric"){
+          return buildForCriterion(lin_op, config, MetaType<Dune::Amg::SymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
+        }else if(criterion == "unsymmetric"){
+          return buildForCriterion(lin_op, config, MetaType<Dune::Amg::UnSymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
+        }else{
+          DUNE_THROW(Exception,"Unknown criterion: " << criterion);
+        }
+      };
     }
   };
 }
