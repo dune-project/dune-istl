@@ -21,7 +21,7 @@ template<class Comm>
 void testSeq(const Dune::ParameterTree& config, Comm c){
   if(c.rank() == 0){
     Matrix mat;
-    int N = config.get("problem.N", 100);
+    int N = config.get("N", 10);
     setupLaplacian(mat, N);
     Vector x(mat.M()), b(mat.N());
 
@@ -43,7 +43,7 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 template<class Comm>
 void testOverlapping(const Dune::ParameterTree& config, Comm c){
   Matrix mat;
-  int N = config.get("problem.N", 100);
+  int N = config.get("N", 10);
   typedef Dune::OwnerOverlapCopyCommunication<int> Communication;
   Communication comm(c);
   int n;
@@ -70,9 +70,9 @@ void testOverlapping(const Dune::ParameterTree& config, Comm c){
 template<class Comm>
 void testNonoverlapping(const Dune::ParameterTree& config, Comm c){
   Matrix mat;
-  int N = config.get("problem.N", 100);
+  int N = config.get("N", 10);
   typedef Dune::OwnerOverlapCopyCommunication<int> Communication;
-  Communication comm(c);
+  Communication comm(c, Dune::SolverCategory::nonoverlapping);
   int n;
   mat = setupAnisotropic2d<Dune::FieldMatrix<double, 1, 1>>(N, comm.indexSet(), comm.communicator(), &n);
   comm.remoteIndices().template rebuild<false>();
@@ -100,8 +100,11 @@ int main(int argc, char** argv){
   Dune::ParameterTreeParser::readINITree("solverrepositorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
+  std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
+  std::cout << std::endl << " Testing overlapping tests... " << std::endl;
   testOverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
-  testOverlapping(config.sub("nonoverlapping"), mpihelper.getCollectiveCommunication());
+    std::cout << std::endl << " Testing nonoverlapping tests... " << std::endl;
+  testNonoverlapping(config.sub("nonoverlapping"), mpihelper.getCollectiveCommunication());
   return 0;
 }
