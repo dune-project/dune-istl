@@ -97,7 +97,8 @@ namespace Dune {
 #endif
 
     const communication_type& comm() const {
-      return communication_type();
+      static communication_type c; // dummy
+      return c;
     }
   };
 

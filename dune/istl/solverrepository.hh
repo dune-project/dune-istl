@@ -127,7 +127,8 @@ namespace Dune{
   };
 
   template<class Operator>
-  auto getSolverFromRepository(std::shared_ptr<Operator> op,
+  std::shared_ptr<InverseOperator<typename Operator::domain_type,
+                                  typename Operator::range_type>> getSolverFromRepository(std::shared_ptr<Operator> op,
                                const ParameterTree& config,
                                std::shared_ptr<Preconditioner<typename Operator::domain_type,
                                typename Operator::range_type>> prec = nullptr){
