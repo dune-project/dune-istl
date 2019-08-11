@@ -236,6 +236,10 @@ namespace Dune {
       return SolverCategory::nonoverlapping;
     }
 
+    virtual const communication_type& comm() const {
+      return communication;
+    }
+
   private:
     std::shared_ptr<const matrix_type> _A_;
     const communication_type& communication;
