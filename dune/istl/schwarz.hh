@@ -142,7 +142,7 @@ namespace Dune {
       return SolverCategory::overlapping;
     }
 
-    virtual const communication_type& comm() const{
+    const communication_type& comm() const{
       return communication;
     }
 

@@ -96,7 +96,7 @@ namespace Dune {
     = 0;
 #endif
 
-    virtual const communication_type& comm() const {
+    const communication_type& comm() const {
       return communication_type();
     }
   };

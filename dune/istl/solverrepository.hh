@@ -33,7 +33,8 @@ namespace Dune{
                                           {"seqgs", Factories::seqgs()},
                                           {"seqjac", Factories::seqjac()},
                                           {"seqilu", Factories::seqilu()},
-                                          {"seqildl", Factories::seqildl()}
+                                          {"seqildl", Factories::seqildl()},
+                                          {"parssor", Factories::parssor()}
       };
       return repository;
     }
@@ -121,6 +122,14 @@ namespace Dune{
       return fac(op, config, prec);
     }
   };
+
+  template<class Operator>
+  auto getSolverFromRepository(std::shared_ptr<Operator> op,
+                               const ParameterTree& config,
+                               std::shared_ptr<Preconditioner<typename Operator::domain_type,
+                               typename Operator::range_type>> prec = nullptr){
+    return SolverRepository<Operator>::get(op, config, prec);
+  }
 }
 
 
