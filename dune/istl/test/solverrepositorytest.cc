@@ -31,7 +31,7 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
     for(std::string test : config.getSubKeys()){
       Dune::ParameterTree solverConfig = config.sub(test);
       std::cout << " ============== " << test << " ============== " << std::endl;
-      auto solver = getSolverFromRepository(op, solverConfig);
+      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromRepository(op, solverConfig);
       x = 0;
       b = 1;
       Dune::InverseOperatorResult res;
@@ -58,7 +58,7 @@ void testOverlapping(const Dune::ParameterTree& config, Comm c){
     Dune::ParameterTree solverConfig = config.sub(test);
     if(c.rank() == 0)
       std::cout << " ============== " << test << " ============== " << std::endl;
-    auto solver = getSolverFromRepository(op, solverConfig);
+    std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromRepository(op, solverConfig);
     x = 1;
     b = 0;
     setBoundary(x, b, N, comm.indexSet());
@@ -85,7 +85,7 @@ void testNonoverlapping(const Dune::ParameterTree& config, Comm c){
     Dune::ParameterTree solverConfig = config.sub(test);
     if(c.rank() == 0)
       std::cout << " ============== " << test << " ============== " << std::endl;
-    auto solver = getSolverFromRepository(op, solverConfig);
+    std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromRepository(op, solverConfig);
     x = 1;
     b = 0;
     setBoundary(x, b, N, comm.indexSet());
