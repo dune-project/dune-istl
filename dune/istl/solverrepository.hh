@@ -43,6 +43,7 @@ namespace Dune{
                                           {"blockpreconditioner", Factories::blockpreconditioner()},
                                           {"amg", Factories::amg()},
                                           {"fastamg", Factories::fastamg()},
+                                          {"kamg", Factories::kamg()},
                                           {"nonoverlappingblockpreconditioner", Factories::nonoverlappingblockpreconditioner()}
       };
       return repository;
