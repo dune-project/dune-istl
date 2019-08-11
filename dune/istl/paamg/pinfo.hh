@@ -74,6 +74,13 @@ namespace Dune
       }
 
       template<class V>
+      void addOwnerCopyToOwnerCopy(V& v, V& v1) const
+      {
+        DUNE_UNUSED_PARAMETER(v);
+        DUNE_UNUSED_PARAMETER(v1);
+      }
+
+      template<class V>
       void project(V& v) const
       {
         DUNE_UNUSED_PARAMETER(v);
