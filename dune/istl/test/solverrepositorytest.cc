@@ -28,19 +28,14 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
     using Operator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
     std::shared_ptr<Dune::LinearOperator<Vector, Vector>> op = std::make_shared<Operator>(mat);
 
-    int counter = 1;
-    while(config.hasSub(std::string("test") + std::to_string(counter))){
-      Dune::ParameterTree testConfig = config.sub(std::string("test") + std::to_string(counter));
-      if(testConfig.template get<std::string>("parallel", "sequential") == "sequential"){
-        Dune::ParameterTree solverConfig = testConfig.sub("solver");
-        std::cout << " ============== TEST " << counter << " ============== " << std::endl;
-        auto solver = getSolverFromRepository(op, solverConfig);
-        x = 0;
-        b = 1;
-        Dune::InverseOperatorResult res;
-        solver->apply(x,b,res);
-      }
-      counter++;
+    for(std::string test : config.getSubKeys()){
+      Dune::ParameterTree solverConfig = config.sub(test);
+      std::cout << " ============== " << test << " ============== " << std::endl;
+      auto solver = getSolverFromRepository(op, solverConfig);
+      x = 0;
+      b = 1;
+      Dune::InverseOperatorResult res;
+      solver->apply(x,b,res);
     }
   }
 }
@@ -59,21 +54,43 @@ void testOverlapping(const Dune::ParameterTree& config, Comm c){
   using Operator = Dune::OverlappingSchwarzOperator<Matrix, Vector, Vector, Communication>;
   std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
 
-  int counter = 1;
-  while(config.hasSub(std::string("test") + std::to_string(counter))){
-    Dune::ParameterTree testConfig = config.sub(std::string("test") + std::to_string(counter));
-    if(testConfig.template get<std::string>("parallel", "sequential") == "overlapping"){
-      Dune::ParameterTree solverConfig = testConfig.sub("solver");
-      if(c.rank() == 0)
-        std::cout << " ============== TEST " << counter << " ============== " << std::endl;
-      auto solver = getSolverFromRepository(op, solverConfig);
-      x = 1;
-      b = 0;
-      setBoundary(x, b, N, comm.indexSet());
-      Dune::InverseOperatorResult res;
-      solver->apply(x,b,res);
-    }
-    counter++;
+  for(const std::string& test : config.getSubKeys()){
+    Dune::ParameterTree solverConfig = config.sub(test);
+    if(c.rank() == 0)
+      std::cout << " ============== " << test << " ============== " << std::endl;
+    auto solver = getSolverFromRepository(op, solverConfig);
+    x = 1;
+    b = 0;
+    setBoundary(x, b, N, comm.indexSet());
+    Dune::InverseOperatorResult res;
+    solver->apply(x,b,res);
+  }
+}
+
+template<class Comm>
+void testNonoverlapping(const Dune::ParameterTree& config, Comm c){
+  Matrix mat;
+  int N = config.get("problem.N", 100);
+  typedef Dune::OwnerOverlapCopyCommunication<int> Communication;
+  Communication comm(c);
+  int n;
+  mat = setupAnisotropic2d<Dune::FieldMatrix<double, 1, 1>>(N, comm.indexSet(), comm.communicator(), &n);
+  comm.remoteIndices().template rebuild<false>();
+  Vector x(mat.M()), b(mat.N());
+
+  using Operator = Dune::NonoverlappingSchwarzOperator<Matrix, Vector, Vector, Communication>;
+  std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
+
+  for(const std::string& test : config.getSubKeys()){
+    Dune::ParameterTree solverConfig = config.sub(test);
+    if(c.rank() == 0)
+      std::cout << " ============== " << test << " ============== " << std::endl;
+    auto solver = getSolverFromRepository(op, solverConfig);
+    x = 1;
+    b = 0;
+    setBoundary(x, b, N, comm.indexSet());
+    Dune::InverseOperatorResult res;
+    solver->apply(x,b,res);
   }
 }
 
@@ -83,7 +100,8 @@ int main(int argc, char** argv){
   Dune::ParameterTreeParser::readINITree("solverrepositorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
-  testSeq(config, mpihelper.getCollectiveCommunication());
-  testOverlapping(config, mpihelper.getCollectiveCommunication());
+  testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
+  testOverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
+  testOverlapping(config.sub("nonoverlapping"), mpihelper.getCollectiveCommunication());
   return 0;
 }
