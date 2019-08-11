@@ -43,7 +43,7 @@ namespace Dune {
   public:
 
     static auto loopsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int verbose = getVerbose(lin_op, config);
@@ -55,7 +55,7 @@ namespace Dune {
     }
 
     static auto gradientsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int verbose = getVerbose(lin_op, config);
@@ -65,7 +65,7 @@ namespace Dune {
     }
 
     static auto cgsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int verbose = getVerbose(lin_op, config);
@@ -75,7 +75,7 @@ namespace Dune {
     }
 
     static auto bicgstabsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int verbose = getVerbose(lin_op, config);
@@ -85,7 +85,7 @@ namespace Dune {
     }
 
     static auto minressolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int verbose = getVerbose(lin_op, config);
@@ -95,7 +95,7 @@ namespace Dune {
     }
 
     static auto restartedgmressolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
@@ -106,7 +106,7 @@ namespace Dune {
     }
 
     static auto restartedflexiblegmressolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
@@ -117,7 +117,7 @@ namespace Dune {
     }
 
     static auto generalizedpcgsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
@@ -128,7 +128,7 @@ namespace Dune {
     }
 
     static auto restartedfcgsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
@@ -139,7 +139,7 @@ namespace Dune {
     }
 
     static auto completefcgsolver(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
@@ -150,7 +150,7 @@ namespace Dune {
     }
 
     static auto umfpack(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
 #if HAVE_SUITESPARSE_UMFPACK
                int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<UMFPack<matrix_type>>(getmat(lin_op), verbose));
@@ -161,7 +161,7 @@ namespace Dune {
     }
 
     static auto ldl(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
 #if HAVE_SUITESPARSE_LDL
                int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<LDL<matrix_type>>(getmat(lin_op), verbose));
@@ -172,7 +172,7 @@ namespace Dune {
     }
 
     static auto spqr(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
 #if HAVE_SUITESPARSE_SPQR
                int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SPQR<matrix_type>>(getmat(lin_op), verbose));
@@ -183,7 +183,7 @@ namespace Dune {
     }
 
     static auto superlu(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
 #if HAVE_SUPERLU
                int verbose = getVerbose(lin_op, config);
                bool reusevector = config.get("reusevector", true);
@@ -195,7 +195,7 @@ namespace Dune {
     }
 
     static auto cholmod(){
-      return [](auto lin_op, const ParameterTree& config, auto prec) {
+      return [&](auto lin_op, const ParameterTree& config, auto prec) {
 #if HAVE_SUITESPARSE_CHOLMOD
                auto iop = std::make_shared<Cholmod<matrix_type>>();
                iop->setMatrix(getmat(lin_op));
