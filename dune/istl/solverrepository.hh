@@ -34,7 +34,8 @@ namespace Dune{
                                           {"seqjac", Factories::seqjac()},
                                           {"seqilu", Factories::seqilu()},
                                           {"seqildl", Factories::seqildl()},
-                                          {"parssor", Factories::parssor()}
+                                          {"parssor", Factories::parssor()},
+                                          {"blockpreconditioner", Factories::blockpreconditioner()}
       };
       return repository;
     }

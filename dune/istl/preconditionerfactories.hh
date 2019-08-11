@@ -12,6 +12,10 @@ namespace Dune {
   template<class Operator>
   class SolverRepository;
 
+  template<class>
+  class PreconditionerRepository;
+
+
   template<class Operator>
   class PreconditionerFactories {
     // the following determine the matrix type or is BCRSMatrix<double,1,1> if
@@ -100,6 +104,13 @@ namespace Dune {
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
                return std::make_shared<Dune::ParSSOR<matrix_type, X, Y, communication_type>>(getmat(lin_op), iterations, relaxation, lin_op->comm());
+             };
+    }
+
+    static auto blockpreconditioner(){
+      return [](auto lin_op, const ParameterTree& config){
+               auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
+               return std::make_shared<Dune::BlockPreconditioner<X, Y, communication_type>>(seq_prec, lin_op->comm());
              };
     }
   };
