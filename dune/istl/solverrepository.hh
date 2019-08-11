@@ -42,6 +42,7 @@ namespace Dune{
                                           {"parssor", Factories::parssor()},
                                           {"blockpreconditioner", Factories::blockpreconditioner()},
                                           {"amg", Factories::amg()},
+                                          {"fastamg", Factories::fastamg()},
                                           {"nonoverlappingblockpreconditioner", Factories::nonoverlappingblockpreconditioner()}
       };
       return repository;

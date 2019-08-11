@@ -8,6 +8,7 @@
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
 #include <dune/istl/paamg/amg.hh>
+#include <dune/istl/paamg/fastamg.hh>
 
 namespace Dune {
 
@@ -374,6 +375,58 @@ namespace Dune {
           return buildForCriterion(lin_op, config, MetaType<Dune::Amg::SymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
         }else if(criterion == "unsymmetric"){
           return buildForCriterion(lin_op, config, MetaType<Dune::Amg::UnSymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
+        }else{
+          DUNE_THROW(Exception,"Unknown criterion: " << criterion);
+        }
+      };
+    }
+
+    /** \brief Amg::FastAMG factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - preset (no default, values: isotropic, anisotropic)
+        - diameter (default: 2, only if preset is set)
+        - dim (default: 2)
+        - max-distance
+        - skip-isolated
+        - min-aggregate-size
+        - max-aggregate-size
+        - max-connectivity
+        - max-connectivity
+        - alpha
+        - beta
+        - max-level
+        - coarsen-target
+        - min-coarsen-rarget
+        - prolongation-damping-factor
+        - debug-level
+        - pre-smooth-steps
+        - post-smooth-steps
+        - gamma (1: V-cycle, 2: W-cycle)
+        - additive (true: Additive, false: Multiplicative)
+        - critrion (default: symmetric, values:symmetric, unsymmetric)
+    */
+    static auto fastamg(){
+      auto buildFastAMG = [&](auto lin_op, const ParameterTree& config, auto criterion_type)
+        -> std::shared_ptr<Preconditioner<X,Y>> {
+        using Criterion = typename decltype(criterion_type)::type;
+        auto parameters = PreconditionerFactories::getAMGParameter(config);
+        Criterion criterion(parameters);
+        using FastAMG = Amg::FastAMG<MatrixAdapter<matrix_type,X,Y>, X>;
+        auto aop = std::dynamic_pointer_cast<MatrixAdapter<matrix_type, X, Y>>(lin_op);
+        if(!aop)
+          DUNE_THROW(Exception, "FastAMG needs an AssembledLinearOperator.");
+        return std::make_shared<FastAMG>(*aop, criterion, config.get("criterion","symmetric")=="symmetric");
+      };
+      return [buildFastAMG](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>> {
+        auto criterion = config.get("criterion","symmetric");
+        if(criterion == "symmetric"){
+          return buildFastAMG(lin_op, config, MetaType<Dune::Amg::SymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
+        }else if(criterion == "unsymmetric"){
+          return buildFastAMG(lin_op, config, MetaType<Dune::Amg::UnSymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
         }else{
           DUNE_THROW(Exception,"Unknown criterion: " << criterion);
         }
