@@ -9,7 +9,9 @@
 #include <dune/istl/ldl.hh>
 #include <dune/istl/spqr.hh>
 #include <dune/istl/superlu.hh>
+#if HAVE_SUITESPARSE_CHOLMOD
 #include <dune/istl/cholmod.hh>
+#endif
 
 namespace Dune {
 
@@ -149,38 +151,58 @@ namespace Dune {
 
     static auto umfpack(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
+#if HAVE_SUITESPARSE_UMFPACK
                int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<UMFPack<matrix_type>>(getmat(lin_op), verbose));
+#else
+               DUNE_THROW(Exception, "UMFPack is not available.");
+#endif
              };
     }
 
     static auto ldl(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
+#if HAVE_SUITESPARSE_LDL
                int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<LDL<matrix_type>>(getmat(lin_op), verbose));
+#else
+               DUNE_THROW(Exception, "LDL is not available.");
+#endif
              };
     }
 
     static auto spqr(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
+#if HAVE_SUITESPARSE_SPQR
                int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SPQR<matrix_type>>(getmat(lin_op), verbose));
+#else
+               DUNE_THROW(Exception, "SPQR is not available.");
+#endif
              };
     }
 
     static auto superlu(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
+#if HAVE_SUPERLU
                int verbose = getVerbose(lin_op, config);
                bool reusevector = config.get("reusevector", true);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SuperLU<matrix_type>>(getmat(lin_op), verbose, reusevector));
+#else
+               DUNE_THROW(Exception, "SuperLU is not available.");
+#endif
              };
     }
 
     static auto cholmod(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
+#if HAVE_SUITESPARSE_CHOLMOD
                auto iop = std::make_shared<Cholmod<matrix_type>>();
                iop->setMatrix(getmat(lin_op));
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(iop);
+#else
+               DUNE_THROW(Exception, "Cholmod is not available.");
+#endif
              };
     }
   };
