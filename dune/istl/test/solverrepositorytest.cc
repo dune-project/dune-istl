@@ -29,11 +29,16 @@ int main(int argc, char** argv){
   using Operator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
   std::shared_ptr<Dune::LinearOperator<Vector, Vector>> op = std::make_shared<Operator>(mat);
 
-  auto solver = Dune::SolverRepository<Dune::LinearOperator<Vector, Vector>>::get(op, config.sub("solver"));
-
-  x = 0;
-  b = 1;
-  Dune::InverseOperatorResult res;
-  solver->apply(x,b,res);
+  int counter = 1;
+  while(config.hasSub(std::string("solver") + std::to_string(counter))){
+    std::cout << " ============== TEST " << counter << " ============== " << std::endl;
+    Dune::ParameterTree solverConfig = config.sub(std::string("solver") + std::to_string(counter));
+    auto solver = Dune::SolverRepository<Dune::LinearOperator<Vector, Vector>>::get(op, solverConfig);
+    x = 0;
+    b = 1;
+    Dune::InverseOperatorResult res;
+    solver->apply(x,b,res);
+    counter++;
+  }
   return 0;
 }
