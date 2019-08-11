@@ -37,91 +37,7 @@ namespace Dune {
         DUNE_THROW(Exception, "The passed solver is not of type AssembledLinearOperator");
       return assembled_op->getmat();
     }
-  public:
 
-    static auto richardson(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               return std::make_shared<Dune::Richardson<X, Y>>(relaxation);
-             };
-    }
-
-    static auto inverseoperator2preconditioner(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               std::shared_ptr<InverseOperator<X, Y>> iop = SolverRepository<Operator>::get(lin_op, config.sub("solver"));
-               return std::make_shared<Dune::InverseOperator2Preconditioner<InverseOperator<X, Y>>>(iop);
-             };
-    }
-
-    static auto seqssor(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqSSOR<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
-             };
-    }
-
-    static auto seqsor(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqSOR<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
-             };
-    }
-
-    static auto seqgs(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqGS<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
-             };
-    }
-
-    static auto seqjac(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqJac<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
-             };
-    }
-
-    static auto seqilu(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               int iterations = config.get("iterations", 1);
-               bool resort = config.get("resort", false);
-               return std::make_shared<Dune::SeqILU<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, resort);
-             };
-    }
-
-    static auto seqildl(){
-      return [&](auto lin_op, const ParameterTree& config) {
-               field_type relaxation = config.get("relaxation", 1.0);
-               return std::make_shared<Dune::SeqILDL<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), relaxation);
-             };
-    }
-
-    static auto parssor(){
-      return [&](auto lin_op, const ParameterTree& config){
-               field_type relaxation = config.get("relaxation", 1.0);
-               int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::ParSSOR<matrix_type, X, Y, communication_type>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, lin_op->comm());
-             };
-    }
-
-    static auto blockpreconditioner(){
-      return [&](auto lin_op, const ParameterTree& config){
-               auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
-               return std::make_shared<Dune::BlockPreconditioner<X, Y, communication_type>>(seq_prec, lin_op->comm());
-             };
-    }
-
-    static auto nonoverlappingblockpreconditioner(){
-      return [&](auto lin_op, const ParameterTree& config){
-               auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
-               return std::make_shared<Dune::NonoverlappingBlockPreconditioner<communication_type, Preconditioner<X,Y>>>(seq_prec, lin_op->comm());
-             };
-    }
 
     static Amg::Parameters getAMGParameter(const ParameterTree& config){
       using Parameters   = Dune::Amg::Parameters;
@@ -206,7 +122,217 @@ namespace Dune {
     struct AMGCompatibleOperator<NonoverlappingSchwarzOperator<matrix_type, X, Y, OwnerOverlapCopyCommunication<GI, LI>>>{
       using type = NonoverlappingSchwarzOperator<matrix_type, X, Y, OwnerOverlapCopyCommunication<GI, LI>>;
     };
+  public:
 
+    /** \brief Richardson factory
+
+        SolverCategory: any
+
+        Parameters:
+        - relaxation (default: 1.0)
+     */
+    static auto richardson(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        return std::make_shared<Richardson<X, Y>>(relaxation);
+      };
+    }
+
+    /** \brief InverseOperator2Preconditioner factory
+
+        SolverCategory: any
+
+        Parameters:
+        - preconditioner (no default, subtree)
+     */
+    static auto inverseoperator2preconditioner(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        std::shared_ptr<InverseOperator<X, Y>> iop = SolverRepository<Operator>::get(lin_op, config.sub("solver"));
+        return std::make_shared<InverseOperator2Preconditioner<InverseOperator<X, Y>>>(iop);
+      };
+    }
+
+    /** \brief SeqSSOR factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - relaxation (default: 1.0)
+        - iterations (default: 1)
+     */
+    static auto seqssor(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        int iterations = config.get("iterations", 1);
+        return std::make_shared<SeqSSOR<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
+      };
+    }
+
+    /** \brief SeqSOR factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - relaxation (default: 1.0)
+        - iterations (default: 1)
+     */
+    static auto seqsor(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        int iterations = config.get("iterations", 1);
+        return std::make_shared<SeqSOR<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
+      };
+    }
+
+    /** \brief SeqGS factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - relaxation (default: 1.0)
+        - iterations (default: 1)
+     */
+    static auto seqgs(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        int iterations = config.get("iterations", 1);
+        return std::make_shared<SeqGS<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
+      };
+    }
+
+    /** \brief SeqJac factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - relaxation (default: 1.0)
+        - iterations (default: 1)
+     */
+    static auto seqjac(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        int iterations = config.get("iterations", 1);
+        return std::make_shared<SeqJac<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
+      };
+    }
+
+    /** \brief SeqILU factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - relaxation (default: 1.0)
+        - iterations (default: 1)
+        - resort (default: false)
+     */
+    static auto seqilu(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        int iterations = config.get("iterations", 1);
+        bool resort = config.get("resort", false);
+        return std::make_shared<SeqILU<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, resort);
+      };
+    }
+
+    /** \brief SeqILDL factory
+
+        SolverCategory: sequential
+
+        Parameters:
+        - relaxation (default: 1.0)
+     */
+    static auto seqildl(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        return std::make_shared<SeqILDL<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), relaxation);
+      };
+    }
+
+    /** \brief ParSSOR factory
+
+        SolverCategory: overlapping
+
+        Parameters:
+        - relaxation (default: 1.0)
+        - iterations (default: 1)
+     */
+    static auto parssor(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        field_type relaxation = config.get("relaxation", 1.0);
+        int iterations = config.get("iterations", 1);
+        return std::make_shared<ParSSOR<matrix_type, X, Y, communication_type>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, lin_op->comm());
+      };
+    }
+
+    /** \brief BlockPreconditioner factory
+
+        SolverCategory: overlapping
+
+        Parameters:
+        - preconditioner (no default, subkey)
+     */
+    static auto blockpreconditioner(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
+        return std::make_shared<BlockPreconditioner<X, Y, communication_type>>(seq_prec, lin_op->comm());
+      };
+    }
+
+    /** \brief NonoverlappingBlockPreconditioner factory
+
+        SolverCategory: nonoverlapping
+
+        Parameters:
+        - preconditioner (no default, subkey)
+     */
+    static auto nonoverlappingblockpreconditioner(){
+      return [&](auto lin_op, const ParameterTree& config)
+        -> std::shared_ptr<Preconditioner<X,Y>>{
+        auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
+        return std::make_shared<NonoverlappingBlockPreconditioner<communication_type, Preconditioner<X,Y>>>(seq_prec, lin_op->comm());
+      };
+    }
+
+    /** \brief Amg::AMG factory
+
+        SolverCategory: any
+
+        Parameters:
+        - preset (no default, values: isotropic, anisotropic)
+        - diameter (default: 2, only if preset is set)
+        - dim (default: 2)
+        - max-distance
+        - skip-isolated
+        - min-aggregate-size
+        - max-aggregate-size
+        - max-connectivity
+        - max-connectivity
+        - alpha
+        - beta
+        - max-level
+        - coarsen-target
+        - min-coarsen-rarget
+        - prolongation-damping-factor
+        - debug-level
+        - pre-smooth-steps
+        - post-smooth-steps
+        - gamma (1: V-cycle, 2: W-cycle)
+        - additive (true: Additive, false: Multiplicative)
+        - critrion (default: symmetric, values:symmetric, unsymmetric)
+        - smoother (default: ssor, values: ssor)
+        - smoother.iterations (default: 1)
+        - smoother.relaxation (default: 1.0)
+     */
     static auto amg(){
       auto buildForSmoother = [&](auto lin_op, const ParameterTree& config, auto criterion_type, auto smoother_type){
                                 using Criterion = typename decltype(criterion_type)::type;
