@@ -36,7 +36,8 @@ namespace Dune{
                                           {"seqildl", Factories::seqildl()},
                                           {"parssor", Factories::parssor()},
                                           {"blockpreconditioner", Factories::blockpreconditioner()},
-                                          {"amg", Factories::amg()}
+                                          {"amg", Factories::amg()},
+                                          {"nonoverlappingblockpreconditioner", Factories::nonoverlappingblockpreconditioner()}
       };
       return repository;
     }

@@ -116,6 +116,13 @@ namespace Dune {
              };
     }
 
+    static auto nonoverlappingblockpreconditioner(){
+      return [](auto lin_op, const ParameterTree& config){
+               auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
+               return std::make_shared<Dune::NonoverlappingBlockPreconditioner<communication_type, Preconditioner<X,Y>>>(seq_prec, lin_op->comm());
+             };
+    }
+
     static Amg::Parameters getAMGParameter(const ParameterTree& config){
       using Parameters   = Dune::Amg::Parameters;
       Parameters parameters;
