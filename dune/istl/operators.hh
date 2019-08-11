@@ -12,6 +12,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
 
+
+#include <dune/istl/paamg/pinfo.hh>
 #include "solvercategory.hh"
 
 
@@ -71,6 +73,7 @@ namespace Dune {
     //! The field type of the operator.
     typedef typename X::field_type field_type;
 
+    typedef  Amg::SequentialInformation communication_type;
     /*! \brief apply operator to x:  \f$ y = A(x) \f$
           The input vector is consistent and the output must also be
        consistent on the interior+border partition.
@@ -92,6 +95,10 @@ namespace Dune {
 #else
     = 0;
 #endif
+
+    virtual const communication_type& comm() const {
+      return communication_type();
+    }
   };
 
 

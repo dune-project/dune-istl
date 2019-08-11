@@ -87,12 +87,16 @@ namespace Dune {
      * @brief Construct the preconditioner from the solver
      * @param inverse_operator The inverse operator to wrap.
      */
-    InverseOperator2Preconditioner(InverseOperator& inverse_operator)
+    InverseOperator2Preconditioner(std::shared_ptr<InverseOperator> inverse_operator)
     : inverse_operator_(inverse_operator)
     {
-      if(c != -1 && SolverCategory::category(inverse_operator_) != c)
+      if(c != -1 && SolverCategory::category(*inverse_operator_) != c)
         DUNE_THROW(InvalidStateException, "User supplied solver category does not match that of the supplied iverser operator");
     }
+
+    InverseOperator2Preconditioner(InverseOperator& inverse_operator)
+      : InverseOperator2Preconditioner(stackobject_to_shared_ptr(inverse_operator))
+    {}
 
     virtual void pre(domain_type&,range_type&)
     {}
@@ -101,7 +105,7 @@ namespace Dune {
     {
       InverseOperatorResult res;
       range_type copy(d);
-      inverse_operator_.apply(v, copy, res);
+      inverse_operator_->apply(v, copy, res);
     }
 
     virtual void post(domain_type&)
@@ -110,11 +114,11 @@ namespace Dune {
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
     {
-      return SolverCategory::category(inverse_operator_);
+      return SolverCategory::category(*inverse_operator_);
     }
 
   private:
-    InverseOperator& inverse_operator_;
+    std::shared_ptr<InverseOperator> inverse_operator_;
   };
 
   //=====================================================================

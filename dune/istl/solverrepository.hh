@@ -18,18 +18,22 @@ namespace Dune{
     using Domain = typename Operator::domain_type;
     using Range = typename Operator::range_type;
     using Preconditioner = Dune::Preconditioner<Domain, Range>;
-    template<typename T>
-    using _communication_type = typename T::communication_type;
-    using Communication = Std::detected_or_t<Amg::SequentialInformation, _communication_type, Operator>;
     using FactoryType = std::function<std::shared_ptr<Preconditioner>(std::shared_ptr<Operator>,
-                                                                      const ParameterTree&,
-                                                                      const Communication&)>;
+                                                                      const ParameterTree&)>;
   public:
     using RepositoryType = std::unordered_map<std::string, FactoryType>;
 
     static RepositoryType repositoryInstance(){
+      using Factories = PreconditionerFactories<Operator>;
       static RepositoryType repository = {
-                                          {"richardson", PreconditionerFactories::richardson}
+                                          {"richardson", Factories::richardson()},
+                                          {"inverseoperator2preconditioner", Factories::inverseoperator2preconditioner()},
+                                          {"seqssor", Factories::seqssor()},
+                                          {"seqsor", Factories::seqsor()},
+                                          {"seqgs", Factories::seqgs()},
+                                          {"seqjac", Factories::seqjac()},
+                                          {"seqilu", Factories::seqilu()},
+                                          {"seqildl", Factories::seqildl()}
       };
       return repository;
     }
@@ -39,8 +43,7 @@ namespace Dune{
     }
 
     static std::shared_ptr<Preconditioner> get(std::shared_ptr<Operator> op,
-                                               const ParameterTree& config,
-                                               const Communication& comm){
+                                               const ParameterTree& config){
       std::string type;
       try{
         type = config.template get<std::string>("type");
@@ -53,7 +56,7 @@ namespace Dune{
       }catch(std::out_of_range&){
         DUNE_THROW(Exception, "Could not find preconditioner \"" << type <<  "\" in PreconditionerRepository");
       }
-      return fac(op, config, comm);
+      return fac(op, config);
     }
   };
 
@@ -64,33 +67,30 @@ namespace Dune{
     using Solver = Dune::InverseOperator<Domain,Range>;
     using Preconditioner = Dune::Preconditioner<Domain, Range>;
 
-    template<typename T>
-    using _communication_type = typename T::communication_type;
-    using Communication = Std::detected_or_t<Amg::SequentialInformation, _communication_type, Operator>;
     using FactoryType = std::function<std::shared_ptr<Solver>(std::shared_ptr<Operator>,
                                                               const ParameterTree&,
-                                                              const Communication&,
                                                               std::shared_ptr<Preconditioner>)>;
   public:
     using RepositoryType = std::unordered_map<std::string, FactoryType>;
 
     static RepositoryType repositoryInstance(){
+      using Factories = SolverFactories<Operator>;
       static RepositoryType repository = {
-                                          {"loopsolver", SolverFactories::loopsolver},
-                                          {"gradientsolver", SolverFactories::gradientsolver},
-                                          {"cgsolver", SolverFactories::cgsolver},
-                                          {"bicgstabsolver", SolverFactories::bicgstabsolver},
-                                          {"minressolver", SolverFactories::minressolver},
-                                          {"restartedgmressolver", SolverFactories::restartedgmressolver},
-                                          {"restartedflexiblegmressolver", SolverFactories::restartedflexiblegmressolver},
-                                          {"generalizedpcgsolver", SolverFactories::generalizedpcgsolver},
-                                          {"restartedfcgsolver", SolverFactories::restartedfcgsolver},
-                                          {"completefcgsolver", SolverFactories::completefcgsolver},
-                                          {"umfpack", SolverFactories::umfpack},
-                                          {"ldl", SolverFactories::ldl},
-                                          {"spqr", SolverFactories::spqr},
-                                          {"superlu", SolverFactories::superlu},
-                                          {"cholmod", SolverFactories::cholmod}
+                                          {"loopsolver", Factories::loopsolver()},
+                                          {"gradientsolver", Factories::gradientsolver()},
+                                          {"cgsolver", Factories::cgsolver()},
+                                          {"bicgstabsolver", Factories::bicgstabsolver()},
+                                          {"minressolver", Factories::minressolver()},
+                                          {"restartedgmressolver", Factories::restartedgmressolver()},
+                                          {"restartedflexiblegmressolver", Factories::restartedflexiblegmressolver()},
+                                          {"generalizedpcgsolver", Factories::generalizedpcgsolver()},
+                                          {"restartedfcgsolver", Factories::restartedfcgsolver()},
+                                          {"completefcgsolver", Factories::completefcgsolver()},
+                                          {"umfpack", Factories::umfpack()},
+                                          {"ldl", Factories::ldl()},
+                                          {"spqr", Factories::spqr()},
+                                          {"superlu", Factories::superlu()},
+                                          {"cholmod", Factories::cholmod()}
       };
       return repository;
     }
@@ -101,8 +101,7 @@ namespace Dune{
 
     static std::shared_ptr<Solver> get(std::shared_ptr<Operator> op,
                                        const ParameterTree& config,
-                                       std::shared_ptr<Preconditioner> prec = nullptr,
-                                       const Communication& comm = {}){
+                                       std::shared_ptr<Preconditioner> prec = nullptr){
       std::string type;
       try{
         type = config.template get<std::string>("type");
@@ -117,9 +116,9 @@ namespace Dune{
       }
 
       if (!prec && config.hasSub("preconditioner")){
-        prec = PreconditionerRepository<Operator>::get(op, config.sub("preconditioner"), comm);
+        prec = PreconditionerRepository<Operator>::get(op, config.sub("preconditioner"));
       }
-      return fac(op, config, comm, prec);
+      return fac(op, config, prec);
     }
   };
 }
