@@ -32,13 +32,19 @@ namespace Dune {
       return assembled_op->getmat();
     }
 
+    static int getVerbose(std::shared_ptr<Operator> op,
+                          const ParameterTree& config){
+      auto& comm = op->comm();
+      return (config.get("verboserank", 0)==comm.communicator().rank())?config.get("verbose", 1):0;
+    }
+
   public:
 
     static auto loopsolver(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
 
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
 
@@ -50,7 +56,7 @@ namespace Dune {
       return [](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::GradientSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
              };
@@ -60,7 +66,7 @@ namespace Dune {
       return [](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::CGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
              };
@@ -70,7 +76,7 @@ namespace Dune {
       return [](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::BiCGSTABSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
              };
@@ -80,7 +86,7 @@ namespace Dune {
       return [](auto lin_op, const ParameterTree& config, auto prec) {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::MINRESSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose);
              };
@@ -91,7 +97,7 @@ namespace Dune {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::RestartedGMResSolver<X>>(lin_op, scalarProduct, prec, reduction, restart, max_iterations, verbose);
              };
@@ -102,7 +108,7 @@ namespace Dune {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::RestartedFlexibleGMResSolver<X>>(lin_op, scalarProduct, prec, reduction, restart, max_iterations, verbose);
              };
@@ -113,7 +119,7 @@ namespace Dune {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::GeneralizedPCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
              };
@@ -124,7 +130,7 @@ namespace Dune {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::RestartedFCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
              };
@@ -135,7 +141,7 @@ namespace Dune {
                double reduction = config.get("reduction",1e-10);
                int max_iterations = config.get("max-iterations",1000);
                int restart = config.get("restart", 10);
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                auto scalarProduct = createScalarProduct<X>(lin_op->comm(), lin_op->category());
                return std::make_shared<Dune::CompleteFCGSolver<X>>(lin_op, scalarProduct, prec, reduction, max_iterations, verbose, restart);
              };
@@ -143,28 +149,28 @@ namespace Dune {
 
     static auto umfpack(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<UMFPack<matrix_type>>(getmat(lin_op), verbose));
              };
     }
 
     static auto ldl(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<LDL<matrix_type>>(getmat(lin_op), verbose));
              };
     }
 
     static auto spqr(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SPQR<matrix_type>>(getmat(lin_op), verbose));
              };
     }
 
     static auto superlu(){
       return [](auto lin_op, const ParameterTree& config, auto prec) {
-               int verbose = config.get("verbose", 0);
+               int verbose = getVerbose(lin_op, config);
                bool reusevector = config.get("reusevector", true);
                return std::dynamic_pointer_cast<InverseOperator<X,Y>>(std::make_shared<SuperLU<matrix_type>>(getmat(lin_op), verbose, reusevector));
              };

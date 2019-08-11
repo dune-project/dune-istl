@@ -5,6 +5,7 @@
 #define DUNE_ISTL_PRECONDITIONERFACTORIES_HH
 
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/schwarz.hh>
 
 namespace Dune {
 
@@ -21,6 +22,7 @@ namespace Dune {
     typedef typename Operator::domain_type X;
     typedef typename Operator::range_type Y;
     using field_type = Simd::Scalar<typename X::field_type>;
+    using communication_type = typename Operator::communication_type;
 
     static auto& getmat(std::shared_ptr<Operator>& op){
       std::shared_ptr<AssembledLinearOperator<matrix_type, X, Y>> assembled_op =
@@ -33,64 +35,72 @@ namespace Dune {
   public:
     static auto richardson(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        return std::make_shared<Dune::Richardson<X, Y>>(relaxation);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               return std::make_shared<Dune::Richardson<X, Y>>(relaxation);
+             };
     }
 
     static auto inverseoperator2preconditioner(){
       return [](auto lin_op, const ParameterTree& config) {
-        std::shared_ptr<InverseOperator<X, Y>> iop = SolverRepository<Operator>::get(lin_op, config.sub("solver"));
-        return std::make_shared<Dune::InverseOperator2Preconditioner<InverseOperator<X, Y>>>(iop);
-      };
+               std::shared_ptr<InverseOperator<X, Y>> iop = SolverRepository<Operator>::get(lin_op, config.sub("solver"));
+               return std::make_shared<Dune::InverseOperator2Preconditioner<InverseOperator<X, Y>>>(iop);
+             };
     }
 
     static auto seqssor(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        int iterations = config.get("iterations", 1);
-        return std::make_shared<Dune::SeqSSOR<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               int iterations = config.get("iterations", 1);
+               return std::make_shared<Dune::SeqSSOR<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+             };
     }
 
     static auto seqsor(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        int iterations = config.get("iterations", 1);
-        return std::make_shared<Dune::SeqSOR<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               int iterations = config.get("iterations", 1);
+               return std::make_shared<Dune::SeqSOR<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+             };
     }
 
     static auto seqgs(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        int iterations = config.get("iterations", 1);
-        return std::make_shared<Dune::SeqGS<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               int iterations = config.get("iterations", 1);
+               return std::make_shared<Dune::SeqGS<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+             };
     }
 
     static auto seqjac(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        int iterations = config.get("iterations", 1);
-        return std::make_shared<Dune::SeqJac<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               int iterations = config.get("iterations", 1);
+               return std::make_shared<Dune::SeqJac<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+             };
     }
 
     static auto seqilu(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        int iterations = config.get("iterations", 1);
-        bool resort = config.get("resort", false);
-        return std::make_shared<Dune::SeqILU<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation, resort);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               int iterations = config.get("iterations", 1);
+               bool resort = config.get("resort", false);
+               return std::make_shared<Dune::SeqILU<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation, resort);
+             };
     }
 
     static auto seqildl(){
       return [](auto lin_op, const ParameterTree& config) {
-        field_type relaxation = config.get("relaxation", 1.0);
-        return std::make_shared<Dune::SeqILDL<matrix_type, X, Y>>(getmat(lin_op), relaxation);
-      };
+               field_type relaxation = config.get("relaxation", 1.0);
+               return std::make_shared<Dune::SeqILDL<matrix_type, X, Y>>(getmat(lin_op), relaxation);
+             };
+    }
+
+    static auto parssor(){
+      return [](auto lin_op, const ParameterTree& config){
+               field_type relaxation = config.get("relaxation", 1.0);
+               int iterations = config.get("iterations", 1);
+               return std::make_shared<Dune::ParSSOR<matrix_type, X, Y, communication_type>>(getmat(lin_op), iterations, relaxation, lin_op->comm());
+             };
     }
   };
 }

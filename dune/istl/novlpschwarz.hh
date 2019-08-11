@@ -236,7 +236,7 @@ namespace Dune {
       return SolverCategory::nonoverlapping;
     }
 
-    virtual const communication_type& comm() const {
+    const communication_type& comm() const {
       return communication;
     }
 
