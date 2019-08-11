@@ -37,87 +37,87 @@ namespace Dune {
         DUNE_THROW(Exception, "The passed solver is not of type AssembledLinearOperator");
       return assembled_op->getmat();
     }
-
   public:
+
     static auto richardson(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
                return std::make_shared<Dune::Richardson<X, Y>>(relaxation);
              };
     }
 
     static auto inverseoperator2preconditioner(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                std::shared_ptr<InverseOperator<X, Y>> iop = SolverRepository<Operator>::get(lin_op, config.sub("solver"));
                return std::make_shared<Dune::InverseOperator2Preconditioner<InverseOperator<X, Y>>>(iop);
              };
     }
 
     static auto seqssor(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqSSOR<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+               return std::make_shared<Dune::SeqSSOR<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
              };
     }
 
     static auto seqsor(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqSOR<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+               return std::make_shared<Dune::SeqSOR<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
              };
     }
 
     static auto seqgs(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqGS<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+               return std::make_shared<Dune::SeqGS<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
              };
     }
 
     static auto seqjac(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::SeqJac<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation);
+               return std::make_shared<Dune::SeqJac<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation);
              };
     }
 
     static auto seqilu(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
                bool resort = config.get("resort", false);
-               return std::make_shared<Dune::SeqILU<matrix_type, X, Y>>(getmat(lin_op), iterations, relaxation, resort);
+               return std::make_shared<Dune::SeqILU<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, resort);
              };
     }
 
     static auto seqildl(){
-      return [](auto lin_op, const ParameterTree& config) {
+      return [&](auto lin_op, const ParameterTree& config) {
                field_type relaxation = config.get("relaxation", 1.0);
-               return std::make_shared<Dune::SeqILDL<matrix_type, X, Y>>(getmat(lin_op), relaxation);
+               return std::make_shared<Dune::SeqILDL<matrix_type, X, Y>>(PreconditionerFactories::getmat(lin_op), relaxation);
              };
     }
 
     static auto parssor(){
-      return [](auto lin_op, const ParameterTree& config){
+      return [&](auto lin_op, const ParameterTree& config){
                field_type relaxation = config.get("relaxation", 1.0);
                int iterations = config.get("iterations", 1);
-               return std::make_shared<Dune::ParSSOR<matrix_type, X, Y, communication_type>>(getmat(lin_op), iterations, relaxation, lin_op->comm());
+               return std::make_shared<Dune::ParSSOR<matrix_type, X, Y, communication_type>>(PreconditionerFactories::getmat(lin_op), iterations, relaxation, lin_op->comm());
              };
     }
 
     static auto blockpreconditioner(){
-      return [](auto lin_op, const ParameterTree& config){
+      return [&](auto lin_op, const ParameterTree& config){
                auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
                return std::make_shared<Dune::BlockPreconditioner<X, Y, communication_type>>(seq_prec, lin_op->comm());
              };
     }
 
     static auto nonoverlappingblockpreconditioner(){
-      return [](auto lin_op, const ParameterTree& config){
+      return [&](auto lin_op, const ParameterTree& config){
                auto seq_prec = PreconditionerRepository<std::decay_t<decltype(*lin_op)>>::get(lin_op, config.sub("preconditioner"));
                return std::make_shared<Dune::NonoverlappingBlockPreconditioner<communication_type, Preconditioner<X,Y>>>(seq_prec, lin_op->comm());
              };
@@ -208,14 +208,14 @@ namespace Dune {
     };
 
     static auto amg(){
-      auto buildForSmoother = [](auto lin_op, const ParameterTree& config, auto criterion_type, auto smoother_type){
+      auto buildForSmoother = [&](auto lin_op, const ParameterTree& config, auto criterion_type, auto smoother_type){
                                 using Criterion = typename decltype(criterion_type)::type;
                                 using Smoother = typename decltype(smoother_type)::type;
                                 using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
                                 SmootherArgs smoother_args;
                                 smoother_args.iterations = config.get("smoother.iterations",1);
                                 smoother_args.relaxationFactor = config.get("smoother.relaxation",1.0);
-                                auto parameters = getAMGParameter(config);
+                                auto parameters = PreconditionerFactories::getAMGParameter(config);
                                 Criterion criterion(parameters);
                                 using AMGOP = typename AMGCompatibleOperator<Operator>::type;
                                 using AMG = Amg::AMG<AMGOP, X, Smoother, typename AMGOP::communication_type>;
@@ -224,7 +224,7 @@ namespace Dune {
                                   DUNE_THROW(Exception, "The operator is not AMG compatible");
                                 return std::make_shared<AMG>(*amgop, criterion, smoother_args, amgop->comm());
                               };
-      auto buildForCriterion = [buildForSmoother](auto lin_op, const ParameterTree& config, auto criterion_type){
+      auto buildForCriterion = [&, buildForSmoother](auto lin_op, const ParameterTree& config, auto criterion_type){
                                  auto smoother = config.get("smoother", "ssor");
                                  if(smoother == "ssor"){
                                    return buildForSmoother(lin_op, config, criterion_type, MetaType<Dune::SeqSSOR<matrix_type, X, Y>>{});
@@ -232,7 +232,7 @@ namespace Dune {
                                    DUNE_THROW(Dune::Exception, "Unknown smoother " << smoother);
                                  }
                                };
-      return [buildForCriterion](auto lin_op, const ParameterTree& config){
+      return [&, buildForCriterion](auto lin_op, const ParameterTree& config){
                auto criterion = config.get("criterion","symmetric");
                if(criterion == "symmetric"){
                  return buildForCriterion(lin_op, config, MetaType<Dune::Amg::SymmetricCriterion<matrix_type,Dune::Amg::FirstDiagonal>>{});
