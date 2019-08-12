@@ -538,7 +538,7 @@ namespace Dune {
 
        Constructor invoking ILU(n).
        \param A The matrix to operate on.
-       \param n The number of iterations to perform.
+       \param n The order of the ILU decomposition.
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
@@ -758,7 +758,7 @@ namespace Dune {
 
        Constructor gets all parameters to operate the prec.
        \param A The matrix to operate on.
-       \param n The number of iterations to perform.
+       \param n The order of the ILU decomposition.
        \param w The relaxation factor.
      */
     SeqILUn (const M& A, int n, scalar_field_type w)
