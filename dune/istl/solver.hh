@@ -269,6 +269,43 @@ namespace Dune
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
 
+        /**
+        \brief General constructor to initialize an iterative solver
+
+        \param op The operator we solve.
+        \param sp The scalar product to use, e. g. SeqScalarproduct.
+        \param prec The preconditioner to apply in each iteration of the loop.
+        Has to inherit from Preconditioner.
+        \param reduction The relative defect reduction to achieve when applying
+        the operator.
+        \param maxit The maximum number of iteration steps allowed when applying
+        the operator.
+        \param verbose The verbosity level.
+
+        Verbose levels are:
+        <ul>
+        <li> 0 : print nothing </li>
+        <li> 1 : print initial and final defect and statistics </li>
+        <li> 2 : print line for each iteration </li>
+        </ul>
+     */
+    IterativeSolver (std::shared_ptr<LinearOperator<X,Y>> op,
+                     std::shared_ptr<ScalarProduct<X>> sp,
+                     std::shared_ptr<Preconditioner<X,Y>> prec,
+                     scalar_real_type reduction, int maxit, int verbose) :
+      _op(op),
+      _prec(prec),
+      _sp(sp),
+      _reduction(reduction), _maxit(maxit), _verbose(verbose),
+      _category(SolverCategory::category(*op))
+    {
+      if(SolverCategory::category(*op) != SolverCategory::category(*prec))
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and Preconditioner must have the same SolverCategory!");
+      if(SolverCategory::category(*op) != SolverCategory::category(*sp))
+        DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
+    }
+
+
     // #warning actually we want to have this as the default and just implement the second one
     // //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
     // virtual void apply (X& x, Y& b, InverseOperatorResult& res)

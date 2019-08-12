@@ -242,6 +242,25 @@ namespace Dune {
     }
 
     /*!
+      \brief Constructor to initialize a CG solver.
+      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<LinearOperator<X,Y>>, std::shared_ptr<ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, real_type, int, int)
+      \param condition_estimate Whether to calculate an estimate of the condition number.
+                                The estimate is given in the InverseOperatorResult returned by apply().
+                                This is only supported for float and double field types.
+    */
+    CGSolver (std::shared_ptr<LinearOperator<X,X>> op, std::shared_ptr<ScalarProduct<X>> sp,
+              std::shared_ptr<Preconditioner<X,X>> prec,
+              scalar_real_type reduction, int maxit, int verbose, bool condition_estimate)
+      : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
+      condition_estimate_(condition_estimate)
+    {
+      if (condition_estimate && !(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)) {
+        condition_estimate_ = false;
+        std::cerr << "WARNING: Condition estimate was disabled. It is only available for double and float field types!" << std::endl;
+      }
+    }
+
+    /*!
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
@@ -826,6 +845,20 @@ namespace Dune {
     {}
 
     /*!
+      \brief Set up RestartedGMResSolver solver.
+
+      \copydoc LoopSolver::LoopSolver(std::shared_ptr<L>,std::shared_ptr<S>,std::shared_ptr<P>,double,int,int)
+       \param restart number of GMRes cycles before restart
+     */
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y>> op,
+                          std::shared_ptr<ScalarProduct<X>> sp,
+                          std::shared_ptr<Preconditioner<X,Y>> prec,
+                          scalar_real_type reduction, int restart, int maxit, int verbose) :
+      IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
+      _restart(restart)
+    {}
+
+    /*!
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
@@ -1265,6 +1298,22 @@ private:
     {}
 
     /*!
+      \brief Set up nonlinear preconditioned conjugate gradient solver.
+
+      \copydoc LoopSolver::LoopSolver(std::shared_ptr<L>,std::shared_ptr<S>,std::shared_ptr<P>,double,int,int)
+      \param restart When to restart the construction of
+      the Krylov search space.
+    */
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
+                          std::shared_ptr<ScalarProduct<X>> sp,
+                          std::shared_ptr<Preconditioner<X,X>> prec,
+                          scalar_real_type reduction, int maxit, int verbose,
+                          int restart = 10) :
+      IterativeSolver<X,X>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
+      _restart(restart)
+    {}
+
+    /*!
        \brief Apply inverse operator.
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
@@ -1410,6 +1459,19 @@ private:
                         scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
+
+    /*!
+      \brief Constructor to initialize a RestartedFCG solver.
+      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<LinearOperator<X,Y>>, std::shared_ptr<ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, real_type, int, int,int)
+      \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
+    */
+    RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
+                        std::shared_ptr<ScalarProduct<X>> sp,
+                        std::shared_ptr<Preconditioner<X,X>> prec,
+                        scalar_real_type reduction, int maxit, int verbose,
+                        int mmax = 10)
+      : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
+    {}
 
     /*!
      \brief Apply inverse operator.
