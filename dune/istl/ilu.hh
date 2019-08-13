@@ -158,6 +158,12 @@ namespace Dune {
     return A[0][0];
   }
 
+  // fallback for example for vectortypes
+  template<class T>
+  T real(const T& t){
+    return t;
+  }
+
 
   /*! ILU decomposition of order n
           Computes ILU decomposition of order n. The matrix ILU should
@@ -200,7 +206,7 @@ namespace Dune {
             // we misuse the storage to store an int. If the field_type is std::complex, we have to access the real part
             // starting from C++11, we can use std::real to always return a real value, even if it is double/float
             using std::real;
-            int generation = (int) real( firstmatrixelement(*kj) );
+            Simd::Rebind<K, int> generation = (Simd::Rebind<K, int>) real( firstmatrixelement(*kj) );
             if (generation<n)
             {
               mapiterator ij = rowpattern.find(kj.index());
@@ -221,7 +227,7 @@ namespace Dune {
       // write generation index into entries
       coliterator endILUij = ILU[i.index()].end();;
       for (coliterator ILUij=ILU[i.index()].begin(); ILUij!=endILUij; ++ILUij)
-        firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
+        firstmatrixelement(*ILUij) = (Simd::Rebind<K, int>) rowpattern[ILUij.index()];
     }
 
     // copy entries of A
