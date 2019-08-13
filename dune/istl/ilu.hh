@@ -200,7 +200,7 @@ namespace Dune {
             // we misuse the storage to store an int. If the field_type is std::complex, we have to access the real part
             // starting from C++11, we can use std::real to always return a real value, even if it is double/float
             using std::real;
-            int generation = (int) real( firstmatrixelement(*kj) );
+            int generation = (int) real( (Simd::Scalar<K>)Simd::lane(0,firstmatrixelement(*kj)) );
             if (generation<n)
             {
               mapiterator ij = rowpattern.find(kj.index());
@@ -221,7 +221,7 @@ namespace Dune {
       // write generation index into entries
       coliterator endILUij = ILU[i.index()].end();;
       for (coliterator ILUij=ILU[i.index()].begin(); ILUij!=endILUij; ++ILUij)
-        firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
+        Simd::lane(0,firstmatrixelement(*ILUij)) = (Simd::Scalar<K>) rowpattern[ILUij.index()];
     }
 
     // copy entries of A
