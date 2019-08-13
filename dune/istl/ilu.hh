@@ -257,7 +257,7 @@ namespace Dune {
 
   namespace ILU {
 
-    template <class B>
+    template <class B, class Alloc = std::allocator<B>>
     struct CRS
     {
       typedef B       block_type;
@@ -300,7 +300,7 @@ namespace Dune {
       }
 
       std::vector< size_type  > rows_;
-      std::vector< block_type > values_;
+      std::vector< block_type, Alloc> values_;
       std::vector< size_type  > cols_;
       size_type nRows_;
     };

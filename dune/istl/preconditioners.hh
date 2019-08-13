@@ -520,7 +520,7 @@ namespace Dune {
     typedef Simd::Scalar<field_type> scalar_field_type;
 
     //! \brief type of ILU storage
-    typedef typename ILU::CRS< block_type > CRS;
+    typedef typename ILU::CRS< block_type , typename M::allocator_type> CRS;
 
     /*! \brief Constructor.
 
