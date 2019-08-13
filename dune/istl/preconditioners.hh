@@ -629,7 +629,7 @@ namespace Dune {
     //! \brief The ILU(n) decomposition of the matrix. As storage a CRS structure is used.
     CRS lower_;
     CRS upper_;
-    std::vector< block_type > inv_;
+    std::vector< block_type, typename matrix_type::allocator_type > inv_;
 
     //! \brief The relaxation factor to use.
     const scalar_field_type w_;

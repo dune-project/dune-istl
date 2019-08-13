@@ -373,10 +373,10 @@ namespace Dune {
 
 
     //! LU backsolve with stored inverse in CRS format for lower and upper triangular
-    template<class CRS, class mblock, class X, class Y>
+    template<class CRS, class InvVector, class X, class Y>
     void bilu_backsolve (const CRS& lower,
                          const CRS& upper,
-                         const std::vector< mblock >& inv,
+                         const InvVector& inv,
                          X& v, const Y& d)
     {
       // iterator types
