@@ -6,11 +6,14 @@
 
 #include <iomanip>
 #include <ostream>
+#include <string>
+#include <functional>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
+#include <dune/common/timer.hh>
 
 #include "solvertype.hh"
 #include "preconditioner.hh"
@@ -193,7 +196,7 @@ namespace Dune
      constructors, which are then only imported in the actual solver
      implementation.
    */
-  template<class X, class Y>
+  template<class X, class Y, class CountType = unsigned int>
   class IterativeSolver : public InverseOperator<X,Y>{
   public:
     using typename InverseOperator<X,Y>::domain_type;
@@ -334,6 +337,120 @@ namespace Dune
     {
       return _category;
     }
+
+    std::string name() const{
+      std::string name = className(*this);
+      return name.substr(0, name.find("<"));
+    }
+
+      /*!
+     \brief Class for controlling iterative methods
+
+     This class provides building blocks for a iterative method. It does all
+     things that have to do with output, residual checking (NaN, infinite,
+     convergence) and sets also the fields of InverseOperatorResult.
+
+     Instances of this class are meant to create with
+     IterativeSolver::startIteration and stored as a local variable in the apply
+     method. If the scope of the apply method is left the destructor of this
+     class sets all the solver statistics in the InverseOperatorResult and
+     prints the final output.
+
+     During the iteration in every step Iteration::step should be called with
+     the current iteration count and norm of the residual. It returns true if
+     convergence is achieved.
+   */
+    class Iteration {
+    public:
+      Iteration(const IterativeSolver& parent, InverseOperatorResult& res)
+        : _i(0)
+        , _res(res)
+        , _parent(parent)
+        , _valid(true)
+      {
+        res.clear();
+        if(_parent._verbose>0){
+          std::cout << "=== " << parent.name() << std::endl;
+          if(_parent._verbose > 1)
+            _parent.printHeader(std::cout);
+        }
+      }
+
+      Iteration(const Iteration&) = delete;
+      Iteration(Iteration&& other)
+        : _def0(other._def0)
+        , _def(other._def)
+        , _i(other._i)
+        , _watch(other._watch)
+        , _res(other._res)
+        , _parent(other._parent)
+        , _valid(other._valid)
+      {
+        other._valid = false;
+      }
+
+      ~Iteration(){
+        if(_valid)
+          finalize();
+      }
+
+      /*! \brief registers the iteration step, checks for invalid defect norm
+          and convergence.
+
+        \param i The current iteration count
+        \param def The current norm of the defect
+
+        \return true is convergence is achieved
+
+        \throw SolverAbort when `def` contains inf or NaN
+       */
+      bool step(CountType i, real_type def){
+        if (!Simd::allTrue(isFinite(def))) // check for inf or NaN
+        {
+          if (_parent._verbose>0)
+            std::cout << "=== " << _parent.name() << ": abort due to infinite or NaN defect"
+                      << std::endl;
+          DUNE_THROW(SolverAbort,
+                     _parent.name() << ": defect=" << Simd::io(def)
+                     << " is infinite or NaN");
+        }
+        if(i == 0)
+          _def0 = def;
+        if(_parent._verbose > 1){
+          if(i!=0)
+            _parent.printOutput(std::cout,i,def,_def);
+          else
+            _parent.printOutput(std::cout,i,def);
+        }
+        _def = def;
+        _i = i;
+        _res.converged = (Simd::allTrue(def<_def0*_parent._reduction) || Simd::max(def)<1E-30);    // convergence check
+        return _res.converged;
+      }
+
+    protected:
+      void finalize(){
+        _res.converged = (Simd::allTrue(_def<_def0*_parent._reduction) || Simd::max(_def)<1E-30);
+        _res.iterations = _i;
+        _res.reduction = static_cast<double>(Simd::max(_def/_def0));
+        _res.conv_rate  = pow(_res.reduction,1.0/_i);
+        _res.elapsed = _watch.elapsed();
+        if (_parent._verbose>0)                 // final print
+          {
+            std::cout << "=== rate=" << _res.conv_rate
+                      << ", T=" << _res.elapsed
+                      << ", TIT=" << _res.elapsed/_res.iterations
+                      << ", IT=" << _res.iterations << std::endl;
+          }
+      }
+
+      real_type _def0 = 0.0, _def = 0.0;
+      CountType _i;
+      Timer _watch;
+      InverseOperatorResult& _res;
+      const IterativeSolver& _parent;
+      bool _valid;
+    };
 
   protected:
     std::shared_ptr<LinearOperator<X,Y>> _op;
