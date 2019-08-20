@@ -2,37 +2,35 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include <config.h>
 
-#include "mpi.h"
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
-#include <dune/istl/paamg/hierarchy.hh>
+#include <dune/istl/paamg/matrixhierarchy.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/schwarz.hh>
 #include "anisotropic.hh"
 
-template<int BS>
+template<int blockSize>
 void testHierarchy(int N)
 {
   typedef int LocalId;
   typedef int GlobalId;
   typedef Dune::OwnerOverlapCopyCommunication<LocalId,GlobalId> Communication;
   typedef Communication::ParallelIndexSet ParallelIndexSet;
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
+  typedef Dune::FieldMatrix<double,blockSize,blockSize> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
+  typedef Dune::FieldVector<double,blockSize> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
 
   int n;
-  Communication pinfo(MPI_COMM_WORLD);
+  Communication pinfo(Dune::MPIHelper::getCommunicator());
   ParallelIndexSet& indices = pinfo.indexSet();
 
   typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
   RemoteIndices& remoteIndices = pinfo.remoteIndices();
 
-  typedef Dune::CollectiveCommunication<MPI_Comm> Comm;
-  Comm cc(MPI_COMM_WORLD);
-  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, indices, cc, &n);
+  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, Dune::MPIHelper::getCollectiveCommunication(), &n);
   Vector b(indices.size());
 
   remoteIndices.rebuild<false>();
@@ -74,20 +72,13 @@ void testHierarchy(int N)
 
 int main(int argc, char** argv)
 {
-  MPI_Init(&argc, &argv);
+  Dune::MPIHelper::instance(argc, argv);
 
-  const int BS=1;
+  constexpr int blockSize = 1;
   int N=10;
 
   if(argc>1)
     N = atoi(argv[1]);
 
-  int procs, rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &procs);
-
-  testHierarchy<BS>(N);
-
-  MPI_Finalize();
-
+  testHierarchy<blockSize>(N);
 }

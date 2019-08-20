@@ -40,15 +40,6 @@ namespace Dune {
   template<class T, bool tag>
   struct SeqOverlappingSchwarzAssemblerHelper;
 
-  /** @brief Use the %UMFPack package to directly solve linear systems -- empty default class
-   * @tparam Matrix the matrix type defining the system
-   * Details on UMFPack can be found on
-   * http://www.cise.ufl.edu/research/sparse/umfpack/
-   */
-  template<class Matrix>
-  class UMFPack
-  {};
-
   // wrapper class for C-Function Calls in the backend. Choose the right function namespace
   // depending on the template parameter used.
   template<typename T>
@@ -65,52 +56,52 @@ namespace Dune {
     template<typename... A>
     static void defaults(A... args)
     {
-      umfpack_di_defaults(args...);
+      umfpack_dl_defaults(args...);
     }
     template<typename... A>
     static void free_numeric(A... args)
     {
-      umfpack_di_free_numeric(args...);
+      umfpack_dl_free_numeric(args...);
     }
     template<typename... A>
     static void free_symbolic(A... args)
     {
-      umfpack_di_free_symbolic(args...);
+      umfpack_dl_free_symbolic(args...);
     }
     template<typename... A>
     static int load_numeric(A... args)
     {
-      return umfpack_di_load_numeric(args...);
+      return umfpack_dl_load_numeric(args...);
     }
     template<typename... A>
     static void numeric(A... args)
     {
-      umfpack_di_numeric(args...);
+      umfpack_dl_numeric(args...);
     }
     template<typename... A>
     static void report_info(A... args)
     {
-      umfpack_di_report_info(args...);
+      umfpack_dl_report_info(args...);
     }
     template<typename... A>
     static void report_status(A... args)
     {
-      umfpack_di_report_status(args...);
+      umfpack_dl_report_status(args...);
     }
     template<typename... A>
     static int save_numeric(A... args)
     {
-      return umfpack_di_save_numeric(args...);
+      return umfpack_dl_save_numeric(args...);
     }
     template<typename... A>
     static void solve(A... args)
     {
-      umfpack_di_solve(args...);
+      umfpack_dl_solve(args...);
     }
     template<typename... A>
     static void symbolic(A... args)
     {
-      umfpack_di_symbolic(args...);
+      umfpack_dl_symbolic(args...);
     }
   };
 
@@ -172,43 +163,68 @@ namespace Dune {
     }
   };
 
-  /** @brief The %UMFPack direct sparse solver for matrices of type BCRSMatrix
+  namespace Impl
+  {
+    template<class M>
+    struct UMFPackVectorChooser
+    {};
+
+    template<typename T, typename A, int n, int m>
+    struct UMFPackVectorChooser<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = BlockVector<
+                              FieldVector<T,m>,
+                              typename A::template rebind<FieldVector<T,m> >::other>;
+      /** @brief The type of the range of the solver */
+      using range_type  = BlockVector<
+                              FieldVector<T,n>,
+                              typename A::template rebind<FieldVector<T,n> >::other>;
+    };
+
+    template<typename T, typename A>
+    struct UMFPackVectorChooser<BCRSMatrix<T,A> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = BlockVector<T, A>;
+      /** @brief The type of the range of the solver */
+      using range_type  = BlockVector<T, A>;
+    };
+  }
+
+  /** @brief The %UMFPack direct sparse solver
    *
-   * Specialization for the Dune::BCRSMatrix. %UMFPack will always go double
-   * precision and supports complex numbers
-   * too (use std::complex<double> for that).
+   * Details on UMFPack can be found on
+   * http://www.cise.ufl.edu/research/sparse/umfpack/
    *
-   * \tparam T Number type.  Only double and std::complex<double> is supported
-   * \tparam A STL-compatible allocator type
-   * \tparam n Number of rows in a matrix block
-   * \tparam m Number of columns in a matrix block
+   * %UMFPack will always use double precision.
+   * For complex matrices use a matrix type with std::complex<double>
+   * as the underlying number type.
+   *
+   * \tparam Matrix the matrix type defining the system
    *
    * \note This will only work if dune-istl has been configured to use UMFPack
    */
-  template<typename T, typename A, int n, int m>
-  class UMFPack<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+  template<typename M>
+  class UMFPack
       : public InverseOperator<
-          BlockVector<FieldVector<T,m>,
-              typename A::template rebind<FieldVector<T,m> >::other>,
-          BlockVector<FieldVector<T,n>,
-              typename A::template rebind<FieldVector<T,n> >::other> >
+          typename Impl::UMFPackVectorChooser<M>::domain_type,
+          typename Impl::UMFPackVectorChooser<M>::range_type >
   {
+    using T = typename M::field_type;
+
     public:
     /** @brief The matrix type. */
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
-    /** @brief The corresponding SuperLU Matrix type.*/
-    typedef Dune::ColCompMatrix<Matrix> UMFPackMatrix;
+    using Matrix = M;
+    using matrix_type = M;
+    /** @brief The corresponding UMFPack matrix type.*/
+    typedef Dune::ColCompMatrix<Matrix, long int> UMFPackMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+    typedef ColCompMatrixInitializer<M, long int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
-    typedef Dune::BlockVector<
-        FieldVector<T,m>,
-        typename A::template rebind<FieldVector<T,m> >::other> domain_type;
+    using domain_type = typename Impl::UMFPackVectorChooser<M>::domain_type;
     /** @brief The type of the range of the solver. */
-    typedef Dune::BlockVector<
-        FieldVector<T,n>,
-        typename A::template rebind<FieldVector<T,n> >::other> range_type;
+    using range_type = typename Impl::UMFPackVectorChooser<M>::range_type;
 
     //! Category of the solver (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -216,7 +232,7 @@ namespace Dune {
       return SolverCategory::Category::sequential;
     }
 
-    /** @brief Construct a solver object from a BCRSMatrix
+    /** @brief Construct a solver object from a matrix
      *
      * This computes the matrix decomposition, and may take a long time
      * (and use a lot of memory).
@@ -483,7 +499,7 @@ namespace Dune {
     private:
     typedef typename Dune::UMFPackMethodChooser<T> Caller;
 
-    template<class M,class X, class TM, class TD, class T1>
+    template<class Mat,class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
     friend struct SeqOverlappingSchwarzAssemblerHelper<UMFPack<Matrix>,true>;
 
