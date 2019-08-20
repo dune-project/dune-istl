@@ -844,6 +844,16 @@ namespace Dune {
       _restart(restart)
     {}
 
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver<X,Y>::IterativeSolver(op,prec,configuration),
+      _restart(configuration.get<int>("restart"))
+    {}
+
+    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,configuration),
+      _restart(configuration.get<int>("restart"))
+    {}
+
     /*!
       \brief Set up RestartedGMResSolver solver.
 
@@ -1297,6 +1307,16 @@ private:
       _restart(restart)
     {}
 
+
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver<X,X>::IterativeSolver(op,prec,configuration),
+      _restart(configuration.get<int>("restart"))
+    {}
+
+    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver<X,X>::IterativeSolver(op,sp,prec,configuration),
+      _restart(configuration.get<int>("restart"))
+    {}
     /*!
       \brief Set up nonlinear preconditioned conjugate gradient solver.
 
