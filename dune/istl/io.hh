@@ -15,13 +15,10 @@
 #include "istlexception.hh"
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/dynmatrix.hh>
-#include <dune/common/diagonalmatrix.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/unused.hh>
 
-#include <dune/istl/matrix.hh>
-#include <dune/istl/scaledidmatrix.hh>
-#include "bcrsmatrix.hh"
+#include <dune/istl/bcrsmatrix.hh>
 
 
 namespace Dune {
@@ -43,7 +40,7 @@ namespace Dune {
   //
 
   /**
-   * \brief Recursively print all the blocks
+   * \brief Recursively print a vector
    *
    * \code
    * #include <dune/istl/io.hh>
@@ -51,43 +48,30 @@ namespace Dune {
    */
   template<class V>
   void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
-                              int& counter, int columns, int width,
-                              int precision)
+                              int& counter, int columns, int width)
   {
-    for (typename V::ConstIterator i=v.begin(); i!=v.end(); ++i)
-      recursive_printvector(s,*i,rowtext,counter,columns,width,precision);
-  }
-
-  /**
-   * \brief Recursively print all the blocks -- specialization for FieldVector
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   */
-  template<class K, int n>
-  void recursive_printvector (std::ostream& s, const FieldVector<K,n>& v,
-                              std::string rowtext, int& counter, int columns,
-                              int width, int precision)
-  {
-    DUNE_UNUSED_PARAMETER(precision);
-    // we now can print n numbers
-    for (int i=0; i<n; i++)
-    {
-      if (counter%columns==0)
-      {
-        s << rowtext; // start a new row
-        s << " ";     // space in front of each entry
-        s.width(4);   // set width for counter
-        s << counter; // number of first entry in a line
-      }
-      s << " ";         // space in front of each entry
-      s.width(width);   // set width for each entry anew
-      s << v[i];        // yeah, the number !
-      counter++;        // increment the counter
-      if (counter%columns==0)
-        s << std::endl; // start a new line
-    }
+    Hybrid::ifElse(IsNumber<V>(),
+      [&](auto id) {
+        // Print one number
+        if (counter%columns==0)
+        {
+          s << rowtext; // start a new row
+          s << " ";     // space in front of each entry
+          s.width(4);   // set width for counter
+          s << counter; // number of first entry in a line
+        }
+        s << " ";         // space in front of each entry
+        s.width(width);   // set width for each entry anew
+        s << v;        // yeah, the number !
+        counter++;        // increment the counter
+        if (counter%columns==0)
+          s << std::endl; // start a new line
+      },
+      [&](auto id) {
+        // Recursively print a vector
+        for (const auto& entry : id(v))
+          recursive_printvector(s,id(entry),rowtext,counter,columns,width);
+      });
   }
 
 
@@ -119,7 +103,7 @@ namespace Dune {
       << std::endl;
 
     // print data from all blocks
-    recursive_printvector(s,v,rowtext,counter,columns,width,precision);
+    recursive_printvector(s,v,rowtext,counter,columns,width);
 
     // check if new line is required
     if (counter%columns!=0)
@@ -155,6 +139,31 @@ namespace Dune {
   }
 
   /**
+   * \brief Print one row of a matrix, specialization for number types
+   *
+   * \code
+   * #include <dune/istl/io.hh>
+   * \endcode
+   */
+  template<class K>
+  void print_row (std::ostream& s, const K& value,
+                  typename FieldMatrix<K,1,1>::size_type I,
+                  typename FieldMatrix<K,1,1>::size_type J,
+                  typename FieldMatrix<K,1,1>::size_type therow,
+                  int width, int precision,
+                  typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
+  {
+    DUNE_UNUSED_PARAMETER(I);
+    DUNE_UNUSED_PARAMETER(J);
+    DUNE_UNUSED_PARAMETER(therow);
+    DUNE_UNUSED_PARAMETER(precision);
+
+    s << " ";         // space in front of each entry
+    s.width(width);   // set width for each entry anew
+    s << value;
+  }
+
+  /**
    * \brief Print one row of a matrix
    *
    * \code
@@ -164,7 +173,8 @@ namespace Dune {
   template<class M>
   void print_row (std::ostream& s, const M& A, typename M::size_type I,
                   typename M::size_type J, typename M::size_type therow,
-                  int width, int precision)
+                  int width, int precision,
+                  typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     typename M::size_type i0=I;
     for (typename M::size_type i=0; i<A.N(); i++)
@@ -190,60 +200,6 @@ namespace Dune {
       }
       // advance rows
       i0 += MatrixDimension<M>::rowdim(A,i);
-    }
-  }
-
-  /**
-   * \brief Print one row of a matrix, specialization for FieldMatrix
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   */
-  template<class K, int n, int m>
-  void print_row (std::ostream& s, const FieldMatrix<K,n,m>& A,
-                  typename FieldMatrix<K,n,m>::size_type I,
-                  typename FieldMatrix<K,n,m>::size_type J,
-                  typename FieldMatrix<K,n,m>::size_type therow, int width,
-                  int precision)
-  {
-    DUNE_UNUSED_PARAMETER(J);
-    DUNE_UNUSED_PARAMETER(precision);
-
-    typedef typename FieldMatrix<K,n,m>::size_type size_type;
-
-    for (size_type i=0; i<n; i++)
-      if (I+i==therow)
-        for (int j=0; j<m; j++)
-        {
-          s << " ";         // space in front of each entry
-          s.width(width);   // set width for each entry anew
-          s << A[i][j];     // yeah, the number !
-        }
-  }
-
-  /**
-   * \brief Print one row of a matrix, specialization for FieldMatrix<K,1,1>
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   */
-  template<class K>
-  void print_row (std::ostream& s, const FieldMatrix<K,1,1>& A,
-                  typename FieldMatrix<K,1,1>::size_type I,
-                  typename FieldMatrix<K,1,1>::size_type J,
-                  typename FieldMatrix<K,1,1>::size_type therow,
-                  int width, int precision)
-  {
-    DUNE_UNUSED_PARAMETER(J);
-    DUNE_UNUSED_PARAMETER(precision);
-
-    if (I==therow)
-    {
-      s << " ";         // space in front of each entry
-      s.width(width);   // set width for each entry anew
-      s << static_cast<K>(A);         // yeah, the number !
     }
   }
 
@@ -419,80 +375,17 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    *
-   * This specialization for DiagonalMatrices ends the recursion
-   */
-  template <class FieldType, int dim>
-  void writeMatrixToMatlabHelper(const ScaledIdentityMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<dim; i++)
-    {
-      //+1 for Matlab numbering
-      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
-      MatlabPODWriter<FieldType>::write(matrix.scalar(), s)<< std::endl;
-    }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for DiagonalMatrices ends the recursion
-   */
-  template <class FieldType, int dim>
-  void writeMatrixToMatlabHelper(const DiagonalMatrix<FieldType,dim>& matrix, int rowOffset, int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<dim; i++)
-    {
-      //+1 for Matlab numbering
-      s << rowOffset + i + 1 << " " << colOffset + i + 1 << " ";
-      MatlabPODWriter<FieldType>::write(matrix.diagonal(i), s)<< std::endl;
-    }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for FieldMatrices ends the recursion
-   */
-  template <class FieldType, int rows, int cols>
-  void writeMatrixToMatlabHelper
-    (   const FieldMatrix<FieldType,rows,cols>& matrix, int rowOffset,
-    int colOffset, std::ostream& s)
-  {
-    for (int i=0; i<rows; i++)
-      for (int j=0; j<cols; j++) {
-        //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
-        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
-      }
-  }
-
-  /**
-   * \brief Helper method for the writeMatrixToMatlab routine.
-   *
-   * \code
-   * #include <dune/istl/io.hh>
-   * \endcode
-   *
-   * This specialization for DynamicMatrices ends the recursion
+   * This specialization for numbers ends the recursion
    */
   template <class FieldType>
-  void writeMatrixToMatlabHelper(const DynamicMatrix<FieldType>& matrix, int rowOffset,
-                                 int colOffset, std::ostream& s)
+  void writeMatrixToMatlabHelper(const FieldType& value,
+                                 int rowOffset, int colOffset,
+                                 std::ostream& s,
+                                 typename std::enable_if_t<Dune::IsNumber<FieldType>::value>* sfinae = nullptr)
   {
-    for (int i=0; i<matrix.N(); i++)
-      for (int j=0; j<matrix.M(); j++) {
-        //+1 for Matlab numbering
-        s << rowOffset + i + 1 << " " << colOffset + j + 1 << " ";
-        MatlabPODWriter<FieldType>::write(matrix[i][j], s)<< std::endl;
-      }
+    //+1 for Matlab numbering
+    s << rowOffset + 1 << " " << colOffset + 1 << " ";
+    MatlabPODWriter<FieldType>::write(value, s)<< std::endl;
   }
 
   /**
@@ -505,7 +398,8 @@ namespace Dune {
   template <class MatrixType>
   void writeMatrixToMatlabHelper(const MatrixType& matrix,
                                  int externalRowOffset, int externalColOffset,
-                                 std::ostream& s)
+                                 std::ostream& s,
+                                 typename std::enable_if_t<!Dune::IsNumber<MatrixType>::value>* sfinae = nullptr)
   {
     // Precompute the accumulated sizes of the columns
     std::vector<typename MatrixType::size_type> colOffset(matrix.M());
@@ -521,11 +415,8 @@ namespace Dune {
     // Loop over all matrix rows
     for (typename MatrixType::size_type rowIdx=0; rowIdx<matrix.N(); rowIdx++)
     {
-
-      const typename MatrixType::row_type& row = matrix[rowIdx];
-
-      typename MatrixType::row_type::ConstIterator cIt   = row.begin();
-      typename MatrixType::row_type::ConstIterator cEndIt = row.end();
+      auto cIt    = matrix[rowIdx].begin();
+      auto cEndIt = matrix[rowIdx].end();
 
       // Loop over all columns in this row
       for (; cIt!=cEndIt; ++cIt)
@@ -570,42 +461,18 @@ namespace Dune {
     outStream.precision(oldPrecision);
   }
 
-  // Recursively print all the blocks
+  // Recursively write vector entries to a stream
   template<class V>
   void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
   {
-    for (const auto& entry : v)
-      writeVectorToMatlabHelper(entry, stream);
-  }
-
-  // Recursively print all the blocks -- specialization for FieldVector
-  template<class K, int n>
-  void writeVectorToMatlabHelper (const FieldVector<K,n>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
-  }
-
-  // Recursively print all the blocks -- specialization for std::vector
-  template<class K>
-  void writeVectorToMatlabHelper (const std::vector<K>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
-  }
-
-  // Recursively print all the blocks -- specialization for std::array
-  template<class K, std::size_t n>
-  void writeVectorToMatlabHelper (const std::array<K,n>& v, std::ostream& s)
-  {
-    for (const auto& entry : v)
-    {
-      s << entry << std::endl;
-    }
+    Hybrid::ifElse(IsNumber<V>(),
+      [&](auto id) {
+        stream << id(v) << std::endl;
+      },
+      [&](auto id) {
+        for (const auto& entry : id(v))
+          writeVectorToMatlabHelper(entry, stream);
+      });
   }
 
   /**

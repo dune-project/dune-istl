@@ -14,12 +14,10 @@
 
 #include "hilbertmatrix.hh"
 
-template< template< class, class, class, int ... > class _Prec, class K = double, int N = 1 >
+
+template< template< class, class, class, int ... > class _Prec, class MatrixBlock, class VectorBlock >
 void testDecomposition ( int n )
 {
-  using MatrixBlock = Dune::FieldMatrix< K, N, N >;
-  using VectorBlock = Dune::FieldVector< K, N >;
-
   using BlockMatrix = Dune::BCRSMatrix< MatrixBlock >;
   using BlockVector = Dune::BlockVector< VectorBlock >;
 
@@ -49,11 +47,14 @@ void testDecomposition ( int n )
 
 int main(int argc, char** argv)
 try {
-  testDecomposition< Dune::SeqILDL, double, 1 >( 4 );
+
+  testDecomposition< Dune::SeqILDL, double, double >( 4 );
+  testDecomposition< Dune::SeqILU, double, double >( 4 );
+  testDecomposition< Dune::SeqILDL, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
 DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0
-  testDecomposition< Dune::SeqILU0, double, 1 >( 4 );
+  testDecomposition< Dune::SeqILU0, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
 DUNE_NO_DEPRECATED_END // for deprecated SeqILU0
-  testDecomposition< Dune::SeqILU,  double, 1 >( 4 );
+  testDecomposition< Dune::SeqILU, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
 
   return 0;
 }

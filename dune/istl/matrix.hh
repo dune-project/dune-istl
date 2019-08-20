@@ -12,6 +12,8 @@
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/istlexception.hh>
@@ -42,7 +44,7 @@ namespace MatrixImp
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -557,7 +559,7 @@ namespace MatrixImp
   public:
 
     /** \brief Export the type representing the underlying field */
-    typedef typename T::field_type field_type;
+    using field_type = typename Imp::BlockTraits<T>::field_type;
 
     /** \brief Export the type representing the components */
     typedef T block_type;
@@ -583,10 +585,8 @@ namespace MatrixImp
     /** \brief Const iterator for the entries of each row */
     typedef typename row_type::const_iterator ConstColIterator;
 
-    enum {
-      //! The number of nesting levels the matrix contains.
-      blocklevel = T::blocklevel+1
-    };
+    //! The number of nesting levels the matrix contains.
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<T>::blockLevel()+1;
 
     /** \brief Create empty matrix */
     Matrix() : data_(0,0), cols_(0)
@@ -787,14 +787,15 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
       for (size_type i=0; i<data_.N(); i++) {
         y[i]=0;
         for (size_type j=0; j<cols_; j++)
-          (*this)[i][j].umv(x[j], y[i]);
-
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).umv(xj, yi);
+        }
       }
-
     }
 
     //! y = A^T x
@@ -805,7 +806,6 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"index out of range");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"index out of range");
 #endif
-
       for(size_type i=0; i<y.N(); ++i)
         y[i]=0;
       umtv(x,y);
@@ -819,14 +819,13 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      for (size_type i=0; i<data_.N(); i++) {
-
+      for (size_type i=0; i<data_.N(); i++)
         for (size_type j=0; j<cols_; j++)
-          (*this)[i][j].umv(x[j], y[i]);
-
-      }
-
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).umv(xj, yi);
+        }
     }
 
     //! y -= A x
@@ -837,13 +836,13 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmv(x[j.index()],y[i.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).mmv(xj, yi);
+        }
     }
 
     /** \brief \f$ y += \alpha A x \f$ */
@@ -854,14 +853,13 @@ namespace MatrixImp
       if (x.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-
-      for (size_type i=0; i<data_.N(); i++) {
-
+      for (size_type i=0; i<data_.N(); i++)
         for (size_type j=0; j<cols_; j++)
-          (*this)[i][j].usmv(alpha, x[j], y[i]);
-
-      }
-
+        {
+          auto&& xj = Impl::asVector(x[j]);
+          auto&& yi = Impl::asVector(y[i]);
+          Impl::asMatrix((*this)[i][j]).usmv(alpha, xj, yi);
+        }
     }
 
     //! y += A^T x
@@ -872,13 +870,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umtv(x[i.index()],y[j.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).umtv(xi, yj);
+        }
     }
 
     //! y -= A^T x
@@ -889,13 +887,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmtv(x[i.index()],y[j.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).mmtv(xi, yj);
+        }
     }
 
     //! y += alpha A^T x
@@ -906,13 +904,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmtv(alpha,x[i.index()],y[j.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).usmtv(alpha, xi, yj);
+        }
     }
 
     //! y += A^H x
@@ -923,13 +921,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).umhv(x[i.index()],y[j.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).umhv(xi,yj);
+        }
     }
 
     //! y -= A^H x
@@ -940,13 +938,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).mmhv(x[i.index()],y[j.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).mmhv(xi,yj);
+        }
     }
 
     //! y += alpha A^H x
@@ -957,13 +955,13 @@ namespace MatrixImp
       if (x.N()!=N()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
       if (y.N()!=M()) DUNE_THROW(ISTLError,"vector/matrix size mismatch!");
 #endif
-      ConstRowIterator endi=end();
-      for (ConstRowIterator i=begin(); i!=endi; ++i)
-      {
-        ConstColIterator endj = (*i).end();
-        for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
-          (*j).usmhv(alpha,x[i.index()],y[j.index()]);
-      }
+      for (size_type i=0; i<data_.N(); i++)
+        for (size_type j=0; j<cols_; j++)
+        {
+          auto&& xi = Impl::asVector(x[i]);
+          auto&& yj = Impl::asVector(y[j]);
+          Impl::asMatrix((*this)[i][j]).usmhv(alpha,xi,yj);
+        }
     }
 
     //===== norms
@@ -977,10 +975,10 @@ namespace MatrixImp
     //! square of frobenius norm, need for block recursion
     typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
-      double sum=0;
-      for (size_type i=0; i<N(); ++i)
-        for (size_type j=0; j<M(); ++j)
-          sum += data_[i][j].frobenius_norm2();
+      typename FieldTraits<field_type>::real_type sum=0;
+      for (size_type i=0; i<this->N(); i++)
+        for (size_type j=0; j<this->M(); j++)
+          sum += Impl::asMatrix(data_[i][j]).frobenius_norm2();
       return sum;
     }
 
@@ -995,9 +993,11 @@ namespace MatrixImp
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm();
+          sum += Impl::asMatrix(y).infinity_norm();
         norm = max(sum, norm);
+        isNaN += sum;
       }
+
       return norm;
     }
 
@@ -1012,7 +1012,7 @@ namespace MatrixImp
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm_real();
+          sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
       }
       return norm;
@@ -1030,12 +1030,12 @@ namespace MatrixImp
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm();
+          sum += Impl::asMatrix(y).infinity_norm();
         norm = max(sum, norm);
         isNaN += sum;
       }
-      isNaN /= isNaN;
-      return norm * isNaN;
+
+      return norm * (isNaN / isNaN);
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
@@ -1050,12 +1050,12 @@ namespace MatrixImp
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
-          sum += y.infinity_norm_real();
+          sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
         isNaN += sum;
       }
-      isNaN /= isNaN;
-      return norm * isNaN;
+
+      return norm * (isNaN / isNaN);
     }
 
     //===== query

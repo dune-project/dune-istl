@@ -153,6 +153,10 @@ else()
     set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
       "Human readable string containing SuperLU version information.")
   endif()
+
+  if(NOT SUPERLU_MIN_VERSION_5)
+    message(AUTHOR_WARNING "Support for SuperLU 4.x is deprecated an will be removed after Dune 2.7")
+  endif()
 endif()
 
 # behave like a CMake module is supposed to behave

@@ -446,10 +446,12 @@ namespace Dune
           {
             *c=0;
             if(c.index()==i->local()) {
-              typedef typename M::block_type::RowIterator RIter;
-              for(RIter r=c->begin(), rend=c->end();
-                  r != rend; ++r)
-                (*r)[r.index()]=1;
+              auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
+                auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
+                for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+                  (*rowIt)[rowIt.index()] = value;
+              };
+              setDiagonal(*c, 1);
             }
           }
         }
