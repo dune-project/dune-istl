@@ -13,6 +13,7 @@
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
+#include <dune/common/parametertree.hh>
 #include <dune/common/timer.hh>
 
 #include "solvertype.hh"
@@ -269,7 +270,21 @@ namespace Dune
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
 
-        /**
+    IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver(op,prec,
+        configuration.get<real_type>("reduction"),
+        configuration.get<int>("maxit"),
+        configuration.get<int>("verbose"))
+    {}
+
+    IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+      IterativeSolver(op,sp,prec,
+        configuration.get<real_type>("reduction"),
+        configuration.get<int>("maxit"),
+        configuration.get<int>("verbose"))
+    {}
+
+    /**
         \brief General constructor to initialize an iterative solver
 
         \param op The operator we solve.
@@ -304,7 +319,6 @@ namespace Dune
       if(SolverCategory::category(*op) != SolverCategory::category(*sp))
         DUNE_THROW(InvalidSolverCategory, "LinearOperator and ScalarProduct must have the same SolverCategory!");
     }
-
 
     // #warning actually we want to have this as the default and just implement the second one
     // //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
