@@ -271,15 +271,17 @@ namespace Dune
     }
 
     IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
-      IterativeSolver(op,prec,
-        configuration.get<real_type>("reduction"),
+      IterativeSolver(op,
+        std::make_shared<SeqScalarProduct<X>>(),
+        prec,
+        configuration.get<scalar_real_type>("reduction"),
         configuration.get<int>("maxit"),
         configuration.get<int>("verbose"))
     {}
 
     IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver(op,sp,prec,
-        configuration.get<real_type>("reduction"),
+        configuration.get<scalar_real_type>("reduction"),
         configuration.get<int>("maxit"),
         configuration.get<int>("verbose"))
     {}
