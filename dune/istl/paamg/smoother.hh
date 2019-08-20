@@ -67,19 +67,22 @@ namespace Dune
 
     };
 
-    template<class X, class Y, class C, class T>
-    struct SmootherTraits<BlockPreconditioner<X,Y,C,T> >
+    template<class X, class Y>
+    struct SmootherTraits<Richardson<X,Y>>
     {
-      typedef DefaultSmootherArgs<typename T::matrix_type::field_type> Arguments;
+      typedef DefaultSmootherArgs<typename X::field_type> Arguments;
 
     };
+
+    template<class X, class Y, class C, class T>
+    struct SmootherTraits<BlockPreconditioner<X,Y,C,T> >
+        : public SmootherTraits<T>
+    {};
 
     template<class C, class T>
     struct SmootherTraits<NonoverlappingBlockPreconditioner<C,T> >
-    {
-      typedef DefaultSmootherArgs<typename T::matrix_type::field_type> Arguments;
-
-    };
+        : public SmootherTraits<T>
+    {};
 
     /**
      * @brief Construction Arguments for the default smoothers
@@ -168,6 +171,49 @@ namespace Dune
     };
 
 
+    template<class X, class Y>
+    class DefaultConstructionArgs<Richardson<X,Y>>
+    {
+      typedef Richardson<X,Y> T;
+
+      typedef typename SmootherTraits<T>::Arguments SmootherArgs;
+
+    public:
+      virtual ~DefaultConstructionArgs()
+      {}
+
+      template <class... Args>
+      void setMatrix(const Args&...)
+      {}
+
+      void setArgs(const SmootherArgs& args)
+      {
+        args_=&args;
+      }
+
+      template<class T1>
+      void setComm(T1& comm)
+      {
+        DUNE_UNUSED_PARAMETER(comm);
+      }
+
+      const SequentialInformation& getComm()
+      {
+        return comm_;
+      }
+
+      const SmootherArgs getArgs() const
+      {
+        return *args_;
+      }
+
+    private:
+      const SmootherArgs* args_;
+      SequentialInformation comm_;
+    };
+
+
+
     template<class T>
     class ConstructionTraits;
 
@@ -230,6 +276,21 @@ namespace Dune
       {
         return std::make_shared<SeqJac<M,X,Y,l>>
           (args.getMatrix(), args.getArgs().iterations, args.getArgs().relaxationFactor);
+      }
+    };
+
+    /**
+     * @brief Policy for the construction of the Richardson smoother
+     */
+    template<class X, class Y>
+    struct ConstructionTraits<Richardson<X,Y> >
+    {
+      typedef DefaultConstructionArgs<Richardson<X,Y> > Arguments;
+
+      static inline std::shared_ptr<Richardson<X,Y>> construct(Arguments& args)
+      {
+        return std::make_shared<Richardson<X,Y>>
+          (args.getArgs().relaxationFactor);
       }
     };
 
