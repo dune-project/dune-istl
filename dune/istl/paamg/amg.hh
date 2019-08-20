@@ -550,7 +550,7 @@ namespace Dune
       for(RowIter row=mat.begin(); row!=mat.end(); ++row) {
         bool isDirichlet = true;
         bool hasDiagonal = false;
-        Block diagonal;
+        Block diagonal{};
         for(ColIter col=row->begin(); col!=row->end(); ++col) {
           if(row.index()==col.index()) {
             diagonal = *col;
