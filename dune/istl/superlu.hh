@@ -31,10 +31,6 @@ namespace Dune
    * @author Markus Blatt
    * @brief Classes for using SuperLU with ISTL matrices.
    */
-  template<class Matrix>
-  class SuperLU
-  {};
-
   template<class M, class T, class TM, class TD, class TA>
   class SeqOverlappingSchwarz;
 
@@ -246,6 +242,35 @@ namespace Dune
   };
 #endif
 
+  namespace Impl
+  {
+    template<class M>
+    struct SuperLUVectorChooser
+    {};
+
+    template<typename T, typename A, int n, int m>
+    struct SuperLUVectorChooser<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = BlockVector<
+                              FieldVector<T,m>,
+                              typename A::template rebind<FieldVector<T,m> >::other>;
+      /** @brief The type of the range of the solver */
+      using range_type  = BlockVector<
+                              FieldVector<T,n>,
+                              typename A::template rebind<FieldVector<T,n> >::other>;
+    };
+
+    template<typename T, typename A>
+    struct SuperLUVectorChooser<BCRSMatrix<T,A> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = BlockVector<T, A>;
+      /** @brief The type of the range of the solver */
+      using range_type  = BlockVector<T, A>;
+    };
+  }
+
   /**
    * @brief SuperLu Solver
    *
@@ -259,30 +284,25 @@ namespace Dune
    * 2: std::complex<float>, 3: std::complex<double>)
    * if the numeric type should be different from double.
    */
-  template<typename T, typename A, int n, int m>
-  class SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+  template<typename M>
+  class SuperLU
     : public InverseOperator<
-          BlockVector<FieldVector<T,m>,
-              typename A::template rebind<FieldVector<T,m> >::other>,
-          BlockVector<FieldVector<T,n>,
-              typename A::template rebind<FieldVector<T,n> >::other> >
+          typename Impl::SuperLUVectorChooser<M>::domain_type,
+          typename Impl::SuperLUVectorChooser<M>::range_type >
   {
+    using T = typename M::field_type;
   public:
     /** @brief The matrix type. */
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
+    using Matrix = M;
+    using matrix_type = M;
     /** @brief The corresponding SuperLU Matrix type.*/
     typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef SuperMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+    typedef SuperMatrixInitializer<Matrix> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
-    typedef Dune::BlockVector<
-        FieldVector<T,m>,
-        typename A::template rebind<FieldVector<T,m> >::other> domain_type;
+    using domain_type = typename Impl::SuperLUVectorChooser<M>::domain_type;
     /** @brief The type of the range of the solver. */
-    typedef Dune::BlockVector<
-        FieldVector<T,n>,
-        typename A::template rebind<FieldVector<T,n> >::other> range_type;
+    using range_type = typename Impl::SuperLUVectorChooser<M>::range_type;
 
     //! Category of the solver (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -356,7 +376,7 @@ namespace Dune
 
     const char* name() { return "SuperLU"; }
   private:
-    template<class M,class X, class TM, class TD, class T1>
+    template<class Mat,class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
     friend struct SeqOverlappingSchwarzAssemblerHelper<SuperLU<Matrix>,true>;
 
@@ -377,16 +397,16 @@ namespace Dune
     bool first, verbose, reusevector;
   };
 
-  template<typename T, typename A, int n, int m>
-  SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  template<typename M>
+  SuperLU<M>
   ::~SuperLU()
   {
     if(mat.N()+mat.M()>0)
       free();
   }
 
-  template<typename T, typename A, int n, int m>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::free()
+  template<typename M>
+  void SuperLU<M>::free()
   {
     delete[] perm_c;
     delete[] perm_r;
@@ -405,8 +425,8 @@ namespace Dune
     mat.free();
   }
 
-  template<typename T, typename A, int n, int m>
-  SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  template<typename M>
+  SuperLU<M>
   ::SuperLU(const Matrix& mat_, bool verbose_, bool reusevector_)
     : work(0), lwork(0), first(true), verbose(verbose_),
       reusevector(reusevector_)
@@ -414,19 +434,19 @@ namespace Dune
     setMatrix(mat_);
 
   }
-  template<typename T, typename A, int n, int m>
-  SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::SuperLU()
+  template<typename M>
+  SuperLU<M>::SuperLU()
     :    work(0), lwork(0),verbose(false),
       reusevector(false)
   {}
-  template<typename T, typename A, int n, int m>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setVerbosity(bool v)
+  template<typename M>
+  void SuperLU<M>::setVerbosity(bool v)
   {
     verbose=v;
   }
 
-  template<typename T, typename A, int n, int m>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setMatrix(const Matrix& mat_)
+  template<typename M>
+  void SuperLU<M>::setMatrix(const Matrix& mat_)
   {
     if(mat.N()+mat.M()>0) {
       free();
@@ -438,9 +458,9 @@ namespace Dune
     decompose();
   }
 
-  template<typename T, typename A, int n, int m>
+  template<typename M>
   template<class S>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::setSubMatrix(const Matrix& mat_,
+  void SuperLU<M>::setSubMatrix(const Matrix& mat_,
                                                                 const S& mrs)
   {
     if(mat.N()+mat.M()>0) {
@@ -453,8 +473,8 @@ namespace Dune
     decompose();
   }
 
-  template<typename T, typename A, int n, int m>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >::decompose()
+  template<typename M>
+  void SuperLU<M>::decompose()
   {
 
     first = true;
@@ -492,7 +512,9 @@ namespace Dune
     if(verbose) {
       dinfo<<"LU factorization: dgssvx() returns info "<< info<<std::endl;
 
-      if ( info == 0 || info == n+1 ) {
+      auto nSuperLUCol = static_cast<SuperMatrix&>(mat).ncol;
+
+      if ( info == 0 || info == nSuperLUCol+1 ) {
 
         if ( options.PivotGrowth )
           dinfo<<"Recip. pivot growth = "<<rpg<<std::endl;
@@ -502,14 +524,14 @@ namespace Dune
         NCformat* Ustore = (NCformat *) U.Store;
         dinfo<<"No of nonzeros in factor L = "<< Lstore->nnz<<std::endl;
         dinfo<<"No of nonzeros in factor U = "<< Ustore->nnz<<std::endl;
-        dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - n<<std::endl;
+        dinfo<<"No of nonzeros in L+U = "<< Lstore->nnz + Ustore->nnz - nSuperLUCol<<std::endl;
         QuerySpaceChooser<T>::querySpace(&L, &U, &memusage);
         dinfo<<"L\\U MB "<<memusage.for_lu/1e6<<" \ttotal MB needed "<<memusage.total_needed/1e6
              <<" \texpansions ";
         std::cout<<stat.expansions<<std::endl;
 
-      } else if ( info > 0 && lwork == -1 ) {
-        dinfo<<"** Estimated memory: "<< info - n<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {    // Memory allocation failed
+        dinfo<<"** Estimated memory: "<< info - nSuperLUCol<<std::endl;
       }
       if ( options.PrintStat ) StatPrint(&stat);
     }
@@ -542,8 +564,8 @@ namespace Dune
     options.Fact = FACTORED;
   }
 
-  template<typename T, typename A, int n, int m>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  template<typename M>
+  void SuperLU<M>
   ::apply(domain_type& x, range_type& b, InverseOperatorResult& res)
   {
     if (mat.N() != b.dim())
@@ -613,15 +635,17 @@ namespace Dune
 
       dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
 
-      if ( info == 0 || info == n+1 ) {
+      auto nSuperLUCol = static_cast<SuperMatrix&>(mat).ncol;
+
+      if ( info == 0 || info == nSuperLUCol+1 ) {
 
         if ( options.IterRefine ) {
           std::cout<<"Iterative Refinement: steps="
                    <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
         }else
           std::cout<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
-      } else if ( info > 0 && lwork == -1 ) {
-        std::cout<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {       // Memory allocation failed
+        std::cout<<"** Estimated memory: "<< info - nSuperLUCol<<" bytes"<<std::endl;
       }
 
       if ( options.PrintStat ) StatPrint(&stat);
@@ -633,8 +657,8 @@ namespace Dune
     }
   }
 
-  template<typename T, typename A, int n, int m>
-  void SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> >
+  template<typename M>
+  void SuperLU<M>
   ::apply(T* x, T* b)
   {
     if(mat.N()+mat.M()==0)
@@ -679,15 +703,17 @@ namespace Dune
     if(verbose) {
       dinfo<<"Triangular solve: dgssvx() returns info "<< info<<std::endl;
 
-      if ( info == 0 || info == n+1 ) {
+      auto nSuperLUCol = static_cast<SuperMatrix&>(mat).ncol;
+
+      if ( info == 0 || info == nSuperLUCol+1 ) {  // Factorization has succeeded
 
         if ( options.IterRefine ) {
           dinfo<<"Iterative Refinement: steps="
                <<stat.RefineSteps<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
         }else
           dinfo<<" FERR="<<ferr<<" BERR="<<berr<<std::endl;
-      } else if ( info > 0 && lwork == -1 ) {
-        dinfo<<"** Estimated memory: "<< info - n<<" bytes"<<std::endl;
+      } else if ( info > 0 && lwork == -1 ) {  // Memory allocation failed
+        dinfo<<"** Estimated memory: "<< info - nSuperLUCol<<" bytes"<<std::endl;
       }
       if ( options.PrintStat ) StatPrint(&stat);
     }

@@ -121,6 +121,61 @@ namespace Dune {
       });
     }
 
+    //===== vector space arithmetic
+
+    //! vector space multiplication with scalar
+    MultiTypeBlockMatrix& operator*= (const field_type& k)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] *= k;
+      });
+
+      return *this;
+    }
+
+    //! vector space division by scalar
+    MultiTypeBlockMatrix& operator/= (const field_type& k)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] /= k;
+      });
+
+      return *this;
+    }
+
+
+    /*! \brief Add the entries of another matrix to this one.
+     *
+     * \param b The matrix to add to this one. Its sparsity pattern
+     * has to be subset of the sparsity pattern of this matrix.
+     */
+    MultiTypeBlockMatrix& operator+= (const MultiTypeBlockMatrix& b)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] += b[i];
+      });
+
+      return *this;
+    }
+
+    /*! \brief Subtract the entries of another matrix from this one.
+     *
+     * \param b The matrix to subtract from this one. Its sparsity pattern
+     * has to be subset of the sparsity pattern of this matrix.
+     */
+    MultiTypeBlockMatrix& operator-= (const MultiTypeBlockMatrix& b)
+    {
+      auto size = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(size), [&](auto&& i) {
+        (*this)[i] -= b[i];
+      });
+
+      return *this;
+    }
+
     /** \brief y = A x
      */
     template<typename X, typename Y>
@@ -176,9 +231,175 @@ namespace Dune {
       });
     }
 
+    /** \brief y = A^T x
+     */
+    template<typename X, typename Y>
+    void mtv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      y = 0;
+      umtv(x,y);
+    }
+
+    /** \brief y += A^T x
+     */
+    template<typename X, typename Y>
+    void umtv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].umtv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y -= A^T x
+     */
+    template<typename X, typename Y>
+    void mmtv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].mmtv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += alpha A^T x
+     */
+    template<typename X, typename Y>
+    void usmtv (const field_type& alpha, const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].usmtv(alpha, x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += A^H x
+     */
+    template<typename X, typename Y>
+    void umhv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].umhv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y -= A^H x
+     */
+    template<typename X, typename Y>
+    void mmhv (const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].mmhv(x[j], y[i]);
+        });
+      });
+    }
+
+    /** \brief y += alpha A^H x
+     */
+    template<typename X, typename Y>
+    void usmhv (const field_type& alpha, const X& x, Y& y) const {
+      static_assert(X::size() == N(), "length of x does not match number of rows");
+      static_assert(Y::size() == M(), "length of y does not match number of columns");
+      using namespace Dune::Hybrid;
+      forEach(integralRange(Hybrid::size(y)), [&](auto&& i) {
+        using namespace Dune::Hybrid; // needed for icc, see issue #31
+        forEach(integralRange(Hybrid::size(x)), [&](auto&& j) {
+          (*this)[j][i].usmhv(alpha, x[j], y[i]);
+        });
+      });
+    }
+
+
+    //===== norms
+
+    //! square of frobenius norm, need for block recursion
+    auto frobenius_norm2 () const
+    {
+      using field_type = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
+      typename FieldTraits<field_type>::real_type sum=0;
+
+      auto rows = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
+        auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
+        Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
+          sum += (*this)[i][j].frobenius_norm2();
+        });
+      });
+
+      return sum;
+    }
+
+    //! frobenius norm: sqrt(sum over squared values of entries)
+    typename FieldTraits<field_type>::real_type frobenius_norm () const
+    {
+      return sqrt(frobenius_norm2());
+    }
+
+    //! Bastardized version of the infinity-norm / row-sum norm
+    auto infinity_norm () const
+    {
+      using field_type = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
+      using std::max;
+      typename FieldTraits<field_type>::real_type norm=0;
+
+      auto rows = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
+
+        typename FieldTraits<field_type>::real_type sum=0;
+        auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
+        Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
+          sum += (*this)[i][j].infinity_norm();
+        });
+        norm = max(sum, norm);
+      });
+
+      return norm;
+    }
+
+    //! Bastardized version of the infinity-norm / row-sum norm
+    auto infinity_norm_real () const
+    {
+      using field_type = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
+      using std::max;
+      typename FieldTraits<field_type>::real_type norm=0;
+
+      auto rows = index_constant<N()>();
+      Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
+
+        typename FieldTraits<field_type>::real_type sum=0;
+        auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
+        Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
+          sum += (*this)[i][j].infinity_norm_real();
+        });
+        norm = max(sum, norm);
+      });
+
+      return norm;
+    }
+
   };
-
-
 
   /**
      @brief << operator for a MultiTypeBlockMatrix

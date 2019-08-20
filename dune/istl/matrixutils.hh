@@ -11,6 +11,7 @@
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "istlexception.hh"
 
@@ -37,43 +38,6 @@ namespace Dune
    * @brief Some handy generic functions for ISTL matrices.
    * @author Markus Blatt
    */
-  namespace
-  {
-
-    template<int i>
-    struct NonZeroCounter
-    {
-      template<class M>
-      static typename M::size_type count(const M& matrix)
-      {
-        typedef typename M::ConstRowIterator RowIterator;
-
-        RowIterator endRow = matrix.end();
-        typename M::size_type nonZeros = 0;
-
-        for(RowIterator row = matrix.begin(); row != endRow; ++row) {
-          typedef typename M::ConstColIterator Entry;
-          Entry endEntry = row->end();
-          for(Entry entry = row->begin(); entry != endEntry; ++entry) {
-            nonZeros += NonZeroCounter<i-1>::count(*entry);
-          }
-        }
-        return nonZeros;
-      }
-    };
-
-    template<>
-    struct NonZeroCounter<1>
-    {
-      template<class M>
-      static typename M::size_type count(const M& matrix)
-      {
-        return matrix.N()*matrix.M();
-      }
-    };
-
-  }
-
   /**
    * @brief Check whether the a matrix has diagonal values
    * on blocklevel recursion levels.
@@ -96,8 +60,10 @@ namespace Dune
         if(diagonal==row->end())
           DUNE_THROW(ISTLError, "Missing diagonal value in row "<<row.index()
                                                                 <<" at block recursion level "<<l-blocklevel);
-        else
-          CheckIfDiagonalPresent<typename Matrix::block_type,blocklevel-1,l>::check(*diagonal);
+        else{
+          auto m = Impl::asMatrix(*diagonal);
+          CheckIfDiagonalPresent<decltype(m),blocklevel-1,l>::check(m);
+        }
       }
 #endif
     }
@@ -150,10 +116,21 @@ namespace Dune
    * number of nonzero blocks time n*m.
    */
   template<class M>
-  inline int countNonZeros(const M& matrix)
+  inline auto countNonZeros(const M& matrix,typename std::enable_if_t<Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
-    return NonZeroCounter<M::blocklevel>::count(matrix);
+    return 1;
   }
+
+  template<class M>
+  inline auto countNonZeros(const M& matrix,typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
+  {
+    typename M::size_type nonZeros = 0;
+    for(auto&& row : matrix)
+      for(auto&& entry : row)
+        nonZeros += countNonZeros(entry);
+    return nonZeros;
+  }
+
   /*
      template<class M>
      struct ProcessOnFieldsOfMatrix
@@ -226,9 +203,56 @@ namespace Dune
     while(cur!=ooc.communicator().min(cur)) ;
   }
 
+  // Default implementation for scalar types
   template<typename M>
   struct MatrixDimension
-  {};
+  {
+    static_assert(IsNumber<M>::value, "MatrixDimension is not implemented for this type!");
+
+    static auto rowdim(const M& A)
+    {
+      return 1;
+    }
+
+    static auto coldim(const M& A)
+    {
+      return 1;
+    }
+  };
+
+  // Default implementation for scalar types
+  template<typename B, typename TA>
+  struct MatrixDimension<Matrix<B,TA> >
+  {
+    using block_type = typename Matrix<B,TA>::block_type;
+    using size_type = typename Matrix<B,TA>::size_type;
+
+    static size_type rowdim (const Matrix<B,TA>& A, size_type i)
+    {
+      return MatrixDimension<block_type>::rowdim(A[i][0]);
+    }
+
+    static size_type coldim (const Matrix<B,TA>& A, size_type c)
+    {
+      return MatrixDimension<block_type>::coldim(A[0][c]);
+    }
+
+    static size_type rowdim (const Matrix<B,TA>& A)
+    {
+      size_type nn=0;
+      for (size_type i=0; i<A.N(); i++)
+        nn += rowdim(A,i);
+      return nn;
+    }
+
+    static size_type coldim (const Matrix<B,TA>& A)
+    {
+      size_type nn=0;
+      for (size_type i=0; i<A.M(); i++)
+        nn += coldim(A,i);
+      return nn;
+    }
+  };
 
 
   template<typename B, typename TA>

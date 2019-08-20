@@ -96,15 +96,6 @@ void *solve(void* arg)
   pthread_exit(NULL);
 }
 
-void *solve1(void* arg)
-{
-  thread_arg *amgarg=(thread_arg*) arg;
-  *amgarg->x=0;
-  (*amgarg->amg).apply(*amgarg->x,*amgarg->b);
-  (*amgarg->amg).post(*amgarg->x);
-  return 0;
-}
-
 void *solve2(void* arg)
 {
   thread_arg *amgarg=(thread_arg*) arg;
@@ -127,7 +118,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   int n;
 
   Comm c;
-  BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, indices, c, &n, 1);
+  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, c, &n, 1);
 
   Vector b(mat.N()), x(mat.M());
 
@@ -199,21 +190,6 @@ void testAMG(int N, int coarsenTarget, int ml)
   }
   void* retval;
 
-  for(int i=0; i < NUM_THREADS; ++i)
-    pthread_join(threads[i], &retval);
-
-  amgs.clear();
-  args.clear();
-  amg.pre(x, b);
-  amgs.resize(NUM_THREADS, amg);
-  for(int i=0; i < NUM_THREADS; ++i)
-  {
-    args[i].amg=&amgs[i];
-    args[i].b=&bs[i];
-    args[i].x=&xs[i];
-    args[i].fop=&fop;
-    pthread_create(&threads[i], NULL, solve1, (void*) &args[i]);
-  }
   for(int i=0; i < NUM_THREADS; ++i)
     pthread_join(threads[i], &retval);
 

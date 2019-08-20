@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <dune/common/rangeutilities.hh>
+#include <dune/common/scalarmatrixview.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 
@@ -32,7 +33,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    typedef typename B::field_type field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -47,7 +48,7 @@ namespace Dune {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    enum {blocklevel = B::blocklevel+1};
+    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     /** \brief Default constructor */
     BDMatrix() : BCRSMatrix<B,A>() {}
@@ -106,10 +107,25 @@ namespace Dune {
       return *this;
     }
 
+    /** \brief Solve the system Ax=b in O(n) time
+     *
+     * \exception ISTLError if the matrix is singular
+     *
+     */
+    template <class V>
+    void solve (V& x, const V& rhs) const {
+      for (size_type i=0; i<this->N(); i++)
+      {
+        auto&& xv = Impl::asVector(x[i]);
+        auto&& rhsv = Impl::asVector(rhs[i]);
+        Impl::asMatrix((*this)[i][i]).solve(xv,rhsv);
+      }
+    }
+
     /** \brief Inverts the matrix */
     void invert() {
-      for (int i=0; i<this->N(); i++)
-        (*this)[i][i].invert();
+      for (size_type i=0; i<this->N(); i++)
+        Impl::asMatrix((*this)[i][i]).invert();
     }
 
   private:
