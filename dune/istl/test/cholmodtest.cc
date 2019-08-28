@@ -9,6 +9,9 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>
+#include<array>
+#include<vector>
+
 #include <dune/istl/cholmod.hh>
 
 
@@ -16,17 +19,59 @@
 
 using namespace Dune;
 
-// dummy for empty ignore block
+// One ignore block
+template<int k>
 struct IgnoreBlock
 {
-  bool operator[](std::size_t) const {return false;}
+  std::array<bool,k> data;
+
+  bool operator[](std::size_t i) const
+  {
+    return data[i];
+
+  }
+
+  bool& operator[](std::size_t i)
+  {
+    return data[i];
+
+  }
+
+  std::size_t count() const
+  {
+    size_t res = 0;
+    for(const auto& d : data)
+      if (d)
+        res++;
+
+    return res;
+  }
 };
 
-// dummy for empty ignore block vector
+// Block ignore vector
+template<int blocksize>
 struct Ignore
 {
-  IgnoreBlock operator[](std::size_t) const { return IgnoreBlock(); }
-  std::size_t count() const { return 0; }
+  std::vector<IgnoreBlock<blocksize>> data;
+
+  IgnoreBlock<blocksize> operator[](std::size_t i) const
+  {
+    return data[i];
+  }
+
+  IgnoreBlock<blocksize>& operator[](std::size_t i)
+  {
+    return data[i];
+  }
+
+  std::size_t count() const
+  {
+    size_t res = 0;
+    for(const auto& d : data)
+      res += d.count();
+
+    return res;
+  }
 };
 
 
@@ -36,8 +81,8 @@ int main(int argc, char** argv)
   try
   {
 
-    int N = 300; // number of nodes
-    const int bs = 1; // block size
+    int N = 30; // number of nodes
+    const int bs = 2; // block size
 
     // fill matrix with external method
     BCRSMatrix<FieldMatrix<double,bs,bs>> A;
@@ -45,12 +90,13 @@ int main(int argc, char** argv)
 
     BlockVector<FieldVector<double,bs>> b,x;
     b.resize(A.N());
+    x.resize(A.N());
     b = 1;
 
     InverseOperatorResult res;
 
     // test without ignore nodes
-    Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod;
+    Cholmod<BlockVector<FieldVector<double,bs>>> cholmod;
     cholmod.setMatrix(A);
     cholmod.apply(x,b,res);
 
@@ -64,16 +110,31 @@ int main(int argc, char** argv)
     b = 1;
 
     // test with ignore nodes
-    Ignore ignore;
-    Cholmod<BCRSMatrix<FieldMatrix<double,bs,bs>>> cholmod2;
+    Ignore<bs> ignore;
+    ignore.data.resize(A.N());
+    // ignore one random entry in x and b
+    ignore[12][0] = true;
+    b[12][0] = 666;
+    x[12][0] = 123;
+
+
+    Cholmod<BlockVector<FieldVector<double,bs>>> cholmod2;
     cholmod2.setMatrix(A,&ignore);
     cholmod2.apply(x,b,res);
 
-    // test
-    A.mmv(x,b);
+    // check that x[12][0] is untouched
+    if ( std::abs(x[12][0] - 123) > 1e-15 )
+      std::cerr << " Error in CHOLMOD, x was NOT ignored!"<< std::endl;
 
-    if ( b.two_norm() > 1e-9 )
-      std::cerr << " Error in CHOLMOD, residual is too large: " << b.two_norm() << std::endl;
+    // reset the x value
+    x[12][0] = 0;
+    // test -> this should result in zero in every line except entry [12][1]
+    A.mmv(x,b);
+    auto b_12_0 = b[12][0];
+
+    // check that error is completely caused by this entry
+    if ( std::abs( b.two_norm() - std::abs(b_12_0) ) > 1e-15 )
+      std::cerr << " Error in CHOLMOD, b was NOT ignored correctly: " << std::abs( b.two_norm() - std::abs(b_12_0) ) << std::endl;
 
   }
   catch (std::exception &e)
