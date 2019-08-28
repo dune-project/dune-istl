@@ -36,24 +36,17 @@ template<class T>
 class Cholmod;
 
 
+
 template<class T, class A, int k>
-class Cholmod<BCRSMatrix<FieldMatrix<T,k,k>, A>>
-  : public InverseOperator<
-      BlockVector<FieldVector<T,k>,
-        typename A::template rebind<FieldVector<T,k>>::other>,
-      BlockVector<FieldVector<T,k>,
-        typename A::template rebind<FieldVector<T,k>>::other>>
+class Cholmod<BlockVector<FieldVector<T,k>, A>>
+  : public InverseOperator<BlockVector<FieldVector<T,k>, A>, BlockVector<FieldVector<T,k>, A>>
 {
 public:
 
   // type of unknown
-  using X = BlockVector<FieldVector<T,k>,
-    typename A::template rebind<FieldVector<T,k>>::other>;
+  using X = BlockVector<FieldVector<T,k>, A>;
   // type of rhs
-  using B = BlockVector<FieldVector<T,k>,
-    typename A::template rebind<FieldVector<T,k>>::other>;
-  // type of external matrix
-  using Matrix = BCRSMatrix<FieldMatrix<T,k,k>, A>;
+  using B = BlockVector<FieldVector<T,k>, A>;
 
 
   /** @brief Default constructor
@@ -135,7 +128,8 @@ public:
    * This method forwards a nullptr to the setMatrix method
    * with ignore nodes
    */
-  void setMatrix(const Matrix& matrix)
+  template<int l>
+  void setMatrix(const BCRSMatrix<FieldMatrix<T,l,l>>& matrix)
   {
     const Impl::NoIgnore* noIgnore = nullptr;
     setMatrix(matrix, noIgnore);
@@ -150,21 +144,23 @@ public:
    * \param [in] matrix Matrix to be decomposed. In BCRS compatible form
    * \param [in] ignore Pointer to a compatible BitVector
    */
-  template<class Ignore>
-  void setMatrix(const Matrix& matrix, const Ignore* ignore)
+  template<class Ignore, int l>
+  void setMatrix(const BCRSMatrix<FieldMatrix<T,l,l>>& matrix, const Ignore* ignore)
   {
 
+    const auto blocksize = l;
+
     // Total number of rows
-    int N = k * matrix.N();
+    int N = blocksize * matrix.N();
     if ( ignore )
       N -= ignore->count();
 
     // number of nonzeroes
-    const int nnz = k * k * matrix.nonzeroes();
+    const int nnz = blocksize * blocksize * matrix.nonzeroes();
     // number of diagonal entries
-    const int nDiag = k * k * matrix.N();
+    const int nDiag = blocksize * blocksize * matrix.N();
     // number of nonzeroes in the dialgonal
-    const int nnzDiag = (k * (k+1)) / 2 * matrix.N();
+    const int nnzDiag = (blocksize * (blocksize+1)) / 2 * matrix.N();
     // number of nonzeroes in triangular submatrix (including diagonal)
     const int nnzTri = (nnz - nDiag) / 2 + nnzDiag;
 
@@ -191,8 +187,6 @@ public:
     int* Ap = static_cast<int*>(M->p);
     int* Ai = static_cast<int*>(M->i);
     double* Ax = static_cast<double*>(M->x);
-
-    std::size_t blocksize = k;
 
     // create a vector that maps each remaining matrix index to it's number in the condensed matrix
     std::vector<std::size_t> subIndices;
@@ -281,5 +275,16 @@ private:
   cholmod_factor* L_ = nullptr;
 };
 
+
+
+// Apdaper class for matrix type template argument instead of vector type
+template<class T, class A, int k>
+class Cholmod<BCRSMatrix<FieldMatrix<T,k,k>, A>>
+  : public Cholmod<BlockVector<FieldVector<T,k>, typename A::template rebind<FieldVector<T,k>>::other>>
+{
+public:
+  //! type of external matrix
+  using Matrix = BCRSMatrix<FieldMatrix<T,k,k>, A>;
+};
 
 } /* namespace Dune */
