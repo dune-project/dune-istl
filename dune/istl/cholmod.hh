@@ -6,7 +6,7 @@
 #include <dune/istl/bvector.hh>
 #include<dune/istl/solver.hh>
 
-
+#include <vector>
 #include <memory>
 
 #include <cholmod.h>
@@ -35,25 +35,20 @@ namespace Impl{
 template<class T>
 class Cholmod;
 
-
+/** @brief Dune wrapper for SuiteSparse/CHOLMOD solver
+  *
+  * This class implements an InverseOperator between BlockVector types
+  */
 template<class T, class A, int k>
-class Cholmod<BCRSMatrix<FieldMatrix<T,k,k>, A>>
-  : public InverseOperator<
-      BlockVector<FieldVector<T,k>,
-        typename A::template rebind<FieldVector<T,k>>::other>,
-      BlockVector<FieldVector<T,k>,
-        typename A::template rebind<FieldVector<T,k>>::other>>
+class Cholmod<BlockVector<FieldVector<T,k>, A>>
+  : public InverseOperator<BlockVector<FieldVector<T,k>, A>, BlockVector<FieldVector<T,k>, A>>
 {
 public:
 
   // type of unknown
-  using X = BlockVector<FieldVector<T,k>,
-    typename A::template rebind<FieldVector<T,k>>::other>;
+  using X = BlockVector<FieldVector<T,k>, A>;
   // type of rhs
-  using B = BlockVector<FieldVector<T,k>,
-    typename A::template rebind<FieldVector<T,k>>::other>;
-  // type of external matrix
-  using Matrix = BCRSMatrix<FieldMatrix<T,k,k>, A>;
+  using B = BlockVector<FieldVector<T,k>, A>;
 
 
   /** @brief Default constructor
@@ -78,13 +73,12 @@ public:
     cholmod_finish(&c_);
   }
 
-  // forbit this to avoid freeing memory twice
+  // forbid copying to avoid freeing memory twice
   Cholmod(const Cholmod&) = delete;
   Cholmod& operator=(const Cholmod&) = delete;
 
 
-  /**
-    *  \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
+  /** @brief simple forward to apply(X&, Y&, InverseOperatorResult&)
     */
   void apply (X& x, B& b, double reduction, InverseOperatorResult& res)
   {
@@ -92,20 +86,37 @@ public:
     apply(x,b,res);
   }
 
-  /**
-  *  \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&)
+  /** @brief solve the linear system Ax=b (possibly with respect to some ignore field)
+   *
+   * The method assumes that setMatrix() was called before
+   * In the case of a given ignore field the corresponding entries of both in x and b will stay untouched in this method.
   */
   void apply(X& x, B& b, InverseOperatorResult& res)
   {
+    if (x.size() != b.size())
+      DUNE_THROW(Exception, "Error in apply(): sizes of x and b do not match!");
+
+    const auto& blocksize = k;
+
     // cast to double array
     auto b2 = std::make_unique<double[]>(L_->n);
     auto x2 = std::make_unique<double[]>(L_->n);
 
     // copy to cholmod
     auto bp = b2.get();
-    for (const auto& bi : b)
-      for (const auto& bii : bi)
-        *bp++ = bii;
+    if (inverseSubIndices_.empty()) // no ignore field given
+    {
+      // simply copy all values
+      for (const auto& bi : b)
+        for (const auto& bii : bi)
+          *bp++ = bii;
+    }
+    else // use the mapping from not ignored entries
+    {
+      // iterate over inverseSubIndices and resolve the block indices
+      for (const auto& idx : inverseSubIndices_)
+        *bp++ = b[ idx / blocksize ][ idx % blocksize ];
+    }
 
     // create a cholmod dense object
     auto b3 = make_cholmod_dense(cholmod_allocate_dense(L_->n, 1, L_->n, CHOLMOD_REAL, &c_), &c_);
@@ -119,10 +130,19 @@ public:
     auto xp = static_cast<double*>(x3->x);
 
     // copy into x
-    x.resize(L_->n);
-    for (auto& xi : x)
-      for (auto& xii : xi)
-        xii = *xp++;
+    if (inverseSubIndices_.empty()) // no ignore field given
+    {
+      // simply copy all values
+      for (auto i=0; i<x.size(); i++)
+        for (auto ii=0; ii<x[i].size(); ii++)
+          x[i][ii] = *xp++;
+    }
+    else // use the mapping from not ignored entries
+    {
+      // iterate over inverseSubIndices and resolve the block indices
+      for (const auto& idx : inverseSubIndices_)
+        x[ idx / blocksize ][ idx % blocksize ] = *xp++;
+    }
 
     // statistics for a direct solver
     res.iterations = 1;
@@ -135,7 +155,7 @@ public:
    * This method forwards a nullptr to the setMatrix method
    * with ignore nodes
    */
-  void setMatrix(const Matrix& matrix)
+  void setMatrix(const BCRSMatrix<FieldMatrix<T,k,k>>& matrix)
   {
     const Impl::NoIgnore* noIgnore = nullptr;
     setMatrix(matrix, noIgnore);
@@ -144,27 +164,34 @@ public:
   /** @brief Set matrix and ignore nodes
    *
    * The input matrix is copied to CHOLMOD compatible form.
-   * The ignore argument consists of a compatible BitVector,
-   * indicating the dof's which has to be deleted from the matrix
+   * It is possible to ignore some degrees of freedom, provided an ignore field is given with same block structure
+   * like the BlockVector template of the class.
+   *
+   * The ignore field causes the method to ignore both rows and cols of the matrix and therefore operates only
+   * on the reduced quadratic matrix. In case of, e.g., Dirichlet values the user has to take care of proper
+   * adjusting of the rhs before calling apply().
+   *
    * Decomposing the matrix at the end takes a lot of time
    * \param [in] matrix Matrix to be decomposed. In BCRS compatible form
    * \param [in] ignore Pointer to a compatible BitVector
    */
   template<class Ignore>
-  void setMatrix(const Matrix& matrix, const Ignore* ignore)
+  void setMatrix(const BCRSMatrix<FieldMatrix<T,k,k>>& matrix, const Ignore* ignore)
   {
 
+    const auto blocksize = k;
+
     // Total number of rows
-    int N = k * matrix.N();
+    int N = blocksize * matrix.N();
     if ( ignore )
       N -= ignore->count();
 
     // number of nonzeroes
-    const int nnz = k * k * matrix.nonzeroes();
+    const int nnz = blocksize * blocksize * matrix.nonzeroes();
     // number of diagonal entries
-    const int nDiag = k * k * matrix.N();
+    const int nDiag = blocksize * blocksize * matrix.N();
     // number of nonzeroes in the dialgonal
-    const int nnzDiag = (k * (k+1)) / 2 * matrix.N();
+    const int nnzDiag = (blocksize * (blocksize+1)) / 2 * matrix.N();
     // number of nonzeroes in triangular submatrix (including diagonal)
     const int nnzTri = (nnz - nDiag) / 2 + nnzDiag;
 
@@ -192,14 +219,14 @@ public:
     int* Ai = static_cast<int*>(M->i);
     double* Ax = static_cast<double*>(M->x);
 
-    std::size_t blocksize = k;
-
-    // create a vector that maps each remaining matrix index to it's number in the condensed matrix
+    // vector mapping all indices in flat order to the not ignored indices
     std::vector<std::size_t> subIndices;
 
     if ( ignore )
     {
-      subIndices.resize(matrix.M()*blocksize);
+      // init the mappings
+      inverseSubIndices_.resize(N);            // size = number of not ignored entries
+      subIndices.resize(matrix.M()*blocksize); // size = number of all entries
 
       std::size_t j=0;
       for( std::size_t block=0; block<matrix.N(); block++ )
@@ -208,7 +235,9 @@ public:
         {
           if( not (*ignore)[block][i] )
           {
-            subIndices[ block*blocksize + i ] = j++;
+            subIndices[ block*blocksize + i ] = j;
+            inverseSubIndices_[j] = block*blocksize + i;
+            j++;
           }
         }
       }
@@ -279,7 +308,11 @@ private:
 
   cholmod_common c_;
   cholmod_factor* L_ = nullptr;
-};
 
+  // mapping from the not ignored indices in flat order to all indices in flat order
+  // it also holds the info about ignore nodes: if size() == 0 => no ignore field
+  std::vector<std::size_t> inverseSubIndices_;
+
+};
 
 } /* namespace Dune */
