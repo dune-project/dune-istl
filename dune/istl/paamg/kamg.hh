@@ -183,10 +183,12 @@ namespace Dune
        * @param maxLevelKrylovSteps The maximum number of Krylov steps allowed at each level.
        * @param minDefectReduction The minimal defect reduction to achieve on each Krylov level.
        */
-      KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+#if 0
+      KAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
            const SmootherArgs& smootherArgs, std::size_t gamma,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1) DUNE_DEPRECATED;
+#endif
 
       /**
        * @brief Construct a new amg with a specific coarse solver.
@@ -199,7 +201,7 @@ namespace Dune
        * @param maxLevelKrylovSteps maximum of krylov iterations on a particular level (default=3)
        * @param minDefectReduction minimal defect reduction during the krylov iterations on a particular level (default=1e-1)
        */
-      KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+      KAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
            const SmootherArgs& smootherArgs, const Parameters& parms,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1);
 
@@ -223,12 +225,14 @@ namespace Dune
        * instead.
        * All parameters can be set in the criterion!
        */
+#if 0
       template<class C>
       KAMG(const Operator& fineOperator, const C& criterion,
            const SmootherArgs& smootherArgs, std::size_t gamma,
            std::size_t preSmoothingSteps=1, std::size_t postSmoothingSteps=1,
            std::size_t maxLevelKrylovSteps=3, double minDefectReduction=1e-1,
            const ParallelInformation& pinfo=ParallelInformation()) DUNE_DEPRECATED;
+#endif
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -275,8 +279,9 @@ namespace Dune
       std::vector<std::shared_ptr<KAmgTwoGrid<Amg> > > ksolvers;
     };
 
+#if 0
     template<class M, class X, class S, class P, class K, class A>
-    KAMG<M,X,S,P,K,A>::KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    KAMG<M,X,S,P,K,A>::KAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                             const SmootherArgs& smootherArgs,
                             std::size_t gamma, std::size_t preSmoothingSteps,
                             std::size_t postSmoothingSteps,
@@ -284,15 +289,17 @@ namespace Dune
       : amg(matrices, coarseSolver, smootherArgs, gamma, preSmoothingSteps,
             postSmoothingSteps), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
+#endif
 
     template<class M, class X, class S, class P, class K, class A>
-    KAMG<M,X,S,P,K,A>::KAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    KAMG<M,X,S,P,K,A>::KAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                             const SmootherArgs& smootherArgs, const Parameters& params,
                             std::size_t ksteps, double reduction)
       : amg(matrices, coarseSolver, smootherArgs, params),
         maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
 
+#if 0
     template<class M, class X, class S, class P, class K, class A>
     template<class C>
     KAMG<M,X,S,P,K,A>::KAMG(const Operator& fineOperator, const C& criterion,
@@ -303,6 +310,7 @@ namespace Dune
       : amg(fineOperator, criterion, smootherArgs, gamma, preSmoothingSteps,
             postSmoothingSteps, false, pinfo), maxLevelKrylovSteps(ksteps), levelDefectReduction(reduction)
     {}
+#endif
 
     template<class M, class X, class S, class P, class K, class A>
     template<class C>
