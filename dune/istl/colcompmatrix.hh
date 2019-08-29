@@ -193,10 +193,7 @@ namespace Dune
     {
       // TODO: The following code assumes that the blocks are dense
       // and that they all have the same dimensions.
-      typename Matrix::block_type dummy;
-      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
-      const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
-      return Nnz_/n/m;
+      return Nnz_/n_/m_;
     }
 
     /**
@@ -239,6 +236,7 @@ namespace Dune
     virtual void setMatrix(const Matrix& mat);
 
   public:
+    std::size_t n_, m_;
     int N_, M_, Nnz_;
     B* values;
     int* rowindex;
@@ -537,19 +535,19 @@ namespace Dune
 
   template<class Mat>
   ColCompMatrix<Mat>::ColCompMatrix()
-    : N_(0), M_(0), Nnz_(0), values(0), rowindex(0), colstart(0)
+    : n_(0), m_(0), N_(0), M_(0), Nnz_(0), values(0), rowindex(0), colstart(0)
   {}
 
   template<class Mat>
   ColCompMatrix<Mat>
   ::ColCompMatrix(const Matrix& mat)
+    : n_(MatrixDimension<typename Mat::block_type>::rowdim(mat))
+    , m_(MatrixDimension<typename Mat::block_type>::coldim(mat))
   {
     // WARNING: This assumes that all blocks are dense and identical
-    const int n = MatrixDimension<typename Mat::block_type>::rowdim();
-    const int m = MatrixDimension<typename Mat::block_type>::coldim();
-    N_ = n*mat.N();
-    M_ = m*mat.N();
-    Nnz_ = n*m*mat.nonzeroes();
+    N_ = n_*mat.N();
+    M_ = m_*mat.N();
+    Nnz_ = n_*m_*mat.nonzeroes();
   }
 
   template<class Mat>
