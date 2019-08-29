@@ -113,53 +113,53 @@ namespace Dune {
     template<typename... A>
     static void defaults(A... args)
     {
-      umfpack_zi_defaults(args...);
+      umfpack_zl_defaults(args...);
     }
     template<typename... A>
     static void free_numeric(A... args)
     {
-      umfpack_zi_free_numeric(args...);
+      umfpack_zl_free_numeric(args...);
     }
     template<typename... A>
     static void free_symbolic(A... args)
     {
-      umfpack_zi_free_symbolic(args...);
+      umfpack_zl_free_symbolic(args...);
     }
     template<typename... A>
     static int load_numeric(A... args)
     {
-      return umfpack_zi_load_numeric(args...);
+      return umfpack_zl_load_numeric(args...);
     }
     template<typename... A>
-    static void numeric(const int* cs, const int* ri, const double* val, A... args)
+    static void numeric(const long int* cs, const long int* ri, const double* val, A... args)
     {
-      umfpack_zi_numeric(cs,ri,val,NULL,args...);
+      umfpack_zl_numeric(cs,ri,val,NULL,args...);
     }
     template<typename... A>
     static void report_info(A... args)
     {
-      umfpack_zi_report_info(args...);
+      umfpack_zl_report_info(args...);
     }
     template<typename... A>
     static void report_status(A... args)
     {
-      umfpack_zi_report_status(args...);
+      umfpack_zl_report_status(args...);
     }
     template<typename... A>
     static int save_numeric(A... args)
     {
-      return umfpack_zi_save_numeric(args...);
+      return umfpack_zl_save_numeric(args...);
     }
     template<typename... A>
-    static void solve(int m, const int* cs, const int* ri, std::complex<double>* val, double* x, const double* b,A... args)
+    static void solve(long int m, const long int* cs, const long int* ri, std::complex<double>* val, double* x, const double* b,A... args)
     {
       const double* cval = reinterpret_cast<const double*>(val);
-      umfpack_zi_solve(m,cs,ri,cval,NULL,x,NULL,b,NULL,args...);
+      umfpack_zl_solve(m,cs,ri,cval,NULL,x,NULL,b,NULL,args...);
     }
     template<typename... A>
-    static void symbolic(int m, int n, const int* cs, const int* ri, const double* val, A... args)
+    static void symbolic(long int m, long int n, const long int* cs, const long int* ri, const double* val, A... args)
     {
-      umfpack_zi_symbolic(m,n,cs,ri,val,NULL,args...);
+      umfpack_zl_symbolic(m,n,cs,ri,val,NULL,args...);
     }
   };
 
