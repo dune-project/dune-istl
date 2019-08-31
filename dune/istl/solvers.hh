@@ -1507,7 +1507,7 @@ private:
 
     virtual void apply (X& x, X& b, InverseOperatorResult& res)
     {
-      using rAlloc = ReboundAllocatorType<X,real_type>;
+      using rAlloc = ReboundAllocatorType<X,field_type>;
       res.clear();
       Iteration iteration(*this,res);
       _prec->pre(x,b);             // prepare preconditioner
@@ -1516,7 +1516,7 @@ private:
       //arrays for interim values:
       std::vector<X> d(_mmax+1, x);                      // array for directions
       std::vector<X> Ad(_mmax+1, x);                    // array for Ad[i]
-      std::vector<real_type,rAlloc> ddotAd(_mmax+1,0); // array for <d[i],Ad[i]>
+      std::vector<field_type,rAlloc> ddotAd(_mmax+1,0); // array for <d[i],Ad[i]>
       X w(x);
 
       real_type def = _sp->norm(b); // compute norm
@@ -1526,7 +1526,7 @@ private:
       }
 
       // some local variables
-      real_type alpha;
+      field_type alpha;
 
       // the loop
       int i=1;
@@ -1566,7 +1566,7 @@ private:
 
   private:
     //This function is called every iteration to orthogonalize against the last search directions
-    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) {
+    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<field_type,ReboundAllocatorType<X,field_type>>& ddotAd,std::vector<X>& d) {
       // The RestartedFCGSolver uses only values with lower array index;
       for (int k = 0; k < i_bounded; k++) {
         d[i_bounded].axpy(-_sp->dot(Ad[k], w) / ddotAd[k], d[k]); // d[i] -= <<Ad[k],w>/<d[k],Ad[k]>>d[k]
@@ -1574,7 +1574,7 @@ private:
     }
 
     // This function is called every mmax iterations to handle limited array sizes.
-    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) {
+    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<field_type,ReboundAllocatorType<X,field_type> >& ddotAd,int& i_bounded) {
       // Reset loop index and exchange the first and last arrays
       i_bounded = 1;
       std::swap(Ad[0], Ad[_mmax]);
@@ -1622,7 +1622,7 @@ private:
 
   private:
     // This function is called every iteration to orthogonalize against the last search directions.
-    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<real_type,ReboundAllocatorType<X,real_type>>& ddotAd,std::vector<X>& d) override {
+    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<field_type,ReboundAllocatorType<X,field_type>>& ddotAd,std::vector<X>& d) override {
       // This FCGSolver uses values with higher array indexes too, if existent.
       for (int k = 0; k < _k_limit; k++) {
         if(i_bounded!=k)
@@ -1635,7 +1635,7 @@ private:
     };
 
     // This function is called every mmax iterations to handle limited array sizes.
-    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<real_type,ReboundAllocatorType<X,real_type> >& ddotAd,int& i_bounded) override {
+    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<field_type,ReboundAllocatorType<X,field_type> >& ddotAd,int& i_bounded) override {
       // Only the loop index i_bounded return to 0, if it reached mmax.
       i_bounded = 0;
       // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.
