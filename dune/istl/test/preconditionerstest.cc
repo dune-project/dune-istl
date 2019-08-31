@@ -16,6 +16,33 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/test/laplacian.hh>
 
+namespace Dune
+{
+  using Mat1 = BCRSMatrix<FieldMatrix<double,1,1>>;
+  using Mat2 = BCRSMatrix<FieldMatrix<std::complex<double>,1,1>>;
+  using Vec1 = BlockVector<FieldVector<double,1>>;
+  using Vec2 = BlockVector<FieldVector<std::complex<double>,1>>;
+
+  // explicit template instantiation of all preconditioners
+  template class SeqJac<Mat1, Vec1, Vec1>;
+  template class SeqGS<Mat1, Vec1, Vec1>;
+  template class SeqSOR<Mat1, Vec1, Vec1>;
+  template class SeqSSOR<Mat1, Vec1, Vec1>;
+  template class Richardson<Vec1, Vec1>;
+  template class SeqILU<Mat1, Vec1, Vec1>;
+  template class SeqILDL<Mat1, Vec1, Vec1>;
+
+  template class SeqJac<Mat2, Vec2, Vec2>;
+  template class SeqGS<Mat2, Vec2, Vec2>;
+  template class SeqSOR<Mat2, Vec2, Vec2>;
+  template class SeqSSOR<Mat2, Vec2, Vec2>;
+  template class Richardson<Vec2, Vec2>;
+  template class SeqILU<Mat2, Vec2, Vec2>;
+  template class SeqILDL<Mat2, Vec2, Vec2>;
+
+} // end namespace Dune
+
+
 using namespace Dune;
 
 template <class Matrix, class Vector>
