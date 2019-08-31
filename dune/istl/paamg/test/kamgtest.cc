@@ -10,6 +10,34 @@
 #include <cstdlib>
 #include <ctime>
 
+namespace Dune
+{
+  using Mat = BCRSMatrix<FieldMatrix<double,1,1>>;
+  using Vec = BlockVector<FieldVector<double,1>>;
+  using LinOp = MatrixAdapter<Mat,Vec,Vec>;
+  using Comm = Amg::SequentialInformation;
+
+  // explicit template instantion of FastAMG preconditioner
+  template class Amg::KAMG<LinOp, Vec, Richardson<Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqGS<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqSOR<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqSSOR<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
+
+  template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, RestartedFCGSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, CompleteFCGSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, BiCGSTABSolver<Vec>>;
+  template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, MINRESSolver<Vec>>;
+
+  /**
+   * Note: RestartedGMResSolver can not be used, since additional constructor argument required.
+   * Needs something like ConstructionTraits for solvers.
+   **/
+  // template class Amg::KAMG<LinOp, Vec, SeqJac<Matrix,Vec,Vec>, Comm, RestartedGMResSolver<Vec>>;
+
+} // end namespace Dune
+
+
 template<class M, class V>
 void randomize(const M& mat, V& b)
 {
