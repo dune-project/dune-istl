@@ -74,6 +74,9 @@
 /* Enable/Disable the backwards compatibility of the category enum/method in dune-istl solvers, preconditioner, etc. */
 #cmakedefine DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE @DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE@
 
+/* Includes for istl library */
+#include "solvertemplates.hh"
+
 /* end dune-istl
    Everything below here will be overwritten
 */

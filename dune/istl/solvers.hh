@@ -1317,6 +1317,7 @@ private:
       IterativeSolver<X,X>::IterativeSolver(op,sp,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
+
     /*!
       \brief Set up nonlinear preconditioned conjugate gradient solver.
 
