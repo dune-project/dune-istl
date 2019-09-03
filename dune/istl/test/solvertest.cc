@@ -13,6 +13,26 @@
 
 #include <iterator>
 
+namespace Dune
+{
+  using Vector = BlockVector<FieldVector<double,1>>;
+
+  // explicit template instantiation of all iterative solvers
+  template class InverseOperator<Vector,Vector>;
+  template class LoopSolver<Vector>;
+  template class GradientSolver<Vector>;
+  template class CGSolver<Vector>;
+  template class BiCGSTABSolver<Vector>;
+  template class MINRESSolver<Vector>;
+  template class RestartedGMResSolver<Vector>;
+  template class RestartedFlexibleGMResSolver<Vector>;
+  template class GeneralizedPCGSolver<Vector>;
+  template class RestartedFCGSolver<Vector>;
+  template class CompleteFCGSolver<Vector>;
+
+} // end namespace Dune
+
+
 int main(int argc, char** argv)
 {
 
