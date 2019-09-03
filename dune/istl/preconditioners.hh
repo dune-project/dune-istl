@@ -176,8 +176,8 @@ namespace Dune {
     SeqSSOR (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<field_type>("iterations");
-      _w = configuration.get<field_type>("relaxation");
+      _n = configuration.get<int>("iterations");
+      _w = configuration.get<scalar_field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -277,8 +277,8 @@ namespace Dune {
     SeqSOR (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<field_type>("iterations");
-      _w = configuration.get<field_type>("relaxation");
+      _n = configuration.get<int>("iterations");
+      _w = configuration.get<scalar_field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -393,8 +393,8 @@ namespace Dune {
     SeqGS (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<field_type>("iterations");
-      _w = configuration.get<field_type>("relaxation");
+      _n = configuration.get<int>("iterations");
+      _w = configuration.get<scalar_field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -490,8 +490,8 @@ namespace Dune {
     SeqJac (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<field_type>("iterations");
-      _w = configuration.get<field_type>("relaxation");
+      _n = configuration.get<int>("iterations");
+      _w = configuration.get<scalar_field_type>("relaxation");
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -749,7 +749,7 @@ namespace Dune {
     SeqILU0 (const M& A, const ParameterTree& configuration)
       : ILU(A) // copy A
     {
-      _w = configuration.get<field_type>("relaxation");
+      _w = configuration.get<scalar_field_type>("relaxation");
       bilu0_decomposition(ILU);
     }
 
@@ -849,8 +849,8 @@ namespace Dune {
     SeqILUn (const M& A, const ParameterTree& configuration)
       : ILU(A.N(),A.M(),M::row_wise)
     {
-      _n = configuration.get<field_type>("iterations");
-      _w = configuration.get<field_type>("relaxation");
+      _n = configuration.get<int>("iterations");
+      _w = configuration.get<scalar_field_type>("relaxation");
       bilu_decomposition(A,_n,ILU);
     }
 
@@ -937,7 +937,7 @@ namespace Dune {
      */
     Richardson (const ParameterTree& configuration)
     {
-      _w = configuration.get<field_type>("relaxation");
+      _w = configuration.get<scalar_field_type>("relaxation");
     }
 
     /*!
