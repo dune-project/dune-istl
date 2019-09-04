@@ -53,7 +53,35 @@ void runSuperLU(std::size_t N)
   solver1.apply(reinterpret_cast<typename Matrix::field_type*>(&x1[0]),
                 reinterpret_cast<typename Matrix::field_type*>(&b1[0]));
 }
+
+// explicit template instantiation of SuperLU class
+
+#if HAVE_SLU_SDEFS_H
+template class Dune::SuperLU<Dune::BCRSMatrix<float>>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<float,1,1> >>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<float,2,2> >>;
 #endif
+
+#if HAVE_SLU_DDEFS_H
+template class Dune::SuperLU<Dune::BCRSMatrix<double>>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >>;
+#endif
+
+#if HAVE_SLU_CDEFS_H
+template class Dune::SuperLU<Dune::BCRSMatrix<std::complex<float> >>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<float>,1,1> >>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<float>,2,2> >>;
+#endif
+
+#if HAVE_SLU_ZDEFS_H
+template class Dune::SuperLU<Dune::BCRSMatrix<std::complex<double> >>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<double>,1,1> >>;
+template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<double>,2,2> >>;
+#endif
+
+#endif
+
 
 int main(int argc, char** argv)
 try
