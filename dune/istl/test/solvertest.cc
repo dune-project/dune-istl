@@ -11,24 +11,41 @@
 #include <dune/istl/solvers.hh>
 #include "laplacian.hh"
 
+#include <complex>
 #include <iterator>
 
 namespace Dune
 {
-  using Vector = BlockVector<FieldVector<double,1>>;
+  using Vec1 = BlockVector<FieldVector<double,1>>;
+  using Vec2 = BlockVector<FieldVector<std::complex<double>,1>>;
 
   // explicit template instantiation of all iterative solvers
-  template class InverseOperator<Vector,Vector>;
-  template class LoopSolver<Vector>;
-  template class GradientSolver<Vector>;
-  template class CGSolver<Vector>;
-  template class BiCGSTABSolver<Vector>;
-  template class MINRESSolver<Vector>;
-  template class RestartedGMResSolver<Vector>;
-  template class RestartedFlexibleGMResSolver<Vector>;
-  template class GeneralizedPCGSolver<Vector>;
-  template class RestartedFCGSolver<Vector>;
-  template class CompleteFCGSolver<Vector>;
+
+  // field_type = double
+  template class InverseOperator<Vec1,Vec1>;
+  template class LoopSolver<Vec1>;
+  template class GradientSolver<Vec1>;
+  template class CGSolver<Vec1>;
+  template class BiCGSTABSolver<Vec1>;
+  template class MINRESSolver<Vec1>;
+  template class RestartedGMResSolver<Vec1>;
+  template class RestartedFlexibleGMResSolver<Vec1>;
+  template class GeneralizedPCGSolver<Vec1>;
+  template class RestartedFCGSolver<Vec1>;
+  template class CompleteFCGSolver<Vec1>;
+
+  // field_type = complex<double>
+  template class InverseOperator<Vec2,Vec2>;
+  template class LoopSolver<Vec2>;
+  template class GradientSolver<Vec2>;
+  template class CGSolver<Vec2>;
+  template class BiCGSTABSolver<Vec2>;
+  template class MINRESSolver<Vec2>;
+  template class RestartedGMResSolver<Vec2>;
+  template class RestartedFlexibleGMResSolver<Vec2>;
+  template class GeneralizedPCGSolver<Vec2>;
+  template class RestartedFCGSolver<Vec2>;
+  template class CompleteFCGSolver<Vec2>;
 
 } // end namespace Dune
 
