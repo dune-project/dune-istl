@@ -104,7 +104,7 @@ namespace Dune
        * for pre and post smoothing.
        * @param parms The parameters for the AMG.
        */
-      AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+      AMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
           const SmootherArgs& smootherArgs, const Parameters& parms);
 
       /**
@@ -335,7 +335,7 @@ namespace Dune
     {}
 
     template<class M, class X, class S, class PI, class A>
-    AMG<M,X,S,PI,A>::AMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    AMG<M,X,S,PI,A>::AMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                          const SmootherArgs& smootherArgs,
                          const Parameters& parms)
       : matrices_(stackobject_to_shared_ptr(matrices)), smootherArgs_(smootherArgs),
