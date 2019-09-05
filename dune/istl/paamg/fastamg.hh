@@ -86,7 +86,7 @@ namespace Dune
        * grid, must match the coarse matrix in the matrix hierarchy.
        * @param parms The parameters for the AMG.
        */
-      FastAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+      FastAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
               const Parameters& parms,
               bool symmetric=true);
 
@@ -302,9 +302,9 @@ namespace Dune
     }
 
     template<class M, class X, class PI, class A>
-    FastAMG<M,X,PI,A>::FastAMG(const OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
+    FastAMG<M,X,PI,A>::FastAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
                                const Parameters& parms, bool symmetric_)
-      : matrices_(&matrices), solver_(&coarseSolver),
+      : matrices_(stackobject_to_shared_ptr(matrices)), solver_(&coarseSolver),
         rhs_(), lhs_(), residual_(), scalarProduct_(),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
