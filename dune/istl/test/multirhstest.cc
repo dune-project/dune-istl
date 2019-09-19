@@ -6,8 +6,6 @@
 
 #define DISABLE_AMG_DIRECTSOLVER 1
 
-// #undef HAVE_VC
-
 #include <iostream>               // for input/output to shell
 #include <fstream>                // for input/output to files
 #include <vector>                 // STL vector class
