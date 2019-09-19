@@ -1,6 +1,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
+#ifndef DUNE_ISTL_TEST_MULTIRHSTEST_HH
+#define DUNE_ISTL_TEST_MULTIRHSTEST_HH
 // start with including some headers
 #include "config.h"
 
@@ -201,3 +203,5 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILU0/n
   test_all_solvers("ILU(1)",      op,ilu_1,N,Runs);
   test_all_solvers("AMG",         op,amg,N,Runs);
 }
+
+#endif // DUNE_ISTL_TEST_MULTIRHSTEST_HH
