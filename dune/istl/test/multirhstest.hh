@@ -3,12 +3,8 @@
 
 #ifndef DUNE_ISTL_TEST_MULTIRHSTEST_HH
 #define DUNE_ISTL_TEST_MULTIRHSTEST_HH
-// start with including some headers
-#include "config.h"
 
 #define DISABLE_AMG_DIRECTSOLVER 1
-
-// #undef HAVE_VC
 
 #include <iostream>               // for input/output to shell
 #include <fstream>                // for input/output to files
