@@ -133,8 +133,8 @@ public:
     if (inverseSubIndices_.empty()) // no ignore field given
     {
       // simply copy all values
-      for (auto i=0; i<x.size(); i++)
-        for (auto ii=0; ii<x[i].size(); ii++)
+      for (int i=0, s=x.size(); i<s; i++)
+        for (int ii=0, ss=x[i].size(); ii<ss; ii++)
           x[i][ii] = *xp++;
     }
     else // use the mapping from not ignored entries
