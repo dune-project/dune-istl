@@ -20,7 +20,6 @@ namespace Dune
   // explicit template instantion of FastAMG preconditioner
   template class Amg::KAMG<LinOp, Vec, Richardson<Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
   template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
-  template class Amg::KAMG<LinOp, Vec, SeqGS<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
   template class Amg::KAMG<LinOp, Vec, SeqSOR<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
   template class Amg::KAMG<LinOp, Vec, SeqSSOR<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
 
