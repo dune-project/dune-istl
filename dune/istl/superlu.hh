@@ -726,14 +726,14 @@ namespace Dune
   }
   /** @} */
 
-  template<typename T, typename A, int n, int m>
-  struct IsDirectSolver<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename T, typename A>
+  struct IsDirectSolver<SuperLU<BCRSMatrix<T,A> > >
   {
     enum { value=true};
   };
 
-  template<typename T, typename A, int n, int m>
-  struct StoresColumnCompressed<SuperLU<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename T, typename A>
+  struct StoresColumnCompressed<SuperLU<BCRSMatrix<T,A> > >
   {
     enum { value = true };
   };
