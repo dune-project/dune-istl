@@ -1,3 +1,4 @@
+add_subdirectory("common")
 add_subdirectory("eigenvalue")
 add_subdirectory("paamg")
 add_subdirectory(test)
