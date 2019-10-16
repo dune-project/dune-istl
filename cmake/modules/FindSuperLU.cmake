@@ -164,7 +164,6 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   "SuperLU"
   DEFAULT_MSG
-  BLAS_FOUND
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
   SUPERLU_MIN_VERSION_4
