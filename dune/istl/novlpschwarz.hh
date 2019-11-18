@@ -336,7 +336,7 @@ namespace Dune {
     void apply (X& v, const Y& d)
     {
       _preconditioner->template apply<forward>(v,d);
-      _communication.copyOwnerToAll(v,v);
+      _communication.addOwnerCopyToOwnerCopy(v,v);
     }
 
     /*!
