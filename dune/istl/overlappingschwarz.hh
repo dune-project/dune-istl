@@ -519,8 +519,9 @@ namespace Dune
   struct AdditiveAdder<S, BlockVector<T,A> >
   {
     typedef typename A::size_type size_type;
+    typedef typename std::decay_t<decltype(Impl::asVector(std::declval<T>()))>::field_type field_type;
     AdditiveAdder(BlockVector<T,A>& v, BlockVector<T,A>& x,
-                  OverlappingAssigner<S>& assigner, const T& relax_);
+                  OverlappingAssigner<S>& assigner, const field_type& relax_);
     void operator()(const size_type& domain);
     void axpy();
     static constexpr size_t n = std::decay_t<decltype(Impl::asVector(std::declval<T>()))>::dimension;
@@ -529,7 +530,7 @@ namespace Dune
     BlockVector<T,A>* v;
     BlockVector<T,A>* x;
     OverlappingAssigner<S>* assigner;
-    T relax;
+    field_type relax;
   };
 
   template<typename S,typename T>
@@ -540,8 +541,9 @@ namespace Dune
   struct MultiplicativeAdder<S, BlockVector<T,A> >
   {
     typedef typename A::size_type size_type;
+    typedef typename std::decay_t<decltype(Impl::asVector(std::declval<T>()))>::field_type field_type;
     MultiplicativeAdder(BlockVector<T,A>& v, BlockVector<T,A>& x,
-                        OverlappingAssigner<S>& assigner_, const T& relax_);
+                        OverlappingAssigner<S>& assigner_, const field_type& relax_);
     void operator()(const size_type& domain);
     void axpy();
     static constexpr size_t n = std::decay_t<decltype(Impl::asVector(std::declval<T>()))>::dimension;
@@ -549,7 +551,7 @@ namespace Dune
   private:
     BlockVector<T,A>* x;
     OverlappingAssigner<S>* assigner;
-    T relax;
+    field_type relax;
   };
 
   /**
@@ -1553,7 +1555,7 @@ namespace Dune
   AdditiveAdder<S,BlockVector<T,A> >::AdditiveAdder(BlockVector<T,A>& v_,
                                                     BlockVector<T,A>& x_,
                                                     OverlappingAssigner<S>& assigner_,
-                                                    const T& relax_)
+                                                    const field_type& relax_)
     : v(&v_), x(&x_), assigner(&assigner_), relax(relax_)
   {}
 
@@ -1577,7 +1579,7 @@ namespace Dune
   MultiplicativeAdder<S,BlockVector<T,A> >
   ::MultiplicativeAdder(BlockVector<T,A>& v_,
                         BlockVector<T,A>& x_,
-                        OverlappingAssigner<S>& assigner_, const T& relax_)
+                        OverlappingAssigner<S>& assigner_, const field_type& relax_)
     : x(&x_), assigner(&assigner_), relax(relax_)
   {
     DUNE_UNUSED_PARAMETER(v_);
