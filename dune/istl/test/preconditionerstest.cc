@@ -25,7 +25,6 @@ namespace Dune
 
   // explicit template instantiation of all preconditioners
   template class SeqJac<Mat1, Vec1, Vec1>;
-  template class SeqGS<Mat1, Vec1, Vec1>;
   template class SeqSOR<Mat1, Vec1, Vec1>;
   template class SeqSSOR<Mat1, Vec1, Vec1>;
   template class Richardson<Vec1, Vec1>;
@@ -33,7 +32,6 @@ namespace Dune
   template class SeqILDL<Mat1, Vec1, Vec1>;
 
   template class SeqJac<Mat2, Vec2, Vec2>;
-  template class SeqGS<Mat2, Vec2, Vec2>;
   template class SeqSOR<Mat2, Vec2, Vec2>;
   template class SeqSSOR<Mat2, Vec2, Vec2>;
   template class Richardson<Vec2, Vec2>;
