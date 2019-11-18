@@ -55,7 +55,6 @@ namespace Dune
   // explicit template instantion of FastAMG preconditioner
   template class Amg::AMG<LinOp, Vec, Richardson<Vec,Vec>, Comm>;
   template class Amg::AMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm>;
-  template class Amg::AMG<LinOp, Vec, SeqGS<Mat,Vec,Vec>, Comm>;
   template class Amg::AMG<LinOp, Vec, SeqSOR<Mat,Vec,Vec>, Comm>;
   template class Amg::AMG<LinOp, Vec, SeqSSOR<Mat,Vec,Vec>, Comm>;
 
