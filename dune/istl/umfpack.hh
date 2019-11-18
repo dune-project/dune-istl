@@ -346,6 +346,8 @@ namespace Dune {
         DUNE_THROW(Dune::ISTLError, "Size of right-hand-side vector b does not match the number of matrix rows!");
       if (umfpackMatrix_.M() != x.dim())
         DUNE_THROW(Dune::ISTLError, "Size of solution vector x does not match the number of matrix columns!");
+      if (b.size() == 0)
+        return;
 
       double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
@@ -429,6 +431,8 @@ namespace Dune {
     {
       if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
+      if (matrix.N() == 0 or matrix.M() == 0)
+        return;
       umfpackMatrix_ = matrix;
       decompose();
     }
