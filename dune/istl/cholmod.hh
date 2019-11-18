@@ -93,6 +93,12 @@ public:
   */
   void apply(X& x, B& b, InverseOperatorResult& res)
   {
+    // do nothing if N=0
+    if ( nIsZero_ )
+    {
+        return;
+    }
+
     if (x.size() != b.size())
       DUNE_THROW(Exception, "Error in apply(): sizes of x and b do not match!");
 
@@ -185,6 +191,13 @@ public:
     int N = blocksize * matrix.N();
     if ( ignore )
       N -= ignore->count();
+
+    nIsZero_ = (N <= 0);
+
+    if ( nIsZero_ )
+    {
+        return;
+    }
 
     // number of nonzeroes
     const int nnz = blocksize * blocksize * matrix.nonzeroes();
@@ -308,6 +321,9 @@ private:
 
   cholmod_common c_;
   cholmod_factor* L_ = nullptr;
+
+  // indicator for a 0x0 problem (due to ignore dof's)
+  bool nIsZero_ = false;
 
   // mapping from the not ignored indices in flat order to all indices in flat order
   // it also holds the info about ignore nodes: if it is empty => no ignore field
