@@ -280,6 +280,9 @@ namespace Dune
 
     ColCompMatrixInitializer();
 
+    virtual ~ColCompMatrixInitializer()
+    {}
+
     template<typename Iter>
     void addRowNnz(const Iter& row) const;
 
