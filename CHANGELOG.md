@@ -40,6 +40,8 @@
 - The interface methods `dot()` and `norm()` of ScalarProduct are now `const`. You will
   have to adjust the method signatures in your own scalar product implementations.
 
+- `SeqILU` can now be used with SIMD data types.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
