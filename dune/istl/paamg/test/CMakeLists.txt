@@ -95,3 +95,11 @@ dune_add_test(NAME pamg_comm_repart_test
               SOURCES parallelamgtest.cc
               COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH
               CMAKE_GUARD MPI_FOUND)
+
+dune_add_test(NAME pamgmmtest
+  SOURCES pamgmmtest.cc
+  TIMEOUT 20
+  MPI_RANKS 6
+  CMAKE_GUARD PARMETIS_FOUND)
+
+file(COPY gr_30_30.mtx DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
