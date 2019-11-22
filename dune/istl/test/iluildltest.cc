@@ -6,6 +6,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/common/simd/loop.hh>
+
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/io.hh>
@@ -39,7 +41,7 @@ void testDecomposition ( int n )
     prec.post( x );
 
     y -= x;
-    if ( y.two_norm() > 1e-8 )
+    if ( Dune::Simd::anyTrue(y.two_norm() > 1e-8) )
       DUNE_THROW( Dune::Exception, "Method Prec::apply() returned wrong value!");
   }
 }
@@ -55,6 +57,7 @@ DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0
   testDecomposition< Dune::SeqILU0, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
 DUNE_NO_DEPRECATED_END // for deprecated SeqILU0
   testDecomposition< Dune::SeqILU, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
+  testDecomposition<Dune::SeqILU, Dune::LoopSIMD<double, 4>, Dune::LoopSIMD<double, 4>>( 4 );
 
   return 0;
 }

@@ -197,10 +197,10 @@ namespace Dune {
           coliterator kj = ILU[(*ik).first].find((*ik).first);                       // diagonal in k
           for (++kj; kj!=endk; ++kj)                       // row k eliminates in row i
           {
-            // we misuse the storage to store an int. If the field_type is std::complex, we have to access the real part
-            // starting from C++11, we can use std::real to always return a real value, even if it is double/float
-            using std::real;
-            int generation = (int) real( firstmatrixelement(*kj) );
+            // we misuse the storage to store an int. If the field_type is std::complex, we have to access the real/abs part
+            // starting from C++11, we can use std::abs to always return a real value, even if it is double/float
+            using std::abs;
+            int generation = (int) Simd::lane(0,abs( firstmatrixelement(*kj) ));
             if (generation<n)
             {
               mapiterator ij = rowpattern.find(kj.index());
@@ -221,7 +221,7 @@ namespace Dune {
       // write generation index into entries
       coliterator endILUij = ILU[i.index()].end();;
       for (coliterator ILUij=ILU[i.index()].begin(); ILUij!=endILUij; ++ILUij)
-        firstmatrixelement(*ILUij) = (K) rowpattern[ILUij.index()];
+        Simd::lane(0,firstmatrixelement(*ILUij)) = (Simd::Scalar<K>) rowpattern[ILUij.index()];
     }
 
     // copy entries of A
@@ -257,7 +257,7 @@ namespace Dune {
 
   namespace ILU {
 
-    template <class B>
+    template <class B, class Alloc = std::allocator<B>>
     struct CRS
     {
       typedef B       block_type;
@@ -300,7 +300,7 @@ namespace Dune {
       }
 
       std::vector< size_type  > rows_;
-      std::vector< block_type > values_;
+      std::vector< block_type, Alloc> values_;
       std::vector< size_type  > cols_;
       size_type nRows_;
     };
@@ -373,10 +373,10 @@ namespace Dune {
 
 
     //! LU backsolve with stored inverse in CRS format for lower and upper triangular
-    template<class CRS, class mblock, class X, class Y>
+    template<class CRS, class InvVector, class X, class Y>
     void bilu_backsolve (const CRS& lower,
                          const CRS& upper,
-                         const std::vector< mblock >& inv,
+                         const InvVector& inv,
                          X& v, const Y& d)
     {
       // iterator types

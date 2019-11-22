@@ -491,7 +491,7 @@ namespace Dune {
     typedef Simd::Scalar<field_type> scalar_field_type;
 
     //! \brief type of ILU storage
-    typedef typename ILU::CRS< block_type > CRS;
+    typedef typename ILU::CRS< block_type , typename M::allocator_type> CRS;
 
     /*! \brief Constructor.
 
@@ -600,7 +600,7 @@ namespace Dune {
     //! \brief The ILU(n) decomposition of the matrix. As storage a CRS structure is used.
     CRS lower_;
     CRS upper_;
-    std::vector< block_type > inv_;
+    std::vector< block_type, typename matrix_type::allocator_type > inv_;
 
     //! \brief The relaxation factor to use.
     const scalar_field_type w_;
