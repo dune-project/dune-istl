@@ -112,8 +112,6 @@ namespace Dune
        */
       FastAMG(const FastAMG& amg);
 
-      ~FastAMG();
-
       /** \copydoc Preconditioner::pre */
       void pre(Domain& x, Range& b);
 
@@ -258,11 +256,11 @@ namespace Dune
       /** @brief The solver of the coarsest level. */
       std::shared_ptr<CoarseSolver> solver_;
       /** @brief The right hand side of our problem. */
-      Hierarchy<Range,A>* rhs_;
+      std::shared_ptr<Hierarchy<Range,A>> rhs_;
       /** @brief The left approximate solution of our problem. */
-      Hierarchy<Domain,A>* lhs_;
+      std::shared_ptr<Hierarchy<Domain,A>> lhs_;
       /** @brief The current residual. */
-      Hierarchy<Domain,A>* residual_;
+      std::shared_ptr<Hierarchy<Domain,A>> residual_;
 
       /** @brief The type of the scalar product for the coarse solver. */
       using ScalarProduct = Dune::ScalarProduct<X>;
@@ -292,14 +290,7 @@ namespace Dune
       gamma_(amg.gamma_), preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
       symmetric(amg.symmetric), coarsesolverconverged(amg.coarsesolverconverged),
       coarseSmoother_(amg.coarseSmoother_), verbosity_(amg.verbosity_)
-    {
-      if(amg.rhs_)
-        rhs_=new Hierarchy<Range,A>(*amg.rhs_);
-      if(amg.lhs_)
-        lhs_=new Hierarchy<Domain,A>(*amg.lhs_);
-      if(amg.residual_)
-        residual_=new Hierarchy<Domain,A>(*amg.residual_);
-    }
+    {}
 
     template<class M, class X, class PI, class A>
     FastAMG<M,X,PI,A>::FastAMG(OperatorHierarchy& matrices, CoarseSolver& coarseSolver,
@@ -345,26 +336,6 @@ namespace Dune
       //             "Matrix and Solver must match in terms of category!");
       auto matrixptr = stackobject_to_shared_ptr(matrix);
       createHierarchies(criterion, matrixptr, pinfo);
-    }
-
-    template<class M, class X, class PI, class A>
-    FastAMG<M,X,PI,A>::~FastAMG()
-    {
-      if(buildHierarchy_) {
-        if(solver_)
-          solver_.reset();
-        if(coarseSmoother_)
-          coarseSmoother_.reset();
-      }
-      if(lhs_)
-        delete lhs_;
-      lhs_=nullptr;
-      if(residual_)
-        delete residual_;
-      residual_=nullptr;
-      if(rhs_)
-        delete rhs_;
-      rhs_=nullptr;
     }
 
     template<class M, class X, class PI, class A>
@@ -488,13 +459,9 @@ namespace Dune
       watch1.reset();
       // No smoother to make x consistent! Do it by hand
       matrices_->parallelInformation().coarsest()->copyOwnerToAll(x,x);
-      if(rhs_)
-        delete rhs_;
-      rhs_ = new Hierarchy<Range,A>(std::make_shared<Range>(b));
-      if(lhs_)
-        delete lhs_;
-      lhs_ = new Hierarchy<Domain,A>(std::make_shared<Domain>(x));
-      residual_ = new Hierarchy<Domain,A>(std::make_shared<Domain>(x));
+      rhs_ = std::make_shared<Hierarchy<Range,A>>(std::make_shared<Range>(b));
+      lhs_ = std::make_shared<Hierarchy<Domain,A>>(std::make_shared<Domain>(x));
+      residual_ = std::make_shared<Hierarchy<Domain,A>>(std::make_shared<Domain>(x));
       matrices_->coarsenVector(*rhs_);
       matrices_->coarsenVector(*lhs_);
       matrices_->coarsenVector(*residual_);
@@ -715,11 +682,7 @@ namespace Dune
             DUNE_THROW(MathError, "Coarse solver did not converge");
         }
 
-        // printvector(std::cout, *lhs, "update corrected", "u", 10, 10, 10);
-        // postsmoothing
         postsmooth(levelContext, v, b);
-        // printvector(std::cout, *lhs, "update postsmoothed", "u", 10, 10, 10);
-
       }
     }
 
@@ -729,11 +692,8 @@ namespace Dune
     void FastAMG<M,X,PI,A>::post(Domain& x)
     {
       DUNE_UNUSED_PARAMETER(x);
-      delete lhs_;
       lhs_=nullptr;
-      delete rhs_;
       rhs_=nullptr;
-      delete residual_;
       residual_=nullptr;
     }
 

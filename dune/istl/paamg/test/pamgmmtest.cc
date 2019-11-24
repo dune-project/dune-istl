@@ -9,6 +9,7 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/matrixmarket.hh>
 #include <dune/istl/matrixredistribute.hh>
+#include <dune/istl/repartition.hh>
 #include <dune/istl/paamg/amg.hh>
 
 typedef double RT;
@@ -32,7 +33,7 @@ void loadMatrix(std::shared_ptr<BCRSMat>& pA){
 std::shared_ptr<Comm> repartMatrix(const std::shared_ptr<BCRSMat>& pA_orig, std::shared_ptr<BCRSMat>& pA, MPI_Comm comm){
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
   RedistInfo ri;
-  Comm* pComm;
+  std::shared_ptr<Comm> pComm;
   int size;
   MPI_Comm_size(comm, &size);
   Comm oocomm(comm);
@@ -42,7 +43,7 @@ std::shared_ptr<Comm> repartMatrix(const std::shared_ptr<BCRSMat>& pA_orig, std:
   ri.setSetup();
   pA = std::make_shared<BCRSMat>();
   redistributeMatrix(*pA_orig, *pA, oocomm, *pComm, ri);
-  return std::shared_ptr<Comm>(pComm);
+  return pComm;
 }
 
 
