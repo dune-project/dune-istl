@@ -197,7 +197,7 @@ namespace Dune
      constructors, which are then only imported in the actual solver
      implementation.
    */
-  template<class X, class Y, class CountType = unsigned int>
+  template<class X, class Y>
   class IterativeSolver : public InverseOperator<X,Y>{
   public:
     using typename InverseOperator<X,Y>::domain_type;
@@ -374,6 +374,7 @@ namespace Dune
      the current iteration count and norm of the residual. It returns true if
      convergence is achieved.
    */
+    template<class CountType = unsigned int>
     class Iteration {
     public:
       Iteration(const IterativeSolver& parent, InverseOperatorResult& res)

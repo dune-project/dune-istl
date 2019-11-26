@@ -111,7 +111,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
 
 
@@ -178,7 +178,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
 
 
@@ -406,25 +406,26 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
 
 
   // Ronald Kriemanns BiCG-STAB implementation from Sumo
   //! \brief Bi-conjugate Gradient Stabilized (BiCG-STAB)
   template<class X>
-  class BiCGSTABSolver : public IterativeSolver<X,X, double> {
+  class BiCGSTABSolver : public IterativeSolver<X,X> {
+    using BASE = IterativeSolver<X,X>;
   public:
-    using typename IterativeSolver<X,X, double>::domain_type;
-    using typename IterativeSolver<X,X, double>::range_type;
-    using typename IterativeSolver<X,X, double>::field_type;
-    using typename IterativeSolver<X,X, double>::real_type;
+    using typename BASE::domain_type;
+    using typename BASE::range_type;
+    using typename BASE::field_type;
+    using typename BASE::real_type;
 
     // copy base class constructors
-    using IterativeSolver<X,X, double>::IterativeSolver;
+    using BASE::IterativeSolver;
 
     // don't shadow four-argument version of apply defined in the base class
-    using IterativeSolver<X,X, double>::apply;
+    using BASE::apply;
 
     /*!
        \brief Apply inverse operator.
@@ -457,7 +458,7 @@ namespace Dune {
       //
 
       // r = r - Ax; rt = r
-      Iteration iteration(*this,res);
+      Iteration<double> iteration(*this,res);
       _prec->pre(x,r);             // prepare preconditioner
 
       _op->applyscaleadd(-1,x,r);  // overwrite b with defect
@@ -578,13 +579,14 @@ namespace Dune {
     }
 
   protected:
-    using IterativeSolver<X,X, double>::_op;
-    using IterativeSolver<X,X, double>::_prec;
-    using IterativeSolver<X,X, double>::_sp;
-    using IterativeSolver<X,X, double>::_reduction;
-    using IterativeSolver<X,X, double>::_maxit;
-    using IterativeSolver<X,X, double>::_verbose;
-    using typename IterativeSolver<X,X, double>::Iteration;
+    using BASE::_op;
+    using BASE::_prec;
+    using BASE::_sp;
+    using BASE::_reduction;
+    using BASE::_maxit;
+    using BASE::_verbose;
+    template<class CountType>
+    using Iteration = typename BASE::template Iteration<CountType>;
   };
 
   /*! \brief Minimal Residual Method (MINRES)
@@ -787,7 +789,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
 
   /**
@@ -1078,7 +1080,7 @@ namespace Dune {
     using IterativeSolver<X,Y>::_reduction;
     using IterativeSolver<X,Y>::_maxit;
     using IterativeSolver<X,Y>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
     int _restart;
   };
 
@@ -1247,7 +1249,7 @@ private:
     using RestartedGMResSolver<X,Y>::_maxit;
     using RestartedGMResSolver<X,Y>::_verbose;
     using RestartedGMResSolver<X,Y>::_restart;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
 
 
@@ -1431,7 +1433,7 @@ private:
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
     int _restart;
   };
 
@@ -1590,7 +1592,7 @@ private:
     using IterativeSolver<X,X>::_reduction;
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
-    using typename IterativeSolver<X,X>::Iteration;
+    using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
 
   /*! \brief Complete flexible conjugate gradient method
