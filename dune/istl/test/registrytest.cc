@@ -72,5 +72,10 @@ int main() {
 
   std::cout << "SUCCESS: " << success << std::endl;
 
+
+  //try to build a parameterizedobjectfactory from registry
+  Dune::ParameterizedObjectFactory<std::shared_ptr<ThingBase<int>>(int)> fac;
+  addRegistryToFactory<Dune::MetaType<int>>(fac, ThingTag{});
+  std::cout << fac.create("A", 1)->do_something() << std::endl;
   return success ? 0 : 1;
 }

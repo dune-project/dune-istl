@@ -11,6 +11,7 @@
 
 #include <dune/common/typelist.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/parameterizedobject.hh>
 
 namespace {
   template<class Tag, std::size_t index>
@@ -44,6 +45,19 @@ namespace {
         }
       });
     return result;
+  }
+
+  template<class V, class Type, class Tag, class... Args>
+  void addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
+                            Tag){
+    constexpr auto count = getCounter(Tag);
+    Dune::Hybrid::forEach(std::make_index_sequence<count>{},
+                          [&](auto index) {
+                            using Reg = Registry<Tag, index>;
+                            factory.define(Reg::name(), [](Args... args){
+                                                          return Reg::getCreator()(V{}, args...);
+                                                        });
+                          });
   }
 }
 
