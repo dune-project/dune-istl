@@ -62,7 +62,8 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
-dune_add_test(SOURCES solverrepositorytest.cc)
+dune_add_test(SOURCES solverrepositorytest.cc
+                LINK_LIBRARIES duneistl)
 
 dune_symlink_to_source_files(FILES solverrepositorytest.ini)
 
