@@ -6,68 +6,53 @@
 
 #include <unordered_map>
 #include <functional>
+#include <memory>
 
 #include <dune/common/parametertree.hh>
+#include <dune/common/singleton.hh>
 
-#include <dune/istl/preconditionerfactories.hh>
-#include <dune/istl/solverfactories.hh>
-#include <dune/istl/paamg/pinfo.hh>
+#include <dune/istl/common/registry.hh>
+#include <dune/istl/solver.hh>
+
+namespace {
+  struct DirectSolverTag {};
+}
+
+// typelist parameter contains matrix_type, domain_type and range_type
+// parameters are matrix and ParameterTree
+#define DUNE_REGISTER_DIRECT_SOLVER(name, ...)                \
+  registry_put(DirectSolverTag, name, __VA_ARGS__)
+
+
+template<template<class>class Solver>
+auto default_direct_solver_creator(){
+  return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
+             {
+               using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
+               using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
+               using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+               int verbose = config.get("verbose", 0);
+               std::shared_ptr<Dune::InverseOperator<D,R>> solver
+                 = std::make_shared<Solver<M>>(mat,verbose);
+               return solver;
+             };
+}
 
 namespace Dune{
-  /**
-   * @addtogroup ISTL_Solver_Repository
-   * @{
-   */
-  template<class Operator>
-  class PreconditionerRepository {
-    using Domain = typename Operator::domain_type;
-    using Range = typename Operator::range_type;
-    using Preconditioner = Dune::Preconditioner<Domain, Range>;
-    using FactoryType = std::function<std::shared_ptr<Preconditioner>(std::shared_ptr<Operator>,
-                                                                      const ParameterTree&)>;
+  template<class M, class X, class Y>
+  class DirectSolverFactory{
+    using Signature = std::shared_ptr<InverseOperator<X,Y>>(const M&, const ParameterTree&);
+    using FactoryType =  ParameterizedObjectFactory<Signature>;
+
   public:
-    using RepositoryType = std::unordered_map<std::string, FactoryType>;
-
-    static RepositoryType repositoryInstance(){
-      using Factories = PreconditionerFactories<Operator>;
-      static RepositoryType repository = {
-                                          {"richardson", Factories::richardson()},
-                                          {"inverseoperator2preconditioner", Factories::inverseoperator2preconditioner()},
-                                          {"seqssor", Factories::seqssor()},
-                                          {"seqsor", Factories::seqsor()},
-                                          {"seqgs", Factories::seqgs()},
-                                          {"seqjac", Factories::seqjac()},
-                                          {"seqilu", Factories::seqilu()},
-                                          {"seqildl", Factories::seqildl()},
-                                          {"parssor", Factories::parssor()},
-                                          {"blockpreconditioner", Factories::blockpreconditioner()},
-                                          {"amg", Factories::amg()},
-                                          {"fastamg", Factories::fastamg()},
-                                          {"kamg", Factories::kamg()},
-                                          {"nonoverlappingblockpreconditioner", Factories::nonoverlappingblockpreconditioner()}
-      };
-      return repository;
+    DirectSolverFactory()
+    {
+      addRegistryToFactory<TypeList<M,X,Y>>(Singleton<FactoryType>::instance(),
+                                            DirectSolverTag{});
     }
 
-    static void add(const std::string& name, FactoryType factory){
-      repositoryInstance().emplace(name, std::move(factory));
-    }
-
-    static std::shared_ptr<Preconditioner> get(std::shared_ptr<Operator> op,
-                                               const ParameterTree& config){
-      std::string type;
-      try{
-        type = config.template get<std::string>("type");
-      }catch(RangeError&){
-        DUNE_THROW(Exception, "SolverRepository: \"type\" is not set in the config");
-      }
-      FactoryType fac;
-      try{
-        fac = repositoryInstance().at(type);
-      }catch(std::out_of_range&){
-        DUNE_THROW(Exception, "Could not find preconditioner \"" << type <<  "\" in PreconditionerRepository");
-      }
-      return fac(op, config);
+    FactoryType& instance(){
+      return Singleton<FactoryType>::instance();
     }
   };
 
@@ -78,58 +63,35 @@ namespace Dune{
     using Solver = Dune::InverseOperator<Domain,Range>;
     using Preconditioner = Dune::Preconditioner<Domain, Range>;
 
-    using FactoryType = std::function<std::shared_ptr<Solver>(std::shared_ptr<Operator>,
-                                                              const ParameterTree&,
-                                                              std::shared_ptr<Preconditioner>)>;
+    template<class O>
+    using _matrix_type = typename O::matrix_type;
+    using matrix_type = Std::detected_or_t<int, _matrix_type, Operator>;
+    static constexpr bool isAssembled = !std::is_same<matrix_type, int>::value;
+
+    static const matrix_type* getmat(std::shared_ptr<Operator> op){
+      std::shared_ptr<AssembledLinearOperator<matrix_type, Domain, Range>> aop
+        = std::dynamic_pointer_cast<AssembledLinearOperator<matrix_type, Domain, Range>>(op);
+      if(aop)
+        return &aop->getmat();
+      return nullptr;
+    }
   public:
-    using RepositoryType = std::unordered_map<std::string, FactoryType>;
-
-    static RepositoryType repositoryInstance(){
-      using Factories = SolverFactories<Operator>;
-      static RepositoryType repository = {
-                                          {"loopsolver", Factories::loopsolver()},
-                                          {"gradientsolver", Factories::gradientsolver()},
-                                          {"cgsolver", Factories::cgsolver()},
-                                          {"bicgstabsolver", Factories::bicgstabsolver()},
-                                          {"minressolver", Factories::minressolver()},
-                                          {"restartedgmressolver", Factories::restartedgmressolver()},
-                                          {"restartedflexiblegmressolver", Factories::restartedflexiblegmressolver()},
-                                          {"generalizedpcgsolver", Factories::generalizedpcgsolver()},
-                                          {"restartedfcgsolver", Factories::restartedfcgsolver()},
-                                          {"completefcgsolver", Factories::completefcgsolver()},
-                                          {"umfpack", Factories::umfpack()},
-                                          {"ldl", Factories::ldl()},
-                                          {"spqr", Factories::spqr()},
-                                          {"superlu", Factories::superlu()},
-                                          {"cholmod", Factories::cholmod()}
-      };
-      return repository;
-    }
-
-    static void add(const std::string& name, FactoryType factory){
-      repositoryInstance().emplace(name, std::move(factory));
-    }
 
     static std::shared_ptr<Solver> get(std::shared_ptr<Operator> op,
                                        const ParameterTree& config,
                                        std::shared_ptr<Preconditioner> prec = nullptr){
-      std::string type;
-      try{
-        type = config.template get<std::string>("type");
-      }catch(RangeError&){
-        DUNE_THROW(Exception, "SolverRepository: \"type\" is not set in the config");
+      std::string type = config.get<std::string>("type");
+      std::shared_ptr<Solver> result;
+      const matrix_type* mat = getmat(op);
+      if(mat){
+        try{
+          result = DirectSolverFactory<matrix_type, Domain, Range>().instance().create(type, *mat, config);
+        }catch(...){}
       }
-      FactoryType fac;
-      try{
-        fac = repositoryInstance().at(type);
-      }catch(std::out_of_range&){
-        DUNE_THROW(Exception, "Could not find solver \"" << type <<  "\" in SolverRepository");
+      if(!result){
+        DUNE_THROW(Dune::InvalidStateException, "Solver \"" << type << "\" was not found in the repository");
       }
-
-      if (!prec && config.hasSub("preconditioner")){
-        prec = PreconditionerRepository<Operator>::get(op, config.sub("preconditioner"));
-      }
-      return fac(op, config, prec);
+      return result;
     }
   };
 
