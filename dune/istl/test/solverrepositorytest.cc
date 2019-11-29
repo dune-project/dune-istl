@@ -14,7 +14,7 @@
 
 // include solvers, this should later be done in a dedicated library
 #include <dune/istl/umfpack.hh>
-#include <dune/istl/superlu.hh>
+//#include <dune/istl/superlu.hh>
 
 #include "laplacian.hh"
 

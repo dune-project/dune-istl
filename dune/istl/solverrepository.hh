@@ -47,8 +47,12 @@ namespace Dune{
   public:
     DirectSolverFactory()
     {
+    }
+
+    template<class UniqueTag=void>
+    static inline void reg(){
       addRegistryToFactory<TypeList<M,X,Y>>(Singleton<FactoryType>::instance(),
-                                            DirectSolverTag{});
+                                             DirectSolverTag{});
     }
 
     FactoryType& instance(){
