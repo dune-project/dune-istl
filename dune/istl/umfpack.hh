@@ -17,6 +17,7 @@
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
+#include <dune/istl/solverrepository.hh>
 
 #include"colcompmatrix.hh"
 
@@ -575,6 +576,9 @@ namespace Dune {
     enum { value = true };
   };
 }
+DUNE_REGISTER_DIRECT_SOLVER("umfpack",default_direct_solver_creator<Dune::UMFPack>());
+
+
 
 #endif // HAVE_SUITESPARSE_UMFPACK
 

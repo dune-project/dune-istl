@@ -17,6 +17,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/istl/solvertype.hh>
+#include <dune/istl/solverrepository.hh>
 
 namespace Dune
 {
@@ -738,6 +739,7 @@ namespace Dune
     enum { value = true };
   };
 }
+DUNE_REGISTER_DIRECT_SOLVER("superlu", default_direct_solver_creator<Dune::SuperLU>());
 
 // undefine macros from SuperLU's slu_util.h
 #undef FIRSTCOL_OF_SNODE
