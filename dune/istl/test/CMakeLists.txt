@@ -63,7 +63,7 @@ dune_add_test(SOURCES solvertest.cc)
 dune_add_test(SOURCES solveraborttest.cc)
 
 dune_add_test(SOURCES solverrepositorytest.cc
-                LINK_LIBRARIES duneistl)
+                LINK_LIBRARIES "-Wl,-whole-archive" duneistl "-Wl,-no-whole-archive")
 
 dune_symlink_to_source_files(FILES solverrepositorytest.ini)
 
