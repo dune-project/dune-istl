@@ -41,4 +41,4 @@ struct Initializer@COUNTER@ {
       (Dune::DirectSolverFactory<Matrix,Vector,Vector>::instance(), DirectSolverTag{});
   }
 };
-inline Initializer@COUNTER@ init@COUNTER@;
+DUNE_INLINE_VARIABLE Initializer@COUNTER@ init@COUNTER@;
