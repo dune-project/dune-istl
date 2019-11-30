@@ -13,7 +13,7 @@ foreach(BLOCK ${DUNE_ISTL_PRECOMPILE_BLOCKS})
   MATH(EXPR COUNTER "${COUNTER}+1")
 endforeach()
 
-dune_add_library("duneistl"
-  ${DUNE_ISTL_DIRECTSOLVERS_SOURCES}
-  ADD_LIBS "dunecommon")
+dune_add_library(duneistl
+  ${DUNE_ISTL_DIRECTSOLVERS_SOURCES})
 add_dune_all_flags(duneistl)
+target_link_libraries(duneistl ${DUNE_LIBS})
