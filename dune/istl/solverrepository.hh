@@ -40,25 +40,9 @@ auto default_direct_solver_creator(){
 
 namespace Dune{
   template<class M, class X, class Y>
-  class DirectSolverFactory{
-    using Signature = std::shared_ptr<InverseOperator<X,Y>>(const M&, const ParameterTree&);
-    using FactoryType =  ParameterizedObjectFactory<Signature>;
-
-  public:
-    DirectSolverFactory()
-    {
-    }
-
-    template<class UniqueTag=void>
-    static inline void reg(){
-      addRegistryToFactory<TypeList<M,X,Y>>(Singleton<FactoryType>::instance(),
-                                             DirectSolverTag{});
-    }
-
-    FactoryType& instance(){
-      return Singleton<FactoryType>::instance();
-    }
-  };
+  using DirectSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const M&, const ParameterTree&);
+  template<class M, class X, class Y>
+  using DirectSolverFactory = Singleton<ParameterizedObjectFactory<DirectSolverSignature<M,X,Y>>>;
 
   template<class Operator>
   class SolverRepository {
@@ -89,7 +73,7 @@ namespace Dune{
       const matrix_type* mat = getmat(op);
       if(mat){
         try{
-          result = DirectSolverFactory<matrix_type, Domain, Range>().instance().create(type, *mat, config);
+          result = DirectSolverFactory<matrix_type, Domain, Range>::instance().create(type, *mat, config);
         }catch(...){}
       }
       if(!result){
