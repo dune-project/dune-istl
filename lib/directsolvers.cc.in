@@ -1,0 +1,44 @@
+// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// vi: set et ts=4 sw=2 sts=2:
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+
+#include <dune/istl/solverrepository.hh>
+
+// include all solvers that should be included:
+#include <dune/istl/umfpack.hh>
+#include <dune/istl/superlu.hh>
+#include <dune/common/typelist.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/bcrsmatrix.hh>
+
+//using namespace Dune;
+
+template<class Block>
+struct MBlock {
+  typedef Block type;
+};
+
+template<class F, int k>
+struct MBlock<Dune::FieldVector<F,k>>{
+  typedef Dune::FieldMatrix<F,k,k> type;
+};
+
+// Create Instances of the factories to add all the registered solvers to the factory
+using Vector = Dune::BlockVector<@BLOCK@>;
+using MB = typename MBlock<@BLOCK@>::type;
+using Matrix = Dune::BCRSMatrix<MB>;
+
+struct UniqueTag {};
+
+struct Initializer@COUNTER@ {
+  Initializer@COUNTER@(){
+    using TL = Dune::TypeList<Matrix,Vector,Vector>;
+    addRegistryToFactory<TL>
+      (Dune::DirectSolverFactory<Matrix,Vector,Vector>::instance(), DirectSolverTag{});
+  }
+};
+inline Initializer@COUNTER@ init@COUNTER@;
