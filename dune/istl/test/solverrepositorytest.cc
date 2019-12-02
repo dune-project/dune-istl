@@ -16,6 +16,9 @@
 #include <dune/istl/umfpack.hh>
 #include <dune/istl/superlu.hh>
 
+#include <dune/istl/preconditioners.hh>
+#include <dune/istl/solvers.hh>
+
 #include "laplacian.hh"
 
 using Vector = Dune::BlockVector<Dune::FieldVector<double, 1>>;
@@ -107,8 +110,9 @@ int main(int argc, char** argv){
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
   // register direct solvers
-  addRegistryToFactory<UniqueTag, Dune::TypeList<Matrix, Vector, Vector>>
-    (Dune::DirectSolverFactory<Matrix,Vector,Vector>::instance(), DirectSolverTag{});
+  Dune::addRegisteredDirectSolversToFactory<UniqueTag, Matrix,Vector,Vector>();
+  Dune::addRegisteredPreconditionersToFactory<UniqueTag, Matrix,Vector,Vector>();
+  Dune::addRegisteredIterativeSolversToFactory<UniqueTag,Vector,Vector>();
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
