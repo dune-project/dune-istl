@@ -2,9 +2,10 @@ install(FILES duneistlam2cmake.lib
   DESTINATION ${CMAKE_INSTALL_BINDIR}/../lib)
 
 LIST(APPEND DUNE_ISTL_PRECOMPILE_BLOCKS
-  "double"
+  #"double"
   "Dune::FieldVector<double,1>"
-  "std::complex<double>")
+  #"std::complex<double>"
+  )
 
 set(COUNTER 0)
 foreach(BLOCK ${DUNE_ISTL_PRECOMPILE_BLOCKS})
