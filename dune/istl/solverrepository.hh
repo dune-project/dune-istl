@@ -44,6 +44,13 @@ namespace Dune{
   template<class M, class X, class Y>
   using DirectSolverFactory = Singleton<ParameterizedObjectFactory<DirectSolverSignature<M,X,Y>>>;
 
+  template<class UniqueTag, class M, class X, class Y>
+  void addRegisteredDirectSolversToFactory(UniqueTag = {}){
+    using TL = Dune::TypeList<M,X,Y>;
+    auto& fac=Dune::DirectSolverFactory<M,X,Y>::instance();
+    addRegistryToFactory<UniqueTag, TL>(fac, DirectSolverTag{});
+  }
+
   template<class Operator>
   class SolverRepository {
     using Domain = typename Operator::domain_type;
