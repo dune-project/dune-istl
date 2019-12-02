@@ -342,6 +342,6 @@ namespace Dune {
   };
 
 }
-
+DUNE_REGISTER_DIRECT_SOLVER("ldl", default_direct_solver_creator<Dune::LDL>());
 #endif //HAVE_SUITESPARSE_LDL
 #endif //DUNE_ISTL_LDL_HH

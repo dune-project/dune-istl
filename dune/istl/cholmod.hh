@@ -330,5 +330,11 @@ private:
   std::vector<std::size_t> inverseSubIndices_;
 
 };
-
 } /* namespace Dune */
+DUNE_REGISTER_DIRECT_SOLVER("cholmod", [](auto tl, const auto& mat, const Dune::ParameterTree& config){
+                                         using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
+                                         using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+                                         std::shared_ptr<Dune::Cholmod<D>> result = std::make_shared<Dune::Cholmod<D>>();
+                                         result->setMatrix(mat);
+                                         return result;
+                                       });

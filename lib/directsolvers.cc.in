@@ -5,15 +5,17 @@
 #include "config.h"
 #endif
 
-
 #include <dune/istl/solverrepository.hh>
-
-// include all solvers that should be included:
-#include <dune/istl/umfpack.hh>
-#include <dune/istl/superlu.hh>
 #include <dune/common/typelist.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+
+// include all solvers that should be included:
+#include <dune/istl/cholmod.hh>
+#include <dune/istl/ldl.hh>
+#include <dune/istl/spqr.hh>
+#include <dune/istl/superlu.hh>
+#include <dune/istl/umfpack.hh>
 
 template<class Block>
 struct MBlock {
