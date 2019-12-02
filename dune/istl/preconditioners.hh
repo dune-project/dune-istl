@@ -1011,5 +1011,7 @@ namespace Dune {
   /** @} end documentation */
 
 } // end namespace
+DUNE_REGISTER_PRECONDITIONER("ssor", default_preconditoner_creator<Dune::SeqSSOR>());
+
 
 #endif
