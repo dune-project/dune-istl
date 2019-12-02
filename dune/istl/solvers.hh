@@ -1657,5 +1657,6 @@ private:
   /** @} end documentation */
 
 } // end namespace
+DUNE_REGISTER_ITERATIVE_SOLVER("cgsolver", default_iterative_solver_creator<Dune::CGSolver>());
 
 #endif
