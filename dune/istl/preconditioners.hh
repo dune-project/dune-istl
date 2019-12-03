@@ -349,7 +349,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("sssor", default_preconditoner_BL_creator<Dune::SeqSOR>());
+  DUNE_REGISTER_PRECONDITIONER("sor", default_preconditoner_BL_creator<Dune::SeqSOR>());
 
 
   /*! \brief Sequential Gauss Seidel preconditioner

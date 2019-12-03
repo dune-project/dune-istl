@@ -72,7 +72,7 @@ namespace Dune{
            };
   }
 
-  template<template<class>class Solver>
+  template<template<class...>class Solver>
   auto default_iterative_solver_creator(){
     return [](auto tl,
               const std::shared_ptr<Dune::LinearOperator<typename Dune::TypeListElement<0, decltype(tl)>::type, typename Dune::TypeListElement<1, decltype(tl)>::type>>& op,
