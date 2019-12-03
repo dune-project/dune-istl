@@ -16,6 +16,7 @@ struct ThingTag {};
 template<class V>
 struct ThingBase {
   virtual std::string do_something() = 0;
+  virtual ~ThingBase() {}
 };
 
 //////////////////////////////////////////////////////////////////////
