@@ -94,39 +94,41 @@ namespace Dune{
   using DirectSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const M&, const ParameterTree&);
   template<class M, class X, class Y>
   using DirectSolverFactory = Singleton<ParameterizedObjectFactory<DirectSolverSignature<M,X,Y>>>;
-
-  template<class UniqueTag, class M, class X, class Y>
-  void addRegisteredDirectSolversToFactory(UniqueTag = {}){
-    using TL = Dune::TypeList<M,X,Y>;
-    auto& fac=Dune::DirectSolverFactory<M,X,Y>::instance();
-    addRegistryToFactory<UniqueTag, TL>(fac, DirectSolverTag{});
-  }
-
   // Preconditioner factory:
   template<class M, class X, class Y>
   using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const M&, const ParameterTree&);
   template<class M, class X, class Y>
   using PreconditionerFactory = Singleton<ParameterizedObjectFactory<PreconditionerSignature<M,X,Y>>>;
-
-  template<class UniqueTag, class M, class X, class Y>
-  void addRegisteredPreconditionersToFactory(UniqueTag = {}){
-    using TL = Dune::TypeList<M,X,Y>;
-    auto& fac=Dune::PreconditionerFactory<M,X,Y>::instance();
-    addRegistryToFactory<UniqueTag, TL>(fac, PreconditionerTag{});
-  }
-
   // Iterative solver factory
   template<class X, class Y>
   using IterativeSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const std::shared_ptr<LinearOperator<X,Y>>&, const std::shared_ptr<ScalarProduct<X>>&, const std::shared_ptr<Preconditioner<X,Y>>, const ParameterTree&);
   template<class X, class Y>
   using IterativeSolverFactory = Singleton<ParameterizedObjectFactory<IterativeSolverSignature<X,Y>>>;
 
-  template<class UniqueTag, class X, class Y>
-  void addRegisteredIterativeSolversToFactory(UniqueTag = {}){
-    using TL = Dune::TypeList<X,Y>;
-    auto& fac=Dune::IterativeSolverFactory<X,Y>::instance();
-    addRegistryToFactory<UniqueTag, TL>(fac, IterativeSolverTag{});
-  }
+  // Put the functions in an anonymous namespace, because they differ in
+  // different translation units
+  namespace {
+    template<class M, class X, class Y>
+    void addRegisteredDirectSolversToFactory(){
+      using TL = Dune::TypeList<M,X,Y>;
+      auto& fac=Dune::DirectSolverFactory<M,X,Y>::instance();
+      addRegistryToFactory<TL>(fac, DirectSolverTag{});
+    }
+
+    template<class M, class X, class Y>
+    void addRegisteredPreconditionersToFactory(){
+      using TL = Dune::TypeList<M,X,Y>;
+      auto& fac=Dune::PreconditionerFactory<M,X,Y>::instance();
+      addRegistryToFactory<TL>(fac, PreconditionerTag{});
+    }
+
+    template<class X, class Y>
+    void addRegisteredIterativeSolversToFactory(){
+      using TL = Dune::TypeList<X,Y>;
+      auto& fac=Dune::IterativeSolverFactory<X,Y>::instance();
+      addRegistryToFactory<TL>(fac, IterativeSolverTag{});
+    }
+  } // end anonymous namespace
 
   template<class Operator>
   class SolverRepository {
@@ -163,12 +165,14 @@ namespace Dune{
       }
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
-        std::string prec_type = precConfig.get<std::string>("type");
         try{
-          prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
-        }catch(Dune::InvalidStateException){
-          DUNE_THROW(Dune::InvalidStateException, "Preconditioner can not be found in the factory");
-        }
+          std::string prec_type = precConfig.get<std::string>("type");
+          try{
+            prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
+          }catch(Dune::InvalidStateException){
+            DUNE_THROW(Dune::InvalidStateException, "Preconditioner can not be found in the factory");
+          }
+        }catch(...){}
       }
       if(op->category()!=SolverCategory::sequential){
         DUNE_THROW(NotImplemented, "The solver repository is only implemented for sequential solvers yet!");

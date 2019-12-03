@@ -48,14 +48,11 @@ namespace {
   }
 
   /*
-    Regsiter all creators from the registry in the Parameterizedobjectfactory An
+    Register all creators from the registry in the Parameterizedobjectfactory An
     object of V is passed in the creator ans should be used to determine the
     template arguments.
-
-    The UniqueTag is necessary to have different instances in different
-    translation units
    */
-  template<class UniqueTag, class V, class Type, class Tag, class... Args>
+  template<class V, class Type, class Tag, class... Args>
   void addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
                             Tag){
     constexpr auto count = getCounter(Tag);
@@ -71,6 +68,6 @@ namespace {
                                                         });
                           });
   }
-}
+} // end anonymous namespace
 
 #endif // DUNE_ISTL_COMMON_REGISTRY_HH
