@@ -46,6 +46,19 @@ auto default_direct_solver_creator(){
              };
 }
 
+template<template<class,class,class,int>class Preconditioner, int l=1>
+auto default_preconditoner_BL_creator(){
+  return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
+         {
+           using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
+           using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
+           using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+           std::shared_ptr<Dune::Preconditioner<D,R>> prec
+             = std::make_shared<Preconditioner<M,D,R,l>>(mat,config);
+           return prec;
+         };
+}
+
 template<template<class,class,class>class Preconditioner>
 auto default_preconditoner_creator(){
   return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
