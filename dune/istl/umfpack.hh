@@ -602,10 +602,8 @@ namespace Dune {
         "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
     };
   };
-
+  DUNE_REGISTER_DIRECT_SOLVER("umfpack",Dune::UMFPackCreator());
 } // end namespace Dune
-
-DUNE_REGISTER_DIRECT_SOLVER("umfpack",Dune::UMFPackCreator());
 
 #endif // HAVE_SUITESPARSE_UMFPACK
 

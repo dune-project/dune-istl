@@ -231,7 +231,7 @@ namespace Dune {
     //! \brief The relaxation factor to use
     scalar_field_type _w;
   };
-
+  DUNE_REGISTER_PRECONDITIONER("ssor", default_preconditoner_BL_creator<Dune::SeqSSOR>());
 
 
   /*!
@@ -1008,7 +1008,6 @@ namespace Dune {
   /** @} end documentation */
 
 } // end namespace
-DUNE_REGISTER_PRECONDITIONER("ssor", default_preconditoner_BL_creator<Dune::SeqSSOR>());
 
 
 #endif

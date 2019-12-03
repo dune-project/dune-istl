@@ -371,10 +371,10 @@ namespace Dune {
         "Unsupported Type in LDL (only double and std::complex<double> supported)");
     };
   };
+  DUNE_REGISTER_DIRECT_SOLVER("ldl", Dune::LDLCreator());
 
 } // end namespace Dune
 
-DUNE_REGISTER_DIRECT_SOLVER("ldl", Dune::LDLCreator());
 
 #endif //HAVE_SUITESPARSE_LDL
 #endif //DUNE_ISTL_LDL_HH

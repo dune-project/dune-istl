@@ -13,11 +13,6 @@
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/parameterizedobject.hh>
 
-namespace {
-  template<class Tag, std::size_t index>
-  struct Registry;
-}
-
 #define registry_put(Tag, id, ...)              \
   namespace {                                   \
     template<>                                  \
@@ -32,42 +27,51 @@ namespace {
   }                                             \
   incCounter(Tag)
 
-namespace {
-  template<template<class> class Base, class V, class Tag, typename... Args>
-  auto registry_get(Tag t, std::string name, Args... args)
-  {
-    constexpr auto count = getCounter(Tag);
-    std::shared_ptr<Base<V> > result;
-    Dune::Hybrid::forEach(std::make_index_sequence<count>{}, [&](auto index) {
-        using Reg = Registry<Tag, index>;
-        if(!result && Reg::name() == name) {
-          result = Reg::getCreator()(Dune::MetaType<V>{}, args...);
-        }
-      });
-    return result;
+
+namespace Dune {
+  namespace {
+    template<class Tag, std::size_t index>
+    struct Registry;
   }
 
-  /*
-    Register all creators from the registry in the Parameterizedobjectfactory An
-    object of V is passed in the creator ans should be used to determine the
-    template arguments.
-   */
-  template<class V, class Type, class Tag, class... Args>
-  void addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
-                            Tag){
-    constexpr auto count = getCounter(Tag);
-    Dune::Hybrid::forEach(std::make_index_sequence<count>{},
-                          [&](auto index) {
-                            // we first get the generic lambda
-                            // and later specialize it with given parameters.
-                            // doing all at once lead to an ICE woth g++-6
-                            using Reg = Registry<Tag, index>;
-                            auto genericcreator = Reg::getCreator();
-                            factory.define(Reg::name(), [genericcreator](Args... args){
-                                                          return genericcreator(V{}, args...);
-                                                        });
-                          });
-  }
-} // end anonymous namespace
+  namespace {
+    template<template<class> class Base, class V, class Tag, typename... Args>
+    auto registry_get(Tag t, std::string name, Args... args)
+    {
+      constexpr auto count = getCounter(Tag);
+      std::shared_ptr<Base<V> > result;
+      Dune::Hybrid::forEach(std::make_index_sequence<count>{},
+                            [&](auto index) {
+                              using Reg = Registry<Tag, index>;
+                              if(!result && Reg::name() == name) {
+                                result = Reg::getCreator()(Dune::MetaType<V>{}, args...);
+                              }
+                            });
+      return result;
+    }
+
+    /*
+      Register all creators from the registry in the Parameterizedobjectfactory An
+      object of V is passed in the creator ans should be used to determine the
+      template arguments.
+    */
+    template<class V, class Type, class Tag, class... Args>
+    void addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
+                              Tag){
+      constexpr auto count = getCounter(Tag);
+      Dune::Hybrid::forEach(std::make_index_sequence<count>{},
+                            [&](auto index) {
+                              // we first get the generic lambda
+                              // and later specialize it with given parameters.
+                              // doing all at once lead to an ICE woth g++-6
+                              using Reg = Registry<Tag, index>;
+                              auto genericcreator = Reg::getCreator();
+                              factory.define(Reg::name(), [genericcreator](Args... args){
+                                                            return genericcreator(V{}, args...);
+                                                          });
+                            });
+    }
+  } // end anonymous namespace
+} // end namespace Dune
 
 #endif // DUNE_ISTL_COMMON_REGISTRY_HH

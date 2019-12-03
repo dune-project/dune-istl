@@ -319,10 +319,10 @@ namespace Dune {
   };
   template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<double,1,1>> : std::true_type{};
   template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
+  DUNE_REGISTER_DIRECT_SOLVER("spqr", Dune::SPQRCreator());
 
 } // end namespace Dune
 
-DUNE_REGISTER_DIRECT_SOLVER("spqr", Dune::SPQRCreator());
 
 #endif //HAVE_SUITESPARSE_SPQR
 #endif //DUNE_ISTL_SPQR_HH
