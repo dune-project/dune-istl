@@ -22,7 +22,7 @@ extern "C"
 #include <dune/istl/colcompmatrix.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
-#include <dune/istl/solverrepository.hh>
+#include <dune/istl/solverfactory.hh>
 
 namespace Dune {
   /**

@@ -9,7 +9,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/operators.hh>
-#include <dune/istl/solverrepository.hh>
+#include <dune/istl/solverfactory.hh>
 #include <dune/istl/paamg/test/anisotropic.hh>
 
 #include "laplacian.hh"
@@ -31,7 +31,7 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
     for(std::string test : config.getSubKeys()){
       Dune::ParameterTree solverConfig = config.sub(test);
       std::cout << " ============== " << test << " ============== " << std::endl;
-      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromRepository(op, solverConfig);
+      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
       x = 0;
       b = 1;
       Dune::InverseOperatorResult res;
@@ -58,7 +58,7 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 //     Dune::ParameterTree solverConfig = config.sub(test);
 //     if(c.rank() == 0)
 //       std::cout << " ============== " << test << " ============== " << std::endl;
-//     std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromRepository(op, solverConfig);
+//     std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
 //     x = 1;
 //     b = 0;
 //     setBoundary(x, b, N, comm.indexSet());
@@ -85,7 +85,7 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 //     Dune::ParameterTree solverConfig = config.sub(test);
 //     if(c.rank() == 0)
 //       std::cout << " ============== " << test << " ============== " << std::endl;
-//     std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromRepository(op, solverConfig);
+//     std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
 //     x = 1;
 //     b = 0;
 //     setBoundary(x, b, N, comm.indexSet());
@@ -97,7 +97,7 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 int main(int argc, char** argv){
   auto& mpihelper = Dune::MPIHelper::instance(argc, argv);
   Dune::ParameterTree config;
-  Dune::ParameterTreeParser::readINITree("solverrepositorytest.ini", config);
+  Dune::ParameterTreeParser::readINITree("solverfactorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
   // register direct solvers

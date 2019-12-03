@@ -17,7 +17,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/istl/solvertype.hh>
-#include <dune/istl/solverrepository.hh>
+#include <dune/istl/solverfactory.hh>
 
 namespace Dune
 {

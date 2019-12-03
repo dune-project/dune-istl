@@ -14,7 +14,7 @@
 #include <dune/common/unused.hh>
 #include <dune/common/parametertree.hh>
 
-#include <dune/istl/solverrepository.hh>
+#include <dune/istl/solverfactory.hh>
 #include "preconditioner.hh"
 #include "solver.hh"
 #include "solvercategory.hh"

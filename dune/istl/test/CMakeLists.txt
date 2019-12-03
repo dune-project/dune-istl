@@ -62,10 +62,10 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
-dune_add_test(SOURCES solverrepositorytest.cc
-                LINK_LIBRARIES "-Wl,-whole-archive" duneistl "-Wl,-no-whole-archive")
+dune_add_test(SOURCES solverfactorytest.cc
+  LINK_LIBRARIES "-Wl,-whole-archive" duneistl "-Wl,-no-whole-archive")
 
-dune_symlink_to_source_files(FILES solverrepositorytest.ini)
+dune_symlink_to_source_files(FILES solverfactorytest.ini)
 
 # SuperLU tests
   dune_add_test(NAME superlustest

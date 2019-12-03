@@ -43,7 +43,7 @@
 /** @defgroup ISTL_Solvers Iterative Solvers
     @ingroup ISTL
 */
-/** @defgroup ISTL_Solver_Repository Solver Repository
+/** @defgroup ISTL_Solver_Factory Solver Factory
     @ingroup ISTL_Solvers
 */
 /** @defgroup ISTL_Eigenvalue Eigenvalue Solvers

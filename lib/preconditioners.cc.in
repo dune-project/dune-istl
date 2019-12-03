@@ -5,7 +5,7 @@
 #include "config.h"
 #endif
 
-#include <dune/istl/solverrepository.hh>
+#include <dune/istl/solverfactory.hh>
 #include <dune/common/typelist.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>

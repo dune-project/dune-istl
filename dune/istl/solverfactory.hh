@@ -1,8 +1,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_SOLVERREPOSITORY_HH
-#define DUNE_ISTL_SOLVERREPOSITORY_HH
+#ifndef DUNE_ISTL_SOLVERFACTORY_HH
+#define DUNE_ISTL_SOLVERFACTORY_HH
 
 #include <unordered_map>
 #include <functional>
@@ -130,7 +130,7 @@ namespace Dune{
   } // end anonymous namespace
 
   template<class Operator>
-  class SolverRepository {
+  class SolverFactory {
     using Domain = typename Operator::domain_type;
     using Range = typename Operator::range_type;
     using Solver = Dune::InverseOperator<Domain,Range>;
@@ -174,12 +174,12 @@ namespace Dune{
         }catch(...){}
       }
       if(op->category()!=SolverCategory::sequential){
-        DUNE_THROW(NotImplemented, "The solver repository is only implemented for sequential solvers yet!");
+        DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
       }
       std::shared_ptr<ScalarProduct<Domain>> sp = std::make_shared<SeqScalarProduct<Domain>>();
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
       if(!result){
-        DUNE_THROW(Dune::InvalidStateException, "Solver \"" << type << "\" was not found in the repository");
+        DUNE_THROW(Dune::InvalidStateException, "Solver \"" << type << "\" was not found in the factory");
       }
       return result;
     }
@@ -191,17 +191,17 @@ namespace Dune{
      \param op Operator
      \param config `ParameterTree` with configuration
      \param prec Custom `Preconditioner` (optional). If not given it will be
-     created with the `PreconditionerRepository` and the configuration given in
+     created with the `PreconditionerFactory` and the configuration given in
      subKey "preconditioner".
 
    */
   template<class Operator>
   std::shared_ptr<InverseOperator<typename Operator::domain_type,
-                                  typename Operator::range_type>> getSolverFromRepository(std::shared_ptr<Operator> op,
+                                  typename Operator::range_type>> getSolverFromFactory(std::shared_ptr<Operator> op,
                                const ParameterTree& config,
                                std::shared_ptr<Preconditioner<typename Operator::domain_type,
                                typename Operator::range_type>> prec = nullptr){
-    return SolverRepository<Operator>::get(op, config, prec);
+    return SolverFactory<Operator>::get(op, config, prec);
   }
 
   /**
