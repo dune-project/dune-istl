@@ -61,6 +61,20 @@ bool check(std::string key, int v, std::string reference)
   return r;
 }
 
+struct FactoryTag {};
+
+template<typename F>
+bool checkDynamic(F& factory, std::string key, int v, std::string reference)
+{
+  auto p = factory.create(key,v);
+  std::string s = p->do_something();
+  bool r = (s == reference);
+  std::cout << "CHECK " << s
+            << " / " << reference
+            << " -> " << r << std::endl;
+  return r;
+}
+
 //////////////////////////////////////////////////////////////////////
 int main() {
   bool success = true;
@@ -70,12 +84,13 @@ int main() {
   success &= (registry_get<ThingBase, int>(ThingTag{}, "C", 3) == nullptr);
   success &= check<double>("A", 4, "d A(4)");
 
-  std::cout << "SUCCESS: " << success << std::endl;
-
-
   //try to build a parameterizedobjectfactory from registry
   Dune::ParameterizedObjectFactory<std::shared_ptr<ThingBase<int>>(int)> fac;
-  addRegistryToFactory<int,Dune::MetaType<int>>(fac, ThingTag{});
-  std::cout << fac.create("A", 1)->do_something() << std::endl;
+  addRegistryToFactory<FactoryTag, Dune::MetaType<int>>(fac, ThingTag{});
+  success &= checkDynamic(fac, "A", 1, "i A(1)");
+  success &= checkDynamic(fac, "B", 2, "i B(dynamic,2)");
+
+  std::cout << "SUCCESS: " << success << std::endl;
+
   return success ? 0 : 1;
 }
