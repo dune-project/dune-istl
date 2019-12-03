@@ -349,6 +349,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
+  DUNE_REGISTER_PRECONDITIONER("sssor", default_preconditoner_BL_creator<Dune::SeqSOR>());
 
 
   /*! \brief Sequential Gauss Seidel preconditioner
@@ -363,6 +364,7 @@ namespace Dune {
    */
   template<class M, class X, class Y, int l=1>
   using SeqGS = SeqSOR<M,X,Y,l>;
+  DUNE_REGISTER_PRECONDITIONER("gs", default_preconditoner_BL_creator<Dune::SeqGS>());
 
   /*! \brief The sequential jacobian preconditioner.
 
@@ -459,6 +461,7 @@ namespace Dune {
     //! \brief The relaxation parameter to use.
     scalar_field_type _w;
   };
+  DUNE_REGISTER_PRECONDITIONER("jac", default_preconditoner_BL_creator<Dune::SeqJac>());
 
 
 
@@ -505,6 +508,12 @@ namespace Dune {
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
+
+    SeqILU(const M& A, const ParameterTree& config)
+      : SeqILU(A, config.get("n", 1),
+               config.get<scalar_field_type>("relaxation"),
+               config.get("resort", false))
+    {}
 
    /*! \brief Constructor.
 
@@ -608,7 +617,7 @@ namespace Dune {
     //! \brief true if w != 1.0
     const bool wNotIdentity_;
   };
-
+  DUNE_REGISTER_PRECONDITIONER("ilu", default_preconditoner_BL_creator<Dune::SeqILU>());
 
   /*!
      \brief Sequential ILU0 preconditioner.
@@ -899,6 +908,11 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
+  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto tl, const auto& mat, const ParameterTree& config){
+                                               using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
+                                               using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+                                               return std::make_shared<Richardson<D,R>>(config);
+                                             });
 
 
   /**
@@ -929,6 +943,10 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+
+    SeqILDL(const matrix_type& A, const ParameterTree& config)
+      : SeqILDL(A, config.template get<scalar_field_type>("relaxation", 1.0))
+    {}
 
     /**
      * \brief constructor
@@ -1004,6 +1022,7 @@ namespace Dune {
     matrix_type decomposition_;
     scalar_field_type relax_;
   };
+  DUNE_REGISTER_PRECONDITIONER("ildl", default_preconditoner_creator<Dune::SeqILDL>());
 
   /** @} end documentation */
 
