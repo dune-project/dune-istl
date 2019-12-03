@@ -5,6 +5,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include<dune/istl/solver.hh>
+#include <dune/istl/solverrepository.hh>
 
 #include <vector>
 #include <memory>

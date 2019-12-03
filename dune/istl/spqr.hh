@@ -16,6 +16,7 @@
 #include <dune/istl/colcompmatrix.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
+#include <dune/istl/solverrepository.hh>
 
 namespace Dune {
   /**
