@@ -96,6 +96,7 @@ dune_add_test(SOURCES overlappingschwarztest.cc)
 
 dune_add_test(SOURCES cholmodtest.cc)
 
+dune_add_test(SOURCES registrytest.cc)
 
 # MPI tests
 dune_add_test(SOURCES matrixredisttest.cc
