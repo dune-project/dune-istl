@@ -159,8 +159,12 @@ namespace Dune{
       if(mat){
         if (DirectSolverFactory<matrix_type, Domain, Range>::instance().contains(type)) {
           result = DirectSolverFactory<matrix_type, Domain, Range>::instance().create(type, *mat, config);
+          return result;
         }
-        // if no direct solver is found its maybe an iterative
+      }
+      // if no direct solver is found it is maybe an iterative solver
+      if (!IterativeSolverFactory<Domain, Range>::instance().contains(type)) {
+        DUNE_THROW(Dune::InvalidStateException, "Solver can not be found in the factory");
       }
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
