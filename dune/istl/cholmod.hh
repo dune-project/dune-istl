@@ -331,11 +331,35 @@ private:
   std::vector<std::size_t> inverseSubIndices_;
 
 };
+
+  struct CholmodCreator{
+    template<class F> struct isValidMatrixBlock : std::false_type{};
+    template<int k> struct isValidMatrixBlock<FieldMatrix<double,k,k>> : std::true_type{};
+    template<int k> struct isValidMatrixBlock<FieldMatrix<float,k,k>> : std::true_type{};
+
+    template<class TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator()(TL tl, const M& mat, const Dune::ParameterTree& config,
+               std::enable_if_t<isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
+    {
+      using D = typename Dune::TypeListElement<1, TL>::type;
+      auto solver = std::make_shared<Dune::Cholmod<D>>();
+      solver->setMatrix(mat);
+      return solver;
+    };
+
+    // second version with SFINAE to validate the template parameters of Cholmod
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+                std::enable_if_t<!isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
+    {
+      DUNE_THROW(Dune::Exception,
+        "Unsupported Type in Cholmod");
+    };
+  };
+
 } /* namespace Dune */
-DUNE_REGISTER_DIRECT_SOLVER("cholmod", [](auto tl, const auto& mat, const Dune::ParameterTree& config){
-                                         using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-                                         using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-                                         std::shared_ptr<Dune::Cholmod<D>> result = std::make_shared<Dune::Cholmod<D>>();
-                                         result->setMatrix(mat);
-                                         return result;
-                                       });
+DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());

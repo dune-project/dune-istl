@@ -343,13 +343,15 @@ namespace Dune {
   };
 
   struct LDLCreator {
+    template<class> struct isFieldMatrix : std::false_type{};
+    template<int k> struct isFieldMatrix<FieldMatrix<double,k,k>> : std::true_type{};
     template<typename TL, typename M>
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
       std::enable_if_t<
-      std::is_same<
-      typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
+                isFieldMatrix<typename M::block_type>::value &&
+                std::is_same<typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
     {
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::LDL<M>>(mat,verbose);
@@ -361,6 +363,7 @@ namespace Dune {
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
       std::enable_if_t<
+                !isFieldMatrix<typename M::block_type>::value ||
       !std::is_same<
       typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
     {
