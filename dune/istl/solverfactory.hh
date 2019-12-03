@@ -164,14 +164,8 @@ namespace Dune{
       }
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
-        try{
-          std::string prec_type = precConfig.get<std::string>("type");
-          try{
-            prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
-          }catch(Dune::InvalidStateException){
-            DUNE_THROW(Dune::InvalidStateException, "Preconditioner can not be found in the factory");
-          }
-        }catch(...){}
+        std::string prec_type = precConfig.get<std::string>("type");
+        prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
       }
       if(op->category()!=SolverCategory::sequential){
         DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
