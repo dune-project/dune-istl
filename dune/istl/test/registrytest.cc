@@ -30,7 +30,9 @@ template<class V> struct ThingA : ThingBase<V> {
     return Dune::className<V>() + " A(" + std::to_string(_v) + ")";
   }
 };
-registry_put(ThingTag, "A", default_thing_creator<ThingA>());
+namespace Dune {
+  registry_put(ThingTag, "A", default_thing_creator<ThingA>());
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -45,14 +47,16 @@ template<class V> struct ThingB : ThingBase<V> {
     return Dune::className<V>() + " B(" + arg + "," + std::to_string(_v) + ")";
   }
 };
+namespace Dune {
 registry_put(ThingTag, "B", [] (auto m, int i) {
     return std::make_shared<ThingB<typename decltype(m)::type> >(i,"dynamic");
   });
+}
 
 template<typename T>
 bool check(std::string key, int v, std::string reference)
 {
-  std::shared_ptr<ThingBase<T>> p = registry_get<ThingBase, T>(ThingTag{}, key, v);
+  std::shared_ptr<ThingBase<T>> p = Dune::registry_get<ThingBase, T>(ThingTag{}, key, v);
   std::string s = p->do_something();
   bool r = (s == reference);
   std::cout << "CHECK " << s
@@ -60,8 +64,6 @@ bool check(std::string key, int v, std::string reference)
             << " -> " << r << std::endl;
   return r;
 }
-
-struct FactoryTag {};
 
 template<typename F>
 bool checkDynamic(F& factory, std::string key, int v, std::string reference)
@@ -81,12 +83,12 @@ int main() {
 
   success &= check<int>("A", 1, "i A(1)");
   success &= check<int>("B", 2, "i B(dynamic,2)");
-  success &= (registry_get<ThingBase, int>(ThingTag{}, "C", 3) == nullptr);
+  success &= (Dune::registry_get<ThingBase, int>(ThingTag{}, "C", 3) == nullptr);
   success &= check<double>("A", 4, "d A(4)");
 
   //try to build a parameterizedobjectfactory from registry
   Dune::ParameterizedObjectFactory<std::shared_ptr<ThingBase<int>>(int)> fac;
-  addRegistryToFactory<FactoryTag, Dune::MetaType<int>>(fac, ThingTag{});
+  Dune::addRegistryToFactory<Dune::MetaType<int>>(fac, ThingTag{});
   success &= checkDynamic(fac, "A", 1, "i A(1)");
   success &= checkDynamic(fac, "B", 2, "i B(dynamic,2)");
 
