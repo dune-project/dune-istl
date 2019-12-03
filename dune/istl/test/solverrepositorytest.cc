@@ -12,10 +12,6 @@
 #include <dune/istl/solverrepository.hh>
 #include <dune/istl/paamg/test/anisotropic.hh>
 
-// include solvers, this should later be done in a dedicated library
-//#include <dune/istl/umfpack.hh>
-//#include <dune/istl/superlu.hh>
-
 #include "laplacian.hh"
 
 using Vector = Dune::BlockVector<Dune::FieldVector<double, 1>>;
