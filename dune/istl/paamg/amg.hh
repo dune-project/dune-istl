@@ -994,6 +994,14 @@ namespace Dune
       std::shared_ptr<OP> op = std::make_shared<OP>(mat);
       if(smoother == "ssor")
         return std::make_shared<Amg::AMG<OP, D, SeqSSOR<M,D,R>>>(op, config);
+      if(smoother == "sor")
+        return std::make_shared<Amg::AMG<OP, D, SeqSOR<M,D,R>>>(op, config);
+      if(smoother == "jac")
+        return std::make_shared<Amg::AMG<OP, D, SeqJac<M,D,R>>>(op, config);
+      if(smoother == "gs")
+        return std::make_shared<Amg::AMG<OP, D, SeqGS<M,D,R>>>(op, config);
+      if(smoother == "ilu")
+        return std::make_shared<Amg::AMG<OP, D, SeqILU<M,D,R>>>(op, config);
       else
         DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
     };
