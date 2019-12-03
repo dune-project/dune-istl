@@ -61,9 +61,13 @@ namespace {
     constexpr auto count = getCounter(Tag);
     Dune::Hybrid::forEach(std::make_index_sequence<count>{},
                           [&](auto index) {
+                            // we first get the generic lambda
+                            // and later specialize it with given parameters.
+                            // doing all at once lead to an ICE woth g++-6
                             using Reg = Registry<Tag, index>;
-                            factory.define(Reg::name(), [](Args... args){
-                                                          return Reg::getCreator()(V{}, args...);
+                            auto genericcreator = Reg::getCreator();
+                            factory.define(Reg::name(), [genericcreator](Args... args){
+                                                          return genericcreator(V{}, args...);
                                                         });
                           });
   }
