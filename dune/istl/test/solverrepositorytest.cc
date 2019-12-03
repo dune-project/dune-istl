@@ -16,9 +16,6 @@
 //#include <dune/istl/umfpack.hh>
 //#include <dune/istl/superlu.hh>
 
-#include <dune/istl/preconditioners.hh>
-#include <dune/istl/solvers.hh>
-
 #include "laplacian.hh"
 
 using Vector = Dune::BlockVector<Dune::FieldVector<double, 1>>;

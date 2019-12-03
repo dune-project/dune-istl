@@ -11,11 +11,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 
 // include all solvers that should be included:
-#include <dune/istl/cholmod.hh>
-#include <dune/istl/ldl.hh>
-#include <dune/istl/spqr.hh>
-#include <dune/istl/superlu.hh>
-#include <dune/istl/umfpack.hh>
+#include <dune/istl/preconditioners.hh>
 
 template<class Block>
 struct MBlock {
@@ -33,5 +29,5 @@ using MB = typename MBlock<@BLOCK@>::type;
 using Matrix = Dune::BCRSMatrix<MB>;
 
 namespace {
-  int init = Dune::addRegisteredDirectSolversToFactory<Matrix, Vector, Vector>();
+  int init = Dune::addRegisteredPreconditionersToFactory<Matrix, Vector, Vector>();
 }

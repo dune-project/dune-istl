@@ -56,7 +56,7 @@ namespace Dune {
       template arguments.
     */
     template<class V, class Type, class Tag, class... Args>
-    void addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
+    int addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
                               Tag){
       constexpr auto count = getCounter(Tag);
       Dune::Hybrid::forEach(std::make_index_sequence<count>{},
@@ -70,6 +70,7 @@ namespace Dune {
                                                             return genericcreator(V{}, args...);
                                                           });
                             });
+      return count;
     }
   } // end anonymous namespace
 } // end namespace Dune
