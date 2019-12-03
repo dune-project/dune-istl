@@ -157,10 +157,10 @@ namespace Dune{
       std::shared_ptr<Solver> result;
       const matrix_type* mat = getmat(op);
       if(mat){
-        try{
+        if (DirectSolverFactory<matrix_type, Domain, Range>::instance().contains(type)) {
           result = DirectSolverFactory<matrix_type, Domain, Range>::instance().create(type, *mat, config);
-          if(result) return result;
-        }catch(Dune::InvalidStateException){} // if no direct solver is found its maybe an iterative
+        }
+        // if no direct solver is found its maybe an iterative
       }
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
