@@ -34,9 +34,8 @@ using Matrix = Dune::BCRSMatrix<MB>;
 
 
 struct Initializer@COUNTER@ {
-  struct UniqueTag {};
   Initializer@COUNTER@(){
-    Dune::addRegisteredDirectSolversToFactory<UniqueTag, Matrix, Vector, Vector>();
+    Dune::addRegisteredDirectSolversToFactory<Matrix, Vector, Vector>();
   }
 };
 DUNE_INLINE_VARIABLE Initializer@COUNTER@ init@COUNTER@;
