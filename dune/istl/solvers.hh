@@ -409,7 +409,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-
+  DUNE_REGISTER_ITERATIVE_SOLVER("cgsolver", default_iterative_solver_creator<Dune::CGSolver>());
 
   // Ronald Kriemanns BiCG-STAB implementation from Sumo
   //! \brief Bi-conjugate Gradient Stabilized (BiCG-STAB)
@@ -1656,8 +1656,6 @@ private:
     using RestartedFCGSolver<X>::_verbose;
   };
   /** @} end documentation */
-
 } // end namespace
-DUNE_REGISTER_ITERATIVE_SOLVER("cgsolver", default_iterative_solver_creator<Dune::CGSolver>());
 
 #endif

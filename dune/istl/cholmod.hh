@@ -360,6 +360,6 @@ private:
         "Unsupported Type in Cholmod");
     };
   };
+  DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());
 
 } /* namespace Dune */
-DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());

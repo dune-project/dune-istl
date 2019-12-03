@@ -738,8 +738,8 @@ namespace Dune
   {
     enum { value = true };
   };
-}
-DUNE_REGISTER_DIRECT_SOLVER("superlu", default_direct_solver_creator<Dune::SuperLU>());
+  DUNE_REGISTER_DIRECT_SOLVER("superlu", default_direct_solver_creator<Dune::SuperLU>());
+} // end namespace DUNE
 
 // undefine macros from SuperLU's slu_util.h
 #undef FIRSTCOL_OF_SNODE
