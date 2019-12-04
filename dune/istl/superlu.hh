@@ -738,7 +738,38 @@ namespace Dune
   {
     enum { value = true };
   };
-  DUNE_REGISTER_DIRECT_SOLVER("superlu", default_direct_solver_creator<Dune::SuperLU>());
+
+  struct SuperLUCreator {
+    template<class,class=void> struct isFieldMatrix : std::false_type{};
+    template<class B> struct isFieldMatrix<B, std::enable_if_t<Simd::lanes<B>()==1>> : std::true_type{};
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+      std::enable_if_t<
+                isFieldMatrix<typename M::block_type>::value &&
+                std::is_same<typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
+    {
+      int verbose = config.get("verbose", 0);
+      return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
+    };
+
+    // second version with SFINAE to validate the template parameters of SuperLU
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+      std::enable_if_t<
+                !isFieldMatrix<typename M::block_type>::value ||
+      !std::is_same<
+      typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
+    {
+      DUNE_THROW(Dune::Exception,
+        "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
+    }
+  };
+
+  DUNE_REGISTER_DIRECT_SOLVER("superlu", SuperLUCreator());
 } // end namespace DUNE
 
 // undefine macros from SuperLU's slu_util.h
