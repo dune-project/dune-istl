@@ -333,15 +333,15 @@ private:
 };
 
   struct CholmodCreator{
-    template<class F> struct isValidMatrixBlock : std::false_type{};
-    template<int k> struct isValidMatrixBlock<FieldMatrix<double,k,k>> : std::true_type{};
-    template<int k> struct isValidMatrixBlock<FieldMatrix<float,k,k>> : std::true_type{};
+    template<class F> struct isValidBlock : std::false_type{};
+    template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
+    template<int k> struct isValidBlock<FieldVector<float,k>> : std::true_type{};
 
     template<class TL, typename M>
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator()(TL /*tl*/, const M& mat, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
+               std::enable_if_t<isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
     {
       using D = typename Dune::TypeListElement<1, TL>::type;
       auto solver = std::make_shared<Dune::Cholmod<D>>();
@@ -354,7 +354,7 @@ private:
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-                std::enable_if_t<!isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
+                std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
     {
       DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
     };
