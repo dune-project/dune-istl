@@ -66,7 +66,8 @@ set(DUNE_TEST_FACTORY_FIELD_TYPES
   "double"
   "float"
   "std::complex<double>"
-  "std::complex<float>")
+  "std::complex<float>"
+  "Dune::LoopSIMD<double, 4>")
 
 set(DUNE_TEST_FACTORY_BLOCK_SIZES
   1
