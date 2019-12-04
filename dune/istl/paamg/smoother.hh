@@ -11,6 +11,7 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/propertymap.hh>
 #include <dune/common/unused.hh>
+#include <dune/common/simd/simd.hh>
 
 namespace Dune
 {
@@ -38,7 +39,7 @@ namespace Dune
       /**
        * @brief The type of the relaxation factor.
        */
-      typedef T RelaxationFactor;
+      typedef Simd::Scalar<T> RelaxationFactor;
 
       /**
        * @brief The numbe of iterations to perform.

@@ -1823,7 +1823,8 @@ namespace Dune
         // the calculator should know whether the vertex is isolated.
         typedef typename Matrix::ConstColIterator ColIterator;
         ColIterator end = row.end();
-        typename FieldTraits<typename Matrix::field_type>::real_type absoffdiag=0.;
+        typedef Simd::Scalar<typename FieldTraits<typename Matrix::field_type>::real_type> scalar_real_type;
+        scalar_real_type absoffdiag=0.;
 
         using std::max;
         if(firstlevel) {

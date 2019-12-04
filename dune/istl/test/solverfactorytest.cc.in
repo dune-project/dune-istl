@@ -5,6 +5,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
+#include <dune/common/simd/loop.hh>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
