@@ -15,8 +15,6 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
-//using namespace Dune;
-
 template<class Block>
 struct MBlock {
   typedef Block type;
@@ -32,13 +30,11 @@ using Vector = Dune::BlockVector<@BLOCK@>;
 using MB = typename MBlock<@BLOCK@>::type;
 using Matrix = Dune::BCRSMatrix<MB>;
 
-struct UniqueTag {};
 
 struct Initializer@COUNTER@ {
+  struct UniqueTag {};
   Initializer@COUNTER@(){
-    using TL = Dune::TypeList<Matrix,Vector,Vector>;
-    addRegistryToFactory<TL>
-      (Dune::DirectSolverFactory<Matrix,Vector,Vector>::instance(), DirectSolverTag{});
+    Dune::addRegisteredDirectSolversToFactory<UniqueTag, Matrix, Vector, Vector>();
   }
 };
 inline Initializer@COUNTER@ init@COUNTER@;
