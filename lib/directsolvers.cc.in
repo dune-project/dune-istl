@@ -10,6 +10,8 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
+@ADDHEADERS@
+
 // include all solvers that should be included:
 #include <dune/istl/cholmod.hh>
 #include <dune/istl/ldl.hh>
