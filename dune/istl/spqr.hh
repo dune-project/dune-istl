@@ -292,6 +292,6 @@ namespace Dune {
   };
 
 }
-
+DUNE_REGISTER_DIRECT_SOLVER("spqr", default_direct_solver_creator<Dune::SPQR>());
 #endif //HAVE_SUITESPARSE_SPQR
 #endif //DUNE_ISTL_SPQR_HH
