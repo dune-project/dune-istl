@@ -19,13 +19,13 @@ LIST(APPEND DUNE_ISTL_PRECOMPILE_BLOCKS
 
 set(COUNTER 0)
 foreach(BLOCK ${DUNE_ISTL_PRECOMPILE_BLOCKS})
-  configure_file(directsolvers.cc.in directsolvers_${COUNTER}.cc)
-  list(APPEND DUNE_ISTL_DIRECTSOLVERS_SOURCES directsolvers_${COUNTER}.cc)
-  configure_file(preconditioners.cc.in preconditioners_${COUNTER}.cc)
-  list(APPEND DUNE_ISTL_PRECONDITIONERS_SOURCES preconditioners_${COUNTER}.cc)
-  configure_file(iterativesolvers.cc.in iterativesolvers_${COUNTER}.cc)
-  list(APPEND DUNE_ISTL_ITERATIVESOLVERS_SOURCES iterativesolvers_${COUNTER}.cc)
-  MATH(EXPR COUNTER "${COUNTER}+1")
+  string(REGEX REPLACE "[^a-zA-Z0-9]" "" BLOCK_CLEAN "${BLOCK}")
+  configure_file(directsolvers.cc.in directsolvers_${BLOCK_CLEAN}.cc)
+  list(APPEND DUNE_ISTL_DIRECTSOLVERS_SOURCES directsolvers_${BLOCK_CLEAN}.cc)
+  configure_file(preconditioners.cc.in preconditioners_${BLOCK_CLEAN}.cc)
+  list(APPEND DUNE_ISTL_PRECONDITIONERS_SOURCES preconditioners_${BLOCK_CLEAN}.cc)
+  configure_file(iterativesolvers.cc.in iterativesolvers_${BLOCK_CLEAN}.cc)
+  list(APPEND DUNE_ISTL_ITERATIVESOLVERS_SOURCES iterativesolvers_${BLOCK_CLEAN}.cc)
 endforeach()
 
 dune_add_library(duneistl
