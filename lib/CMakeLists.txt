@@ -24,7 +24,6 @@ set(DUNE_ISTL_PRECOMPILE_BLOCKS
   "Dune::FieldVector<float,3>"
   CACHE STRING "List of types for that the solvers are compiled in libduneistl")
 
-set(COUNTER 0)
 foreach(BLOCK ${DUNE_ISTL_PRECOMPILE_BLOCKS})
   string(REGEX REPLACE "[^a-zA-Z0-9]" "" BLOCK_CLEAN "${BLOCK}")
   configure_file(directsolvers.cc.in directsolvers_${BLOCK_CLEAN}.cc)
@@ -41,3 +40,5 @@ dune_add_library(duneistl
   ${DUNE_ISTL_ITERATIVESOLVERS_SOURCES})
 add_dune_all_flags(duneistl)
 target_link_libraries(duneistl ${DUNE_LIBS})
+
+add_subdirectory(test)

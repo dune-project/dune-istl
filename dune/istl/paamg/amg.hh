@@ -1012,7 +1012,7 @@ namespace Dune
     operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
                 std::enable_if_t<!isValidBlockType<typename M::block_type>::value,int> = 0) const
     {
-      DUNE_THROW(Exception, "AMG needs a FieldMatrix as Matrix block_type");
+      DUNE_THROW(UnsupportedType, "AMG needs a FieldMatrix as Matrix block_type");
     }
   };
 

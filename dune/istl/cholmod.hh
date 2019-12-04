@@ -356,8 +356,7 @@ private:
     operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
                 std::enable_if_t<!isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
     {
-      DUNE_THROW(Dune::Exception,
-        "Unsupported Type in Cholmod");
+      DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
     };
   };
   DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());

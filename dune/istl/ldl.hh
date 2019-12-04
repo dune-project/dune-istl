@@ -367,7 +367,7 @@ namespace Dune {
       !std::is_same<
       typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
     {
-      DUNE_THROW(Dune::Exception,
+      DUNE_THROW(UnsupportedType,
         "Unsupported Type in LDL (only double and std::complex<double> supported)");
     }
   };

@@ -313,7 +313,7 @@ namespace Dune {
     operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
       std::enable_if_t<!isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
     {
-      DUNE_THROW(Dune::Exception,
+      DUNE_THROW(UnsupportedType,
         "Unsupported Type in SPQR (only double and std::complex<double> supported)");
     }
   };

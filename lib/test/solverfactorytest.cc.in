@@ -1,0 +1,74 @@
+// -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// vi: set et ts=4 sw=2 sts=2:
+#include "config.h"
+
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/parametertree.hh>
+#include <dune/common/parametertreeparser.hh>
+
+#include <dune/istl/bvector.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/operators.hh>
+#include <dune/istl/solverfactory.hh>
+#include <dune/istl/paamg/test/anisotropic.hh>
+
+#include <dune/istl/test/laplacian.hh>
+
+using Vector = Dune::BlockVector<@BLOCK@>;
+
+template<class Block>
+struct MBlock {
+  typedef Block type;
+};
+
+template<class F, int k>
+struct MBlock<Dune::FieldVector<F,k>>{
+  typedef Dune::FieldMatrix<F,k,k> type;
+};
+using MB = typename MBlock<@BLOCK@>::type;
+using Matrix = Dune::BCRSMatrix<MB>;
+
+template<class Comm>
+void testSeq(const Dune::ParameterTree& config, Comm c){
+  if(c.rank() == 0){
+    Matrix mat;
+    int N = config.get("N", 10);
+    setupLaplacian(mat, N);
+    Vector x(mat.M()), b(mat.N());
+
+    using Operator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
+    std::shared_ptr<Operator> op = std::make_shared<Operator>(mat);
+
+    for(std::string test : config.getSubKeys()){
+      Dune::ParameterTree solverConfig = config.sub(test);
+      std::cout << " ============== " << test << " ============== " << std::endl;
+      try{
+        std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
+        x = 0;
+        b = 1;
+        Dune::InverseOperatorResult res;
+        solver->apply(x,b,res);
+        if(!res.converged)
+          DUNE_THROW(Dune::Exception, test << "Solver did not converge");
+      }catch(Dune::UnsupportedType& e){
+        std::cout << e.what() << std::endl;
+      }
+    }
+  }
+}
+
+int main(int argc, char** argv){
+  auto& mpihelper = Dune::MPIHelper::instance(argc, argv);
+  Dune::ParameterTree config;
+  Dune::ParameterTreeParser::readINITree("solverfactorytest.ini", config);
+  Dune::ParameterTreeParser::readOptions(argc, argv, config);
+
+  // register direct solvers
+  Dune::addRegisteredDirectSolversToFactory<Matrix,Vector,Vector>();
+  Dune::addRegisteredPreconditionersToFactory<Matrix,Vector,Vector>();
+  Dune::addRegisteredIterativeSolversToFactory<Vector,Vector>();
+
+  std::cout << std::endl << " Testing sequential tests... " << std::endl;
+  testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
+  return 0;
+}

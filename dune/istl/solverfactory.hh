@@ -115,6 +115,11 @@ namespace Dune{
     }
   } // end anonymous namespace
 
+  /* This exception is thrown, when the requested solver is in the factory but
+  cannot be instantiated for the required template parameters
+  */
+  class UnsupportedType : public NotImplemented {};
+
   template<class Operator>
   class SolverFactory {
     using Domain = typename Operator::domain_type;
