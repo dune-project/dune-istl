@@ -580,7 +580,7 @@ namespace Dune {
     template<typename TL, typename M>
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
       std::enable_if_t<
       std::is_same<
       typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
@@ -593,7 +593,7 @@ namespace Dune {
     template<typename TL, typename M>
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
       std::enable_if_t<
       !std::is_same<
       typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const

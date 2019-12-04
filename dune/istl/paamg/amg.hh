@@ -1009,7 +1009,7 @@ namespace Dune
     template<typename TL, typename M>
     std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
                 std::enable_if_t<!isValidBlockType<typename M::block_type>::value,int> = 0) const
     {
       DUNE_THROW(Exception, "AMG needs a FieldMatrix as Matrix block_type");
