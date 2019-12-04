@@ -318,7 +318,8 @@ namespace Dune {
     }
   };
   template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<double,1,1>> : std::true_type{};
-  template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
+  // std::complex is temporary disabled, because it fails if libc++ is used
+  //template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
   DUNE_REGISTER_DIRECT_SOLVER("spqr", Dune::SPQRCreator());
 
 } // end namespace Dune
