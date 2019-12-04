@@ -10,6 +10,8 @@
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
+@ADDHEADERS@
+
 // include all solvers that should be included:
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/paamg/amg.hh>
