@@ -1,7 +1,14 @@
 install(FILES duneistlam2cmake.lib
   DESTINATION ${CMAKE_INSTALL_BINDIR}/../lib)
 
-LIST(APPEND DUNE_ISTL_PRECOMPILE_BLOCKS
+set(DUNE_ISTL_PRECOMPILE_ADD_HEADERS
+  CACHE STRING "Additional headers that are included in the library files")
+
+foreach(FILE ${DUNE_ISTL_PRECOMPILE_ADD_HEADERS})
+  list(APPEND ADDHEADERS "#include <${FILE}>")
+endforeach()
+
+set(DUNE_ISTL_PRECOMPILE_BLOCKS
   "double"
   "std::complex<double>"
   "float"
@@ -15,7 +22,7 @@ LIST(APPEND DUNE_ISTL_PRECOMPILE_BLOCKS
   "Dune::FieldVector<double,3>"
   "Dune::FieldVector<std::complex<double>,3>"
   "Dune::FieldVector<float,3>"
-  )
+  CACHE STRING "List of types for that the solvers are compiled in libduneistl")
 
 set(COUNTER 0)
 foreach(BLOCK ${DUNE_ISTL_PRECOMPILE_BLOCKS})
