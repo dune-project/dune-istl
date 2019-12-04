@@ -101,8 +101,6 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 //   }
 // }
 
-struct UniqueTag {};
-
 int main(int argc, char** argv){
   auto& mpihelper = Dune::MPIHelper::instance(argc, argv);
   Dune::ParameterTree config;
@@ -110,9 +108,9 @@ int main(int argc, char** argv){
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
   // register direct solvers
-  Dune::addRegisteredDirectSolversToFactory<UniqueTag, Matrix,Vector,Vector>();
-  Dune::addRegisteredPreconditionersToFactory<UniqueTag, Matrix,Vector,Vector>();
-  Dune::addRegisteredIterativeSolversToFactory<UniqueTag,Vector,Vector>();
+  Dune::addRegisteredDirectSolversToFactory<Matrix,Vector,Vector>();
+  Dune::addRegisteredPreconditionersToFactory<Matrix,Vector,Vector>();
+  Dune::addRegisteredIterativeSolversToFactory<Vector,Vector>();
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
