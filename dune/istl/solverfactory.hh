@@ -174,6 +174,20 @@ namespace Dune{
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
       return result;
     }
+
+    /*
+      @brief Construct a Preconditioner for a given Operator
+     */
+    static std::shared_ptr<Preconditioner> getPreconditioner(std::shared_ptr<Operator> op,
+                                                             const ParameterTree& config){
+      const matrix_type* mat = getmat(op);
+      if(mat){
+        std::string prec_type = config.get<std::string>("type");
+        return PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, config);
+      }else{
+        DUNE_THROW(InvalidStateException, "Cant deduce matrix from Operator. Please pass in an AssembledLinearOperator.");
+      }
+    }
   };
 
   /**
