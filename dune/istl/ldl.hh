@@ -369,7 +369,7 @@ namespace Dune {
     {
       DUNE_THROW(Dune::Exception,
         "Unsupported Type in LDL (only double and std::complex<double> supported)");
-    };
+    }
   };
   DUNE_REGISTER_DIRECT_SOLVER("ldl", Dune::LDLCreator());
 
