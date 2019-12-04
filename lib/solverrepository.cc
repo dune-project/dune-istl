@@ -19,7 +19,8 @@ struct UniqueTag {};
 
 struct Initializer {
   Initializer(){
-    Dune::DirectSolverFactory<Matrix, Vector, Vector>::template reg<UniqueTag>();
+    addRegistryToFactory<Dune::TypeList<Matrix, Vector, Vector>>
+      (Dune::DirectSolverFactory<Matrix,Vector,Vector>::instance(), DirectSolverTag{});
   }
 };
 Initializer init;
