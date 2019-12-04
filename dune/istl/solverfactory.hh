@@ -176,9 +176,6 @@ namespace Dune{
       }
       std::shared_ptr<ScalarProduct<Domain>> sp = std::make_shared<SeqScalarProduct<Domain>>();
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
-      if(!result){
-        DUNE_THROW(Dune::InvalidStateException, "Solver \"" << type << "\" was not found in the factory");
-      }
       return result;
     }
   };
