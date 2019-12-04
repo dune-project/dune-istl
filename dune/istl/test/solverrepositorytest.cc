@@ -98,11 +98,17 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 //   }
 // }
 
+struct UniqueTag {};
+
 int main(int argc, char** argv){
   auto& mpihelper = Dune::MPIHelper::instance(argc, argv);
   Dune::ParameterTree config;
   Dune::ParameterTreeParser::readINITree("solverrepositorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
+
+  // register direct solvers
+  addRegistryToFactory<UniqueTag, Dune::TypeList<Matrix, Vector, Vector>>
+    (Dune::DirectSolverFactory<Matrix,Vector,Vector>::instance(), DirectSolverTag{});
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
