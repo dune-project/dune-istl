@@ -293,13 +293,14 @@ namespace Dune {
   };
 
   struct SPQRCreator {
+    template<class> struct isValidMatrixBlock : std::false_type{};
+
     template<typename TL, typename M>
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
       std::enable_if_t<
-      std::is_same<
-      typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
+                isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
     {
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::SPQR<M>>(mat,verbose);
@@ -310,14 +311,14 @@ namespace Dune {
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
-      std::enable_if_t<
-      !std::is_same<
-      typename FieldTraits<typename M::field_type>::real_type,double>::value,int> = 0) const
+      std::enable_if_t<!isValidMatrixBlock<typename M::block_type>::value,int> = 0) const
     {
       DUNE_THROW(Dune::Exception,
         "Unsupported Type in SPQR (only double and std::complex<double> supported)");
-    };
+    }
   };
+  template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<double,1,1>> : std::true_type{};
+  template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
 
 } // end namespace Dune
 
