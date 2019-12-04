@@ -108,24 +108,24 @@ namespace Dune{
   // different translation units
   namespace {
     template<class M, class X, class Y>
-    void addRegisteredDirectSolversToFactory(){
+    int addRegisteredDirectSolversToFactory(){
       using TL = Dune::TypeList<M,X,Y>;
       auto& fac=Dune::DirectSolverFactory<M,X,Y>::instance();
-      addRegistryToFactory<TL>(fac, DirectSolverTag{});
+      return addRegistryToFactory<TL>(fac, DirectSolverTag{});
     }
 
     template<class M, class X, class Y>
-    void addRegisteredPreconditionersToFactory(){
+    int addRegisteredPreconditionersToFactory(){
       using TL = Dune::TypeList<M,X,Y>;
       auto& fac=Dune::PreconditionerFactory<M,X,Y>::instance();
-      addRegistryToFactory<TL>(fac, PreconditionerTag{});
+      return addRegistryToFactory<TL>(fac, PreconditionerTag{});
     }
 
     template<class X, class Y>
-    void addRegisteredIterativeSolversToFactory(){
+    int addRegisteredIterativeSolversToFactory(){
       using TL = Dune::TypeList<X,Y>;
       auto& fac=Dune::IterativeSolverFactory<X,Y>::instance();
-      addRegistryToFactory<TL>(fac, IterativeSolverTag{});
+      return addRegistryToFactory<TL>(fac, IterativeSolverTag{});
     }
   } // end anonymous namespace
 
