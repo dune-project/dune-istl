@@ -12,6 +12,7 @@
 
 // include all solvers that should be included:
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/paamg/amg.hh>
 
 template<class Block>
 struct MBlock {
