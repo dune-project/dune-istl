@@ -14,8 +14,6 @@
 #include <dune/istl/common/registry.hh>
 #include <dune/istl/solver.hh>
 
-// typelist parameter contains matrix_type, domain_type and range_type
-// parameters are matrix and ParameterTree
 #define DUNE_REGISTER_DIRECT_SOLVER(name, ...)                \
   registry_put(DirectSolverTag, name, __VA_ARGS__)
 
@@ -79,20 +77,30 @@ namespace Dune{
   using DirectSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const M&, const ParameterTree&);
   template<class M, class X, class Y>
   using DirectSolverFactory = Singleton<ParameterizedObjectFactory<DirectSolverSignature<M,X,Y>>>;
+
   // Preconditioner factory:
   template<class M, class X, class Y>
   using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const M&, const ParameterTree&);
   template<class M, class X, class Y>
   using PreconditionerFactory = Singleton<ParameterizedObjectFactory<PreconditionerSignature<M,X,Y>>>;
+
   // Iterative solver factory
   template<class X, class Y>
   using IterativeSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const std::shared_ptr<LinearOperator<X,Y>>&, const std::shared_ptr<ScalarProduct<X>>&, const std::shared_ptr<Preconditioner<X,Y>>, const ParameterTree&);
   template<class X, class Y>
   using IterativeSolverFactory = Singleton<ParameterizedObjectFactory<IterativeSolverSignature<X,Y>>>;
 
-  // Put the functions in an anonymous namespace, because they differ in
-  // different translation units
+  // initSolverFactories differs in different compilation units, so we have it
+  // in an anonymous namespace
   namespace {
+
+    /* initializes the direct solvers, preconditioners and iterative solvers in
+       the factories with the corresponding Matrix and Vector types.
+
+       @tparam M the Matrix type
+       @tparam X the Domain type
+       @tparam Y the Range type
+    */
     template<class M, class X, class Y>
     int initSolverFactories(){
       using TL = Dune::TypeList<M,X,Y>;
@@ -111,6 +119,10 @@ namespace Dune{
   */
   class UnsupportedType : public NotImplemented {};
 
+  /* @brief Factory to assembly solvers configured by a `ParameterTree`.
+
+     \tparam Operator type of the operator, necessary to deduce the matrix type etc.
+   */
   template<class Operator>
   class SolverFactory {
     using Domain = typename Operator::domain_type;
@@ -132,6 +144,8 @@ namespace Dune{
     }
   public:
 
+    /* @brief get a solver from the factory
+     */
     static std::shared_ptr<Solver> get(std::shared_ptr<Operator> op,
                                        const ParameterTree& config,
                                        std::shared_ptr<Preconditioner> prec = nullptr){

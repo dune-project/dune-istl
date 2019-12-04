@@ -41,6 +41,7 @@ install(FILES
    schwarz.hh
    solvercategory.hh
    solver.hh
+   solverfactory.hh
    solvers.hh
    solvertype.hh
    spqr.hh
