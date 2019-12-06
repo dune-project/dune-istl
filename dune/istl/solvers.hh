@@ -848,6 +848,18 @@ namespace Dune {
       _restart(restart)
     {}
 
+    /*!
+       \brief Constructor.
+
+       \copydoc IterativeSolver::IterativeSolver(L&,S&,P&,const ParameterTree&)
+
+       Additional parameter:
+       ParameterTree Key | Meaning
+       ------------------|------------
+       restart           | number of GMRes cycles before restart
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
     RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
@@ -1312,6 +1324,18 @@ private:
     {}
 
 
+     /*!
+       \brief Constructor.
+
+       \copydoc IterativeSolver::IterativeSolver(L&,S&,P&,const ParameterTree&)
+
+       Additional parameter:
+       ParameterTree Key | Meaning
+       ------------------|------------
+       restart           | number of PCG cycles before restart
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
     GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,X>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
@@ -1499,9 +1523,17 @@ private:
     {}
 
     /*!
-      \brief Constructor to initialize a RestartedFCG solver.
-      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<LinearOperator<X,Y>>, std::shared_ptr<ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, const ParameterTree&)
-    */
+       \brief Constructor.
+
+       \copydoc IterativeSolver::IterativeSolver(L&,S&,P&,const ParameterTree&)
+
+       Additional parameter:
+       ParameterTree Key | Meaning
+       ------------------|------------
+       mmax              | number of FCG cycles before restart. default=10
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
     RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
                         std::shared_ptr<ScalarProduct<X>> sp,
                         std::shared_ptr<Preconditioner<X,X>> prec,

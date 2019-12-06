@@ -17,6 +17,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
+#include <dune/common/parametertree.hh>
 
 namespace Dune
 {
@@ -133,7 +134,7 @@ namespace Dune
          ParameterTree Key         | Meaning
          --------------------------|------------
          smootherIterations        | The number of iterations to perform.
-         smootherRelaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+         smootherRelaxation        | The relaxation factor
          maxLevel                  | Maximum number of levels allowed in the hierarchy.
          coarsenTarget             | Maximum number of unknowns on the coarsest level.
          prolongationDampingFactor | Damping factor for the prolongation.
@@ -143,7 +144,7 @@ namespace Dune
          gamma                     | 1 for V-cycle, 2 for W-cycle.
          preSteps                  | Number of presmoothing steps.
          postSteps                 | Number of postsmoothing steps.
-         verbosity                 | Output verbosity.
+         verbosity                 | Output verbosity. default=2
 
          See \ref ISTL_Factory for the ParameterTree layout and examples.
        */
