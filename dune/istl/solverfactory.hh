@@ -123,7 +123,22 @@ namespace Dune{
   */
   class UnsupportedType : public NotImplemented {};
 
-  /* @brief Factory to assembly solvers configured by a `ParameterTree`.
+  /**
+     @brief Factory to assembly solvers configured by a `ParameterTree`.
+
+     Example ini File that can be passed in to construct a CGSolver with a SSOR
+     preconditioner:
+     \verbatim
+     type = cgsolver
+     verbose = 1
+     maxit = 1000
+     reduction = 1e-5
+
+     [preconditioner]
+     type = ssor
+     iterations = 1
+     relaxation = 1
+     \endverbatim
 
      \tparam Operator type of the operator, necessary to deduce the matrix type etc.
    */
