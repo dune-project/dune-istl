@@ -24,6 +24,10 @@
   registry_put(IterativeSolverTag, name, __VA_ARGS__)
 
 namespace Dune{
+  /** @addtogroup ISTL_Factory
+      @{
+  */
+
   namespace {
     struct DirectSolverTag {};
     struct PreconditionerTag {};
