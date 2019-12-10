@@ -48,7 +48,7 @@ namespace Dune
     /**
      * @brief Parallel algebraic multigrid based on agglomeration.
      *
-     * \tparam M The matrix type
+     * \tparam M The LinearOperator type which represents the matrix
      * \tparam X The vector type
      * \tparam S The smoother type
      * \tparam A An allocator for X
