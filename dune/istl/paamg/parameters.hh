@@ -235,7 +235,7 @@ namespace Dune
        */
       noAccu = 0,
       /**
-       * @brief Accumulate data to on process at once
+       * @brief Accumulate data to one process at once
        *
        * Once no further coarsening is possible all data will be accumulated to one process
        */
