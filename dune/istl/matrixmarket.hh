@@ -24,6 +24,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/unused.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/stdstreams.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
@@ -356,7 +357,7 @@ namespace Dune
       mmHeader=MMHeader();
       if(c!='%')
         return false;
-      std::cout<<buffer<<std::endl;
+      dverb<<buffer<<std::endl;
       /* read the banner */
       if(buffer!="%%MatrixMarket") {
         /* discard the rest of the line */
@@ -1152,7 +1153,7 @@ namespace Dune
     // Write the local matrix
     std::ostringstream rfilename;
     rfilename<<filename <<"_"<<rank<<".mm";
-    std::cout<< rfilename.str()<<std::endl;
+    dverb<< rfilename.str()<<std::endl;
     std::ofstream file(rfilename.str().c_str());
     file.setf(std::ios::scientific,std::ios::floatfield);
     writeMatrixMarket(matrix, file);
