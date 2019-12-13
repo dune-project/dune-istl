@@ -48,6 +48,19 @@ namespace Dune {
        or with a separate method of the derived method if several
        linear systems with the same matrix are to be solved.
 
+       \note if a preconditioner is copied (e.g. for a second thread)
+       again the pre() method has to be called to ensure proper memory
+       mangement.
+
+       \code
+       X x(0.0);
+       Y b = ...; // rhs
+       Preconditioner<X,Y> prec(...);
+       prec.pre(x,b);   // prepare the preconditioner
+       prec.apply(x,b); // can be called multiple times now...
+       prec.post(x);    // cleanup internal state
+       \endcode
+
        \param x The left hand side of the equation.
        \param b The right hand side of the equation.
      */
