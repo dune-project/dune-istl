@@ -4,7 +4,7 @@
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/indexset.hh>
-#include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/common/parallel/communication.hh>
 #include <dune/istl/paamg/kamg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <cstdlib>

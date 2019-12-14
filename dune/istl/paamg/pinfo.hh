@@ -3,12 +3,12 @@
 #ifndef DUNE_AMG_PINFO_HH
 #define DUNE_AMG_PINFO_HH
 
-#include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/common/parallel/communication.hh>
 #include <dune/common/enumset.hh>
 
 #if HAVE_MPI
 
-#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpicommunication.hh>
 #include <dune/common/parallel/mpitraits.hh>
 #include <dune/common/parallel/remoteindices.hh>
 #include <dune/common/parallel/interface.hh>

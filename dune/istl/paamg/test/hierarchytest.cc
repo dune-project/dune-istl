@@ -3,7 +3,7 @@
 #include <config.h>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpicommunication.hh>
 #include <dune/istl/paamg/matrixhierarchy.hh>
 #include <dune/istl/paamg/smoother.hh>
 #include <dune/istl/preconditioners.hh>

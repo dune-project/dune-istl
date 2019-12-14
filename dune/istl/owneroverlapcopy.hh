@@ -24,12 +24,12 @@
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/communicator.hh>
 #include <dune/common/parallel/remoteindices.hh>
-#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpicommunication.hh>
 #endif
 
 #include "solvercategory.hh"
 #include "istlexception.hh"
-#include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/common/parallel/communication.hh>
 #include <dune/istl/matrixmarket.hh>
 
 template<int dim, template<class,class> class Comm>
