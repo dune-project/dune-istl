@@ -8,7 +8,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/unused.hh>
 #include <dune/common/parallel/indexset.hh>
-#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpicommunication.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/schwarz.hh>

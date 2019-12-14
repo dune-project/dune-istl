@@ -18,7 +18,7 @@
 #include "anisotropic.hh"
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/indexset.hh>
-#include <dune/common/parallel/collectivecommunication.hh>
+#include <dune/common/parallel/communication.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
