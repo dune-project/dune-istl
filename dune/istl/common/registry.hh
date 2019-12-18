@@ -16,7 +16,7 @@
 #define registry_put(Tag, id, ...)              \
   namespace {                                   \
     template<>                                  \
-    struct Registry<Tag, getCounter(Tag)>       \
+    struct Registry<Tag, DUNE_GET_COUNTER(Tag)>       \
     {                                           \
       static auto getCreator()                  \
       {                                         \
@@ -25,7 +25,7 @@
       static std::string name() { return id; }  \
     };                                          \
   }                                             \
-  incCounter(Tag)
+  DUNE_INC_COUNTER(Tag)
 
 
 namespace Dune {
@@ -38,7 +38,7 @@ namespace Dune {
     template<template<class> class Base, class V, class Tag, typename... Args>
     auto registry_get(Tag , std::string name, Args... args)
     {
-      constexpr auto count = getCounter(Tag);
+      constexpr auto count = DUNE_GET_COUNTER(Tag);
       std::shared_ptr<Base<V> > result;
       Dune::Hybrid::forEach(std::make_index_sequence<count>{},
                             [&](auto index) {
@@ -58,7 +58,7 @@ namespace Dune {
     template<class V, class Type, class Tag, class... Args>
     int addRegistryToFactory(Dune::ParameterizedObjectFactory<Type(Args...), std::string>& factory,
                               Tag){
-      constexpr auto count = getCounter(Tag);
+      constexpr auto count = DUNE_GET_COUNTER(Tag);
       Dune::Hybrid::forEach(std::make_index_sequence<count>{},
                             [&](auto index) {
                               // we first get the generic lambda
