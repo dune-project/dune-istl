@@ -13,24 +13,20 @@
 constexpr std::size_t maxcount = 100;
 
 #define getCounter(Tag)                                                 \
-  (counterFunc(Dune::PriorityTag<maxcount>{}, Tag{}, Dune::Overloads::ADLTag{}))
+  (counterFunc(Dune::PriorityTag<maxcount>{}, Tag{}, Dune::ADLTag{}))
 
 #define incCounter(Tag)                                                 \
   namespace {                                                           \
-    namespace Overloads {                                               \
       constexpr std::size_t                                             \
       counterFunc(Dune::PriorityTag<getCounter(Tag)+1> p, Tag, ADLTag)        \
       {                                                                 \
         return p.value;                                                 \
       }                                                                 \
-    }                                                                   \
   }                                                                     \
   static_assert(true, "unfudge indentation")
 
 namespace Dune {
   namespace {
-
-    namespace Overloads {
 
       struct ADLTag {};
 
@@ -40,7 +36,6 @@ namespace Dune {
         return 0;
       }
 
-    } // end namespace Overloads
   } // end empty namespace
 } // end namespace Dune
 #endif // DUNE_ISTL_COMMON_COUNTER_HH
