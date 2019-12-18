@@ -17,6 +17,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/istl/solvertype.hh>
+#include <dune/istl/solverfactory.hh>
 
 namespace Dune
 {
@@ -737,7 +738,37 @@ namespace Dune
   {
     enum { value = true };
   };
-}
+
+  struct SuperLUCreator {
+    template<class> struct isValidBlock : std::false_type{};
+    template<int k> struct isValidBlock<Dune::FieldVector<double,k>> : std::true_type{};
+    template<int k> struct isValidBlock<Dune::FieldVector<std::complex<double>,k>> : std::true_type{};
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
+                std::enable_if_t<isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    {
+      int verbose = config.get("verbose", 0);
+      return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
+    };
+
+    // second version with SFINAE to validate the template parameters of SuperLU
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
+      std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    {
+      DUNE_THROW(UnsupportedType,
+        "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
+    }
+  };
+  template<> struct SuperLUCreator::isValidBlock<double> : std::true_type{};
+  template<> struct SuperLUCreator::isValidBlock<std::complex<double>> : std::true_type{};
+
+  DUNE_REGISTER_DIRECT_SOLVER("superlu", SuperLUCreator());
+} // end namespace DUNE
 
 // undefine macros from SuperLU's slu_util.h
 #undef FIRSTCOL_OF_SNODE

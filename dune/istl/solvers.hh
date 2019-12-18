@@ -28,6 +28,7 @@
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/solver.hh>
+#include <dune/istl/solverfactory.hh>
 
 namespace Dune {
   /** @addtogroup ISTL_Solvers
@@ -113,6 +114,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
+  DUNE_REGISTER_ITERATIVE_SOLVER("loopsolver", default_iterative_solver_creator<Dune::LoopSolver>());
 
 
   // all these solvers are taken from the SUMO library
@@ -180,8 +182,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-
-
+  DUNE_REGISTER_ITERATIVE_SOLVER("gradientsolver", default_iterative_solver_creator<Dune::GradientSolver>());
 
   //! \brief conjugate gradient method
   template<class X>
@@ -408,7 +409,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-
+  DUNE_REGISTER_ITERATIVE_SOLVER("cgsolver", default_iterative_solver_creator<Dune::CGSolver>());
 
   // Ronald Kriemanns BiCG-STAB implementation from Sumo
   //! \brief Bi-conjugate Gradient Stabilized (BiCG-STAB)
@@ -587,6 +588,7 @@ namespace Dune {
     template<class CountType>
     using Iteration = typename IterativeSolver<X,X>::template Iteration<CountType>;
   };
+  DUNE_REGISTER_ITERATIVE_SOLVER("bicgstabsolver", default_iterative_solver_creator<Dune::BiCGSTABSolver>());
 
   /*! \brief Minimal Residual Method (MINRES)
 
@@ -790,6 +792,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
+  DUNE_REGISTER_ITERATIVE_SOLVER("minressolver", default_iterative_solver_creator<Dune::MINRESSolver>());
 
   /**
      \brief implements the Generalized Minimal Residual (GMRes) method
@@ -845,6 +848,18 @@ namespace Dune {
       _restart(restart)
     {}
 
+    /*!
+       \brief Constructor.
+
+       \copydoc IterativeSolver::IterativeSolver(L&,S&,P&,const ParameterTree&)
+
+       Additional parameter:
+       ParameterTree Key | Meaning
+       ------------------|------------
+       restart           | number of GMRes cycles before restart
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
     RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
@@ -1082,7 +1097,7 @@ namespace Dune {
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
     int _restart;
   };
-
+  DUNE_REGISTER_ITERATIVE_SOLVER("restartedgmressolver", default_iterative_solver_creator<Dune::RestartedGMResSolver>());
 
   /**
      \brief implements the Flexible Generalized Minimal Residual (FGMRes) method (right preconditioned)
@@ -1250,7 +1265,7 @@ private:
     using RestartedGMResSolver<X,Y>::_restart;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-
+  DUNE_REGISTER_ITERATIVE_SOLVER("restartedflexiblegmressolver", default_iterative_solver_creator<Dune::RestartedFlexibleGMResSolver>());
 
   /**
    * @brief Generalized preconditioned conjugate gradient solver.
@@ -1309,6 +1324,18 @@ private:
     {}
 
 
+     /*!
+       \brief Constructor.
+
+       \copydoc IterativeSolver::IterativeSolver(L&,S&,P&,const ParameterTree&)
+
+       Additional parameter:
+       ParameterTree Key | Meaning
+       ------------------|------------
+       restart           | number of PCG cycles before restart
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
     GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,X>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
@@ -1435,6 +1462,7 @@ private:
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
     int _restart;
   };
+  DUNE_REGISTER_ITERATIVE_SOLVER("generalizedpcgsolver", default_iterative_solver_creator<Dune::GeneralizedPCGSolver>());
 
   /*! \brief Accelerated flexible conjugate gradient method
 
@@ -1492,6 +1520,25 @@ private:
                         scalar_real_type reduction, int maxit, int verbose,
                         int mmax = 10)
       : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
+    {}
+
+    /*!
+       \brief Constructor.
+
+       \copydoc IterativeSolver::IterativeSolver(L&,S&,P&,const ParameterTree&)
+
+       Additional parameter:
+       ParameterTree Key | Meaning
+       ------------------|------------
+       mmax              | number of FCG cycles before restart. default=10
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
+                        std::shared_ptr<ScalarProduct<X>> sp,
+                        std::shared_ptr<Preconditioner<X,X>> prec,
+                        const ParameterTree& config)
+      : IterativeSolver<X,X>(op, sp, prec, config), _mmax(config.get("mmax", 10))
     {}
 
     /*!
@@ -1593,6 +1640,7 @@ private:
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
+  DUNE_REGISTER_ITERATIVE_SOLVER("restartedfcgsolver", default_iterative_solver_creator<Dune::RestartedFCGSolver>());
 
   /*! \brief Complete flexible conjugate gradient method
 
@@ -1654,8 +1702,8 @@ private:
     using RestartedFCGSolver<X>::_maxit;
     using RestartedFCGSolver<X>::_verbose;
   };
+  DUNE_REGISTER_ITERATIVE_SOLVER("completefcgsolver", default_iterative_solver_creator<Dune::CompleteFCGSolver>());
   /** @} end documentation */
-
 } // end namespace
 
 #endif

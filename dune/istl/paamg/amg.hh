@@ -17,6 +17,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
+#include <dune/common/parametertree.hh>
 
 namespace Dune
 {
@@ -133,7 +134,7 @@ namespace Dune
          ParameterTree Key         | Meaning
          --------------------------|------------
          smootherIterations        | The number of iterations to perform.
-         smootherRelaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+         smootherRelaxation        | The relaxation factor
          maxLevel                  | Maximum number of levels allowed in the hierarchy.
          coarsenTarget             | Maximum number of unknowns on the coarsest level.
          prolongationDampingFactor | Damping factor for the prolongation.
@@ -143,7 +144,7 @@ namespace Dune
          gamma                     | 1 for V-cycle, 2 for W-cycle.
          preSteps                  | Number of presmoothing steps.
          postSteps                 | Number of postsmoothing steps.
-         verbosity                 | Output verbosity.
+         verbosity                 | Output verbosity. default=2
 
          See \ref ISTL_Factory for the ParameterTree layout and examples.
        */
@@ -975,6 +976,48 @@ namespace Dune
     }
 
   } // end namespace Amg
+
+  struct AMGCreator{
+    template<class> struct isValidBlockType : std::false_type{};
+    template<class T, int n, int m> struct isValidBlockType<FieldMatrix<T,n,m>> : std::true_type{};
+
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
+                                         typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
+                std::enable_if_t<isValidBlockType<typename M::block_type>::value,int> = 0) const
+    {
+      using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
+      using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+      std::shared_ptr<Preconditioner<D,R>> amg;
+      std::string smoother = config.get("smoother", "ssor");
+      typedef MatrixAdapter<M,D,R> OP;
+      std::shared_ptr<OP> op = std::make_shared<OP>(mat);
+      if(smoother == "ssor")
+        return std::make_shared<Amg::AMG<OP, D, SeqSSOR<M,D,R>>>(op, config);
+      if(smoother == "sor")
+        return std::make_shared<Amg::AMG<OP, D, SeqSOR<M,D,R>>>(op, config);
+      if(smoother == "jac")
+        return std::make_shared<Amg::AMG<OP, D, SeqJac<M,D,R>>>(op, config);
+      if(smoother == "gs")
+        return std::make_shared<Amg::AMG<OP, D, SeqGS<M,D,R>>>(op, config);
+      if(smoother == "ilu")
+        return std::make_shared<Amg::AMG<OP, D, SeqILU<M,D,R>>>(op, config);
+      else
+        DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
+    };
+
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
+                                         typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
+                std::enable_if_t<!isValidBlockType<typename M::block_type>::value,int> = 0) const
+    {
+      DUNE_THROW(UnsupportedType, "AMG needs a FieldMatrix as Matrix block_type");
+    }
+  };
+
+  DUNE_REGISTER_PRECONDITIONER("amg", AMGCreator());
 } // end namespace Dune
 
 #endif
