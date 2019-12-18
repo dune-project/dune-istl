@@ -63,9 +63,9 @@ namespace Dune{
   template<template<class...>class Solver>
   auto default_iterative_solver_creator(){
     return [](auto tl,
-              const std::shared_ptr<Dune::LinearOperator<typename Dune::TypeListElement<0, decltype(tl)>::type, typename Dune::TypeListElement<1, decltype(tl)>::type>>& op,
-              const std::shared_ptr<Dune::ScalarProduct<typename Dune::TypeListElement<0, decltype(tl)>::type>>& sp,
-              const std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<0, decltype(tl)>::type, typename Dune::TypeListElement<1, decltype(tl)>::type>>& prec,
+              const auto& op,
+              const auto& sp,
+              const auto& prec,
               const Dune::ParameterTree& config)
            {
              using D = typename Dune::TypeListElement<0, decltype(tl)>::type;
