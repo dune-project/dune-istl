@@ -12,14 +12,14 @@
 
 constexpr std::size_t maxcount = 100;
 
-#define getCounter(Tag)                                                 \
+#define DUNE_GET_COUNTER(Tag)                                                 \
   (counterFunc(Dune::PriorityTag<maxcount>{}, Tag{}, Dune::CounterImpl::ADLTag{}))
 
-#define incCounter(Tag)                                                 \
+#define DUNE_INC_COUNTER(Tag)                                           \
   namespace {                                                           \
     namespace CounterImpl {                                               \
       constexpr std::size_t                                             \
-      counterFunc(Dune::PriorityTag<getCounter(Tag)+1> p, Tag, ADLTag)        \
+      counterFunc(Dune::PriorityTag<DUNE_GET_COUNTER(Tag)+1> p, Tag, ADLTag)        \
       {                                                                 \
         return p.value;                                                 \
       }                                                                 \
