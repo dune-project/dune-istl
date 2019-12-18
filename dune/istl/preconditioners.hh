@@ -14,6 +14,7 @@
 #include <dune/common/unused.hh>
 #include <dune/common/parametertree.hh>
 
+#include <dune/istl/solverfactory.hh>
 #include "preconditioner.hh"
 #include "solver.hh"
 #include "solvercategory.hh"
@@ -168,16 +169,16 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       iterations        | The number of iterations to perform.
-       relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       iterations        | The number of iterations to perform
+       relaxation        | The relaxation factor
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqSSOR (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<int>("iterations");
-      _w = configuration.get<scalar_field_type>("relaxation");
+      _n = configuration.get<int>("iterations",1);
+      _w = configuration.get<scalar_field_type>("relaxation",1.0);
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -230,7 +231,7 @@ namespace Dune {
     //! \brief The relaxation factor to use
     scalar_field_type _w;
   };
-
+  DUNE_REGISTER_PRECONDITIONER("ssor", default_preconditoner_BL_creator<Dune::SeqSSOR>());
 
 
   /*!
@@ -272,13 +273,23 @@ namespace Dune {
     }
 
     /*!
-       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqSOR (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<int>("iterations");
-      _w = configuration.get<scalar_field_type>("relaxation");
+      _n = configuration.get<int>("iterations",1);
+      _w = configuration.get<scalar_field_type>("relaxation",1.0);
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -348,6 +359,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
+  DUNE_REGISTER_PRECONDITIONER("sor", default_preconditoner_BL_creator<Dune::SeqSOR>());
 
 
   /*! \brief Sequential Gauss Seidel preconditioner
@@ -362,6 +374,7 @@ namespace Dune {
    */
   template<class M, class X, class Y, int l=1>
   using SeqGS = SeqSOR<M,X,Y,l>;
+  DUNE_REGISTER_PRECONDITIONER("gs", default_preconditoner_BL_creator<Dune::SeqGS>());
 
   /*! \brief The sequential jacobian preconditioner.
 
@@ -401,13 +414,23 @@ namespace Dune {
     }
 
     /*!
-       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqJac (const M& A, const ParameterTree& configuration)
       : _A_(A)
     {
-      _n = configuration.get<int>("iterations");
-      _w = configuration.get<scalar_field_type>("relaxation");
+      _n = configuration.get<int>("iterations",1);
+      _w = configuration.get<scalar_field_type>("relaxation",1.0);
       CheckIfDiagonalPresent<M,l>::check(_A_);
     }
 
@@ -458,6 +481,7 @@ namespace Dune {
     //! \brief The relaxation parameter to use.
     scalar_field_type _w;
   };
+  DUNE_REGISTER_PRECONDITIONER("jac", default_preconditoner_BL_creator<Dune::SeqJac>());
 
 
 
@@ -504,6 +528,26 @@ namespace Dune {
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
+
+    /*!
+      \brief Constructor.
+
+      \param A The matrix to operate on.
+      \param configuration ParameterTree containing preconditioner parameters.
+
+      ParameterTree Key | Meaning
+      ------------------|------------
+      n                 | The order of the ILU decomposition
+      relaxation        | The relaxation factor
+      resort            | True if a resort of the computed ILU for improved performance should be done.
+
+      See \ref ISTL_Factory for the ParameterTree layout and examples.
+    */
+    SeqILU(const M& A, const ParameterTree& config)
+      : SeqILU(A, config.get("n", 0),
+               config.get<scalar_field_type>("relaxation", 1.0),
+               config.get("resort", false))
+    {}
 
    /*! \brief Constructor.
 
@@ -607,7 +651,7 @@ namespace Dune {
     //! \brief true if w != 1.0
     const bool wNotIdentity_;
   };
-
+  DUNE_REGISTER_PRECONDITIONER("ilu", default_preconditoner_BL_creator<Dune::SeqILU>());
 
   /*!
      \brief Sequential ILU0 preconditioner.
@@ -658,7 +702,7 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       relaxation        | Common parameter defined [here](@ref ISTL_Factory_Common_Params).
+       relaxation        | The relaxation factor
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
@@ -849,7 +893,15 @@ namespace Dune {
     {}
 
     /*!
-       \copydoc SeqILU0::SeqILU0(const M&,const ParameterTree&)
+       \brief Constructor.
+
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     Richardson (const ParameterTree& configuration)
     {
@@ -898,6 +950,11 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
+  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto tl, const auto& mat, const ParameterTree& config){
+                                               using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
+                                               using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+                                               return std::make_shared<Richardson<D,R>>(config);
+                                             });
 
 
   /**
@@ -928,6 +985,22 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqILDL(const matrix_type& A, const ParameterTree& config)
+      : SeqILDL(A, config.template get<scalar_field_type>("relaxation", 1.0))
+    {}
 
     /**
      * \brief constructor
@@ -1003,9 +1076,11 @@ namespace Dune {
     matrix_type decomposition_;
     scalar_field_type relax_;
   };
+  DUNE_REGISTER_PRECONDITIONER("ildl", default_preconditoner_creator<Dune::SeqILDL>());
 
   /** @} end documentation */
 
 } // end namespace
+
 
 #endif

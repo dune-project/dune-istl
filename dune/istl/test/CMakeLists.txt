@@ -62,6 +62,32 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
+set(DUNE_TEST_FACTORY_FIELD_TYPES
+  "double"
+  "float"
+  "std::complex<double>"
+  "std::complex<float>"
+  "Dune::LoopSIMD<double, 4>")
+
+set(DUNE_TEST_FACTORY_BLOCK_SIZES
+  1
+  2
+  3)
+
+function(add_factory_test BLOCK)
+  STRING(REGEX REPLACE "[^a-zA-Z0-9]" "" BLOCK_CLEAN ${BLOCK})
+  configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}.cc)
+  dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc)
+endfunction(add_factory_test)
+
+foreach(FIELD_TYPE ${DUNE_TEST_FACTORY_FIELD_TYPES})
+  add_factory_test(${FIELD_TYPE})
+  foreach(BLOCK_SIZE ${DUNE_TEST_FACTORY_BLOCK_SIZES})
+    add_factory_test("Dune::FieldVector<${FIELD_TYPE}, ${BLOCK_SIZE}>")
+  endforeach()
+endforeach()
+dune_symlink_to_source_files(FILES solverfactorytest.ini)
+
 # SuperLU tests
   dune_add_test(NAME superlustest
                 SOURCES superlutest.cc
@@ -92,6 +118,7 @@ dune_add_test(SOURCES overlappingschwarztest.cc)
 
 dune_add_test(SOURCES cholmodtest.cc)
 
+dune_add_test(SOURCES registrytest.cc)
 
 # MPI tests
 dune_add_test(SOURCES matrixredisttest.cc

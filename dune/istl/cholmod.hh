@@ -5,6 +5,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include<dune/istl/solver.hh>
+#include <dune/istl/solverfactory.hh>
 
 #include <vector>
 #include <memory>
@@ -330,5 +331,34 @@ private:
   std::vector<std::size_t> inverseSubIndices_;
 
 };
+
+  struct CholmodCreator{
+    template<class F> struct isValidBlock : std::false_type{};
+    template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
+    template<int k> struct isValidBlock<FieldVector<float,k>> : std::true_type{};
+
+    template<class TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator()(TL /*tl*/, const M& mat, const Dune::ParameterTree& /*config*/,
+               std::enable_if_t<isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    {
+      using D = typename Dune::TypeListElement<1, TL>::type;
+      auto solver = std::make_shared<Dune::Cholmod<D>>();
+      solver->setMatrix(mat);
+      return solver;
+    };
+
+    // second version with SFINAE to validate the template parameters of Cholmod
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
+                std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    {
+      DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
+    };
+  };
+  DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());
 
 } /* namespace Dune */

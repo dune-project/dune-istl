@@ -1,5 +1,8 @@
 # Master (will become release 2.7)
 
+- New `SolverFactory` for generating sequential direct or iterative solvers and
+  preconditioners from a `ParameterTree` configuration.
+
 - `BDMatrix` objects now have the method `solve`, which implements that
   canonical way to solve block-diagonal linear systems.
 

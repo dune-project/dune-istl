@@ -16,6 +16,7 @@
 #include <dune/istl/colcompmatrix.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
+#include <dune/istl/solverfactory.hh>
 
 namespace Dune {
   /**
@@ -291,7 +292,38 @@ namespace Dune {
     enum {value = true};
   };
 
-}
+  struct SPQRCreator {
+    template<class> struct isValidBlock : std::false_type{};
+
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
+      std::enable_if_t<
+                isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    {
+      int verbose = config.get("verbose", 0);
+      return std::make_shared<Dune::SPQR<M>>(mat,verbose);
+    };
+
+    // second version with SFINAE to validate the template parameters of SPQR
+    template<typename TL, typename M>
+    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
+                                          typename Dune::TypeListElement<2, TL>::type>>
+    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
+      std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    {
+      DUNE_THROW(UnsupportedType,
+        "Unsupported Type in SPQR (only double and std::complex<double> supported)");
+    }
+  };
+  template<> struct SPQRCreator::isValidBlock<FieldVector<double,1>> : std::true_type{};
+  // std::complex is temporary disabled, because it fails if libc++ is used
+  //template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
+  DUNE_REGISTER_DIRECT_SOLVER("spqr", Dune::SPQRCreator());
+
+} // end namespace Dune
+
 
 #endif //HAVE_SUITESPARSE_SPQR
 #endif //DUNE_ISTL_SPQR_HH
