@@ -751,7 +751,7 @@ namespace Dune
     {
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
-    };
+    }
 
     // second version with SFINAE to validate the template parameters of SuperLU
     template<typename TL, typename M>

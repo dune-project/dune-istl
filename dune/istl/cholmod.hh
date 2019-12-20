@@ -347,7 +347,7 @@ private:
       auto solver = std::make_shared<Dune::Cholmod<D>>();
       solver->setMatrix(mat);
       return solver;
-    };
+    }
 
     // second version with SFINAE to validate the template parameters of Cholmod
     template<typename TL, typename M>
@@ -357,7 +357,7 @@ private:
                 std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
     {
       DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
-    };
+    }
   };
   DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());
 
