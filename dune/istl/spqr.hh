@@ -304,7 +304,7 @@ namespace Dune {
     {
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::SPQR<M>>(mat,verbose);
-    };
+    }
 
     // second version with SFINAE to validate the template parameters of SPQR
     template<typename TL, typename M>

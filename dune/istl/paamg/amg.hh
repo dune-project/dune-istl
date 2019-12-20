@@ -1005,7 +1005,7 @@ namespace Dune
         return std::make_shared<Amg::AMG<OP, D, SeqILU<M,D,R>>>(op, config);
       else
         DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
-    };
+    }
 
     template<typename TL, typename M>
     std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
