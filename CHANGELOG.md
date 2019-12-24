@@ -61,9 +61,6 @@
   Use `SeqILU` instead, which implements incomplete LU decomposition
   of any order.
 
-- The method `setSolverCategory` of `OwnerOverlapCopyCommunication` is deprecated and
-  will be removed after Dune 2.7. The solver category can only be set in the constructor.
-
 - The method `getSolverCategory` of `OwnerOverlapCopyCommunication` is deprecated and
   will be removed after Dune 2.7. Use `category()` instead.
 
