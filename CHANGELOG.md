@@ -47,6 +47,12 @@
 
 - `SeqILU` can now be used with SIMD data types.
 
+- The method `setSolverCategory` of `OwnerOverlapCopyCommunication` is deprecated and
+  will be removed after Dune 2.7. The solver category can only be set in the constructor.
+
+- The method `getSolverCategory` of `OwnerOverlapCopyCommunication` is deprecated and
+  will be removed after Dune 2.7. Use `category()` instead.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
