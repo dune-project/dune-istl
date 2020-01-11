@@ -40,6 +40,9 @@
 - `MultiTypeBlockVector` now implements the interface method `N()`, which
   returns the number of vector entries.
 
+- `MultiTypeBlockVector` now implements the interface method `dim()`, which
+  returns the number of scalar vector entries.
+
 - `MultiTypeBlockVector::count()` is now `const`
 
 - `SeqILU` can now be used with SIMD data types.

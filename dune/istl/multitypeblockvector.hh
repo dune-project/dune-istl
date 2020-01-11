@@ -105,6 +105,16 @@ namespace Dune {
       return sizeof...(Args);
     }
 
+    /** \brief Number of scalar elements */
+    size_type dim() const
+    {
+      size_type result = 0;
+      Hybrid::forEach(std::make_index_sequence<N()>{},
+                      [&](auto i){result += std::get<i>(*this).dim();});
+
+      return result;
+    }
+
     /** \brief Random-access operator
      *
      * This method mimicks the behavior of normal vector access with square brackets like, e.g., v[5] = 1.
