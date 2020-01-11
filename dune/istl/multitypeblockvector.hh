@@ -80,7 +80,11 @@ namespace Dune {
      */
     typedef double field_type;
 
-    /** \brief Return the number of vector entries */
+    /** \brief Return the number of non-zero vector entries
+     *
+     * As this is a dense vector data structure, all entries are non-zero,
+     * and hence 'size' returns the same number as 'N'.
+     */
     static constexpr size_type size()
     {
       return sizeof...(Args);
