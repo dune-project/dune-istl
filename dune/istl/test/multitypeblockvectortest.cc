@@ -25,16 +25,28 @@ using namespace Dune;
 template<typename... Args>
 void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
 {
+    // Test whether the vector exports 'size_type', and whether that is an integer
+    using size_type = typename MultiTypeBlockVector<Args...>::size_type;
+    static_assert(std::numeric_limits<size_type>::is_integer, "size_type is not an integer!");
+
     // test operator<<
     std::cout << multiVector << std::endl;
 
     // test method 'count'
-    std::cout << "multi vector has " << multiVector.count() << " first level blocks" << std::endl;
+    std::cout << "multi vector has " << multiVector.N() << " first level blocks" << std::endl;
 
     static_assert(MultiTypeBlockVector<Args...>::size()==2, "Method MultiTypeBlockVector::size() returned wrong value!");
 
+DUNE_NO_DEPRECATED_BEGIN
     if (multiVector.count() != 2)
       DUNE_THROW(Exception, "Method MultiTypeBlockVector::count returned wrong value!");
+DUNE_NO_DEPRECATED_END
+
+    if (multiVector.N() != 2)
+      DUNE_THROW(Exception, "Method MultiTypeBlockVector::N returned wrong value!");
+
+    if (multiVector.dim() != 11)
+      DUNE_THROW(Exception, "Method MultiTypeBlockVector::dim returned wrong value!");
 
     // Test copy construction
     auto multiVector2 = multiVector;
