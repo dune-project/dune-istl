@@ -86,10 +86,17 @@ namespace Dune {
       return sizeof...(Args);
     }
 
+    /** \brief Number of elements
+     */
+    static constexpr size_type N()
+    {
+      return sizeof...(Args);
+    }
+
     /**
      * number of elements
      */
-    int count() const
+    int count() const DUNE_DEPRECATED_MSG("Use method 'N' instead")
     {
       return sizeof...(Args);
     }
