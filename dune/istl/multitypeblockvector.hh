@@ -58,6 +58,9 @@ namespace Dune {
     typedef std::tuple<Args...> TupleType;
   public:
 
+    /** \brief Type used for vector sizes */
+    using size_type = std::size_t;
+
     /**
      * \brief Get the constructors from tuple
      */
@@ -77,8 +80,19 @@ namespace Dune {
      */
     typedef double field_type;
 
-    /** \brief Return the number of vector entries */
-    static constexpr std::size_t size()
+    /** \brief Return the number of non-zero vector entries
+     *
+     * As this is a dense vector data structure, all entries are non-zero,
+     * and hence 'size' returns the same number as 'N'.
+     */
+    static constexpr size_type size()
+    {
+      return sizeof...(Args);
+    }
+
+    /** \brief Number of elements
+     */
+    static constexpr size_type N()
     {
       return sizeof...(Args);
     }
@@ -86,9 +100,19 @@ namespace Dune {
     /**
      * number of elements
      */
-    int count() const
+    int count() const DUNE_DEPRECATED_MSG("Use method 'N' instead")
     {
       return sizeof...(Args);
+    }
+
+    /** \brief Number of scalar elements */
+    size_type dim() const
+    {
+      size_type result = 0;
+      Hybrid::forEach(std::make_index_sequence<N()>{},
+                      [&](auto i){result += std::get<i>(*this).dim();});
+
+      return result;
     }
 
     /** \brief Random-access operator
@@ -109,9 +133,9 @@ namespace Dune {
      *  v[std::integral_constant<std::size_t,0>()] = ...
      * \endcode
      */
-    template< std::size_t index >
+    template< size_type index >
     typename std::tuple_element<index,TupleType>::type&
-    operator[] ( const std::integral_constant< std::size_t, index > indexVariable )
+    operator[] ( const std::integral_constant< size_type, index > indexVariable )
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
@@ -122,9 +146,9 @@ namespace Dune {
      * This is the const version of the random-access operator.  See the non-const version for a full
      * explanation of how to use it.
      */
-    template< std::size_t index >
+    template< size_type index >
     const typename std::tuple_element<index,TupleType>::type&
-    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) const
+    operator[] ( const std::integral_constant< size_type, index > indexVariable ) const
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
