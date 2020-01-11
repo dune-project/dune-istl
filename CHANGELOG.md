@@ -37,6 +37,9 @@
 - The interface methods `dot()` and `norm()` of ScalarProduct are now `const`. You will
   have to adjust the method signatures in your own scalar product implementations.
 
+- `MultiTypeBlockVector` now implements the interface method `N()`, which
+  returns the number of vector entries.
+
 - `MultiTypeBlockVector::count()` is now `const`
 
 - `SeqILU` can now be used with SIMD data types.
@@ -54,6 +57,9 @@
 
 - The method `getSolverCategory` of `OwnerOverlapCopyCommunication` is deprecated and
   will be removed after Dune 2.7. Use `category()` instead.
+
+- The method `MultiTypeBlockVector::count()` has been deprecated, because its name
+  is inconsistent with the name mandated by the `dune-istl` vector interface.
 
 # Release 2.6
 

@@ -33,12 +33,17 @@ void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
     std::cout << multiVector << std::endl;
 
     // test method 'count'
-    std::cout << "multi vector has " << multiVector.count() << " first level blocks" << std::endl;
+    std::cout << "multi vector has " << multiVector.N() << " first level blocks" << std::endl;
 
     static_assert(MultiTypeBlockVector<Args...>::size()==2, "Method MultiTypeBlockVector::size() returned wrong value!");
 
+DUNE_NO_DEPRECATED_BEGIN
     if (multiVector.count() != 2)
       DUNE_THROW(Exception, "Method MultiTypeBlockVector::count returned wrong value!");
+DUNE_NO_DEPRECATED_END
+
+    if (multiVector.N() != 2)
+      DUNE_THROW(Exception, "Method MultiTypeBlockVector::N returned wrong value!");
 
     // Test copy construction
     auto multiVector2 = multiVector;
