@@ -76,8 +76,15 @@ set(DUNE_TEST_FACTORY_BLOCK_SIZES
 
 function(add_factory_test BLOCK)
   STRING(REGEX REPLACE "[^a-zA-Z0-9]" "" BLOCK_CLEAN ${BLOCK})
+  set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "#define DISABLE_AMG_DIRECTSOLVER 1")
   configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}.cc)
   dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc)
+  string(REGEX MATCH "LoopSIMD" _matched "${BLOCK}")
+  if(NOT _matched)
+    set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "")
+    configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}_direct.cc)
+    dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc)
+  endif()
 endfunction(add_factory_test)
 
 foreach(FIELD_TYPE ${DUNE_TEST_FACTORY_FIELD_TYPES})
