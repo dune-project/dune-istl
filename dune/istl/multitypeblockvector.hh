@@ -58,6 +58,9 @@ namespace Dune {
     typedef std::tuple<Args...> TupleType;
   public:
 
+    /** \brief Type used for vector sizes */
+    using size_type = std::size_t;
+
     /**
      * \brief Get the constructors from tuple
      */
@@ -78,7 +81,7 @@ namespace Dune {
     typedef double field_type;
 
     /** \brief Return the number of vector entries */
-    static constexpr std::size_t size()
+    static constexpr size_type size()
     {
       return sizeof...(Args);
     }
@@ -109,9 +112,9 @@ namespace Dune {
      *  v[std::integral_constant<std::size_t,0>()] = ...
      * \endcode
      */
-    template< std::size_t index >
+    template< size_type index >
     typename std::tuple_element<index,TupleType>::type&
-    operator[] ( const std::integral_constant< std::size_t, index > indexVariable )
+    operator[] ( const std::integral_constant< size_type, index > indexVariable )
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
@@ -122,9 +125,9 @@ namespace Dune {
      * This is the const version of the random-access operator.  See the non-const version for a full
      * explanation of how to use it.
      */
-    template< std::size_t index >
+    template< size_type index >
     const typename std::tuple_element<index,TupleType>::type&
-    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) const
+    operator[] ( const std::integral_constant< size_type, index > indexVariable ) const
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
