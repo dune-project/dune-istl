@@ -64,6 +64,9 @@
 - The method `MultiTypeBlockVector::count()` has been deprecated, because its name
   is inconsistent with the name mandated by the `dune-istl` vector interface.
 
+- The method `MultiTypeBlockMatrix::size()` has been deprecated, because its name
+  is inconsistent with the name mandated by the `dune-istl` vector interface.
+
 # Release 2.6
 
 - `BDMatrix` objects can now be constructed and assigned from `std::initializer_list`.
