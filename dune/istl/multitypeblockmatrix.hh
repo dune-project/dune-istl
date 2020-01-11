@@ -61,7 +61,7 @@ namespace Dune {
     }
 
     /** \brief Return the number of matrix rows */
-    static constexpr size_type size()
+    static constexpr size_type size() DUNE_DEPRECATED_MSG("Use method 'N' instead")
     {
       return 1+sizeof...(Args);
     }
