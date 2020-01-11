@@ -45,6 +45,9 @@ DUNE_NO_DEPRECATED_END
     if (multiVector.N() != 2)
       DUNE_THROW(Exception, "Method MultiTypeBlockVector::N returned wrong value!");
 
+    if (multiVector.dim() != 11)
+      DUNE_THROW(Exception, "Method MultiTypeBlockVector::dim returned wrong value!");
+
     // Test copy construction
     auto multiVector2 = multiVector;
 
