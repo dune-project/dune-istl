@@ -25,6 +25,10 @@ using namespace Dune;
 template<typename... Args>
 void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
 {
+    // Test whether the vector exports 'size_type', and whether that is an integer
+    using size_type = typename MultiTypeBlockVector<Args...>::size_type;
+    static_assert(std::numeric_limits<size_type>::is_integer, "size_type is not an integer!");
+
     // test operator<<
     std::cout << multiVector << std::endl;
 
