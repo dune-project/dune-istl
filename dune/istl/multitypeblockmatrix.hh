@@ -49,22 +49,25 @@ namespace Dune {
      */
     typedef MultiTypeBlockMatrix<FirstRow, Args...> type;
 
+    /** \brief Type used for sizes */
+    using size_type = std::size_t;
+
     typedef typename FirstRow::field_type field_type;
 
     /** \brief Return the number of matrix rows */
-    static constexpr std::size_t N()
+    static constexpr size_type N()
     {
       return 1+sizeof...(Args);
     }
 
     /** \brief Return the number of matrix rows */
-    static constexpr std::size_t size()
+    static constexpr size_type size() DUNE_DEPRECATED_MSG("Use method 'N' instead")
     {
       return 1+sizeof...(Args);
     }
 
     /** \brief Return the number of matrix columns */
-    static constexpr std::size_t M()
+    static constexpr size_type M()
     {
       return FirstRow::size();
     }
@@ -76,18 +79,18 @@ namespace Dune {
      * Therefore we implement a trick using std::integral_constant.  To access the first row of
      * a MultiTypeBlockMatrix named m write
      * \code
-     *  std::integral_constant<std::size_t,0> _0;
+     *  std::integral_constant<size_type,0> _0;
      *  m[_0] = ...
      * \endcode
      * The name '_0' used here as a static replacement of the integer number zero is arbitrary.
      * Any other variable name can be used.  If you don't like the separate variable, you can write
      * \code
-     *  m[std::integral_constant<std::size_t,0>()] = ...
+     *  m[std::integral_constant<size_type,0>()] = ...
      * \endcode
      */
-    template< std::size_t index >
+    template< size_type index >
     auto
-    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) -> decltype(std::get<index>(*this))
+    operator[] ( const std::integral_constant< size_type, index > indexVariable ) -> decltype(std::get<index>(*this))
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
@@ -98,9 +101,9 @@ namespace Dune {
      * This is the const version of the random-access operator.  See the non-const version for a full
      * explanation of how to use it.
      */
-    template< std::size_t index >
+    template< size_type index >
     auto
-    operator[] ( const std::integral_constant< std::size_t, index > indexVariable ) const -> decltype(std::get<index>(*this))
+    operator[] ( const std::integral_constant< size_type, index > indexVariable ) const -> decltype(std::get<index>(*this))
     {
       DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
