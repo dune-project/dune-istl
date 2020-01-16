@@ -80,7 +80,7 @@ int main(int argc, char** argv){
   Dune::ParameterTreeParser::readINITree("solverfactorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
-  Dune::initSolverFactories<Matrix,Vector,Vector>();
+  Dune::initSolverFactories<Dune::MatrixAdapter<Matrix,Vector,Vector>,Vector,Vector>();
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
