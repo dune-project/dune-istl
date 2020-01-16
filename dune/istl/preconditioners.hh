@@ -164,12 +164,28 @@ namespace Dune {
     /*!
        \brief Constructor.
 
-       \param A The matrix to operate on.
+       \param A The assembled linear operator to use.
        \param configuration ParameterTree containing preconditioner parameters.
 
        ParameterTree Key | Meaning
        ------------------|------------
        iterations        | The number of iterations to perform
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqSSOR (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqSSOR(A->getmat(), configuration)
+    {}
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
        relaxation        | The relaxation factor
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
@@ -275,12 +291,28 @@ namespace Dune {
     /*!
        \brief Constructor.
 
-       \param A The matrix to operate on.
+       \param A The assembled linear operator to use.
        \param configuration ParameterTree containing preconditioner parameters.
 
        ParameterTree Key | Meaning
        ------------------|------------
        iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqSOR (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqSOR(A->getmat(), configuration)
+    {}
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
        relaxation        | The relaxation factor
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
@@ -416,12 +448,28 @@ namespace Dune {
     /*!
        \brief Constructor.
 
-       \param A The matrix to operate on.
+       \param A The assembled linear operator to use.
        \param configuration ParameterTree containing preconditioner parameters.
 
        ParameterTree Key | Meaning
        ------------------|------------
        iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqJac (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqJac(A->getmat(), configuration)
+    {}
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
        relaxation        | The relaxation factor
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
@@ -532,7 +580,7 @@ namespace Dune {
     /*!
       \brief Constructor.
 
-      \param A The matrix to operate on.
+      \param A The assembled linear operator to use.
       \param configuration ParameterTree containing preconditioner parameters.
 
       ParameterTree Key | Meaning
@@ -543,6 +591,24 @@ namespace Dune {
 
       See \ref ISTL_Factory for the ParameterTree layout and examples.
     */
+    SeqILU (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqILU(A->getmat(), configuration)
+    {}
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       n                 | The order of the ILU decomposition
+       relaxation        | The relaxation factor
+       resort            | True if a resort of the computed ILU for improved performance should be done.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
     SeqILU(const M& A, const ParameterTree& config)
       : SeqILU(A, config.get("n", 0),
                config.get<scalar_field_type>("relaxation", 1.0),
@@ -697,6 +763,22 @@ namespace Dune {
     /*!
        \brief Constructor.
 
+       \param A The assembled linear operator to use.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | The relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqILU0 (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqILU0(A->getmat(), configuration)
+    {}
+
+    /*!
+       \brief Constructor.
+
        \param A The matrix to operate on.
        \param configuration ParameterTree containing preconditioner parameters.
 
@@ -803,13 +885,40 @@ namespace Dune {
       bilu_decomposition(A,n,ILU);
     }
 
+    /*
+       \brief Constructor.
+
+       \param A The assembled linear operator to use.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | The relaxation factor
+       n                 | The order of the ILU decomposition.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqILUn (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqILUn(A->getmat(), configuration)
+    {}
+
     /*!
-       \copydoc SeqSSOR::SeqSSOR(const M&,const ParameterTree&)
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | The relaxation factor
+       n                 | The order of the ILU decomposition.
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqILUn (const M& A, const ParameterTree& configuration)
       : ILU(A.N(),A.M(),M::row_wise)
     {
-      _n = configuration.get<int>("iterations");
+      _n = configuration.get<int>("n");
       _w = configuration.get<scalar_field_type>("relaxation");
       bilu_decomposition(A,_n,ILU);
     }
@@ -985,6 +1094,22 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+
+    /*!
+       \brief Constructor.
+
+       \param A The linear operator to use.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+       relaxation        | relaxation factor
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqILDL (const std::shared_ptr<const AssembledLinearOperator<M,X,Y>>& A, const ParameterTree& configuration)
+      : SeqILDL(A->getmat(), configuration)
+    {}
 
     /*!
        \brief Constructor.
