@@ -84,7 +84,7 @@ namespace Dune{
 
   // Preconditioner factory:
   template<class M, class X, class Y>
-  using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const M&, const ParameterTree&);
+  using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const std::shared_ptr<M>&, const ParameterTree&);
   template<class M, class X, class Y>
   using PreconditionerFactory = Singleton<ParameterizedObjectFactory<PreconditionerSignature<M,X,Y>>>;
 
@@ -101,16 +101,18 @@ namespace Dune{
     /* initializes the direct solvers, preconditioners and iterative solvers in
        the factories with the corresponding Matrix and Vector types.
 
-       @tparam M the Matrix type
+       @tparam O the assembled linear operator type
        @tparam X the Domain type
        @tparam Y the Range type
     */
-    template<class M, class X, class Y>
+    template<class O, class X, class Y>
     int initSolverFactories(){
+      using M  = typename O::matrix_type;
       using TL = Dune::TypeList<M,X,Y>;
       auto& dsfac=Dune::DirectSolverFactory<M,X,Y>::instance();
       addRegistryToFactory<TL>(dsfac, DirectSolverTag{});
-      auto& pfac=Dune::PreconditionerFactory<M,X,Y>::instance();
+      using TLO = Dune::TypeList<O,X,Y>;
+      auto& pfac=Dune::PreconditionerFactory<O,X,Y>::instance();
       addRegistryToFactory<TL>(pfac, PreconditionerTag{});
       using TLS = Dune::TypeList<X,Y>;
       auto& isfac=Dune::IterativeSolverFactory<X,Y>::instance();
@@ -184,7 +186,7 @@ namespace Dune{
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
         std::string prec_type = precConfig.get<std::string>("type");
-        prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
+        prec = PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, precConfig);
       }
       if(op->category()!=SolverCategory::sequential){
         DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
@@ -202,7 +204,7 @@ namespace Dune{
       const matrix_type* mat = getmat(op);
       if(mat){
         std::string prec_type = config.get<std::string>("type");
-        return PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, config);
+        return PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, config);
       }else{
         DUNE_THROW(InvalidStateException, "Cant deduce matrix from Operator. Please pass in an AssembledLinearOperator.");
       }
