@@ -1078,18 +1078,17 @@ namespace Dune
     template<class> struct isValidBlockType : std::false_type{};
     template<class T, int n, int m> struct isValidBlockType<FieldMatrix<T,n,m>> : std::true_type{};
 
-    template<typename TL, typename M>
+    template<typename TL, typename OP>
     std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL tl, const M& mat, const Dune::ParameterTree& config,
-                std::enable_if_t<isValidBlockType<typename M::block_type>::value,int> = 0) const
+    operator() (TL tl, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
+                std::enable_if_t<isValidBlockType<typename OP::matrix_type::block_type>::value,int> = 0) const
     {
       using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
       using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
+      using M = typename OP::matrix_type;
       std::shared_ptr<Preconditioner<D,R>> amg;
       std::string smoother = config.get("smoother", "ssor");
-      typedef MatrixAdapter<M,D,R> OP;
-      std::shared_ptr<OP> op = std::make_shared<OP>(mat);
       if(smoother == "ssor")
         return std::make_shared<Amg::AMG<OP, D, SeqSSOR<M,D,R>>>(op, config);
       if(smoother == "sor")
@@ -1104,11 +1103,11 @@ namespace Dune
         DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
     }
 
-    template<typename TL, typename M>
+    template<typename TL, typename OP>
     std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-                std::enable_if_t<!isValidBlockType<typename M::block_type>::value,int> = 0) const
+    operator() (TL /*tl*/, const std::shared_ptr<OP>& /*mat*/, const Dune::ParameterTree& /*config*/,
+                std::enable_if_t<!isValidBlockType<typename OP::matrix_type::block_type>::value,int> = 0) const
     {
       DUNE_THROW(UnsupportedType, "AMG needs a FieldMatrix as Matrix block_type");
     }
