@@ -13,6 +13,8 @@
 
 #include "solverregistry.hh"
 #include <dune/istl/solver.hh>
+#include <dune/istl/schwarz.hh>
+#include <dune/istl/novlpschwarz.hh>
 
 namespace Dune{
   /** @addtogroup ISTL_Factory
@@ -64,6 +66,46 @@ namespace Dune{
   } // end anonymous namespace
 
 
+  template<class O, class Preconditioner>
+  std::shared_ptr<Preconditioner> wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                                                              const O&)
+  {
+    return prec;
+  }
+
+  template<class M, class X, class Y, class C, class Preconditioner>
+  std::shared_ptr<Preconditioner>
+  wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                              const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return std::make_shared<BlockPreconditioner<X,Y,C,Preconditioner> >(prec, op->getCommunication());
+  }
+
+  template<class M, class X, class Y, class C, class Preconditioner>
+  std::shared_ptr<Preconditioner>
+  wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                              const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return std::make_shared<NonoverlappingBlockPreconditioner<C,Preconditioner> >(prec, op->getCommunication());
+  }
+
+  template<class M, class X, class Y>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<MatrixAdapter<M,X,Y> >&)
+  {
+    return std::make_shared<SeqScalarProduct<X>>();
+  }
+  template<class M, class X, class Y, class C>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return createScalarProduct<X>(op->getCommunication(), op->category());
+  }
+
+  template<class M, class X, class Y, class C>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return createScalarProduct<X>(op->getCommunication(), op->category());
+  }
+
   /**
      @brief Factory to assembly solvers configured by a `ParameterTree`.
 
@@ -102,6 +144,7 @@ namespace Dune{
         return &aop->getmat();
       return nullptr;
     }
+
   public:
 
     /* @brief get a solver from the factory
@@ -114,6 +157,9 @@ namespace Dune{
       const matrix_type* mat = getmat(op);
       if(mat){
         if (DirectSolverFactory<matrix_type, Domain, Range>::instance().contains(type)) {
+          if(op->category()!=SolverCategory::sequential){
+            DUNE_THROW(NotImplemented, "The solver factory does not support parallel direct solvers!");
+          }
           result = DirectSolverFactory<matrix_type, Domain, Range>::instance().create(type, *mat, config);
           return result;
         }
@@ -126,11 +172,9 @@ namespace Dune{
         const ParameterTree& precConfig = config.sub("preconditioner");
         std::string prec_type = precConfig.get<std::string>("type");
         prec = PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, precConfig);
+        prec = wrapPreconditioner4Parallel(prec, op);
       }
-      if(op->category()!=SolverCategory::sequential){
-        DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
-      }
-      std::shared_ptr<ScalarProduct<Domain>> sp = std::make_shared<SeqScalarProduct<Domain>>();
+      std::shared_ptr<ScalarProduct<Domain>> sp = createScalarProduct(op);
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
       return result;
     }
