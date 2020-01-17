@@ -13,6 +13,8 @@
 
 #include "solverregistry.hh"
 #include <dune/istl/solver.hh>
+#include <dune/istl/schwarz.hh>
+#include <dune/istl/novlpschwarz.hh>
 
 namespace Dune{
   /** @addtogroup ISTL_Factory
@@ -102,6 +104,30 @@ namespace Dune{
         return &aop->getmat();
       return nullptr;
     }
+
+    template<class O>
+    static std::shared_ptr<Preconditioner> wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                                                                       O&)
+    {
+      return prec;
+    }
+
+    template<class M, class X, class Y, class C>
+    static std::shared_ptr<Preconditioner>
+    wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                                const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+    {
+      return std::make_shared<BlockPreconditioner<X,Y,C,Preconditioner> >(prec, op.getCommunication());
+    }
+
+    template<class M, class X, class Y, class C>
+    static std::shared_ptr<Preconditioner>
+    wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                                const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+    {
+      return std::make_shared<NonoverlappingBlockPreconditioner<C,Preconditioner> >(prec, op.getCommunication());
+    }
+
   public:
 
     /* @brief get a solver from the factory
@@ -126,6 +152,7 @@ namespace Dune{
         const ParameterTree& precConfig = config.sub("preconditioner");
         std::string prec_type = precConfig.get<std::string>("type");
         prec = PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, precConfig);
+        prec = wrapPreconditioner4Parallel(prec, op);
       }
       if(op->category()!=SolverCategory::sequential){
         DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
