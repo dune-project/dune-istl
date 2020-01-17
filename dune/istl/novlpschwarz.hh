@@ -12,6 +12,8 @@
 
 #include <dune/common/timer.hh>
 
+#include <dune/common/hybridutilities.hh>
+
 #include "io.hh"
 #include "bvector.hh"
 #include "vbvector.hh"
@@ -208,24 +210,49 @@ namespace Dune {
 
       //compute alpha*A*x nonoverlapping case
       for (RowIterator i = _A_->begin(); i != _A_->end(); ++i) {
-        if (mask[i.index()] == 0) {
-          //dof doesn't belong to process but is border (not ghost)
-          for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j) {
-            if (mask[j.index()] == 1) //j is owner => then sum entries
-              (*j).usmv(alpha,x[j.index()],y[i.index()]);
-            else if (mask[j.index()] == 0) {
-              std::pair<MM::iterator, MM::iterator> itp =
-                bordercontribution.equal_range(i.index());
-              for (MM::iterator it = itp.first; it != itp.second; ++it)
-                if ((*it).second == (int)j.index())
-                  (*j).usmv(alpha,x[j.index()],y[i.index()]);
-            }
-          }
-        }
-        else if (mask[i.index()] == 1) {
-          for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j)
-            if (mask[j.index()] != 2)
-              (*j).usmv(alpha,x[j.index()],y[i.index()]);
+        Hybrid::ifElse(IsNumber<typename M::block_type>(),
+                       [&](auto id) {
+                         if (mask[i.index()] == 0) {
+                           //dof doesn't belong to process but is border (not ghost)
+                           for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j) {
+                             if (mask[j.index()] == 1) //j is owner => then sum entries
+                               y[i.index()] += id(*j) * alpha * x[j.index()];
+                             else if (mask[j.index()] == 0) {
+                               std::pair<MM::iterator, MM::iterator> itp =
+                                 bordercontribution.equal_range(i.index());
+                               for (MM::iterator it = itp.first; it != itp.second; ++it)
+                                 if ((*it).second == (int)j.index())
+                                   y[i.index()] += id(*j) * alpha *x[j.index()];
+                             }
+                           }
+                         }
+                         else if (mask[i.index()] == 1) {
+                           for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j)
+                             if (mask[j.index()] != 2)
+                               y[i.index()] += id(*j) * alpha *x[j.index()];
+                         }
+                       },
+                       [&](auto id) {
+                         if (mask[i.index()] == 0) {
+                           //dof doesn't belong to process but is border (not ghost)
+                           for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j) {
+                             if (mask[j.index()] == 1) //j is owner => then sum entries
+                               id(*j).usmv(alpha,x[j.index()],y[i.index()]);
+                             else if (mask[j.index()] == 0) {
+                               std::pair<MM::iterator, MM::iterator> itp =
+                                 bordercontribution.equal_range(i.index());
+                               for (MM::iterator it = itp.first; it != itp.second; ++it)
+                                 if ((*it).second == (int)j.index())
+                                   id(*j).usmv(alpha,x[j.index()],y[i.index()]);
+                             }
+                           }
+                         }
+                         else if (mask[i.index()] == 1) {
+                           for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j)
+                             if (mask[j.index()] != 2)
+                               id(*j).usmv(alpha,x[j.index()],y[i.index()]);
+                         }
+                       });
         }
       }
     }
