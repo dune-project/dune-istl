@@ -42,6 +42,7 @@ install(FILES
    solvercategory.hh
    solver.hh
    solverfactory.hh
+   solverregistry.hh
    solvers.hh
    solvertype.hh
    spqr.hh
