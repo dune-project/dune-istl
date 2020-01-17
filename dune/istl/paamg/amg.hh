@@ -1078,6 +1078,78 @@ namespace Dune
     template<class> struct isValidBlockType : std::false_type{};
     template<class T, int n, int m> struct isValidBlockType<FieldMatrix<T,n,m>> : std::true_type{};
 
+    template<class OP>
+    std::shared_ptr<Dune::Preconditioner<typename OP::element_type::domain_type, typename OP::element_type::range_type> >
+    makeAMG(const OP& op, const std::string& smoother, const Dune::ParameterTree& config) const
+    {
+      DUNE_THROW(Dune::Exception, "Operator type not supported by AMG");
+    }
+
+    template<class M, class X, class Y>
+    std::shared_ptr<Dune::Preconditioner<X,Y> >
+    makeAMG(const std::shared_ptr<MatrixAdapter<M,X,Y>>& op, const std::string& smoother,
+            const Dune::ParameterTree& config) const
+    {
+      using OP = MatrixAdapter<M,X,Y>;
+
+      if(smoother == "ssor")
+        return std::make_shared<Amg::AMG<OP, X, SeqSSOR<M,X,Y>>>(op, config);
+      if(smoother == "sor")
+        return std::make_shared<Amg::AMG<OP, X, SeqSOR<M,X,Y>>>(op, config);
+      if(smoother == "jac")
+        return std::make_shared<Amg::AMG<OP, X, SeqJac<M,X,Y>>>(op, config);
+      if(smoother == "gs")
+        return std::make_shared<Amg::AMG<OP, X, SeqGS<M,X,Y>>>(op, config);
+      if(smoother == "ilu")
+        return std::make_shared<Amg::AMG<OP, X, SeqILU<M,X,Y>>>(op, config);
+      else
+        DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
+    }
+
+    template<class M, class X, class Y, class C>
+    std::shared_ptr<Dune::Preconditioner<X,Y> >
+    makeAMG(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
+            const Dune::ParameterTree& config) const
+    {
+      using OP = OverlappingSchwarzOperator<M,X,Y,C>;
+
+      auto cop = std::static_pointer_cast<const OP>(op);
+
+      if(smoother == "ssor")
+        return std::make_shared<Amg::AMG<OP, X, BlockPreconditioner<X,Y,C,SeqSSOR<M,X,Y>>,C>>(cop, config, op->getCommunication());
+      if(smoother == "sor")
+        return std::make_shared<Amg::AMG<OP, X, BlockPreconditioner<X,Y,C,SeqSOR<M,X,Y>>,C>>(cop, config, op->getCommunication());
+      if(smoother == "jac")
+        return std::make_shared<Amg::AMG<OP, X, BlockPreconditioner<X,Y,C,SeqJac<M,X,Y>>,C>>(cop, config, op->getCommunication());
+      if(smoother == "gs")
+        return std::make_shared<Amg::AMG<OP, X, BlockPreconditioner<X,Y,C,SeqGS<M,X,Y>>,C>>(cop, config, op->getCommunication());
+      if(smoother == "ilu")
+        return std::make_shared<Amg::AMG<OP, X, BlockPreconditioner<X,Y,C,SeqILU<M,X,Y>>,C>>(cop, config, op->getCommunication());
+      else
+        DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
+    }
+
+    template<class M, class X, class Y, class C>
+    std::shared_ptr<Dune::Preconditioner<X,Y> >
+    makeAMG(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
+            const Dune::ParameterTree& config) const
+    {
+      using OP = NonoverlappingSchwarzOperator<M,X,Y,C>;
+
+      if(smoother == "ssor")
+        return std::make_shared<Amg::AMG<OP, X, NonoverlappingBlockPreconditioner<C,SeqSSOR<M,X,Y>>,C>>(op, config, op->getCommunication());
+      if(smoother == "sor")
+        return std::make_shared<Amg::AMG<OP, X, NonoverlappingBlockPreconditioner<C,SeqSOR<M,X,Y>>,C>>(op, config, op->getCommunication());
+      if(smoother == "jac")
+        return std::make_shared<Amg::AMG<OP, X, NonoverlappingBlockPreconditioner<C,SeqJac<M,X,Y>>,C>>(op, config, op->getCommunication());
+      if(smoother == "gs")
+        return std::make_shared<Amg::AMG<OP, X, NonoverlappingBlockPreconditioner<C,SeqGS<M,X,Y>>,C>>(op, config, op->getCommunication());
+      if(smoother == "ilu")
+        return std::make_shared<Amg::AMG<OP, X, NonoverlappingBlockPreconditioner<C,SeqILU<M,X,Y>>,C>>(op, config, op->getCommunication());
+      else
+        DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
+    }
+
     template<typename TL, typename OP>
     std::shared_ptr<Dune::Preconditioner<typename Dune::TypeListElement<1, TL>::type,
                                          typename Dune::TypeListElement<2, TL>::type>>
@@ -1089,18 +1161,7 @@ namespace Dune
       using M = typename OP::matrix_type;
       std::shared_ptr<Preconditioner<D,R>> amg;
       std::string smoother = config.get("smoother", "ssor");
-      if(smoother == "ssor")
-        return std::make_shared<Amg::AMG<OP, D, SeqSSOR<M,D,R>>>(op, config);
-      if(smoother == "sor")
-        return std::make_shared<Amg::AMG<OP, D, SeqSOR<M,D,R>>>(op, config);
-      if(smoother == "jac")
-        return std::make_shared<Amg::AMG<OP, D, SeqJac<M,D,R>>>(op, config);
-      if(smoother == "gs")
-        return std::make_shared<Amg::AMG<OP, D, SeqGS<M,D,R>>>(op, config);
-      if(smoother == "ilu")
-        return std::make_shared<Amg::AMG<OP, D, SeqILU<M,D,R>>>(op, config);
-      else
-        DUNE_THROW(Dune::Exception, "Unknown smoother for AMG");
+      return makeAMG(op, smoother, config);
     }
 
     template<typename TL, typename OP>
