@@ -409,6 +409,7 @@ namespace Dune {
     template<class T1, class T2>
     void dot (const T1& x, const T1& y, T2& result) const
     {
+      using real_type = typename FieldTraits<typename T1::field_type>::real_type;
       // set up mask vector
       if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size()))
       {
@@ -422,7 +423,7 @@ namespace Dune {
       result = T2(0.0);
 
       for (typename T1::size_type i=0; i<x.size(); i++)
-        result += x[i]*(y[i])*mask[i];
+        result += (x[i]*(y[i]))*static_cast<real_type>(mask[i]);
       result = cc.sum(result);
     }
 
@@ -450,6 +451,7 @@ namespace Dune {
       auto result = real_type(0.0);
       for (typename T1::size_type i=0; i<x.size(); i++)
         result += Impl::asVector(x[i]).two_norm2()*mask[i];
+      using std::sqrt;
       return sqrt(cc.sum(result));
     }
 
