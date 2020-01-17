@@ -28,7 +28,7 @@
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/solver.hh>
-#include <dune/istl/solverfactory.hh>
+#include <dune/istl/solverregistry.hh>
 
 namespace Dune {
   /** @addtogroup ISTL_Solvers
