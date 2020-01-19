@@ -589,7 +589,7 @@ namespace Dune {
     {
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
-    };
+    }
 
     // second version with SFINAE to validate the template parameters of UMFPack
     template<typename TL, typename M>
@@ -601,7 +601,7 @@ namespace Dune {
     {
       DUNE_THROW(UnsupportedType,
         "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
-    };
+    }
   };
   DUNE_REGISTER_DIRECT_SOLVER("umfpack",Dune::UMFPackCreator());
 } // end namespace Dune
