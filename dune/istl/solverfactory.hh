@@ -15,13 +15,13 @@
 #include <dune/istl/solver.hh>
 
 #define DUNE_REGISTER_DIRECT_SOLVER(name, ...)                \
-  registry_put(DirectSolverTag, name, __VA_ARGS__)
+  DUNE_REGISTRY_PUT(DirectSolverTag, name, __VA_ARGS__)
 
 #define DUNE_REGISTER_PRECONDITIONER(name, ...)                \
-  registry_put(PreconditionerTag, name, __VA_ARGS__)
+  DUNE_REGISTRY_PUT(PreconditionerTag, name, __VA_ARGS__)
 
 #define DUNE_REGISTER_ITERATIVE_SOLVER(name, ...)                \
-  registry_put(IterativeSolverTag, name, __VA_ARGS__)
+  DUNE_REGISTRY_PUT(IterativeSolverTag, name, __VA_ARGS__)
 
 namespace Dune{
   /** @addtogroup ISTL_Factory

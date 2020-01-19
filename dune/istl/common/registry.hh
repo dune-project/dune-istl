@@ -13,7 +13,7 @@
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/parameterizedobject.hh>
 
-#define registry_put(Tag, id, ...)              \
+#define DUNE_REGISTRY_PUT(Tag, id, ...)               \
   namespace {                                   \
     template<>                                  \
     struct Registry<Tag, DUNE_GET_COUNTER(Tag)>       \
