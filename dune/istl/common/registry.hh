@@ -36,7 +36,7 @@ namespace Dune {
 
   namespace {
     template<template<class> class Base, class V, class Tag, typename... Args>
-    auto registry_get(Tag , std::string name, Args... args)
+    auto registryGet(Tag , std::string name, Args... args)
     {
       constexpr auto count = DUNE_GET_COUNTER(Tag);
       std::shared_ptr<Base<V> > result;
