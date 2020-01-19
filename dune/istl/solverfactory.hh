@@ -34,44 +34,44 @@ namespace Dune{
     struct IterativeSolverTag {};
   }
 
-  template<template<class,class,class,int>class Preconditioner, int l=1>
+  template<template<class,class,class,int>class Preconditioner, int blockLevel=1>
   auto defaulPreconditionerBlockLevelCreator(){
-    return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
+    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
            {
-             using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-             std::shared_ptr<Dune::Preconditioner<D,R>> prec
-               = std::make_shared<Preconditioner<M,D,R,l>>(mat,config);
-             return prec;
+             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+               = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+             return preconditioner;
            };
   }
 
   template<template<class,class,class>class Preconditioner>
   auto defaultPreconditionerCreator(){
-    return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
+    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
            {
-             using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-             std::shared_ptr<Dune::Preconditioner<D,R>> prec
-               = std::make_shared<Preconditioner<M,D,R>>(mat,config);
-             return prec;
+             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+               = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+             return preconditioner;
            };
   }
 
   template<template<class...>class Solver>
   auto defaultIterativeSolverCreator(){
-    return [](auto tl,
-              const auto& op,
-              const auto& sp,
-              const auto& prec,
+    return [](auto typeList,
+              const auto& linearOperator,
+              const auto& scalarProduct,
+              const auto& preconditioner,
               const Dune::ParameterTree& config)
            {
-             using D = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             std::shared_ptr<Dune::InverseOperator<D,R>> solver
-               = std::make_shared<Solver<D>>(op, sp, prec,config);
+             using Domain = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+             using Range = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+             std::shared_ptr<Dune::InverseOperator<Domain, Range>> solver
+               = std::make_shared<Solver<Domain>>(linearOperator, scalarProduct, preconditioner, config);
              return solver;
            };
   }
