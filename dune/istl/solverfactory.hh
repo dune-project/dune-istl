@@ -35,7 +35,7 @@ namespace Dune{
   }
 
   template<template<class,class,class,int>class Preconditioner, int l=1>
-  auto default_preconditoner_BL_creator(){
+  auto defaultPreconditionerBlockLevelCreator(){
     return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
            {
              using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
@@ -48,7 +48,7 @@ namespace Dune{
   }
 
   template<template<class,class,class>class Preconditioner>
-  auto default_preconditoner_creator(){
+  auto defaultPreconditionerCreator(){
     return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
            {
              using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
@@ -61,7 +61,7 @@ namespace Dune{
   }
 
   template<template<class...>class Solver>
-  auto default_iterative_solver_creator(){
+  auto defaultIterativeSolverCreator(){
     return [](auto tl,
               const auto& op,
               const auto& sp,
