@@ -231,7 +231,7 @@ namespace Dune {
     //! \brief The relaxation factor to use
     scalar_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("ssor", default_preconditoner_BL_creator<Dune::SeqSSOR>());
+  DUNE_REGISTER_PRECONDITIONER("ssor", defaulPreconditionerBlockLevelCreator<Dune::SeqSSOR>());
 
 
   /*!
@@ -359,7 +359,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("sor", default_preconditoner_BL_creator<Dune::SeqSOR>());
+  DUNE_REGISTER_PRECONDITIONER("sor", defaulPreconditionerBlockLevelCreator<Dune::SeqSOR>());
 
 
   /*! \brief Sequential Gauss Seidel preconditioner
@@ -374,7 +374,7 @@ namespace Dune {
    */
   template<class M, class X, class Y, int l=1>
   using SeqGS = SeqSOR<M,X,Y,l>;
-  DUNE_REGISTER_PRECONDITIONER("gs", default_preconditoner_BL_creator<Dune::SeqGS>());
+  DUNE_REGISTER_PRECONDITIONER("gs", defaulPreconditionerBlockLevelCreator<Dune::SeqGS>());
 
   /*! \brief The sequential jacobian preconditioner.
 
@@ -481,7 +481,7 @@ namespace Dune {
     //! \brief The relaxation parameter to use.
     scalar_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("jac", default_preconditoner_BL_creator<Dune::SeqJac>());
+  DUNE_REGISTER_PRECONDITIONER("jac", defaulPreconditionerBlockLevelCreator<Dune::SeqJac>());
 
 
 
@@ -600,7 +600,7 @@ namespace Dune {
     }
 
     /*!
-       \brief Apply the preconditoner.
+       \brief Apply the preconditioner.
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
@@ -651,7 +651,7 @@ namespace Dune {
     //! \brief true if w != 1.0
     const bool wNotIdentity_;
   };
-  DUNE_REGISTER_PRECONDITIONER("ilu", default_preconditoner_BL_creator<Dune::SeqILU>());
+  DUNE_REGISTER_PRECONDITIONER("ilu", defaulPreconditionerBlockLevelCreator<Dune::SeqILU>());
 
   /*!
      \brief Sequential ILU0 preconditioner.
@@ -725,7 +725,7 @@ namespace Dune {
     }
 
     /*!
-       \brief Apply the preconditoner.
+       \brief Apply the preconditioner.
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
@@ -1076,7 +1076,7 @@ namespace Dune {
     matrix_type decomposition_;
     scalar_field_type relax_;
   };
-  DUNE_REGISTER_PRECONDITIONER("ildl", default_preconditoner_creator<Dune::SeqILDL>());
+  DUNE_REGISTER_PRECONDITIONER("ildl", defaulPreconditionerCreator<Dune::SeqILDL>());
 
   /** @} end documentation */
 
