@@ -177,9 +177,9 @@ namespace Dune{
           return result;
         }
       }
-      // if no direct solver is found it is maybe an iterative solver
+      // if no direct solver is found it might be an iterative solver
       if (!IterativeSolverFactory<Domain, Range>::instance().contains(type)) {
-        DUNE_THROW(Dune::InvalidStateException, "Solver can not be found in the factory");
+        DUNE_THROW(Dune::InvalidStateException, "Solver not found in the factory.");
       }
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
@@ -187,7 +187,7 @@ namespace Dune{
         prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
       }
       if(op->category()!=SolverCategory::sequential){
-        DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
+        DUNE_THROW(NotImplemented, "The solver factory is currently only implemented for sequential solvers!");
       }
       std::shared_ptr<ScalarProduct<Domain>> sp = std::make_shared<SeqScalarProduct<Domain>>();
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
@@ -204,14 +204,14 @@ namespace Dune{
         std::string prec_type = config.get<std::string>("type");
         return PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, config);
       }else{
-        DUNE_THROW(InvalidStateException, "Cant deduce matrix from Operator. Please pass in an AssembledLinearOperator.");
+        DUNE_THROW(InvalidStateException, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
       }
     }
   };
 
   /**
-     \brief Instanciates an `InverseOperator` from an Operator and a
-     configuration given in a ParameterTree.
+     \brief Instantiates an `InverseOperator` from an Operator and a
+     configuration given as a ParameterTree.
      \param op Operator
      \param config `ParameterTree` with configuration
      \param prec Custom `Preconditioner` (optional). If not given it will be
