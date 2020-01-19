@@ -32,7 +32,7 @@ template<class V> struct ThingA : ThingBase<V> {
   }
 };
 namespace Dune {
-  registry_put(ThingTag, "A", defaultThingCreator<ThingA>());
+  DUNE_ISTL_REGISTRY_PUT(ThingTag, "A", defaultThingCreator<ThingA>());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ template<class V> struct ThingB : ThingBase<V> {
   }
 };
 namespace Dune {
-registry_put(ThingTag, "B", [] (auto m, int i) {
+DUNE_ISTL_REGISTRY_PUT(ThingTag, "B", [] (auto m, int i) {
     return std::make_shared<ThingB<typename decltype(m)::type> >(i,"dynamic");
   });
 }
