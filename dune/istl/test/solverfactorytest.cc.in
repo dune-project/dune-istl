@@ -78,73 +78,69 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
 
 template<class Comm>
 void testOverlapping(const Dune::ParameterTree& config, Comm c){
-  if(c.rank() == 0){
-    using Communication = Dune::OwnerOverlapCopyCommunication<int>;
-    using Operator      = Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>;
-    using MatrixBlock   = typename Operator::matrix_type::block_type;
-    int N = config.get("N", 100);
-    int n;
-    Communication comm(MPI_COMM_WORLD);
-    Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
-    Vector x(mat.M()), b(mat.N());
-    b=0;
-    x=100;
-    setBoundary(x, b, N, comm.indexSet());
-    comm.remoteIndices().template rebuild<false>();
+  using Communication = Dune::OwnerOverlapCopyCommunication<int>;
+  using Operator      = Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>;
+  using MatrixBlock   = typename Operator::matrix_type::block_type;
+  int N = config.get("N", 100);
+  int n;
+  Communication comm(MPI_COMM_WORLD);
+  Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  Vector x(mat.M()), b(mat.N());
+  b=0;
+  x=100;
+  setBoundary(x, b, N, comm.indexSet());
+  comm.remoteIndices().template rebuild<false>();
 
-    std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
+  std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
 
-    for(std::string test : config.getSubKeys()){
-      Dune::ParameterTree solverConfig = config.sub(test);
-      std::cout << " ============== " << test << " ============== " << std::endl;
-      try{
-        std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
-        x = 0;
-        b = 1;
-        Dune::InverseOperatorResult res;
-        solver->apply(x,b,res);
-        if(!res.converged)
-          DUNE_THROW(Dune::Exception, test << " not converged!");
-      }catch(Dune::UnsupportedType& e){
-        std::cout << e.what() << std::endl;
-      }
+  for(std::string test : config.getSubKeys()){
+    Dune::ParameterTree solverConfig = config.sub(test);
+    std::cout << " ============== " << test << " ============== " << std::endl;
+    try{
+      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
+      x = 0;
+      b = 1;
+      Dune::InverseOperatorResult res;
+      solver->apply(x,b,res);
+      if(!res.converged)
+        DUNE_THROW(Dune::Exception, test << " not converged!");
+    }catch(Dune::UnsupportedType& e){
+      std::cout << e.what() << std::endl;
     }
   }
 }
 
 template<class Comm>
 void testNonoverlapping(const Dune::ParameterTree& config, Comm c){
-  if(c.rank() == 0){
-    using Communication = Dune::OwnerOverlapCopyCommunication<int>;
-    using Operator      = Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>;
-    using MatrixBlock   = typename Operator::matrix_type::block_type;
-    int N = config.get("N", 100);
-    int n;
-    Communication comm(MPI_COMM_WORLD);
-    /// \todo Make discretization mimic onoverlapping.
-    Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
-    Vector x(mat.M()), b(mat.N());
-    b=0;
-    x=100;
-    setBoundary(x, b, N, comm.indexSet());
-    comm.remoteIndices().template rebuild<false>();
+  using Communication = Dune::OwnerOverlapCopyCommunication<int>;
+  using Operator      = Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>;
+  using MatrixBlock   = typename Operator::matrix_type::block_type;
+  int N = config.get("N", 100);
+  int n;
+  Communication comm(MPI_COMM_WORLD);
+  /// \todo Make discretization mimic onoverlapping.
+  Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  Vector x(mat.M()), b(mat.N());
+  b=0;
+  x=100;
+  setBoundary(x, b, N, comm.indexSet());
+  comm.remoteIndices().template rebuild<false>();
 
-    std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
+  std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
 
-    for(std::string test : config.getSubKeys()){
-      Dune::ParameterTree solverConfig = config.sub(test);
-      std::cout << " ============== " << test << " ============== " << std::endl;
-      try{
-        std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
-        x = 0;
-        b = 1;
-        Dune::InverseOperatorResult res;
-        solver->apply(x,b,res);
-        if(!res.converged)
-          DUNE_THROW(Dune::Exception, test << " not converged!");
-      }catch(Dune::UnsupportedType& e){
-        std::cout << e.what() << std::endl;
-      }
+  for(std::string test : config.getSubKeys()){
+    Dune::ParameterTree solverConfig = config.sub(test);
+    std::cout << " ============== " << test << " ============== " << std::endl;
+    try{
+      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
+      x = 0;
+      b = 1;
+      Dune::InverseOperatorResult res;
+      solver->apply(x,b,res);
+      if(!res.converged)
+        DUNE_THROW(Dune::Exception, test << " not converged!");
+    }catch(Dune::UnsupportedType& e){
+      std::cout << e.what() << std::endl;
     }
   }
 }
