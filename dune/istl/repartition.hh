@@ -830,7 +830,7 @@ namespace Dune
       }
       // Check numbers in adjncy
       for(Metis::idx_t i=xadj[vtx]; i< xadj[vtx+1]; ++i) {
-        if(adjncy[i]<0||((std::size_t)adjncy[i])>gnoVtx) {
+        if(signbit(adjncy[i]) || ((std::size_t)adjncy[i])>gnoVtx) {
           std::cerr<<" Edge "<<adjncy[i]<<" out of range ["<<0<<","<<noVtx<<")"
                    <<std::endl;
           correct=false;
