@@ -92,7 +92,7 @@ namespace Dune {
     : inverse_operator_(inverse_operator)
     {
       if(c != -1 && SolverCategory::category(inverse_operator_) != c)
-        DUNE_THROW(InvalidStateException, "User supplied solver category does not match that of the supplied iverser operator");
+        DUNE_THROW(InvalidStateException, "User-supplied solver category does not match that of the given inverse operator");
     }
 
     virtual void pre(domain_type&,range_type&)
