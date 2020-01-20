@@ -1059,7 +1059,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     scalar_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto tl, const auto& mat, const ParameterTree& config){
+  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto tl, const auto& /* mat */, const ParameterTree& config){
                                                using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
                                                using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
                                                return std::make_shared<Richardson<D,R>>(config);
