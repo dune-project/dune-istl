@@ -570,14 +570,14 @@ namespace Dune {
         // copy A
         ILU_.reset( new matrix_type( A ) );
         // create ILU(0) decomposition
-        bilu0_decomposition( *ILU_ );
+        ILU::blockILU0Decomposition( *ILU_ );
       }
       else
       {
         // create matrix in build mode
         ILU_.reset( new matrix_type(  A.N(), A.M(), matrix_type::row_wise) );
         // create ILU(n) decomposition
-        bilu_decomposition( A, n, *ILU_ );
+        ILU::blockILUDecomposition( A, n, *ILU_ );
       }
 
       if( resort )
@@ -608,11 +608,11 @@ namespace Dune {
     {
       if( ILU_ )
       {
-        bilu_backsolve( *ILU_, v, d);
+        ILU::blockILUBacksolve( *ILU_, v, d);
       }
       else
       {
-        ILU::bilu_backsolve(lower_, upper_, inv_, v, d);
+        ILU::blockILUBacksolve(lower_, upper_, inv_, v, d);
       }
 
       if( wNotIdentity_ )
@@ -691,7 +691,7 @@ namespace Dune {
         ILU(A) // copy A
 
     {
-      bilu0_decomposition(ILU);
+      ILU::blockILU0Decomposition(ILU);
     }
 
     /*!
@@ -710,7 +710,7 @@ namespace Dune {
       : ILU(A) // copy A
     {
       _w = configuration.get<scalar_field_type>("relaxation");
-      bilu0_decomposition(ILU);
+      ILU::blockILU0Decomposition(ILU);
     }
 
     /*!
@@ -731,7 +731,7 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      bilu_backsolve(ILU,v,d);
+      ILU::blockILUBacksolve(ILU,v,d);
       v *= _w;
     }
 
@@ -800,7 +800,7 @@ namespace Dune {
         _n(n),
         _w(w)
     {
-      bilu_decomposition(A,n,ILU);
+      ILU::blockILUDecomposition(A,n,ILU);
     }
 
     /*!
@@ -811,7 +811,7 @@ namespace Dune {
     {
       _n = configuration.get<int>("iterations");
       _w = configuration.get<scalar_field_type>("relaxation");
-      bilu_decomposition(A,_n,ILU);
+      ILU::blockILUDecomposition(A,_n,ILU);
     }
 
     /*!
@@ -832,7 +832,7 @@ namespace Dune {
      */
     virtual void apply (X& v, const Y& d)
     {
-      bilu_backsolve(ILU,v,d);
+      ILU::blockILUBacksolve(ILU,v,d);
       v *= _w;
     }
 

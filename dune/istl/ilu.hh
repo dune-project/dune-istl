@@ -386,7 +386,7 @@ namespace Dune {
       const size_type lastRow = iEnd - 1;
       if( iEnd != upper.rows() )
       {
-        DUNE_THROW(ISTLError,"ILU::bilu_backsolve: lower and upper rows must be the same");
+        DUNE_THROW(ISTLError,"ILU::blockILUBacksolve: lower and upper rows must be the same");
       }
 
       // lower triangular solve
