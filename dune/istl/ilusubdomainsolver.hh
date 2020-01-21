@@ -89,7 +89,7 @@ namespace Dune {
      */
     void apply (X& v, const Y& d)
     {
-      bilu_backsolve(this->ILU,v,d);
+      ILU::blockILUBacksolve(this->ILU,v,d);
     }
     /**
      * @brief Set the data of the local problem.
@@ -121,7 +121,7 @@ namespace Dune {
      */
     void apply (X& v, const Y& d)
     {
-      bilu_backsolve(RILU,v,d);
+      ILU::blockILUBacksolve(RILU,v,d);
     }
 
     /**
@@ -218,7 +218,7 @@ namespace Dune {
   void ILU0SubdomainSolver<M,X,Y>::setSubMatrix(const M& A, S& rowSet)
   {
     this->copyToLocalMatrix(A,rowSet);
-    bilu0_decomposition(this->ILU);
+    ILU::blockILU0Decomposition(this->ILU);
   }
 
   template<class M, class X, class Y>
@@ -228,7 +228,7 @@ namespace Dune {
     std::size_t offset=copyToLocalMatrix(A,rowSet);
     RILU.setSize(rowSet.size(),rowSet.size(), (1+2*offset)*rowSet.size());
     RILU.setBuildMode(matrix_type::row_wise);
-    bilu_decomposition(this->ILU, (offset+1)/2, RILU);
+    ILU::blockILUDecomposition(this->ILU, (offset+1)/2, RILU);
   }
 
   /** @} */
