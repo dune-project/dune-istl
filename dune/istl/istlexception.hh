@@ -4,6 +4,7 @@
 #define DUNE_ISTL_ISTLEXCEPTION_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fmatrix.hh>
 
 namespace Dune {
 
@@ -41,6 +42,15 @@ namespace Dune {
    * RestartedGMResSolver).
    */
   class SolverAbort : public ISTLError {};
+
+  //! Error when performing an operation on a matrix block
+  /**
+   * For example an error in a block LU decomposition
+   */
+  class MatrixBlockError : public virtual Dune::FMatrixError {
+  public:
+    int r, c; // row and column index of the entry from which the error resulted
+  };
 
   /** @} end documentation */
 
