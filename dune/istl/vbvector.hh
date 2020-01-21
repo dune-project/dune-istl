@@ -772,7 +772,7 @@ namespace Dune {
 
     A allocator_;
 
-    typename A::template rebind<window_type>::other windowAllocator_;
+    typename std::allocator_traits<A>::template rebind_alloc<window_type> windowAllocator_;
   };
 
 

@@ -38,7 +38,7 @@ void assign(VectorBlock& b, const V& i)
 template<class VectorBlock, class A=std::allocator<void> >
 int testVector()
 {
-  typedef typename A::template rebind<VectorBlock>::other Alloc;
+  using Alloc = typename std::allocator_traits<A>::template rebind_alloc<VectorBlock>;
   typedef Dune::BlockVector<VectorBlock, Alloc> Vector;
 
   // empty vector
