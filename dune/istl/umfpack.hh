@@ -176,11 +176,11 @@ namespace Dune {
       /** @brief The type of the domain of the solver */
       using domain_type = BlockVector<
                               FieldVector<T,m>,
-                              typename A::template rebind<FieldVector<T,m> >::other>;
+                              typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > >;
       /** @brief The type of the range of the solver */
       using range_type  = BlockVector<
                               FieldVector<T,n>,
-                              typename A::template rebind<FieldVector<T,n> >::other>;
+                              typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > >;
     };
 
     template<typename T, typename A>

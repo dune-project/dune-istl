@@ -5,6 +5,7 @@
 #include <cassert>
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <vector>
 #include <set>
 #include <dune/common/dynmatrix.hh>
@@ -786,23 +787,23 @@ namespace Dune
 
     /** @brief The type for the subdomain to row index mapping. */
     typedef std::set<size_type, std::less<size_type>,
-        typename TA::template rebind<size_type>::other>
+        typename std::allocator_traits<TA>::template rebind_alloc<size_type> >
     subdomain_type;
 
     /** @brief The vector type containing the subdomain to row index mapping. */
-    typedef std::vector<subdomain_type, typename TA::template rebind<subdomain_type>::other> subdomain_vector;
+    typedef std::vector<subdomain_type, typename std::allocator_traits<TA>::template rebind_alloc<subdomain_type> > subdomain_vector;
 
     /** @brief The type for the row to subdomain mapping. */
-    typedef SLList<size_type, typename TA::template rebind<size_type>::other> subdomain_list;
+    typedef SLList<size_type, typename std::allocator_traits<TA>::template rebind_alloc<size_type> > subdomain_list;
 
     /** @brief The vector type containing the row index to subdomain mapping. */
-    typedef std::vector<subdomain_list, typename TA::template rebind<subdomain_list>::other > rowtodomain_vector;
+    typedef std::vector<subdomain_list, typename std::allocator_traits<TA>::template rebind_alloc<subdomain_list> > rowtodomain_vector;
 
     /** @brief The type for the subdomain solver in use. */
     typedef TD slu;
 
     /** @brief The vector type containing subdomain solvers. */
-    typedef std::vector<slu, typename TA::template rebind<slu>::other> slu_vector;
+    typedef std::vector<slu, typename std::allocator_traits<TA>::template rebind_alloc<slu> > slu_vector;
 
     /**
      * @brief Construct the overlapping Schwarz method.

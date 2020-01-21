@@ -12,6 +12,7 @@
 #include <numeric>
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "istlexception.hh"
 #include "bvector.hh"
@@ -882,7 +883,7 @@ namespace Dune {
       if (n>0 && n!=Mat.n) {
         // free rows
         for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
-          rowAllocator_.destroy(riter);
+          std::allocator_traits<decltype(rowAllocator_)>::destroy(rowAllocator_, riter);
         rowAllocator_.deallocate(r,n);
       }
 
@@ -1978,11 +1979,11 @@ namespace Dune {
     BuildStage ready;               // indicate the stage the matrix building is in
 
     // The allocator used for memory management
-    typename A::template rebind<B>::other allocator_;
+    typename std::allocator_traits<A>::template rebind_alloc<B> allocator_;
 
-    typename A::template rebind<row_type>::other rowAllocator_;
+    typename std::allocator_traits<A>::template rebind_alloc<row_type> rowAllocator_;
 
-    typename A::template rebind<size_type>::other sizeAllocator_;
+    typename std::allocator_traits<A>::template rebind_alloc<size_type> sizeAllocator_;
 
     // size of the matrix
     size_type n;       // number of rows
@@ -2107,7 +2108,7 @@ namespace Dune {
         if (a)
           {
             for(B *aiter=a+(allocationSize_-1), *aend=a-1; aiter!=aend; --aiter)
-              allocator_.destroy(aiter);
+              std::allocator_traits<decltype(allocator_)>::destroy(allocator_, aiter);
             allocator_.deallocate(a,allocationSize_);
             a = nullptr;
           }
@@ -2120,7 +2121,7 @@ namespace Dune {
           {
             for (B *col=r[i].getptr()+(r[i].getsize()-1),
                  *colend = r[i].getptr()-1; col!=colend; --col) {
-              allocator_.destroy(col);
+              std::allocator_traits<decltype(allocator_)>::destroy(allocator_, col);
             }
             sizeAllocator_.deallocate(r[i].getindexptr(),1);
             allocator_.deallocate(r[i].getptr(),1);
@@ -2133,7 +2134,7 @@ namespace Dune {
       // deallocate the rows
       if (n>0 && deallocateRows && r) {
         for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
-          rowAllocator_.destroy(riter);
+          std::allocator_traits<decltype(rowAllocator_)>::destroy(rowAllocator_, riter);
         rowAllocator_.deallocate(r,n);
         r = nullptr;
       }
@@ -2146,10 +2147,10 @@ namespace Dune {
     /** \brief Class used by shared_ptr to deallocate memory using the proper allocator */
     class Deallocator
     {
-      typename A::template rebind<size_type>::other& sizeAllocator_;
+      typename std::allocator_traits<A>::template rebind_alloc<size_type>& sizeAllocator_;
 
     public:
-      Deallocator(typename A::template rebind<size_type>::other& sizeAllocator)
+      Deallocator(typename std::allocator_traits<A>::template rebind_alloc<size_type>& sizeAllocator)
         : sizeAllocator_(sizeAllocator)
       {}
 
@@ -2190,7 +2191,7 @@ namespace Dune {
           r = rowAllocator_.allocate(rows);
           // initialize row entries
           for(row_type* ri=r; ri!=r+rows; ++ri)
-            rowAllocator_.construct(ri, row_type());
+            std::allocator_traits<decltype(rowAllocator_)>::construct(rowAllocator_, ri, row_type());
         }else{
           r = 0;
         }
