@@ -30,7 +30,7 @@ namespace Dune {
     using AllocatorType = typename AllocatorTraits<T>::type;
 
     template<typename T, typename X>
-    using ReboundAllocatorType = typename AllocatorTraits<T>::type::template rebind<X>::other;
+    using ReboundAllocatorType = typename std::allocator_traits<typename AllocatorTraits<T>::type>::template rebind_alloc<X>;
 
 } // end namespace Dune
 

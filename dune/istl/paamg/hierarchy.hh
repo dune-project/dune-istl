@@ -72,7 +72,7 @@ namespace Dune
       /**
        * @brief The allocator to use for the list elements.
        */
-      typedef typename A::template rebind<Element>::other Allocator;
+      using Allocator = typename std::allocator_traits<A>::template rebind_alloc<Element>;
 
       typedef typename ConstructionTraits<T>::Arguments Arguments;
 
