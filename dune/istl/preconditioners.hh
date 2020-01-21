@@ -570,14 +570,14 @@ namespace Dune {
         // copy A
         ILU_.reset( new matrix_type( A ) );
         // create ILU(0) decomposition
-        bilu0_decomposition( *ILU_ );
+        ILU::blockILU0Decomposition( *ILU_ );
       }
       else
       {
         // create matrix in build mode
         ILU_.reset( new matrix_type(  A.N(), A.M(), matrix_type::row_wise) );
         // create ILU(n) decomposition
-        bilu_decomposition( A, n, *ILU_ );
+        ILU::blockILUDecomposition( A, n, *ILU_ );
       }
 
       if( resort )
@@ -608,11 +608,11 @@ namespace Dune {
     {
       if( ILU_ )
       {
-        bilu_backsolve( *ILU_, v, d);
+        ILU::blockILUBacksolve( *ILU_, v, d);
       }
       else
       {
-        ILU::bilu_backsolve(lower_, upper_, inv_, v, d);
+        ILU::blockILUBacksolve(lower_, upper_, inv_, v, d);
       }
 
       if( wNotIdentity_ )
