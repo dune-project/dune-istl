@@ -25,11 +25,6 @@ namespace Dune {
           @{
    */
 
-  class MatrixBlockError : public virtual Dune::FMatrixError {
-  public:
-    int r, c;
-  };
-
   namespace ILU {
 
     //! compute ILU decomposition of A. A is overwritten by its decomposition
