@@ -12,10 +12,11 @@
 #include <dune/common/deprecated.hh>
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
+
 #include "istlexception.hh"
 
 /** \file
- * \brief  ???
+ * \brief  The incomplete LU factorization kernels
  */
 
 namespace Dune {
