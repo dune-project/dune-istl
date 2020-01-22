@@ -172,7 +172,9 @@ namespace Dune{
         const ParameterTree& precConfig = config.sub("preconditioner");
         std::string prec_type = precConfig.get<std::string>("type");
         prec = PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, precConfig);
-        prec = wrapPreconditioner4Parallel(prec, op);
+        if (prec->category() != op->category() && prec->category() == SolverCategory::sequential)
+          // try to wrap to a parallel preconditioner
+          prec = wrapPreconditioner4Parallel(prec, op);
       }
       std::shared_ptr<ScalarProduct<Domain>> sp = createScalarProduct(op);
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
