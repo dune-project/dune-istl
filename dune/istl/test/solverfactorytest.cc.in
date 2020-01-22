@@ -15,6 +15,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solverfactory.hh>
+#include <dune/istl/solvercategory.hh>
 #include <dune/istl/paamg/test/anisotropic.hh>
 
 // direct solvers
@@ -117,7 +118,7 @@ void testNonoverlapping(const Dune::ParameterTree& config, Comm c){
   using MatrixBlock   = typename Operator::matrix_type::block_type;
   int N = config.get("N", 100);
   int n;
-  Communication comm(MPI_COMM_WORLD);
+  Communication comm(MPI_COMM_WORLD, Dune::SolverCategory::nonoverlapping);
   /// \todo Make discretization mimic onoverlapping.
   Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
   Vector x(mat.M()), b(mat.N());
