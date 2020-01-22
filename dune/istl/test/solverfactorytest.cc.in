@@ -161,7 +161,8 @@ int main(int argc, char** argv){
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
   std::cout << std::endl << " Testing overlapping tests... " << std::endl;
   testOverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
-  std::cout << std::endl << " Testing nonoverlapping tests... " << std::endl;
-  testNonoverlapping(config.sub("nonoverlapping"), mpihelper.getCollectiveCommunication());
+  // Still need to implement proper discretization for non-overlapping
+  // std::cout << std::endl << " Testing nonoverlapping tests... " << std::endl;
+  // testNonoverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
   return 0;
 }
