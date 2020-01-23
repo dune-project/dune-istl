@@ -364,6 +364,9 @@ namespace Dune
       int row_;
       /** @brief The norm of the current diagonal. */
       real_type diagonal_;
+    private:
+      void initRow(const Row& row, int index, const std::integral_constant<bool, false>&);
+      void initRow(const Row& row, int index, const std::integral_constant<bool, true>&);
     };
 
     /**
@@ -1401,6 +1404,18 @@ namespace Dune
 
     template<class M, class N>
     inline void SymmetricDependency<M,N>::initRow(const Row& row, int index)
+    {
+      initRow(row, index, std::is_convertible<field_type, real_type>());
+    }
+
+    template<class M, class N>
+    inline void SymmetricDependency<M,N>::initRow(const Row& row, int index, const std::integral_constant<bool, false>&)
+    {
+      DUNE_THROW(InvalidStateException, "field_type needs to convertible to real_type");
+    }
+
+    template<class M, class N>
+    inline void SymmetricDependency<M,N>::initRow(const Row& row, int index, const std::integral_constant<bool, true>&)
     {
       using std::min;
       DUNE_UNUSED_PARAMETER(row);

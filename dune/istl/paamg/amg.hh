@@ -145,6 +145,13 @@ namespace Dune
          preSteps                  | Number of presmoothing steps.
          postSteps                 | Number of postsmoothing steps.
          verbosity                 | Output verbosity. default=2
+         criterionSymmetric        | If true use SymmetricCriterion (default), else UnSymmetricCriterion
+         strengthMeasure           | What conversion to use to convert a matrix block
+                                   | to a scalar when determining strength of connection:
+                                   | diagonal (use a diagonal of row strengthIndex, default)
+                                   | rowSum (rowSum norm), frobenius (Frobenius norm)
+                                   | one (use always one and neglect the actual entries)
+          strengthIndex            | the index to use for the diagonal strength (default 0)
 
          See \ref ISTL_Factory for the ParameterTree layout and examples.
        */
@@ -201,6 +208,30 @@ namespace Dune
       bool usesDirectCoarseLevelSolver() const;
 
     private:
+      /*
+       * @brief Helper function to create hierarchies with parameter tree.
+       *
+       * Will create the coarsen criterion with the norm and  create the
+       * Hierarchies
+       * \tparam Norm Type of the norm to use.
+       */
+      template<class Norm>
+      void createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr,
+                                         const PI& pinfo, const Norm&,
+                                         const ParameterTree& configuration,
+                                         std::integral_constant<bool,true> compiles = std::integral_constant<bool,true>());
+      template<class Norm>
+      void createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr,
+                                         const PI& pinfo, const Norm&,
+                                         const ParameterTree& configuration,
+                                         std::integral_constant<bool,false>);
+      /**
+       * @brief Helper function to create hierarchies with settings from parameter tree.
+       * @param criterion Coarsen criterion to configure and use
+       */
+      template<class C>
+      void createHierarchies(C& criterion, std::shared_ptr<const Operator> matrixptr,
+                             const PI& pinfo, const ParameterTree& configuration);
       /**
        * @brief Create matrix and smoother hierarchies.
        * @param criterion The coarsening criterion.
@@ -397,10 +428,76 @@ namespace Dune
       if (configuration.hasKey ("smootherRelaxation"))
         smootherArgs_.relaxationFactor = configuration.get<typename SmootherArgs::RelaxationFactor>("smootherRelaxation");
 
-      typedef Amg::RowSum Norm;
-      typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> > Criterion;
+      auto normName = configuration.get("strengthMeasure", "diagonal");
+      auto index =  configuration.get<int>("strengthIndex", 0);
+      std::transform(normName.begin(), normName.end(), normName.begin(), ::tolower);
 
-      Criterion criterion (configuration.get<int>("maxLevel"));
+      if ( normName == "diagonal")
+      {
+        using field_type = typename M::field_type;
+        using real_type = typename FieldTraits<field_type>::real_type;
+        std::is_convertible<field_type, real_type> compiles;
+
+        switch (index)
+        {
+        case 0:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<0>(), configuration, compiles);
+          break;
+        case 1:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<1>(), configuration, compiles);
+          break;
+        case 2:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<2>(), configuration, compiles);
+          break;
+        case 3:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<3>(), configuration, compiles);
+          break;
+        case 4:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<4>(), configuration, compiles);
+          break;
+        }
+      }
+      else if (normName == "rowsum")
+        createCriterionAndHierarchies(matrixptr, pinfo, RowSum(), configuration);
+      else if (normName == "frobenius")
+        createCriterionAndHierarchies(matrixptr, pinfo, FrobeniusNorm(), configuration);
+      else if (normName == "one")
+        createCriterionAndHierarchies(matrixptr, pinfo, AlwaysOneNorm(), configuration);
+      else
+        DUNE_THROW(Dune::NotImplemented, "Wrong config file: strengthMeasure "<<normName<<" is not supported by AMG");
+    }
+
+  template<class M, class X, class S, class PI, class A>
+  template<class Norm>
+  void AMG<M,X,S,PI,A>::createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const Norm&, const ParameterTree& configuration, std::integral_constant<bool, false>)
+  {
+    DUNE_THROW(InvalidStateException, "Strength of connection measure does not support this type (std::complex?).");
+  }
+
+  template<class M, class X, class S, class PI, class A>
+  template<class Norm>
+  void AMG<M,X,S,PI,A>::createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const Norm&, const ParameterTree& configuration, std::integral_constant<bool, true>)
+  {
+    if (configuration.get<bool>("criterionSymmetric", true))
+      {
+        using Criterion = Dune::Amg::CoarsenCriterion<
+          Dune::Amg::SymmetricCriterion<typename M::matrix_type,Norm> >;
+        Criterion criterion(configuration.get<int>("maxLevel"));
+        createHierarchies(criterion, matrixptr, pinfo, configuration);
+      }
+      else
+      {
+        using Criterion = Dune::Amg::CoarsenCriterion<
+          Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> >;
+        Criterion criterion(configuration.get<int>("maxLevel"));
+        createHierarchies(criterion, matrixptr, pinfo, configuration);
+      }
+    }
+
+  template<class M, class X, class S, class PI, class A>
+  template<class C>
+  void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const ParameterTree& configuration)
+  {
 
       if (configuration.hasKey ("coarsenTarget"))
         criterion.setCoarsenTarget (configuration.get<int>("coarsenTarget"));
