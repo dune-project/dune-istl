@@ -137,6 +137,13 @@ namespace Dune
          smootherRelaxation        | The relaxation factor
          maxLevel                  | Maximum number of levels allowed in the hierarchy.
          coarsenTarget             | Maximum number of unknowns on the coarsest level.
+         minCoarseningRate         | Coarsening will stop if the rate is below this threshold.
+         accumulationMode          | If and how data is agglomerated on coarser level to
+                                   | fewer processors. ("atOnce": do agglomeration once and
+                                   | to one process; "successive": Multiple agglomerations to
+                                   | fewer proceses until all data is on one process;
+                                   | "none": Do no agglomeration at all and solve coarse level
+                                   | iteratively).
          prolongationDampingFactor | Damping factor for the prolongation.
          alpha                     | Scaling avlue for marking connections as strong.
          beta                      | Treshold for marking nodes as isolated.
@@ -144,7 +151,26 @@ namespace Dune
          gamma                     | 1 for V-cycle, 2 for W-cycle.
          preSteps                  | Number of presmoothing steps.
          postSteps                 | Number of postsmoothing steps.
-         verbosity                 | Output verbosity. default=2
+         verbosity                 | Output verbosity. default=2.
+         criterionSymmetric        | If true use SymmetricCriterion (default), else UnSymmetricCriterion
+         strengthMeasure           | What conversion to use to convert a matrix block
+                                   | to a scalar when determining strength of connection:
+                                   | diagonal (use a diagonal of row diagonalRowIndex, class Diagonal, default);
+                                   | rowSum (rowSum norm), frobenius (Frobenius norm);
+                                   | one (use always one and neglect the actual entries).
+          diagonalRowIndex         | The index to use for the diagonal strength (default 0)
+                                   | if this is i and strengthMeasure is "diagonal", then
+                                   | block[i][i] will be used when determining strength of
+                                   | connection.
+          defaultAggregationSizeMode | Whether to set default values depending on isotropy of
+                                   | problem uses parameters "defaultAggregationDimension" and
+                                   | "maxAggregateDistance" (isotropic: For and isotropic problem;
+                                   |  anisotropic: for an anisotropic problem).
+          defaultAggregationDimension | Dimension of the problem (used for setting default aggregate size).
+          maxAggregateDistance     | Maximum distance in an aggregte (in term of minimum edges needed to travel.
+                                   | one vertex to another within the aggregate).
+          minAggregateSize         | Minimum number of vertices an aggregate should consist of.
+          maxAggregateSize         | Maximum number of vertices an aggregate should consist of.
 
          See \ref ISTL_Factory for the ParameterTree layout and examples.
        */
@@ -201,6 +227,30 @@ namespace Dune
       bool usesDirectCoarseLevelSolver() const;
 
     private:
+      /*
+       * @brief Helper function to create hierarchies with parameter tree.
+       *
+       * Will create the coarsen criterion with the norm and  create the
+       * Hierarchies
+       * \tparam Norm Type of the norm to use.
+       */
+      template<class Norm>
+      void createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr,
+                                         const PI& pinfo, const Norm&,
+                                         const ParameterTree& configuration,
+                                         std::true_type compiles = std::true_type());
+      template<class Norm>
+      void createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr,
+                                         const PI& pinfo, const Norm&,
+                                         const ParameterTree& configuration,
+                                         std::false_type);
+      /**
+       * @brief Helper function to create hierarchies with settings from parameter tree.
+       * @param criterion Coarsen criterion to configure and use
+       */
+      template<class C>
+      void createHierarchies(C& criterion, std::shared_ptr<const Operator> matrixptr,
+                             const PI& pinfo, const ParameterTree& configuration);
       /**
        * @brief Create matrix and smoother hierarchies.
        * @param criterion The coarsening criterion.
@@ -319,6 +369,17 @@ namespace Dune
       SolverCategory::Category category_;
       /** @brief The verbosity level. */
       std::size_t verbosity_;
+
+      struct ToLower
+      {
+        static std::string operator()(const std::string& str)
+        {
+          std::ostrstram retval;
+          std::ostream_iterator<char> out(retval);
+          std::transform(str.begin(), str.end(), out,
+                         [](char c){ return std::tolower(c, std::locale::classic());));
+          return out.str();
+        }
     };
 
     template<class M, class X, class S, class PI, class A>
@@ -397,15 +458,132 @@ namespace Dune
       if (configuration.hasKey ("smootherRelaxation"))
         smootherArgs_.relaxationFactor = configuration.get<typename SmootherArgs::RelaxationFactor>("smootherRelaxation");
 
-      typedef Amg::RowSum Norm;
-      typedef Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> > Criterion;
+      auto normName = ToLower()(configuration.get("strengthMeasure", "diagonal"));
+      auto index =  configuration.get<int>("diagonalRowIndex", 0);
 
-      Criterion criterion (configuration.get<int>("maxLevel"));
+      if ( normName == "diagonal")
+      {
+        using field_type = typename M::field_type;
+        using real_type = typename FieldTraits<field_type>::real_type;
+        std::is_convertible<field_type, real_type> compiles;
+
+        switch (index)
+        {
+        case 0:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<0>(), configuration, compiles);
+          break;
+        case 1:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<1>(), configuration, compiles);
+          break;
+        case 2:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<2>(), configuration, compiles);
+          break;
+        case 3:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<3>(), configuration, compiles);
+          break;
+        case 4:
+          createCriterionAndHierarchies(matrixptr, pinfo, Diagonal<4>(), configuration, compiles);
+          break;
+        default:
+          DUNE_THROW(InvalidStateException, "Currently strengthIndex>4 is not supported.");
+        }
+      }
+      else if (normName == "rowsum")
+        createCriterionAndHierarchies(matrixptr, pinfo, RowSum(), configuration);
+      else if (normName == "frobenius")
+        createCriterionAndHierarchies(matrixptr, pinfo, FrobeniusNorm(), configuration);
+      else if (normName == "one")
+        createCriterionAndHierarchies(matrixptr, pinfo, AlwaysOneNorm(), configuration);
+      else
+        DUNE_THROW(Dune::NotImplemented, "Wrong config file: strengthMeasure "<<normName<<" is not supported by AMG");
+    }
+
+  template<class M, class X, class S, class PI, class A>
+  template<class Norm>
+  void AMG<M,X,S,PI,A>::createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const Norm&, const ParameterTree& configuration, std::false_type)
+  {
+    DUNE_THROW(InvalidStateException, "Strength of connection measure does not support this type ("
+               << className<typename M::field_type>() << ") as it is lacking a conversion to"
+               << className<typename FieldTraits<typename M::field_type>::real_type>() << ".");
+  }
+
+  template<class M, class X, class S, class PI, class A>
+  template<class Norm>
+  void AMG<M,X,S,PI,A>::createCriterionAndHierarchies(std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const Norm&, const ParameterTree& configuration, std::true_type)
+  {
+    if (configuration.get<bool>("criterionSymmetric", true))
+      {
+        using Criterion = Dune::Amg::CoarsenCriterion<
+          Dune::Amg::SymmetricCriterion<typename M::matrix_type,Norm> >;
+        Criterion criterion;
+        createHierarchies(criterion, matrixptr, pinfo, configuration);
+      }
+      else
+      {
+        using Criterion = Dune::Amg::CoarsenCriterion<
+          Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> >;
+        Criterion criterion;
+        createHierarchies(criterion, matrixptr, pinfo, configuration);
+      }
+    }
+
+  template<class M, class X, class S, class PI, class A>
+  template<class C>
+  void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const ParameterTree& configuration)
+  {
+      if (configuration.hasKey ("maxLevel"))
+        criterion.setMaxLevel(configuration.get<int>("maxLevel"));
+
+      if (configuration.hasKey ("minCoarseningRate"))
+        criterion.setMinCoarsenRate(configuration.get<int>("minCoarseningRate"));
 
       if (configuration.hasKey ("coarsenTarget"))
         criterion.setCoarsenTarget (configuration.get<int>("coarsenTarget"));
+
+      if (configuration.hasKey ("accumulationMode"))
+      {
+        std::string mode = ToLower()(configuration.get<std::string>("accumulationMode"));
+        if ( mode == "none")
+          criterion.setAccumulate(AccumulationMode::noAccu);
+        else if ( mode == "atonce" )
+          criterion.setAccumulate(AccumulationMode::atOnceAccu);
+        else if ( mode == "successive")
+          criterion.setCoarsenTarget (AccumulationMode::successiveAccu);
+        else
+          DUNE_THROW(InvalidSolverFactoryConfiguration, "Parameter accumulationMode does not allow value "
+                     << mode <<".");
+      }
+
       if (configuration.hasKey ("prolongationDampingFactor"))
         criterion.setProlongationDampingFactor (configuration.get<double>("prolongationDampingFactor"));
+
+      if (configuration.hasKey("defaultAggregationSizeMode"))
+      {
+        auto mode = ToLower()(configuration.get<std::string>("defaultAggregationSizeMode"));
+        auto dim = configuration.get<std::size_t>("defaultAggregationDimension");
+        std::size_t maxDistance = 2;
+        if (configuration.hasKey("MaxAggregateDistance"))
+          maxDistance = configuration.get<std::size_t>("maxAggregateDistance");
+        if (mode == "isotropic")
+          criterion.setDefaultValuesIsotropic(dim, maxDistance);
+        else if(mode == "anisotropic")
+          criterion.setDefaultValuesAnisotropic(dim, maxDistance);
+        else
+          DUNE_THROW(InvalidSolverFactoryConfiguration, "Parameter accumulationMode does not allow value "
+                   << mode <<".");
+      }
+
+      if (configuration.hasKey("maxAggregateDistance"))
+        criterion.setMaxDistance(configuration.get<std::size_t>("maxAggregateDistance"));
+
+      if (configuration.hasKey("minAggregateSize"))
+        criterion.setMinAggregateSize(configuration.get<std::size_t>("minAggregateSize"));
+
+      if (configuration.hasKey("maxAggregateSize"))
+        criterion.setMaxAggregateSize(configuration.get<std::size_t>("maxAggregateSize"));
+
+      if (configuration.hasKey("maxAggregateConnectivity"))
+        criterion.setMaxConnectivity(configuration.get<std::size_t>("maxAggregateConnectivity"));
 
       if (configuration.hasKey ("alpha"))
         criterion.setAlpha (configuration.get<double> ("alpha"));

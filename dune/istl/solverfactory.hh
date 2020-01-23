@@ -94,6 +94,8 @@ namespace Dune{
   template<class X, class Y>
   using IterativeSolverFactory = Singleton<ParameterizedObjectFactory<IterativeSolverSignature<X,Y>>>;
 
+  class InvalidSolverFactoryConfiguration : public InvalidStateException{};
+
   // initSolverFactories differs in different compilation units, so we have it
   // in an anonymous namespace
   namespace {
