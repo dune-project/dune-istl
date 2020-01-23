@@ -12,6 +12,8 @@
 
 #include <dune/common/timer.hh>
 
+#include <dune/common/hybridutilities.hh>
+
 #include "io.hh"
 #include "bvector.hh"
 #include "vbvector.hh"
@@ -212,20 +214,20 @@ namespace Dune {
           //dof doesn't belong to process but is border (not ghost)
           for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j) {
             if (mask[j.index()] == 1) //j is owner => then sum entries
-              (*j).usmv(alpha,x[j.index()],y[i.index()]);
+              Impl::asMatrix(*j).usmv(alpha,x[j.index()],y[i.index()]);
             else if (mask[j.index()] == 0) {
               std::pair<MM::iterator, MM::iterator> itp =
                 bordercontribution.equal_range(i.index());
               for (MM::iterator it = itp.first; it != itp.second; ++it)
                 if ((*it).second == (int)j.index())
-                  (*j).usmv(alpha,x[j.index()],y[i.index()]);
+                  Impl::asMatrix(*j).usmv(alpha,x[j.index()],y[i.index()]);
             }
           }
         }
         else if (mask[i.index()] == 1) {
           for (ColIterator j = (*_A_)[i.index()].begin(); j != (*_A_)[i.index()].end(); ++j)
             if (mask[j.index()] != 2)
-              (*j).usmv(alpha,x[j.index()],y[i.index()]);
+              Impl::asMatrix(*j).usmv(alpha,x[j.index()],y[i.index()]);
         }
       }
     }
