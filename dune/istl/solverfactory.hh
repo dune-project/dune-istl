@@ -47,21 +47,32 @@ namespace Dune{
        the factories with the corresponding Matrix and Vector types.
 
        @tparam O the assembled linear operator type
-       @tparam X the Domain type
-       @tparam Y the Range type
     */
-    template<class O, class X, class Y>
+    template<class O>
     int initSolverFactories(){
       using M  = typename O::matrix_type;
+      using X  = typename O::range_type;
+      using Y  = typename O::domain_type;
       using TL = Dune::TypeList<M,X,Y>;
       auto& dsfac=Dune::DirectSolverFactory<M,X,Y>::instance();
       addRegistryToFactory<TL>(dsfac, DirectSolverTag{});
-      using TLO = Dune::TypeList<O,X,Y>;
       auto& pfac=Dune::PreconditionerFactory<O,X,Y>::instance();
       addRegistryToFactory<TL>(pfac, PreconditionerTag{});
       using TLS = Dune::TypeList<X,Y>;
       auto& isfac=Dune::IterativeSolverFactory<X,Y>::instance();
       return addRegistryToFactory<TLS>(isfac, IterativeSolverTag{});
+    }
+    /* initializes the direct solvers, preconditioners and iterative solvers in
+       the factories with the corresponding Matrix and Vector types.
+
+       @tparam O the assembled linear operator type
+       @tparam X the Domain type
+       @tparam Y the Range type
+    */
+    template<class O, class X, class Y>
+    int  DUNE_DEPRECATED_MSG("Use method 'initSolverFactories<O>' instead")
+      initSolverFactories() {
+      return initSolverFactories<O>();
     }
   } // end anonymous namespace
 
