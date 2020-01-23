@@ -152,10 +152,10 @@ int main(int argc, char** argv){
   Dune::ParameterTreeParser::readINITree("solverfactorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
-  Dune::initSolverFactories<Dune::MatrixAdapter<Matrix,Vector,Vector>,Vector,Vector>();
+  Dune::initSolverFactories<Dune::MatrixAdapter<Matrix,Vector,Vector>>();
   using Communication = Dune::OwnerOverlapCopyCommunication<int>;
-  Dune::initSolverFactories<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>,Vector,Vector>();
-  Dune::initSolverFactories<Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>,Vector,Vector>();
+  Dune::initSolverFactories<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>>();
+  Dune::initSolverFactories<Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>>();
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
