@@ -151,7 +151,7 @@ namespace Dune
                                    | diagonal (use a diagonal of row diagonalRowIndex, class Diagonal, default)
                                    | rowSum (rowSum norm), frobenius (Frobenius norm)
                                    | one (use always one and neglect the actual entries)
-          diagonalRowIndex         | the index to use for the diagonal strength (default 0)
+          diagonalRowIndex         | The index to use for the diagonal strength (default 0)
                                    | if this is i and strengthMeasure is "diagonal", then
                                    | block[i][i] will be used when determining strength of
                                    | connection.
