@@ -15,13 +15,13 @@
 #include <dune/istl/solver.hh>
 
 #define DUNE_REGISTER_DIRECT_SOLVER(name, ...)                \
-  registry_put(DirectSolverTag, name, __VA_ARGS__)
+  DUNE_REGISTRY_PUT(DirectSolverTag, name, __VA_ARGS__)
 
 #define DUNE_REGISTER_PRECONDITIONER(name, ...)                \
-  registry_put(PreconditionerTag, name, __VA_ARGS__)
+  DUNE_REGISTRY_PUT(PreconditionerTag, name, __VA_ARGS__)
 
 #define DUNE_REGISTER_ITERATIVE_SOLVER(name, ...)                \
-  registry_put(IterativeSolverTag, name, __VA_ARGS__)
+  DUNE_REGISTRY_PUT(IterativeSolverTag, name, __VA_ARGS__)
 
 namespace Dune{
   /** @addtogroup ISTL_Factory
@@ -34,44 +34,44 @@ namespace Dune{
     struct IterativeSolverTag {};
   }
 
-  template<template<class,class,class,int>class Preconditioner, int l=1>
-  auto default_preconditoner_BL_creator(){
-    return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
+  template<template<class,class,class,int>class Preconditioner, int blockLevel=1>
+  auto defaultPreconditionerBlockLevelCreator(){
+    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
            {
-             using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-             std::shared_ptr<Dune::Preconditioner<D,R>> prec
-               = std::make_shared<Preconditioner<M,D,R,l>>(mat,config);
-             return prec;
+             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+               = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+             return preconditioner;
            };
   }
 
   template<template<class,class,class>class Preconditioner>
-  auto default_preconditoner_creator(){
-    return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
+  auto defaultPreconditionerCreator(){
+    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
            {
-             using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-             std::shared_ptr<Dune::Preconditioner<D,R>> prec
-               = std::make_shared<Preconditioner<M,D,R>>(mat,config);
-             return prec;
+             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
+             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+               = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+             return preconditioner;
            };
   }
 
   template<template<class...>class Solver>
-  auto default_iterative_solver_creator(){
-    return [](auto tl,
-              const auto& op,
-              const auto& sp,
-              const auto& prec,
+  auto defaultIterativeSolverCreator(){
+    return [](auto typeList,
+              const auto& linearOperator,
+              const auto& scalarProduct,
+              const auto& preconditioner,
               const Dune::ParameterTree& config)
            {
-             using D = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             std::shared_ptr<Dune::InverseOperator<D,R>> solver
-               = std::make_shared<Solver<D>>(op, sp, prec,config);
+             using Domain = typename Dune::TypeListElement<0, decltype(typeList)>::type;
+             using Range = typename Dune::TypeListElement<1, decltype(typeList)>::type;
+             std::shared_ptr<Dune::InverseOperator<Domain, Range>> solver
+               = std::make_shared<Solver<Domain>>(linearOperator, scalarProduct, preconditioner, config);
              return solver;
            };
   }
@@ -179,9 +179,9 @@ namespace Dune{
           return result;
         }
       }
-      // if no direct solver is found it is maybe an iterative solver
+      // if no direct solver is found it might be an iterative solver
       if (!IterativeSolverFactory<Domain, Range>::instance().contains(type)) {
-        DUNE_THROW(Dune::InvalidStateException, "Solver can not be found in the factory");
+        DUNE_THROW(Dune::InvalidStateException, "Solver not found in the factory.");
       }
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
@@ -189,7 +189,7 @@ namespace Dune{
         prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
       }
       if(op->category()!=SolverCategory::sequential){
-        DUNE_THROW(NotImplemented, "The solver factory is only implemented for sequential solvers yet!");
+        DUNE_THROW(NotImplemented, "The solver factory is currently only implemented for sequential solvers!");
       }
       std::shared_ptr<ScalarProduct<Domain>> sp = std::make_shared<SeqScalarProduct<Domain>>();
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
@@ -206,14 +206,14 @@ namespace Dune{
         std::string prec_type = config.get<std::string>("type");
         return PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, config);
       }else{
-        DUNE_THROW(InvalidStateException, "Cant deduce matrix from Operator. Please pass in an AssembledLinearOperator.");
+        DUNE_THROW(InvalidStateException, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
       }
     }
   };
 
   /**
-     \brief Instanciates an `InverseOperator` from an Operator and a
-     configuration given in a ParameterTree.
+     \brief Instantiates an `InverseOperator` from an Operator and a
+     configuration given as a ParameterTree.
      \param op Operator
      \param config `ParameterTree` with configuration
      \param prec Custom `Preconditioner` (optional). If not given it will be
