@@ -1241,6 +1241,14 @@ namespace Dune
     operator() (TL tl, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
                 std::enable_if_t<isValidBlockType<typename OP::matrix_type::block_type>::value,int> = 0) const
     {
+      using field_type = typename OP::matrix_type::field_type;
+      using real_type = typename FieldTraits<field_type>::real_type;
+      if (!std::is_convertible<field_type, real_type>())
+        DUNE_THROW(UnsupportedType, "AMG needs field_type(" <<
+                   className<field_type>() <<
+                   ") to be convertible to its real_type (" <<
+                   className<real_type>() <<
+                   ").");
       using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
       using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
       std::shared_ptr<Preconditioner<D,R>> amg;
