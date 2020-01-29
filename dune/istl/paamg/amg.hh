@@ -611,7 +611,7 @@ namespace Dune
         criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("preSteps"));
       postSteps_ = criterion.getNoPostSmoothSteps ();
 
-      verbosity_ = configuration.get("verbosity",2);
+      verbosity_ = configuration.get("verbosity", 0);
       criterion.setDebugLevel (verbosity_);
 
       createHierarchies(criterion, matrixptr, pinfo);
