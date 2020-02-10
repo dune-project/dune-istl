@@ -215,7 +215,7 @@ namespace Dune
 
 
     template<class T>
-    class ConstructionTraits;
+    struct ConstructionTraits;
 
     /**
      * @brief Policy for the construction of the SeqSSOR smoother

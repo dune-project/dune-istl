@@ -34,9 +34,8 @@ namespace Dune
      * too expensive.
      */
     template<typename T>
-    class ConstructionTraits
+    struct ConstructionTraits
     {
-    public:
       /**
        * @brief A type holding all the arguments needed to call the
        * constructor.
@@ -56,9 +55,8 @@ namespace Dune
     };
 
     template<class T, class A>
-    class ConstructionTraits<BlockVector<T,A> >
+    struct ConstructionTraits<BlockVector<T,A> >
     {
-    public:
       typedef const int Arguments;
       static inline std::shared_ptr<BlockVector<T,A>> construct(Arguments& n)
       {
@@ -112,9 +110,8 @@ namespace Dune
   namespace Amg
   {
     template<class M, class X, class Y, class C>
-    class ConstructionTraits<OverlappingSchwarzOperator<M,X,Y,C> >
+    struct ConstructionTraits<OverlappingSchwarzOperator<M,X,Y,C> >
     {
-    public:
       typedef ParallelOperatorArgs<M,C> Arguments;
 
       static inline std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C>> construct(const Arguments& args)
@@ -125,9 +122,8 @@ namespace Dune
     };
 
     template<class M, class X, class Y, class C>
-    class ConstructionTraits<NonoverlappingSchwarzOperator<M,X,Y,C> >
+    struct ConstructionTraits<NonoverlappingSchwarzOperator<M,X,Y,C> >
     {
-    public:
       typedef ParallelOperatorArgs<M,C> Arguments;
 
       static inline std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C>> construct(const Arguments& args)
@@ -148,9 +144,8 @@ namespace Dune
     };
 
     template<class M, class X, class Y>
-    class ConstructionTraits<MatrixAdapter<M,X,Y> >
+    struct ConstructionTraits<MatrixAdapter<M,X,Y> >
     {
-    public:
       typedef const MatrixAdapterArgs<M,X,Y> Arguments;
 
       static inline std::shared_ptr<MatrixAdapter<M,X,Y>> construct(Arguments& args)
@@ -160,9 +155,8 @@ namespace Dune
     };
 
     template<>
-    class ConstructionTraits<SequentialInformation>
+    struct ConstructionTraits<SequentialInformation>
     {
-    public:
       typedef const SequentialCommunicationArgs Arguments;
       static inline std::shared_ptr<SequentialInformation> construct(Arguments& args)
       {
@@ -174,9 +168,8 @@ namespace Dune
 #if HAVE_MPI
 
     template<class T1, class T2>
-    class ConstructionTraits<OwnerOverlapCopyCommunication<T1,T2> >
+    struct ConstructionTraits<OwnerOverlapCopyCommunication<T1,T2> >
     {
-    public:
       typedef const OwnerOverlapCopyCommunicationArgs Arguments;
 
       static inline std::shared_ptr<OwnerOverlapCopyCommunication<T1,T2>> construct(Arguments& args)
