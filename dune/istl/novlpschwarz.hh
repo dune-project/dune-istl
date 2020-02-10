@@ -250,7 +250,7 @@ namespace Dune {
 
   namespace Amg
   {
-    template<class T> class ConstructionTraits;
+    template<class T> struct ConstructionTraits;
   }
 
   /**
