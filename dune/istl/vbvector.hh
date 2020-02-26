@@ -466,7 +466,7 @@ namespace Dune {
       ~CreateIterator() {
         // When the iterator gets destructed, we allocate the memory
         // for the VariableBlockVector if
-        // 1. the current iterator was not created as enditarator
+        // 1. the current iterator was not created as enditerator
         // 2. we're at the last block
         // 3. the vector hasn't been initialized earlier
         if (not isEnd && i==v.nblocks && not v.initialized)
