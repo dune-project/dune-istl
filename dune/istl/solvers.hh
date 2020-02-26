@@ -114,7 +114,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("loopsolver", default_iterative_solver_creator<Dune::LoopSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("loopsolver", defaultIterativeSolverCreator<Dune::LoopSolver>());
 
 
   // all these solvers are taken from the SUMO library
@@ -182,7 +182,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("gradientsolver", default_iterative_solver_creator<Dune::GradientSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("gradientsolver", defaultIterativeSolverCreator<Dune::GradientSolver>());
 
   //! \brief conjugate gradient method
   template<class X>
@@ -409,7 +409,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("cgsolver", default_iterative_solver_creator<Dune::CGSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("cgsolver", defaultIterativeSolverCreator<Dune::CGSolver>());
 
   // Ronald Kriemanns BiCG-STAB implementation from Sumo
   //! \brief Bi-conjugate Gradient Stabilized (BiCG-STAB)
@@ -588,7 +588,7 @@ namespace Dune {
     template<class CountType>
     using Iteration = typename IterativeSolver<X,X>::template Iteration<CountType>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("bicgstabsolver", default_iterative_solver_creator<Dune::BiCGSTABSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("bicgstabsolver", defaultIterativeSolverCreator<Dune::BiCGSTABSolver>());
 
   /*! \brief Minimal Residual Method (MINRES)
 
@@ -792,7 +792,7 @@ namespace Dune {
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("minressolver", default_iterative_solver_creator<Dune::MINRESSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("minressolver", defaultIterativeSolverCreator<Dune::MINRESSolver>());
 
   /**
      \brief implements the Generalized Minimal Residual (GMRes) method
@@ -1097,7 +1097,7 @@ namespace Dune {
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
     int _restart;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("restartedgmressolver", default_iterative_solver_creator<Dune::RestartedGMResSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("restartedgmressolver", defaultIterativeSolverCreator<Dune::RestartedGMResSolver>());
 
   /**
      \brief implements the Flexible Generalized Minimal Residual (FGMRes) method (right preconditioned)
@@ -1265,7 +1265,7 @@ private:
     using RestartedGMResSolver<X,Y>::_restart;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("restartedflexiblegmressolver", default_iterative_solver_creator<Dune::RestartedFlexibleGMResSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("restartedflexiblegmressolver", defaultIterativeSolverCreator<Dune::RestartedFlexibleGMResSolver>());
 
   /**
    * @brief Generalized preconditioned conjugate gradient solver.
@@ -1462,7 +1462,7 @@ private:
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
     int _restart;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("generalizedpcgsolver", default_iterative_solver_creator<Dune::GeneralizedPCGSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("generalizedpcgsolver", defaultIterativeSolverCreator<Dune::GeneralizedPCGSolver>());
 
   /*! \brief Accelerated flexible conjugate gradient method
 
@@ -1640,7 +1640,7 @@ private:
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("restartedfcgsolver", default_iterative_solver_creator<Dune::RestartedFCGSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("restartedfcgsolver", defaultIterativeSolverCreator<Dune::RestartedFCGSolver>());
 
   /*! \brief Complete flexible conjugate gradient method
 
@@ -1702,7 +1702,7 @@ private:
     using RestartedFCGSolver<X>::_maxit;
     using RestartedFCGSolver<X>::_verbose;
   };
-  DUNE_REGISTER_ITERATIVE_SOLVER("completefcgsolver", default_iterative_solver_creator<Dune::CompleteFCGSolver>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("completefcgsolver", defaultIterativeSolverCreator<Dune::CompleteFCGSolver>());
   /** @} end documentation */
 } // end namespace
 

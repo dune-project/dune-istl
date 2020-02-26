@@ -13,7 +13,7 @@
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/parameterizedobject.hh>
 
-#define registry_put(Tag, id, ...)              \
+#define DUNE_REGISTRY_PUT(Tag, id, ...)               \
   namespace {                                   \
     template<>                                  \
     struct Registry<Tag, DUNE_GET_COUNTER(Tag)>       \
@@ -36,7 +36,7 @@ namespace Dune {
 
   namespace {
     template<template<class> class Base, class V, class Tag, typename... Args>
-    auto registry_get(Tag , std::string name, Args... args)
+    auto registryGet(Tag , std::string name, Args... args)
     {
       constexpr auto count = DUNE_GET_COUNTER(Tag);
       std::shared_ptr<Base<V> > result;
