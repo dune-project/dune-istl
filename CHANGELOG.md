@@ -1,5 +1,8 @@
 # Master (will become release 2.8)
 
+## Deprecations and removals
+- Drop deprecated bindings of direct solver Pardiso.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and
