@@ -17,7 +17,6 @@
 #include <dune/common/alignedallocator.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/debugalign.hh>
-#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #if HAVE_VC
@@ -156,11 +155,6 @@ void test_all(unsigned int Runs = 1)
   Dune::SeqGS<Matrix,Vector,Vector> gs(A,1,0.1);          // GS preconditioner
   Dune::SeqSOR<Matrix,Vector,Vector> sor(A,1,0.1);  // SOR preconditioner
   Dune::SeqSSOR<Matrix,Vector,Vector> ssor(A,1,0.1);      // SSOR preconditioner
-DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0/n
-  Dune::SeqILU0<Matrix,Vector,Vector> ilu0(A,0.1);        // preconditioner object
-  Dune::SeqILUn<Matrix,Vector,Vector> ilu1(A,1,0.1);     // preconditioner object
-DUNE_NO_DEPRECATED_END // for deprecated SeqILU0/n
-
   Dune::SeqILU<Matrix,Vector,Vector> ilu_0(A,0.1);       // preconditioner object
   Dune::SeqILU<Matrix,Vector,Vector> ilu_1(A,1,0.1);     // preconditioner object
 
@@ -193,8 +187,6 @@ DUNE_NO_DEPRECATED_END // for deprecated SeqILU0/n
   test_all_solvers("GaussSeidel", op,gs,N,Runs);
   test_all_solvers("SOR",         op,sor,N,Runs);
   test_all_solvers("SSOR",        op,ssor,N,Runs);
-  test_all_solvers("ILU0",        op,ilu0,N,Runs);
-  test_all_solvers("ILU1",        op,ilu1,N,Runs);
   test_all_solvers("ILU(0)",      op,ilu_0,N,Runs);
   test_all_solvers("ILU(1)",      op,ilu_1,N,Runs);
   test_all_solvers("AMG",         op,amg,N,Runs);

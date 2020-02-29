@@ -3,6 +3,9 @@
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
+- Remove deprecated preconditioner implementations `SeqILU0` and `SeqILUn`. Use
+  `SeqILU` instead, which implements incomplete LU decomposition of any order.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and

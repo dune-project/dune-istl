@@ -17,7 +17,6 @@
 #include <dune/common/alignedallocator.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/debugalign.hh>
-#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #if HAVE_VC
