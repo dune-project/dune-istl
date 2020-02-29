@@ -13,7 +13,6 @@
 #include <utility>
 #include <vector>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/dotproduct.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/fmatrix.hh>
@@ -487,32 +486,6 @@ namespace Imp {
     }
 
     /**
-     * @brief Reserve space.
-     *
-     * After calling this method the vector can hold up to
-     * capacity values. If the specified capacity is smaller
-     * than the current capacity and bigger than the current size
-     * space will be freed.
-     *
-     * If the template parameter copyOldValues is true the values will
-     * be copied. If it is false the old values are lost.
-     *
-     * @param capacity The maximum number of elements the vector
-     * needs to hold.
-     * @param copyOldValues Ignored, values are always copied.
-     *
-     * \deprecated This method is deprecated, since the extra copyOldValues
-     *             parameter is unusual, and the previous implementation did
-     *             not always reduce memory anyway.
-     */
-    DUNE_DEPRECATED_MSG("Use the overload without the second parameter, "
-                        "values are always copied")
-    void reserve(size_type capacity, bool copyOldValues)
-    {
-      reserve(capacity);
-    }
-
-    /**
      * @brief Get the capacity of the vector.
      *
      * I. e. the maximum number of elements the vector can hold.
@@ -539,33 +512,6 @@ namespace Imp {
         Imp::makeScopeGuard([this]{ syncBaseArray(); });
       storage_.resize(size);
     }
-
-    /**
-     * @brief Resize the vector.
-     *
-     * After calling this method BlockVector::N() will return size
-     * If the capacity of the vector is smaller than the specified
-     * size then reserve(size) will be called.
-     *
-     * If the template parameter copyOldValues is true the values
-     * will be copied if the capacity changes.  If it is false
-     * the old values are lost.
-     * @param size The new size of the vector.
-     * @param copyOldValues Ignored, values are always copied.
-     *
-     * \deprecated This method is deprecated, since the extra copyOldValues
-     *             parameter is unusual and conflicts with the usual meaning
-     *             (default value for newly created elements).
-     */
-    DUNE_DEPRECATED_MSG("Use the overload without the second parameter, "
-                        "values are always copied")
-    void resize(size_type size, bool copyOldValues)
-    {
-      resize(size);
-    }
-
-
-
 
     //! copy constructor
     BlockVector(const BlockVector &a)
