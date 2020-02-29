@@ -6,6 +6,9 @@
 - Remove deprecated preconditioner implementations `SeqILU0` and `SeqILUn`. Use
   `SeqILU` instead, which implements incomplete LU decomposition of any order.
 
+- Remove deprecated methods 'BlockVector::resize' and 'BlockVecotor::reserve'
+  with two arguments.
+
 - Drop support SuperLU 4.
 
 # Release 2.7
