@@ -50,15 +50,6 @@
 /* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
 #cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
 
-/* Define to 0 as all versions since SuperLu 4.0 do no longer provide it that way. */
-#define HAVE_MEM_USAGE_T_EXPANSIONS 1
-
-/* define to 1 if SuperLU header slu_ddefs.h contains SLU_DOUBLE */
-#cmakedefine SUPERLU_MIN_VERSION_4_3 @SUPERLU_MIN_VERSION_4_3@
-
-/* define to 1 if SuperLU dgssvx takes a GlobalLU_t parameter */
-#cmakedefine SUPERLU_MIN_VERSION_5 @SUPERLU_MIN_VERSION_5@
-
 /* Define to the version of dune-istl */
 #define DUNE_ISTL_VERSION "${DUNE_ISTL_VERSION}"
 

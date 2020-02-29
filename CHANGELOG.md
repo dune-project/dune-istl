@@ -6,6 +6,8 @@
 - Remove deprecated preconditioner implementations `SeqILU0` and `SeqILUn`. Use
   `SeqILU` instead, which implements incomplete LU decomposition of any order.
 
+- Drop support SuperLU 4.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and
