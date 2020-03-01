@@ -114,16 +114,21 @@ dune_symlink_to_source_files(FILES solverfactorytest.ini)
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
 
 # SuiteSparse tests
-  dune_add_test(SOURCES umfpacktest.cc)
+  dune_add_test(SOURCES umfpacktest.cc
+              CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 
-dune_add_test(SOURCES ldltest.cc)
+dune_add_test(SOURCES ldltest.cc
+              CMAKE_GUARD SuiteSparse_LDL_FOUND)
 
-dune_add_test(SOURCES spqrtest.cc)
+dune_add_test(SOURCES spqrtest.cc
+              CMAKE_GUARD SuiteSparse_SPQR_FOUND)
 
-dune_add_test(SOURCES overlappingschwarztest.cc)
+dune_add_test(SOURCES overlappingschwarztest.cc
+              CMAKE_GUARD SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
 
-dune_add_test(SOURCES cholmodtest.cc)
+dune_add_test(SOURCES cholmodtest.cc
+              CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
 
 dune_add_test(SOURCES registrytest.cc)
 

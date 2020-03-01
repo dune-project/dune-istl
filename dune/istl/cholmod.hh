@@ -1,5 +1,7 @@
 #pragma once
 
+#if HAVE_SUITESPARSE_CHOLMOD
+
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -362,3 +364,5 @@ private:
   DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());
 
 } /* namespace Dune */
+
+#endif // HAVE_SUITESPARSE_CHOLMOD
