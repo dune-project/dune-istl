@@ -29,7 +29,7 @@
 /* end private */
 
 /* Define to ENABLE_SUPERLU if the SuperLU library is available */
-#cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
+#cmakedefine01 HAVE_SUPERLU ENABLE_SUPERLU
 
 /* Define to the integer type that SuperLU was compiled for
    See e.g. what int_t is defined to in slu_sdefs.h */
