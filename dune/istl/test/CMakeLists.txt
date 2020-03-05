@@ -83,7 +83,13 @@ function(add_factory_test BLOCK)
   if(NOT _matched)
     set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "")
     configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}_direct.cc)
-    dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc)
+    dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc
+                  CMAKE_GUARD
+                  SuiteSparse_CHOLMOD_FOUND
+                  SuiteSparse_LDL_FOUND
+                  SuiteSparse_SPQR_FOUND
+                  SuiteSparse_UMFPACK_FOUND
+                  SUPERLU_FOUND)
   endif()
 endfunction(add_factory_test)
 
