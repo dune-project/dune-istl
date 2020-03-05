@@ -83,7 +83,13 @@ function(add_factory_test BLOCK)
   if(NOT _matched)
     set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "")
     configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}_direct.cc)
-    dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc)
+    dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc
+                  CMAKE_GUARD
+                  SuiteSparse_CHOLMOD_FOUND
+                  SuiteSparse_LDL_FOUND
+                  SuiteSparse_SPQR_FOUND
+                  SuiteSparse_UMFPACK_FOUND
+                  SUPERLU_FOUND)
   endif()
 endfunction(add_factory_test)
 
@@ -114,16 +120,21 @@ dune_symlink_to_source_files(FILES solverfactorytest.ini)
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
 
 # SuiteSparse tests
-  dune_add_test(SOURCES umfpacktest.cc)
+  dune_add_test(SOURCES umfpacktest.cc
+              CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 
-dune_add_test(SOURCES ldltest.cc)
+dune_add_test(SOURCES ldltest.cc
+              CMAKE_GUARD SuiteSparse_LDL_FOUND)
 
-dune_add_test(SOURCES spqrtest.cc)
+dune_add_test(SOURCES spqrtest.cc
+              CMAKE_GUARD SuiteSparse_SPQR_FOUND)
 
-dune_add_test(SOURCES overlappingschwarztest.cc)
+dune_add_test(SOURCES overlappingschwarztest.cc
+              CMAKE_GUARD SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
 
-dune_add_test(SOURCES cholmodtest.cc)
+dune_add_test(SOURCES cholmodtest.cc
+              CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
 
 dune_add_test(SOURCES registrytest.cc)
 

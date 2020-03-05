@@ -17,10 +17,7 @@ extern "C" {
          char *, float *, float *, SuperMatrix *, SuperMatrix *,
          void *, int, SuperMatrix *, SuperMatrix *,
          float *, float *, float *, float *,
-#if SUPERLU_MIN_VERSION_5
-         GlobalLU_t*,
-#endif
-         mem_usage_t *, SuperLUStat_t *, int *);
+         GlobalLU_t*, mem_usage_t *, SuperLUStat_t *, int *);
 
   extern void
   sCreate_Dense_Matrix(SuperMatrix *, int, int, float *, int,
@@ -41,10 +38,7 @@ extern "C" {
          char *, double *, double *, SuperMatrix *, SuperMatrix *,
          void *, int, SuperMatrix *, SuperMatrix *,
          double *, double *, double *, double *,
-#if SUPERLU_MIN_VERSION_5
-         GlobalLU_t*,
-#endif
-         mem_usage_t *, SuperLUStat_t *, int *);
+         GlobalLU_t*, mem_usage_t *, SuperLUStat_t *, int *);
 
   extern void
   dCreate_CompCol_Matrix(SuperMatrix *, int, int, int, double *,
@@ -69,10 +63,7 @@ extern "C" {
          char *, float *, float *, SuperMatrix *, SuperMatrix *,
          void *, int, SuperMatrix *, SuperMatrix *,
          float *, float *, float *, float *,
-#if SUPERLU_MIN_VERSION_5
-         GlobalLU_t*,
-#endif
-         mem_usage_t *, SuperLUStat_t *, int *);
+         GlobalLU_t*, mem_usage_t *, SuperLUStat_t *, int *);
 
 
   extern void
@@ -98,10 +89,7 @@ extern "C" {
          char *, double *, double *, SuperMatrix *, SuperMatrix *,
          void *, int, SuperMatrix *, SuperMatrix *,
          double *, double *, double *, double *,
-#if SUPERLU_MIN_VERSION_5
-         GlobalLU_t*,
-#endif
-         mem_usage_t *, SuperLUStat_t *, int *);
+         GlobalLU_t*, mem_usage_t *, SuperLUStat_t *, int *);
 
 
   extern void
