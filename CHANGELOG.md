@@ -1,5 +1,7 @@
 # Master (will become release 2.8)
 
+- Added pubic access of the `cholmod_common` object in class `Cholmod`.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and
