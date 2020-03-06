@@ -32,7 +32,6 @@ install(FILES
    operators.hh
    overlappingschwarz.hh
    owneroverlapcopy.hh
-   pardiso.hh
    preconditioner.hh
    preconditioners.hh
    repartition.hh

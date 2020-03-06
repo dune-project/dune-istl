@@ -19,7 +19,6 @@
 #if HAVE_MPROTECT
 #include <dune/common/debugallocator.hh>
 #endif
-#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/scalarvectorview.hh>
@@ -108,14 +107,6 @@ void testCapacity()
   for(int i=0; i<10; ++i)
     vec[i]=Dune::BlockVector<SmallVector>(10);
   ThreeLevelVector vec1=vec;
-DUNE_NO_DEPRECATED_BEGIN
-  vec.reserve(20, true);
-  vec.reserve(10, true);
-  vec.reserve(5, false);
-  vec.reserve(20, false);
-  vec.reserve(0, true);
-  vec1.reserve(0, false);
-DUNE_NO_DEPRECATED_END
 }
 
 template <class V>

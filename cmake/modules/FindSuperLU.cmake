@@ -1,7 +1,7 @@
 # .. cmake_module::
 #
 #    Module that checks whether SuperLU is available and usable.
-#    SuperLU must be 4.0 or newer.
+#    SuperLU must be 5.0 or newer.
 #
 #    Variables used by this module which you may want to set:
 #
@@ -12,15 +12,6 @@
 #
 #    :code:`SUPERLU_FOUND`
 #       True if SuperLU available and usable.
-#
-#    :code:`SUPERLU_MIN_VERSION_4`
-#       True if SuperLU version >= 4.0.
-#
-#    :code:`SUPERLU_MIN_VERSION_4_3`
-#       True if SuperLU version >= 4.3.
-#
-#    :code:`SUPERLU_MIN_VERSION_5`
-#       True if SuperLU version >= 5.0.
 #
 #    :code:`SUPERLU_WITH_VERSION`
 #       Human readable string containing version information.
@@ -58,7 +49,6 @@ find_path(SUPERLU_INCLUDE_DIR
 find_library(SUPERLU_LIBRARY
   NAMES "superlu"
         "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
-        "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0"
   PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
   PATH_SUFFIXES "lib" "lib32" "lib64"
   NO_DEFAULT_PATH
@@ -68,7 +58,6 @@ find_library(SUPERLU_LIBRARY
 find_library(SUPERLU_LIBRARY
   NAMES "superlu"
         "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
-        "superlu_4.3" "superlu_4.2" "superlu_4.1" "superlu_4.0"
   PATH_SUFFIXES "lib" "lib32" "lib64"
 )
 
@@ -92,26 +81,6 @@ endif(SUPERLU_LIBRARY)
 if(BLAS_LIBRARIES)
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
 endif(BLAS_LIBRARIES)
-# check wether version is new enough >= 4.0
-check_c_source_compiles("
-typedef int int_t;
-#include <supermatrix.h>
-#include <slu_util.h>
-int main()
-{
-  SuperLUStat_t stat;
-  stat.expansions=8;
-  return 0;
-}" SUPERLU_MIN_VERSION_4)
-
-# check whether version is at least 4.3
-check_c_source_compiles("
-#include <slu_ddefs.h>
-int main(void)
-{
-  return SLU_DOUBLE;
-}"
-SUPERLU_MIN_VERSION_4_3)
 
 # check whether version is at least 5.0
 check_c_source_compiles("
@@ -125,39 +94,17 @@ int main(void)
 }"
 SUPERLU_MIN_VERSION_5)
 
-if(SUPERLU_MIN_VERSION_4_3)
-  include(CheckIncludeFiles)
-  set(HAVE_SLU_DDEFS_H 1)
-  check_include_files(slu_sdefs.h HAVE_SLU_SDEFS_H)
-  check_include_files(slu_cdefs.h HAVE_SLU_CDEFS_H)
-  check_include_files(slu_zdefs.h HAVE_SLU_ZDEFS_H)
-endif(SUPERLU_MIN_VERSION_4_3)
+include(CheckIncludeFiles)
+set(HAVE_SLU_DDEFS_H 1)
+check_include_files(slu_sdefs.h HAVE_SLU_SDEFS_H)
+check_include_files(slu_cdefs.h HAVE_SLU_CDEFS_H)
+check_include_files(slu_zdefs.h HAVE_SLU_ZDEFS_H)
 
 cmake_pop_check_state()
 
 set(SUPERLU_INT_TYPE "int" CACHE STRING
   "The integer version that SuperLU was compiled for (Default is int.
   Should be the same as int_t define in e.g. slu_sdefs.h")
-
-if(NOT SUPERLU_MIN_VERSION_4)
-  set(SUPERLU_WITH_VERSION "SuperLU < 4.0" CACHE STRING
-    "Human readable string containing SuperLU version information.")
-else()
-  if(SUPERLU_MIN_VERSION_5)
-    set(SUPERLU_WITH_VERSION "SuperLU >= 5.0" CACHE STRING
-      "Human readable string containing SuperLU version information.")
-  elseif(SUPERLU_MIN_VERSION_4_3)
-    set(SUPERLU_WITH_VERSION "SuperLU >= 4.3" CACHE STRING
-      "Human readable string containing SuperLU version information.")
-  else()
-    set(SUPERLU_WITH_VERSION "SuperLU <= 4.2 and >= 4.0" CACHE STRING
-      "Human readable string containing SuperLU version information.")
-  endif()
-
-  if(NOT SUPERLU_MIN_VERSION_5)
-    message(AUTHOR_WARNING "Support for SuperLU 4.x is deprecated an will be removed after Dune 2.7")
-  endif()
-endif()
 
 # behave like a CMake module is supposed to behave
 include(FindPackageHandleStandardArgs)
@@ -166,10 +113,10 @@ find_package_handle_standard_args(
   DEFAULT_MSG
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
-  SUPERLU_MIN_VERSION_4
+  SUPERLU_MIN_VERSION_5
 )
 
-mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY)
+mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SUPERLU_MIN_VERSION_5)
 
 # if both headers and library are found, store results
 if(SUPERLU_FOUND)

@@ -8,7 +8,6 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
-#include <dune/common/deprecated.hh>
 #include <dune/common/propertymap.hh>
 #include <dune/common/unused.hh>
 
@@ -278,64 +277,6 @@ namespace Dune
           (args.getArgs().relaxationFactor);
       }
     };
-
-
-DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILU0
-    /**
-     * @brief Policy for the construction of the SeqILU0 smoother
-     */
-    template<class M, class X, class Y>
-    struct ConstructionTraits<SeqILU0<M,X,Y> >
-    {
-      typedef DefaultConstructionArgs<SeqILU0<M,X,Y> > Arguments;
-
-      static inline std::shared_ptr<SeqILU0<M,X,Y>> construct(Arguments& args)
-      {
-        return std::make_shared<SeqILU0<M,X,Y>>
-          (args.getMatrix(), args.getArgs().relaxationFactor);
-      }
-    };
-DUNE_NO_DEPRECATED_END // for deprecated SeqILU0
-
-DUNE_NO_DEPRECATED_BEGIN // for deprecated SeqILUn
-    template<class M, class X, class Y>
-    class ConstructionArgs<SeqILUn<M,X,Y> >
-      : public DefaultConstructionArgs<SeqILUn<M,X,Y> >
-    {
-    public:
-      ConstructionArgs(int n=1)
-        : n_(n)
-      {}
-
-      void setN(int n)
-      {
-        n_ = n;
-      }
-      int getN()
-      {
-        return n_;
-      }
-
-    private:
-      int n_;
-    };
-
-
-    /**
-     * @brief Policy for the construction of the SeqILUn smoother
-     */
-    template<class M, class X, class Y>
-    struct ConstructionTraits<SeqILUn<M,X,Y> >
-    {
-      typedef ConstructionArgs<SeqILUn<M,X,Y> > Arguments;
-
-      static inline std::shared_ptr<SeqILUn<M,X,Y>> construct(Arguments& args)
-      {
-        return std::make_shared<SeqILUn<M,X,Y>>
-          (args.getMatrix(), args.getN(), args.getArgs().relaxationFactor);
-      }
-    };
-DUNE_NO_DEPRECATED_END // for deprecated SeqILUn
 
 
     template<class M, class X, class Y>
