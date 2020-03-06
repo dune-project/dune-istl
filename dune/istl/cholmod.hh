@@ -309,6 +309,15 @@ public:
     return SolverCategory::Category::sequential;
   }
 
+  /** \brief return a reference to the CHOLMOD common object for advanced option settings
+   *  The CHOLMOD common object stores all parameters and options for the solver to run
+   *  an can be modified in several ways, see CHOLMOD Userguide for further information
+   */
+  cholmod_common& cholmodCommonObject()
+  {
+      return c_;
+  }
+
 private:
 
   // create a destrucable unique_ptr
