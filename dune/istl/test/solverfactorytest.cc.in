@@ -15,6 +15,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solverfactory.hh>
+#include <dune/istl/solvercategory.hh>
 #include <dune/istl/paamg/test/anisotropic.hh>
 
 // direct solvers
@@ -32,6 +33,7 @@
 #include <dune/istl/solvers.hh>
 
 #include <dune/istl/test/laplacian.hh>
+#include <dune/istl/paamg/test/anisotropic.hh>
 
 using Vector = Dune::BlockVector<@BLOCK@>;
 
@@ -74,19 +76,93 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
   }
 }
 
+
+template<class Comm>
+void testOverlapping(const Dune::ParameterTree& config, Comm c){
+  using Communication = Dune::OwnerOverlapCopyCommunication<int>;
+  using Operator      = Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>;
+  using MatrixBlock   = typename Operator::matrix_type::block_type;
+  int N = config.get("N", 100);
+  int n;
+  Communication comm(MPI_COMM_WORLD);
+  Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  Vector x(mat.M()), b(mat.N());
+  b=0;
+  x=100;
+  setBoundary(x, b, N, comm.indexSet());
+  comm.remoteIndices().template rebuild<false>();
+
+  std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
+
+  for(std::string test : config.getSubKeys()){
+    Dune::ParameterTree solverConfig = config.sub(test);
+    std::cout << " ============== " << test << " ============== " << std::endl;
+    try{
+      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
+      x = 0;
+      b = 1;
+      Dune::InverseOperatorResult res;
+      solver->apply(x,b,res);
+      if(!res.converged)
+        DUNE_THROW(Dune::Exception, test << " not converged!");
+    }catch(Dune::UnsupportedType& e){
+      std::cout << e.what() << std::endl;
+    }
+  }
+}
+
+template<class Comm>
+void testNonoverlapping(const Dune::ParameterTree& config, Comm c){
+  using Communication = Dune::OwnerOverlapCopyCommunication<int>;
+  using Operator      = Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>;
+  using MatrixBlock   = typename Operator::matrix_type::block_type;
+  int N = config.get("N", 100);
+  int n;
+  Communication comm(MPI_COMM_WORLD, Dune::SolverCategory::nonoverlapping);
+  /// \todo Make discretization mimic onoverlapping.
+  Matrix mat =setupAnisotropic2d<MatrixBlock>(N, comm.indexSet(), comm.communicator(), &n, 1);
+  Vector x(mat.M()), b(mat.N());
+  b=0;
+  x=100;
+  setBoundary(x, b, N, comm.indexSet());
+  comm.remoteIndices().template rebuild<false>();
+
+  std::shared_ptr<Operator> op = std::make_shared<Operator>(mat, comm);
+
+  for(std::string test : config.getSubKeys()){
+    Dune::ParameterTree solverConfig = config.sub(test);
+    std::cout << " ============== " << test << " ============== " << std::endl;
+    try{
+      std::shared_ptr<Dune::InverseOperator<Vector, Vector>> solver = getSolverFromFactory(op, solverConfig);
+      x = 0;
+      b = 1;
+      Dune::InverseOperatorResult res;
+      solver->apply(x,b,res);
+      if(!res.converged)
+        DUNE_THROW(Dune::Exception, test << " not converged!");
+    }catch(Dune::UnsupportedType& e){
+      std::cout << e.what() << std::endl;
+    }
+  }
+}
+
 int main(int argc, char** argv){
   auto& mpihelper = Dune::MPIHelper::instance(argc, argv);
   Dune::ParameterTree config;
   Dune::ParameterTreeParser::readINITree("solverfactorytest.ini", config);
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
 
-  Dune::initSolverFactories<Matrix,Vector,Vector>();
+  Dune::initSolverFactories<Dune::MatrixAdapter<Matrix,Vector,Vector>>();
+  using Communication = Dune::OwnerOverlapCopyCommunication<int>;
+  Dune::initSolverFactories<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>>();
+  Dune::initSolverFactories<Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>>();
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
   testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
-  // std::cout << std::endl << " Testing overlapping tests... " << std::endl;
-  // testOverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
-  //   std::cout << std::endl << " Testing nonoverlapping tests... " << std::endl;
-  // testNonoverlapping(config.sub("nonoverlapping"), mpihelper.getCollectiveCommunication());
+  std::cout << std::endl << " Testing overlapping tests... " << std::endl;
+  testOverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
+  // Still need to implement proper discretization for non-overlapping
+  // std::cout << std::endl << " Testing nonoverlapping tests... " << std::endl;
+  // testNonoverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
   return 0;
 }

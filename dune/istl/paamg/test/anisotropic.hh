@@ -85,9 +85,10 @@ void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int 
       (*rowIt)[rowIt.index()] = value;
   };
 
-  setDiagonal(dval, 2.0+2.0*eps);
-  setDiagonal(bone, 1.0);
-  setDiagonal(bmone, -1.0);
+  using real_type = typename Dune::FieldTraits<typename M::field_type>::real_type;
+  setDiagonal(dval, static_cast<real_type>(2.0)+static_cast<real_type>(2.0)*eps);
+  setDiagonal(bone, static_cast<real_type>(1.0));
+  setDiagonal(bmone, static_cast<real_type>(-1.0));
   setDiagonal(beps, -eps);
 
   int n = overlapEnd-overlapStart;
