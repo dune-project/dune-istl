@@ -62,6 +62,11 @@ public:
   Cholmod()
   {
     cholmod_start(&c_);
+
+    // metis_dswitch: see cholmod.h: Some METIS implementaions throw segmentation faults for large problems(like ScotchMETIS)
+    // this caused some hard to understand CI problems: see https://git.imp.fu-berlin.de/agnumpde/dune-solvers/-/merge_requests/36/
+    // this switch disables METIS for problems larger than defined in metis_nswitch (default 3000)
+    c_.metis_dswitch = 0.0;
   }
 
   /** @brief Destructor
