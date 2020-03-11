@@ -11,70 +11,15 @@
 #include <dune/common/parametertree.hh>
 #include <dune/common/singleton.hh>
 
-#include <dune/istl/common/registry.hh>
+#include "solverregistry.hh"
 #include <dune/istl/solver.hh>
-
-#define DUNE_REGISTER_DIRECT_SOLVER(name, ...)                \
-  DUNE_REGISTRY_PUT(DirectSolverTag, name, __VA_ARGS__)
-
-#define DUNE_REGISTER_PRECONDITIONER(name, ...)                \
-  DUNE_REGISTRY_PUT(PreconditionerTag, name, __VA_ARGS__)
-
-#define DUNE_REGISTER_ITERATIVE_SOLVER(name, ...)                \
-  DUNE_REGISTRY_PUT(IterativeSolverTag, name, __VA_ARGS__)
+#include <dune/istl/schwarz.hh>
+#include <dune/istl/novlpschwarz.hh>
 
 namespace Dune{
   /** @addtogroup ISTL_Factory
       @{
   */
-
-  namespace {
-    struct DirectSolverTag {};
-    struct PreconditionerTag {};
-    struct IterativeSolverTag {};
-  }
-
-  template<template<class,class,class,int>class Preconditioner, int blockLevel=1>
-  auto defaultPreconditionerBlockLevelCreator(){
-    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
-           {
-             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
-             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
-               = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
-             return preconditioner;
-           };
-  }
-
-  template<template<class,class,class>class Preconditioner>
-  auto defaultPreconditionerCreator(){
-    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
-           {
-             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
-             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
-               = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
-             return preconditioner;
-           };
-  }
-
-  template<template<class...>class Solver>
-  auto defaultIterativeSolverCreator(){
-    return [](auto typeList,
-              const auto& linearOperator,
-              const auto& scalarProduct,
-              const auto& preconditioner,
-              const Dune::ParameterTree& config)
-           {
-             using Domain = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-             using Range = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-             std::shared_ptr<Dune::InverseOperator<Domain, Range>> solver
-               = std::make_shared<Solver<Domain>>(linearOperator, scalarProduct, preconditioner, config);
-             return solver;
-           };
-  }
 
   // Direct solver factory:
   template<class M, class X, class Y>
@@ -84,7 +29,7 @@ namespace Dune{
 
   // Preconditioner factory:
   template<class M, class X, class Y>
-  using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const M&, const ParameterTree&);
+  using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const std::shared_ptr<M>&, const ParameterTree&);
   template<class M, class X, class Y>
   using PreconditionerFactory = Singleton<ParameterizedObjectFactory<PreconditionerSignature<M,X,Y>>>;
 
@@ -94,8 +39,6 @@ namespace Dune{
   template<class X, class Y>
   using IterativeSolverFactory = Singleton<ParameterizedObjectFactory<IterativeSolverSignature<X,Y>>>;
 
-  class InvalidSolverFactoryConfiguration : public InvalidStateException{};
-
   // initSolverFactories differs in different compilation units, so we have it
   // in an anonymous namespace
   namespace {
@@ -103,27 +46,76 @@ namespace Dune{
     /* initializes the direct solvers, preconditioners and iterative solvers in
        the factories with the corresponding Matrix and Vector types.
 
-       @tparam M the Matrix type
-       @tparam X the Domain type
-       @tparam Y the Range type
+       @tparam O the assembled linear operator type
     */
-    template<class M, class X, class Y>
+    template<class O>
     int initSolverFactories(){
+      using M  = typename O::matrix_type;
+      using X  = typename O::range_type;
+      using Y  = typename O::domain_type;
       using TL = Dune::TypeList<M,X,Y>;
       auto& dsfac=Dune::DirectSolverFactory<M,X,Y>::instance();
       addRegistryToFactory<TL>(dsfac, DirectSolverTag{});
-      auto& pfac=Dune::PreconditionerFactory<M,X,Y>::instance();
+      auto& pfac=Dune::PreconditionerFactory<O,X,Y>::instance();
       addRegistryToFactory<TL>(pfac, PreconditionerTag{});
       using TLS = Dune::TypeList<X,Y>;
       auto& isfac=Dune::IterativeSolverFactory<X,Y>::instance();
       return addRegistryToFactory<TLS>(isfac, IterativeSolverTag{});
     }
+    /* initializes the direct solvers, preconditioners and iterative solvers in
+       the factories with the corresponding Matrix and Vector types.
+
+       @tparam O the assembled linear operator type
+       @tparam X the Domain type
+       @tparam Y the Range type
+    */
+    template<class O, class X, class Y>
+    int  DUNE_DEPRECATED_MSG("Use method 'initSolverFactories<O>' instead")
+      initSolverFactories() {
+      return initSolverFactories<O>();
+    }
   } // end anonymous namespace
 
-  /* This exception is thrown, when the requested solver is in the factory but
-  cannot be instantiated for the required template parameters
-  */
-  class UnsupportedType : public NotImplemented {};
+
+  template<class O, class Preconditioner>
+  std::shared_ptr<Preconditioner> wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                                                              const O&)
+  {
+    return prec;
+  }
+
+  template<class M, class X, class Y, class C, class Preconditioner>
+  std::shared_ptr<Preconditioner>
+  wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                              const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return std::make_shared<BlockPreconditioner<X,Y,C,Preconditioner> >(prec, op->getCommunication());
+  }
+
+  template<class M, class X, class Y, class C, class Preconditioner>
+  std::shared_ptr<Preconditioner>
+  wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
+                              const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return std::make_shared<NonoverlappingBlockPreconditioner<C,Preconditioner> >(prec, op->getCommunication());
+  }
+
+  template<class M, class X, class Y>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<MatrixAdapter<M,X,Y> >&)
+  {
+    return std::make_shared<SeqScalarProduct<X>>();
+  }
+  template<class M, class X, class Y, class C>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return createScalarProduct<X>(op->getCommunication(), op->category());
+  }
+
+  template<class M, class X, class Y, class C>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return createScalarProduct<X>(op->getCommunication(), op->category());
+  }
 
   /**
      @brief Factory to assembly solvers configured by a `ParameterTree`.
@@ -163,6 +155,7 @@ namespace Dune{
         return &aop->getmat();
       return nullptr;
     }
+
   public:
 
     /* @brief get a solver from the factory
@@ -175,6 +168,9 @@ namespace Dune{
       const matrix_type* mat = getmat(op);
       if(mat){
         if (DirectSolverFactory<matrix_type, Domain, Range>::instance().contains(type)) {
+          if(op->category()!=SolverCategory::sequential){
+            DUNE_THROW(NotImplemented, "The solver factory does not support parallel direct solvers!");
+          }
           result = DirectSolverFactory<matrix_type, Domain, Range>::instance().create(type, *mat, config);
           return result;
         }
@@ -186,12 +182,12 @@ namespace Dune{
       if(!prec){
         const ParameterTree& precConfig = config.sub("preconditioner");
         std::string prec_type = precConfig.get<std::string>("type");
-        prec = PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, precConfig);
+        prec = PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, precConfig);
+        if (prec->category() != op->category() && prec->category() == SolverCategory::sequential)
+          // try to wrap to a parallel preconditioner
+          prec = wrapPreconditioner4Parallel(prec, op);
       }
-      if(op->category()!=SolverCategory::sequential){
-        DUNE_THROW(NotImplemented, "The solver factory is currently only implemented for sequential solvers!");
-      }
-      std::shared_ptr<ScalarProduct<Domain>> sp = std::make_shared<SeqScalarProduct<Domain>>();
+      std::shared_ptr<ScalarProduct<Domain>> sp = createScalarProduct(op);
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
       return result;
     }
@@ -204,7 +200,7 @@ namespace Dune{
       const matrix_type* mat = getmat(op);
       if(mat){
         std::string prec_type = config.get<std::string>("type");
-        return PreconditionerFactory<matrix_type, Domain, Range>::instance().create(prec_type, *mat, config);
+        return PreconditionerFactory<Operator, Domain, Range>::instance().create(prec_type, op, config);
       }else{
         DUNE_THROW(InvalidStateException, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
       }
