@@ -133,7 +133,7 @@ dune_add_test(SOURCES spqrtest.cc
               CMAKE_GUARD SuiteSparse_SPQR_FOUND)
 
 dune_add_test(SOURCES overlappingschwarztest.cc
-              CMAKE_GUARD SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND)
+              CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
 dune_add_test(SOURCES cholmodtest.cc
               CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
