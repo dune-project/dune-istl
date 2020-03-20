@@ -884,21 +884,25 @@ namespace Dune
   template<typename T, typename A>
   void mm_read_vector_entries(Dune::BlockVector<T,A>& vector,
                               std::size_t size,
-                              std::istream& istr)
+                              std::istream& istr,
+                              size_t lane)
   {
+    typedef typename Dune::BlockVector<T,A>::field_type field_type;
     for (int i=0; size>0; ++i, --size)
-      istr>>vector[i];
+        istr>>Simd::lane(lane,vector[i]);
   }
 
   template<typename T, typename A, int entries>
   void mm_read_vector_entries(Dune::BlockVector<Dune::FieldVector<T,entries>,A>& vector,
                               std::size_t size,
-                              std::istream& istr)
+                              std::istream& istr,
+                              size_t lane)
   {
+    typedef typename Dune::BlockVector<Dune::FieldVector<T,entries>,A>::field_type field_type;
     for(int i=0; size>0; ++i, --size) {
-      T val;
+      Simd::Scalar<T> val;
       istr>>val;
-      vector[i/entries][i%entries]=val;
+      Simd::lane(lane, vector[i/entries][i%entries])=val;
     }
   }
 
@@ -913,13 +917,14 @@ namespace Dune
   void readMatrixMarket(Dune::BlockVector<T,A>& vector,
                         std::istream& istr)
   {
+    typedef typename Dune::BlockVector<T,A>::field_type field_type;
     using namespace MatrixMarketImpl;
 
     MMHeader header;
     std::size_t rows, cols;
     mm_read_header(rows,cols,header,istr, true);
-    if(cols!=1)
-      DUNE_THROW(MatrixMarketFormatError, "cols!=1, therefore this is no vector!");
+    if(cols!=Simd::lanes<field_type>())
+      DUNE_THROW(MatrixMarketFormatError, "cols does not match the number of lanes in the field_type!");
 
     if(header.type!=array_type)
       DUNE_THROW(MatrixMarketFormatError, "Vectors have to be stored in array format!");
@@ -940,7 +945,9 @@ namespace Dune
       });
 
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-    mm_read_vector_entries(vector, rows, istr);
+    for(size_t l=0;l<Simd::lanes<field_type>();++l){
+      mm_read_vector_entries(vector, rows, istr, l);
+    }
   }
 
   /**
