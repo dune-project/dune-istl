@@ -25,6 +25,7 @@
 #include <dune/common/unused.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/stdstreams.hh>
+#include <dune/common/simd/simd.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
@@ -177,7 +178,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix coordinate ";
-        os<<mm_numeric_type<typename Imp::BlockTraits<T>::field_type>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<Simd::Scalar<typename Imp::BlockTraits<T>::field_type>>::str()<<" general"<<std::endl;
       }
     };
 
@@ -187,7 +188,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix array ";
-        os<<mm_numeric_type<typename Imp::BlockTraits<B>::field_type>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<Simd::Scalar<typename Imp::BlockTraits<B>::field_type>>::str()<<" general"<<std::endl;
       }
     };
 
@@ -1032,26 +1033,29 @@ namespace Dune
   // Write a vector entry
   template<typename V>
   void mm_print_vector_entry(const V& entry, std::ostream& ostr,
-                             const std::integral_constant<int,1>&)
+                             const std::integral_constant<int,1>&,
+                             size_t lane)
   {
-    ostr<<entry<<std::endl;
+    ostr<<Simd::lane(lane,entry)<<std::endl;
   }
 
   // Write a vector
   template<typename V>
   void mm_print_vector_entry(const V& vector, std::ostream& ostr,
-                             const std::integral_constant<int,0>&)
+                             const std::integral_constant<int,0>&,
+                             size_t lane)
   {
     using namespace MatrixMarketImpl;
 
     // Is the entry a supported numeric type?
-    const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
+    const int isnumeric = mm_numeric_type<Simd::Scalar<typename V::block_type>>::is_numeric;
     typedef typename V::const_iterator VIter;
 
     for(VIter i=vector.begin(); i != vector.end(); ++i)
 
       mm_print_vector_entry(*i, ostr,
-                            std::integral_constant<int,isnumeric>());
+                            std::integral_constant<int,isnumeric>(),
+                            lane);
   }
 
   template<typename T, typename A>
@@ -1072,10 +1076,13 @@ namespace Dune
                          const std::integral_constant<int,0>&)
   {
     using namespace MatrixMarketImpl;
+    typedef typename V::field_type field_type;
 
-    ostr<<countEntries(vector)<<" "<<1<<std::endl;
-    const int isnumeric = mm_numeric_type<typename V::block_type>::is_numeric;
-    mm_print_vector_entry(vector,ostr, std::integral_constant<int,isnumeric>());
+    ostr<<countEntries(vector)<<" "<<Simd::lanes<field_type>()<<std::endl;
+    const int isnumeric = mm_numeric_type<Simd::Scalar<V>>::is_numeric;
+    for(size_t l=0;l<Simd::lanes<field_type>(); ++l){
+      mm_print_vector_entry(vector,ostr, std::integral_constant<int,isnumeric>(), l);
+    }
   }
 
   // Versions for writing matrices
