@@ -1,5 +1,7 @@
 # Master (will become release 2.8)
 
+- Added public access of the `cholmod_common` object in class `Cholmod`.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
