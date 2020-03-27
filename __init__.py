@@ -1,8 +1,8 @@
-from .. import common
+import dune.common
 
-from .._istl import BCRSMatrix as BCRSMatrix11
-from .._istl import BlockVector as BlockVector1
-from .._istl import *
+from ._istl import BCRSMatrix as BCRSMatrix11
+from ._istl import BlockVector as BlockVector1
+from ._istl import *
 
 from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
