@@ -1,5 +1,11 @@
 # Master (will become release 2.8)
 
+## Deprecations and removals
+
+- The exception `ImplicitModeOverflowExhausted` has been rename to `ImplicitModeCompressionBufferExhausted`,
+  to better reflect its meaning.  The old exception is still there, but it triggers
+  a deprecation warning.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and

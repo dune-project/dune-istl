@@ -20,18 +20,27 @@ namespace Dune {
     : public ISTLError
   {};
 
-  //! The overflow error used during implicit BCRSMatrix construction was exhausted.
-  /**
-   * This error occurs if the overflow area of the BCRSMatrix
+  /** \brief Thrown when the compression buffer used by the implicit BCRSMatrix construction is exhausted
+   *
+   * This error occurs if the compression buffer of the BCRSMatrix
    * did not have room for another non-zero entry during implicit
    * mode construction.
    *
    * You can fix this problem by either increasing the average row size
-   * or the overflow fraction.
+   * or the compressionBufferSize value.
    */
-  class ImplicitModeOverflowExhausted
+  class ImplicitModeCompressionBufferExhausted
     : public BCRSMatrixError
   {};
+
+  /** \brief Alias for backward compatibility
+   *
+   * \deprecated The class ImplicitModeOverflowExhausted got renamed to ImplicitModeCompressionBufferExhausted
+   *   in dune-istl 2.8, because the old name was very misleading.  We keep the old name for
+   *   backward compatibility, but discourage its use.
+   */
+  using ImplicitModeOverflowExhausted [[deprecated("Use ImplicitModeCompressionBufferExhausted instead!")]]
+    = ImplicitModeCompressionBufferExhausted;
 
   //! Thrown when a solver aborts due to some problem.
   /**
