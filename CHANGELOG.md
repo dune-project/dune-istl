@@ -13,6 +13,10 @@
 
 - Drop support SuperLU 4.
 
+- Rename the exception `ImplicitModeOverflowExhausted` to `ImplicitModeCompressionBufferExhausted`,
+  to better reflect its meaning.  The old exception is still there, but it triggers
+  a deprecation warning.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and

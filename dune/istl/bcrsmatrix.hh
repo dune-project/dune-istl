@@ -331,68 +331,95 @@ namespace Dune {
 
      3. implicit scheme
 
-     With the above Random Scheme, the sparsity pattern has to be determined
-     and stored before the matrix is assembled. This leads to increased memory
-     usage and computation time. Often, one has good a priori
-     knowledge about the number of entries a row contains on average. `implicit`
-     mode tries to make use of that knowledge by allocating memory based on
-     that average. If a row contains more non-zeroes than the average value
-     these are stored in an auxiliary buffer during the initial assembly phase.
-     After all indices are added a compression step optimizes the matrix and
-     integrates any entries from the buffer into the standard BCRS storage
-     making use of an optional overflow area to allow rows exceeding the
-     average non-zero count. More precisely, if \f$\textrm{nnz}_j\f$ denotes the
-     number of non-zeros in the \f$j\f$-th row, then the maximal number of
-     allowed non-zeros in the \f$i\f$-th row is
+     With the 'random scheme` described above, the sparsity pattern has to be determined
+     and stored before the matrix is assembled. This requires a dedicated iteration
+     over the grid elements, which can be costly in terms of time. Also, additional
+     memory is needed to store the pattern before it can be given to the 'random' build mode.
+
+     On the other hand, often one has good a priori knowledge about the number of entries
+     a row contains on average. The `implicit` mode tries to make use of that knowledge,
+     and allows the setup of matrix pattern and numerical values together.
+
+     Constructing and filling a BCRSMatrix with the 'implicit' mode is performed in two steps:
+     In a setup phase, matrix entries with
+     numerical values can be inserted into the matrix. Then, a compression algorithm is called which defragments
+     and optimizes the memory layout. After this compression step, the matrix is
+     ready to be used, and no further nonzero entries can be added.
+
+     To use this mode, either construct a matrix object via
+
+      - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double compressionBufferSize, BuildMode bm)
+
+     or default-construct the matrix and then call
+      - setImplicitBuildModeParameters(size_type _avg, double compressionBufferSize)
+      - setSize(size_type rows, size_type columns, size_type nnz=0)
+
+     The parameter `_avg` specifies the expected number of (block) entries per matrix row.
+
+     When the BCRSMatrix object is first constructed with the 'implicit' build mode,
+     two areas for matrix entry storage are allocated:
+
+     1) A large continuous chunk of memory that can hold the expected number of entries.
+        In addition, this chunk contains an extra part of memory called the 'compression buffer',
+        located before the memory for the matrix itself.
+        The size of this buffer will be `_avg * _n * compressionBufferSize`.
+
+     2) An associative container indexed by \f$i,j\f$-pairs, which will hold surplus
+        matrix entries during the setup phase (the 'overflow area'). Its content is merged into the main
+        memory during compression.
+
+     You can then start filling your matrix by calling entry(size_type row, size_type col),
+     which returns the corresponding matrix entry, creating it on the fly if
+     it does not exist yet.
+     The matrix pattern is hence created implicitly by simply accessing nonzero entries
+     during the initial matrix assembly.  Note that new entries are not zero-initialized,
+     though, and hence the first operation on each entry has to be an assignment.
+
+     If a row contains more non-zero entries than what was specified in the _avg parameter,
+     the surplus entries are stored in the 'overflow area' during the initial setup phase.
+     After all indices are added, call compress() to trigger the compression step
+     that optimizes the matrix and
+     integrates any entries from the overflow area into the standard BCRS storage.
+     This compression step builds up the final memory layout row by row.
+     It will fail with an exception if the compression buffer is not large enough, which would lead
+     to compressed rows overwriting uncompressed ones.
+     More precisely, if \f$\textrm{nnz}_j\f$ denotes the
+     number of non-zeros in the \f$j\f$-th row, then the compression algorithm will succeed
+     if the maximal number of in the \f$i\f$-th row is
      \f[
         M_i = \textrm{avg} + A + \sum_{j<i} (\textrm{avg} - \textrm{nnz}_j)
      \f]
-     where
-     \f$ A = \textrm{avg}(n \cdot \textrm{overflowsize} +4) \f$
-     is the total size of the overflow area determined by the parameters
-     explained below.
+     for all \f$i\f$, where
+     \f$ A = \textrm{avg}(n \cdot \textrm{compressionBufferSize}) \f$
+     is the total size of the compression buffer determined by the parameters
+     explained above.
 
-     To use this mode use the following methods:
+     The data of the matrix is now located at the beginning of the allocated
+     area, and covers what used to be the compression buffer. In exchange, there is now
+     unused space at the end of the large allocated piece of memory. This will go
+     unused and cannot be freed during the lifetime of the matrix, but it has no
+     negative impact on run-time performance. No matrix entries may be added after
+     the compression step.
 
-     Construct the matrix via
-      - BCRSMatrix(size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
-      - void setSize(size_type rows, size_type columns, size_type nnz=0) after setting
-        the buildmode to implicit and the compression parameters via setImplicitBuildModeParameters(size_type _avg, double _overflow)
-
-     Here, the parameter `_avg` denotes the average number of matrix entries per row, while
-     `_overflowsize` reserves `_n * _overflowsize * _avg` entries in the overflow area.
-
-     \warning If the overflow area is exhausted during the compression step,
-              i.e., if the assertion \f$\textrm{nnz}_i \leq M_i\f$ is not matched,
-              an exception will be thrown during compress().
-
-     Start filling your matrix by calling entry(size_type row, size_type col),
-     which returns the corresponding matrix entry, creating it on the fly if
-     it did not exist yet. Please note that this method may be slightly slower than
-     accessing entries via `matrix[row][col]` after the initial assembly because
-     of the additional overhead of searching the overflow area.
-     The matrix pattern is created implicitly by simply accessing nonzero entries
-     during the initial matrix assembly.
-
-     After the entry-method has been called for each nonzero matrix entry at least once,
-     you can call compress() to reorganize the data into the standard BCRS data layout,
-     which sets the matrix state to `built`. No matrix entries may be added after
-     this step. compress() returns a value of type Dune::CompressionStatistics, which
-     you can inspect to tune the construction parameters `_avg` and `_overflowsize`.
+     The compress() method returns a value of type Dune::CompressionStatistics, which
+     you can inspect to tune the construction parameters `_avg` and `compressionBufferSize`.
 
      Use of copy constructor, assignment operator and matrix vector arithmetics
      are not supported until the matrix is fully built.
 
-     In the following sample code, an array with 28 entries will be reserved
+     The following sample code constructs a \f$ 10 \times 10\f$ matrix, with an expected
+     number of two entries per matrix row.  The compression buffer size is set to 0.4.
+     Hence the main chunk of allocated memory will be able to hold `10 * 2` entries
+     in the matrix rows, and `10 * 2 * 0.4` entries in the compression buffer.
+     In total that's 28 entries.
      \code
-     #include<dune/common/fmatrix.hh>
      #include<dune/istl/bcrsmatrix.hh>
 
-     typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > M;
+     typedef Dune::BCRSMatrix<double> M;
      M m(10, 10, 2, 0.4, M::implicit);
 
-     //fill in some arbitrary entries, even operations on these would be possible,
-     //you get a reference to the entry! the order of these statements is irrelevant!
+     // Fill in some arbitrary entries; the order is irrelevant.
+     // Even operations on these would be possible, you get a reference to the entry!
      m.entry(0,0) = 0.;
      m.entry(8,0) = 0.;
      m.entry(1,8) = 0.; m.entry(1,0) = 0.; m.entry(1,5) = 0.;
@@ -403,23 +430,32 @@ namespace Dune {
      m.entry(5,0) = 0.; m.entry(5,5) = 0.; m.entry(5,8) = 0.;
      m.entry(6,0) = 0.;
      m.entry(7,0) = 0.; m.entry(7,5) = 0.; m.entry(7,8) = 0.;
+     \endcode
 
-
-
-     // internally the index array now looks like this (second row are the row pointers):
+     Internally the index array now looks like this:
+     \code
      // xxxxxxxx0x800x500x050x050x05
      // ........|.|.|.|.|.|.|.|.|.|.
-     // and the overflow area contains (1,5,0.0), (3,8,0.0), (5,8,0.0), (7,8,0.0), (9,8,0.0)
-     // the data array has similar structure.
+     \endcode
+     The second row denotes the beginnings of the matrix rows.
+     The eight 'x' on the left are the compression buffer.
+     The overflow area contains the entries (1,5,0.0), (3,8,0.0), (5,8,0.0), (7,8,0.0),
+     and (9,8,0.0).
+     These are entries of rows 1, 3, 5, 7, and 9, which have three entries each,
+     even though only two were anticipated.
 
+     \code
      //finish building by compressing the array
      Dune::CompressionStatistics<M::size_type> stats = m.compress();
+     \endcode
 
-     // internally the index array now looks like this:
+     Internally the index array now looks like this:
+     \code
      // 00580058005800580058xxxxxxxx
      // ||..||..||..||..||..........
-
      \endcode
+     The compression buffer on the left is gone now, and the matrix has a real CRS layout.
+     The 'x' on the right will be unused for the rest of the matrix' lifetime.
    */
   template<class B, class A=std::allocator<B> >
   class BCRSMatrix
@@ -701,21 +737,21 @@ namespace Dune {
 
     //===== constructors & resizers
 
-    // we use a negative overflowsize to indicate that the implicit
+    // we use a negative compressionBufferSize to indicate that the implicit
     // mode parameters have not been set yet
 
     //! an empty matrix
     BCRSMatrix ()
       : build_mode(unknown), ready(notAllocated), n(0), m(0), nnz_(0),
         allocationSize_(0), r(0), a(0),
-        avg(0), overflowsize(-1.0)
+        avg(0), compressionBufferSize_(-1.0)
     {}
 
     //! matrix with known number of nonzeroes
     BCRSMatrix (size_type _n, size_type _m, size_type _nnz, BuildMode bm)
       : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
         allocationSize_(0), r(0), a(0),
-        avg(0), overflowsize(-1.0)
+        avg(0), compressionBufferSize_(-1.0)
     {
       allocate(_n, _m, _nnz,true,false);
     }
@@ -724,7 +760,7 @@ namespace Dune {
     BCRSMatrix (size_type _n, size_type _m, BuildMode bm)
       : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
         allocationSize_(0), r(0), a(0),
-        avg(0), overflowsize(-1.0)
+        avg(0), compressionBufferSize_(-1.0)
     {
       allocate(_n, _m,0,true,false);
     }
@@ -736,22 +772,22 @@ namespace Dune {
      * @param _n number of rows of the matrix
      * @param _m number of columns of the matrix
      * @param _avg expected average number of entries per row
-     * @param _overflowsize fraction of _n*_avg which is expected to be
+     * @param compressionBufferSize fraction of _n*_avg which is expected to be
      *   needed for elements that exceed _avg entries per row.
      *
      */
-    BCRSMatrix (size_type _n, size_type _m, size_type _avg, double _overflowsize, BuildMode bm)
+    BCRSMatrix (size_type _n, size_type _m, size_type _avg, double compressionBufferSize, BuildMode bm)
       : build_mode(bm), ready(notAllocated), n(0), m(0), nnz_(0),
         allocationSize_(0), r(0), a(0),
-        avg(_avg), overflowsize(_overflowsize)
+        avg(_avg), compressionBufferSize_(compressionBufferSize)
     {
       if (bm != implicit)
         DUNE_THROW(BCRSMatrixError,"Only call this constructor when using the implicit build mode");
-      // Prevent user from setting a negative overflowsize:
+      // Prevent user from setting a negative compression buffer size:
       // 1) It doesn't make sense
-      // 2) We use a negative overflow value to indicate that the parameters
+      // 2) We use a negative value to indicate that the parameters
       //    have not been set yet
-      if (_overflowsize < 0.0)
+      if (compressionBufferSize_ < 0.0)
         DUNE_THROW(BCRSMatrixError,"You cannot set a negative overflow fraction");
       implicit_allocate(_n,_m);
     }
@@ -764,7 +800,7 @@ namespace Dune {
     BCRSMatrix (const BCRSMatrix& Mat)
       : build_mode(Mat.build_mode), ready(notAllocated), n(0), m(0), nnz_(0),
         allocationSize_(0), r(0), a(0),
-        avg(Mat.avg), overflowsize(Mat.overflowsize)
+        avg(Mat.avg), compressionBufferSize_(Mat.compressionBufferSize_)
     {
       if (!(Mat.ready == notAllocated || Mat.ready == built))
         DUNE_THROW(InvalidStateException,"BCRSMatrix can only be copy-constructed when source matrix is completely empty (size not set) or fully built)");
@@ -842,23 +878,23 @@ namespace Dune {
      * Use this method before setSize() to define storage behaviour of a matrix
      * in implicit build mode
      * @param _avg expected average number of entries per row
-     * @param _overflowsize fraction of _n*_avg which is expected to be
+     * @param compressionBufferSize fraction of _n*_avg which is expected to be
      *   needed for elements that exceed _avg entries per row.
      */
-    void setImplicitBuildModeParameters(size_type _avg, double _overflow)
+    void setImplicitBuildModeParameters(size_type _avg, double compressionBufferSize)
     {
-      // Prevent user from setting a negative overflowsize:
+      // Prevent user from setting a negative compression buffer size:
       // 1) It doesn't make sense
-      // 2) We use a negative overflow value to indicate that the parameters
+      // 2) We use a negative value to indicate that the parameters
       //    have not been set yet
-      if (_overflow < 0.0)
-        DUNE_THROW(BCRSMatrixError,"You cannot set a negative overflow fraction");
+      if (compressionBufferSize < 0.0)
+        DUNE_THROW(BCRSMatrixError,"You cannot set a negative compressionBufferSize value");
 
       // make sure the parameters aren't changed after memory has been allocated
       if (ready != notAllocated)
         DUNE_THROW(InvalidStateException,"You cannot modify build mode parameters at this stage anymore");
       avg = _avg;
-      overflowsize = _overflow;
+      compressionBufferSize_ = compressionBufferSize;
     }
 
     /**
@@ -1293,7 +1329,7 @@ namespace Dune {
         //modify index array
         *end = col;
 
-        //do simulatenous operations on data array a
+        //do simultaneous operations on data array a
         std::ptrdiff_t offset = end - r[row].getindexptr();
         B* apos = r[row].getptr() + offset;
 
@@ -1339,7 +1375,7 @@ namespace Dune {
       //get iterator to the smallest overflow element
       typename OverflowType::iterator oit = overflow.begin();
 
-      //store a copy of index pointers on which to perform sortation
+      //store a copy of index pointers on which to perform sorting
       std::vector<size_type*> perm;
 
       //iterate over all rows and copy elements into their position in the compressed array
@@ -1370,9 +1406,9 @@ namespace Dune {
           {
             //check whether there is enough memory to write to
             if (jiit > begin)
-              DUNE_THROW(Dune::ImplicitModeOverflowExhausted,
+              DUNE_THROW(Dune::ImplicitModeCompressionBufferExhausted,
                          "Allocated memory for BCRSMatrix exhausted during compress()!"
-                         "Please increase either the average number of entries per row or the overflow fraction."
+                         "Please increase either the average number of entries per row or the compressionBufferSize value."
                          );
             //copy an element from the overflow area to the insertion position in a and j
             *jiit = oit->first.second;
@@ -1385,9 +1421,9 @@ namespace Dune {
 
           //check whether there is enough memory to write to
           if (jiit > begin)
-              DUNE_THROW(Dune::ImplicitModeOverflowExhausted,
+              DUNE_THROW(Dune::ImplicitModeCompressionBufferExhausted,
                          "Allocated memory for BCRSMatrix exhausted during compress()!"
-                         "Please increase either the average number of entries per row or the overflow fraction."
+                         "Please increase either the average number of entries per row or the compressionBufferSize value."
                          );
 
           //copy element from array
@@ -1403,9 +1439,9 @@ namespace Dune {
         {
           //check whether there is enough memory to write to
           if (jiit > begin)
-              DUNE_THROW(Dune::ImplicitModeOverflowExhausted,
+              DUNE_THROW(Dune::ImplicitModeCompressionBufferExhausted,
                          "Allocated memory for BCRSMatrix exhausted during compress()!"
-                         "Please increase either the average number of entries per row or the overflow fraction."
+                         "Please increase either the average number of entries per row or the compressionBufferSize value."
                          );
 
           //copy and element from the overflow area to the insertion position in a and j
@@ -2003,7 +2039,7 @@ namespace Dune {
 
     // additional data is needed in implicit buildmode
     size_type avg;
-    double overflowsize;
+    double compressionBufferSize_;
 
     typedef std::map<std::pair<size_type,size_type>, B> OverflowType;
     OverflowType overflow;
@@ -2239,10 +2275,10 @@ namespace Dune {
         DUNE_THROW(InvalidStateException,"memory has already been allocated");
 
       // check to make sure the user has actually set the parameters
-      if (overflowsize < 0)
+      if (compressionBufferSize_ < 0)
         DUNE_THROW(InvalidStateException,"You have to set the implicit build mode parameters before starting to build the matrix");
       //calculate size of overflow region, add buffer for row sort!
-      size_type osize = (size_type) (_n*avg)*overflowsize + 4*avg;
+      size_type osize = (size_type) (_n*avg)*compressionBufferSize_ + 4*avg;
       allocationSize_ = _n*avg + osize;
 
       allocate(_n, _m, allocationSize_,true,true);
