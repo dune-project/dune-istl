@@ -2,6 +2,14 @@
 
 - Added public access of the `cholmod_common` object in class `Cholmod`.
 
+- Python bindings have been moved from the `dune-python` module which is now
+  obsolete.
+  Note that for `dune-istl` bindings are still very much work in progress.
+  To activate Python bindings the CMake flag
+  `DUNE_ENABLE_PYTHONBINDINGS` needs to be turned on (default is off).
+  Furthermore, flags for either shared library or position independent code
+  needs to be used.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
