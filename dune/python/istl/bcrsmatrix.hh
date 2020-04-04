@@ -6,17 +6,14 @@
 #include <string>
 #include <tuple>
 
-#include <dune/common/fmatrix.hh>
-#include <dune/common/fvector.hh>
+#include <dune/python/common/fvecmatregistry.hh>
 
-#if HAVE_DUNE_ISTL
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/matrixmarket.hh>
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/operators.hh>
-#endif // #if HAVE_DUNE_ISTL
 
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
@@ -74,7 +71,6 @@ namespace Dune
     // registerBCRSMatrix
     // ------------------
 
-#if HAVE_DUNE_ISTL
     template <class BCRSMatrix, class... options>
     void registerBCRSMatrix(pybind11::handle scope,
                             pybind11::class_<BCRSMatrix, options...> cls)
@@ -82,13 +78,12 @@ namespace Dune
       using pybind11::operator""_a;
       typedef typename BCRSMatrix::block_type block_type;
       typedef typename BCRSMatrix::field_type field_type;
-      //typedef typename FieldTraits< field_type >::real_type real_type;
       typedef typename BCRSMatrix::size_type Size;
       typedef typename BCRSMatrix::row_type row_type;
 
       typedef typename BCRSMatrix::BuildMode BuildMode;
-      //need one of thses for istl buildmode
-      //typedef typename istl::BuildMode istlBuildMode;
+
+      registerFieldVecMat<block_type>::apply();
 
       pybind11::class_< row_type > clsRow( scope, "BCRSMatrixRow" );
       registerBlockVector( clsRow );
@@ -180,7 +175,7 @@ namespace Dune
           if( row >= self.N() )
             throw pybind11::index_error( "No such row: " + std::to_string( row ) );
           return self[ row ];
-        }, pybind11::return_value_policy::reference, pybind11::keep_alive< 0, 1 >() );
+        }, pybind11::return_value_policy::reference); // , pybind11::keep_alive< 0, 1 >() );
       cls.def( "__getitem__", [] ( BCRSMatrix &self, std::tuple< Size, Size > index ) -> block_type & {
           const Size row = std::get< 0 >( index );
           if( row >= self.N() )
@@ -340,11 +335,10 @@ namespace Dune
       auto cls = Dune::Python::insertClass< BCRSMatrix >( scope, clsName, Dune::Python::GenerateTypeName(matrixTypename), Dune::Python::IncludeFiles{"dune/istl/bcrsmatrix.hh","dune/python/istl/bcrsmatrix.hh"});
       if(cls.second)
       {
-      registerBCRSMatrix( scope, cls.first );
+        registerBCRSMatrix( scope, cls.first );
       }
       return cls.first;
     }
-#endif // #if HAVE_DUNE_ISTL
 
   } // namespace Python
 

@@ -4,11 +4,9 @@
 #include <dune/common/typeutilities.hh>
 #include <dune/common/version.hh>
 
-#if HAVE_DUNE_ISTL
 #include <dune/istl/solver.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
-#endif // #if HAVE_DUNE_ISTL
 
 #include <dune/python/istl/preconditioners.hh>
 
@@ -84,7 +82,6 @@ namespace Dune
       // registerEndomorphismSolvers
       // ---------------------------
 
-#if HAVE_DUNE_ISTL
       template< class X, class Y, class... options >
       inline std::enable_if_t< std::is_same< X, Y >::value >
       registerEndomorphismSolvers ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options... >, PriorityTag< 1 > )
@@ -204,7 +201,6 @@ namespace Dune
       {
         registerEndomorphismSolvers( module, cls, PriorityTag< 42 >() );
       }
-#endif // #if HAVE_DUNE_ISTL
 
     } // namespace detail
 
@@ -213,7 +209,6 @@ namespace Dune
     // registerSolvers
     // ---------------
 
-#if HAVE_DUNE_ISTL
     template< class X, class Y, class... options >
     inline void registerSolvers ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options... > cls )
     {
@@ -251,7 +246,6 @@ namespace Dune
                 This can lead to a large memory consumption.
           )doc" );
     }
-#endif // #if HAVE_DUNE_ISTL
 
   } // namespace Python
 

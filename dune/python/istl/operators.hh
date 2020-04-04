@@ -3,9 +3,7 @@
 
 #include <dune/common/typeutilities.hh>
 
-#if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
-#endif // #if HAVE_DUNE_ISTL
 
 #include <dune/python/pybind11/pybind11.h>
 

@@ -12,17 +12,14 @@
 
 //this added otherwise insert class wasn't possible on line ~190
 #include <dune/python/common/typeregistry.hh>
-
-
+#include <dune/python/common/fvecmatregistry.hh>
 #include <dune/python/common/string.hh>
 #include <dune/python/common/vector.hh>
 #include <dune/python/istl/iterator.hh>
 #include <dune/python/pybind11/operators.h>
 #include <dune/python/pybind11/pybind11.h>
 
-#if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
-#endif // #if HAVE_DUNE_ISTL
 
 namespace Dune
 {
@@ -44,7 +41,6 @@ namespace Dune
       }
 
 
-#if HAVE_DUNE_ISTL
       template< class B, class A >
       inline static void copy ( const char *ptr, const ssize_t *shape, const ssize_t *strides, Dune::BlockVector< B, A > &v )
       {
@@ -52,7 +48,6 @@ namespace Dune
         for( ssize_t i = 0; i < *shape; ++i )
           copy( ptr + i*(*strides), shape+1, strides+1, v[ i ] );
       }
-#endif // #if HAVE_DUNE_ISTL
 
 
       template< class BlockVector >
@@ -111,6 +106,8 @@ namespace Dune
       typedef typename BlockVector::field_type field_type;
       typedef typename BlockVector::block_type block_type;
       typedef typename BlockVector::size_type size_type;
+
+      registerFieldVecMat<block_type>::apply();
 
       using pybind11::operator""_a;
 

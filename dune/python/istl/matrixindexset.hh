@@ -9,9 +9,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
-#if HAVE_DUNE_ISTL
 #include <dune/istl/matrixindexset.hh>
-#endif // #if HAVE_DUNE_ISTL
 
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
@@ -25,7 +23,6 @@ namespace Dune
     // registermatrixindexset
     // ------------------
 
-#if HAVE_DUNE_ISTL
     template <class MatrixIndexSet, class... options>
     void registerMatrixIndexSet(pybind11::handle scope,
                             pybind11::class_<MatrixIndexSet, options...> cls)
@@ -48,7 +45,6 @@ namespace Dune
       registerMatrixIndexSet( scope, cls );
       return cls;
     }
-#endif // #if HAVE_DUNE_ISTL
 
   } // namespace Python
 

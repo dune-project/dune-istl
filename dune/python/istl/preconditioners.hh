@@ -4,11 +4,9 @@
 #include <dune/common/typeutilities.hh>
 #include <dune/common/version.hh>
 
-#if HAVE_DUNE_ISTL
 #include <dune/istl/operators.hh>
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/preconditioners.hh>
-#endif // #if HAVE_DUNE_ISTL
 
 #include <dune/python/pybind11/pybind11.h>
 
@@ -21,7 +19,6 @@ namespace Dune
     // registerPreconditioner
     // ----------------------
 
-#if HAVE_DUNE_ISTL
     template< class Preconditioner, class... options >
     inline void registerPreconditioner ( pybind11::class_< Preconditioner, options... > cls )
     {
@@ -47,14 +44,12 @@ namespace Dune
 
       cls.def_property_readonly( "category", [] ( const Preconditioner &self ) { return self.category(); } );
     }
-#endif // #if HAVE_DUNE_ISTL
 
 
 
     // registerPreconditioners
     // -----------------------
 
-#if HAVE_DUNE_ISTL
     template< class X, class Y, class... options >
     inline void registerPreconditioners ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options...  > cls )
     {
@@ -84,9 +79,7 @@ namespace Dune
               This is a sequential preconditioner.
         )doc" );
     }
-#endif // #if HAVE_DUNE_ISTL
 
-#if HAVE_DUNE_ISTL
     template< class M, class X, class Y, class... options >
     inline void registerMatrixPreconditioners ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options... > cls )
     {
@@ -208,7 +201,6 @@ namespace Dune
               given matrix, however only L and D are actually stored.
         )doc" );
     }
-#endif // #if HAVE_DUNE_ISTL
 
   } // namespace Python
 
