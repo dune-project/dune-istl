@@ -77,7 +77,8 @@ set(DUNE_TEST_FACTORY_BLOCK_SIZES
 function(add_factory_test BLOCK)
   STRING(REGEX REPLACE "[^a-zA-Z0-9]" "" BLOCK_CLEAN ${BLOCK})
   configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}.cc)
-  dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc)
+  dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc
+                CMAKE_GUARD HAVE_MPI)
 endfunction(add_factory_test)
 
 foreach(FIELD_TYPE ${DUNE_TEST_FACTORY_FIELD_TYPES})
