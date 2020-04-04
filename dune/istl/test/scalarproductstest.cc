@@ -115,6 +115,7 @@ int main(int argc, char** argv)
     scalarProductTest<ScalarProduct, Vector>(scalarProduct,numBlocks);
   }
 
+#if HAVE_MPI
   // Test the ParallelScalarProduct class
   {
     using Vector = BlockVector<FieldVector<double,BlockSize> >;
@@ -139,6 +140,7 @@ int main(int argc, char** argv)
     ScalarProduct scalarProduct(communicator,SolverCategory::nonoverlapping);
     scalarProductTest<ScalarProduct, Vector>(scalarProduct,numBlocks);
   }
+#endif
 
   return t.exit();
 }
