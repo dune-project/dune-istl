@@ -1,0 +1,11 @@
+from setuptools import setup, find_packages
+
+setup(name="dune.istl",
+    namespace_packages=['dune'],
+    description="Python lib for dune: dune-alugrid library",
+    version="${DUNE_ISTL_VERSION}",
+    author="Andreas Dedner and Martin Nolte",
+    packages = find_packages(),
+    zip_safe = 0,
+    package_data = {'': ['*.so']}
+  )

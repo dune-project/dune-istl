@@ -28,5 +28,11 @@ add_subdirectory(dune)
 add_subdirectory(doc)
 add_subdirectory(lib)
 
+# if Python bindings are enabled, include necessary sub directories.
+if( DUNE_ENABLE_PYTHONBINDINGS )
+  add_subdirectory(python)
+  dune_python_install_package(PATH python)
+endif()
+
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
