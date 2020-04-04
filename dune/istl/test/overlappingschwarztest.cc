@@ -257,7 +257,6 @@ Dune::TestSuite test(int argc, char** argv)
 
 int main(int argc, char** argv){
   Dune::TestSuite suite;
-  suite.require(HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK) << "You need SuperLU or SuiteSparse's UMFPack to run this test.";
   suite.subTest(test<Dune::FieldMatrix<double, 1, 1>, Dune::FieldVector<double, 1>>(argc, argv));
   suite.subTest(test<double, double>(argc, argv));
   return suite.exit();
