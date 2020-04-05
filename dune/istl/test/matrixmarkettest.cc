@@ -52,7 +52,7 @@ int testMatrixMarket(int N)
   storeMatrixMarket(mat, std::string("testmat"), comm);
   storeMatrixMarket(bv, std::string("testvec"), comm, false);
 #else
-  typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
+  typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
   Operator op(mat);
   op.apply(bv, cv);
 
