@@ -257,7 +257,7 @@ namespace Dune {
       real_type result = 0.0;
       // Compute max norm tracking appearing nan values
       // if the field type supports nan.
-      ifElse(HasNaN<field_type>(), [&](auto&& id) {
+      if constexpr (HasNaN<field_type>()) {
         // This variable will preserve any nan value
         real_type nanTracker = 1.0;
         using namespace Dune::Hybrid; // needed for icc, see issue #31
@@ -268,12 +268,12 @@ namespace Dune {
         });
         // Incorporate possible nan value into result
         result *= (nanTracker / nanTracker);
-      }, [&](auto&& id) {
+      } else {
         using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(*this, [&](auto&& entry) {
           result = max(entry.infinity_norm(), result);
         });
-      });
+      }
       return result;
     }
 
@@ -288,7 +288,7 @@ namespace Dune {
       real_type result = 0.0;
       // Compute max norm tracking appearing nan values
       // if the field type supports nan.
-      ifElse(HasNaN<field_type>(), [&](auto&& id) {
+      if constexpr (HasNaN<field_type>()) {
         // This variable will preserve any nan value
         real_type nanTracker = 1.0;
         using namespace Dune::Hybrid; // needed for icc, see issue #31
@@ -299,12 +299,12 @@ namespace Dune {
         });
         // Incorporate possible nan value into result
         result *= (nanTracker / nanTracker);
-      }, [&](auto&& id) {
+      } else {
         using namespace Dune::Hybrid; // needed for icc, see issue #31
         forEach(*this, [&](auto&& entry) {
           result = max(entry.infinity_norm_real(), result);
         });
-      });
+      }
       return result;
     }
 
