@@ -925,19 +925,18 @@ namespace Dune
       DUNE_THROW(MatrixMarketFormatError, "Vectors have to be stored in array format!");
 
 
-    Dune::Hybrid::ifElse(Dune::IsNumber<T>(),
-      [&](auto id){
-        vector.resize(rows);
-      },
-      [&](auto id){  // Assume that T is a FieldVector
+    if constexpr (Dune::IsNumber<T>())
+      vector.resize(rows);
+    else
+    {
         T dummy;
-        auto blocksize = id(dummy).size();
+        auto blocksize = dummy.size();
         std::size_t size=rows/blocksize;
         if(size*blocksize!=rows)
           DUNE_THROW(MatrixMarketFormatError, "Block size of vector is not correct!");
 
         vector.resize(size);
-      });
+    }
 
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
     mm_read_vector_entries(vector, rows, istr);
@@ -1009,17 +1008,16 @@ namespace Dune
                       std::size_t colidx,
                       std::ostream& ostr)
   {
-    Hybrid::ifElse(IsNumber<B>(),
-      [&](auto id) {
-        ostr << rowidx << " " << colidx << " " << entry << std::endl;
-      },
-      [&](auto id) {
-        for (auto row=id(entry).begin(); row != id(entry).end(); ++row, ++rowidx) {
-          int coli=colidx;
-          for (auto col = row->begin(); col != row->end(); ++col, ++coli)
-            ostr<< rowidx<<" "<<coli<<" "<<*col<<std::endl;
-        }
-      });
+    if constexpr (IsNumber<B>())
+      ostr << rowidx << " " << colidx << " " << entry << std::endl;
+    else
+    {
+      for (auto row=entry.begin(); row != entry.end(); ++row, ++rowidx) {
+        int coli=colidx;
+        for (auto col = row->begin(); col != row->end(); ++col, ++coli)
+          ostr<< rowidx<<" "<<coli<<" "<<*col<<std::endl;
+      }
+    }
   }
 
   // Write a vector entry
