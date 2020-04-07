@@ -7,7 +7,6 @@
 #include <dune/common/classname.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/test/testsuite.hh>
-#include <dune/common/hybridutilities.hh>
 #include <dune/common/scalarvectorview.hh>
 
 template<typename T>
@@ -70,40 +69,36 @@ Dune::TestSuite DotProductTest(const size_t numBlocks,const size_t blockSizeOrCa
   ct result = ct();
 
   // blockwise dot tests
-  Dune::Hybrid::ifElse(Dune::Std::negation<Dune::IsNumber<RealBlockType>>(),
-    [&](auto id) {
-      result = ct();
-      for(size_type i=0; i < numBlocks; ++i) {
-        result += dot(id(one[i]),id(one[i])) + (id(one[i])).dot(id(one[i]));
-      }
-
-      t.check(std::abs(result-ct(2)*ctlength)<= myEps);
-
-      result = ct();
-      for(size_type i=0; i < numBlocks; ++i) {
-        result += dot(id(iVec[i]),id(iVec[i]))+ (id(iVec[i])).dot(id(iVec[i]));
-      }
-
-      t.check(std::abs(result-ct(2)*ctlength)<= myEps);
-
-      // blockwise dotT / operator * tests
-      result = ct();
-      for(size_type i=0; i < numBlocks; ++i) {
-        result += dotT(id(one[i]),id(one[i])) + id(one[i])*id(one[i]);
-      }
-
-      t.check(std::abs(result-ct(2)*ctlength)<= myEps);
-
-      result = ct();
-      for(size_type i=0; i < numBlocks; ++i) {
-        result += dotT(id(iVec[i]),id(iVec[i])) + id(iVec[i])*id(iVec[i]);
-      }
-
-      t.check(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
+  if constexpr (!Dune::IsNumber<RealBlockType>{}){
+    result = ct();
+    for(size_type i=0; i < numBlocks; ++i) {
+      result += dot(one[i],one[i]) + (one[i]).dot(one[i]);
     }
-    ,
-    [&](auto id){}
-  );  // end Hybrid::ifElse
+
+    t.check(std::abs(result-ct(2)*ctlength)<= myEps);
+
+    result = ct();
+    for(size_type i=0; i < numBlocks; ++i) {
+      result += dot(iVec[i],iVec[i])+ (iVec[i]).dot(iVec[i]);
+    }
+
+    t.check(std::abs(result-ct(2)*ctlength)<= myEps);
+
+    // blockwise dotT / operator * tests
+    result = ct();
+    for(size_type i=0; i < numBlocks; ++i) {
+      result += dotT(one[i],one[i]) + one[i]*one[i];
+    }
+
+    t.check(std::abs(result-ct(2)*ctlength)<= myEps);
+
+    result = ct();
+    for(size_type i=0; i < numBlocks; ++i) {
+      result += dotT(iVec[i],iVec[i]) + iVec[i]*iVec[i];
+    }
+
+    t.check(std::abs(result-complexSign*ct(2)*ctlength)<= myEps);
+  }
 
   // global operator * tests
   result = one*one +  dotT(one,one);
