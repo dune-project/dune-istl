@@ -388,23 +388,24 @@ namespace Dune {
         rhs = b[i.index()];           // rhs = b_i
         coliterator endj=(*i).end();
         coliterator j=(*i).begin();
-        Hybrid::ifElse(IsNumber<typename M::block_type>(),
-          [&](auto id) {
-            for (; j.index()<i.index(); ++j)
-              rhs -= id(*j) * x[j.index()];
-            coliterator diag=j++;           // *diag = a_ii and increment coliterator j from a_ii to a_i+1,i to skip diagonal
-            for (; j != endj; ++j)
-              rhs -= id(*j) * x[j.index()];
-            x[i.index()] = rhs / id(*diag);
-          },
-          [&](auto id) {
-        for (; j.index()<i.index(); ++j)           // iterate over a_ij with j < i
-          id(*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
-        coliterator diag=j++;           // *diag = a_ii and increment coliterator j from a_ii to a_i+1,i to skip diagonal
-        for (; j != endj; ++j)           // iterate over a_ij with j > i
-          id(*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j>i} a_ij * xold_j
-        algmeta_itsteps<I-1,typename M::block_type>::dbgs(*diag,x[i.index()],rhs,w);           // if I==1: xnew_i = rhs/a_ii
-        });
+        if constexpr (IsNumber<typename M::block_type>())
+        {
+          for (; j.index()<i.index(); ++j)
+            rhs -= (*j) * x[j.index()];
+          coliterator diag=j++;           // *diag = a_ii and increment coliterator j from a_ii to a_i+1,i to skip diagonal
+          for (; j != endj; ++j)
+            rhs -= (*j) * x[j.index()];
+          x[i.index()] = rhs / (*diag);
+        }
+        else
+        {
+          for (; j.index()<i.index(); ++j)           // iterate over a_ij with j < i
+            (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
+          coliterator diag=j++;           // *diag = a_ii and increment coliterator j from a_ii to a_i+1,i to skip diagonal
+          for (; j != endj; ++j)           // iterate over a_ij with j > i
+            (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j>i} a_ij * xold_j
+          algmeta_itsteps<I-1,typename M::block_type>::dbgs(*diag,x[i.index()],rhs,w);           // if I==1: xnew_i = rhs/a_ii
+        }
       }
       // next two lines: xnew_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j) + (1-w)*xold;
       x *= w;
@@ -431,25 +432,26 @@ namespace Dune {
         rhs = b[i.index()];           // rhs = b_i
         coliterator endj=(*i).end();           // iterate over a_ij with j < i
         coliterator j=(*i).begin();
-        Hybrid::ifElse(IsNumber<typename M::block_type>(),
-          [&](auto id) {
-            for (; j.index()<i.index(); ++j)
-              rhs -= id(*j) * x[j.index()];               //  rhs -= sum_{j<i} a_ij * xnew_j
-            coliterator diag=j;           // *diag = a_ii
-            for (; j!=endj; ++j)
-              rhs -= id(*j) * x[j.index()];               // rhs -= sum_{j<i} a_ij * xnew_j
-            v = rhs / id(*diag);
-            id(x[i.index()]) += w*id(v);           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
-          },
-          [&](auto id) {
-        for (; j.index()<i.index(); ++j)
-          id(*j).mmv(x[j.index()],rhs);               //  rhs -= sum_{j<i} a_ij * xnew_j
-        coliterator diag=j;           // *diag = a_ii
-        for (; j!=endj; ++j)
-          id(*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
-        algmeta_itsteps<I-1,typename M::block_type>::bsorf(*diag,v,rhs,w);           // if blocksize I==1: v = rhs/a_ii
-        id(x[i.index()]).axpy(w,v);           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
-          });
+        if constexpr (IsNumber<typename M::block_type>())
+        {
+          for (; j.index()<i.index(); ++j)
+            rhs -= (*j) * x[j.index()];               //  rhs -= sum_{j<i} a_ij * xnew_j
+          coliterator diag=j;           // *diag = a_ii
+          for (; j!=endj; ++j)
+            rhs -= (*j) * x[j.index()];               // rhs -= sum_{j<i} a_ij * xnew_j
+          v = rhs / (*diag);
+          x[i.index()] += w*v;           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
+        }
+        else
+        {
+          for (; j.index()<i.index(); ++j)
+            (*j).mmv(x[j.index()],rhs);               //  rhs -= sum_{j<i} a_ij * xnew_j
+          coliterator diag=j;           // *diag = a_ii
+          for (; j!=endj; ++j)
+            (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
+          algmeta_itsteps<I-1,typename M::block_type>::bsorf(*diag,v,rhs,w);           // if blocksize I==1: v = rhs/a_ii
+          x[i.index()].axpy(w,v);           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
+        }
       }
     }
 
@@ -473,25 +475,26 @@ namespace Dune {
         rhs = b[i.index()];
         coliterator endj=(*i).end();
         coliterator j=(*i).begin();
-        Hybrid::ifElse(IsNumber<typename M::block_type>(),
-          [&](auto id) {
-            for (; j.index()<i.index(); ++j)
-              rhs -= id(*j) * x[j.index()];
-            coliterator diag=j;
-            for (; j!=endj; ++j)
-              rhs -= id(*j) * x[j.index()];
-            v = rhs / id(*diag);
-            x[i.index()] += w*id(v);
-          },
-          [&](auto id) {
-        for (; j.index()<i.index(); ++j)
-          id(*j).mmv(x[j.index()],rhs);
-        coliterator diag=j;
-        for (; j!=endj; ++j)
-          id(*j).mmv(x[j.index()],rhs);
-        algmeta_itsteps<I-1,typename M::block_type>::bsorb(*diag,v,rhs,w);
-        id(x[i.index()]).axpy(w,v);
-          });
+        if constexpr (IsNumber<typename M::block_type>())
+        {
+          for (; j.index()<i.index(); ++j)
+            rhs -= (*j) * x[j.index()];
+          coliterator diag=j;
+          for (; j!=endj; ++j)
+            rhs -= (*j) * x[j.index()];
+          v = rhs / (*diag);
+          x[i.index()] += w*v;
+        }
+        else
+        {
+          for (; j.index()<i.index(); ++j)
+            j->mmv(x[j.index()],rhs);
+          coliterator diag=j;
+          for (; j!=endj; ++j)
+            j->mmv(x[j.index()],rhs);
+          algmeta_itsteps<I-1,typename M::block_type>::bsorb(*diag,v,rhs,w);
+          x[i.index()].axpy(w,v);
+        }
       }
     }
 
@@ -511,23 +514,24 @@ namespace Dune {
         rhs = b[i.index()];
         coliterator endj=(*i).end();
         coliterator j=(*i).begin();
-        Hybrid::ifElse(IsNumber<typename M::block_type>(),
-          [&](auto id) {
-            for (; j.index()<i.index(); ++j)
-              rhs -= id(*j) * x[j.index()];
-            coliterator diag=j;
-            for (; j!=endj; ++j)
-              rhs -= id(*j) * x[j.index()];
-            v[i.index()] = rhs / id(*diag);
-          },
-          [&](auto id) {
-        for (; j.index()<i.index(); ++j)
-          id(*j).mmv(x[j.index()],rhs);
-        coliterator diag=j;
-        for (; j!=endj; ++j)
-          id(*j).mmv(x[j.index()],rhs);
-        algmeta_itsteps<I-1,typename M::block_type>::dbjac(*diag,v[i.index()],rhs,w);
-          });
+        if constexpr (IsNumber<typename M::block_type>())
+        {
+          for (; j.index()<i.index(); ++j)
+            rhs -= (*j) * x[j.index()];
+          coliterator diag=j;
+          for (; j!=endj; ++j)
+            rhs -= (*j) * x[j.index()];
+          v[i.index()] = rhs / (*diag);
+        }
+        else
+        {
+          for (; j.index()<i.index(); ++j)
+            j->mmv(x[j.index()],rhs);
+          coliterator diag=j;
+          for (; j!=endj; ++j)
+            j->mmv(x[j.index()],rhs);
+          algmeta_itsteps<I-1,typename M::block_type>::dbjac(*diag,v[i.index()],rhs,w);
+        }
       }
       x.axpy(w,v);
     }
