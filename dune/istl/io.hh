@@ -50,28 +50,29 @@ namespace Dune {
   void recursive_printvector (std::ostream& s, const V& v, std::string rowtext,
                               int& counter, int columns, int width)
   {
-    Hybrid::ifElse(IsNumber<V>(),
-      [&](auto id) {
-        // Print one number
-        if (counter%columns==0)
-        {
-          s << rowtext; // start a new row
-          s << " ";     // space in front of each entry
-          s.width(4);   // set width for counter
-          s << counter; // number of first entry in a line
-        }
-        s << " ";         // space in front of each entry
-        s.width(width);   // set width for each entry anew
-        s << v;        // yeah, the number !
-        counter++;        // increment the counter
-        if (counter%columns==0)
-          s << std::endl; // start a new line
-      },
-      [&](auto id) {
-        // Recursively print a vector
-        for (const auto& entry : id(v))
-          recursive_printvector(s,id(entry),rowtext,counter,columns,width);
-      });
+    if constexpr (IsNumber<V>())
+    {
+      // Print one number
+      if (counter%columns==0)
+      {
+        s << rowtext; // start a new row
+        s << " ";     // space in front of each entry
+        s.width(4);   // set width for counter
+        s << counter; // number of first entry in a line
+      }
+      s << " ";         // space in front of each entry
+      s.width(width);   // set width for each entry anew
+      s << v;        // yeah, the number !
+      counter++;        // increment the counter
+      if (counter%columns==0)
+        s << std::endl; // start a new line
+    }
+    else
+    {
+      // Recursively print a vector
+      for (const auto& entry : v)
+        recursive_printvector(s,entry,rowtext,counter,columns,width);
+    }
   }
 
 
@@ -465,14 +466,12 @@ namespace Dune {
   template<class V>
   void writeVectorToMatlabHelper (const V& v, std::ostream& stream)
   {
-    Hybrid::ifElse(IsNumber<V>(),
-      [&](auto id) {
-        stream << id(v) << std::endl;
-      },
-      [&](auto id) {
-        for (const auto& entry : id(v))
-          writeVectorToMatlabHelper(entry, stream);
-      });
+    if constexpr (IsNumber<V>()) {
+      stream << v << std::endl;
+    } else {
+      for (const auto& entry : v)
+        writeVectorToMatlabHelper(entry, stream);
+    }
   }
 
   /**

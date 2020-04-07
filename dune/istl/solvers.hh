@@ -13,7 +13,6 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/hybridutilities.hh>
 #include <dune/common/math.hh>
 #include <dune/common/simd/io.hh>
 #include <dune/common/simd/simd.hh>
@@ -201,7 +200,9 @@ namespace Dune {
 
   protected:
 
-    using enableConditionEstimate_t = Dune::Std::bool_constant<(std::is_same<field_type,float>::value || std::is_same<field_type,double>::value)>;
+    static constexpr bool enableConditionEstimate = (std::is_same_v<field_type,float> || std::is_same_v<field_type,double>);
+    using enableConditionEstimate_t [[deprecated("Use bool enableConditionEstimate instead. Will be removed after Dune 2.8")]]
+      = std::bool_constant<enableConditionEstimate>;
 
   public:
 
@@ -219,7 +220,7 @@ namespace Dune {
       scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
     {
-      if (condition_estimate && !(enableConditionEstimate_t{})) {
+      if (condition_estimate && !enableConditionEstimate) {
         condition_estimate_ = false;
         std::cerr << "WARNING: Condition estimate was disabled. It is only available for double and float field types!" << std::endl;
       }
@@ -308,10 +309,9 @@ namespace Dune {
         _op->apply(p,q);             // q=Ap
         alpha = _sp->dot(p,q);       // scalar product
         lambda = rholast/alpha;     // minimization
-        Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
+        if constexpr (enableConditionEstimate)
           if (condition_estimate_)
-            lambdas.push_back(std::real(id(lambda)));
-        });
+            lambdas.push_back(std::real(lambda));
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
@@ -325,10 +325,9 @@ namespace Dune {
         _prec->apply(q,b);           // apply preconditioner
         rho = _sp->dot(q,b);         // orthogonalization
         beta = rho/rholast;         // scaling factor
-        Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
+        if constexpr (enableConditionEstimate)
           if (condition_estimate_)
-            betas.push_back(std::real(id(beta)));
-        });
+            betas.push_back(std::real(beta));
         p *= beta;                  // scale old search direction
         p += q;                     // orthogonalization with correction
         rholast = rho;              // remember rho for recurrence
@@ -338,7 +337,7 @@ namespace Dune {
 
       if (condition_estimate_) {
 #if HAVE_ARPACKPP
-        Hybrid::ifElse(enableConditionEstimate_t{}, [&](auto id) {
+        if constexpr (enableConditionEstimate) {
           using std::sqrt;
 
           // Build T matrix which has extreme eigenvalues approximating
@@ -386,7 +385,7 @@ namespace Dune {
             std::cout << "Condition estimate: "
                       << Simd::io(max_eigv / min_eigv) << std::endl;
           }
-        });
+        }
 #else
       std::cerr << "WARNING: Condition estimate was requested. This requires ARPACK, but ARPACK was not found!" << std::endl;
 #endif
