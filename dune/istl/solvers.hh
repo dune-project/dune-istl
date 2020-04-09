@@ -1534,6 +1534,12 @@ private:
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
+                        std::shared_ptr<Preconditioner<X,X>> prec,
+                        const ParameterTree& config)
+      : IterativeSolver<X,X>(op, prec, config), _mmax(config.get("mmax", 10))
+    {}
+
+    RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
                         std::shared_ptr<ScalarProduct<X>> sp,
                         std::shared_ptr<Preconditioner<X,X>> prec,
                         const ParameterTree& config)
