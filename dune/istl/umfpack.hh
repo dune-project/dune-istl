@@ -269,6 +269,19 @@ namespace Dune {
       setMatrix(matrix);
     }
 
+    /** @brief Construct a solver object from a matrix
+     *
+     * @param matrix  the matrix to solve for
+     * @param config  ParameterTree containing solver parameters.
+     *
+     * ParameterTree Key | Meaning
+     * ------------------|------------
+     * verbose           | The verbosity level. default=0
+    */
+    UMFPack(const Matrix& mat_, const ParameterTree& config)
+      : UMFPack(mat_, config.get<int>("verbose", 0))
+    {}
+
     /** @brief default constructor
      */
     UMFPack() : matrixIsLoaded_(false), verbosity_(0)
