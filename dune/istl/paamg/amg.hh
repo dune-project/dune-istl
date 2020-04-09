@@ -152,7 +152,7 @@ namespace Dune
          gamma                     | 1 for V-cycle, 2 for W-cycle.
          preSteps                  | Number of presmoothing steps.
          postSteps                 | Number of postsmoothing steps.
-         verbosity                 | Output verbosity. default=2.
+         verbose                   | Output verbosity. default=0.
          criterionSymmetric        | If true use SymmetricCriterion (default), else UnSymmetricCriterion
          strengthMeasure           | What conversion to use to convert a matrix block
                                    | to a scalar when determining strength of connection:
@@ -611,7 +611,7 @@ namespace Dune
         criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("preSteps"));
       postSteps_ = criterion.getNoPostSmoothSteps ();
 
-      verbosity_ = configuration.get("verbosity", 0);
+      verbosity_ = configuration.get("verbose", 0);
       criterion.setDebugLevel (verbosity_);
 
       createHierarchies(criterion, matrixptr, pinfo);
