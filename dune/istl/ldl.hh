@@ -123,6 +123,19 @@ namespace Dune {
       setMatrix(matrix);
     }
 
+    /** @brief Constructs the LDL solver.
+     *
+     * @param matrix  The matrix of the system to solve.
+     * @param config  ParameterTree containing solver parameters.
+     *
+     * ParameterTree Key | Meaning
+     * ------------------|------------
+     * verbose           | The verbosity level. default=0
+    */
+    LDL(const Matrix& matrix, const ParameterTree& config)
+      : LDL(matrix, config.get<int>("verbose", 0))
+    {}
+
     /** @brief Default constructor. */
     LDL() : matrixIsLoaded_(false), verbose_(0)
     {}

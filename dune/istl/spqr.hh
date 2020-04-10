@@ -119,6 +119,19 @@ namespace Dune {
       setMatrix(matrix);
     }
 
+    /** @brief Constructs the SPQR solver.
+     *
+     * @param matrix  The matrix of the system to solve.
+     * @param config  ParameterTree containing solver parameters.
+     *
+     * ParameterTree Key | Meaning
+     * ------------------|------------
+     * verbose           | The verbosity level. default=0
+    */
+    SPQR(const Matrix& matrix, const ParameterTree& config)
+      : SPQR(matrix, config.get<int>("verbose", 0))
+    {}
+
     /** @brief Default constructor. */
     SPQR() : matrixIsLoaded_(false), verbose_(0)
     {
