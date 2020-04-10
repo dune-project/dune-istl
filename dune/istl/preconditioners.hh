@@ -169,8 +169,8 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       iterations        | The number of iterations to perform
-       relaxation        | The relaxation factor
+       iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
@@ -186,17 +186,14 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       relaxation        | The relaxation factor
+       iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqSSOR (const M& A, const ParameterTree& configuration)
-      : _A_(A)
-    {
-      _n = configuration.get<int>("iterations",1);
-      _w = configuration.get<scalar_field_type>("relaxation",1.0);
-      CheckIfDiagonalPresent<M,l>::check(_A_);
-    }
+      : SeqSSOR(A, configuration.get<int>("iterations",1), configuration.get<scalar_field_type>("relaxation",1.0))
+    {}
 
     /*!
        \brief Prepare the preconditioner.
@@ -297,7 +294,7 @@ namespace Dune {
        ParameterTree Key | Meaning
        ------------------|------------
        iterations        | The number of iterations to perform. default=1
-       relaxation        | The relaxation factor
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
@@ -313,17 +310,14 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       relaxation        | The relaxation factor
+       iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqSOR (const M& A, const ParameterTree& configuration)
-      : _A_(A)
-    {
-      _n = configuration.get<int>("iterations",1);
-      _w = configuration.get<scalar_field_type>("relaxation",1.0);
-      CheckIfDiagonalPresent<M,l>::check(_A_);
-    }
+      : SeqSOR(A, configuration.get<int>("iterations",1), configuration.get<scalar_field_type>("relaxation",1.0))
+    {}
 
     /*!
        \brief Prepare the preconditioner.
@@ -454,7 +448,7 @@ namespace Dune {
        ParameterTree Key | Meaning
        ------------------|------------
        iterations        | The number of iterations to perform. default=1
-       relaxation        | The relaxation factor
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
@@ -470,17 +464,14 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       relaxation        | The relaxation factor
+       iterations        | The number of iterations to perform. default=1
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqJac (const M& A, const ParameterTree& configuration)
-      : _A_(A)
-    {
-      _n = configuration.get<int>("iterations",1);
-      _w = configuration.get<scalar_field_type>("relaxation",1.0);
-      CheckIfDiagonalPresent<M,l>::check(_A_);
-    }
+      : SeqJac(A, configuration.get<int>("iterations",1), configuration.get<scalar_field_type>("relaxation",1.0))
+    {}
 
     /*!
        \brief Prepare the preconditioner.
@@ -585,9 +576,9 @@ namespace Dune {
 
       ParameterTree Key | Meaning
       ------------------|------------
-      n                 | The order of the ILU decomposition
-      relaxation        | The relaxation factor
-      resort            | True if a resort of the computed ILU for improved performance should be done.
+      n                 | The order of the ILU decomposition. default=0
+      relaxation        | The relaxation factor. default=1.0
+      resort            | True if a resort of the computed ILU for improved performance should be done. default=false
 
       See \ref ISTL_Factory for the ParameterTree layout and examples.
     */
@@ -603,9 +594,9 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       n                 | The order of the ILU decomposition
-       relaxation        | The relaxation factor
-       resort            | True if a resort of the computed ILU for improved performance should be done.
+      n                 | The order of the ILU decomposition. default=0
+      relaxation        | The relaxation factor. default=1.0
+      resort            | True if a resort of the computed ILU for improved performance should be done. default=false
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
@@ -756,14 +747,13 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       relaxation        | The relaxation factor
+       relaxation        | The relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     Richardson (const ParameterTree& configuration)
-    {
-      _w = configuration.get<scalar_field_type>("relaxation");
-    }
+      : Richardson(configuration.get<scalar_field_type>("relaxation", 1.0))
+    {}
 
     /*!
        \brief Prepare the preconditioner.
@@ -867,12 +857,12 @@ namespace Dune {
 
        ParameterTree Key | Meaning
        ------------------|------------
-       relaxation        | relaxation factor
+       relaxation        | relaxation factor. default=1.0
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqILDL(const matrix_type& A, const ParameterTree& config)
-      : SeqILDL(A, config.template get<scalar_field_type>("relaxation", 1.0))
+      : SeqILDL(A, config.get<scalar_field_type>("relaxation", 1.0))
     {}
 
     /**
