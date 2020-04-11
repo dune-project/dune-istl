@@ -7,6 +7,8 @@
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/fieldtype.hh>
+#include <dune/istl/blocklevel.hh>
 
 /** \file
     \author Oliver Sander
@@ -31,7 +33,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the type representing the components
     typedef B block_type;
@@ -47,7 +49,7 @@ namespace Dune {
 
     //! increment block level counter
     [[deprecated("Use free blockLevel function. Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr auto blocklevel = blockLevel<B>()+1;
 
     /** \brief Default constructor */
     BTDMatrix() : BCRSMatrix<B,A>() {}

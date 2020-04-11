@@ -13,6 +13,9 @@
 #include "istlexception.hh"
 #include "bvector.hh"
 
+#include <dune/istl/blocklevel.hh>
+#include <dune/istl/fieldtype.hh>
+
 /** \file
  * \brief ???
  */
@@ -48,7 +51,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -83,7 +86,7 @@ namespace Dune {
             VariableBlockVector is a container of containers
      */
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+2;
+    static constexpr auto blocklevel = blockLevel<B>()+2;
 
     //===== constructors and such
 
