@@ -82,6 +82,7 @@ namespace Dune {
     /** increment block level counter, yes, it is two levels because
             VariableBlockVector is a container of containers
      */
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+2;
 
     //===== constructors and such

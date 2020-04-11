@@ -417,6 +417,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! make iterators available as types
@@ -648,6 +649,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! make iterators available as types
@@ -1028,6 +1030,7 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! make iterators available as types

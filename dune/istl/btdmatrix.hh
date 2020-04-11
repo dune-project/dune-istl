@@ -46,6 +46,7 @@ namespace Dune {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
+    [[deprecated("Use free blockLevel function. Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     /** \brief Default constructor */

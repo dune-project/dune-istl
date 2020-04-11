@@ -499,6 +499,7 @@ namespace Dune {
     typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;
 
     //! increment block level counter
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
 
     //! we support two modes
