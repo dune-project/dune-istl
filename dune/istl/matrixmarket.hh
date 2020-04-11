@@ -26,6 +26,7 @@
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/stdstreams.hh>
 
+#include <dune/istl/fieldtype.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/matrixutils.hh> // countNonZeros()
@@ -177,7 +178,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix coordinate ";
-        os<<mm_numeric_type<typename Imp::BlockTraits<T>::field_type>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<FieldType<T>>::str()<<" general"<<std::endl;
       }
     };
 
@@ -187,7 +188,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix array ";
-        os<<mm_numeric_type<typename Imp::BlockTraits<B>::field_type>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<FieldType<B>>::str()<<" general"<<std::endl;
       }
     };
 
