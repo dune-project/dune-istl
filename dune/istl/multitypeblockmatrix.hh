@@ -52,7 +52,7 @@ namespace Dune {
     /** \brief Type used for sizes */
     using size_type = std::size_t;
 
-    typedef typename FirstRow::field_type field_type;
+    typedef FieldType<type> field_type;
 
     /** \brief Return the number of matrix rows */
     static constexpr size_type N()

@@ -71,14 +71,8 @@ namespace Dune {
      */
     typedef MultiTypeBlockVector<Args...> type;
 
-    /** \brief The type used for scalars
-     *
-     * The current code hardwires it to 'double', which is far from nice.
-     * On the other hand, it is not clear what the correct type is.  If the MultiTypeBlockVector class
-     * is instantiated with several vectors of different field_types, what should the resulting
-     * field_type be?
-     */
-    typedef double field_type;
+    /** \brief The type used for scalars */
+    typedef FieldType<type> field_type;
 
     /** \brief Return the number of non-zero vector entries
      *
