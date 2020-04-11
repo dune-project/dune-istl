@@ -20,6 +20,7 @@
 #include <dune/python/pybind11/pybind11.h>
 
 #include <dune/istl/bvector.hh>
+#include <dune/istl/blocklevel.hh>
 
 namespace Dune
 {
@@ -59,7 +60,7 @@ namespace Dune
 
         if( info.format != pybind11::format_descriptor< field_type >::format() )
           throw pybind11::value_error( "Incompatible buffer format." );
-        if( info.ndim != BlockVector::blocklevel )
+        if( info.ndim != blockLevel<BlockVector>() )
           throw pybind11::value_error( "Block vectors can only be initialized from one-dimensional buffers." );
 
         copy( static_cast< const char * >( info.ptr ), info.shape.data(), info.strides.data(), v );
