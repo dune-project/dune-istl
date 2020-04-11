@@ -16,6 +16,7 @@
 
 #include <dune/common/exceptions.hh>  // provides DUNE_THROW(...)
 
+#include <dune/istl/blocklevel.hh>      // provides Dune::blockLevel
 #include <dune/istl/operators.hh>       // provides Dune::LinearOperator
 #include <dune/istl/solvercategory.hh>  // provides Dune::SolverCategory::sequential
 #include <dune/istl/solvertype.hh>      // provides Dune::IsDirectSolver
@@ -215,7 +216,7 @@ namespace Dune
     {
       // assert that BCRSMatrix type has blocklevel 2
       static_assert
-        (BCRSMatrix::blocklevel == 2,
+        (blockLevel<BCRSMatrix>() == 2,
          "Only BCRSMatrices with blocklevel 2 are supported.");
 
       // assert that BCRSMatrix type has square blocks
