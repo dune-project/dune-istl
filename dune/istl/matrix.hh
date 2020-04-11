@@ -17,6 +17,8 @@
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/istlexception.hh>
+#include <dune/istl/fieldtype.hh>
+#include <dune/istl/blocklevel.hh>
 
 namespace Dune {
 
@@ -44,7 +46,7 @@ namespace MatrixImp
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -559,7 +561,7 @@ namespace MatrixImp
   public:
 
     /** \brief Export the type representing the underlying field */
-    using field_type = typename Imp::BlockTraits<T>::field_type;
+    using field_type = FieldType<T>;
 
     /** \brief Export the type representing the components */
     typedef T block_type;
@@ -587,7 +589,7 @@ namespace MatrixImp
 
     //! The number of nesting levels the matrix contains.
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<T>::blockLevel()+1;
+    static constexpr auto blocklevel = blockLevel<T>()+1;
 
     /** \brief Create empty matrix */
     Matrix() : data_(0,0), cols_(0)
