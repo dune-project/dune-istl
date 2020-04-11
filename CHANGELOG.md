@@ -10,6 +10,13 @@
   Furthermore, flags for either shared library or position independent code
   needs to be used.
 
+- Added new utility functions templates `maxBlockLevel`, `minBlockLevel`, `blockLevel` in `dnue/istl/blocklevel.hh` to
+  automatically determine the block level of possibly nested matrices at compile time.
+  The block level cannot be always uniquely determined for `MultiTypeBlockMatrix` since the nesting level
+  of different block types might differ. Hence, `maxBlockLevel`, `minBlockLevel` always works
+  but if they yield different results `blockLevel` will not compile.
+  This condition can be checked with the function template `hasUniqueBlockLevel`.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
