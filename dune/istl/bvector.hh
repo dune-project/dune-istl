@@ -22,6 +22,9 @@
 #include <dune/common/unused.hh>
 #include <dune/common/scalarvectorview.hh>
 
+#include <dune/istl/blocklevel.hh>
+#include <dune/istl/fieldtype.hh>
+
 #include "basearray.hh"
 #include "istlexception.hh"
 
@@ -36,44 +39,6 @@ namespace Dune {
 
 /** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
 namespace Imp {
-
-  /** \brief Define some derived types transparently for number types and dune-istl vector types
-   *
-   * This is the actual implementation.  Calling code should use BlockTraits instead.
-   * \tparam isNumber Whether B is a number type (true) or a dune-istl matrix or vector type (false)
-   */
-  template <class B, bool isNumber>
-  class BlockTraitsImp;
-
-  template <class B>
-  class BlockTraitsImp<B,true>
-  {
-  public:
-    using field_type = B;
-
-    static constexpr unsigned int blockLevel()
-    {
-      return 0;
-    }
-  };
-
-  template <class B>
-  class BlockTraitsImp<B,false>
-  {
-  public:
-    using field_type = typename B::field_type;
-
-    static constexpr unsigned int blockLevel()
-    {
-      return B::blocklevel;
-    }
-  };
-
-  /** \brief Define some derived types transparently for number types and dune-istl matrix/vector types
-   */
-  template <class B>
-  using BlockTraits = BlockTraitsImp<B,IsNumber<B>::value>;
-
   /**
       \brief An unmanaged vector of blocks.
 
@@ -93,7 +58,7 @@ namespace Imp {
   public:
 
     //===== type definitions and constants
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the type representing the components
     typedef B block_type;
@@ -187,7 +152,7 @@ namespace Imp {
     template<class OtherB, class OtherA>
     auto operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
-      typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
+      typedef typename PromotionTraits<field_type, FieldType<OtherB>>::PromotedType PromotedType;
       PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
@@ -208,7 +173,7 @@ namespace Imp {
     template<class OtherB, class OtherA>
     auto dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
     {
-      typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
+      typedef typename PromotionTraits<field_type, FieldType<OtherB>>::PromotedType PromotedType;
       PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
@@ -405,7 +370,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the type representing the components
     typedef B block_type;
@@ -418,7 +383,7 @@ namespace Imp {
 
     //! increment block level counter
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -637,7 +602,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the type representing the components
     typedef B block_type;
@@ -650,7 +615,7 @@ namespace Imp {
 
     //! increment block level counter
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -764,7 +729,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the type representing the components
     typedef B block_type;
@@ -1018,7 +983,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = FieldType<B>;
 
     //! export the type representing the components
     typedef B block_type;
@@ -1031,7 +996,7 @@ namespace Imp {
 
     //! increment block level counter
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename compressed_block_vector_unmanaged<B,A>::Iterator Iterator;
