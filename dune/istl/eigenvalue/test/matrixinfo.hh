@@ -11,6 +11,7 @@
 #include <dune/common/exceptions.hh>  // provides DUNE_THROW(...), Dune::Exception
 #include <dune/common/fvector.hh>     // provides Dune::FieldVector
 
+#include <dune/istl/blocklevel.hh>       // provides Dune::blockLevel
 #include <dune/istl/bvector.hh>          // provides Dune::BlockVector
 #include <dune/istl/superlu.hh>          // provides Dune::SuperLU
 #include <dune/istl/preconditioners.hh>  // provides Dune::SeqGS
@@ -69,7 +70,7 @@ public:
   {
     // assert that BCRSMatrix type has blocklevel 2
     static_assert
-      (BCRSMatrix::blocklevel == 2,
+      (Dune::blockLevel<BCRSMatrix>() == 2,
        "Only BCRSMatrices with blocklevel 2 are supported.");
 
     // assert that BCRSMatrix type has square blocks

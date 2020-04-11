@@ -10,6 +10,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/common/unused.hh>
+#include <dune/istl/blocklevel.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
 #include <dune/istl/bdmatrix.hh>
@@ -77,7 +78,7 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
   typedef typename MatrixType::ConstColIterator ConstColIterator DUNE_UNUSED;
 
-  assert(MatrixType::blocklevel >= 0);
+  static_assert(maxBlockLevel<MatrixType>() >= 0, "Block level has to be at least 1 for a matrix!");
 
   // ////////////////////////////////////////////////////////
   //   Count number of rows, columns, and nonzero entries
