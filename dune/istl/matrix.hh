@@ -586,6 +586,7 @@ namespace MatrixImp
     typedef typename row_type::const_iterator ConstColIterator;
 
     //! The number of nesting levels the matrix contains.
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
     static constexpr unsigned int blocklevel = Imp::BlockTraits<T>::blockLevel()+1;
 
     /** \brief Create empty matrix */
