@@ -22,6 +22,8 @@
 #include <dune/common/unused.hh>
 #include <dune/common/scalarvectorview.hh>
 
+#include <dune/istl/blocklevel.hh>
+
 #include "basearray.hh"
 #include "istlexception.hh"
 
@@ -50,11 +52,6 @@ namespace Imp {
   {
   public:
     using field_type = B;
-
-    static constexpr unsigned int blockLevel()
-    {
-      return 0;
-    }
   };
 
   template <class B>
@@ -62,11 +59,6 @@ namespace Imp {
   {
   public:
     using field_type = typename B::field_type;
-
-    static constexpr unsigned int blockLevel()
-    {
-      return B::blocklevel;
-    }
   };
 
   /** \brief Define some derived types transparently for number types and dune-istl matrix/vector types
@@ -418,7 +410,7 @@ namespace Imp {
 
     //! increment block level counter
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -650,7 +642,7 @@ namespace Imp {
 
     //! increment block level counter
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -1031,7 +1023,7 @@ namespace Imp {
 
     //! increment block level counter
     [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename compressed_block_vector_unmanaged<B,A>::Iterator Iterator;
