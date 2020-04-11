@@ -13,11 +13,13 @@
 
 /*!
  * \file
- * \brief Helper functions for determining the matrix block level
+ * \brief Helper functions for determining the vector/matrix block level
  */
 
 // forward declaration
 namespace Dune {
+template<typename... Args>
+class MultiTypeBlockVector;
 template<typename FirstRow, typename... Args>
 class MultiTypeBlockMatrix;
 } // end namespace Dune
@@ -44,6 +46,23 @@ constexpr std::size_t blockLevelMultiTypeBlockMatrix(const Op& op)
       using Block = typename std::decay_t<decltype(std::declval<M>()[i][j])>;
       blockLevel = op(blockLevel, BlockLevel<Block>::value() + 1);
     });
+  });
+  return blockLevel;
+}
+
+//! recursively determine block level of a MultiTypeBlockVector
+template<typename V, template<typename B> typename BlockLevel, typename Op>
+constexpr std::size_t blockLevelMultiTypeBlockVector(const Op& op)
+{
+  // inialize with zeroth block
+  using namespace Dune::Indices;
+  using Block00 = typename std::decay_t<decltype(std::declval<V>()[_0])>;
+  std::size_t blockLevel = BlockLevel<Block00>::value() + 1;
+  // iterate over all blocks to determine min/max block level
+  using namespace Dune::Hybrid;
+  forEach(integralRange(index_constant<V::size()>()), [&](auto&& i) {
+    using Block = typename std::decay_t<decltype(std::declval<V>()[i])>;
+    blockLevel = op(blockLevel, BlockLevel<Block>::value() + 1);
   });
   return blockLevel;
 }
@@ -91,26 +110,50 @@ struct MinBlockLevel<MultiTypeBlockMatrix<FirstRow, Args...>>
   }
 };
 
+// max block level for MultiTypeBlockMatrix
+template<typename... Args>
+struct MaxBlockLevel<MultiTypeBlockVector<Args...>>
+{
+  static constexpr std::size_t value()
+  {
+    using V = MultiTypeBlockVector<Args...>;
+    constexpr auto max = [](const auto& a, const auto& b){ return std::max(a,b); };
+    return blockLevelMultiTypeBlockVector<V, MaxBlockLevel>(max);
+  }
+};
+
+// min block level for MultiTypeBlockMatrix
+template<typename... Args>
+struct MinBlockLevel<MultiTypeBlockVector<Args...>>
+{
+  static constexpr std::size_t value()
+  {
+    using V = MultiTypeBlockVector<Args...>;
+    constexpr auto min = [](const auto& a, const auto& b){ return std::min(a,b); };
+    return blockLevelMultiTypeBlockVector<V, MinBlockLevel>(min);
+  }
+};
+
 } // end namespace Dune::Impl
 
 namespace Dune {
 
-//! Determine the maximum block level of a possibly nested matrix type
+//! Determine the maximum block level of a possibly nested vector/matrix type
 template<typename T>
 constexpr std::size_t maxBlockLevel()
 { return Impl::MaxBlockLevel<T>::value(); }
 
-//! Determine the minimum block level of a possibly nested matrix type
+//! Determine the minimum block level of a possibly nested vector/matrix type
 template<typename T>
 constexpr std::size_t minBlockLevel()
 { return Impl::MinBlockLevel<T>::value(); }
 
-//! Determine if a matrix has a uniquely determinable block level
+//! Determine if a vector/matrix has a uniquely determinable block level
 template<typename T>
 constexpr bool hasUniqueBlockLevel()
 { return maxBlockLevel<T>() == minBlockLevel<T>(); }
 
-//! Determine the block level of a possibly nested matrix type
+//! Determine the block level of a possibly nested vector/matrix type
 template<typename T>
 constexpr std::size_t blockLevel()
 {
