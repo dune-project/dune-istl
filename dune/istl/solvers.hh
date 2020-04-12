@@ -358,7 +358,7 @@ namespace Dune {
               T[row][row-1] = sqrt(betas[row-1]) / lambdas[row-1];
             }
 
-            T[row][row] = 1.0 / id(lambdas[row]);
+            T[row][row] = 1.0 / lambdas[row];
             if (row > 0) {
               T[row][row] += betas[row-1] / lambdas[row-1];
             }
@@ -377,7 +377,7 @@ namespace Dune {
           arpack.computeSymMinMagnitude (eps, eigv, min_eigv);
           arpack.computeSymMaxMagnitude (eps, eigv, max_eigv);
 
-          res.condition_estimate = id(max_eigv / min_eigv);
+          res.condition_estimate = max_eigv / min_eigv;
 
           if (this->_verbose > 0) {
             std::cout << "Min eigv estimate: " << Simd::io(min_eigv) << '\n';
