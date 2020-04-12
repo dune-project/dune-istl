@@ -22,16 +22,6 @@
 #    system paths.
 #
 
-# check for Fortran support which is required by ARPACK
-if(NOT(Fortran_Works))
-  message(WARNING "Fortran doesn't seem to be supported, skipping search for ARPACK.")
-  # log errornous result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-    "Determing location of ARPACK failed:\n"
-    "Fortran support is required but could not be detected\n\n")
-  return()
-endif()
-
 # look for library, only at positions given by the user
 find_library(ARPACK_LIBRARY
   NAMES "arpack"
