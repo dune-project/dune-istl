@@ -7,6 +7,7 @@
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/blocklevel.hh>
 
 /** \file
     \author Oliver Sander
@@ -46,7 +47,8 @@ namespace Dune {
     typedef typename A::size_type size_type;
 
     //! increment block level counter
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    [[deprecated("Use free blockLevel function. Will be removed after 2.8.")]]
+    static constexpr auto blocklevel = blockLevel<B>()+1;
 
     /** \brief Default constructor */
     BTDMatrix() : BCRSMatrix<B,A>() {}

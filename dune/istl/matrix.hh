@@ -17,6 +17,7 @@
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/istlexception.hh>
+#include <dune/istl/blocklevel.hh>
 
 namespace Dune {
 
@@ -586,7 +587,8 @@ namespace MatrixImp
     typedef typename row_type::const_iterator ConstColIterator;
 
     //! The number of nesting levels the matrix contains.
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<T>::blockLevel()+1;
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
+    static constexpr auto blocklevel = blockLevel<T>()+1;
 
     /** \brief Create empty matrix */
     Matrix() : data_(0,0), cols_(0)

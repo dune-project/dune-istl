@@ -13,6 +13,7 @@
 #include <dune/common/fvector.hh>     // provides Dune::FieldVector
 #include <dune/common/exceptions.hh>  // provides DUNE_THROW(...)
 
+#include <dune/istl/blocklevel.hh>     // provides Dune::blockLevel
 #include <dune/istl/bvector.hh>        // provides Dune::BlockVector
 #include <dune/istl/istlexception.hh>  // provides Dune::ISTLError
 #include <dune/istl/io.hh>             // provides Dune::printvector(...)
@@ -64,7 +65,7 @@ namespace Dune
       {
         // assert that BCRSMatrix type has blocklevel 2
         static_assert
-          (BCRSMatrix::blocklevel == 2,
+          (blockLevel<BCRSMatrix>() == 2,
             "Only BCRSMatrices with blocklevel 2 are supported.");
 
         // allocate memory for auxiliary block vector objects
