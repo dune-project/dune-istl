@@ -610,17 +610,19 @@ namespace Dune
     void FastAMG<M,X,PI,A>
     ::presmooth(LevelContext& levelContext, Domain& x, const Range& b)
     {
-      GaussSeidelPresmoothDefect<M::matrix_type::blocklevel>::apply(levelContext.matrix->getmat(),
-                                                                    x,
-                                                                    *levelContext.residual,
-                                                                    b);
+      constexpr auto bl = blockLevel<typename M::matrix_type>();
+      GaussSeidelPresmoothDefect<bl>::apply(levelContext.matrix->getmat(),
+                                            x,
+                                            *levelContext.residual,
+                                            b);
     }
 
     template<class M, class X, class PI, class A>
     void FastAMG<M,X,PI,A>
     ::postsmooth(LevelContext& levelContext, Domain& x, const Range& b)
     {
-      GaussSeidelPostsmoothDefect<M::matrix_type::blocklevel>
+      constexpr auto bl = blockLevel<typename M::matrix_type>();
+      GaussSeidelPostsmoothDefect<bl>
       ::apply(levelContext.matrix->getmat(), x, *levelContext.residual, b);
     }
 

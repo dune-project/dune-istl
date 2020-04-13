@@ -24,6 +24,8 @@
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
 
+#include <dune/istl/blocklevel.hh>
+
 /*! \file
  * \brief Implementation of the BCRSMatrix class
  */
@@ -499,7 +501,8 @@ namespace Dune {
     typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;
 
     //! increment block level counter
-    static constexpr unsigned int blocklevel = Imp::BlockTraits<B>::blockLevel()+1;
+    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
+    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! we support two modes
     enum BuildMode {
