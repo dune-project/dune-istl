@@ -8,8 +8,10 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <memory>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include "bvector.hh"
 #include "solvercategory.hh"
@@ -113,9 +115,20 @@ namespace Dune {
      * data points.
      * \param cat parallel solver category (nonoverlapping or overlapping)
      */
-    ParallelScalarProduct (const communication_type& com, SolverCategory::Category cat)
+    ParallelScalarProduct (std::shared_ptr<const communication_type> com, SolverCategory::Category cat)
       : _communication(com), _category(cat)
     {}
+
+    /*!
+     * \param com The communication object for syncing overlap and copy
+     * data points.
+     * \param cat parallel solver category (nonoverlapping or overlapping)
+     * \note if you use this constructor you have to make sure com stays alive
+     */
+    ParallelScalarProduct (const communication_type& com, SolverCategory::Category cat)
+      : ParallelScalarProduct(stackobject_to_shared_ptr(com), cat)
+    {}
+
 
     /*! \brief Dot product of two vectors.
        It is assumed that the vectors are consistent on the interior+border
@@ -124,7 +137,7 @@ namespace Dune {
     virtual field_type dot (const X& x, const X& y) const override
     {
       field_type result(0);
-      _communication.dot(x,y,result); // explicitly loop and apply masking
+      _communication->dot(x,y,result); // explicitly loop and apply masking
       return result;
     }
 
@@ -133,7 +146,7 @@ namespace Dune {
      */
     virtual real_type norm (const X& x) const override
     {
-      return _communication.norm(x);
+      return _communication->norm(x);
     }
 
     //! Category of the scalar product (see SolverCategory::Category)
@@ -143,7 +156,7 @@ namespace Dune {
     }
 
   private:
-    const communication_type& _communication;
+    std::shared_ptr<const communication_type> _communication;
     SolverCategory::Category _category;
   };
 
@@ -163,6 +176,9 @@ namespace Dune {
   class NonoverlappingSchwarzScalarProduct : public ParallelScalarProduct<X,C>
   {
   public:
+    NonoverlappingSchwarzScalarProduct (std::shared_ptr<const C> comm) :
+      ParallelScalarProduct<X,C>(comm,SolverCategory::nonoverlapping) {}
+
     NonoverlappingSchwarzScalarProduct (const C& comm) :
       ParallelScalarProduct<X,C>(comm,SolverCategory::nonoverlapping) {}
   };
@@ -182,6 +198,9 @@ namespace Dune {
   class OverlappingSchwarzScalarProduct : public ParallelScalarProduct<X,C>
   {
   public:
+    OverlappingSchwarzScalarProduct (std::shared_ptr<const C> comm) :
+      ParallelScalarProduct<X,C>(comm, SolverCategory::overlapping) {}
+
     OverlappingSchwarzScalarProduct (const C& comm) :
       ParallelScalarProduct<X,C>(comm,SolverCategory::overlapping) {}
   };
@@ -200,7 +219,7 @@ namespace Dune {
    * available the defines the type  of the scalar product.
    */
   template<class X, class Comm>
-  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const Comm& comm, SolverCategory::Category category)
+  std::shared_ptr<ScalarProduct<X>> makeScalarProduct(std::shared_ptr<const Comm> comm, SolverCategory::Category category)
   {
     switch(category)
     {
@@ -212,6 +231,14 @@ namespace Dune {
           std::make_shared<ParallelScalarProduct<X,Comm>>(comm,category);
     }
   }
+
+  /**
+   * \copydoc createScalarProduct(std::shared_ptr<const Comm>,SolverCategory::Category)
+   * \note Using this helper, you are responsible for the life-time management of comm
+   */
+  template<class X, class Comm>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const Comm& comm, SolverCategory::Category category)
+  { return makeScalarProduct<X>(stackobject_to_shared_ptr(comm), category); }
 
 } // end namespace Dune
 
