@@ -21,8 +21,8 @@
 template<class MatrixBlock, class VectorBlock>
 Dune::TestSuite test(int argc, char** argv)
 {
-#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   Dune::TestSuite suite;
+#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   const int BS=1;
   int N=4;
 
@@ -251,13 +251,12 @@ Dune::TestSuite test(int argc, char** argv)
   solver4.apply(x,b, res);
   suite.check(res.converged) << "solver4 did not converge";
 
-  return suite;
 #endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
+  return suite;
 }
 
 int main(int argc, char** argv){
   Dune::TestSuite suite;
-  suite.require(HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK) << "You need SuperLU or SuiteSparse's UMFPack to run this test.";
   suite.subTest(test<Dune::FieldMatrix<double, 1, 1>, Dune::FieldVector<double, 1>>(argc, argv));
   suite.subTest(test<double, double>(argc, argv));
   return suite.exit();
