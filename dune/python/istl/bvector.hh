@@ -16,8 +16,8 @@
 #include <dune/python/common/string.hh>
 #include <dune/python/common/vector.hh>
 #include <dune/python/istl/iterator.hh>
-#include <dune/python/pybind11/operators.h>
-#include <dune/python/pybind11/pybind11.h>
+#include <pybind11/operators.h>
+#include <pybind11/pybind11.h>
 
 #include <dune/istl/bvector.hh>
 #include <dune/istl/blocklevel.hh>

@@ -14,7 +14,7 @@
 #include <dune/python/istl/preconditioners.hh>
 #include <dune/python/istl/solvers.hh>
 
-#include <dune/python/pybind11/pybind11.h>
+#include <pybind11/pybind11.h>
 
 #include <dune/python/common/typeregistry.hh>
 
