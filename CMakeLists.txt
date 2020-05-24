@@ -2,7 +2,7 @@
 project(dune-istl C CXX)
 
 # general stuff
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.13)
 
 # guess build tree of dune-common
 if(NOT (dune-common_DIR OR dune-common_ROOT OR
