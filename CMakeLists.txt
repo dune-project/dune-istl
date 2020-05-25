@@ -26,7 +26,6 @@ dune_project()
 add_subdirectory(cmake/modules)
 add_subdirectory(dune)
 add_subdirectory(doc)
-add_subdirectory(lib)
 
 # if Python bindings are enabled, include necessary sub directories.
 if( DUNE_ENABLE_PYTHONBINDINGS )
