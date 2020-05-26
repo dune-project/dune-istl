@@ -286,21 +286,6 @@ namespace Dune {
   public:
 
     /**
-     * @brief Set right Solver Category (default is overlapping).
-     */
-    void
-    DUNE_DEPRECATED_MSG("The solver category can only be set in the constructor. This method is deprecated and will be removed after Dune 2.7")
-    setSolverCategory (SolverCategory::Category set) {
-      category_ = set;
-    }
-
-    SolverCategory::Category
-    DUNE_DEPRECATED_MSG("This method is deprecated and will be removed after Dune 2.7, use category() instead.")
-    getSolverCategory () const {
-      return category_;
-    }
-
-    /**
      * @brief Get Solver Category.
      * @return The Solver Category.
      */
@@ -703,8 +688,7 @@ namespace Dune {
     mutable std::vector<double> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;
-    // re-intruduce const qualifier once deprecated setCategory got removed after Dune 2.7
-    /* const */ SolverCategory::Category category_;
+    const SolverCategory::Category category_;
     bool freecomm;
   };
 
