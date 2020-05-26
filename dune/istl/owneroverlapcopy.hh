@@ -288,7 +288,7 @@ namespace Dune {
     /**
      * @brief Set right Solver Category (default is overlapping).
      */
-    void setSolverCategory (SolverCategory set) {
+    void setSolverCategory (SolverCategory::Category set) {
       category = set;
     }
 
