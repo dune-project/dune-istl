@@ -2,6 +2,10 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include <config.h>
 
+#if !(HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK)
+  #error "You need SuperLU or SuiteSparse's UMFPack to run the overlappingschwarztest."
+#endif
+
 #include <dune/istl/io.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
@@ -21,7 +25,6 @@
 template<class MatrixBlock, class VectorBlock>
 Dune::TestSuite test(int argc, char** argv)
 {
-#if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
   Dune::TestSuite suite;
   const int BS=1;
   int N=4;
@@ -252,12 +255,10 @@ Dune::TestSuite test(int argc, char** argv)
   suite.check(res.converged) << "solver4 did not converge";
 
   return suite;
-#endif // HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
 }
 
 int main(int argc, char** argv){
   Dune::TestSuite suite;
-  suite.require(HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK) << "You need SuperLU or SuiteSparse's UMFPack to run this test.";
   suite.subTest(test<Dune::FieldMatrix<double, 1, 1>, Dune::FieldVector<double, 1>>(argc, argv));
   suite.subTest(test<double, double>(argc, argv));
   return suite.exit();
