@@ -2,6 +2,10 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include <config.h>
 
+#if ! HAVE_SUITESPARSE_UMFPACK
+  #error "You need SuiteSparse's UMFPack to run this test."
+#endif
+
 #include <iostream>
 
 #include <dune/common/fmatrix.hh>
@@ -58,7 +62,6 @@ void runUMFPack(std::size_t N)
 
 int main(int argc, char** argv) try
 {
-#if HAVE_SUITESPARSE_UMFPACK
   std::size_t N=100;
 
   if(argc>1)
@@ -89,10 +92,6 @@ int main(int argc, char** argv) try
   }
 
   return 0;
-#else // HAVE_SUITESPARSE_UMFPACK
-  std::cerr << "You need SuiteSparse's UMFPack to run this test." << std::endl;
-  return 77;
-#endif // HAVE_SUITESPARSE_UMFPACK
 }
 catch (std::exception &e)
 {

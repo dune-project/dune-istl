@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_UMFPACK_HH
 #define DUNE_ISTL_UMFPACK_HH
 
-#if HAVE_SUITESPARSE_UMFPACK || defined DOXYGEN
+#if (defined(HAVE_SUITESPARSE_UMFPACK) && HAVE_SUITESPARSE_UMFPACK) || defined(DOXYGEN)
 
 #include<complex>
 #include<type_traits>

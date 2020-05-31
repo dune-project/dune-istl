@@ -2,6 +2,10 @@
 // vi: set et ts=4 sw=2 sts=2:
 #include <config.h>
 
+#if HAVE_SUPERLU
+#pragma message "HAVE_SUPERLU"
+#endif
+
 #include <complex>
 
 #include <dune/common/fmatrix.hh>
