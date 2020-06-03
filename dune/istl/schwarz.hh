@@ -277,7 +277,7 @@ namespace Dune {
    */
   template<class X, class Y, class C, class P=Preconditioner<X,Y> >
   class BlockPreconditioner : public Preconditioner<X,Y> {
-    friend class Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,P> >;
+    friend struct Amg::ConstructionTraits<BlockPreconditioner<X,Y,C,P> >;
   public:
     //! \brief The domain type of the preconditioner.
     //!
