@@ -23,12 +23,11 @@ Dune::TestSuite test(int argc, char** argv)
 {
   Dune::TestSuite suite;
 #if HAVE_SUPERLU || HAVE_SUITESPARSE_UMFPACK
-  const int BS=1;
   int N=4;
 
   if(argc>1)
     N = atoi(argv[1]);
-  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+  std::cout<<"testing for N="<<N<<std::endl;
 
 
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;

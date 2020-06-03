@@ -122,7 +122,7 @@ protected:
   {
     // 1) allocate memory for largest and smallest magnitude eigenvalue
     //    as well as the spectral (i.e. 2-norm) condition number
-    Real lambda_max, lambda_min, cond_2;
+    Real lambda_max{}, lambda_min{}, cond_2{};
 
     // 2) allocate memory for starting vectors and approximated
     //    eigenvectors
@@ -260,7 +260,7 @@ protected:
 
     // 5) allocate memory for largest and smallest magnitude
     //    eigenvalue of m^t*m
-    Real lambda_max, lambda_min;
+    Real lambda_max{}, lambda_min{};
 
     // 6) setup power iteration based iterative eigenvalue algorithms
     //    for m^t*m
