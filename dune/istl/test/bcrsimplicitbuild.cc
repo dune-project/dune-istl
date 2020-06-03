@@ -75,7 +75,7 @@ void testImplicitBuildWithInsufficientOverflow()
       }
     m.compress();
     assert(false && "compress() should have thrown an exception");
-  } catch (Dune::ImplicitModeOverflowExhausted& e) {
+  } catch (const Dune::ImplicitModeCompressionBufferExhausted& e) {
     // test passed
   }
 }
