@@ -30,12 +30,10 @@ void loadMatrix(std::shared_ptr<BCRSMat>& pA){
   }
 }
 
-std::shared_ptr<Comm> repartMatrix(const std::shared_ptr<BCRSMat>& pA_orig, std::shared_ptr<BCRSMat>& pA, MPI_Comm comm){
+std::shared_ptr<Comm> repartMatrix(const std::shared_ptr<BCRSMat>& pA_orig, std::shared_ptr<BCRSMat>& pA, MPI_Comm comm, int size){
   typedef typename Dune::Amg::MatrixGraph<BCRSMat> MatrixGraph;
   RedistInfo ri;
   std::shared_ptr<Comm> pComm;
-  int size;
-  MPI_Comm_size(comm, &size);
   Comm oocomm(comm);
   Dune::graphRepartition(MatrixGraph(*pA_orig), oocomm,
                          size,
@@ -55,7 +53,7 @@ int main(int argc, char** argv){
   int rank = mpihelper.rank();
   std::shared_ptr<BCRSMat> mat, mat_reparted;
   loadMatrix(mat);
-  std::shared_ptr<Comm> comm = repartMatrix(mat, mat_reparted, world);
+  std::shared_ptr<Comm> comm = repartMatrix(mat, mat_reparted, world, size);
   typedef FieldVector<RT,1> VectorBlock;
   typedef BlockVector<VectorBlock> Vector;
   typedef OverlappingSchwarzOperator<BCRSMat, Vector, Vector, Comm> Operator;

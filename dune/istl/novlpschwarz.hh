@@ -275,7 +275,7 @@ namespace Dune {
   template<class C, class P>
   class NonoverlappingBlockPreconditioner
     : public Preconditioner<typename P::domain_type,typename P::range_type> {
-    friend class Amg::ConstructionTraits<NonoverlappingBlockPreconditioner<C,P> >;
+    friend struct Amg::ConstructionTraits<NonoverlappingBlockPreconditioner<C,P> >;
     using X = typename P::domain_type;
     using Y = typename P::range_type;
   public:
