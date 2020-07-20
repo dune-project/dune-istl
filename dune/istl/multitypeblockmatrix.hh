@@ -42,7 +42,11 @@ namespace Dune {
   class MultiTypeBlockMatrix
   : public std::tuple<FirstRow, Args...>
   {
+    using ParentType = std::tuple<FirstRow, Args...>;
   public:
+
+    /** \brief Get the constructors from tuple */
+    using ParentType::ParentType;
 
     /**
      * own class' type
