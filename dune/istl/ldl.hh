@@ -6,6 +6,7 @@
 #if HAVE_SUITESPARSE_LDL || defined DOXYGEN
 
 #include <iostream>
+#include <memory>
 #include <type_traits>
 
 #ifdef __cplusplus
@@ -68,8 +69,8 @@ namespace Dune {
    */
   template<typename T, typename A, int n, int m>
   class LDL<BCRSMatrix<FieldMatrix<T,n,m>,A > >
-    : public InverseOperator<BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other>,
-                             BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> >
+    : public InverseOperator<BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > >,
+                             BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > >
   {
     public:
     /** @brief The matrix type. */
@@ -80,9 +81,9 @@ namespace Dune {
     /** @brief Type of an associated initializer class. */
     typedef ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
     /** @brief The type of the domain of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,m>, typename A::template rebind<FieldVector<T,m> >::other> domain_type;
+    typedef Dune::BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > > domain_type;
     /** @brief The type of the range of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,n>, typename A::template rebind<FieldVector<T,n> >::other> range_type;
+    typedef Dune::BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > range_type;
 
     //! Category of the solver (see SolverCategory::Category)
     virtual SolverCategory::Category category() const

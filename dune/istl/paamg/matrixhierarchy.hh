@@ -80,7 +80,7 @@ namespace Dune
       typedef Dune::Amg::Hierarchy<ParallelInformation,Allocator> ParallelInformationHierarchy;
 
       /** @brief Allocator for pointers. */
-      typedef typename Allocator::template rebind<AggregatesMap*>::other AAllocator;
+      using AAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<AggregatesMap*>;
 
       /** @brief The type of the aggregates maps list. */
       typedef std::list<AggregatesMap*,AAllocator> AggregatesMapList;
@@ -89,7 +89,7 @@ namespace Dune
       typedef RedistributeInformation<ParallelInformation> RedistributeInfoType;
 
       /** @brief Allocator for RedistributeInfoType. */
-      typedef typename Allocator::template rebind<RedistributeInfoType>::other RILAllocator;
+      using RILAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<RedistributeInfoType>;
 
       /** @brief The type of the list of redistribute information. */
       typedef std::list<RedistributeInfoType,RILAllocator> RedistributeInfoList;
