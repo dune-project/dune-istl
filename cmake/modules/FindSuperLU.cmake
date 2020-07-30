@@ -3,11 +3,6 @@
 #    Module that checks whether SuperLU is available and usable.
 #    SuperLU must be 5.0 or newer.
 #
-#    Variables used by this module which you may want to set:
-#
-#    :ref:`SUPERLU_ROOT`
-#       Path list to search for SuperLU
-#
 #    Sets the follwing variables:
 #
 #    :code:`SUPERLU_FOUND`
@@ -22,39 +17,25 @@
 #    :code:`SUPERLU_LIBRARIES`
 #       Name to the SuperLU library.
 #
-# .. cmake_variable:: SUPERLU_ROOT
 #
-#    You may set this variable to have :ref:`FindSuperLU` look
-#    for the SuperLU package in the given path before inspecting
-#    system paths.
+#    This module provides the following imported targets, if found:
 #
+#    :code:`SuperLU:SuperLU`
+#      Library and include directories for the found SuperLU.
+#
+
+# text for feature summary
+set_package_properties("SuperLU" PROPERTIES
+  DESCRIPTION "Supernodal LU"
+  PURPOSE "Direct solver for linear system, based on LU decomposition")
 
 find_package(BLAS QUIET)
 
-# look for header files, only at positions given by the user
-find_path(SUPERLU_INCLUDE_DIR
-  NAMES supermatrix.h
-  PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
-  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
-  NO_DEFAULT_PATH
-)
-
-# look for header files, including default paths
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
   PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
 )
 
-# look for library, only at positions given by the user
-find_library(SUPERLU_LIBRARY
-  NAMES "superlu"
-        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
-  PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
-  PATH_SUFFIXES "lib" "lib32" "lib64"
-  NO_DEFAULT_PATH
-)
-
-# look for library files, including default paths
 find_library(SUPERLU_LIBRARY
   NAMES "superlu"
         "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
@@ -139,8 +120,3 @@ else(SUPERLU_FOUND)
     "Library directory: ${SUPERLU_LIBRARIES}\n"
     "Found unsupported version: ${SUPERLU_WITH_VERSION}\n\n")
 endif(SUPERLU_FOUND)
-
-# text for feature summary
-set_package_properties("SuperLU" PROPERTIES
-  DESCRIPTION "Supernodal LU"
-  PURPOSE "Direct solver for linear system, based on LU decomposition")
