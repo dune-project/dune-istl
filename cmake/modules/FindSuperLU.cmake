@@ -140,16 +140,6 @@ else(SUPERLU_FOUND)
     "Found unsupported version: ${SUPERLU_WITH_VERSION}\n\n")
 endif(SUPERLU_FOUND)
 
-# set HAVE_SUPERLU for config.h
-set(HAVE_SUPERLU ${SUPERLU_FOUND})
-
-# register all superlu related flags
-if(SUPERLU_FOUND)
-  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_SUPERLU=1"
-                              LIBRARIES "${SUPERLU_DUNE_LIBRARIES}"
-                              INCLUDE_DIRS "${SUPERLU_INCLUDE_DIRS}")
-endif()
-
 # text for feature summary
 set_package_properties("SuperLU" PROPERTIES
   DESCRIPTION "Supernodal LU"

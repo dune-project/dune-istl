@@ -10,6 +10,17 @@
 #       A list of targets to use SuperLU with.
 #
 
+# set HAVE_SUPERLU for config.h
+set(HAVE_SUPERLU ${SUPERLU_FOUND})
+
+# register all superlu related flags
+if(SUPERLU_FOUND)
+  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_SUPERLU=1"
+                              LIBRARIES "${SUPERLU_DUNE_LIBRARIES}"
+                              INCLUDE_DIRS "${SUPERLU_INCLUDE_DIRS}")
+endif()
+
+# Provide function to set target properties for linking to SuperLU
 function(add_dune_superlu_flags)
   if(SUPERLU_FOUND)
     cmake_parse_arguments(_add_superlu "OBJECT" "" "" ${ARGN})
