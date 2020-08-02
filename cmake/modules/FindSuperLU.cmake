@@ -13,9 +13,19 @@
 #
 #    :code:`SUPERLU_INCLUDE_DIRS`
 #       Path to the SuperLU include dirs.
+#       .. deprecated:: 2.8
+#          Use target SuperLU::SuperLU instead.
 #
 #    :code:`SUPERLU_LIBRARIES`
 #       Name to the SuperLU library.
+#       .. deprecated:: 2.8
+#          Use target SuperLU::SuperLU instead.
+#
+#
+#    This module provides the following imported targets, if found:
+#
+#    :code:`SuperLU:SuperLU`
+#      Library and include directories for the found SuperLU.
 #
 #
 #    This module provides the following imported targets, if found:
@@ -99,8 +109,24 @@ find_package_handle_standard_args(
 
 mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SUPERLU_MIN_VERSION_5)
 
+
 # if both headers and library are found, store results
 if(SUPERLU_FOUND)
+  if(NOT TARGET SuperLU::SuperLU)
+    add_library(SuperLU::SuperLU UNKNOWN IMPORTED)
+    set_target_properties(SuperLU::SuperLU
+      PROPERTIES
+      IMPORTED_LOCATION ${SUPERLU_LIBRARY}
+      INTERFACE_INCLUDE_DIRECTORIES "${SUPERLU_INCLUDE_DIR}")
+    # Link BLAS library
+    if(TARGET BLAS::BLAS)
+      target_link_libraries(SuperLU::SuperLU
+        INTERFACE BLAS::BLAS)
+    else()
+      target_link_libraries(SuperLU::SuperLU
+        INTERFACE ${BLAS_LINKER_FLAGS} ${BLAS_LIBRARIES})
+    endif()
+  endif()
   set(SUPERLU_INCLUDE_DIRS ${SUPERLU_INCLUDE_DIR})
   set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
   # log result
@@ -112,7 +138,7 @@ if(SUPERLU_FOUND)
     CACHE STRING "Compile flags used by DUNE when compiling SuperLU programs")
   set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking SuperLU programs")
-else(SUPERLU_FOUND)
+else()
   # log errornous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
