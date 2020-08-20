@@ -1105,7 +1105,7 @@ namespace Dune
     writeMatrixMarket(matrix,ostr,std::integral_constant<int,IsMatrix<M>::value>());
   }
 
-
+  static const int default_precision = -1;
   /**
    * @brief Stores a parallel matrix/vector in matrix market format in a file.
    *
@@ -1115,13 +1115,17 @@ namespace Dune
    * @param matrix The matrix/vector to store.
    * @param filename the name of the filename (without suffix and rank!)
    *        rank i will write the file filename_i.mm
+   * @param prec Set the decimal precision to be used
    */
   template<typename M>
   void storeMatrixMarket(const M& matrix,
-                         std::string filename)
+                         std::string filename,
+                         int prec=default_precision)
   {
     std::ofstream file(filename.c_str());
     file.setf(std::ios::scientific,std::ios::floatfield);
+    if(prec>0)
+      file.precision(prec);
     writeMatrixMarket(matrix, file);
     file.close();
   }
@@ -1139,12 +1143,14 @@ namespace Dune
    * @param comm The information about the data distribution.
    * @param storeIndices Whether to store the parallel index information.
    *        If true rank i writes the index information to file filename_i.idx.
+   * @param prec Set the decimal precision to be used
    */
   template<typename M, typename G, typename L>
   void storeMatrixMarket(const M& matrix,
                          std::string filename,
                          const OwnerOverlapCopyCommunication<G,L>& comm,
-                         bool storeIndices=true)
+                         bool storeIndices=true,
+                         int prec=default_precision)
   {
     // Get our rank
     int rank = comm.communicator().rank();
@@ -1154,6 +1160,8 @@ namespace Dune
     dverb<< rfilename.str()<<std::endl;
     std::ofstream file(rfilename.str().c_str());
     file.setf(std::ios::scientific,std::ios::floatfield);
+    if(prec>0)
+      file.precision(prec);
     writeMatrixMarket(matrix, file);
     file.close();
 
