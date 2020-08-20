@@ -1105,7 +1105,7 @@ namespace Dune
     writeMatrixMarket(matrix,ostr,std::integral_constant<int,IsMatrix<M>::value>());
   }
 
-
+  static const int default_precision = -1;
   /**
    * @brief Stores a parallel matrix/vector in matrix market format in a file.
    *
@@ -1120,7 +1120,7 @@ namespace Dune
   template<typename M>
   void storeMatrixMarket(const M& matrix,
                          std::string filename,
-                         int prec=0)
+                         int prec=default_precision)
   {
     std::ofstream file(filename.c_str());
     file.setf(std::ios::scientific,std::ios::floatfield);
@@ -1150,7 +1150,7 @@ namespace Dune
                          std::string filename,
                          const OwnerOverlapCopyCommunication<G,L>& comm,
                          bool storeIndices=true,
-                         int prec=0)
+                         int prec=default_precision)
   {
     // Get our rank
     int rank = comm.communicator().rank();
