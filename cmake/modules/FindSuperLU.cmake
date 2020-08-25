@@ -80,7 +80,7 @@ typedef int int_t;
 #include <slu_util.h>
 int main(void)
 {
-  GlobalLU_t glu;
+  static_assert(SUPERLU_MAJOR_VERSION >= 5, \"SuperLU must be 5.0 or newer.\");
   return 0;
 }"
 SUPERLU_MIN_VERSION_5)
