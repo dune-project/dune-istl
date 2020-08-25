@@ -3,9 +3,9 @@
 #    Module that checks whether SuperLU is available and usable.
 #    SuperLU must be 5.0 or newer.
 #
-#    Sets the follwing variables:
+#    Sets the following variables:
 #
-#    :code:`SUPERLU_FOUND`
+#    :code:`SuperLU_FOUND`
 #       True if SuperLU available and usable.
 #
 #    :code:`SUPERLU_INCLUDE_DIRS`
@@ -108,7 +108,7 @@ mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SUPERLU_MIN_VERSION_5)
 
 
 # if both headers and library are found, store results
-if(SUPERLU_FOUND)
+if(SuperLU_FOUND)
   if(NOT TARGET SuperLU::SuperLU)
     add_library(SuperLU::SuperLU UNKNOWN IMPORTED)
     set_target_properties(SuperLU::SuperLU
@@ -126,6 +126,8 @@ if(SUPERLU_FOUND)
   endif()
   set(SUPERLU_INCLUDE_DIRS ${SUPERLU_INCLUDE_DIR})
   set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
+  # for backwards compatibility only
+  set(SUPERLU_FOUND ${SuperLU_FOUND})
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determining location of SuperLU succeeded:\n"
@@ -136,9 +138,9 @@ if(SUPERLU_FOUND)
   set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking SuperLU programs")
 else()
-  # log errornous result
+  # log erroneous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n")
-endif(SUPERLU_FOUND)
+endif()
