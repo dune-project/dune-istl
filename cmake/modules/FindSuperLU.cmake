@@ -8,9 +8,6 @@
 #    :code:`SUPERLU_FOUND`
 #       True if SuperLU available and usable.
 #
-#    :code:`SUPERLU_WITH_VERSION`
-#       Human readable string containing version information.
-#
 #    :code:`SUPERLU_INCLUDE_DIRS`
 #       Path to the SuperLU include dirs.
 #       .. deprecated:: 2.8
@@ -131,7 +128,7 @@ if(SUPERLU_FOUND)
   set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determining location of ${SUPERLU_WITH_VERSION} succeeded:\n"
+    "Determining location of SuperLU succeeded:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
     "Library directory: ${SUPERLU_LIBRARIES}\n\n")
   set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS}"
@@ -143,6 +140,5 @@ else()
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n"
-    "Found unsupported version: ${SUPERLU_WITH_VERSION}\n\n")
+    "Library directory: ${SUPERLU_LIBRARIES}\n")
 endif(SUPERLU_FOUND)
