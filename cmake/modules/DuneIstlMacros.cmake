@@ -6,7 +6,7 @@
 find_package(METIS)
 find_package(ParMETIS)
 include(AddParMETISFlags)
-find_package(SuperLU)
+find_package(SuperLU 5.0)
 include(AddSuperLUFlags)
 find_package(ARPACKPP)
 include(AddARPACKPPFlags)
