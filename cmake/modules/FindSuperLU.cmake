@@ -1,7 +1,6 @@
 # .. cmake_module::
 #
 #    Module that checks whether SuperLU is available and usable.
-#    SuperLU must be 5.0 or newer.
 #
 #    Sets the following variables:
 #
@@ -32,79 +31,64 @@
 #
 
 # text for feature summary
+include(FeatureSummary)
 set_package_properties("SuperLU" PROPERTIES
   DESCRIPTION "Supernodal LU"
   PURPOSE "Direct solver for linear system, based on LU decomposition")
-
-find_package(BLAS QUIET)
-
-find_path(SUPERLU_INCLUDE_DIR
-  NAMES supermatrix.h
-  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
-)
-
-find_library(SUPERLU_LIBRARY
-  NAMES "superlu"
-        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
-  PATH_SUFFIXES "lib" "lib32" "lib64"
-)
-
-# check version specific macros
-include(CheckCSourceCompiles)
-include(CMakePushCheckState)
-cmake_push_check_state()
-
-# we need if clauses here because variable is set variable-NOTFOUND
-# if the searches above were not successful
-# Without them CMake print errors like:
-# "CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
-# Please set them or make sure they are set and tested correctly in the CMake files:"
-#
-if(SUPERLU_INCLUDE_DIR)
-  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SUPERLU_INCLUDE_DIR})
-endif(SUPERLU_INCLUDE_DIR)
-if(SUPERLU_LIBRARY)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${SUPERLU_LIBRARY})
-endif(SUPERLU_LIBRARY)
-if(BLAS_LIBRARIES)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
-endif(BLAS_LIBRARIES)
-
-# check whether version is at least 5.0
-check_c_source_compiles("
-typedef int int_t;
-#include <supermatrix.h>
-#include <slu_util.h>
-int main(void)
-{
-  static_assert(SUPERLU_MAJOR_VERSION >= 5, \"SuperLU must be 5.0 or newer.\");
-  return 0;
-}"
-SUPERLU_MIN_VERSION_5)
-
-include(CheckIncludeFiles)
-set(HAVE_SLU_DDEFS_H 1)
-check_include_files(slu_sdefs.h HAVE_SLU_SDEFS_H)
-check_include_files(slu_cdefs.h HAVE_SLU_CDEFS_H)
-check_include_files(slu_zdefs.h HAVE_SLU_ZDEFS_H)
-
-cmake_pop_check_state()
 
 set(SUPERLU_INT_TYPE "int" CACHE STRING
   "The integer version that SuperLU was compiled for (Default is int.
   Should be the same as int_t define in e.g. slu_sdefs.h")
 
-# behave like a CMake module is supposed to behave
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-  "SuperLU"
-  DEFAULT_MSG
-  SUPERLU_INCLUDE_DIR
-  SUPERLU_LIBRARY
-  SUPERLU_MIN_VERSION_5
+find_package(BLAS QUIET)
+
+find_path(SUPERLU_INCLUDE_DIR supermatrix.h
+  PATH_SUFFIXES "superlu" "SuperLU" "SRC"
 )
 
-mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SUPERLU_MIN_VERSION_5)
+find_library(SUPERLU_LIBRARY
+  NAMES "superlu"
+        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
+)
+
+# check version of SuperLU
+find_file(SLU_UTIL_HEADER slu_util.h
+  HINTS ${SUPERLU_INCLUDE_DIR}
+  NO_DEFAULT_PATH)
+if(SLU_UTIL_HEADER)
+  file(READ "${SLU_UTIL_HEADER}" superluheader)
+  # get version number from defines in header file
+  string(REGEX REPLACE ".*#define SUPERLU_MAJOR_VERSION[ \t]+([0-9]+).*" "\\1"
+    SUPERLU_MAJOR_VERSION  "${superluheader}")
+  string(REGEX REPLACE ".*#define SUPERLU_MINOR_VERSION[ \t]+([0-9]+).*" "\\1"
+    SUPERLU_MINOR_VERSION  "${superluheader}")
+  string(REGEX REPLACE ".*#define SUPERLU_PATCH_VERSION[ \t]+([0-9]+).*" "\\1"
+    SUPERLU_PATCH_VERSION "${superluheader}")
+  if(SUPERLU_MAJOR_VERSION GREATER_EQUAL 0)
+    set(SuperLU_VERSION "${SUPERLU_MAJOR_VERSION}")
+  endif()
+  if (SUPERLU_MINOR_VERSION GREATER_EQUAL 0)
+    set(SuperLU_VERSION "${SuperLU_VERSION}.${SUPERLU_MINOR_VERSION}")
+  endif()
+  if (SUPERLU_PATCH_VERSION GREATER_EQUAL 0)
+    set(SuperLU_VERSION "${SuperLU_VERSION}.${SUPERLU_PATCH_VERSION}")
+  endif()
+  # if SUPERLU_MAJOR_VERSION not defined, SuperLU must be version 4 or older
+  if(NOT SuperLU_VERSION)
+    set(SuperLU_VERSION "4")
+  endif()
+endif()
+
+# behave like a CMake module is supposed to behave
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args("SuperLU"
+  REQUIRED_VARS
+    SUPERLU_LIBRARY SUPERLU_INCLUDE_DIR SLU_UTIL_HEADER BLAS_FOUND
+  VERSION_VAR
+    SuperLU_VERSION
+)
+
+mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SLU_UTIL_HEADER)
 
 
 # if both headers and library are found, store results
