@@ -56,25 +56,25 @@ void runSuperLU(std::size_t N)
 
 // explicit template instantiation of SuperLU class
 
-#if HAVE_SLU_SDEFS_H
+#if __has_include("slu_sdefs.h")
 template class Dune::SuperLU<Dune::BCRSMatrix<float>>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<float,1,1> >>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<float,2,2> >>;
 #endif
 
-#if HAVE_SLU_DDEFS_H
+#if __has_include("slu_ddefs.h")
 template class Dune::SuperLU<Dune::BCRSMatrix<double>>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >>;
 #endif
 
-#if HAVE_SLU_CDEFS_H
+#if __has_include("slu_cdefs.h")
 template class Dune::SuperLU<Dune::BCRSMatrix<std::complex<float> >>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<float>,1,1> >>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<float>,2,2> >>;
 #endif
 
-#if HAVE_SLU_ZDEFS_H
+#if __has_include("slu_zdefs.h")
 template class Dune::SuperLU<Dune::BCRSMatrix<std::complex<double> >>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<double>,1,1> >>;
 template class Dune::SuperLU<Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<double>,2,2> >>;
@@ -94,28 +94,28 @@ try
 
   // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<T>"<<std::endl;
-#if HAVE_SLU_SDEFS_H
+#if __has_include("slu_sdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<float>;
     using Vector = Dune::BlockVector<float>;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_DDEFS_H
+#if __has_include("slu_ddefs.h")
   {
     using Matrix = Dune::BCRSMatrix<double>;
     using Vector = Dune::BlockVector<double>;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_CDEFS_H
+#if __has_include("slu_cdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<std::complex<float> >;
     using Vector = Dune::BlockVector<std::complex<float> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_ZDEFS_H
+#if __has_include("slu_zdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<std::complex<double> >;
     using Vector = Dune::BlockVector<std::complex<double> >;
@@ -125,28 +125,28 @@ try
 
   // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<T,1,1> >"<<std::endl;
-#if HAVE_SLU_SDEFS_H
+#if __has_include("slu_sdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<float,1,1> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<float,1> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_DDEFS_H
+#if __has_include("slu_ddefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<double,1> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_CDEFS_H
+#if __has_include("slu_cdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<float>,1,1> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<std::complex<float>,1> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_ZDEFS_H
+#if __has_include("slu_zdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<double>,1,1> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> >;
@@ -156,28 +156,28 @@ try
 
   // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<T,2,2> >"<<std::endl;
-#if HAVE_SLU_SDEFS_H
+#if __has_include("slu_sdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<float,2,2> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<float,2> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_DDEFS_H
+#if __has_include("slu_ddefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<double,2> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_CDEFS_H
+#if __has_include("slu_cdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<float>,2,2> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<std::complex<float>,2> >;
     runSuperLU<Matrix,Vector>(N);
   }
 #endif
-#if HAVE_SLU_ZDEFS_H
+#if __has_include("slu_zdefs.h")
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<std::complex<double>,2,2> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<std::complex<double>,2> >;
