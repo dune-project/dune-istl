@@ -19,18 +19,18 @@ if(CMAKE_USE_PTHREADS_INIT)
                 SOURCES pthreadamgtest.cc
                 COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
-                CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
+                CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
   dune_add_test(NAME pthreaddirectfastamgtest
                 SOURCES pthreadamgtest.cc
                 COMPILE_DEFINITIONS MYAMG=Dune::Amg::FastAMG<Operator,Vector>
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
-                CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
+                CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
   dune_add_test(NAME pthreaddirecttwoleveltest
                 SOURCES pthreadtwoleveltest.cc
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
-                CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
+                CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 endif()
 
 # add an executable without SuperLU/UMFPack
@@ -42,7 +42,7 @@ add_executable(fastamg fastamg.cc)
 target_link_libraries(fastamg ${DUNE_LIBS})
 dune_add_test(TARGET fastamg)
 
-if(SUPERLU_FOUND)
+if(SuperLU_FOUND)
   add_executable(superluamgtest amgtest.cc)
   add_dune_superlu_flags(superluamgtest)
   target_link_libraries(superluamgtest ${DUNE_LIBS})

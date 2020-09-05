@@ -10,7 +10,7 @@
 #include "slu_util.h"
 #undef int_t
 
-#if HAVE_SLU_SDEFS_H
+#if __has_include("slu_sdefs.h")
 extern "C" {
   extern void
   sgssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
@@ -31,7 +31,7 @@ extern "C" {
 }
 #endif
 
-#if HAVE_SLU_DDEFS_H
+#if __has_include("slu_ddefs.h")
 extern "C" {
   extern void
   dgssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,
@@ -54,7 +54,7 @@ extern "C" {
 }
 #endif
 
-#if HAVE_SLU_CDEFS_H
+#if __has_include("slu_cdefs.h")
 #include "slu_scomplex.h"
 
 extern "C" {
@@ -81,7 +81,7 @@ extern "C" {
 }
 #endif
 
-#if HAVE_SLU_ZDEFS_H
+#if __has_include("slu_zdefs.h")
 #include "slu_dcomplex.h"
 extern "C" {
   extern void

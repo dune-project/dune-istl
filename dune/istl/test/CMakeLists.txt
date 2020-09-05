@@ -93,7 +93,7 @@ function(add_factory_test BLOCK)
                   SuiteSparse_LDL_FOUND
                   SuiteSparse_SPQR_FOUND
                   SuiteSparse_UMFPACK_FOUND
-                  SUPERLU_FOUND)
+                  SuperLU_FOUND)
   endif()
 endfunction(add_factory_test)
 
@@ -135,7 +135,7 @@ dune_add_test(SOURCES spqrtest.cc
               CMAKE_GUARD SuiteSparse_SPQR_FOUND)
 
 dune_add_test(SOURCES overlappingschwarztest.cc
-              CMAKE_GUARD "SUPERLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
+              CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
 dune_add_test(SOURCES cholmodtest.cc
               CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
