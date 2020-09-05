@@ -108,23 +108,15 @@ if(SuperLU_FOUND)
         INTERFACE ${BLAS_LINKER_FLAGS} ${BLAS_LIBRARIES})
     endif()
   endif()
-  set(SUPERLU_INCLUDE_DIRS ${SUPERLU_INCLUDE_DIR})
-  set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
-  # for backwards compatibility only
-  set(SUPERLU_FOUND ${SuperLU_FOUND})
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determining location of SuperLU succeeded:\n"
-    "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n\n")
-  set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS}"
-    CACHE STRING "Compile flags used by DUNE when compiling SuperLU programs")
-  set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}
-    CACHE STRING "Libraries used by DUNE when linking SuperLU programs")
+    "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
+    "Library directory: ${SUPERLU_LIBRARY}\n\n")
 else()
   # log erroneous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
-    "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n")
+    "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
+    "Library directory: ${SUPERLU_LIBRARY}\n")
 endif()
