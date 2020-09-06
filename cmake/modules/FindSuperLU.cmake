@@ -1,156 +1,122 @@
 # .. cmake_module::
 #
 #    Module that checks whether SuperLU is available and usable.
-#    SuperLU must be 5.0 or newer.
 #
-#    Variables used by this module which you may want to set:
+#    Sets the following variables:
 #
-#    :ref:`SUPERLU_ROOT`
-#       Path list to search for SuperLU
-#
-#    Sets the follwing variables:
-#
-#    :code:`SUPERLU_FOUND`
+#    :code:`SuperLU_FOUND`
 #       True if SuperLU available and usable.
-#
-#    :code:`SUPERLU_WITH_VERSION`
-#       Human readable string containing version information.
 #
 #    :code:`SUPERLU_INCLUDE_DIRS`
 #       Path to the SuperLU include dirs.
+#       .. deprecated:: 2.8
+#          Use target SuperLU::SuperLU instead.
 #
 #    :code:`SUPERLU_LIBRARIES`
 #       Name to the SuperLU library.
+#       .. deprecated:: 2.8
+#          Use target SuperLU::SuperLU instead.
 #
-# .. cmake_variable:: SUPERLU_ROOT
 #
-#    You may set this variable to have :ref:`FindSuperLU` look
-#    for the SuperLU package in the given path before inspecting
-#    system paths.
+#    This module provides the following imported targets, if found:
+#
+#    :code:`SuperLU:SuperLU`
+#      Library and include directories for the found SuperLU.
+#
+#
+#    This module provides the following imported targets, if found:
+#
+#    :code:`SuperLU:SuperLU`
+#      Library and include directories for the found SuperLU.
 #
 
-find_package(BLAS QUIET)
-
-# look for header files, only at positions given by the user
-find_path(SUPERLU_INCLUDE_DIR
-  NAMES supermatrix.h
-  PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
-  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
-  NO_DEFAULT_PATH
-)
-
-# look for header files, including default paths
-find_path(SUPERLU_INCLUDE_DIR
-  NAMES supermatrix.h
-  PATH_SUFFIXES "superlu" "SuperLU" "include/superlu" "include" "SRC"
-)
-
-# look for library, only at positions given by the user
-find_library(SUPERLU_LIBRARY
-  NAMES "superlu"
-        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
-  PATHS ${SUPERLU_PREFIX} ${SUPERLU_ROOT}
-  PATH_SUFFIXES "lib" "lib32" "lib64"
-  NO_DEFAULT_PATH
-)
-
-# look for library files, including default paths
-find_library(SUPERLU_LIBRARY
-  NAMES "superlu"
-        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
-  PATH_SUFFIXES "lib" "lib32" "lib64"
-)
-
-# check version specific macros
-include(CheckCSourceCompiles)
-include(CMakePushCheckState)
-cmake_push_check_state()
-
-# we need if clauses here because variable is set variable-NOTFOUND
-# if the searches above were not successful
-# Without them CMake print errors like:
-# "CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
-# Please set them or make sure they are set and tested correctly in the CMake files:"
-#
-if(SUPERLU_INCLUDE_DIR)
-  set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SUPERLU_INCLUDE_DIR})
-endif(SUPERLU_INCLUDE_DIR)
-if(SUPERLU_LIBRARY)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${SUPERLU_LIBRARY})
-endif(SUPERLU_LIBRARY)
-if(BLAS_LIBRARIES)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${BLAS_LIBRARIES})
-endif(BLAS_LIBRARIES)
-
-# check whether version is at least 5.0
-check_c_source_compiles("
-typedef int int_t;
-#include <supermatrix.h>
-#include <slu_util.h>
-int main(void)
-{
-  GlobalLU_t glu;
-  return 0;
-}"
-SUPERLU_MIN_VERSION_5)
-
-include(CheckIncludeFiles)
-set(HAVE_SLU_DDEFS_H 1)
-check_include_files(slu_sdefs.h HAVE_SLU_SDEFS_H)
-check_include_files(slu_cdefs.h HAVE_SLU_CDEFS_H)
-check_include_files(slu_zdefs.h HAVE_SLU_ZDEFS_H)
-
-cmake_pop_check_state()
+# text for feature summary
+include(FeatureSummary)
+set_package_properties("SuperLU" PROPERTIES
+  DESCRIPTION "Supernodal LU"
+  PURPOSE "Direct solver for linear system, based on LU decomposition")
 
 set(SUPERLU_INT_TYPE "int" CACHE STRING
   "The integer version that SuperLU was compiled for (Default is int.
   Should be the same as int_t define in e.g. slu_sdefs.h")
 
-# behave like a CMake module is supposed to behave
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-  "SuperLU"
-  DEFAULT_MSG
-  SUPERLU_INCLUDE_DIR
-  SUPERLU_LIBRARY
-  SUPERLU_MIN_VERSION_5
+find_package(BLAS QUIET)
+
+find_path(SUPERLU_INCLUDE_DIR supermatrix.h
+  PATH_SUFFIXES "superlu" "SuperLU" "SRC"
 )
 
-mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SUPERLU_MIN_VERSION_5)
+find_library(SUPERLU_LIBRARY
+  NAMES "superlu"
+        "superlu_5.2.1" "superlu_5.2" "superlu_5.1.1" "superlu_5.1" "superlu_5.0"
+)
 
-# if both headers and library are found, store results
-if(SUPERLU_FOUND)
-  set(SUPERLU_INCLUDE_DIRS ${SUPERLU_INCLUDE_DIR})
-  set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
-  # log result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determining location of ${SUPERLU_WITH_VERSION} succeeded:\n"
-    "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n\n")
-  set(SUPERLU_DUNE_COMPILE_FLAGS "-I${SUPERLU_INCLUDE_DIRS}"
-    CACHE STRING "Compile flags used by DUNE when compiling SuperLU programs")
-  set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}
-    CACHE STRING "Libraries used by DUNE when linking SuperLU programs")
-else(SUPERLU_FOUND)
-  # log errornous result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-    "Determining location of SuperLU failed:\n"
-    "Include directory: ${SUPERLU_INCLUDE_DIRS}\n"
-    "Library directory: ${SUPERLU_LIBRARIES}\n"
-    "Found unsupported version: ${SUPERLU_WITH_VERSION}\n\n")
-endif(SUPERLU_FOUND)
-
-# set HAVE_SUPERLU for config.h
-set(HAVE_SUPERLU ${SUPERLU_FOUND})
-
-# register all superlu related flags
-if(SUPERLU_FOUND)
-  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_SUPERLU=1"
-                              LIBRARIES "${SUPERLU_DUNE_LIBRARIES}"
-                              INCLUDE_DIRS "${SUPERLU_INCLUDE_DIRS}")
+# check version of SuperLU
+find_file(SLU_UTIL_HEADER slu_util.h
+  HINTS ${SUPERLU_INCLUDE_DIR}
+  NO_DEFAULT_PATH)
+if(SLU_UTIL_HEADER)
+  file(READ "${SLU_UTIL_HEADER}" superluheader)
+  # get version number from defines in header file
+  string(REGEX REPLACE ".*#define SUPERLU_MAJOR_VERSION[ \t]+([0-9]+).*" "\\1"
+    SUPERLU_MAJOR_VERSION  "${superluheader}")
+  string(REGEX REPLACE ".*#define SUPERLU_MINOR_VERSION[ \t]+([0-9]+).*" "\\1"
+    SUPERLU_MINOR_VERSION  "${superluheader}")
+  string(REGEX REPLACE ".*#define SUPERLU_PATCH_VERSION[ \t]+([0-9]+).*" "\\1"
+    SUPERLU_PATCH_VERSION "${superluheader}")
+  if(SUPERLU_MAJOR_VERSION GREATER_EQUAL 0)
+    set(SuperLU_VERSION "${SUPERLU_MAJOR_VERSION}")
+  endif()
+  if (SUPERLU_MINOR_VERSION GREATER_EQUAL 0)
+    set(SuperLU_VERSION "${SuperLU_VERSION}.${SUPERLU_MINOR_VERSION}")
+  endif()
+  if (SUPERLU_PATCH_VERSION GREATER_EQUAL 0)
+    set(SuperLU_VERSION "${SuperLU_VERSION}.${SUPERLU_PATCH_VERSION}")
+  endif()
+  # if SUPERLU_MAJOR_VERSION not defined, SuperLU must be version 4 or older
+  if(NOT SuperLU_VERSION)
+    set(SuperLU_VERSION "4")
+  endif()
 endif()
 
-# text for feature summary
-set_package_properties("SuperLU" PROPERTIES
-  DESCRIPTION "Supernodal LU"
-  PURPOSE "Direct solver for linear system, based on LU decomposition")
+# behave like a CMake module is supposed to behave
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args("SuperLU"
+  REQUIRED_VARS
+    SUPERLU_LIBRARY SUPERLU_INCLUDE_DIR SLU_UTIL_HEADER BLAS_FOUND
+  VERSION_VAR
+    SuperLU_VERSION
+)
+
+mark_as_advanced(SUPERLU_INCLUDE_DIR SUPERLU_LIBRARY SLU_UTIL_HEADER)
+
+
+# if both headers and library are found, store results
+if(SuperLU_FOUND)
+  if(NOT TARGET SuperLU::SuperLU)
+    add_library(SuperLU::SuperLU UNKNOWN IMPORTED)
+    set_target_properties(SuperLU::SuperLU
+      PROPERTIES
+      IMPORTED_LOCATION ${SUPERLU_LIBRARY}
+      INTERFACE_INCLUDE_DIRECTORIES "${SUPERLU_INCLUDE_DIR}")
+    # Link BLAS library
+    if(TARGET BLAS::BLAS)
+      target_link_libraries(SuperLU::SuperLU
+        INTERFACE BLAS::BLAS)
+    else()
+      target_link_libraries(SuperLU::SuperLU
+        INTERFACE ${BLAS_LINKER_FLAGS} ${BLAS_LIBRARIES})
+    endif()
+  endif()
+  # log result
+  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+    "Determining location of SuperLU succeeded:\n"
+    "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
+    "Library directory: ${SUPERLU_LIBRARY}\n\n")
+else()
+  # log erroneous result
+  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+    "Determining location of SuperLU failed:\n"
+    "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
+    "Library directory: ${SUPERLU_LIBRARY}\n")
+endif()

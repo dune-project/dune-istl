@@ -27,7 +27,7 @@ namespace Dune
   struct SuperMatrixPrinter
   {};
 
-#if HAVE_SLU_SDEFS_H
+#if __has_include("slu_sdefs.h")
   template<>
   struct SuperMatrixCreateSparseChooser<float>
   {
@@ -50,7 +50,7 @@ namespace Dune
   };
 #endif
 
-#if HAVE_SLU_DDEFS_H
+#if __has_include("slu_ddefs.h")
   template<>
   struct SuperMatrixCreateSparseChooser<double>
   {
@@ -73,7 +73,7 @@ namespace Dune
   };
 #endif
 
-#if HAVE_SLU_CDEFS_H
+#if __has_include("slu_cdefs.h")
   template<>
   struct SuperMatrixCreateSparseChooser<std::complex<float> >
   {
@@ -96,7 +96,7 @@ namespace Dune
   };
 #endif
 
-#if HAVE_SLU_ZDEFS_H
+#if __has_include("slu_zdefs.h")
   template<>
   struct SuperMatrixCreateSparseChooser<std::complex<double> >
   {
