@@ -119,24 +119,27 @@ int main(int argc, char** argv)
   // Test the ParallelScalarProduct class
   {
     using Vector = BlockVector<FieldVector<double,BlockSize> >;
-    using ScalarProduct = ParallelScalarProduct<Vector, OwnerOverlapCopyCommunication<std::size_t,std::size_t> >;
-    OwnerOverlapCopyCommunication<std::size_t,std::size_t> communicator;
+    using Comm = OwnerOverlapCopyCommunication<std::size_t,std::size_t>;
+    using ScalarProduct = ParallelScalarProduct<Vector, Comm>;
+    auto communicator = std::make_shared<Comm>();
     ScalarProduct scalarProduct(communicator,SolverCategory::nonoverlapping);
     scalarProductTest<ScalarProduct, Vector>(scalarProduct,numBlocks);
   }
 
   {
     using Vector = BlockVector<float>;
-    using ScalarProduct = ParallelScalarProduct<Vector, OwnerOverlapCopyCommunication<std::size_t,std::size_t> >;
-    OwnerOverlapCopyCommunication<std::size_t,std::size_t> communicator;
+    using Comm = OwnerOverlapCopyCommunication<std::size_t,std::size_t>;
+    using ScalarProduct = ParallelScalarProduct<Vector, Comm>;
+    auto communicator = std::make_shared<Comm>();
     ScalarProduct scalarProduct(communicator,SolverCategory::nonoverlapping);
     scalarProductTest<ScalarProduct, Vector>(scalarProduct,numBlocks);
   }
 
   {
     using Vector = BlockVector<FieldVector<std::complex<double>, 1> >;
-    using ScalarProduct = ParallelScalarProduct<Vector, OwnerOverlapCopyCommunication<std::size_t,std::size_t> >;
-    OwnerOverlapCopyCommunication<std::size_t,std::size_t> communicator;
+    using Comm = OwnerOverlapCopyCommunication<std::size_t,std::size_t>;
+    using ScalarProduct = ParallelScalarProduct<Vector, Comm>;
+    Comm communicator; // test constructor taking a const reference to the communicator
     ScalarProduct scalarProduct(communicator,SolverCategory::nonoverlapping);
     scalarProductTest<ScalarProduct, Vector>(scalarProduct,numBlocks);
   }
