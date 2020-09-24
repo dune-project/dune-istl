@@ -14,3 +14,5 @@ parent type (`std::tuple<Args...>`). This means you can now also construct
 `MultiTypeBlockVector`s from values or references of BlockVectors.
 
 - `MultiTypeBlockVector::count()` is now `const`
+
+- `MultiTypeBlockMatrix` now implements the methods `frobenius_norm` and `frobenius_norm2`.
