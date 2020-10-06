@@ -37,3 +37,11 @@ debian-11-gcc-9-17-python:
     # finally set the python path to all modules
     PYTHONPATH:         /duneci/modules/dune-common/build-cmake/python:$CI_PROJECT_DIR/build-cmake/python
   tags: [duneci]
+
+debian-11-gcc-9-17-with-checking:
+  image: duneci/debian:11
+  script: duneci-standard-test
+  variables:
+    DUNECI_TOOLCHAIN:   gcc-9-17
+    DUNECI_CMAKE_FLAGS:   "CC=gcc-9 CXX=g++-9 -DCMAKE_CXX_FLAGS='-std=c++17 -O2 -g -Wall -fdiagnostics-color=always -DDUNE_ISTL_WITH_CHECKING' -DDUNE_MAX_TEST_CORES=4 -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
+  tags: [duneci]
