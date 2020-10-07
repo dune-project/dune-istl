@@ -1,0 +1,10 @@
+graft cmake
+graft doc
+graft dune
+graft lib
+graft python
+include CMakeLists.txt
+include config.h.cmake
+include dune-istl.pc.in
+include dune.module
+include pyproject.toml
