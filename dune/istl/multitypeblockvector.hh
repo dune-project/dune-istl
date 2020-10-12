@@ -99,8 +99,12 @@ namespace Dune {
 
     /**
      * number of elements
+     *
+     * \deprecated Use method <code>N</code> instead.
+     *             This will be removed after Dune 2.8.
      */
-    int count() const DUNE_DEPRECATED_MSG("Use method 'N' instead")
+    [[deprecated("Use method 'N' instead")]]
+    int count() const
     {
       return sizeof...(Args);
     }
