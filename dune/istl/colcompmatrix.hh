@@ -161,7 +161,7 @@ namespace Dune
   public:
     using Matrix = M;
     using Index = I;
-    typedef Dune::ColCompMatrix<Matrix, Index> ColCompMatrix;
+    typedef Dune::BCCSMatrix<Matrix, Index> ColCompMatrix;
     typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;
 

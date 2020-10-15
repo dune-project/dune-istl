@@ -9,22 +9,17 @@
 
 namespace Dune
 {
-  /**
-   * @brief Inititializer for the ColCompMatrix
-   * as needed by OverlappingSchwarz
-   * @tparam M the matrix type
-   * @tparam I the internal index type
-   */
   template<class M, class I = int>
   class ColCompMatrixInitializer;
 
   /**
-   * @brief Utility class for converting an ISTL Matrix into a column-compressed matrix
+   * @brief A block matrix with compressed-column storage
+   *
    * @tparam M The matrix type
    * @tparam I the internal index type
    */
   template<class Mat, class I = int>
-  class ColCompMatrix
+  class BCCSMatrix
   {
     friend class ColCompMatrixInitializer<Mat, I>;
 
@@ -42,16 +37,25 @@ namespace Dune
      * @brief Constructor that initializes the data.
      * @param mat The matrix to convert.
      */
-    explicit ColCompMatrix(const Matrix& mat);
+    explicit BCCSMatrix(const Matrix& mat)
+    {
+      // WARNING: This assumes that all blocks are dense and identical
+      typename Matrix::block_type dummy;
+      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
+      const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
+      N_ = n*mat.N();
+      M_ = m*mat.N();
+      Nnz_ = n*m*mat.nonzeroes();
+    }
 
     /** \brief Default constructor
      */
-    ColCompMatrix()
+    BCCSMatrix()
     : N_(0), M_(0), Nnz_(0), values(0), rowindex(0), colstart(0)
     {}
 
     /** @brief Destructor */
-    virtual ~ColCompMatrix()
+    virtual ~BCCSMatrix()
     {
       if(N_+M_+Nnz_!=0)
         free();
@@ -100,8 +104,53 @@ namespace Dune
       return colstart;
     }
 
-    ColCompMatrix& operator=(const Matrix& mat);
-    ColCompMatrix& operator=(const ColCompMatrix& mat);
+    BCCSMatrix& operator=(const Matrix& mat)
+    {
+      if(N_+M_+Nnz_!=0)
+        free();
+      setMatrix(mat);
+      return *this;
+    }
+
+    BCCSMatrix& operator=(const BCCSMatrix& mat)
+    {
+      if(N_+M_+Nnz_!=0)
+        free();
+      N_=mat.N_;
+      M_=mat.M_;
+      Nnz_= mat.Nnz_;
+      if(M_>0) {
+        colstart=new size_type[M_+1];
+        for(size_type i=0; i<=M_; ++i)
+          colstart[i]=mat.colstart[i];
+      }
+
+      if(Nnz_>0) {
+        values = new B[Nnz_];
+        rowindex = new size_type[Nnz_];
+
+        for(size_type i=0; i<Nnz_; ++i)
+          values[i]=mat.values[i];
+
+        for(size_type i=0; i<Nnz_; ++i)
+          rowindex[i]=mat.rowindex[i];
+      }
+      return *this;
+    }
+
+    /** @brief free allocated space. */
+    virtual void free()
+    {
+      delete[] values;
+      delete[] rowindex;
+      delete[] colstart;
+      N_ = 0;
+      M_ = 0;
+      Nnz_ = 0;
+    }
+
+    /** @brief Initialize data from given matrix. */
+    virtual void setMatrix(const Matrix& mat);
 
     /**
      * @brief Initialize data from a given set of matrix rows and columns
@@ -109,11 +158,6 @@ namespace Dune
      * @param mrs The set of row (and column) indices to remove
      */
     virtual void setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs);
-    /** @brief free allocated space. */
-    virtual void free();
-
-    /** @brief Initialize data from given matrix. */
-    virtual void setMatrix(const Matrix& mat);
 
   public:
     size_type N_, M_, Nnz_;
@@ -122,57 +166,6 @@ namespace Dune
     Index* colstart;
   };
 
-  template<class Mat, class I>
-  ColCompMatrix<Mat, I>
-  ::ColCompMatrix(const Matrix& mat)
-  {
-    // WARNING: This assumes that all blocks are dense and identical
-    typename Matrix::block_type dummy;
-    const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
-    const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
-    N_ = n*mat.N();
-    M_ = m*mat.N();
-    Nnz_ = n*m*mat.nonzeroes();
-  }
-
-  template<class Mat, class I>
-  ColCompMatrix<Mat, I>&
-  ColCompMatrix<Mat, I>::operator=(const Matrix& mat)
-  {
-    if(N_+M_+Nnz_!=0)
-      free();
-    setMatrix(mat);
-    return *this;
-  }
-
-  template<class Mat, class I>
-  ColCompMatrix<Mat, I>&
-  ColCompMatrix<Mat, I>::operator=(const ColCompMatrix& mat)
-  {
-    if(N_+M_+Nnz_!=0)
-      free();
-    N_=mat.N_;
-    M_=mat.M_;
-    Nnz_= mat.Nnz_;
-    if(M_>0) {
-      colstart=new size_type[M_+1];
-      for(size_type i=0; i<=M_; ++i)
-        colstart[i]=mat.colstart[i];
-    }
-
-    if(Nnz_>0) {
-      values = new B[Nnz_];
-      rowindex = new size_type[Nnz_];
-
-      for(size_type i=0; i<Nnz_; ++i)
-        values[i]=mat.values[i];
-
-      for(size_type i=0; i<Nnz_; ++i)
-        rowindex[i]=mat.rowindex[i];
-    }
-    return *this;
-  }
-
   template<class Matrix>
   class MatrixRowSet;
 
@@ -180,7 +173,7 @@ namespace Dune
   class MatrixRowSubset;
 
   template<class Mat, class I>
-  void ColCompMatrix<Mat, I>
+  void BCCSMatrix<Mat, I>
   ::setMatrix(const Matrix& mat)
   {
     N_=MatrixDimension<Mat>::rowdim(mat);
@@ -191,7 +184,7 @@ namespace Dune
   }
 
   template<class Mat, class I>
-  void ColCompMatrix<Mat, I>
+  void BCCSMatrix<Mat, I>
   ::setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs)
   {
     if(N_+M_+Nnz_!=0)
@@ -203,17 +196,5 @@ namespace Dune
 
     copyToColCompMatrix(initializer, MatrixRowSubset<Mat,std::set<std::size_t> >(mat,mrs));
   }
-
-  template<class Mat, class I>
-  void ColCompMatrix<Mat, I>::free()
-  {
-    delete[] values;
-    delete[] rowindex;
-    delete[] colstart;
-    N_ = 0;
-    M_ = 0;
-    Nnz_ = 0;
-  }
-
 }
 #endif

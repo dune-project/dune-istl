@@ -184,7 +184,7 @@ namespace Dune
    */
   template<class B, class TA>
   class SuperLUMatrix<BCRSMatrix<B,TA> >
-    : public ColCompMatrix<BCRSMatrix<B,TA> >
+    : public BCCSMatrix<BCRSMatrix<B,TA> >
   {
     template<class M, class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
@@ -201,10 +201,10 @@ namespace Dune
      * @brief Constructor that initializes the data.
      * @param mat The matrix to convert.
      */
-    explicit SuperLUMatrix(const Matrix& mat) : ColCompMatrix<BCRSMatrix<B,TA> >(mat)
+    explicit SuperLUMatrix(const Matrix& mat) : BCCSMatrix<BCRSMatrix<B,TA> >(mat)
     {}
 
-    SuperLUMatrix() : ColCompMatrix<BCRSMatrix<B,TA> >()
+    SuperLUMatrix() : BCCSMatrix<BCRSMatrix<B,TA> >()
     {}
 
     /** @brief Destructor */
@@ -228,7 +228,7 @@ namespace Dune
 
     SuperLUMatrix<BCRSMatrix<B,TA> >& operator=(const BCRSMatrix<B,TA>& mat)
     {
-      this->ColCompMatrix<BCRSMatrix<B,TA> >::operator=(mat);
+      this->BCCSMatrix<BCRSMatrix<B,TA> >::operator=(mat);
       SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
              this->values,this->rowindex, this->colstart, SLU_NC,
@@ -238,7 +238,7 @@ namespace Dune
 
     SuperLUMatrix<BCRSMatrix<B,TA> >& operator=(const SuperLUMatrix <BCRSMatrix<B,TA> >& mat)
     {
-      this->ColCompMatrix<BCRSMatrix<B,TA> >::operator=(mat);
+      this->BCCSMatrix<BCRSMatrix<B,TA> >::operator=(mat);
       SuperMatrixCreateSparseChooser<B>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
              this->values,this->rowindex, this->colstart, SLU_NC,
@@ -276,7 +276,7 @@ namespace Dune
     /** @brief free allocated space. */
     virtual void free()
     {
-      ColCompMatrix<BCRSMatrix<B,TA> >::free();
+      BCCSMatrix<BCRSMatrix<B,TA> >::free();
       SUPERLU_FREE(A.Store);
     }
   private:

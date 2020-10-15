@@ -77,7 +77,7 @@ namespace Dune {
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
     /** @brief The corresponding SuperLU Matrix type. */
-    typedef Dune::ColCompMatrix<Matrix> LDLMatrix;
+    typedef Dune::BCCSMatrix<Matrix> LDLMatrix;
     /** @brief Type of an associated initializer class. */
     typedef ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
     /** @brief The type of the domain of the solver. */
