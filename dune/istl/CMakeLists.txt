@@ -7,6 +7,7 @@ add_subdirectory(test)
 install(FILES
    allocator.hh
    basearray.hh
+   bccsmatrix.hh
    bcrsmatrix.hh
    bdmatrix.hh
    blocklevel.hh
