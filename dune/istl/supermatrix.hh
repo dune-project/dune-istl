@@ -184,7 +184,7 @@ namespace Dune
    */
   template<class B, class TA>
   class SuperLUMatrix<BCRSMatrix<B,TA> >
-    : public BCCSMatrix<BCRSMatrix<B,TA> >
+    : public BCCSMatrix<typename BCRSMatrix<B,TA>::field_type>
   {
     template<class M, class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
@@ -204,7 +204,7 @@ namespace Dune
     explicit SuperLUMatrix(const Matrix& mat) : BCCSMatrix<BCRSMatrix<B,TA> >(mat)
     {}
 
-    SuperLUMatrix() : BCCSMatrix<BCRSMatrix<B,TA> >()
+    SuperLUMatrix() : BCCSMatrix<typename BCRSMatrix<B,TA>::field_type >()
     {}
 
     /** @brief Destructor */
@@ -294,7 +294,7 @@ namespace Dune
     /** @brief free allocated space. */
     virtual void free()
     {
-      BCCSMatrix<BCRSMatrix<B,TA> >::free();
+      BCCSMatrix<typename BCRSMatrix<B,TA>::field_type>::free();
       SUPERLU_FREE(A.Store);
     }
   private:

@@ -219,7 +219,7 @@ namespace Dune {
     using Matrix = M;
     using matrix_type = M;
     /** @brief The corresponding UMFPack matrix type.*/
-    typedef Dune::BCCSMatrix<Matrix, long int> UMFPackMatrix;
+    typedef Dune::BCCSMatrix<typename Matrix::field_type, long int> UMFPackMatrix;
     /** @brief Type of an associated initializer class. */
     typedef ColCompMatrixInitializer<M, long int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */

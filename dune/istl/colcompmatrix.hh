@@ -153,7 +153,7 @@ namespace Dune
    * @tparam M the matrix type
    * @tparam I the internal index type
    */
-  template<class M, class I>
+  template<class M, class I=int>
   class ColCompMatrixInitializer
   {
     template<class IList, class S, class D>
@@ -161,7 +161,7 @@ namespace Dune
   public:
     using Matrix = M;
     using Index = I;
-    typedef Dune::BCCSMatrix<Matrix, Index> ColCompMatrix;
+    typedef Dune::BCCSMatrix<typename Matrix::field_type, I> ColCompMatrix;
     typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;
 

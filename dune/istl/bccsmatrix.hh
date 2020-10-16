@@ -9,29 +9,22 @@
 
 namespace Dune
 {
-  template<class M, class I = int>
-  class ColCompMatrixInitializer;
-
   /**
    * @brief A block matrix with compressed-column storage
    *
-   * @tparam M The matrix type
+   * @tparam B The type of a matrix entry (may be a matrix itself)
    * @tparam I the internal index type
+   *
+   * Currently this class is mainly a vehicle to get matrices into the solvers
+   * of the SuiteSparse package.  The class tries to follow the dune-istl
+   * matrix interface, but it doesn't implement the interface entirely.
    */
-  template<class Mat, class I = int>
+  template<class B, class I = int>
   class BCCSMatrix
   {
-    friend class ColCompMatrixInitializer<Mat, I>;
-
-    using B = typename Mat::field_type;
-
   public:
-    /** @brief The type of the matrix to convert. */
-    using Matrix = Mat;
-
-    typedef typename Matrix::size_type size_type;
-
     using Index = I;
+    using size_type = I;
 
     /** \brief Default constructor
      */
@@ -57,7 +50,7 @@ namespace Dune
      * @brief Get the number of rows.
      * @return  The number of rows.
      */
-    size_type N() const
+    std::size_t N() const
     {
       return N_;
     }
@@ -66,9 +59,9 @@ namespace Dune
     {
       // TODO: The following code assumes that the blocks are dense
       // and that they all have the same dimensions.
-      typename Matrix::block_type dummy;
-      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
-      const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
+      B dummy;
+      const auto n = MatrixDimension<B>::rowdim(dummy);
+      const auto m = MatrixDimension<B>::coldim(dummy);
       return Nnz_/n/m;
     }
 
@@ -76,7 +69,7 @@ namespace Dune
      * @brief Get the number of columns.
      * @return  The number of columns.
      */
-    size_type M() const
+    std::size_t M() const
     {
       return M_;
     }
