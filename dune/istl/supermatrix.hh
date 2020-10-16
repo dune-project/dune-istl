@@ -228,7 +228,16 @@ namespace Dune
 
     SuperLUMatrix<BCRSMatrix<B,TA> >& operator=(const BCRSMatrix<B,TA>& mat)
     {
-      this->BCCSMatrix<BCRSMatrix<B,TA> >::operator=(mat);
+      if (this->N_ + this->M_ + this->Nnz_!=0)
+        free();
+
+      using Matrix = BCRSMatrix<B,TA>;
+      this->N_ = MatrixDimension<Matrix>::rowdim(mat);
+      this->M_ = MatrixDimension<Matrix>::coldim(mat);
+      ColCompMatrixInitializer<Matrix, int> initializer(*this);
+
+      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
+
       SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
              this->values,this->rowindex, this->colstart, SLU_NC,
@@ -238,7 +247,16 @@ namespace Dune
 
     SuperLUMatrix<BCRSMatrix<B,TA> >& operator=(const SuperLUMatrix <BCRSMatrix<B,TA> >& mat)
     {
-      this->BCCSMatrix<BCRSMatrix<B,TA> >::operator=(mat);
+      if (this->N_ + this->M_ + this->Nnz_!=0)
+        free();
+
+      using Matrix = BCRSMatrix<B,TA>;
+      this->N_ = MatrixDimension<Matrix>::rowdim(mat);
+      this->M_ = MatrixDimension<Matrix>::coldim(mat);
+      ColCompMatrixInitializer<Matrix, int> initializer(*this);
+
+      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
+
       SuperMatrixCreateSparseChooser<B>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
              this->values,this->rowindex, this->colstart, SLU_NC,

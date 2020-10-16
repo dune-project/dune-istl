@@ -447,7 +447,15 @@ namespace Dune {
         free();
       if (matrix.N() == 0 or matrix.M() == 0)
         return;
-      umfpackMatrix_ = matrix;
+
+      if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nnz() != 0)
+        umfpackMatrix_.free();
+      umfpackMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
+                             MatrixDimension<Matrix>::coldim(matrix));
+      ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+
+      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(matrix));
+
       decompose();
     }
 
@@ -456,7 +464,16 @@ namespace Dune {
     {
       if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
-      umfpackMatrix_.setMatrix(_mat,rowIndexSet);
+
+      if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nnz() != 0)
+        umfpackMatrix_.free();
+
+      umfpackMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(_mat) / _mat.N(),
+                             rowIndexSet.size()*MatrixDimension<Matrix>::coldim(_mat) / _mat.M());
+      ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+
+      copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
+
       decompose();
     }
 

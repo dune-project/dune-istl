@@ -33,21 +33,6 @@ namespace Dune
 
     using Index = I;
 
-    /**
-     * @brief Constructor that initializes the data.
-     * @param mat The matrix to convert.
-     */
-    explicit BCCSMatrix(const Matrix& mat)
-    {
-      // WARNING: This assumes that all blocks are dense and identical
-      typename Matrix::block_type dummy;
-      const auto n = MatrixDimension<typename Matrix::block_type>::rowdim(dummy);
-      const auto m = MatrixDimension<typename Matrix::block_type>::coldim(dummy);
-      N_ = n*mat.N();
-      M_ = m*mat.N();
-      Nnz_ = n*m*mat.nonzeroes();
-    }
-
     /** \brief Default constructor
      */
     BCCSMatrix()
@@ -55,10 +40,17 @@ namespace Dune
     {}
 
     /** @brief Destructor */
-    virtual ~BCCSMatrix()
+    ~BCCSMatrix()
     {
       if(N_+M_+Nnz_!=0)
         free();
+    }
+
+    /** \brief Set matrix size */
+    void setSize(size_type rows, size_type columns)
+    {
+      N_ = rows;
+      M_ = columns;
     }
 
     /**
@@ -104,14 +96,7 @@ namespace Dune
       return colstart;
     }
 
-    BCCSMatrix& operator=(const Matrix& mat)
-    {
-      if(N_+M_+Nnz_!=0)
-        free();
-      setMatrix(mat);
-      return *this;
-    }
-
+    /** \brief Assignment operator */
     BCCSMatrix& operator=(const BCCSMatrix& mat)
     {
       if(N_+M_+Nnz_!=0)
@@ -149,16 +134,6 @@ namespace Dune
       Nnz_ = 0;
     }
 
-    /** @brief Initialize data from given matrix. */
-    virtual void setMatrix(const Matrix& mat);
-
-    /**
-     * @brief Initialize data from a given set of matrix rows and columns
-     * @param mat the matrix with the values
-     * @param mrs The set of row (and column) indices to remove
-     */
-    virtual void setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs);
-
   public:
     size_type N_, M_, Nnz_;
     B* values;
@@ -166,35 +141,5 @@ namespace Dune
     Index* colstart;
   };
 
-  template<class Matrix>
-  class MatrixRowSet;
-
-  template<class Matrix, class Container>
-  class MatrixRowSubset;
-
-  template<class Mat, class I>
-  void BCCSMatrix<Mat, I>
-  ::setMatrix(const Matrix& mat)
-  {
-    N_=MatrixDimension<Mat>::rowdim(mat);
-    M_=MatrixDimension<Mat>::coldim(mat);
-    ColCompMatrixInitializer<Mat, I> initializer(*this);
-
-    copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
-  }
-
-  template<class Mat, class I>
-  void BCCSMatrix<Mat, I>
-  ::setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs)
-  {
-    if(N_+M_+Nnz_!=0)
-      free();
-
-    N_=mrs.size()*MatrixDimension<Mat>::rowdim(mat) / mat.N();
-    M_=mrs.size()*MatrixDimension<Mat>::coldim(mat) / mat.M();
-    ColCompMatrixInitializer<Mat, I> initializer(*this);
-
-    copyToColCompMatrix(initializer, MatrixRowSubset<Mat,std::set<std::size_t> >(mat,mrs));
-  }
 }
 #endif

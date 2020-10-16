@@ -198,7 +198,15 @@ namespace Dune {
     {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
-      spqrMatrix_ = matrix;
+
+      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nnz() != 0)
+        spqrMatrix_.free();
+      spqrMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
+                          MatrixDimension<Matrix>::coldim(matrix));
+      ColCompMatrixInitializer<Matrix, int> initializer(spqrMatrix_);
+
+      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(matrix));
+
       decompose();
     }
 
@@ -207,7 +215,16 @@ namespace Dune {
     {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
-      spqrMatrix_.setMatrix(matrix,rowIndexSet);
+
+      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nnz() != 0)
+        spqrMatrix_.free();
+
+      spqrMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),
+                          rowIndexSet.size()*MatrixDimension<Matrix>::coldim(matrix) / matrix.M());
+      ColCompMatrixInitializer<Matrix, int> initializer(spqrMatrix_);
+
+      copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(matrix,rowIndexSet));
+
       decompose();
     }
 
