@@ -170,52 +170,140 @@ namespace Dune
      * \tparam Block Dummy parameter to make SFINAE work
      */
     template <class Block=typename M::block_type>
-    ColCompMatrixInitializer(ColCompMatrix& lum,
-                             typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae = nullptr);
+    ColCompMatrixInitializer(ColCompMatrix& mat_,
+                             typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae = nullptr)
+    : mat(&mat_), cols(mat_.M())
+    {
+      n = 1;
+      m = 1;
+
+      mat->Nnz_=0;
+    }
 
     /** \brief Constructor for dense matrix-valued matrices
      *
      * \tparam Block Dummy parameter to make SFINAE work
      */
     template <class Block=typename M::block_type>
-    ColCompMatrixInitializer(ColCompMatrix& lum,
-                             typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae = nullptr);
+    ColCompMatrixInitializer(ColCompMatrix& mat_,
+                             typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae = nullptr)
+    : mat(&mat_), cols(mat_.M())
+    {
+      // WARNING: This assumes that all blocks are dense and identical
+      n = M::block_type::rows;
+      m = M::block_type::cols;
 
-    ColCompMatrixInitializer();
+      mat->Nnz_=0;
+    }
+
+    ColCompMatrixInitializer()
+    : mat(0), cols(0), n(0), m(0)
+    {}
 
     virtual ~ColCompMatrixInitializer()
     {}
 
     template<typename Iter>
-    void addRowNnz(const Iter& row) const;
+    void addRowNnz(const Iter& row) const
+    {
+      mat->Nnz_+=row->getsize();
+    }
 
     template<typename Iter, typename FullMatrixIndex>
-    void addRowNnz(const Iter& row, const std::set<FullMatrixIndex>& indices) const;
+    void addRowNnz(const Iter& row, const std::set<FullMatrixIndex>& indices) const
+    {
+      auto siter =indices.begin();
+      for (auto entry=row->begin(); entry!=row->end(); ++entry)
+      {
+        for(; siter!=indices.end() && *siter<entry.index(); ++siter) ;
+        if(siter==indices.end())
+          break;
+        if(*siter==entry.index())
+          // index is in subdomain
+          ++mat->Nnz_;
+      }
+    }
 
     template<typename Iter, typename SubMatrixIndex>
-    void addRowNnz(const Iter& row, const std::vector<SubMatrixIndex>& indices) const;
+    void addRowNnz(const Iter& row, const std::vector<SubMatrixIndex>& indices) const
+    {
+      for (auto entry=row->begin(); entry!=row->end(); ++entry)
+        if (indices[entry.index()]!=std::numeric_limits<SubMatrixIndex>::max())
+          ++mat->Nnz_;
+    }
 
-    void allocate();
+    void allocate()
+    {
+      allocateMatrixStorage();
+      allocateMarker();
+    }
 
     template<typename Iter>
-    void countEntries(const Iter& row, const CIter& col) const;
+    void countEntries(const Iter& row, const CIter& col) const
+    {
+      DUNE_UNUSED_PARAMETER(row);
+      countEntries(col.index());
+    }
 
-    void countEntries(size_type colidx) const;
+    void countEntries(size_type colindex) const
+    {
+      for(size_type i=0; i < m; ++i)
+      {
+        assert(colindex*m+i<cols);
+        marker[colindex*m+i]+=n;
+      }
+    }
 
-    void calcColstart() const;
+    void calcColstart() const
+    {
+      mat->colstart[0]=0;
+      for(size_type i=0; i < cols; ++i) {
+        assert(i<cols);
+        mat->colstart[i+1]=mat->colstart[i]+marker[i];
+        marker[i]=mat->colstart[i];
+      }
+    }
 
     template<typename Iter>
-    void copyValue(const Iter& row, const CIter& col) const;
+    void copyValue(const Iter& row, const CIter& col) const
+    {
+      copyValue(col, row.index(), col.index());
+    }
 
-    void copyValue(const CIter& col, size_type rowindex, size_type colidx) const;
+    void copyValue(const CIter& col, size_type rowindex, size_type colindex) const
+    {
+      for(size_type i=0; i<n; i++) {
+        for(size_type j=0; j<m; j++) {
+          assert(colindex*m+j<cols-1 || (size_type)marker[colindex*m+j]<(size_type)mat->colstart[colindex*m+j+1]);
+          assert((size_type)marker[colindex*m+j]<mat->Nnz_);
+          mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
+          mat->values[marker[colindex*m+j]]=Impl::asMatrix(*col)[i][j];
+          ++marker[colindex*m+j]; // index for next entry in column
+        }
+      }
+    }
 
-    virtual void createMatrix() const;
+    virtual void createMatrix() const
+    {
+      marker.clear();
+    }
 
   protected:
 
-    void allocateMatrixStorage() const;
+    void allocateMatrixStorage() const
+    {
+      mat->Nnz_*=n*m;
+      // initialize data
+      mat->values=new typename M::field_type[mat->Nnz_];
+      mat->rowindex=new I[mat->Nnz_];
+      mat->colstart=new I[cols+1];
+    }
 
-    void allocateMarker();
+    void allocateMarker()
+    {
+      marker.resize(cols);
+      std::fill(marker.begin(), marker.end(), 0);
+    }
 
     ColCompMatrix* mat;
     size_type cols;
@@ -227,171 +315,24 @@ namespace Dune
     mutable std::vector<size_type> marker;
   };
 
-  template<class M, class I>
-  template <class Block>
-  ColCompMatrixInitializer<M, I>::ColCompMatrixInitializer(ColCompMatrix& mat_,typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae)
-    : mat(&mat_), cols(mat_.M())
-  {
-    n = 1;
-    m = 1;
-
-    mat->Nnz_=0;
-  }
-
-  template<class M, class I>
-  template <class Block>
-  ColCompMatrixInitializer<M, I>::ColCompMatrixInitializer(ColCompMatrix& mat_,typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae)
-    : mat(&mat_), cols(mat_.M())
-  {
-    // WARNING: This assumes that all blocks are dense and identical
-    n = M::block_type::rows;
-    m = M::block_type::cols;
-
-    mat->Nnz_=0;
-  }
-
-  template<class M, class I>
-  ColCompMatrixInitializer<M, I>::ColCompMatrixInitializer()
-    : mat(0), cols(0), n(0), m(0)
-  {}
-
-  template<class M, class I>
-  template<typename Iter>
-  void ColCompMatrixInitializer<M, I>::addRowNnz(const Iter& row) const
-  {
-    mat->Nnz_+=row->getsize();
-  }
-
-  template<class M, class I>
-  template<typename Iter, typename FullMatrixIndex>
-  void ColCompMatrixInitializer<M, I>::addRowNnz(const Iter& row,
-                                                                            const std::set<FullMatrixIndex>& indices) const
-  {
-    typedef typename  Iter::value_type::const_iterator RIter;
-    typedef typename std::set<FullMatrixIndex>::const_iterator MIter;
-    MIter siter =indices.begin();
-    for(RIter entry=row->begin(); entry!=row->end(); ++entry)
-    {
-      for(; siter!=indices.end() && *siter<entry.index(); ++siter) ;
-      if(siter==indices.end())
-        break;
-      if(*siter==entry.index())
-        // index is in subdomain
-        ++mat->Nnz_;
-    }
-  }
-
-  template<class M, class I>
-  template<typename Iter, typename SubMatrixIndex>
-  void ColCompMatrixInitializer<M, I>::addRowNnz(const Iter& row,
-                                                                            const std::vector<SubMatrixIndex>& indices) const
-  {
-    using RIter = typename Iter::value_type::const_iterator;
-    for(RIter entry=row->begin(); entry!=row->end(); ++entry)
-      if (indices[entry.index()]!=std::numeric_limits<SubMatrixIndex>::max())
-          ++mat->Nnz_;
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::allocate()
-  {
-    allocateMatrixStorage();
-    allocateMarker();
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::allocateMatrixStorage() const
-  {
-    mat->Nnz_*=n*m;
-    // initialize data
-    mat->values=new typename M::field_type[mat->Nnz_];
-    mat->rowindex=new I[mat->Nnz_];
-    mat->colstart=new I[cols+1];
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::allocateMarker()
-  {
-    marker.resize(cols);
-    std::fill(marker.begin(), marker.end(), 0);
-  }
-
-  template<class M, class I>
-  template<typename Iter>
-  void ColCompMatrixInitializer<M, I>::countEntries(const Iter& row, const CIter& col) const
-  {
-    DUNE_UNUSED_PARAMETER(row);
-    countEntries(col.index());
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::countEntries(size_type colindex) const
-  {
-    for(size_type i=0; i < m; ++i)
-    {
-      assert(colindex*m+i<cols);
-      marker[colindex*m+i]+=n;
-    }
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::calcColstart() const
-  {
-    mat->colstart[0]=0;
-    for(size_type i=0; i < cols; ++i) {
-      assert(i<cols);
-      mat->colstart[i+1]=mat->colstart[i]+marker[i];
-      marker[i]=mat->colstart[i];
-    }
-  }
-
-  template<class M, class I>
-  template<typename Iter>
-  void ColCompMatrixInitializer<M, I>::copyValue(const Iter& row, const CIter& col) const
-  {
-    copyValue(col, row.index(), col.index());
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::copyValue(const CIter& col, size_type rowindex, size_type colindex) const
-  {
-    for(size_type i=0; i<n; i++) {
-      for(size_type j=0; j<m; j++) {
-        assert(colindex*m+j<cols-1 || (size_type)marker[colindex*m+j]<(size_type)mat->colstart[colindex*m+j+1]);
-        assert((size_type)marker[colindex*m+j]<mat->Nnz_);
-        mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
-        mat->values[marker[colindex*m+j]]=Impl::asMatrix(*col)[i][j];
-        ++marker[colindex*m+j]; // index for next entry in column
-      }
-    }
-  }
-
-  template<class M, class I>
-  void ColCompMatrixInitializer<M, I>::createMatrix() const
-  {
-    marker.clear();
-  }
-
   template<class F, class MRS>
   void copyToColCompMatrix(F& initializer, const MRS& mrs)
   {
-    typedef typename MRS::const_iterator Iter;
-    typedef typename  std::iterator_traits<Iter>::value_type::const_iterator CIter;
-    for(Iter row=mrs.begin(); row!= mrs.end(); ++row)
+    for (auto row=mrs.begin(); row!= mrs.end(); ++row)
       initializer.addRowNnz(row);
 
     initializer.allocate();
 
-    for(Iter row=mrs.begin(); row!= mrs.end(); ++row) {
+    for (auto row=mrs.begin(); row!= mrs.end(); ++row) {
 
-      for(CIter col=row->begin(); col != row->end(); ++col)
+      for (auto col=row->begin(); col != row->end(); ++col)
         initializer.countEntries(row, col);
     }
 
     initializer.calcColstart();
 
-    for(Iter row=mrs.begin(); row!= mrs.end(); ++row) {
-      for(CIter col=row->begin(); col != row->end(); ++col) {
+    for (auto row=mrs.begin(); row!= mrs.end(); ++row) {
+      for (auto col=row->begin(); col != row->end(); ++col) {
         initializer.copyValue(row, col);
       }
 
