@@ -165,33 +165,21 @@ namespace Dune
     typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;
 
-    /** \brief Constructor for scalar-valued matrices
-     *
-     * \tparam Block Dummy parameter to make SFINAE work
-     */
-    template <class Block=typename M::block_type>
-    ColCompMatrixInitializer(ColCompMatrix& mat_,
-                             typename std::enable_if_t<Dune::IsNumber<Block>::value>* sfinae = nullptr)
-    : mat(&mat_), cols(mat_.M())
-    {
-      n = 1;
-      m = 1;
-
-      mat->Nnz_=0;
-    }
-
     /** \brief Constructor for dense matrix-valued matrices
-     *
-     * \tparam Block Dummy parameter to make SFINAE work
      */
-    template <class Block=typename M::block_type>
-    ColCompMatrixInitializer(ColCompMatrix& mat_,
-                             typename std::enable_if_t<!Dune::IsNumber<Block>::value>* sfinae = nullptr)
+    ColCompMatrixInitializer(ColCompMatrix& mat_)
     : mat(&mat_), cols(mat_.M())
     {
-      // WARNING: This assumes that all blocks are dense and identical
-      n = M::block_type::rows;
-      m = M::block_type::cols;
+      if constexpr (Dune::IsNumber<typename M::block_type>::value)
+      {
+        n = m = 1;
+      }
+      else
+      {
+        // WARNING: This assumes that all blocks are dense and identical
+        n = M::block_type::rows;
+        m = M::block_type::cols;
+      }
 
       mat->Nnz_=0;
     }
