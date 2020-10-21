@@ -184,7 +184,7 @@ namespace Dune
    */
   template<class B, class TA>
   class SuperLUMatrix<BCRSMatrix<B,TA> >
-    : public BCCSMatrix<typename BCRSMatrix<B,TA>::field_type>
+    : public ISTL::Impl::BCCSMatrix<typename BCRSMatrix<B,TA>::field_type>
   {
     template<class M, class X, class TM, class TD, class T1>
     friend class SeqOverlappingSchwarz;
@@ -201,10 +201,10 @@ namespace Dune
      * @brief Constructor that initializes the data.
      * @param mat The matrix to convert.
      */
-    explicit SuperLUMatrix(const Matrix& mat) : BCCSMatrix<BCRSMatrix<B,TA> >(mat)
+    explicit SuperLUMatrix(const Matrix& mat) : ISTL::Impl::BCCSMatrix<BCRSMatrix<B,TA> >(mat)
     {}
 
-    SuperLUMatrix() : BCCSMatrix<typename BCRSMatrix<B,TA>::field_type >()
+    SuperLUMatrix() : ISTL::Impl::BCCSMatrix<typename BCRSMatrix<B,TA>::field_type >()
     {}
 
     /** @brief Destructor */
@@ -234,9 +234,9 @@ namespace Dune
       using Matrix = BCRSMatrix<B,TA>;
       this->N_ = MatrixDimension<Matrix>::rowdim(mat);
       this->M_ = MatrixDimension<Matrix>::coldim(mat);
-      ColCompMatrixInitializer<Matrix, int> initializer(*this);
+      ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(*this);
 
-      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(mat));
 
       SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
@@ -253,9 +253,9 @@ namespace Dune
       using Matrix = BCRSMatrix<B,TA>;
       this->N_ = MatrixDimension<Matrix>::rowdim(mat);
       this->M_ = MatrixDimension<Matrix>::coldim(mat);
-      ColCompMatrixInitializer<Matrix, int> initializer(*this);
+      ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(*this);
 
-      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(mat));
 
       SuperMatrixCreateSparseChooser<B>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
@@ -278,7 +278,7 @@ namespace Dune
       this->M_=mrs.size()*MatrixDimension<typename Matrix::block_type>::coldim(*(mat[0].begin()));
       SuperMatrixInitializer<Matrix> initializer(*this);
 
-      copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(mat,mrs));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(mat,mrs));
     }
 
     /** @brief Initialize data from given matrix. */
@@ -288,13 +288,13 @@ namespace Dune
       this->M_=MatrixDimension<Matrix>::coldim(mat);
       SuperMatrixInitializer<Matrix> initializer(*this);
 
-      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(mat));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(mat));
     }
 
     /** @brief free allocated space. */
     virtual void free()
     {
-      BCCSMatrix<typename BCRSMatrix<B,TA>::field_type>::free();
+      ISTL::Impl::BCCSMatrix<typename BCRSMatrix<B,TA>::field_type>::free();
       SUPERLU_FREE(A.Store);
     }
   private:
@@ -303,7 +303,7 @@ namespace Dune
 
   template<class B, class A>
   class SuperMatrixInitializer<BCRSMatrix<B,A> >
-    : public ColCompMatrixInitializer<BCRSMatrix<B,A> >
+    : public ISTL::Impl::ColCompMatrixInitializer<BCRSMatrix<B,A> >
   {
     template<class I, class S, class D>
     friend class OverlappingSchwarzInitializer;
@@ -311,16 +311,16 @@ namespace Dune
     typedef BCRSMatrix<B,A> Matrix;
     typedef Dune::SuperLUMatrix<Matrix> SuperLUMatrix;
 
-    SuperMatrixInitializer(SuperLUMatrix& lum) : ColCompMatrixInitializer<BCRSMatrix<B,A> >(lum)
+    SuperMatrixInitializer(SuperLUMatrix& lum) : ISTL::Impl::ColCompMatrixInitializer<BCRSMatrix<B,A> >(lum)
       ,slumat(&lum)
     {}
 
-    SuperMatrixInitializer() : ColCompMatrixInitializer<BCRSMatrix<B,A> >()
+    SuperMatrixInitializer() : ISTL::Impl::ColCompMatrixInitializer<BCRSMatrix<B,A> >()
     {}
 
     virtual void createMatrix() const
     {
-      ColCompMatrixInitializer<BCRSMatrix<B,A> >::createMatrix();
+      ISTL::Impl::ColCompMatrixInitializer<BCRSMatrix<B,A> >::createMatrix();
       SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&slumat->A, slumat->N_, slumat->M_, slumat->colstart[this->cols],
              slumat->values,slumat->rowindex, slumat->colstart, SLU_NC,

@@ -77,9 +77,9 @@ namespace Dune {
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
     /** @brief The corresponding SuperLU Matrix type. */
-    typedef Dune::BCCSMatrix<T> LDLMatrix;
+    typedef Dune::ISTL::Impl::BCCSMatrix<T> LDLMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+    typedef ISTL::Impl::ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     typedef Dune::BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > > domain_type;
     /** @brief The type of the range of the solver. */
@@ -199,9 +199,9 @@ namespace Dune {
         ldlMatrix_.free();
       ldlMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                          MatrixDimension<Matrix>::coldim(matrix));
-      ColCompMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
+      ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
 
-      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(matrix));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(matrix));
 
       decompose();
     }
@@ -217,9 +217,9 @@ namespace Dune {
 
       ldlMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),
                          rowIndexSet.size()*MatrixDimension<Matrix>::coldim(matrix) / matrix.M());
-      ColCompMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
+      ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
 
-      copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(matrix,rowIndexSet));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(matrix,rowIndexSet));
 
       decompose();
     }

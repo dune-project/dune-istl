@@ -7,7 +7,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
 
-namespace Dune
+namespace Dune::ISTL::Impl
 {
   /**
    * @brief A block matrix with compressed-column storage

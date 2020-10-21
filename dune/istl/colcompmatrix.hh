@@ -16,6 +16,18 @@
 
 namespace Dune
 {
+  template<class M, class X, class TM, class TD, class T1>
+  class SeqOverlappingSchwarz;
+
+  template<class T, bool flag>
+  struct SeqOverlappingSchwarzAssemblerHelper;
+
+  template<class I, class S, class D>
+  class OverlappingSchwarzInitializer;
+}
+
+namespace Dune::ISTL::Impl
+{
   /**
    * @brief Provides access to an iterator over all matrix rows.
    *
@@ -140,13 +152,6 @@ namespace Dune
     const RowIndexSet& s_;
   };
 
-  template<class M, class X, class TM, class TD, class T1>
-  class SeqOverlappingSchwarz;
-
-  template<class T, bool flag>
-  struct SeqOverlappingSchwarzAssemblerHelper;
-
-
   /**
    * @brief Inititializer for the ColCompMatrix
    * as needed by OverlappingSchwarz
@@ -157,11 +162,11 @@ namespace Dune
   class ColCompMatrixInitializer
   {
     template<class IList, class S, class D>
-    friend class OverlappingSchwarzInitializer;
+    friend class Dune::OverlappingSchwarzInitializer;
   public:
     using Matrix = M;
     using Index = I;
-    typedef Dune::BCCSMatrix<typename Matrix::field_type, I> ColCompMatrix;
+    typedef Dune::ISTL::Impl::BCCSMatrix<typename Matrix::field_type, I> ColCompMatrix;
     typedef typename Matrix::size_type size_type;
 
     /** \brief Constructor for dense matrix-valued matrices
@@ -265,7 +270,7 @@ namespace Dune
           assert(colindex*m+j<cols-1 || (size_type)marker[colindex*m+j]<(size_type)mat->colstart[colindex*m+j+1]);
           assert((size_type)marker[colindex*m+j]<mat->Nnz_);
           mat->rowindex[marker[colindex*m+j]]=rowindex*n+i;
-          mat->values[marker[colindex*m+j]]=Impl::asMatrix(*col)[i][j];
+          mat->values[marker[colindex*m+j]] = Dune::Impl::asMatrix(*col)[i][j];
           ++marker[colindex*m+j]; // index for next entry in column
         }
       }

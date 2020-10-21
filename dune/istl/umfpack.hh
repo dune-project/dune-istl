@@ -219,9 +219,9 @@ namespace Dune {
     using Matrix = M;
     using matrix_type = M;
     /** @brief The corresponding UMFPack matrix type.*/
-    typedef Dune::BCCSMatrix<typename Matrix::field_type, long int> UMFPackMatrix;
+    typedef ISTL::Impl::BCCSMatrix<typename Matrix::field_type, long int> UMFPackMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ColCompMatrixInitializer<M, long int> MatrixInitializer;
+    typedef ISTL::Impl::ColCompMatrixInitializer<M, long int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     using domain_type = typename Impl::UMFPackVectorChooser<M>::domain_type;
     /** @brief The type of the range of the solver. */
@@ -452,9 +452,9 @@ namespace Dune {
         umfpackMatrix_.free();
       umfpackMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                              MatrixDimension<Matrix>::coldim(matrix));
-      ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+      ISTL::Impl::ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
 
-      copyToColCompMatrix(initializer, MatrixRowSet<Matrix>(matrix));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(matrix));
 
       decompose();
     }
@@ -470,9 +470,9 @@ namespace Dune {
 
       umfpackMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(_mat) / _mat.N(),
                              rowIndexSet.size()*MatrixDimension<Matrix>::coldim(_mat) / _mat.M());
-      ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+      ISTL::Impl::ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
 
-      copyToColCompMatrix(initializer, MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
+      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
 
       decompose();
     }
