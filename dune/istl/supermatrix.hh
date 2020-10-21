@@ -236,7 +236,7 @@ namespace Dune
       this->M_ = MatrixDimension<Matrix>::coldim(mat);
       ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(*this);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(mat));
+      copyToColCompMatrix(initializer, mat);
 
       SuperMatrixCreateSparseChooser<typename Matrix::field_type>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
@@ -255,7 +255,7 @@ namespace Dune
       this->M_ = MatrixDimension<Matrix>::coldim(mat);
       ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(*this);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(mat));
+      copyToColCompMatrix(initializer, mat);
 
       SuperMatrixCreateSparseChooser<B>
            ::create(&A, this->N_, this->M_, this->colstart[this->N_],
@@ -288,7 +288,7 @@ namespace Dune
       this->M_=MatrixDimension<Matrix>::coldim(mat);
       SuperMatrixInitializer<Matrix> initializer(*this);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(mat));
+      copyToColCompMatrix(initializer, mat);
     }
 
     /** @brief free allocated space. */

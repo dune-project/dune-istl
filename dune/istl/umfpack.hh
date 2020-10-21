@@ -454,7 +454,7 @@ namespace Dune {
                              MatrixDimension<Matrix>::coldim(matrix));
       ISTL::Impl::ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(matrix));
+      copyToColCompMatrix(initializer, matrix);
 
       decompose();
     }

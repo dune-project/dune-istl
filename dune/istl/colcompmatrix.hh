@@ -29,42 +29,6 @@ namespace Dune
 namespace Dune::ISTL::Impl
 {
   /**
-   * @brief Provides access to an iterator over all matrix rows.
-   *
-   * @tparam M The type of the matrix.
-   */
-  template<class M>
-  class MatrixRowSet
-  {
-  public:
-    //! @brief The type of the matrix.
-    typedef M Matrix;
-    //! @brief The matrix row iterator type.
-    typedef typename Matrix::ConstRowIterator const_iterator;
-
-    /**
-     * @brief Construct an row set over all matrix rows.
-     * @param m The matrix for which we manage the rows.
-     */
-    MatrixRowSet(const Matrix& m)
-      : m_(m)
-    {}
-
-    //! @brief Get the row iterator at the first row.
-    const_iterator begin() const
-    {
-      return m_.begin();
-    }
-    //! @brief Get the row iterator at the end of all rows.
-    const_iterator end() const
-    {
-      return m_.end();
-    }
-  private:
-    const Matrix& m_;
-  };
-
-  /**
    * @brief Provides access to an iterator over an arbitrary subset
    * of matrix rows.
    *
@@ -308,15 +272,15 @@ namespace Dune::ISTL::Impl
     mutable std::vector<size_type> marker;
   };
 
-  template<class F, class MRS>
-  void copyToColCompMatrix(F& initializer, const MRS& mrs)
+  template<class F, class Matrix>
+  void copyToColCompMatrix(F& initializer, const Matrix& matrix)
   {
-    for (auto row=mrs.begin(); row!= mrs.end(); ++row)
+    for (auto row=matrix.begin(); row!= matrix.end(); ++row)
       initializer.addRowNnz(row);
 
     initializer.allocate();
 
-    for (auto row=mrs.begin(); row!= mrs.end(); ++row) {
+    for (auto row=matrix.begin(); row!= matrix.end(); ++row) {
 
       for (auto col=row->begin(); col != row->end(); ++col)
         initializer.countEntries(row, col);
@@ -324,7 +288,7 @@ namespace Dune::ISTL::Impl
 
     initializer.calcColstart();
 
-    for (auto row=mrs.begin(); row!= mrs.end(); ++row) {
+    for (auto row=matrix.begin(); row!= matrix.end(); ++row) {
       for (auto col=row->begin(); col != row->end(); ++col) {
         initializer.copyValue(row, col);
       }

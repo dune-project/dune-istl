@@ -201,7 +201,7 @@ namespace Dune {
                          MatrixDimension<Matrix>::coldim(matrix));
       ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(matrix));
+      copyToColCompMatrix(initializer, matrix);
 
       decompose();
     }

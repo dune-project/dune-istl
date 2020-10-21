@@ -205,7 +205,7 @@ namespace Dune {
                           MatrixDimension<Matrix>::coldim(matrix));
       ISTL::Impl::ColCompMatrixInitializer<Matrix, int> initializer(spqrMatrix_);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSet<Matrix>(matrix));
+      copyToColCompMatrix(initializer, matrix);
 
       decompose();
     }
