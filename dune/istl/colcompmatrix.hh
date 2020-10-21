@@ -162,7 +162,6 @@ namespace Dune
     using Matrix = M;
     using Index = I;
     typedef Dune::BCCSMatrix<typename Matrix::field_type, I> ColCompMatrix;
-    typedef typename Matrix::row_type::const_iterator CIter;
     typedef typename Matrix::size_type size_type;
 
     /** \brief Constructor for dense matrix-valued matrices
@@ -226,7 +225,7 @@ namespace Dune
       allocateMarker();
     }
 
-    template<typename Iter>
+    template<typename Iter, typename CIter>
     void countEntries(const Iter& row, const CIter& col) const
     {
       DUNE_UNUSED_PARAMETER(row);
@@ -252,12 +251,13 @@ namespace Dune
       }
     }
 
-    template<typename Iter>
+    template<typename Iter, typename CIter>
     void copyValue(const Iter& row, const CIter& col) const
     {
       copyValue(col, row.index(), col.index());
     }
 
+    template<typename CIter>
     void copyValue(const CIter& col, size_type rowindex, size_type colindex) const
     {
       for(size_type i=0; i<n; i++) {
