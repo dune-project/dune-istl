@@ -95,6 +95,7 @@ dune_add_test(NAME pamg_comm_repart_test
               SOURCES parallelamgtest.cc
               COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH
               CMAKE_GUARD MPI_FOUND)
+add_dune_parmetis_flags(pamg_comm_repart_test)
 
 dune_add_test(NAME pamgmmtest
   SOURCES pamgmmtest.cc
