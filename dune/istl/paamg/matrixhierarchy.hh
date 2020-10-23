@@ -510,9 +510,7 @@ namespace Dune
 
         Timer watch;
         watch.reset();
-        int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
-
-        std::tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
+        auto [noAggregates, isoAggregates, oneAggregates, skippedAggregates] =
           aggregatesMap->buildAggregates(matrix->getmat(), *(std::get<1>(graphs)), criterion, level==0);
 
         if(rank==0 && criterion.debugLevel()>2)
