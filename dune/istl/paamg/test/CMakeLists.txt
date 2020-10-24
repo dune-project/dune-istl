@@ -11,7 +11,7 @@ if(CMAKE_USE_PTHREADS_INIT)
   target_compile_definitions(pthreadfastamgtest PUBLIC MYAMG=Dune::Amg::FastAMG<Operator,Vector>)
   target_link_libraries(pthreadfastamgtest ${CMAKE_THREAD_LIBS_INIT} ${DUNE_LIBS})
   add_dune_mpi_flags(pthreadfastamgtest)
-  add_dune_parmetis_flags(pthreadamgtest)
+  add_dune_parmetis_flags(pthreadfastamgtest)
   dune_add_test(TARGET pthreadfastamgtest)
 
   add_executable(pthreadtwoleveltest pthreadtwoleveltest.cc)
