@@ -153,17 +153,23 @@ namespace Dune {
     /** \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&) */
     virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
     {
-      const std::size_t dimMat(spqrMatrix_.N());
+      const std::size_t numRows(spqrMatrix_.N());
       // fill B
-      for(std::size_t k = 0; k != dimMat; ++k)
-        (static_cast<T*>(B_->x))[k] = b[k];
+      for(std::size_t k = 0; k != numRows/n; ++k)
+        for (int l = 0; l < n; ++l)
+          (static_cast<T*>(B_->x))[n*k+l] = b[k][l];
+
       cholmod_dense* BTemp = B_;
       B_ = SuiteSparseQR_qmult<T>(0, spqrfactorization_, B_, cc_);
       cholmod_dense* X = SuiteSparseQR_solve<T>(1, spqrfactorization_, B_, cc_);
       cholmod_l_free_dense(&BTemp, cc_);
+
+      const std::size_t numCols(spqrMatrix_.M());
       // fill x
-      for(std::size_t k = 0; k != dimMat; ++k)
-        x [k] = (static_cast<T*>(X->x))[k];
+      for(std::size_t k = 0; k != numCols/m; ++k)
+        for (int l = 0; l < m; ++l)
+          x[k][l] = (static_cast<T*>(X->x))[m*k+l];
+
       cholmod_l_free_dense(&X, cc_);
       // this is a direct solver
       res.iterations = 1;
