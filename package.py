@@ -12,9 +12,6 @@ dune_dependencies=['dune-common']
 # Package dependencies
 install_requires=[]
 
-# Module libaries that have to be compiled (without the _ prefix)
-modules=['istl']
-
 # Files to include in the source package
 manifest='''\
 graft cmake
