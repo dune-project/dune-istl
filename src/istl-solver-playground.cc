@@ -27,7 +27,7 @@
 #include <dune/istl/paamg/amg.hh>
 
 
-#include "istl-playground.hh"
+#include "istl-solver-playground.hh"
 
 using VectorFieldType = double;
 
