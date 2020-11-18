@@ -43,16 +43,39 @@ void printHelp(){
             << "Parameters are read in a ParameterTree from solve_mm.ini" << std::endl
             << "but can also be passed in by command line arguments." << std::endl
             << std::endl
-            << "-matrix\t\tFilename of the MatrixMarket file of the operator matrix" << std::endl
-            << "-rhs\t\tFilename of the MatrixMarket file of the right-hand side" << std::endl
-            << "-verbose\tVerbosity (default: 1)" << std::endl
-            << "-random_rhs\tIf 1 generates a random RHS instead of reading it from a file (default: 0)" << std::endl
-            << "-distributed\tLoads a distributed MatrixMarket format (see matrixmarket.hh) (default: 0)" << std::endl
-            << "-redistribute\tRedistributes the matrix using ParMETIS (default: 0)" << std::endl
-            << "-ini\t\tFilename of the ini-file (default:solve_mm.ini)" << std::endl
-            << "-check_residual\tWhether to compute the defect at the end (default: 1)" << std::endl
-            << "-output\t\tFilename of the output filename in which the result is stored" << std::endl
-            << "-FP_EXCEPT\tenables floating point exceptions (default: 0)" << std::endl
+            << std::setw(20) << std::left
+            << "-matrix"
+            << "Filename of the MatrixMarket file of the operator matrix" << std::endl
+            << std::setw(20) << std::left
+            << ""
+            << "(default \"laplacian\", generated from test/laplacian.hh)" << std::endl
+            << std::setw(20) << std::left
+            << "-rhs"
+            << "Filename of the MatrixMarket file of the right-hand side" << std::endl
+            << std::setw(20) << std::left
+            << "-verbose"
+            << "Verbosity (default: 1)" << std::endl
+            << std::setw(20) << std::left
+            << "-random_rhs"
+            << "If 1 generates a random RHS instead of reading it from a file (default: 0)" << std::endl
+            << std::setw(20) << std::left
+            << "-distributed"
+            << "Loads a distributed MatrixMarket format (see matrixmarket.hh) (default: 0)" << std::endl
+            << std::setw(20) << std::left
+            << "-redistribute"
+            << "Redistributes the matrix using ParMETIS (default: 0)" << std::endl
+            << std::setw(20) << std::left
+            << "-ini"
+            << "Filename of the ini-file (default:solve_mm.ini)" << std::endl
+            << std::setw(20) << std::left
+            << "-check_residual"
+            << "Whether to compute the defect at the end (default: 1)" << std::endl
+            << std::setw(20) << std::left
+            << "-output"
+            << "Filename of the output filename in which the result is stored" << std::endl
+            << std::setw(20) << std::left
+            << "-FP_EXCEPT"
+            << "Enables floating point exceptions (default: 0)" << std::endl
             << std::endl
             << "The subtree 'solver' in the ParameterTree is passed to the SolverFactory" << std::endl;
 }
