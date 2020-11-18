@@ -27,7 +27,7 @@
 #include <dune/istl/paamg/amg.hh>
 
 
-#include "solve_mm.hh"
+#include "istl-playground.hh"
 
 using VectorFieldType = double;
 
@@ -35,12 +35,12 @@ typedef Dune::BCRSMatrix<Dune::FieldMatrix<Dune::Simd::Scalar<VectorFieldType>,1
 typedef Dune::BlockVector<Dune::FieldVector<VectorFieldType,1>> Vec;
 
 void printHelp(){
-  std::cout << "solve_mm" << std::endl
+  std::cout << "istl-playground" << std::endl
             << "Loads and solves a system from MatrixMarket" <<std::endl
             << "format and stores the result in MatrixMarket format." << std::endl
             << "This program is thought as test environment to play" << std::endl
             << "around with different solvers and preconditioners." << std::endl
-            << "Parameters are read in a ParameterTree from solve_mm.ini" << std::endl
+            << "Parameters are read in a ParameterTree from playground.ini" << std::endl
             << "but can also be passed in by command line arguments." << std::endl
             << std::endl
             << std::setw(20) << std::left
@@ -66,7 +66,7 @@ void printHelp(){
             << "Redistributes the matrix using ParMETIS (default: 0)" << std::endl
             << std::setw(20) << std::left
             << "-ini"
-            << "Filename of the ini-file (default:solve_mm.ini)" << std::endl
+            << "Filename of the ini-file (default:playground.ini)" << std::endl
             << std::setw(20) << std::left
             << "-check_residual"
             << "Whether to compute the defect at the end (default: 1)" << std::endl
@@ -89,7 +89,7 @@ int main(int argc, char** argv){
   }
 
   Dune::ParameterTreeParser::readOptions(argc, argv, config);
-  Dune::ParameterTreeParser::readINITree(config.get("ini","solve_mm.ini"), config, false);
+  Dune::ParameterTreeParser::readINITree(config.get("ini","playground.ini"), config, false);
 
   if(mpihelper.size() > 1 && !config.get("distributed", false) && !config.get("redistribute", false)){
     std::cerr << "To run this program in parallel you either need to load a distributed"
