@@ -7,6 +7,8 @@
 #include <dune/common/parametertree.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/solverfactory.hh>
+#include <dune/istl/test/laplacian.hh>
+
 
 Dune::ParameterTree config;
 
@@ -54,7 +56,7 @@ std::shared_ptr<OOCOMM> loadSystem(std::shared_ptr<Mat>& m,
                                    std::shared_ptr<Vec>& rhs,
                                    const Dune::ParameterTree& config,
                                    Comm comm){
-  std::string matrixfilename = config.get<std::string>("matrix");
+  std::string matrixfilename = config.get<std::string>("matrix", "laplacian");
   std::string rhsfilename;
   if(!config.get("random_rhs", false))
     rhsfilename = config.get<std::string>("rhs");
@@ -73,7 +75,11 @@ std::shared_ptr<OOCOMM> loadSystem(std::shared_ptr<Mat>& m,
   }else{
     oocomm = std::make_shared<OOCOMM>(comm);
     if(comm.rank()==0){
-      loadMatrixMarket(*m, matrixfilename);
+      if(matrixfilename != "laplacian"){
+        loadMatrixMarket(*m, matrixfilename);
+      }else{
+        setupLaplacian(*m, config.get("N", 20));
+      }
       if(config.get("random_rhs", false)){
         rhs->resize(m->N());
         fillRandom(*rhs);
