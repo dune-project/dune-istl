@@ -8,8 +8,8 @@ DEPENDENCIES=@REQUIRES@
 
 Name: @PACKAGE_NAME@
 Version: @VERSION@
-Description: Dune (Distributed and Unified Numerics Environment) istl module
-URL: http://dune-project.org/
+Description: @DESCRIPTION@
+URL: @URL@
 Requires: ${DEPENDENCIES}
 Libs:
 Cflags: -I${includedir}
