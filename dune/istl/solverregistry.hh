@@ -69,20 +69,6 @@ namespace Dune{
            };
   }
 
-  template<template<class,class,class,int>class Preconditioner, int l=1>
-  auto default_preconditoner_BL_creator(){
-    return [](auto tl, const auto& mat, const Dune::ParameterTree& config)
-           {
-             using M = typename Dune::TypeListElement<0, decltype(tl)>::type;
-             using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-             using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-             std::shared_ptr<Dune::Preconditioner<D,R>> prec
-               = std::make_shared<Preconditioner<M,D,R,l>>(mat,config);
-             return prec;
-           };
-  }
-
-
   /* This exception is thrown, when the requested solver is in the factory but
   cannot be instantiated for the required template parameters
   */
