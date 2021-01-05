@@ -1,6 +1,7 @@
 add_subdirectory("common")
 add_subdirectory("eigenvalue")
 add_subdirectory("paamg")
+add_subdirectory("blockkrylov")
 add_subdirectory(test)
 
 #install headers
