@@ -172,16 +172,15 @@ namespace Dune{
      \brief Factory function for BlockInnerProducts configured by a ParameterTree for the parallel implementation.
   */
   template<class X, class Comm>
-  std::shared_ptr<ScalarProduct<X>> createBlockInnerProduct(const ParameterTree& config,
+  std::shared_ptr<ScalarProduct<X>> createBlockInnerProduct(size_t p, const ParameterTree& config,
                                                             Comm& comm, SolverCategory::Category cat){
     constexpr size_t K = Simd::lanes<typename X::field_type>();
-    size_t config_p = config.get("p", K);
     std::shared_ptr<ScalarProduct<X>> bip;
     Hybrid::forEach(std::make_index_sequence<K>(),
-                    [&](auto p){
-                      if constexpr (K%(p+1) == 0){
-                        if (config_p==(p+1)){
-                          bip = std::make_shared<ParallelBlockInnerProduct<Comm, ParallelMatrixAlgebra<X,(p+1)>>>(comm, cat, config);
+                    [&](auto pp){
+                      if constexpr (K%(pp+1) == 0){
+                        if (p==(pp+1)){
+                          bip = std::make_shared<ParallelBlockInnerProduct<Comm, ParallelMatrixAlgebra<X,(pp+1)>>>(comm, cat, config);
                         }
                       }
                     });

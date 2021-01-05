@@ -54,7 +54,8 @@ namespace Dune{
             std::shared_ptr<Preconditioner<X,X> > prec,
             const ParameterTree& config)
       : BlockCG(op,
-                std::dynamic_pointer_cast<BlockInnerProduct<Algebra>>(sp),
+                // check is sp has correct type before casting
+                dynamic_cast_or_throw<BlockInnerProduct<Algebra>>(sp),
                 prec,
                 config)
     {}
@@ -173,7 +174,7 @@ namespace Dune{
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
   };
   /** @} end documentation */
-  //DUNE_REGISTER_ITERATIVE_SOLVER("blockcg", defaultIterativeSolverCreator<Dune::Blockkrylov::BlockCG>());
+  DUNE_REGISTER_ITERATIVE_SOLVER("blockcg", blockKrylovSolverCreator<Dune::BlockCG>());
 }
 
 #endif

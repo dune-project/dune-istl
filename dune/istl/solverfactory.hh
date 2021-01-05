@@ -15,6 +15,7 @@
 #include <dune/istl/solver.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
+#include <dune/istl/blockkrylov/blockinnerproduct.hh>
 
 namespace Dune{
   /** @addtogroup ISTL_Factory
@@ -101,20 +102,26 @@ namespace Dune{
   }
 
   template<class M, class X, class Y>
-  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<MatrixAdapter<M,X,Y> >&)
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<MatrixAdapter<M,X,Y> >&,
+                                                        size_t p = Simd::lanes<typename X::field_type>(),
+                                                        const ParameterTree& config = {})
   {
-    return std::make_shared<SeqScalarProduct<X>>();
+    return createBlockInnerProduct<X>(p, config);
   }
   template<class M, class X, class Y, class C>
-  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op,
+                                                        size_t p = Simd::lanes<typename X::field_type>(),
+                                                        const ParameterTree& config = {})
   {
-    return createScalarProduct<X>(op->getCommunication(), op->category());
+    return createBlockInnerProduct<X>(p, config, op->getCommunication(), op->category());
   }
 
   template<class M, class X, class Y, class C>
-  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op,
+                                                        size_t p = Simd::lanes<typename X::field_type>(),
+                                                        const ParameterTree& config = {})
   {
-    return createScalarProduct<X>(op->getCommunication(), op->category());
+    return createBlockInnerProduct<X>(p, config, op->getCommunication(), op->category());
   }
 
   /**
@@ -187,7 +194,7 @@ namespace Dune{
           // try to wrap to a parallel preconditioner
           prec = wrapPreconditioner4Parallel(prec, op);
       }
-      std::shared_ptr<ScalarProduct<Domain>> sp = createScalarProduct(op);
+      std::shared_ptr<ScalarProduct<Domain>> sp = createScalarProduct(op, config.get("p", Simd::lanes<typename Domain::field_type>()), config.sub("inner_product"));
       result = IterativeSolverFactory<Domain, Range>::instance().create(type, op, sp, prec, config);
       return result;
     }

@@ -155,7 +155,7 @@ namespace Dune {
       return _category;
     }
 
-  private:
+  protected:
     std::shared_ptr<const communication_type> _communication;
     SolverCategory::Category _category;
   };
