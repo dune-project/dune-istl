@@ -93,7 +93,7 @@ namespace Dune {
    * implementing the same interface.
    */
   template<class X, class C>
-  class ParallelScalarProduct : public ScalarProduct<X>
+  class ParallelScalarProduct : public virtual ScalarProduct<X>
   {
   public:
     //! \brief The type of the vector to compute the scalar product on.
@@ -162,7 +162,7 @@ namespace Dune {
 
   //! Default implementation for the scalar case
   template<class X>
-  class SeqScalarProduct : public ScalarProduct<X>
+  class SeqScalarProduct : public virtual ScalarProduct<X>
   {
     using ScalarProduct<X>::ScalarProduct;
   };
