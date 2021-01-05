@@ -85,6 +85,20 @@ namespace Dune {
     }
   }
 
+  /**
+     @class ParallelMatrixAlgebra
+     TODO: Add docu
+
+     Overloads with priorities
+     | overload                |  prio  | condition                                                                       |
+     |-------------------------|--------|---------------------------------------------------------------------------------|
+     | LoopSIMD specialization | 7      | see `LoopSIMDcheck`                                                             |
+     | non-block spec.         | 9      | P == 1                                                                          |
+     | full-block spec.        | 4      | P == S                                                                          |
+     | fall-back               | 0      | none                                                                            |
+     | BLAS                    | 5      | BLAS avail. can be adjusted via cmake variable `DUNE_BLOCKKRYLOV_BLAS_PRIORITY` |
+  **/
+
   template<class X, size_t P>
   class ParallelMatrixAlgebra{
   public:
@@ -250,10 +264,11 @@ namespace Dune {
     }
 
   private:
+
     template<class X1 = X>
     std::enable_if_t<LoopSIMDcheck<typename X1::field_type,P>()>
     /*void*/ axpy(scalar_type alpha, X& x, const X& y,
-                  PriorityTag<8>) const {
+                  PriorityTag<7>) const {
       using inner_simd = typename field_type::value_type;
       constexpr size_t ISN = Simd::lanes<inner_simd>();
 
@@ -324,7 +339,8 @@ namespace Dune {
     // P==N
     template<size_t P1=P>
     std::enable_if_t<P1==N>
-    /*void*/ axpy(scalar_type alpha, X& x, const X& y, PriorityTag<4>) const {
+    /*void*/ axpy(scalar_type alpha, X& x, const X& y,
+                  PriorityTag<4>) const {
       std::array<field_type, N> alpha_m;
       for(size_t i=0;i<N;++i){
         for(size_t j=0;j<N;++j){
@@ -370,7 +386,7 @@ namespace Dune {
 #if HAVE_BLAS
     void axpy(scalar_type alpha,
               X& x, const X& y,
-              PriorityTag<5>) const {
+              PriorityTag<DUNE_BLOCKKRYLOV_BLAS_PRIORITY>) const {
       int lda = P;
       int ldb = sizeof(field_type)/sizeof(scalar_type); // don't use just N here, because field_type could be overaligned
       int n = x.dim(), m = P;
@@ -387,7 +403,7 @@ namespace Dune {
 
 #endif
 
-    // mv
+    // mv (only the simple implementation, otherwise call axpy)
     // P==1
     template<size_t P1 = P>
     std::enable_if_t<P1==1>
@@ -408,68 +424,10 @@ namespace Dune {
     }
 
     // dot
-    // P==1
-    template<size_t P1 = P>
-    static std::enable_if_t<P1 == 1, ParallelMatrixAlgebra>
-    /*void*/ dot(const X& x, const X& y,
-                 PriorityTag<9>){
-      auto prod = x.dot(y);
-      ParallelMatrixAlgebra result;
-      for(size_t l=0;l<Simd::lanes(prod);++l)
-        result.value_[l][0][0] = Simd::lane(l,prod);
-      return result;
-    }
-
-    // P==N
-    template<size_t P1 = P>
-    static std::enable_if_t<P1 == N, ParallelMatrixAlgebra>
-    /*void*/ dot(const X& x, const X& y,
-                 PriorityTag<4>){
-      std::array<field_type, N> result = filledArray<N>(field_type(0.0));
-      size_t J = Impl::asVector(x[0]).size();
-      for(size_t i=0;i<x.size();++i){
-        auto&& xx = Impl::asVector(x[i]);
-        auto&& yy = Impl::asVector(y[i]);
-        for(size_t j=0;j<J;++j){
-          for(size_t k=0;k<N;++k){
-            result[k] = fma(Simd::lane(k, xx[j]), yy[j], result[k]);
-          }
-        }
-      }
-      ParallelMatrixAlgebra r;
-      for(size_t i=0;i<N;++i){
-        for(size_t j=0;j<N;++j){
-          r.value_[0][i][j] = Simd::lane(i, result[j]);
-        }
-      }
-      return r;
-    }
-
-    // fall back
-    static ParallelMatrixAlgebra dot(const X& x, const X& y,
-                                     PriorityTag<0>){
-      ParallelMatrixAlgebra result;
-      size_t J = Impl::asVector(x[0]).size();
-      for(size_t i=0;i<x.size();++i){
-        auto&& xx = Impl::asVector(x[i]);
-        auto&& yy = Impl::asVector(y[i]);
-        for(size_t j=0;j<J;++j){
-          for(size_t q=0;q<Q;++q){
-            for(size_t p1=0;p1<P;++p1){
-              for(size_t p2=0;p2<P;++p2){
-                result.value_[q][p2][p1] += Simd::lane(p1+q*P, xx[j])*Simd::lane(p2+q*P, yy[j]);
-              }
-            }
-          }
-        }
-      }
-      return result;
-    }
-
     template<class X1 = X>
     static std::enable_if_t<LoopSIMDcheck<typename X1::field_type,P>(), ParallelMatrixAlgebra>
     dot(const X& x, const X& y,
-        PriorityTag<8>){
+        PriorityTag<7>){
       using inner_simd = typename field_type::value_type;
       constexpr size_t ISN = Simd::lanes<inner_simd>();
 
@@ -536,10 +494,68 @@ namespace Dune {
       return r;
     }
 
+    // P==1
+    template<size_t P1 = P>
+    static std::enable_if_t<P1 == 1, ParallelMatrixAlgebra>
+    /*void*/ dot(const X& x, const X& y,
+                 PriorityTag<9>){
+      auto prod = x.dot(y);
+      ParallelMatrixAlgebra result;
+      for(size_t l=0;l<Simd::lanes(prod);++l)
+        result.value_[l][0][0] = Simd::lane(l,prod);
+      return result;
+    }
+
+    // P==N
+    template<size_t P1 = P>
+    static std::enable_if_t<P1 == N, ParallelMatrixAlgebra>
+    /*void*/ dot(const X& x, const X& y,
+                 PriorityTag<4>){
+      std::array<field_type, N> result = filledArray<N>(field_type(0.0));
+      size_t J = Impl::asVector(x[0]).size();
+      for(size_t i=0;i<x.size();++i){
+        auto&& xx = Impl::asVector(x[i]);
+        auto&& yy = Impl::asVector(y[i]);
+        for(size_t j=0;j<J;++j){
+          for(size_t k=0;k<N;++k){
+            result[k] = fma(Simd::lane(k, xx[j]), yy[j], result[k]);
+          }
+        }
+      }
+      ParallelMatrixAlgebra r;
+      for(size_t i=0;i<N;++i){
+        for(size_t j=0;j<N;++j){
+          r.value_[0][i][j] = Simd::lane(i, result[j]);
+        }
+      }
+      return r;
+    }
+
+    // fall back
+    static ParallelMatrixAlgebra dot(const X& x, const X& y,
+                                     PriorityTag<0>){
+      ParallelMatrixAlgebra result;
+      size_t J = Impl::asVector(x[0]).size();
+      for(size_t i=0;i<x.size();++i){
+        auto&& xx = Impl::asVector(x[i]);
+        auto&& yy = Impl::asVector(y[i]);
+        for(size_t j=0;j<J;++j){
+          for(size_t q=0;q<Q;++q){
+            for(size_t p1=0;p1<P;++p1){
+              for(size_t p2=0;p2<P;++p2){
+                result.value_[q][p2][p1] += Simd::lane(p1+q*P, xx[j])*Simd::lane(p2+q*P, yy[j]);
+              }
+            }
+          }
+        }
+      }
+      return result;
+    }
+
 
 #if HAVE_BLAS
     static ParallelMatrixAlgebra dot(const X& x, const X& y,
-                                     PriorityTag<5>){
+                                     PriorityTag<DUNE_BLOCKKRYLOV_BLAS_PRIORITY>){ // BLOCKKRYLOV_BLAS_PRIORITY is 8 if set during configuration otherwise 5
       int n = P, m = P;
       int k = x.dim();
       int lda = sizeof(field_type)/sizeof(scalar_type); // don't use just N here, because field_type could be overaligned
