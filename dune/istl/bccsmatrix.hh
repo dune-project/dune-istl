@@ -58,15 +58,10 @@ namespace Dune::ISTL::Impl
       return N_;
     }
 
-    /** \brief Return the number of scalar nonzero entries */
-    size_type nnz() const
+    /** \brief Return the number of nonzero block entries */
+    size_type nonzeroes() const
     {
-      // TODO: The following code assumes that the blocks are dense
-      // and that they all have the same dimensions.
-      B dummy;
-      const auto n = MatrixDimension<B>::rowdim(dummy);
-      const auto m = MatrixDimension<B>::coldim(dummy);
-      return Nnz_/n/m;
+      return Nnz_;
     }
 
     /**

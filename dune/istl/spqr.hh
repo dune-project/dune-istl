@@ -199,7 +199,7 @@ namespace Dune {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
 
-      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nnz() != 0)
+      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nonzeroes() != 0)
         spqrMatrix_.free();
       spqrMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                           MatrixDimension<Matrix>::coldim(matrix));
@@ -216,7 +216,7 @@ namespace Dune {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
 
-      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nnz() != 0)
+      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nonzeroes() != 0)
         spqrMatrix_.free();
 
       spqrMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),

@@ -195,7 +195,7 @@ namespace Dune {
       if ((ldlMatrix_.N() + ldlMatrix_.M() > 0) || matrixIsLoaded_)
         free();
 
-      if (ldlMatrix_.N() + ldlMatrix_.M() + ldlMatrix_.nnz() != 0)
+      if (ldlMatrix_.N() + ldlMatrix_.M() + ldlMatrix_.nonzeroes() != 0)
         ldlMatrix_.free();
       ldlMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                          MatrixDimension<Matrix>::coldim(matrix));
@@ -212,7 +212,7 @@ namespace Dune {
       if ((ldlMatrix_.N() + ldlMatrix_.M() > 0) || matrixIsLoaded_)
         free();
 
-      if (ldlMatrix_.N() + ldlMatrix_.M() + ldlMatrix_.nnz() != 0)
+      if (ldlMatrix_.N() + ldlMatrix_.M() + ldlMatrix_.nonzeroes() != 0)
         ldlMatrix_.free();
 
       ldlMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),

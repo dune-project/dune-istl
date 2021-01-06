@@ -448,7 +448,7 @@ namespace Dune {
       if (matrix.N() == 0 or matrix.M() == 0)
         return;
 
-      if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nnz() != 0)
+      if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nonzeroes() != 0)
         umfpackMatrix_.free();
       umfpackMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                              MatrixDimension<Matrix>::coldim(matrix));
@@ -465,7 +465,7 @@ namespace Dune {
       if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
 
-      if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nnz() != 0)
+      if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nonzeroes() != 0)
         umfpackMatrix_.free();
 
       umfpackMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(_mat) / _mat.N(),
