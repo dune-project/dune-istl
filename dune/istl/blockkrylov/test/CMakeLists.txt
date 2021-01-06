@@ -1,5 +1,6 @@
 dune_add_test(SOURCES blockcgtest.cc)
 dune_add_test(SOURCES blockgmrestest.cc)
+dune_add_test(SOURCES blockbicgstabtest.cc)
 
 dune_add_test(SOURCES matrixalgebratest.cc)
 dune_add_test(SOURCES blastest.cc)
