@@ -114,7 +114,7 @@ namespace Dune::ISTL::Impl
    * @tparam M The matrix type
    * @tparam I The type used for row and column indices
    */
-  template<class M, class I=int>
+  template<class M, class I = typename M::size_type>
   class BCCSMatrixInitializer
   {
     template<class IList, class S, class D>

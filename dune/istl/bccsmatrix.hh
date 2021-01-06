@@ -22,7 +22,7 @@ namespace Dune::ISTL::Impl
    * of the SuiteSparse package.  The class tries to follow the dune-istl
    * matrix interface, but it doesn't implement the interface entirely.
    */
-  template<class B, class I = int>
+  template<class B, class I = typename std::allocator<B>::size_type>
   class BCCSMatrix
   {
   public:

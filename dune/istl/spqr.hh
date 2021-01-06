@@ -69,9 +69,9 @@ namespace Dune {
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
     /** @brief The corresponding SuperLU Matrix type.*/
-    typedef ISTL::Impl::BCCSMatrix<T> SPQRMatrix;
+    typedef ISTL::Impl::BCCSMatrix<T,int> SPQRMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+    typedef ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A>, int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     typedef Dune::BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > > domain_type;
     /** @brief The type of the range of the solver. */
