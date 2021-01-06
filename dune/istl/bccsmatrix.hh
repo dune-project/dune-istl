@@ -13,7 +13,10 @@ namespace Dune::ISTL::Impl
    * @brief A block matrix with compressed-column storage
    *
    * @tparam B The type of a matrix entry (may be a matrix itself)
-   * @tparam I the internal index type
+   * @tparam I The type used for row and column indices.
+   *   When using BCCSMatrix to set up a SuiteSparse solver, this type
+   *   should be set to the index type used by the solver.  That way,
+   *   the solver can use the row/column information without any copying.
    *
    * Currently this class is mainly a vehicle to get matrices into the solvers
    * of the SuiteSparse package.  The class tries to follow the dune-istl
@@ -24,7 +27,7 @@ namespace Dune::ISTL::Impl
   {
   public:
     using Index = I;
-    using size_type = I;
+    using size_type = std::size_t;
 
     /** \brief Default constructor
      */
@@ -50,11 +53,12 @@ namespace Dune::ISTL::Impl
      * @brief Get the number of rows.
      * @return  The number of rows.
      */
-    std::size_t N() const
+    size_type N() const
     {
       return N_;
     }
 
+    /** \brief Return the number of scalar nonzero entries */
     size_type nnz() const
     {
       // TODO: The following code assumes that the blocks are dense
@@ -69,21 +73,39 @@ namespace Dune::ISTL::Impl
      * @brief Get the number of columns.
      * @return  The number of columns.
      */
-    std::size_t M() const
+    size_type M() const
     {
       return M_;
     }
 
+    /** \brief Direct access to the array of matrix entries
+     *
+     * This is meant to be handed directly to SuiteSparse solvers.
+     * Note that the 'Index' type is controllable via the second
+     * class template argument.
+     */
     B* getValues() const
     {
       return values;
     }
 
+    /** \brief Direct access to the array of row indices
+     *
+     * This is meant to be handed directly to SuiteSparse solvers.
+     * Note that the 'Index' type is controllable via the second
+     * class template argument.
+     */
     Index* getRowIndex() const
     {
       return rowindex;
     }
 
+    /** \brief Direct access to the array of column entry points
+     *
+     * This is meant to be handed directly to SuiteSparse solvers.
+     * Note that the 'Index' type is controllable via the second
+     * class template argument.
+     */
     Index* getColStart() const
     {
       return colstart;
