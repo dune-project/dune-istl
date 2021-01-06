@@ -179,6 +179,12 @@ namespace Dune
   template<class T>
   class SuperLU;
 
+  template<class M, class X, class TM, class TD, class T1>
+  class SeqOverlappingSchwarz;
+
+  template<class T, bool flag>
+  struct SeqOverlappingSchwarzAssemblerHelper;
+
   /**
    * @brief Converter for BCRSMatrix to SuperLU Matrix.
    */
