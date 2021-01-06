@@ -39,6 +39,24 @@ namespace Dune {
     return sum;
   }
 
+  namespace {
+    template<size_t S, size_t... P>
+    constexpr auto dividersOfImpl(std::index_sequence<P...>){
+      auto result = std::tuple_cat(std::conditional_t<(S % (P+1) == 0), std::tuple<std::integral_constant<size_t, P+1>>, std::tuple<>>{}...);
+      return result;
+    }
+
+    template<class I, I... P>
+    auto tuple_to_integer_sequence(std::tuple<std::integral_constant<I, P>...>){
+      return std::integer_sequence<I, P...>{};
+    }
+  }
+
+  template<size_t S>
+  constexpr auto dividersOf(){
+    return tuple_to_integer_sequence(dividersOfImpl<S>(std::make_index_sequence<S>()));
+  }
+
   // solverfactory function to create block Krylov solvers
   template<template<class, size_t> class Solver>
   auto blockKrylovSolverCreator(){
@@ -52,14 +70,13 @@ namespace Dune {
       using Range = typename Dune::TypeListElement<1, decltype(typeList)>::type;
       constexpr size_t K = Simd::lanes<typename Domain::field_type>();
       std::shared_ptr<InverseOperator<Domain, Range>> solver;
-      Hybrid::switchCases(std::make_index_sequence<K>(),
-                          config.get<size_t>("p", K)-1,
+      Hybrid::switchCases(dividersOf<K>(),
+                          config.get<size_t>("p", K),
                           [&](auto pp){
-                            if constexpr (K % (pp.value+1) == 0){
-                              solver = std::make_shared<Solver<Domain, (pp.value+1)>>(linearOperator, scalarProduct, preconditioner, config);
-                            }else{
-                              DUNE_THROW(Exception, "Invalid parameter P: P must be a divider of the SIMD width");
-                            }
+                            solver = std::make_shared<Solver<Domain, (pp.value)>>(linearOperator, scalarProduct, preconditioner, config);
+                          },
+                          [](auto...){
+                             DUNE_THROW(Exception, "Invalid parameter P: P must be a divider of the SIMD width");
                           });
       return solver;
     };
