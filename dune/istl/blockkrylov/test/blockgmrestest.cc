@@ -4,13 +4,8 @@
 
 #include <dune/common/simd/loop.hh>
 #include <dune/common/test/testsuite.hh>
-#include <dune/common/parametertree.hh>
-#include <dune/common/parametertreeparser.hh>
 
-#include <dune/istl/solverfactory.hh>
-#include <dune/istl/blockkrylov/blockcg.hh>
 #include <dune/istl/blockkrylov/blockgmres.hh>
-#include <dune/istl/preconditioners.hh>
 #include <dune/istl/test/laplacian.hh>
 
 using namespace Dune;
@@ -24,18 +19,24 @@ typedef BlockVector<VectorBlock> BVector;
 typedef MatrixAdapter<BCRSMat,BVector,BVector> Operator;
 
 std::shared_ptr<Operator> fop;
+std::shared_ptr<Preconditioner<BVector,BVector>> prec;
 int N=50;
 
-TestSuite test(const ParameterTree& config){
+template<size_t P>
+TestSuite test(){
   TestSuite tsuite;
   BVector b(N*N), x(N*N);
   fillRandom(x, SIMD(0.0)==0.0);
   fop->apply(x, b);
   BVector b0 = b;
   x=0;
-  auto solver = getSolverFromFactory(fop, config);
+  ParameterTree config;
+  config["reduction"] = "1e-10";
+  config["maxit"] = "1000";
+  config["verbose"] = "1";
+  BlockGMRes<BVector, P> solver0(fop, prec, config);
   InverseOperatorResult res;
-  solver->apply(x,b, res);
+  solver0.apply(x,b, res);
 
   // compute residual
   auto def0 = b0.two_norm();
@@ -47,22 +48,20 @@ TestSuite test(const ParameterTree& config){
 int main(int argc, char** argv)
 {
   TestSuite tsuite;
+  if(argc>1)
+    N = atoi(argv[1]);
+  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+  std::cout << "S=" << Simd::lanes<SIMD>() << " RHS" << std::endl;
 
-  ParameterTree ptree;
-  ParameterTreeParser::readINITree("blockkrylovfactorytest.ini", ptree, true);
-
-  N = ptree.get("N", 50);
-
-  Dune::initSolverFactories<Operator>();
   BCRSMat mat;
   fop = std::make_shared<Operator>(mat);
 
   setupLaplacian(mat,N);
+  prec = std::make_shared<SeqSOR<BCRSMat,BVector,BVector>>(mat, 1,1.0);
 
-  for(const auto& subkey : ptree.getSubKeys()){
-    std::cout << "[" << subkey << "]" << std::endl;
-    tsuite.subTest(test(ptree.sub(subkey)));
-    std::cout << std::endl;
-  }
+  Hybrid::forEach(std::index_sequence<1, 2, 4, 8, 16>{}, [&tsuite](auto p){
+    std::cout << "P=" << size_t(p) << std::endl;
+    tsuite.subTest(test<p.value>());
+  });
   return tsuite.exit();
 }
