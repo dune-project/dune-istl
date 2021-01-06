@@ -1,16 +1,14 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_ISTL_COLCOMPMATRIX_HH
-#define DUNE_ISTL_COLCOMPMATRIX_HH
+#ifndef DUNE_ISTL_BCCSMATRIX_INITIALIZER_HH
+#define DUNE_ISTL_BCCSMATRIX_INITIALIZER_HH
 
-#include "bcrsmatrix.hh"
-#include "bvector.hh"
-#include <dune/common/fmatrix.hh>
-#include <dune/common/fvector.hh>
+#include <limits>
+#include <set>
+
 #include <dune/common/typetraits.hh>
 #include <dune/common/unused.hh>
 #include <dune/common/scalarmatrixview.hh>
-#include <limits>
 
 #include <dune/istl/bccsmatrix.hh>
 
@@ -117,25 +115,25 @@ namespace Dune::ISTL::Impl
   };
 
   /**
-   * @brief Inititializer for the ColCompMatrix
+   * @brief Initializer for a BCCSMatrix,
    * as needed by OverlappingSchwarz
-   * @tparam M the matrix type
-   * @tparam I the internal index type
+   * @tparam M The matrix type
+   * @tparam I The type used for row and column indices
    */
   template<class M, class I=int>
-  class ColCompMatrixInitializer
+  class BCCSMatrixInitializer
   {
     template<class IList, class S, class D>
     friend class Dune::OverlappingSchwarzInitializer;
   public:
     using Matrix = M;
     using Index = I;
-    typedef Dune::ISTL::Impl::BCCSMatrix<typename Matrix::field_type, I> ColCompMatrix;
+    typedef Dune::ISTL::Impl::BCCSMatrix<typename Matrix::field_type, I> OutputMatrix;
     typedef typename Matrix::size_type size_type;
 
     /** \brief Constructor for dense matrix-valued matrices
      */
-    ColCompMatrixInitializer(ColCompMatrix& mat_)
+    BCCSMatrixInitializer(OutputMatrix& mat_)
     : mat(&mat_), cols(mat_.M())
     {
       if constexpr (Dune::IsNumber<typename M::block_type>::value)
@@ -152,11 +150,11 @@ namespace Dune::ISTL::Impl
       mat->Nnz_=0;
     }
 
-    ColCompMatrixInitializer()
+    BCCSMatrixInitializer()
     : mat(0), cols(0), n(0), m(0)
     {}
 
-    virtual ~ColCompMatrixInitializer()
+    virtual ~BCCSMatrixInitializer()
     {}
 
     template<typename Iter>
@@ -262,7 +260,7 @@ namespace Dune::ISTL::Impl
       std::fill(marker.begin(), marker.end(), 0);
     }
 
-    ColCompMatrix* mat;
+    OutputMatrix* mat;
     size_type cols;
 
     // Number of rows/columns of the matrix entries
@@ -273,7 +271,7 @@ namespace Dune::ISTL::Impl
   };
 
   template<class F, class Matrix>
-  void copyToColCompMatrix(F& initializer, const Matrix& matrix)
+  void copyToBCCSMatrix(F& initializer, const Matrix& matrix)
   {
     for (auto row=matrix.begin(); row!= matrix.end(); ++row)
       initializer.addRowNnz(row);
@@ -298,7 +296,7 @@ namespace Dune::ISTL::Impl
   }
 
   template<class F, class M,class S>
-  void copyToColCompMatrix(F& initializer, const MatrixRowSubset<M,S>& mrs)
+  void copyToBCCSMatrix(F& initializer, const MatrixRowSubset<M,S>& mrs)
   {
     typedef MatrixRowSubset<M,S> MRS;
     typedef typename MRS::RowIndexSet SIS;

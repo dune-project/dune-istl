@@ -11,6 +11,8 @@
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/sllist.hh>
 #include <dune/common/unused.hh>
+
+#include <dune/istl/bccsmatrixinitializer.hh>
 #include "preconditioners.hh"
 #include "superlu.hh"
 #include "umfpack.hh"
@@ -1183,7 +1185,7 @@ namespace Dune
           RowToDomain, SubDomains> Initializer;
 
       Initializer initializer(initializers, rowToDomain, subDomains);
-      copyToColCompMatrix(initializer, mat);
+      copyToBCCSMatrix(initializer, mat);
 
       // Calculate the LU decompositions
       for(auto&& s: solvers)

@@ -8,13 +8,13 @@ install(FILES
    allocator.hh
    basearray.hh
    bccsmatrix.hh
+   bccsmatrixinitializer.hh
    bcrsmatrix.hh
    bdmatrix.hh
    blocklevel.hh
    btdmatrix.hh
    bvector.hh
    cholmod.hh
-   colcompmatrix.hh
    gsetc.hh
    ildl.hh
    ilu.hh

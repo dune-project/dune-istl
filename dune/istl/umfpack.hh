@@ -14,12 +14,12 @@
 #include<dune/common/fmatrix.hh>
 #include<dune/common/fvector.hh>
 #include<dune/common/unused.hh>
+#include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
 #include <dune/istl/solverfactory.hh>
 
-#include"colcompmatrix.hh"
 
 
 namespace Dune {
@@ -221,7 +221,7 @@ namespace Dune {
     /** @brief The corresponding UMFPack matrix type.*/
     typedef ISTL::Impl::BCCSMatrix<typename Matrix::field_type, long int> UMFPackMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ISTL::Impl::ColCompMatrixInitializer<M, long int> MatrixInitializer;
+    typedef ISTL::Impl::BCCSMatrixInitializer<M, long int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     using domain_type = typename Impl::UMFPackVectorChooser<M>::domain_type;
     /** @brief The type of the range of the solver. */
@@ -452,9 +452,9 @@ namespace Dune {
         umfpackMatrix_.free();
       umfpackMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                              MatrixDimension<Matrix>::coldim(matrix));
-      ISTL::Impl::ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+      ISTL::Impl::BCCSMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
 
-      copyToColCompMatrix(initializer, matrix);
+      copyToBCCSMatrix(initializer, matrix);
 
       decompose();
     }
@@ -470,9 +470,9 @@ namespace Dune {
 
       umfpackMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(_mat) / _mat.N(),
                              rowIndexSet.size()*MatrixDimension<Matrix>::coldim(_mat) / _mat.M());
-      ISTL::Impl::ColCompMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+      ISTL::Impl::BCCSMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
 
-      copyToColCompMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
+      copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
 
       decompose();
     }
