@@ -51,7 +51,7 @@ namespace Dune{
                   const std::shared_ptr<Preconditioner<X,X>>& prec,
                   const ParameterTree& config)
       : IterativeSolver<X,X>(op,sp,prec, config)
-      , _residual_ortho(config.get("residual_ortho", 0.0))
+      , _residual_ortho(config.get("residual_ortho", 1.0))
       , _bip(sp)
     {}
 
@@ -87,13 +87,18 @@ namespace Dune{
       _op->applyscaleadd(-1,x,b);  // overwrite b with defect
 
       real_type norm;
-      Algebra sigma;
-      if(_residual_ortho > 0){
-        sigma = _bip->bnormalize(b,b).get();
-        norm = sigma.column_norms();
-      }else{
-        norm = _bip->norm(b);
+      Algebra sigma, rho, alpha, beta, gamma, rho_sigma;
+      sigma = _bip->bnormalize(b,b).get();
+
+      if(Simd::anyTrue(sigma.diagonal() == 0.0)){ // breakdown in cholesky factorization is indicated by zero diagonal entries
+        if(_verbose > 1)
+          std::cout << "=== amending residual by random right-hand sides" << std::endl;
+        fillRandom(b, sigma.diagonal()==0.0);
+        gamma = _bip->bnormalize(b,b).get();
+        sigma.leftmultiply(gamma);
       }
+
+      norm = sigma.column_norms();
 
       if(iteration.step(0, norm)){
         _prec->post(x);
@@ -104,7 +109,6 @@ namespace Dune{
       _prec->apply(p, b);
 
       X rt0(p), v(p), q(p), z(b), t(b), u(b), w(b);
-      Algebra rho, alpha, beta, gamma, rho_sigma;
 
       for(int it = 1; it < _maxit; ++it){
         _op->apply(p, q);
@@ -118,34 +122,39 @@ namespace Dune{
         rho.leftmultiply(alpha);
         rho.axpy(-1.0, b, q); // update S
         rho_sigma = rho;
-        if(_residual_ortho>0){
-          rho_sigma.rightmultiply(sigma);
-        }
-        auto gamma_future = _bip->bdot(b,b);
+        rho_sigma.rightmultiply(sigma);
         rho_sigma.axpy(1.0, x, p); // update X
-        gamma = gamma_future.get();
+        gamma = _bip->bdot(b,b).get();
         auto residual_cond = gamma.cond(true);
-        if(_residual_ortho>0){
-          gamma.rightmultiply(sigma);
-          gamma.transpose();
-          gamma.rightmultiply(sigma);
-        }
-        norm = sqrt(abs(gamma.diagonal()));
-        if(iteration.step(it, norm))
-          break;
+        gamma.rightmultiply(sigma);
+        gamma.transpose();
+        gamma.rightmultiply(sigma);
         // orthonormalization - improves stability
         if(_residual_ortho*residual_cond > 1.0/std::sqrt(std::numeric_limits<scalar_real_type>::epsilon())
-           || (isNaN(residual_cond) && _residual_ortho>0)){
+           || (isNaN(residual_cond))){
           if(_verbose>1)
             std::cout << "=== orthogonalizing residual" << std::endl;
           gamma = _bip->bnormalize(b,b).get();
           sigma.leftmultiply(gamma);
+          if(Simd::anyTrue(gamma.diagonal() == 0.0)){
+            if(_verbose > 1)
+              std::cout << "=== Restart due to breakdown" << std::endl;
+            fillRandom(b, gamma.diagonal() == 0);
+            gamma = _bip->bnormalize(b,b).get();
+            sigma.leftmultiply(gamma);
+            _prec->apply(p, b);
+            rt0 = p;
+            u = 0.0; // restart
+          }
           t = 0.0;
           _prec->apply(t, b);
         }else{
           t = v;
           rho.axpy(-1.0, t, z);
         }
+        norm = sqrt(abs(gamma.diagonal()));
+        if(iteration.step(it, norm))
+          break;
         _op->apply(t,u);
         auto omega1 = frobenius_product(u,b);
         auto omega2 = frobenius_product(u,u);
@@ -153,10 +162,7 @@ namespace Dune{
         w = 0.0;
         _prec->apply(w, u);
         scalar_field_type omega = omega1/omega2;
-        if(_residual_ortho>0){
-          sigma.axpy(omega, x, t);
-        }else
-          x.axpy(omega, t);
+        sigma.axpy(omega, x, t);
         b.axpy(-omega, u);
         v=t;
         v.axpy(-omega, w);
@@ -183,7 +189,7 @@ namespace Dune{
       return sum;
     }
 
-    double _residual_ortho = 0.0;
+    double _residual_ortho = 1.0;
     using IterativeSolver<X,X>::_op;
     using IterativeSolver<X,X>::_prec;
     std::shared_ptr<BlockInnerProduct<Algebra>> _bip;
