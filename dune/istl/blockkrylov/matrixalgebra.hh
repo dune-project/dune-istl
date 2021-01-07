@@ -16,7 +16,6 @@
 #include <dune/common/transpose.hh>
 
 #include "blas.hh"
-#include "cholesky.hh"
 
 namespace Dune {
 
@@ -82,6 +81,35 @@ namespace Dune {
         }
       }
       return false;
+    }
+
+    // computes the cholesky factor of a s.p.d. matrix.
+    // A breakdown is indicated by zero diagonal entries
+    template<class T, int N>
+    std::vector<size_t> cholesky_factorize(FieldMatrix<T, N>& mat){
+      using std::sqrt, std::real;
+      std::vector<size_t> dependend_columns = {};
+      for(size_t i=0; i<N;++i){
+        for(size_t j=0; j<=i; ++j){
+          T sum = mat[i][j];
+          for(size_t k=0;k<j;++k)
+            sum -= mat[i][k]*conjugateComplex(mat[j][k]);
+          if(i > j){
+            mat[i][j] = sum/mat[j][j];
+          }else{ // i == j
+            if(real(sum) > 100.0*real(mat[i][j]*std::numeric_limits<T>::epsilon())){
+              mat[i][i] = sqrt(sum);
+            }else{
+              dependend_columns.push_back(i);
+              mat[i][i] = 0.0;  // indicates breakdown
+            }
+          }
+        }
+        for(size_t j=i+1;j<N;++j){
+          mat[i][j] = 0.0;
+        }
+      }
+      return dependend_columns;
     }
   }
 
