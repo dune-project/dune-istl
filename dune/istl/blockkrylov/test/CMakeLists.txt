@@ -10,3 +10,6 @@ dune_add_test(SOURCES blastest.cc CMAKE_GUARD BLAS_FOUND)
 
 dune_symlink_to_source_files(FILES blockkrylovfactorytest.ini)
 dune_add_test(SOURCES blockkrylovfactorytest.cc)
+
+dune_symlink_to_source_files(FILES breakdown_test.ini)
+dune_add_test(SOURCES breakdown_test.cc)
