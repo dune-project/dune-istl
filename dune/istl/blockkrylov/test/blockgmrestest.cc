@@ -34,7 +34,7 @@ TestSuite test(){
   config["reduction"] = "1e-14";
   config["maxit"] = "1000";
   config["verbose"] = "1";
-  BlockGMRes<BVector, P> solver0(fop, prec, config);
+  BlockGMRes<BVector, BVector, P, false> solver0(fop, prec, config);
   InverseOperatorResult res;
   solver0.apply(x,b, res);
 
