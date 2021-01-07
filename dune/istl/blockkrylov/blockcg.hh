@@ -24,10 +24,14 @@ namespace Dune{
      \brief Implements the block Conjugate Gradient method (BlockCG).
 
      BlockCG solves the symmetric positive definite linear system Ax = b for
-     multiple right-hand sides using the block Conjugate Gradients method as
-     described in cite PhD Thesis
+     multiple right-hand sides using the block Conjugate Gradients.
+
+     See
+     - O'Leary, D. P. (1980). The block conjugate gradient algorithm and related methods.
+     - Dreier, N. (2020). Hardware-Oriented Krylov Methods for High-Performance Computing. PhD Thesis. Chapter 4.
 
      \tparam X vector type
+     \tparam P block size
 
   */
   template<class X, std::size_t P = Simd::lanes<typename X::field_type>()>
@@ -54,7 +58,6 @@ namespace Dune{
             std::shared_ptr<Preconditioner<X,X> > prec,
             const ParameterTree& config)
       : BlockCG(op,
-                // check is sp has correct type before casting
                 dynamic_cast_or_throw<BlockInnerProduct<Algebra>>(sp),
                 prec,
                 config)
@@ -96,7 +99,7 @@ namespace Dune{
       _prec->apply(p,b);               // apply preconditioner
       sigma = _bip->bnormalize(b,p).get();
 
-      if(Simd::anyTrue(sigma.diagonal() == 0.0)){
+      if(Simd::anyTrue(sigma.diagonal() == 0.0)){ // breakdown in cholesky factorization is indicated by zero diagonal entries
         if(_verbose > 1)
           std::cout << "=== amending residual by random right-hand sides" << std::endl;
         fillRandom(b, sigma.diagonal()==0.0);
@@ -139,7 +142,7 @@ namespace Dune{
             break;
 
           // check for breakdown
-          breakdown_cols = gamma.diagonal()==0.0;
+          breakdown_cols = gamma.diagonal()==0.0; // breakdown in cholesky factorization is indicated by zero diagonal entries
           breakdown_counter += countTrue(breakdown_cols);
           if(breakdown_counter > _breakdown_restart){
             if(_verbose > 1)

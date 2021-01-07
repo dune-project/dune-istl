@@ -4,6 +4,11 @@
 #ifndef DUNE_ISTL_BLOCKKRYLOV_BLOCKBICGSTAB_HH
 #define DUNE_ISTL_BLOCKKRYLOV_BLOCKBICGSTAB_HH
 
+/** \file
+ * \brief Block BiCGSTAB method for solving systems with multiple right-hand sides
+ */
+
+
 #include <dune/istl/solver.hh>
 #include <dune/istl/solverfactory.hh>
 #include <dune/istl/blockkrylov/blockinnerproduct.hh>
@@ -13,6 +18,21 @@ namespace Dune{
   /** @addtogroup ISTL_BK
       @{
   */
+
+  /**
+     \brief Implements the block BiCGSTAB method (BlockBiCGSTAB).
+
+     BlockBiCGSTAB solves a linear system Ax = b for
+     multiple right-hand sides using the block BiCGSTAB method.
+
+     see
+     - El Guennouni, A., Jbilou, K., & Sadok, H. (2003). A block version of BiCGSTAB for linear systems with multiple right-hand sides. Electronic Transactions on Numerical Analysis, 16(129-142), 2.
+     - Dreier, N. (2020). Hardware-Oriented Krylov Methods for High-Performance Computing. PhD Thesis. Chapter 6.
+
+     \tparam X vector type
+     \tparam P block size
+  */
+
   template<class X, size_t P>
   class BlockBiCGSTAB : public IterativeSolver<X, X>
   {
@@ -40,7 +60,7 @@ namespace Dune{
                   std::shared_ptr<Preconditioner<X,X> > prec,
                   const ParameterTree& config)
       : BlockBiCGSTAB(op,
-                      std::dynamic_pointer_cast<BlockInnerProduct<Algebra>>(sp),
+                      dynamic_cast_or_throw<BlockInnerProduct<Algebra>>(sp),
                       prec,
                       config)
     {}
@@ -88,9 +108,7 @@ namespace Dune{
 
       for(int it = 1; it < _maxit; ++it){
         _op->apply(p, q);
-        //auto alpha_future = _bip->bdot(rt0, q);
         auto alpha_future = _bip->bdot(q, rt0);
-        // auto rho_future = _bip->bdot(rt0, b);
         auto rho_future = _bip->bdot(b, rt0);
         z=0.0;
         _prec->apply(z,q);
@@ -115,7 +133,7 @@ namespace Dune{
         norm = sqrt(abs(gamma.diagonal()));
         if(iteration.step(it, norm))
           break;
-        // ortho
+        // orthonormalization - improves stability
         if(_residual_ortho*residual_cond > 1.0/std::sqrt(std::numeric_limits<scalar_real_type>::epsilon())
            || (isNaN(residual_cond) && _residual_ortho>0)){
           if(_verbose>1)
@@ -131,7 +149,6 @@ namespace Dune{
         _op->apply(t,u);
         auto omega1 = frobenius_product(u,b);
         auto omega2 = frobenius_product(u,u);
-        //auto beta_future = _bip->bdot(rt0, u);
         auto beta_future = _bip->bdot(u, rt0);
         w = 0.0;
         _prec->apply(w, u);
@@ -173,7 +190,6 @@ namespace Dune{
     using IterativeSolver<X,X>::_maxit;
     using IterativeSolver<X,X>::_verbose;
     using Iteration = typename IterativeSolver<X,X>::template Iteration<unsigned int>;
-    bool _initial_deflation = false;
   };
   /** @} end documentation */
   DUNE_REGISTER_ITERATIVE_SOLVER("blockbicgstab", blockKrylovSolverCreator<Dune::BlockBiCGSTAB>());
