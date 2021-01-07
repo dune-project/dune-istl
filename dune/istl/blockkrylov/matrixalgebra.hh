@@ -96,7 +96,10 @@ namespace Dune {
           for(size_t k=0;k<j;++k)
             sum -= mat[i][k]*conjugateComplex(mat[j][k]);
           if(i > j){
-            mat[i][j] = sum/mat[j][j];
+            if(mat[j][j] != 0)
+              mat[i][j] = sum/mat[j][j];
+            else
+              mat[i][j] = 0;
           }else{ // i == j
             if(real(sum) > 100.0*real(mat[i][j]*std::numeric_limits<T>::epsilon())){
               mat[i][i] = sqrt(sum);

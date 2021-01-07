@@ -46,11 +46,11 @@ namespace Dune{
     virtual Future<Algebra> bdot(const X&, const X&) = 0;
 
     /** Normalization of a block vector, i.e. the orthonormalization of the
-        columns. The CholeskyQR algorithm is used for that. It can be
-        configured whether it should be repeated to improve the stability
-        (default=1). If at least 3 iterations are performed a shift is
-        introduced. This approach was presented in the paper by Fukaya et
-        al. \cite fukaya2020shifted.
+        columns. The CholeskyQR algorithm is used for that. It can be configured
+        whether it should be repeated to improve the stability (default=1). If
+        at least 3 iterations are performed a shift is introduced. This approach
+        was presented in the paper Fukaya et al. 2018, Shifted CholeskyQR for
+        computing the QR factorization of ill-conditioned matrices.
 
         \param[inout] x block vector to be normalized
         \param[inout] y Mx
