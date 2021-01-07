@@ -19,12 +19,6 @@
 
 namespace Dune {
 
-  /**
-   * @defgroup ISTL_BK Block Krylov solvers
-   * @ingroup ISTL_Solvers
-   * Block Krylov methods for solving linear systems with multiple right-hand sides.
-   */
-
 #ifndef DOXYGEN
   namespace {
     // computes fused-multiply add. Necessary for interleaving operations for
@@ -118,8 +112,36 @@ namespace Dune {
   }
 #endif
 
+  /** @defgroup ISTL_Blockkrylov Block Krylov Solvers
+      @ingroup ISTL_Solver
+      @brief Block Krylov methods for solving linear systems with multiple right-hand
+      sides.
+
+      These methods are build up on the block Krylov framework by
+      Frommer et al. that parametrizes the block Krylov space by a generic
+      *-subalgebra of the \f$s \times s\f$ matrices. The practical relevant
+      *-subsubalgebra are the `ParallelMatrixAlgebra`. It is parametrized by a
+      parameter `P` that determines the block size. `P` must be a divider of the
+      numbers of right-hand sides \f$s\f$. The larger the block size the faster
+      is the convergence in terms of iterations. However the building blocks
+      scale like \f$\mathcal{O}(p^2)\f$ for large `P`. For small `P` the runtime
+      is constant due to the fact that the kernels are memory-bound. For good
+      performance `P` should also be a multiple of the hardware SIMD-width. For
+      a modern architecture like Intel Skylake a good choice for `P` is between
+      32 and 64.
+
+     See
+     - Frommer, A., Lund, K., & Szyld, D. B. (2017). Block Krylov subspace methods for functions of matrices.
+     - Frommer, A., Lund, K., & Szyld, D. B. (2020). Block Krylov subspace methods for functions of matrices II: Modified block FOM. SIAM Journal on Matrix Analysis and Applications, 41(2), 804-837.
+     - Dreier, N. (2020). Hardware-Oriented Krylov Methods for High-Performance Computing. PhD Thesis.
+  */
+
+  /** @addtogroup ISTL_Blockkrylov
+      @{
+  */
   /**
      @class ParallelMatrixAlgebra
+     @brief Implementation of the block parallel matrix algebra
 
      Implements the subalgebra of S x S matrices where only the P x P diagonal
      blocks are allowed to be nonzero.  Practically, the purpose of this class
@@ -133,14 +155,13 @@ namespace Dune {
      BLAS gemm kernel. The implementation is selected by the following
      priorities and conditions.
 
-     Overloads with priorities
-     | overload                |  prio  | condition                                                                       |
-     |-------------------------|--------|---------------------------------------------------------------------------------|
-     | LoopSIMD specialization | 7      | see `LoopSIMDcheck`                                                             |
-     | non-block spec.         | 9      | P == 1                                                                          |
-     | full-block spec.        | 4      | P == S                                                                          |
-     | fall-back               | 0      | none                                                                            |
-     | BLAS gemm               | 5      | BLAS avail. can be adjusted via cmake variable `DUNE_BLOCKKRYLOV_BLAS_PRIORITY` |
+     | Overload                |  Priority  | Condition                                                                       |
+     |-------------------------|------------|---------------------------------------------------------------------------------|
+     | LoopSIMD specialization | 7          | see `LoopSIMDcheck`                                                             |
+     | non-block spec.         | 9          | `P == 1`                                                                        |
+     | full-block spec.        | 4          | `P == S`                                                                        |
+     | fall-back               | 0          | none                                                                            |
+     | BLAS gemm               | 5          | BLAS avail. can be adjusted via cmake variable `DUNE_BLOCKKRYLOV_BLAS_PRIORITY` |
 
      \tparam X the vector space the matrixalgebra operates on
      \tparam P block size
@@ -622,6 +643,7 @@ namespace Dune {
 
 #endif
   };
+  /** @} end documentation */
 
 
 #ifndef DOXYGEN
