@@ -16,7 +16,7 @@
 
 namespace Dune {
 
-
+#ifndef DOXYGEN
   namespace {
     // computes the givens rotation and applies it to m1 and m2
     // assumes that m2 is upper triangular
@@ -152,6 +152,7 @@ namespace Dune {
     }
     return GivensRotation<ParallelMatrixAlgebra<X,P>>({ts[0], ts[1], ts[2], ts[3]});
   }
+#endif
 
   /** @addtogroup ISTL_Solvers
       @{
@@ -159,11 +160,15 @@ namespace Dune {
   /**
      \brief Implements the block GMRes method (BlockGMRes).
 
-     BlockGMRes solves the unsymmetric linear system Ax = b for multiple right-hand
-     sides using the block  method as described in cite PhD
-     Thesis
+     BlockGMRes solves the linear system Ax = b for multiple right-hand
+     sides using the block method.
+
+     See
+     - Saad, Y. (2003). Iterative methods for sparse linear systems. Society for Industrial and Applied Mathematics. Section 6.12.
+     - Dreier, N. (2020). Hardware-Oriented Krylov Methods for High-Performance Computing. PhD Thesis. Chapter 5.
 
      \tparam X vector type
+     \tparam P block size
   */
 
   // TODO: allow different range vector type
@@ -197,7 +202,7 @@ namespace Dune {
                std::shared_ptr<Preconditioner<X,X> > prec,
                const ParameterTree& config)
       : BlockGMRes(op,
-                   std::dynamic_pointer_cast<BlockInnerProduct<Algebra>>(sp),
+                   dynamic_cast_or_throw<BlockInnerProduct<Algebra>>(sp),
                    prec,
                    config)
     {}

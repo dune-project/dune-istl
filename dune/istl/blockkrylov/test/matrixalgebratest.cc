@@ -11,7 +11,9 @@
 #include <cmath>
 
 #include <dune/common/simd/loop.hh>
+#if HAVE_VC
 #include <dune/common/simd/vc.hh>
+#endif
 #include <dune/common/alignedallocator.hh>
 #include <dune/common/test/testsuite.hh>
 
