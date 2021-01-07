@@ -16,7 +16,7 @@
 #include <dune/istl/blockkrylov/utils.hh>
 
 namespace Dune{
-  /** @addtogroup ISTL_BK
+  /** @addtogroup ISTL_Blockkrylov
       @{
   */
 

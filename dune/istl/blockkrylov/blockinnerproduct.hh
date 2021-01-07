@@ -135,8 +135,8 @@ namespace Dune{
     ParallelBlockInnerProduct (const Comm& com,
                                SolverCategory::Category cat,
                                const ParameterTree& config = {})
-      : BlockInnerProduct<Algebra>(config.get("cholQR_it", 1)),
-        ParallelScalarProduct<X,Comm>(com,cat)
+      : ParallelScalarProduct<X,Comm>(com,cat)
+      , BlockInnerProduct<Algebra>(config.get("cholQR_it", 1))
     {}
 
     using Base::category;

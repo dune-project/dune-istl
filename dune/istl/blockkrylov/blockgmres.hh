@@ -154,7 +154,7 @@ namespace Dune {
   }
 #endif
 
-  /** @addtogroup ISTL_Solvers
+  /** @addtogroup ISTL_Blockkrylov
       @{
   */
   /**
