@@ -3,7 +3,7 @@
 #ifndef DUNE_ISTL_BLOCKKRYLOV_MATRIXALGEBRA_HH
 #define DUNE_ISTL_BLOCKKRYLOV_MATRIXALGEBRA_HH
 
-/** \file \brief Provides implementations of *-subalgebras of
+/** \file \brief Provides an implementation of *-subalgebras of
     \f$K^{s\times s}\f$ for the generic implementation of block Krylov methods.
  */
 
@@ -25,6 +25,7 @@ namespace Dune {
    * Block Krylov methods for solving linear systems with multiple right-hand sides.
    */
 
+#ifndef DOXYGEN
   namespace {
     // computes fused-multiply add. Necessary for interleaving operations for
     // LoopSIMD to enable proper compiler optimizations. See dune-common#223
@@ -112,10 +113,22 @@ namespace Dune {
       return dependend_columns;
     }
   }
+#endif
 
   /**
      @class ParallelMatrixAlgebra
-     TODO: Add docu
+
+     Implements the subalgebra of S x S matrices where only the P x P diagonal
+     blocks are allowed to be nonzero.  Practically, the purpose of this class
+     is to balance the computitional effort and the memory throughput.
+
+     To make use of this effect it is important to use performant
+     implementations of the costly kernels (i.e. axpy and dot operations). For
+     nested SIMD-types (i.e. LoopSIMD of a SIMD-type,
+     e.g. `LoopSIMD<Vc::Vector<double>, 8>`) we provide a tuned
+     implementation. Alternatively, this routines are implemented by using the
+     BLAS gemm kernel. The implementation is selected by the following
+     priorities and conditions.
 
      Overloads with priorities
      | overload                |  prio  | condition                                                                       |
@@ -124,7 +137,10 @@ namespace Dune {
      | non-block spec.         | 9      | P == 1                                                                          |
      | full-block spec.        | 4      | P == S                                                                          |
      | fall-back               | 0      | none                                                                            |
-     | BLAS                    | 5      | BLAS avail. can be adjusted via cmake variable `DUNE_BLOCKKRYLOV_BLAS_PRIORITY` |
+     | BLAS gemm               | 5      | BLAS avail. can be adjusted via cmake variable `DUNE_BLOCKKRYLOV_BLAS_PRIORITY` |
+
+     \tparam X the vector space the matrixalgebra operates on
+     \tparam P block size
   **/
 
   template<class X, size_t P>
@@ -605,6 +621,7 @@ namespace Dune {
   };
 
 
+#ifndef DOXYGEN
 #if HAVE_MPI
   template<class X, size_t P>
   struct MPIData<ParallelMatrixAlgebra<X,P>, void>{
@@ -630,7 +647,7 @@ namespace Dune {
   };
 
 #endif // HAVE_MPI
-
+#endif
 }
 
 #endif

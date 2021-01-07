@@ -3,6 +3,10 @@
 #ifndef DUNE_ISTL_BLOCKKRYLOV_UTILS_HH
 #define DUNE_ISTL_BLOCKKRYLOV_UTILS_HH
 
+/** \file
+ * \brief Provides utility functions for block Krylov methods
+ */
+
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/simd/interface.hh>

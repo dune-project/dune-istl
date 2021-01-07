@@ -4,6 +4,11 @@
 #ifndef DUNE_ISTL_BLOCKKRYLOV_BLOCKBICGSTAB_HH
 #define DUNE_ISTL_BLOCKKRYLOV_BLOCKBICGSTAB_HH
 
+/** \file
+ * \brief Block BiCGSTAB method for solving systems with multiple right-hand sides
+ */
+
+
 #include <dune/istl/solver.hh>
 #include <dune/istl/solverfactory.hh>
 #include <dune/istl/blockkrylov/blockinnerproduct.hh>
@@ -13,6 +18,21 @@ namespace Dune{
   /** @addtogroup ISTL_BK
       @{
   */
+
+  /**
+     \brief Implements the block BiCGSTAB method (BlockBiCGSTAB).
+
+     BlockBiCGSTAB solves a linear system Ax = b for
+     multiple right-hand sides using the block BiCGSTAB method.
+
+     see
+     - El Guennouni, A., Jbilou, K., & Sadok, H. (2003). A block version of BiCGSTAB for linear systems with multiple right-hand sides. Electronic Transactions on Numerical Analysis, 16(129-142), 2.
+     - Dreier, N. (2020). Hardware-Oriented Krylov Methods for High-Performance Computing. PhD Thesis. Chapter 6.
+
+     \tparam X vector type
+     \tparam P block size
+  */
+
   template<class X, size_t P>
   class BlockBiCGSTAB : public IterativeSolver<X, X>
   {
