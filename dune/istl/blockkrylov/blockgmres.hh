@@ -266,7 +266,7 @@ namespace Dune {
       }
 
       int j = 1;
-      while(j<= _maxit && res.converged != true){
+      while(j< _maxit && res.converged != true){
         size_t i = 0;
         for(; i < _restart && !res.converged; ++j){
           // block arnoldi
@@ -315,12 +315,12 @@ namespace Dune {
 
           i++;
           real_type norm = s[i].column_norms();
-          if(iteration.step(j, norm))
+          if(iteration.step(j, norm) || j>=_maxit)
             break;
         }
         blockBackSubstitute(H,s,i);
 
-        // R^{-1}s to V to get the least-squares solution
+        // compute R^{-1}s*V to get the least-squares solution
         for(size_t k=0;k<i;++k){
           s[k].axpy(1.0, x, v[k]);
         }
@@ -329,14 +329,14 @@ namespace Dune {
             std::cout << "=== BlockGMRes::restart" << std::endl;
           b = b0;
           if constexpr (RIGHT_PREC){
-            _op->applyscaleadd(-1.0, x, b);
-            v[0] = 0.0;
-            _prec->apply(v[0], b);
-          }else{
             tmp = 0.0;
             _prec->apply(tmp, x);
             v[0] = b;
             _op->applyscaleadd(-1.0, tmp, v[0]);
+          }else{
+            _op->applyscaleadd(-1.0, x, b);
+            v[0] = 0.0;
+            _prec->apply(v[0], b);
           }
           Q.clear();
           s[0] = _bip->bnormalize(v[0], v[0]).get();
