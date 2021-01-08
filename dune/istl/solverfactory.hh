@@ -43,8 +43,8 @@ namespace Dune{
   // in an anonymous namespace
   namespace {
 
-    /* initializes the direct solvers, preconditioners and iterative solvers in
-       the factories with the corresponding Matrix and Vector types.
+    /** initializes the direct solvers, preconditioners and iterative solvers in
+        the factories with the corresponding Matrix and Vector types.
 
        @tparam O the assembled linear operator type
     */
@@ -62,16 +62,19 @@ namespace Dune{
       auto& isfac=Dune::IterativeSolverFactory<X,Y>::instance();
       return addRegistryToFactory<TLS>(isfac, IterativeSolverTag{});
     }
-    /* initializes the direct solvers, preconditioners and iterative solvers in
+    /** initializes the direct solvers, preconditioners and iterative solvers in
        the factories with the corresponding Matrix and Vector types.
 
        @tparam O the assembled linear operator type
        @tparam X the Domain type
        @tparam Y the Range type
+
+       @deprecated Use method <code>initSolverFactories<O></code>
+                   instead. This will be removed after Dune 2.8.
     */
     template<class O, class X, class Y>
-    int  DUNE_DEPRECATED_MSG("Use method 'initSolverFactories<O>' instead")
-      initSolverFactories() {
+    [[deprecated("Use method 'initSolverFactories<O>' instead")]]
+    int initSolverFactories() {
       return initSolverFactories<O>();
     }
   } // end anonymous namespace
@@ -158,7 +161,7 @@ namespace Dune{
 
   public:
 
-    /* @brief get a solver from the factory
+    /** @brief get a solver from the factory
      */
     static std::shared_ptr<Solver> get(std::shared_ptr<Operator> op,
                                        const ParameterTree& config,
@@ -192,7 +195,7 @@ namespace Dune{
       return result;
     }
 
-    /*
+    /**
       @brief Construct a Preconditioner for a given Operator
      */
     static std::shared_ptr<Preconditioner> getPreconditioner(std::shared_ptr<Operator> op,
