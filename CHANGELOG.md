@@ -32,6 +32,9 @@
   to better reflect its meaning.  The old exception is still there, but it triggers
   a deprecation warning.
 
+- Remove deprecated `SequentialInformation::getSolverCategory()`, use
+  `category()` instead.
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and
