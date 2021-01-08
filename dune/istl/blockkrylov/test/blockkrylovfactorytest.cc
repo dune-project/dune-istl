@@ -37,7 +37,7 @@ int N=50;
 
 TestSuite test(const ParameterTree& config){
   TestSuite tsuite;
-  BVector b(N*N), x(N*N);
+  BVector b(fop->getmat().N()), x(fop->getmat().M());
   std::srand(42);
   fillRandom(x, SIMD(0.0)==0.0);
   fop->apply(x, b);
