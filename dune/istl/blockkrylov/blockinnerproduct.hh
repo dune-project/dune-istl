@@ -143,7 +143,7 @@ namespace Dune{
 
     Future<Algebra> bdot(const X& x, const X& y) override {
       Algebra local_dot = Algebra::dot(x,y);
-      return _communication->communicator().template iallreduce<std::plus<Simd::Scalar<field_type>>>(std::move(local_dot));
+      return _communication->communicator().template iallreduce<std::plus<Algebra>>(std::move(local_dot));
     }
 
   protected:
