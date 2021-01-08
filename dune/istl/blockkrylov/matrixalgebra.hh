@@ -331,6 +331,12 @@ namespace Dune {
       return dependent_lanes;
     }
 
+    friend ParallelMatrixAlgebra operator+ (const ParallelMatrixAlgebra& m1, const ParallelMatrixAlgebra& m2){
+      ParallelMatrixAlgebra m = m1;
+      m.add(m2);
+      return m;
+    }
+
   private:
 
     template<class X1 = X>
@@ -644,35 +650,6 @@ namespace Dune {
 #endif
   };
   /** @} end documentation */
-
-
-#ifndef DOXYGEN
-#if HAVE_MPI
-  template<class X, size_t P>
-  struct MPIData<ParallelMatrixAlgebra<X,P>, void>{
-    ParallelMatrixAlgebra<X,P>& data;
-
-    MPIData(ParallelMatrixAlgebra<X,P>& d)
-      : data(d)
-    {}
-
-    void* ptr() const{
-      return &data.value_;
-    }
-
-    static constexpr bool static_size = true;
-
-    int size() const{
-      return P*Simd::lanes<typename X::field_type>();
-    }
-
-    MPI_Datatype type() const {
-      return MPITraits<Simd::Scalar<typename X::field_type>>::getType();
-    }
-  };
-
-#endif // HAVE_MPI
-#endif
 }
 
 #endif

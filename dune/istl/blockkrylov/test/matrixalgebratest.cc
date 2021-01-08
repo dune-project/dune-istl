@@ -33,7 +33,6 @@ TestSuite testAlgebra(){
   using X = typename Algebra::vector_type;
   using field_type = typename Algebra::field_type;
   using scalar_type = typename Algebra::scalar_type;
-  Algebra a;
   SeqBlockInnerProduct<Algebra> bip;
 
   // test normalization
