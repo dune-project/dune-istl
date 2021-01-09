@@ -120,7 +120,7 @@ namespace Dune {
       These methods are build up on the block Krylov framework by
       Frommer et al. that parametrizes the block Krylov space by a generic
       *-subalgebra of the \f$s \times s\f$ matrices. The practical relevant
-      *-subsubalgebra are the `ParallelMatrixAlgebra`. It is parametrized by a
+      *-subsubalgebra is the `ParallelMatrixAlgebra`. It is parametrized by a
       parameter `P` that determines the block size. `P` must be a divider of the
       numbers of right-hand sides \f$s\f$. The larger the block size the faster
       is the convergence in terms of iterations. However the building blocks
