@@ -13,7 +13,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/unused.hh>
 
-#include <dune/istl/colcompmatrix.hh>
+#include <dune/istl/bccsmatrixinitializer.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
 #include <dune/istl/solverfactory.hh>
@@ -69,9 +69,9 @@ namespace Dune {
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
     typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
     /** @brief The corresponding SuperLU Matrix type.*/
-    typedef Dune::ColCompMatrix<Matrix> SPQRMatrix;
+    typedef ISTL::Impl::BCCSMatrix<T,int> SPQRMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ColCompMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A> > MatrixInitializer;
+    typedef ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A>, int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
     typedef Dune::BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > > domain_type;
     /** @brief The type of the range of the solver. */
@@ -198,7 +198,15 @@ namespace Dune {
     {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
-      spqrMatrix_ = matrix;
+
+      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nonzeroes() != 0)
+        spqrMatrix_.free();
+      spqrMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
+                          MatrixDimension<Matrix>::coldim(matrix));
+      ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(spqrMatrix_);
+
+      copyToBCCSMatrix(initializer, matrix);
+
       decompose();
     }
 
@@ -207,7 +215,16 @@ namespace Dune {
     {
       if ((spqrMatrix_.N() + spqrMatrix_.M() > 0) || matrixIsLoaded_)
         free();
-      spqrMatrix_.setMatrix(matrix,rowIndexSet);
+
+      if (spqrMatrix_.N() + spqrMatrix_.M() + spqrMatrix_.nonzeroes() != 0)
+        spqrMatrix_.free();
+
+      spqrMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),
+                          rowIndexSet.size()*MatrixDimension<Matrix>::coldim(matrix) / matrix.M());
+      ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(spqrMatrix_);
+
+      copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(matrix,rowIndexSet));
+
       decompose();
     }
 

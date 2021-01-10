@@ -353,7 +353,7 @@ namespace Dune
 
     typename SuperLUMatrix::size_type nnz() const
     {
-      return mat.nnz();
+      return mat.nonzeroes();
     }
 
     template<class S>
