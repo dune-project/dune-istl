@@ -17,6 +17,14 @@
   but if they yield different results `blockLevel` will not compile.
   This condition can be checked with the function template `hasUniqueBlockLevel`.
 
+- The internal setup code of the various SuiteSparse solvers (like `UMFPack`)
+  has been cleaned up.  The effects should be invisible to all regular users.
+  However, if you have happened to use the `ColCompMatrix` and `ColCompMatrixInitializer`
+  classes in the past you need to port your code to use `Impl::BCCSMatrix` and
+  `Impl::BCCSMatrixInitializer` instead.  Their interfaces have changed a little bit;
+  please look at the class documentation for details.  The old header `colcompmatrix.hh`
+  is still there, but backward compatibility is only partial.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
