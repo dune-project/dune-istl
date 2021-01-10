@@ -6,7 +6,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/istl/colcompmatrix.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/spqr.hh>
