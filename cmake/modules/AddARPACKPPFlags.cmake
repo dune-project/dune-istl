@@ -10,6 +10,24 @@
 #       A list of targets to use ARPACKPP with.
 #
 
+if(ARPACKPP_FOUND)
+  dune_create_and_install_pkg_config("arpack"
+    NAME "ARPACK"
+    DESCRIPTION "ARnoldi PACKage"
+    URL "https://www.caam.rice.edu/software/ARPACK"
+    CFLAGS "-I${ARPACP_INCLUDE_DIR}"
+    LIBS "${ARPACK_LIBRARY}")
+  dune_create_and_install_pkg_config("arpackpp"
+    NAME "ARPACK++"
+    DESCRIPTION "ARnoldi PACKage C++ interface"
+    URL "https://github.com/m-reuter/arpackpp"
+    CFLAGS "-I${ARPACKPP_INCLUDE_DIR}"
+    LIBS "${ARPACKPP_LIBRARY}"
+    REQUIRES "arpack")
+  dune_add_pkg_config_requirement("arpackpp")
+  dune_add_pkg_config_flags("-DHAVE_ARPACKPP")
+endif()
+
 function(add_dune_arpackpp_flags _targets)
   if(ARPACKPP_FOUND)
     foreach(_target ${_targets})
