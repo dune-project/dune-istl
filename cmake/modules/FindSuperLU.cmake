@@ -109,13 +109,13 @@ if(SuperLU_FOUND)
     endif()
   endif()
   # log result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+  file(APPEND ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determining location of SuperLU succeeded:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
     "Library directory: ${SUPERLU_LIBRARY}\n\n")
 else()
   # log erroneous result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+  file(APPEND ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determining location of SuperLU failed:\n"
     "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
     "Library directory: ${SUPERLU_LIBRARY}\n")
