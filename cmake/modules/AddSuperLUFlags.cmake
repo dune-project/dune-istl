@@ -33,11 +33,11 @@ if(SuperLU_FOUND)
     VERSION "${SuperLU_VERSION}"
     DESCRIPTION "Supernodal LU - Direct solver for linear system"
     URL "https://portal.nersc.gov/project/sparse/superlu"
-    CFLAGS "-I${SUPERLU_INCLUDE_DIR} -DSUPERLU_INT_TYPE=${SUPERLU_INT_TYPE}"
+    CFLAGS "-I${SUPERLU_INCLUDE_DIR}"
     LIBS "${SUPERLU_LIBRARY}"
     REQUIRES "blas")
   dune_add_pkg_config_requirement("superlu")
-  dune_add_pkg_config_flags("-DHAVE_SUPERLU")
+  dune_add_pkg_config_flags("-DHAVE_SUPERLU -DSUPERLU_INT_TYPE=${SUPERLU_INT_TYPE}")
 endif()
 
 # Provide function to set target properties for linking to SuperLU
