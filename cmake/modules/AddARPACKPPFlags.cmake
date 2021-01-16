@@ -15,7 +15,7 @@ if(ARPACKPP_FOUND)
     NAME "ARPACK"
     DESCRIPTION "ARnoldi PACKage"
     URL "https://www.caam.rice.edu/software/ARPACK"
-    CFLAGS "-I${ARPACP_INCLUDE_DIR}"
+    # CFLAGS "-I${ARPACK_INCLUDE_DIR}"
     LIBS "${ARPACK_LIBRARY}")
   dune_create_and_install_pkg_config("arpackpp"
     NAME "ARPACK++"
