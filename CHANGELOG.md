@@ -25,6 +25,12 @@
   please look at the class documentation for details.  The old header `colcompmatrix.hh`
   is still there, but backward compatibility is only partial.
 
+- More implementation code of the ILU preconditioners (in `ilu.hh`) has moved
+  into the `ILU` namespace.  With the move, some methods have changed their names
+  from std-style to CamelCase.  The old methods are still there, but they are
+  deprecated now. The class `MatrixBlockError` has moved from the file `ilu.hh`
+  to the file `istlexception.hh`, because it is of wider interest.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
