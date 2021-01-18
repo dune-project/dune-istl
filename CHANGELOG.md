@@ -31,6 +31,10 @@
   deprecated now. The class `MatrixBlockError` has moved from the file `ilu.hh`
   to the file `istlexception.hh`, because it is of wider interest.
 
+- Added class `VectorIterator` that allows to iterate over an arbitrary nested vector type.
+  At each scalar entry a lambda function `entryAction( index, entry )` taking the multiindex (as `std::tuple`) and the entry itself is called.
+  The initial implementation is given for any combination of `FieldVector`, `BlockVector` and `MultiTypeBlockVector`.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
