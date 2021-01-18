@@ -62,6 +62,9 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
+dune_add_test(SOURCES vectoriteratortest.cc)
+
+
 set(DUNE_TEST_FACTORY_FIELD_TYPES
   "double"
   "float"
