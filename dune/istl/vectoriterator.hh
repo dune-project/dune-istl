@@ -15,26 +15,6 @@
 
 namespace Dune
 {
-  namespace Impl
-  {
-    //! a small helper that removes the first entry of an std::tuple
-    template<class T, class... Args>
-    auto tupleTail(const std::tuple<T,Args...>& t)
-    {
-      // apply make_tuple to the tail
-      return std::apply(
-        [](auto&& /*firstElement*/, auto&& ... tail) { return std::make_tuple(tail...); }, t
-      );
-    }
-
-    //! a small helper that picks the first entry of an std::tuple
-    template<class... Args>
-    auto tupleHead(const std::tuple<Args...>& t)
-    {
-      return std::get<0>(t);
-    }
-  }
-
 
 /** \brief Primary class for the iteration of arbitrary vector types
  *

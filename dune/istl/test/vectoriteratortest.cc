@@ -10,13 +10,32 @@
 
 using namespace Dune;
 
+
+//! a small helper that removes the first entry of an std::tuple
+template<class T, class... Args>
+auto tupleTail(const std::tuple<T,Args...>& t)
+{
+  // apply make_tuple to the tail
+  return std::apply(
+    [](auto&& /*firstElement*/, auto&& ... tail) { return std::make_tuple(tail...); }, t
+  );
+}
+
+//! a small helper that picks the first entry of an std::tuple
+template<class... Args>
+auto tupleHead(const std::tuple<Args...>& t)
+{
+  return std::get<0>(t);
+}
+
+
 template<class Index>
 void printIndex( std::ostream& os, const Index& index )
 {
   if constexpr ( std::tuple_size_v<Index> > 0 )
   {
-    auto head = Impl::tupleHead(index);
-    auto tail = Impl::tupleTail(index);
+    auto head = tupleHead(index);
+    auto tail = tupleTail(index);
     os << head << " ";
     printIndex( os, tail );
   }
