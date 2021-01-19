@@ -1,25 +1,19 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_ISTL_VECTORFLATVIEW_HH
-#define DUNE_ISTL_VECTORFLATVIEW_HH
-
-#include<tuple>
-
-#include<dune/common/fvector.hh>
-#include<dune/common/hybridutilities.hh>
-#include<dune/common/indices.hh>
-#include<dune/common/typetraits.hh>
-
-#include<dune/istl/blocklevel.hh>
-#include<dune/istl/bvector.hh>
-#include<dune/istl/multitypeblockvector.hh>
+#ifndef DUNE_ISTL_FLATVECTORVIEW_HH
+#define DUNE_ISTL_FLATVECTORVIEW_HH
 
 namespace Dune
 {
 
 
+
+/** \brief Wrapper for blocked vector types to export a flat vector interface
+ *
+ * \tparam Vector The original vector type that is wrapped
+ */
 template<class Vector>
-class VectorFlatView
+class FlatVectorView
 {
 public:
 
@@ -27,10 +21,10 @@ public:
   using size_type = std::size_t;
 
   /** \brief The type used for scalars */
-  using field_type = Vector::field_type;
+  using field_type = typename Vector::field_type;
 
   /** \brief Default constructor referencing the original vector */
-  VectorFlatView(const Vector& vector)
+  FlatVectorView(const Vector& vector)
   : vector_(vector)
   {}
 
@@ -51,16 +45,22 @@ public:
 
   /** \brief Number of scalar elements
    *
-   *  This is the same as size() for a flat vector
+   *  For a flat vector size() and dim() are the same
    */
   size_type dim() const
   {
     return size();
   }
 
+  /** \brief Return reference to the stored original vector */
+  const Vector& rawVector() const
+  {
+    return vector_;
+  }
+
 
 private:
-  Vector& vector_;
+  const Vector& vector_;
 
 };
 

@@ -16,6 +16,7 @@ install(FILES
    bvector.hh
    cholmod.hh
    colcompmatrix.hh
+   flatvectorview.hh
    gsetc.hh
    ildl.hh
    ilu.hh
@@ -53,6 +54,4 @@ install(FILES
    supermatrix.hh
    umfpack.hh
    vbvector.hh
-   vectorflatview.hh
-   vectoriterator.hh
    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl)
