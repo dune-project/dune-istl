@@ -13,7 +13,7 @@
 function(add_dune_arpackpp_flags _targets)
   if(ARPACKPP_FOUND)
     foreach(_target ${_targets})
-      target_link_libraries(${_target} ${ARPACKPP_DUNE_LIBRARIES})
+      target_link_libraries(${_target} PUBLIC ${ARPACKPP_DUNE_LIBRARIES})
       target_compile_definitions(${_target} PUBLIC ENABLE_ARPACKPP=1)
       target_compile_options(${_target} PUBLIC ${ARPACKPP_DUNE_COMPILE_FLAGS})
     endforeach()
