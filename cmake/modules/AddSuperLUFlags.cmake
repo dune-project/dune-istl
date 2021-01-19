@@ -28,7 +28,7 @@ if(SuperLU_FOUND)
   set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking SuperLU programs")
 
-  dune_create_and_install_pkg_config("superlu"
+  dune_generate_pkg_config("superlu"
     NAME "SuperLU"
     VERSION "${SuperLU_VERSION}"
     DESCRIPTION "Supernodal LU - Direct solver for linear system"
