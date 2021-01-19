@@ -53,5 +53,6 @@ install(FILES
    supermatrix.hh
    umfpack.hh
    vbvector.hh
+   vectorflatview.hh
    vectoriterator.hh
    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl)
