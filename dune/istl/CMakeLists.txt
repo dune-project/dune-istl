@@ -48,6 +48,7 @@ install(FILES
    solverregistry.hh
    solvers.hh
    solvertype.hh
+   sparseforeach.hh
    spqr.hh
    superlu.hh
    superlufunctions.hh

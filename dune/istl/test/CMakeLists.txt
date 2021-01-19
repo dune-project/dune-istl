@@ -62,7 +62,7 @@ dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
 
-dune_add_test(SOURCES vectoriteratortest.cc)
+dune_add_test(SOURCES sparseforeachtest.cc)
 
 
 set(DUNE_TEST_FACTORY_FIELD_TYPES
