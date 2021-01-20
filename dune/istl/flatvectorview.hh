@@ -5,9 +5,23 @@
 
 #include <cstddef>
 
+#include<dune/common/hybridutilities.hh>
+#include<dune/common/indices.hh>
+#include<dune/common/typetraits.hh>
+#include <dune/common/std/type_traits.hh>
+
 
 namespace Dune
 {
+  namespace Detail
+  {
+    // stolen from dune-functions
+    template<class C>
+    using staticIndexAccess_t = decltype(std::declval<C>()[Indices::_0]);
+
+    template<class C>
+    using isScalar = Std::bool_constant<not Std::is_detected_v<staticIndexAccess_t, std::remove_reference_t<C>>>;
+  }
 
 
 
@@ -26,33 +40,29 @@ public:
   /** \brief The type used for scalars */
   using field_type = typename Vector::field_type;
 
+  /** \brief The type of the entries which is the field_type */
+  using block_type = field_type;
+
   /** \brief Default constructor referencing the original vector */
   FlatVectorView(const Vector& vector)
   : vector_(vector)
   {}
 
-  /** \brief Return the number of non-zero vector entries
+  /** \brief Return the number of entries
     *
-    * Since we wrap a possibly blocked vector we redirect it to the original dim()
+    *  Go through the blocks and call `size()` recursively until down to the scalar case
     */
   size_type size() const
   {
-    return vector_.dim();
-  }
-
-  /** \brief Number of elements */
-  size_type N() const
-  {
-    return size();
-  }
-
-  /** \brief Number of scalar elements
-   *
-   *  For a flat vector size() and dim() are the same
-   */
-  size_type dim() const
-  {
-    return size();
+    size_type result = 0;
+    Hybrid::forEach(vector_, [&](auto&& block){
+      using Block = std::decay_t<decltype(block)>;
+      if constexpr ( Detail::isScalar<Block>::value )
+        result += 1;
+      else
+        result += FlatVectorView<Block>(block).size();
+    });
+    return result;
   }
 
   /** \brief Return reference to the stored original vector */

@@ -39,6 +39,8 @@ TestSuite testSparseForEach()
 
   FlatVectorView flatView(v);
 
+  std::cout << " size = " << flatView.size() << std::endl;
+
   sparseForEach(flatView,countEntres);
 
   t.check( entries == 20 );
