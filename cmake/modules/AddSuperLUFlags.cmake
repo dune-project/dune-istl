@@ -27,6 +27,17 @@ if(SuperLU_FOUND)
     CACHE STRING "Compile flags used by DUNE when compiling SuperLU programs")
   set(SUPERLU_DUNE_LIBRARIES ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking SuperLU programs")
+
+  dune_generate_pkg_config("superlu"
+    NAME "SuperLU"
+    VERSION "${SuperLU_VERSION}"
+    DESCRIPTION "Supernodal LU - Direct solver for linear system"
+    URL "https://portal.nersc.gov/project/sparse/superlu"
+    CFLAGS "-I${SUPERLU_INCLUDE_DIR}"
+    LIBS "${SUPERLU_LIBRARY}"
+    REQUIRES "blas")
+  dune_add_pkg_config_requirement("superlu")
+  dune_add_pkg_config_flags("-DHAVE_SUPERLU -DSUPERLU_INT_TYPE=${SUPERLU_INT_TYPE}")
 endif()
 
 # Provide function to set target properties for linking to SuperLU
