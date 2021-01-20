@@ -3,6 +3,9 @@
 #ifndef DUNE_ISTL_FLATVECTORVIEW_HH
 #define DUNE_ISTL_FLATVECTORVIEW_HH
 
+#include <cstddef>
+
+
 namespace Dune
 {
 
