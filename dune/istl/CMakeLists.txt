@@ -16,6 +16,7 @@ install(FILES
    bvector.hh
    cholmod.hh
    colcompmatrix.hh
+   flatvectorview.hh
    gsetc.hh
    ildl.hh
    ilu.hh
@@ -47,6 +48,7 @@ install(FILES
    solverregistry.hh
    solvers.hh
    solvertype.hh
+   sparseforeach.hh
    spqr.hh
    superlu.hh
    superlufunctions.hh
