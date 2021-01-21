@@ -24,7 +24,7 @@ template<typename FirstRow, typename... Args>
 class MultiTypeBlockMatrix;
 } // end namespace Dune
 
-namespace Dune::Impl {
+namespace Dune { namespace Impl {
 
 // forward declaration
 template<typename T> struct MaxBlockLevel;
@@ -88,7 +88,7 @@ struct MinBlockLevel
 
 // max block level for MultiTypeBlockMatrix
 template<typename FirstRow, typename... Args>
-struct MaxBlockLevel<MultiTypeBlockMatrix<FirstRow, Args...>>
+struct MaxBlockLevel<Dune::MultiTypeBlockMatrix<FirstRow, Args...>>
 {
   static constexpr std::size_t value()
   {
@@ -100,7 +100,7 @@ struct MaxBlockLevel<MultiTypeBlockMatrix<FirstRow, Args...>>
 
 // min block level for MultiTypeBlockMatrix
 template<typename FirstRow, typename... Args>
-struct MinBlockLevel<MultiTypeBlockMatrix<FirstRow, Args...>>
+struct MinBlockLevel<Dune::MultiTypeBlockMatrix<FirstRow, Args...>>
 {
   static constexpr std::size_t value()
   {
@@ -112,7 +112,7 @@ struct MinBlockLevel<MultiTypeBlockMatrix<FirstRow, Args...>>
 
 // max block level for MultiTypeBlockVector
 template<typename... Args>
-struct MaxBlockLevel<MultiTypeBlockVector<Args...>>
+struct MaxBlockLevel<Dune::MultiTypeBlockVector<Args...>>
 {
   static constexpr std::size_t value()
   {
@@ -124,7 +124,7 @@ struct MaxBlockLevel<MultiTypeBlockVector<Args...>>
 
 // min block level for MultiTypeBlockVector
 template<typename... Args>
-struct MinBlockLevel<MultiTypeBlockVector<Args...>>
+struct MinBlockLevel<Dune::MultiTypeBlockVector<Args...>>
 {
   static constexpr std::size_t value()
   {
@@ -136,7 +136,7 @@ struct MinBlockLevel<MultiTypeBlockVector<Args...>>
 
 // special case: empty MultiTypeBlockVector
 template<>
-struct MaxBlockLevel<MultiTypeBlockVector<>>
+struct MaxBlockLevel<Dune::MultiTypeBlockVector<>>
 {
   static constexpr std::size_t value()
   { return 0; };
@@ -144,13 +144,13 @@ struct MaxBlockLevel<MultiTypeBlockVector<>>
 
 // special case: empty MultiTypeBlockVector
 template<>
-struct MinBlockLevel<MultiTypeBlockVector<>>
+struct MinBlockLevel<Dune::MultiTypeBlockVector<>>
 {
   static constexpr std::size_t value()
   { return 0; };
 };
 
-} // end namespace Dune::Impl
+}} // end namespace Dune::Impl
 
 namespace Dune {
 
