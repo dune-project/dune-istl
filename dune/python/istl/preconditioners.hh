@@ -8,7 +8,7 @@
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/preconditioners.hh>
 
-#include <dune/python/pybind11/pybind11.h>
+#include <pybind11/pybind11.h>
 
 namespace Dune
 {
