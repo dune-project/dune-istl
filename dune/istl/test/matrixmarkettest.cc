@@ -7,6 +7,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/simd/loop.hh>
 
 #include <dune/istl/matrixmarket.hh>
 #include <dune/istl/io.hh>
@@ -94,7 +95,7 @@ int testMatrixMarket(int N)
     }
 
   for (auto entry=bv.begin(), entry1=bv1.begin(); bv.end() != entry; ++entry, ++entry1)
-    if (*entry!=*entry1)
+    if (Dune::Simd::anyTrue(*entry!=*entry1))
     {
       std::cerr<<"written and read vector do not match"<<std::endl;
       ++ret;
@@ -118,7 +119,7 @@ int testMatrixMarket(int N)
 #endif
 
   for (auto entry=cv.begin(), entry1=cv1.begin(); cv.end() != entry; ++entry, ++entry1)
-    if (*entry!=*entry1)
+    if (Dune::Simd::anyTrue(*entry!=*entry1))
     {
       std::cerr<<"computed vectors do not match"<<std::endl;
       ++ret;
@@ -156,6 +157,11 @@ int main(int argc, char** argv)
   typedef Dune::BlockVector<VectorBlock> BVector;
 
   ret = testMatrixMarket<BCRSMat, BVector>(N);
+
+  // test for vector with multiple lanes
+  typedef Dune::BlockVector<Dune::LoopSIMD<double, 4>> BVectorSIMD;
+
+  ret = testMatrixMarket<Dune::BCRSMatrix<double>, BVectorSIMD>(N);
 
 #if HAVE_MPI
   if(ret!=0)
