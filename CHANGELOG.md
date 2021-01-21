@@ -31,6 +31,9 @@
   deprecated now. The class `MatrixBlockError` has moved from the file `ilu.hh`
   to the file `istlexception.hh`, because it is of wider interest.
 
+- Added the routines `forEachScalarMatrixEntry` and `forEachScalarMatrixRow` which traverse a (blocked) matrix.
+  At each row or entry, respectily, a functor is called taking the global indices (std::tuple).
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
