@@ -20,6 +20,8 @@ dune_add_test(SOURCES complexmatrixtest.cc)
 
 dune_add_test(SOURCES fieldvectortest.cc)
 
+dune_add_test(SOURCES foreachmatrixentrytest.cc)
+
 dune_add_test(SOURCES matrixnormtest.cc)
 
 dune_add_test(SOURCES matrixutilstest.cc)
@@ -61,6 +63,7 @@ dune_add_test(SOURCES scaledidmatrixtest.cc)
 dune_add_test(SOURCES solvertest.cc)
 
 dune_add_test(SOURCES solveraborttest.cc)
+
 
 set(DUNE_TEST_FACTORY_FIELD_TYPES
   "double"
