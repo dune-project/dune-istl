@@ -216,7 +216,7 @@ namespace Dune {
                                 The estimate is given in the InverseOperatorResult returned by apply().
                                 This is only supported for float and double field types.
     */
-    CGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+    CGSolver (const LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
       scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
     {
@@ -233,7 +233,7 @@ namespace Dune {
                                 The estimate is given in the InverseOperatorResult returned by apply().
                                 This is only supported for float and double field types.
     */
-    CGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
+    CGSolver (const LinearOperator<X,X>& op, const ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
       scalar_real_type reduction, int maxit, int verbose, bool condition_estimate) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
       condition_estimate_(condition_estimate)
     {
@@ -250,7 +250,7 @@ namespace Dune {
                                 The estimate is given in the InverseOperatorResult returned by apply().
                                 This is only supported for float and double field types.
     */
-    CGSolver (std::shared_ptr<LinearOperator<X,X>> op, std::shared_ptr<ScalarProduct<X>> sp,
+    CGSolver (std::shared_ptr<const LinearOperator<X,X>> op, std::shared_ptr<const ScalarProduct<X>> sp,
               std::shared_ptr<Preconditioner<X,X>> prec,
               scalar_real_type reduction, int maxit, int verbose, bool condition_estimate)
       : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose),
@@ -831,7 +831,8 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (const LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec,
+                          scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -842,7 +843,8 @@ namespace Dune {
        \copydoc LoopSolver::LoopSolver(L&,S&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
+    RestartedGMResSolver (const LinearOperator<X,Y>& op, const ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
+                          scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -859,12 +861,14 @@ namespace Dune {
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    RestartedGMResSolver (std::shared_ptr<const LinearOperator<X,Y> > op,
+                          std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,Y>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
 
-    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    RestartedGMResSolver (std::shared_ptr<const LinearOperator<X,Y> > op, std::shared_ptr<const ScalarProduct<X> > sp,
+                          std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
@@ -875,8 +879,8 @@ namespace Dune {
       \copydoc LoopSolver::LoopSolver(std::shared_ptr<L>,std::shared_ptr<S>,std::shared_ptr<P>,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    RestartedGMResSolver (std::shared_ptr<LinearOperator<X,Y>> op,
-                          std::shared_ptr<ScalarProduct<X>> sp,
+    RestartedGMResSolver (std::shared_ptr<const LinearOperator<X,Y>> op,
+                          std::shared_ptr<const ScalarProduct<X>> sp,
                           std::shared_ptr<Preconditioner<X,Y>> prec,
                           scalar_real_type reduction, int restart, int maxit, int verbose) :
       IterativeSolver<X,Y>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
@@ -1305,7 +1309,8 @@ private:
        \copydoc LoopSolver::LoopSolver(L&,P&,double,int,int)
        \param restart number of GMRes cycles before restart
      */
-    GeneralizedPCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
+    GeneralizedPCGSolver (const LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+                          scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
       IterativeSolver<X,X>::IterativeSolver(op,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -1317,7 +1322,8 @@ private:
        \param restart When to restart the construction of
        the Krylov search space.
      */
-    GeneralizedPCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
+    GeneralizedPCGSolver (const LinearOperator<X,X>& op, const ScalarProduct<X>& sp,
+                          Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
       IterativeSolver<X,X>::IterativeSolver(op,sp,prec,reduction,maxit,verbose),
       _restart(restart)
     {}
@@ -1335,12 +1341,14 @@ private:
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    GeneralizedPCGSolver (std::shared_ptr<const LinearOperator<X,X> > op,
+                          std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,X>::IterativeSolver(op,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
 
-    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    GeneralizedPCGSolver (std::shared_ptr<const LinearOperator<X,X> > op,
+                          std::shared_ptr<const ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver<X,X>::IterativeSolver(op,sp,prec,configuration),
       _restart(configuration.get<int>("restart"))
     {}
@@ -1351,8 +1359,8 @@ private:
       \param restart When to restart the construction of
       the Krylov search space.
     */
-    GeneralizedPCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
-                          std::shared_ptr<ScalarProduct<X>> sp,
+    GeneralizedPCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
+                          std::shared_ptr<const ScalarProduct<X>> sp,
                           std::shared_ptr<Preconditioner<X,X>> prec,
                           scalar_real_type reduction, int maxit, int verbose,
                           int restart = 10) :
@@ -1493,8 +1501,9 @@ private:
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int, int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    RestartedFCGSolver (LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
-                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
+    RestartedFCGSolver (const LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
+                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10)
+      : IterativeSolver<X,X>(op, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
 
@@ -1503,8 +1512,9 @@ private:
       \copydetails IterativeSolver::IterativeSolver(LinearOperator<X,Y>&, ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int,int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    RestartedFCGSolver (LinearOperator<X,X>& op, ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
-                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10) : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
+    RestartedFCGSolver (const LinearOperator<X,X>& op, const ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
+                        scalar_real_type reduction, int maxit, int verbose, int mmax = 10)
+      : IterativeSolver<X,X>(op, sp, prec, reduction, maxit, verbose), _mmax(mmax)
     {
     }
 
@@ -1513,8 +1523,8 @@ private:
       \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<LinearOperator<X,Y>>, std::shared_ptr<ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, real_type, int, int,int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
-    RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
-                        std::shared_ptr<ScalarProduct<X>> sp,
+    RestartedFCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
+                        std::shared_ptr<const ScalarProduct<X>> sp,
                         std::shared_ptr<Preconditioner<X,X>> prec,
                         scalar_real_type reduction, int maxit, int verbose,
                         int mmax = 10)
@@ -1533,14 +1543,14 @@ private:
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
+    RestartedFCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
                         std::shared_ptr<Preconditioner<X,X>> prec,
                         const ParameterTree& config)
       : IterativeSolver<X,X>(op, prec, config), _mmax(config.get("mmax", 10))
     {}
 
-    RestartedFCGSolver (std::shared_ptr<LinearOperator<X,X>> op,
-                        std::shared_ptr<ScalarProduct<X>> sp,
+    RestartedFCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
+                        std::shared_ptr<const ScalarProduct<X>> sp,
                         std::shared_ptr<Preconditioner<X,X>> prec,
                         const ParameterTree& config)
       : IterativeSolver<X,X>(op, sp, prec, config), _mmax(config.get("mmax", 10))
