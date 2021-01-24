@@ -1172,7 +1172,7 @@ namespace Dune
 
     template<class M, class X, class Y>
     std::shared_ptr<Dune::Preconditioner<X,Y> >
-    makeAMG(const std::shared_ptr<MatrixAdapter<M,X,Y>>& op, const std::string& smoother,
+    makeAMG(const std::shared_ptr<const MatrixAdapter<M,X,Y>>& op, const std::string& smoother,
             const Dune::ParameterTree& config) const
     {
       using OP = MatrixAdapter<M,X,Y>;
@@ -1193,7 +1193,7 @@ namespace Dune
 
     template<class M, class X, class Y, class C>
     std::shared_ptr<Dune::Preconditioner<X,Y> >
-    makeAMG(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
+    makeAMG(const std::shared_ptr<const OverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
             const Dune::ParameterTree& config) const
     {
       using OP = OverlappingSchwarzOperator<M,X,Y,C>;
@@ -1216,7 +1216,7 @@ namespace Dune
 
     template<class M, class X, class Y, class C>
     std::shared_ptr<Dune::Preconditioner<X,Y> >
-    makeAMG(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
+    makeAMG(const std::shared_ptr<const NonoverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
             const Dune::ParameterTree& config) const
     {
       using OP = NonoverlappingSchwarzOperator<M,X,Y,C>;
