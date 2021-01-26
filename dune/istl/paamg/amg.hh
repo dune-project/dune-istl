@@ -19,6 +19,8 @@
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
 #include <dune/common/parametertree.hh>
+#include <dune/common/shared_ptr.hh>
+#include <dune/istl/solverfactory.hh>
 
 namespace Dune
 {
@@ -172,6 +174,7 @@ namespace Dune
                                    | one vertex to another within the aggregate).
           minAggregateSize         | Minimum number of vertices an aggregate should consist of.
           maxAggregateSize         | Maximum number of vertices an aggregate should consist of.
+          coarsesolver             | SolverFactory configuration for the coarse solver (subtree)
 
          See \ref ISTL_Factory for the ParameterTree layout and examples.
        */
@@ -250,18 +253,19 @@ namespace Dune
        * @param criterion Coarsen criterion to configure and use
        */
       template<class C>
-      void createHierarchies(C& criterion, std::shared_ptr<const Operator> matrixptr,
+      void createHierarchiesFromParameterTree(C& criterion, std::shared_ptr<const Operator> matrixptr,
                              const PI& pinfo, const ParameterTree& configuration);
       /**
        * @brief Create matrix and smoother hierarchies.
        * @param criterion The coarsening criterion.
        * @param matrix The fine level matrix operator.
        * @param pinfo The fine level parallel information.
+       * @param pinfo Coarse solver configuration
        */
       template<class C>
       void createHierarchies(C& criterion,
                              const std::shared_ptr<const Operator>& matrixptr,
-                             const PI& pinfo);
+                             const PI& pinfo, const ParameterTree& coarseSolverConfig= {});
       /**
        * @brief A struct that holds the context of the current level.
        *
@@ -338,6 +342,25 @@ namespace Dune
        */
       void initIteratorsWithFineLevel(LevelContext& levelContext);
 
+      ParameterTree defaultCoarseSolverConfig(bool parallel){
+        ParameterTree result;
+        if(parallel){
+          result["type"] = "bicgstabsolver";
+          result["reduction"] = "1e-8";
+          result["verbose"] = "0";
+          result["maxit"] = "1000";
+          result["preconditioner.type"] = "sor";
+        }else{
+#if DISABLE_AMG_DIRECTSOLVER
+#elif HAVE_SUITESPARSE_UMFPACK
+          result["type"] = "umfpack";
+#elif HAVE_SUPERLU
+          result["type"] = "superlu";
+#endif
+        }
+        return result;
+      }
+
       /**  @brief The matrix we solve. */
       std::shared_ptr<OperatorHierarchy> matrices_;
       /** @brief The arguments to construct the smoother */
@@ -345,17 +368,13 @@ namespace Dune
       /** @brief The hierarchy of the smoothers. */
       std::shared_ptr<Hierarchy<Smoother,A> > smoothers_;
       /** @brief The solver of the coarsest level. */
-      std::shared_ptr<CoarseSolver> solver_;
+      std::shared_ptr<InverseOperator<X,X>> solver_;
       /** @brief The right hand side of our problem. */
       std::shared_ptr<Hierarchy<Range,A>> rhs_;
       /** @brief The left approximate solution of our problem. */
       std::shared_ptr<Hierarchy<Domain,A>> lhs_;
       /** @brief The total update for the outer solver. */
       std::shared_ptr<Hierarchy<Domain,A>> update_;
-      /** @brief The type of the scalar product for the coarse solver. */
-      using ScalarProduct = Dune::ScalarProduct<X>;
-      /** @brief Scalar product on the coarse level. */
-      std::shared_ptr<ScalarProduct> scalarProduct_;
       /** @brief Gamma, 1 for V-cycle and 2 for W-cycle. */
       std::size_t gamma_;
       /** @brief The number of pre and postsmoothing steps. */
@@ -365,7 +384,6 @@ namespace Dune
       bool buildHierarchy_;
       bool additive;
       bool coarsesolverconverged;
-      std::shared_ptr<Smoother> coarseSmoother_;
       /** @brief The solver category. */
       SolverCategory::Category category_;
       /** @brief The verbosity level. */
@@ -391,11 +409,10 @@ namespace Dune
     : matrices_(amg.matrices_), smootherArgs_(amg.smootherArgs_),
       smoothers_(amg.smoothers_), solver_(amg.solver_),
       rhs_(), lhs_(), update_(),
-      scalarProduct_(amg.scalarProduct_), gamma_(amg.gamma_),
+      gamma_(amg.gamma_),
       preSteps_(amg.preSteps_), postSteps_(amg.postSteps_),
       buildHierarchy_(amg.buildHierarchy_),
       additive(amg.additive), coarsesolverconverged(amg.coarsesolverconverged),
-      coarseSmoother_(amg.coarseSmoother_),
       category_(amg.category_),
       verbosity_(amg.verbosity_)
     {}
@@ -406,11 +423,10 @@ namespace Dune
                          const Parameters& parms)
       : matrices_(stackobject_to_shared_ptr(matrices)), smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(&coarseSolver),
-        rhs_(), lhs_(), update_(), scalarProduct_(0),
+        rhs_(), lhs_(), update_(),
         gamma_(parms.getGamma()), preSteps_(parms.getNoPreSmoothSteps()),
         postSteps_(parms.getNoPostSmoothSteps()), buildHierarchy_(false),
         additive(parms.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(),
 // #warning should category be retrieved from matrices?
         category_(SolverCategory::category(*smoothers_->coarsest())),
         verbosity_(parms.debugLevel())
@@ -429,11 +445,10 @@ namespace Dune
                          const PI& pinfo)
       : smootherArgs_(smootherArgs),
         smoothers_(new Hierarchy<Smoother,A>), solver_(),
-        rhs_(), lhs_(), update_(), scalarProduct_(),
+        rhs_(), lhs_(), update_(),
         gamma_(criterion.getGamma()), preSteps_(criterion.getNoPreSmoothSteps()),
         postSteps_(criterion.getNoPostSmoothSteps()), buildHierarchy_(true),
         additive(criterion.getAdditive()), coarsesolverconverged(true),
-        coarseSmoother_(),
         category_(SolverCategory::category(pinfo)),
         verbosity_(criterion.debugLevel())
     {
@@ -451,8 +466,8 @@ namespace Dune
                          const ParameterTree& configuration,
                          const ParallelInformation& pinfo) :
       smoothers_(new Hierarchy<Smoother,A>),
-      solver_(), rhs_(), lhs_(), update_(), scalarProduct_(), buildHierarchy_(true),
-      coarsesolverconverged(true), coarseSmoother_(),
+      solver_(), rhs_(), lhs_(), update_(), buildHierarchy_(true),
+      coarsesolverconverged(true),
       category_(SolverCategory::category(pinfo))
     {
 
@@ -520,20 +535,20 @@ namespace Dune
         using Criterion = Dune::Amg::CoarsenCriterion<
           Dune::Amg::SymmetricCriterion<typename M::matrix_type,Norm> >;
         Criterion criterion;
-        createHierarchies(criterion, matrixptr, pinfo, configuration);
+        createHierarchiesFromParameterTree(criterion, matrixptr, pinfo, configuration);
       }
       else
       {
         using Criterion = Dune::Amg::CoarsenCriterion<
           Dune::Amg::UnSymmetricCriterion<typename M::matrix_type,Norm> >;
         Criterion criterion;
-        createHierarchies(criterion, matrixptr, pinfo, configuration);
+        createHierarchiesFromParameterTree(criterion, matrixptr, pinfo, configuration);
       }
     }
 
   template<class M, class X, class S, class PI, class A>
   template<class C>
-  void AMG<M,X,S,PI,A>::createHierarchies(C& criterion, std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const ParameterTree& configuration)
+  void AMG<M,X,S,PI,A>::createHierarchiesFromParameterTree(C& criterion, std::shared_ptr<const Operator> matrixptr, const PI& pinfo, const ParameterTree& configuration)
   {
       if (configuration.hasKey ("maxLevel"))
         criterion.setMaxLevel(configuration.get<int>("maxLevel"));
@@ -614,79 +629,15 @@ namespace Dune
       verbosity_ = configuration.get("verbosity", 0);
       criterion.setDebugLevel (verbosity_);
 
-      createHierarchies(criterion, matrixptr, pinfo);
+      createHierarchies(criterion, matrixptr, pinfo, configuration.sub("coarsesolver"));
     }
-
-    template <class Matrix,
-              class Vector>
-    struct DirectSolverSelector
-    {
-      typedef typename Matrix :: field_type field_type;
-      enum SolverType { umfpack, superlu, none };
-
-      static constexpr SolverType solver =
-#if DISABLE_AMG_DIRECTSOLVER
-        none;
-#elif HAVE_SUITESPARSE_UMFPACK
-        UMFPackMethodChooser< field_type > :: valid ? umfpack : none ;
-#elif HAVE_SUPERLU
-        superlu ;
-#else
-        none;
-#endif
-
-      template <class M, SolverType>
-      struct Solver
-      {
-        typedef InverseOperator<Vector,Vector> type;
-        static type* create(const M& mat, bool verbose, bool reusevector )
-        {
-          DUNE_THROW(NotImplemented,"DirectSolver not selected");
-          return nullptr;
-        }
-        static std::string name () { return "None"; }
-      };
-#if HAVE_SUITESPARSE_UMFPACK
-      template <class M>
-      struct Solver< M, umfpack >
-      {
-        typedef UMFPack< M > type;
-        static type* create(const M& mat, bool verbose, bool reusevector )
-        {
-          return new type(mat, verbose, reusevector );
-        }
-        static std::string name () { return "UMFPack"; }
-      };
-#endif
-#if HAVE_SUPERLU
-      template <class M>
-      struct Solver< M, superlu >
-      {
-        typedef SuperLU< M > type;
-        static type* create(const M& mat, bool verbose, bool reusevector )
-        {
-          return new type(mat, verbose, reusevector );
-        }
-        static std::string name () { return "SuperLU"; }
-      };
-#endif
-
-      // define direct solver type to be used
-      typedef Solver< Matrix, solver > SelectedSolver ;
-      typedef typename SelectedSolver :: type   DirectSolver;
-      static constexpr bool isDirectSolver = solver != none;
-      static std::string name() { return SelectedSolver :: name (); }
-      static DirectSolver* create(const Matrix& mat, bool verbose, bool reusevector )
-      {
-        return SelectedSolver :: create( mat, verbose, reusevector );
-      }
-    };
 
     template<class M, class X, class S, class PI, class A>
     template<class C>
     void AMG<M,X,S,PI,A>::createHierarchies(C& criterion,
       const std::shared_ptr<const Operator>& matrixptr,
-                                            const PI& pinfo)
+                                            const PI& pinfo,
+                                            const ParameterTree& coarseSolverConfig)
     {
       Timer watch;
       matrices_ = std::make_shared<OperatorHierarchy>(
@@ -721,71 +672,26 @@ namespace Dune
           cargs.setComm(*matrices_->parallelInformation().coarsest());
         }
 
-        coarseSmoother_ = ConstructionTraits<Smoother>::construct(cargs);
-        scalarProduct_ = createScalarProduct<X>(cargs.getComm(),category());
+        initSolverFactories<Operator>();
 
-        typedef DirectSolverSelector< typename M::matrix_type, X > SolverSelector;
+        bool parallel = (std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
+                           || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
+                           || (matrices_->parallelInformation().coarsest().isRedistributed()
+                               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
+                               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0) );
 
-        // Use superlu if we are purely sequential or with only one processor on the coarsest level.
-        if( SolverSelector::isDirectSolver &&
-            (std::is_same<ParallelInformation,SequentialInformation>::value // sequential mode
-           || matrices_->parallelInformation().coarsest()->communicator().size()==1 //parallel mode and only one processor
-           || (matrices_->parallelInformation().coarsest().isRedistributed()
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()==1
-               && matrices_->parallelInformation().coarsest().getRedistributed().communicator().size()>0) )
-          )
-        { // redistribute and 1 proc
-          if(matrices_->parallelInformation().coarsest().isRedistributed())
-          {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
-            {
-              // We are still participating on this level
-              solver_.reset(SolverSelector::create(matrices_->matrices().coarsest().getRedistributed().getmat(), false, false));
-            }
-            else
-              solver_.reset();
-          }
-          else
-          {
-            solver_.reset(SolverSelector::create(matrices_->matrices().coarsest()->getmat(), false, false));
-          }
-          if(verbosity_>0 && matrices_->parallelInformation().coarsest()->communicator().rank()==0)
-            std::cout<< "Using a direct coarse solver (" << SolverSelector::name() << ")" << std::endl;
-        }
-        else
-        {
-          if(matrices_->parallelInformation().coarsest().isRedistributed())
-          {
-            if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0)
-              // We are still participating on this level
+        const ParameterTree& config = coarseSolverConfig.hasKey("type")?coarseSolverConfig:defaultCoarseSolverConfig(parallel);
 
-              // we have to allocate these types using the rebound allocator
-              // in order to ensure that we fulfill the alignment requirements
-              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(matrices_->matrices().coarsest().getRedistributed()),
-                                                  *scalarProduct_,
-                                                  *coarseSmoother_, 1E-2, 1000, 0));
-            else
-              solver_.reset();
-          }else
-          {
-              solver_.reset(new BiCGSTABSolver<X>(const_cast<M&>(*matrices_->matrices().coarsest()),
-                  *scalarProduct_,
-                  *coarseSmoother_, 1E-2, 1000, 0));
-            // // we have to allocate these types using the rebound allocator
-            // // in order to ensure that we fulfill the alignment requirements
-            // using Alloc = typename std::allocator_traits<A>::template rebind_alloc<BiCGSTABSolver<X>>;
-            // Alloc alloc;
-            // auto p = alloc.allocate(1);
-            // std::allocator_traits<Alloc>::construct(alloc, p,
-            //   const_cast<M&>(*matrices_->matrices().coarsest()),
-            //   *scalarProduct_,
-            //   *coarseSmoother_, 1E-2, 1000, 0);
-            // solver_.reset(p,[](BiCGSTABSolver<X>* p){
-            //     Alloc alloc;
-            //     std::allocator_traits<Alloc>::destroy(alloc, p);
-            //     alloc.deallocate(p,1);
-            //   });
+        if(matrices_->parallelInformation().coarsest().isRedistributed()){
+          if(matrices_->matrices().coarsest().getRedistributed().getmat().N()>0){
+            solver_ = getSolverFromFactory(stackobject_to_shared_ptr(matrices_->matrices().coarsest().getRedistributed()),
+                                           config);
+          }else {
+            solver_.reset();
           }
+        }else{
+          solver_ = getSolverFromFactory(stackobject_to_shared_ptr(*matrices_->matrices().coarsest()),
+                                         config);
         }
       }
 
@@ -1172,7 +1078,7 @@ namespace Dune
 
     template<class M, class X, class Y>
     std::shared_ptr<Dune::Preconditioner<X,Y> >
-    makeAMG(const std::shared_ptr<MatrixAdapter<M,X,Y>>& op, const std::string& smoother,
+    makeAMG(const std::shared_ptr<const MatrixAdapter<M,X,Y>>& op, const std::string& smoother,
             const Dune::ParameterTree& config) const
     {
       using OP = MatrixAdapter<M,X,Y>;
@@ -1193,7 +1099,7 @@ namespace Dune
 
     template<class M, class X, class Y, class C>
     std::shared_ptr<Dune::Preconditioner<X,Y> >
-    makeAMG(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
+    makeAMG(const std::shared_ptr<const OverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
             const Dune::ParameterTree& config) const
     {
       using OP = OverlappingSchwarzOperator<M,X,Y,C>;
@@ -1216,7 +1122,7 @@ namespace Dune
 
     template<class M, class X, class Y, class C>
     std::shared_ptr<Dune::Preconditioner<X,Y> >
-    makeAMG(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
+    makeAMG(const std::shared_ptr<const NonoverlappingSchwarzOperator<M,X,Y,C>>& op, const std::string& smoother,
             const Dune::ParameterTree& config) const
     {
       using OP = NonoverlappingSchwarzOperator<M,X,Y,C>;

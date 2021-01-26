@@ -225,7 +225,8 @@ namespace Dune
        <li> 2 : print line for each iteration </li>
        </ul>
      */
-    IterativeSolver (LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int maxit, int verbose) :
+    IterativeSolver (const LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec,
+                     scalar_real_type reduction, int maxit, int verbose) :
       _op(stackobject_to_shared_ptr(op)),
       _prec(stackobject_to_shared_ptr(prec)),
       _sp(new SeqScalarProduct<X>),
@@ -257,7 +258,8 @@ namespace Dune
         <li> 2 : print line for each iteration </li>
         </ul>
      */
-    IterativeSolver (LinearOperator<X,Y>& op, ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
+    IterativeSolver (const LinearOperator<X,Y>& op,
+                     const ScalarProduct<X>& sp, Preconditioner<X,Y>& prec,
       scalar_real_type reduction, int maxit, int verbose) :
       _op(stackobject_to_shared_ptr(op)),
       _prec(stackobject_to_shared_ptr(prec)),
@@ -285,7 +287,7 @@ namespace Dune
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    IterativeSolver (std::shared_ptr<const LinearOperator<X,Y> > op, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver(op,std::make_shared<SeqScalarProduct<X>>(),prec,
         configuration.get<real_type>("reduction"),
         configuration.get<int>("maxit"),
@@ -308,7 +310,7 @@ namespace Dune
 
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
-    IterativeSolver (std::shared_ptr<LinearOperator<X,Y> > op, std::shared_ptr<ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
+    IterativeSolver (std::shared_ptr<const LinearOperator<X,Y> > op, std::shared_ptr<const ScalarProduct<X> > sp, std::shared_ptr<Preconditioner<X,X> > prec, const ParameterTree& configuration) :
       IterativeSolver(op,sp,prec,
         configuration.get<scalar_real_type>("reduction"),
         configuration.get<int>("maxit"),
@@ -335,8 +337,8 @@ namespace Dune
         <li> 2 : print line for each iteration </li>
         </ul>
      */
-    IterativeSolver (std::shared_ptr<LinearOperator<X,Y>> op,
-                     std::shared_ptr<ScalarProduct<X>> sp,
+    IterativeSolver (std::shared_ptr<const LinearOperator<X,Y>> op,
+                     std::shared_ptr<const ScalarProduct<X>> sp,
                      std::shared_ptr<Preconditioner<X,Y>> prec,
                      scalar_real_type reduction, int maxit, int verbose) :
       _op(op),
@@ -499,9 +501,9 @@ namespace Dune
     };
 
   protected:
-    std::shared_ptr<LinearOperator<X,Y>> _op;
+    std::shared_ptr<const LinearOperator<X,Y>> _op;
     std::shared_ptr<Preconditioner<X,Y>> _prec;
-    std::shared_ptr<ScalarProduct<X>> _sp;
+    std::shared_ptr<const ScalarProduct<X>> _sp;
     scalar_real_type _reduction;
     int _maxit;
     int _verbose;

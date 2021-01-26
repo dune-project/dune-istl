@@ -29,13 +29,15 @@ namespace Dune{
 
   // Preconditioner factory:
   template<class M, class X, class Y>
-  using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const std::shared_ptr<M>&, const ParameterTree&);
+  using PreconditionerSignature = std::shared_ptr<Preconditioner<X,Y>>(const std::shared_ptr<const M>&, const ParameterTree&);
   template<class M, class X, class Y>
   using PreconditionerFactory = Singleton<ParameterizedObjectFactory<PreconditionerSignature<M,X,Y>>>;
 
   // Iterative solver factory
   template<class X, class Y>
-  using IterativeSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const std::shared_ptr<LinearOperator<X,Y>>&, const std::shared_ptr<ScalarProduct<X>>&, const std::shared_ptr<Preconditioner<X,Y>>, const ParameterTree&);
+  using IterativeSolverSignature = std::shared_ptr<InverseOperator<X,Y>>(const std::shared_ptr<const LinearOperator<X,Y>>&,
+                                                                         const std::shared_ptr<const ScalarProduct<X>>&,
+                                                                         const std::shared_ptr<Preconditioner<X,Y>>, const ParameterTree&);
   template<class X, class Y>
   using IterativeSolverFactory = Singleton<ParameterizedObjectFactory<IterativeSolverSignature<X,Y>>>;
 
@@ -56,7 +58,7 @@ namespace Dune{
       using TL = Dune::TypeList<M,X,Y>;
       auto& dsfac=Dune::DirectSolverFactory<M,X,Y>::instance();
       addRegistryToFactory<TL>(dsfac, DirectSolverTag{});
-      auto& pfac=Dune::PreconditionerFactory<O,X,Y>::instance();
+      auto& pfac=Dune::PreconditionerFactory<std::remove_const_t<O>,X,Y>::instance();
       addRegistryToFactory<TL>(pfac, PreconditionerTag{});
       using TLS = Dune::TypeList<X,Y>;
       auto& isfac=Dune::IterativeSolverFactory<X,Y>::instance();
@@ -90,7 +92,7 @@ namespace Dune{
   template<class M, class X, class Y, class C, class Preconditioner>
   std::shared_ptr<Preconditioner>
   wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
-                              const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
+                              const std::shared_ptr<const OverlappingSchwarzOperator<M,X,Y,C> >& op)
   {
     return std::make_shared<BlockPreconditioner<X,Y,C,Preconditioner> >(prec, op->getCommunication());
   }
@@ -98,15 +100,26 @@ namespace Dune{
   template<class M, class X, class Y, class C, class Preconditioner>
   std::shared_ptr<Preconditioner>
   wrapPreconditioner4Parallel(const std::shared_ptr<Preconditioner>& prec,
-                              const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+                              const std::shared_ptr<const NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
   {
     return std::make_shared<NonoverlappingBlockPreconditioner<C,Preconditioner> >(prec, op->getCommunication());
   }
 
   template<class M, class X, class Y>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<const MatrixAdapter<M,X,Y> >&)
+  {
+    return std::make_shared<SeqScalarProduct<X>>();
+  }
+  template<class M, class X, class Y>
   std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<MatrixAdapter<M,X,Y> >&)
   {
     return std::make_shared<SeqScalarProduct<X>>();
+  }
+
+  template<class M, class X, class Y, class C>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<const OverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return createScalarProduct<X>(op->getCommunication(), op->category());
   }
   template<class M, class X, class Y, class C>
   std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<OverlappingSchwarzOperator<M,X,Y,C> >& op)
@@ -114,6 +127,11 @@ namespace Dune{
     return createScalarProduct<X>(op->getCommunication(), op->category());
   }
 
+  template<class M, class X, class Y, class C>
+  std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<const NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
+  {
+    return createScalarProduct<X>(op->getCommunication(), op->category());
+  }
   template<class M, class X, class Y, class C>
   std::shared_ptr<ScalarProduct<X>> createScalarProduct(const std::shared_ptr<NonoverlappingSchwarzOperator<M,X,Y,C> >& op)
   {
@@ -151,9 +169,9 @@ namespace Dune{
     using matrix_type = Std::detected_or_t<int, _matrix_type, Operator>;
     static constexpr bool isAssembled = !std::is_same<matrix_type, int>::value;
 
-    static const matrix_type* getmat(std::shared_ptr<Operator> op){
-      std::shared_ptr<AssembledLinearOperator<matrix_type, Domain, Range>> aop
-        = std::dynamic_pointer_cast<AssembledLinearOperator<matrix_type, Domain, Range>>(op);
+    static const matrix_type* getmat(std::shared_ptr<const Operator> op){
+      std::shared_ptr<const AssembledLinearOperator<matrix_type, Domain, Range>> aop
+        = std::dynamic_pointer_cast<const AssembledLinearOperator<matrix_type, Domain, Range>>(op);
       if(aop)
         return &aop->getmat();
       return nullptr;
@@ -163,7 +181,7 @@ namespace Dune{
 
     /** @brief get a solver from the factory
      */
-    static std::shared_ptr<Solver> get(std::shared_ptr<Operator> op,
+    static std::shared_ptr<Solver> get(std::shared_ptr<const Operator> op,
                                        const ParameterTree& config,
                                        std::shared_ptr<Preconditioner> prec = nullptr){
       std::string type = config.get<std::string>("type");
@@ -198,7 +216,7 @@ namespace Dune{
     /**
       @brief Construct a Preconditioner for a given Operator
      */
-    static std::shared_ptr<Preconditioner> getPreconditioner(std::shared_ptr<Operator> op,
+    static std::shared_ptr<Preconditioner> getPreconditioner(std::shared_ptr<const Operator> op,
                                                              const ParameterTree& config){
       const matrix_type* mat = getmat(op);
       if(mat){
