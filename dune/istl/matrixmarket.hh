@@ -925,7 +925,10 @@ namespace Dune
     std::size_t rows, cols;
     mm_read_header(rows,cols,header,istr, true);
     if(cols!=Simd::lanes<field_type>())
-      DUNE_THROW(MatrixMarketFormatError, "cols does not match the number of lanes in the field_type!");
+      if(Simd::lanes<field_type>() == 1)
+        DUNE_THROW(MatrixMarketFormatError, "cols!=1, therefore this is no vector!");
+      else
+        DUNE_THROW(MatrixMarketFormatError, "cols does not match the number of lanes in the field_type!");
 
     if(header.type!=array_type)
       DUNE_THROW(MatrixMarketFormatError, "Vectors have to be stored in array format!");
