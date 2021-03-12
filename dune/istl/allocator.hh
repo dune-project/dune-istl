@@ -1,8 +1,10 @@
 #ifndef DUNE_ISTL_ALLOCATOR_HH
 #define DUNE_ISTL_ALLOCATOR_HH
 
-#include <dune/common/typetraits.hh>
 #include <memory>
+#include <type_traits>
+
+#include <dune/common/typetraits.hh>
 
 namespace Dune {
 
@@ -18,7 +20,7 @@ namespace Dune {
     };
 
     template<typename T>
-    struct DefaultAllocatorTraits<T, void_t<typename T::allocator_type> >
+    struct DefaultAllocatorTraits<T, std::void_t<typename T::allocator_type> >
     {
         using type = typename T::allocator_type;
     };
