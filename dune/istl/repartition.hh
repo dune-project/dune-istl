@@ -19,7 +19,6 @@ extern "C"
 #endif
 
 #include <dune/common/timer.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/enumset.hh>
 #include <dune/common/stdstreams.hh>
 #include <dune/common/parallel/mpitraits.hh>
@@ -586,9 +585,8 @@ namespace Dune
     }
 
     template<class T, class I>
-    void my_push_back(std::vector<T>& ownerVec, const I& index, int proc)
+    void my_push_back(std::vector<T>& ownerVec, const I& index, [[maybe_unused]] int proc)
     {
-      DUNE_UNUSED_PARAMETER(proc);
       ownerVec.push_back(index);
     }
 
@@ -626,9 +624,8 @@ namespace Dune
      */
     template<class OwnerSet, class G, class IS, class T, class GI>
     void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet,
-                            int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
+                            [[maybe_unused]] int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
                             RedistributeInterface& redist, std::set<int>& neighborProcs) {
-      DUNE_UNUSED_PARAMETER(myPe);
       //typedef typename IndexSet::const_iterator Iterator;
       typedef typename IS::const_iterator Iterator;
       for(Iterator index = indexSet.begin(); index != indexSet.end(); ++index) {
@@ -967,7 +964,7 @@ namespace Dune
                             vtxdist[oocomm.communicator().size()],
                             noNeighbours, xadj, adjncy, false));
 
-        DUNE_UNUSED Metis::idx_t wgtflag=0;
+        [[maybe_unused]] Metis::idx_t wgtflag=0;
         Metis::idx_t numflag=0;
         Metis::idx_t edgecut;
 #ifdef USE_WEIGHTS

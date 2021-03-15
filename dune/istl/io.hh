@@ -16,7 +16,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/unused.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
 
@@ -128,9 +127,8 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    */
-  inline void fill_row (std::ostream& s, int m, int width, int precision)
+  inline void fill_row (std::ostream& s, int m, int width, [[maybe_unused]] int precision)
   {
-    DUNE_UNUSED_PARAMETER(precision);
     for (int j=0; j<m; j++)
     {
       s << " ";         // space in front of each entry
@@ -148,17 +146,13 @@ namespace Dune {
    */
   template<class K>
   void print_row (std::ostream& s, const K& value,
-                  typename FieldMatrix<K,1,1>::size_type I,
-                  typename FieldMatrix<K,1,1>::size_type J,
-                  typename FieldMatrix<K,1,1>::size_type therow,
-                  int width, int precision,
+                  [[maybe_unused]] typename FieldMatrix<K,1,1>::size_type I,
+                  [[maybe_unused]] typename FieldMatrix<K,1,1>::size_type J,
+                  [[maybe_unused]] typename FieldMatrix<K,1,1>::size_type therow,
+                  int width,
+                  [[maybe_unused]] int precision,
                   typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
   {
-    DUNE_UNUSED_PARAMETER(I);
-    DUNE_UNUSED_PARAMETER(J);
-    DUNE_UNUSED_PARAMETER(therow);
-    DUNE_UNUSED_PARAMETER(precision);
-
     s << " ";         // space in front of each entry
     s.width(width);   // set width for each entry anew
     s << value;

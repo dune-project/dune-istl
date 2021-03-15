@@ -7,7 +7,6 @@
 #include "pinfo.hh"
 #include <dune/common/poolallocator.hh>
 #include <dune/common/enumset.hh>
-#include <dune/common/unused.hh>
 #include <set>
 #include <limits>
 #include <algorithm>
@@ -493,11 +492,10 @@ namespace Dune
     template<class V, class R>
     void ConnectivityConstructor<G,SequentialInformation>::examine(G& graph,
                                                                    V& visitedMap,
-                                                                   const SequentialInformation& pinfo,
+                                                                   [[maybe_unused]] const SequentialInformation& pinfo,
                                                                    const AggregatesMap<Vertex>& aggregates,
                                                                    R& row)
     {
-      DUNE_UNUSED_PARAMETER(pinfo);
       typedef typename G::VertexIterator VertexIterator;
 
       VertexIterator vend=graph.end();
@@ -614,9 +612,8 @@ namespace Dune
                                                   const SequentialInformation& pinfo,
                                                   const AggregatesMap<typename G::VertexDescriptor>& aggregates,
                                                   const typename G::Matrix::size_type& size,
-                                                  const Set& overlap)
+                                                  [[maybe_unused]] const Set& overlap)
     {
-      DUNE_UNUSED_PARAMETER(overlap);
       typedef typename G::MutableMatrix M;
       M* coarseMatrix = new M(size, size, M::row_wise);
 
@@ -642,9 +639,8 @@ namespace Dune
 
     template<class M, class V, class P, class O>
     void BaseGalerkinProduct::calculate(const M& fine, const AggregatesMap<V>& aggregates, M& coarse,
-                                        const P& pinfo, const O& copy)
+                                        const P& pinfo, [[maybe_unused]] const O& copy)
     {
-      DUNE_UNUSED_PARAMETER(copy);
       coarse = static_cast<typename M::field_type>(0);
 
       typedef typename M::ConstIterator RowIterator;

@@ -3,7 +3,6 @@
 #ifndef DUNE_AMGCONSTRUCTION_HH
 #define DUNE_AMGCONSTRUCTION_HH
 
-#include <dune/common/unused.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/owneroverlapcopy.hh>
@@ -89,11 +88,9 @@ namespace Dune
 
     struct SequentialCommunicationArgs
     {
-      SequentialCommunicationArgs(CollectiveCommunication<void*> comm, int cat)
+      SequentialCommunicationArgs(CollectiveCommunication<void*> comm, [[maybe_unused]] int cat)
         : comm_(comm)
-      {
-        DUNE_UNUSED_PARAMETER(cat);
-      }
+      {}
 
       CollectiveCommunication<void*> comm_;
     };

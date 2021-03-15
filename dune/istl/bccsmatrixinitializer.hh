@@ -7,7 +7,6 @@
 #include <set>
 
 #include <dune/common/typetraits.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/scalarmatrixview.hh>
 
 #include <dune/istl/bccsmatrix.hh>
@@ -187,9 +186,8 @@ namespace Dune::ISTL::Impl
     }
 
     template<typename Iter, typename CIter>
-    void countEntries(const Iter& row, const CIter& col) const
+    void countEntries([[maybe_unused]] const Iter& row, const CIter& col) const
     {
-      DUNE_UNUSED_PARAMETER(row);
       countEntries(col.index());
     }
 

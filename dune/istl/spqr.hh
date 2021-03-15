@@ -11,7 +11,6 @@
 #include <SuiteSparseQR.hpp>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/unused.hh>
 
 #include <dune/istl/bccsmatrixinitializer.hh>
 #include <dune/istl/solvers.hh>
@@ -181,17 +180,13 @@ namespace Dune {
     }
 
     /** \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&) */
-    virtual void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
     {
-      DUNE_UNUSED_PARAMETER(reduction);
       apply(x, b, res);
     }
 
-    void setOption(unsigned int option, double value)
-    {
-      DUNE_UNUSED_PARAMETER(option);
-      DUNE_UNUSED_PARAMETER(value);
-    }
+    void setOption([[maybe_unused]] unsigned int option, [[maybe_unused]] double value)
+    {}
 
     /** @brief Initialize data from given matrix. */
     void setMatrix(const Matrix& matrix)

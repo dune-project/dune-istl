@@ -13,7 +13,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/common/fmatrix.hh>
 #include<dune/common/fvector.hh>
-#include<dune/common/unused.hh>
 #include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/istl/solvers.hh>
@@ -385,9 +384,8 @@ namespace Dune {
     /**
      *  \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
     {
-      DUNE_UNUSED_PARAMETER(reduction);
       apply(x,b,res);
     }
 

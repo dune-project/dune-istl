@@ -19,7 +19,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/typetraits.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/scalarvectorview.hh>
 
 #include <dune/istl/blocklevel.hh>
@@ -473,7 +472,7 @@ namespace Imp {
      */
     void reserve(size_type capacity)
     {
-      DUNE_UNUSED const auto &guard =
+      [[maybe_unused]] const auto &guard =
         Imp::makeScopeGuard([this]{ syncBaseArray(); });
       storage_.reserve(capacity);
     }
@@ -501,7 +500,7 @@ namespace Imp {
      */
     void resize(size_type size)
     {
-      DUNE_UNUSED const auto &guard =
+      [[maybe_unused]] const auto &guard =
         Imp::makeScopeGuard([this]{ syncBaseArray(); });
       storage_.resize(size);
     }
@@ -525,7 +524,7 @@ namespace Imp {
     BlockVector& operator= (const BlockVector& a)
       noexcept(noexcept(std::declval<BlockVector>().storage_ = a.storage_))
     {
-      DUNE_UNUSED const auto &guard =
+      [[maybe_unused]] const auto &guard =
         Imp::makeScopeGuard([this]{ syncBaseArray(); });
       storage_ = a.storage_;
       return *this;
@@ -544,7 +543,7 @@ namespace Imp {
       noexcept(noexcept(
             std::declval<BlockVector&>().storage_.swap(other.storage_)))
     {
-      DUNE_UNUSED const auto &guard = Imp::makeScopeGuard([&]{
+      [[maybe_unused]] const auto &guard = Imp::makeScopeGuard([&]{
           syncBaseArray();
           other.syncBaseArray();
         });

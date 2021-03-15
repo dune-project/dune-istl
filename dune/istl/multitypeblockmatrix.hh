@@ -95,9 +95,9 @@ namespace Dune {
      */
     template< size_type index >
     auto
-    operator[] ( const std::integral_constant< size_type, index > indexVariable ) -> decltype(std::get<index>(*this))
+    operator[] ([[maybe_unused]] const std::integral_constant< size_type, index > indexVariable)
+                -> decltype(std::get<index>(*this))
     {
-      DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
     }
 
@@ -108,9 +108,9 @@ namespace Dune {
      */
     template< size_type index >
     auto
-    operator[] ( const std::integral_constant< size_type, index > indexVariable ) const -> decltype(std::get<index>(*this))
+    operator[] ([[maybe_unused]] const std::integral_constant< size_type, index > indexVariable) const
+                -> decltype(std::get<index>(*this))
     {
-      DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
     }
 

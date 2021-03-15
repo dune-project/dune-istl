@@ -13,7 +13,6 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/sllist.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/scalarmatrixview.hh>
 
@@ -597,10 +596,8 @@ namespace Dune
       {
       public:
         template<class EdgeIterator>
-        void operator()(const EdgeIterator& edge) const
-        {
-          DUNE_UNUSED_PARAMETER(edge);
-        }
+        void operator()([[maybe_unused]] const EdgeIterator& edge) const
+        {}
       };
 
 
@@ -1415,10 +1412,9 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::initRow(const Row& row, int index, const std::true_type&)
+    inline void SymmetricDependency<M,N>::initRow([[maybe_unused]] const Row& row, int index, const std::true_type&)
     {
       using std::min;
-      DUNE_UNUSED_PARAMETER(row);
       maxValue_ = min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);
@@ -1485,10 +1481,9 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void Dependency<M,N>::initRow(const Row& row, int index)
+    inline void Dependency<M,N>::initRow([[maybe_unused]] const Row& row, int index)
     {
       using std::min;
-      DUNE_UNUSED_PARAMETER(row);
       maxValue_ = min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
       row_ = index;
       diagonal_ = norm_(matrix_->operator[](row_)[row_]);

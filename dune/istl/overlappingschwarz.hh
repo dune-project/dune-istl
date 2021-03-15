@@ -10,7 +10,6 @@
 #include <set>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/sllist.hh>
-#include <dune/common/unused.hh>
 
 #include <dune/istl/bccsmatrixinitializer.hh>
 #include "preconditioners.hh"
@@ -842,11 +841,8 @@ namespace Dune
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, X& b)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-      DUNE_UNUSED_PARAMETER(b);
-    }
+    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] X& b)
+    {}
 
     /*!
        \brief Apply the precondtioner
@@ -860,10 +856,8 @@ namespace Dune
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-    }
+    virtual void post ([[maybe_unused]] X& x)
+    {}
 
     template<bool forward>
     void apply(X& v, const X& d);
@@ -1123,16 +1117,12 @@ namespace Dune
   template<class RowToDomain, class Solvers, class SubDomains>
   std::size_t
   SeqOverlappingSchwarzAssemblerHelper< DynamicMatrixSubdomainSolver< BCRSMatrix< K, Al>, X, Y >,false>::
-  assembleLocalProblems(const RowToDomain& rowToDomain,
-                        const matrix_type& mat,
-                        Solvers& solvers,
+  assembleLocalProblems([[maybe_unused]] const RowToDomain& rowToDomain,
+                        [[maybe_unused]] const matrix_type& mat,
+                        [[maybe_unused]] Solvers& solvers,
                         const SubDomains& subDomains,
-                        bool onTheFly)
+                        [[maybe_unused]] bool onTheFly)
   {
-    DUNE_UNUSED_PARAMETER(onTheFly);
-    DUNE_UNUSED_PARAMETER(rowToDomain);
-    DUNE_UNUSED_PARAMETER(mat);
-    DUNE_UNUSED_PARAMETER(solvers);
     typedef typename SubDomains::const_iterator DomainIterator;
     std::size_t maxlength = 0;
 
@@ -1203,13 +1193,12 @@ namespace Dune
 
   template<class M,class X,class Y>
   template<class RowToDomain, class Solvers, class SubDomains>
-  std::size_t SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>::assembleLocalProblems(const RowToDomain& rowToDomain,
+  std::size_t SeqOverlappingSchwarzAssemblerILUBase<M,X,Y>::assembleLocalProblems([[maybe_unused]] const RowToDomain& rowToDomain,
                                                                                   const matrix_type& mat,
                                                                                   Solvers& solvers,
                                                                                   const SubDomains& subDomains,
                                                                                   bool onTheFly)
   {
-    DUNE_UNUSED_PARAMETER(rowToDomain);
     typedef typename SubDomains::const_iterator DomainIterator;
     typedef typename Solvers::iterator SolverIterator;
     std::size_t maxlength = 0;
@@ -1580,13 +1569,11 @@ namespace Dune
 
   template<typename S, typename T, typename A>
   MultiplicativeAdder<S,BlockVector<T,A> >
-  ::MultiplicativeAdder(BlockVector<T,A>& v_,
+  ::MultiplicativeAdder([[maybe_unused]] BlockVector<T,A>& v_,
                         BlockVector<T,A>& x_,
                         OverlappingAssigner<S>& assigner_, const field_type& relax_)
     : x(&x_), assigner(&assigner_), relax(relax_)
-  {
-    DUNE_UNUSED_PARAMETER(v_);
-  }
+  {}
 
 
   template<typename S,typename T, typename A>

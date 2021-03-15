@@ -16,7 +16,6 @@
 #include "aggregates.hh"
 #include "pinfo.hh"
 #include <dune/common/parallel/indexset.hh>
-#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -222,14 +221,10 @@ namespace Dune
       typedef SequentialInformation ParallelInformation;
       typedef typename ParallelInformation::GlobalLookupIndexSet GlobalLookupIndexSet;
 
-      static void publish(AggregatesMap<Vertex>& aggregates,
-                          ParallelInformation& pinfo,
-                          const GlobalLookupIndexSet& globalLookup)
-      {
-        DUNE_UNUSED_PARAMETER(aggregates);
-        DUNE_UNUSED_PARAMETER(pinfo);
-        DUNE_UNUSED_PARAMETER(globalLookup);
-      }
+      static void publish([[maybe_unused]] AggregatesMap<Vertex>& aggregates,
+                          [[maybe_unused]] ParallelInformation& pinfo,
+                          [[maybe_unused]] const GlobalLookupIndexSet& globalLookup)
+      {}
     };
 
   } // end Amg namespace

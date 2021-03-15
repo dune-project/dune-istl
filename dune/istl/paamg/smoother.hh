@@ -9,7 +9,6 @@
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
 #include <dune/common/propertymap.hh>
-#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -103,9 +102,8 @@ namespace Dune
       {
         matrix_=&matrix;
       }
-      virtual void setMatrix(const Matrix& matrix, const AggregatesMap& amap)
+      virtual void setMatrix(const Matrix& matrix, [[maybe_unused]] const AggregatesMap& amap)
       {
-        DUNE_UNUSED_PARAMETER(amap);
         setMatrix(matrix);
       }
 
@@ -121,10 +119,8 @@ namespace Dune
       }
 
       template<class T1>
-      void setComm(T1& comm)
-      {
-        DUNE_UNUSED_PARAMETER(comm);
-      }
+      void setComm([[maybe_unused]] T1& comm)
+      {}
 
       const SequentialInformation& getComm()
       {
@@ -191,10 +187,8 @@ namespace Dune
       }
 
       template<class T1>
-      void setComm(T1& comm)
-      {
-        DUNE_UNUSED_PARAMETER(comm);
-      }
+      void setComm([[maybe_unused]] T1& comm)
+      {}
 
       const SequentialInformation& getComm()
       {
