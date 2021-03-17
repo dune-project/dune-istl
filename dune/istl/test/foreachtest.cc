@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include <dune/common/bitsetvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/test/testsuite.hh>
@@ -34,9 +35,9 @@ TestSuite testFlatVectorForEach()
   d3.resize(5);
   v1.resize(5);
 
-  using TBV = TupleVector<DynamicVector<FieldVector<double,3>>,std::vector<FieldVector<double,1>>>;
+  using MTBV = MultiTypeBlockVector<DynamicVector<FieldVector<double,3>>,std::vector<FieldVector<double,1>>>;
 
-  TBV v;
+  MTBV v;
 
   v[Indices::_0] = d3;
   v[Indices::_1] = v1;
@@ -54,6 +55,29 @@ TestSuite testFlatVectorForEach()
 
   return t;
 }
+
+
+TestSuite testFlatVectorForEachBitSetVector()
+{
+  TestSuite t;
+
+  int entries = 0;
+
+  auto countEntres = [&](auto&& entry, auto&& index){
+    entries++;
+  };
+
+  BitSetVector<2> bitSetVector;
+  bitSetVector.resize(10);
+
+  auto s = flatVectorForEach(bitSetVector,countEntres);
+
+  t.check( entries == 20 );
+  t.check( s == 20 );
+
+  return t;
+}
+
 
 TestSuite testFlatMatrixForEachStatic()
 {
@@ -156,6 +180,7 @@ int main(int argc, char** argv)
   TestSuite t;
 
   t.subTest(testFlatVectorForEach());
+  t.subTest(testFlatVectorForEachBitSetVector());
   t.subTest(testFlatMatrixForEachStatic());
   t.subTest(testFlatMatrixForEachDynamic());
 

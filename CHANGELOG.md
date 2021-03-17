@@ -37,6 +37,8 @@
 - Added the routines `flatVectorForEach` and `flatMatrixForEach` that traverse a (blocked) vector or matrix container.
   At each entry a functor is called taking the entry and the (flat) index offset.
 
+- `Cholmod` solver can now be used with each blocked matrix/vector type compatible with `flatVectorForEach` and `flatMatrixForEach`.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
