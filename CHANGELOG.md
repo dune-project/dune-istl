@@ -34,6 +34,9 @@
   deprecated now. The class `MatrixBlockError` has moved from the file `ilu.hh`
   to the file `istlexception.hh`, because it is of wider interest.
 
+- Added the routines `flatVectorForEach` and `flatMatrixForEach` that traverse a (blocked) vector or matrix container.
+  At each entry a functor is called taking the entry and the (flat) index offset.
+
 ## Deprecations and removals
 - Drop deprecated bindings of direct solver Pardiso.
 
