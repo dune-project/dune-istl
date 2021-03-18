@@ -9,7 +9,6 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/aggregates.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -95,14 +94,12 @@ namespace Dune
     template<typename T>
     inline void
     Transfer<V,V1,SequentialInformation>::prolongateVector(const AggregatesMap<Vertex>& aggregates,
-                                                           Vector& coarse, Vector& fine, Vector& fineRedist,
+                                                           Vector& coarse, Vector& fine,
+                                                           [[maybe_unused]] Vector& fineRedist,
                                                            T damp,
-                                                           const SequentialInformation& comm,
-                                                           const Redist& redist)
+                                                           [[maybe_unused]] const SequentialInformation& comm,
+                                                           [[maybe_unused]] const Redist& redist)
     {
-      DUNE_UNUSED_PARAMETER(fineRedist);
-      DUNE_UNUSED_PARAMETER(comm);
-      DUNE_UNUSED_PARAMETER(redist);
       prolongateVector(aggregates, coarse, fine, damp);
     }
     template<class V, class V1>
@@ -111,9 +108,8 @@ namespace Dune
     Transfer<V,V1,SequentialInformation>::prolongateVector(const AggregatesMap<Vertex>& aggregates,
                                                            Vector& coarse, Vector& fine,
                                                            T damp,
-                                                           const SequentialInformation& comm)
+                                                           [[maybe_unused]] const SequentialInformation& comm)
     {
-      DUNE_UNUSED_PARAMETER(comm);
       typedef typename Vector::iterator Iterator;
 
       Iterator end = coarse.end();
@@ -136,9 +132,8 @@ namespace Dune
     Transfer<V,V1,SequentialInformation>::restrictVector(const AggregatesMap<Vertex>& aggregates,
                                                          Vector& coarse,
                                                          const Vector& fine,
-                                                         const SequentialInformation& comm)
+                                                         [[maybe_unused]] const SequentialInformation& comm)
     {
-      DUNE_UNUSED_PARAMETER(comm);
       // Set coarse vector to zero
       coarse=0;
 
@@ -173,12 +168,11 @@ namespace Dune
 
     template<class V, class V1, class T1, class T2>
     template<typename T3>
-    inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::prolongateVector(const AggregatesMap<Vertex>& aggregates,
-                                                                                       Vector& coarse, Vector& fine,
-                                                                                       T3 damp,
-                                                                                       OwnerOverlapCopyCommunication<T1,T2>& comm)
+    inline void Transfer<V,V1,OwnerOverlapCopyCommunication<T1,T2> >::prolongateVector(
+      const AggregatesMap<Vertex>& aggregates,
+      Vector& coarse, Vector& fine, T3 damp,
+      [[maybe_unused]] OwnerOverlapCopyCommunication<T1,T2>& comm)
     {
-      DUNE_UNUSED_PARAMETER(comm);
       Transfer<V,V1,SequentialInformation>::prolongateVector(aggregates, coarse, fine, damp);
     }
     template<class V, class V1, class T1, class T2>

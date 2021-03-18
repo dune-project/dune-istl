@@ -22,7 +22,6 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/stdstreams.hh>
 
@@ -614,9 +613,8 @@ namespace Dune
       return is>>num.number;
     }
 
-    inline std::istream& operator>>(std::istream& is, NumericWrapper<PatternDummy>& num)
+    inline std::istream& operator>>(std::istream& is, [[maybe_unused]] NumericWrapper<PatternDummy>& num)
     {
-      DUNE_UNUSED_PARAMETER(num);
       return is;
     }
 

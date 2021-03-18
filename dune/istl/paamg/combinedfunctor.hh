@@ -5,8 +5,6 @@
 
 #include <tuple>
 
-#include <dune/common/unused.hh>
-
 namespace Dune
 {
   namespace Amg
@@ -26,11 +24,8 @@ namespace Dune
     struct ApplyHelper<0>
     {
       template<class TT, class T>
-      static void apply(TT tuple, const T& t)
-      {
-        DUNE_UNUSED_PARAMETER(tuple);
-        DUNE_UNUSED_PARAMETER(t);
-      }
+      static void apply([[maybe_unused]] TT tuple, [[maybe_unused]] const T& t)
+      {}
     };
 
     template<typename T>

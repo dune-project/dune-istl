@@ -10,7 +10,6 @@
 #include "pinfo.hh"
 #include <dune/istl/operators.hh>
 #include <dune/istl/bcrsmatrix.hh>
-#include <dune/common/unused.hh>
 
 namespace Dune
 {
@@ -72,12 +71,10 @@ namespace Dune
       typedef std::tuple<MatrixGraph*,PropertiesGraph*> GraphTuple;
 
       template<class OF, class T>
-      static GraphTuple create(const M& matrix, T& excluded,
-                               const SequentialInformation& pinfo,
+      static GraphTuple create([[maybe_unused]] const M& matrix, T& excluded,
+                               [[maybe_unused]] const SequentialInformation& pinfo,
                                const OF&)
       {
-        DUNE_UNUSED_PARAMETER(excluded);
-        DUNE_UNUSED_PARAMETER(pinfo);
         MatrixGraph* mg = new MatrixGraph(matrix.getmat());
         PropertiesGraph* pg = new PropertiesGraph(*mg, IdentityMap(), IdentityMap());
         return GraphTuple(mg,pg);

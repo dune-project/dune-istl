@@ -5,7 +5,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/test/testsuite.hh>
-#include <dune/common/unused.hh>
 #include <dune/istl/io.hh>
 
 template<class M>
@@ -13,7 +12,7 @@ std::size_t computeNNZ(M&& matrix)
 {
   std::size_t nnz = 0;
   for (auto&& row : matrix)
-    for (DUNE_UNUSED auto&& entry : row)
+    for ([[maybe_unused]] auto&& entry : row)
       ++nnz;
   return nnz;
 }

@@ -139,9 +139,8 @@ namespace Dune {
      */
     template< size_type index >
     typename std::tuple_element<index,TupleType>::type&
-    operator[] ( const std::integral_constant< size_type, index > indexVariable )
+    operator[] ([[maybe_unused]] const std::integral_constant< size_type, index > indexVariable)
     {
-      DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
     }
 
@@ -152,9 +151,8 @@ namespace Dune {
      */
     template< size_type index >
     const typename std::tuple_element<index,TupleType>::type&
-    operator[] ( const std::integral_constant< size_type, index > indexVariable ) const
+    operator[] ([[maybe_unused]] const std::integral_constant< size_type, index > indexVariable) const
     {
-      DUNE_UNUSED_PARAMETER(indexVariable);
       return std::get<index>(*this);
     }
 

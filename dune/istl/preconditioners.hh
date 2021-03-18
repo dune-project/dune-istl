@@ -11,7 +11,6 @@
 #include <string>
 
 #include <dune/common/simd/simd.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/parametertree.hh>
 
 #include <dune/istl/solverregistry.hh>
@@ -200,12 +199,8 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-      DUNE_UNUSED_PARAMETER(b);
-
-    }
+    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    {}
 
     /*!
        \brief Apply the preconditioner
@@ -225,10 +220,8 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-    }
+    virtual void post ([[maybe_unused]] X& x)
+    {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -324,11 +317,8 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-      DUNE_UNUSED_PARAMETER(b);
-    }
+    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    {}
 
     /*!
        \brief Apply the preconditioner.
@@ -366,10 +356,8 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-    }
+    virtual void post ([[maybe_unused]] X& x)
+    {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -478,11 +466,8 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-      DUNE_UNUSED_PARAMETER(b);
-    }
+    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    {}
 
     /*!
        \brief Apply the preconditioner.
@@ -501,10 +486,8 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-    }
+    virtual void post ([[maybe_unused]] X& x)
+    {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -650,11 +633,8 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-      DUNE_UNUSED_PARAMETER(b);
-    }
+    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    {}
 
     /*!
        \brief Apply the preconditioner.
@@ -683,10 +663,8 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-    }
+    virtual void post ([[maybe_unused]] X& x)
+    {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -760,11 +738,8 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-      DUNE_UNUSED_PARAMETER(b);
-    }
+    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    {}
 
     /*!
        \brief Apply the precondioner.
@@ -782,10 +757,8 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
-    {
-      DUNE_UNUSED_PARAMETER(x);
-    }
+    virtual void post ([[maybe_unused]] X& x)
+    {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
@@ -913,11 +886,8 @@ namespace Dune {
     }
 
     /** \copydoc Preconditioner::pre(X&,Y&) **/
-    void pre ( X &x, Y &b ) override
-    {
-      DUNE_UNUSED_PARAMETER( x );
-      DUNE_UNUSED_PARAMETER( b );
-    }
+    void pre ([[maybe_unused]] X &x, [[maybe_unused]] Y &b) override
+    {}
 
     /** \copydoc Preconditioner::apply(X&,const Y&) **/
     void apply ( X &v, const Y &d ) override
@@ -927,10 +897,8 @@ namespace Dune {
     }
 
     /** \copydoc Preconditioner::post(X&) **/
-    void post ( X &x ) override
-    {
-      DUNE_UNUSED_PARAMETER( x );
-    }
+    void post ([[maybe_unused]] X &x) override
+    {}
 
     /** \copydoc Preconditioner::category() **/
     SolverCategory::Category category () const override { return SolverCategory::sequential; }

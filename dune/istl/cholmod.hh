@@ -83,9 +83,8 @@ public:
 
   /** @brief simple forward to apply(X&, Y&, InverseOperatorResult&)
     */
-  void apply (X& x, B& b, double reduction, InverseOperatorResult& res)
+  void apply (X& x, B& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
   {
-    DUNE_UNUSED_PARAMETER(reduction);
     apply(x,b,res);
   }
 

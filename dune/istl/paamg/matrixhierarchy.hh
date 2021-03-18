@@ -230,10 +230,8 @@ namespace Dune
         /**
          * @brief Print matrix statistics.
          */
-        static void stats(const Matrix& matrix)
-        {
-          DUNE_UNUSED_PARAMETER(matrix);
-        }
+        static void stats([[maybe_unused]] const Matrix& matrix)
+        {}
       };
 
       template<class Matrix>
@@ -310,20 +308,14 @@ namespace Dune
     };
 
     template<typename M, typename C1>
-    bool repartitionAndDistributeMatrix(const M& origMatrix,
-                                        std::shared_ptr<M> newMatrix,
-                                        SequentialInformation& origComm,
-                                        std::shared_ptr<SequentialInformation>& newComm,
-                                        RedistributeInformation<SequentialInformation>& ri,
-                                        int nparts, C1& criterion)
+    bool repartitionAndDistributeMatrix([[maybe_unused]] const M& origMatrix,
+                                        [[maybe_unused]] std::shared_ptr<M> newMatrix,
+                                        [[maybe_unused]] SequentialInformation& origComm,
+                                        [[maybe_unused]] std::shared_ptr<SequentialInformation>& newComm,
+                                        [[maybe_unused]] RedistributeInformation<SequentialInformation>& ri,
+                                        [[maybe_unused]] int nparts,
+                                        [[maybe_unused]] C1& criterion)
     {
-      DUNE_UNUSED_PARAMETER(origMatrix);
-      DUNE_UNUSED_PARAMETER(newMatrix);
-      DUNE_UNUSED_PARAMETER(origComm);
-      DUNE_UNUSED_PARAMETER(newComm);
-      DUNE_UNUSED_PARAMETER(ri);
-      DUNE_UNUSED_PARAMETER(nparts);
-      DUNE_UNUSED_PARAMETER(criterion);
       DUNE_THROW(NotImplemented, "Redistribution does not make sense in sequential code!");
     }
 

@@ -7,7 +7,6 @@
 #include <memory>
 #include <limits>
 #include <dune/common/stdstreams.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/bigunsignedint.hh>
 #include <dune/istl/paamg/construction.hh>

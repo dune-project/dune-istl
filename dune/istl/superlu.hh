@@ -337,9 +337,8 @@ namespace Dune
     /**
      *  \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    void apply (domain_type& x, range_type& b, double reduction, InverseOperatorResult& res)
+    void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
     {
-      DUNE_UNUSED_PARAMETER(reduction);
       apply(x,b,res);
     }
 

@@ -9,7 +9,6 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
-#include <dune/common/unused.hh>
 #include <dune/istl/blocklevel.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/matrix.hh>
@@ -42,7 +41,7 @@ void testSuperMatrix(MatrixType& matrix)
 
   typedef typename MatrixType::size_type size_type;
 
-  typedef typename MatrixType::allocator_type allocator_type DUNE_UNUSED;
+  using allocator_type [[maybe_unused]] = typename MatrixType::allocator_type;
 
   size_type n = matrix.N();
   size_type m = matrix.M();
@@ -64,19 +63,19 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
 
   typedef typename FieldTraits<field_type>::real_type real_type;
 
-  typedef typename MatrixType::block_type block_type DUNE_UNUSED;
+  using block_type [[maybe_unused]] = typename MatrixType::block_type;
 
-  typedef typename MatrixType::row_type row_type DUNE_UNUSED;
+  using row_type [[maybe_unused]] = typename MatrixType::row_type;
 
   typedef typename MatrixType::size_type size_type;
 
-  typedef typename MatrixType::RowIterator RowIterator DUNE_UNUSED;
+  using RowIterator [[maybe_unused]] = typename MatrixType::RowIterator;
 
-  typedef typename MatrixType::ConstRowIterator ConstRowIterator DUNE_UNUSED;
+  using ConstRowIterator [[maybe_unused]] = typename MatrixType::ConstRowIterator;
 
-  typedef typename MatrixType::ColIterator ColIterator DUNE_UNUSED;
+  using ColIterator [[maybe_unused]] = typename MatrixType::ColIterator;
 
-  typedef typename MatrixType::ConstColIterator ConstColIterator DUNE_UNUSED;
+  using ConstColIterator [[maybe_unused]] = typename MatrixType::ConstColIterator;
 
   static_assert(maxBlockLevel<MatrixType>() >= 0, "Block level has to be at least 1 for a matrix!");
 
@@ -201,7 +200,7 @@ void testMatrix(MatrixType& matrix, X& x, Y& y)
   matrix = 0;
 
   // The copy constructor
-  DUNE_UNUSED MatrixType thirdMatrix(matrix);
+  [[maybe_unused]] MatrixType thirdMatrix(matrix);
 
   // ///////////////////////////////////////////////////////
   //   Test component-wise operations

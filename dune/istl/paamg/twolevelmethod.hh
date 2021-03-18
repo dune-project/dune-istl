@@ -10,8 +10,6 @@
 #include"galerkin.hh"
 #include<dune/istl/solver.hh>
 
-#include<dune/common/unused.hh>
-
 /**
  * @addtogroup ISTL_PAAMG
  * @{
@@ -273,10 +271,8 @@ private:
       : amg_(op, crit,args), first_(true)
     {}
 
-    void apply(X& x, X& b, double reduction, InverseOperatorResult& res)
+    void apply(X& x, X& b, [[maybe_unused]] double reduction, [[maybe_unused]] InverseOperatorResult& res)
     {
-      DUNE_UNUSED_PARAMETER(reduction);
-      DUNE_UNUSED_PARAMETER(res);
       if(first_)
       {
         amg_.pre(x,b);
@@ -435,10 +431,8 @@ public:
     smoother_->pre(x,b);
   }
 
-  void post(FineDomainType& x)
-  {
-    DUNE_UNUSED_PARAMETER(x);
-  }
+  void post([[maybe_unused]] FineDomainType& x)
+  {}
 
   void apply(FineDomainType& v, const FineRangeType& d)
   {

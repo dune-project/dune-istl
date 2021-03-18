@@ -1063,13 +1063,11 @@ namespace MatrixImp
     //===== query
 
     //! return true if (i,j) is in pattern
-    bool exists (size_type i, size_type j) const
+    bool exists ([[maybe_unused]] size_type i, [[maybe_unused]] size_type j) const
     {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (i<0 || i>=N()) DUNE_THROW(ISTLError,"row index out of range");
       if (j<0 || i>=M()) DUNE_THROW(ISTLError,"column index out of range");
-#else
-      DUNE_UNUSED_PARAMETER(i);  DUNE_UNUSED_PARAMETER(j);
 #endif
       return true;
     }

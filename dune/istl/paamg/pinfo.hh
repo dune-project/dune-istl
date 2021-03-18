@@ -61,17 +61,12 @@ namespace Dune
       }
 
       template<class V>
-      void copyOwnerToAll(V& v, V& v1) const
-      {
-        DUNE_UNUSED_PARAMETER(v);
-        DUNE_UNUSED_PARAMETER(v1);
-      }
+      void copyOwnerToAll([[maybe_unused]] V& v, [[maybe_unused]] V& v1) const
+      {}
 
       template<class V>
-      void project(V& v) const
-      {
-        DUNE_UNUSED_PARAMETER(v);
-      }
+      void project([[maybe_unused]] V& v) const
+      {}
 
       template<class T1, class T2>
       void dot (const T1& x, const T1& y, T2& result) const

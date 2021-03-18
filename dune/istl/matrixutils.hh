@@ -10,7 +10,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/diagonalmatrix.hh>
-#include <dune/common/unused.hh>
 #include <dune/common/scalarmatrixview.hh>
 #include <dune/istl/scaledidmatrix.hh>
 #include "istlexception.hh"
@@ -49,9 +48,8 @@ namespace Dune
      * @brief Check whether the a matrix has diagonal values
      * on blocklevel recursion levels.
      */
-    static void check(const Matrix& mat)
+    static void check([[maybe_unused]] const Matrix& mat)
     {
-      DUNE_UNUSED_PARAMETER(mat);
 #ifdef DUNE_ISTL_WITH_CHECKING
       typedef typename Matrix::ConstRowIterator Row;
       typedef typename Matrix::ConstColIterator Entry;
