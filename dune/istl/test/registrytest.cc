@@ -1,4 +1,12 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <cassert>
+
+#ifndef DISABLE_CXA_DEMANGLE
+#define DISABLE_CXA_DEMANGLE 1
+#endif
 
 #include <dune/common/classname.hh>
 #include <dune/istl/common/registry.hh>
