@@ -5,6 +5,8 @@
 
 #include <type_traits>
 
+#include <dune/common/iteratorfacades.hh>
+
 namespace Dune
 {
 
@@ -17,7 +19,7 @@ namespace Dune
     template< class A >
     struct ArraySlice
     {
-      typedef typedef typename A::member_type member_type;
+      typedef typename A::member_type member_type;
       typedef typename A::size_type size_type;
 
       typedef decltype( std::declval< A & >()[ 0 ] ) reference;
@@ -54,8 +56,8 @@ namespace Dune
       };
 
     public:
-      typedef IteratorImpl< const B > const_iterator;
-      typedef IteratorImpl< B > iterator;
+      typedef IteratorImpl< const A > const_iterator;
+      typedef IteratorImpl< A > iterator;
 
       ArraySlice ( A &array, size_type start, size_type step, size_type size ) noexcept
         : array_( array ), start_( start ), step_( step ), size_( size )
@@ -65,7 +67,7 @@ namespace Dune
       const_reference operator[] ( size_type i ) const noexcept( noexcept( std::declval< const A & >()[ 0 ] ) ) { return array_[ start_ + i*step_ ]; }
 
       const_iterator begin () const noexcept { return const_iterator( array_, start_, step_ ); }
-      iterator begin () noexcept { return iterator( array_, start_, step_ );
+      iterator begin () noexcept { return iterator( array_, start_, step_); }
 
       const_iterator end () const noexcept { return const_iterator( array_, start_ + step_*size_, step_ ); }
       iterator end () noexcept { return iterator( array_, start_ + step_*size_, step_ ); }

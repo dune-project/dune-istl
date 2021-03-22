@@ -5,6 +5,7 @@
 
 #include <map>
 #include <dune/common/typetraits.hh>
+#include <dune/istl/preconditioners.hh>
 #include "matrix.hh"
 #include <cmath>
 #include <cstdlib>
