@@ -185,7 +185,7 @@ namespace Dune
           if( col >= self.M() )
             throw pybind11::index_error( "No such column: " + std::to_string( col ) );
 
-          if( self.buildMode() != BCRSMatrix::implicit )
+          if( self.buildMode() != BCRSMatrix::implicit || self.buildStage() == BCRSMatrix::built )
           {
             auto pos = self[ row ].find( col );
             if( pos != self[ row ].end() )
@@ -212,7 +212,7 @@ namespace Dune
           if( col >= self.M() )
             throw pybind11::index_error( "No such column: " + std::to_string( col ) );
 
-          if( self.buildMode() != BCRSMatrix::implicit )
+          if( self.buildMode() != BCRSMatrix::implicit || self.buildStage() == BCRSMatrix::built )
           {
             auto pos = self[ row ].find( col );
             if( pos != self[ row ].end() )
@@ -231,7 +231,7 @@ namespace Dune
           std::size_t cstart, cstop, cstep, clength;
           std::get< 1 >( index ).compute( self.M(), &cstart, &cstop, &cstep, &clength );
 
-          if( self.buildMode() == BCRSMatrix::implicit )
+          if( self.buildMode() != BCRSMatrix::implicit || self.buildStage() == BCRSMatrix::built )
           {
             for( auto v : value )
             {
