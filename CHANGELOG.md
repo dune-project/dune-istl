@@ -1,5 +1,8 @@
 # Master (will become release 2.8)
 
+- Extended the MatrixMarket IO functions for reading and writing vectors with
+  SIMD field_type as tall-skinny matrices.
+
 - Added public access of the `cholmod_common` object in class `Cholmod`.
 
 - Python bindings have been moved from the `dune-python` module which is now
