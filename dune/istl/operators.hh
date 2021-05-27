@@ -147,25 +147,25 @@ namespace Dune {
     explicit MatrixAdapter (std::shared_ptr<const M> A) : _A_(A) {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
-    virtual void apply (const X& x, Y& y) const
+    void apply (const X& x, Y& y) const override
     {
       _A_->mv(x,y);
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    void applyscaleadd (field_type alpha, const X& x, Y& y) const override
     {
       _A_->usmv(alpha,x,y);
     }
 
     //! get matrix via *
-    virtual const M& getmat () const
+    const M& getmat () const override
     {
       return *_A_;
     }
 
     //! Category of the solver (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }
