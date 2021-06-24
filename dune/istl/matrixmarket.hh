@@ -886,7 +886,6 @@ namespace Dune
                               std::istream& istr,
                               size_t lane)
   {
-    typedef typename Dune::BlockVector<T,A>::field_type field_type;
     for (int i=0; size>0; ++i, --size)
         istr>>Simd::lane(lane,vector[i]);
   }
@@ -897,7 +896,6 @@ namespace Dune
                               std::istream& istr,
                               size_t lane)
   {
-    typedef typename Dune::BlockVector<Dune::FieldVector<T,entries>,A>::field_type field_type;
     for(int i=0; size>0; ++i, --size) {
       Simd::Scalar<T> val;
       istr>>val;
@@ -922,11 +920,12 @@ namespace Dune
     MMHeader header;
     std::size_t rows, cols;
     mm_read_header(rows,cols,header,istr, true);
-    if(cols!=Simd::lanes<field_type>())
+    if(cols!=Simd::lanes<field_type>()) {
       if(Simd::lanes<field_type>() == 1)
         DUNE_THROW(MatrixMarketFormatError, "cols!=1, therefore this is no vector!");
       else
         DUNE_THROW(MatrixMarketFormatError, "cols does not match the number of lanes in the field_type!");
+    }
 
     if(header.type!=array_type)
       DUNE_THROW(MatrixMarketFormatError, "Vectors have to be stored in array format!");
