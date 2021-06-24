@@ -8,6 +8,8 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/gmpfield.hh>
+#include <dune/common/quadmath.hh>
 #include <dune/common/simd/loop.hh>
 
 #include <dune/istl/matrixmarket.hh>
@@ -21,6 +23,17 @@
 #else
 #include <dune/istl/operators.hh>
 #include "laplacian.hh"
+#endif
+
+#if HAVE_GMP
+namespace Dune {
+  namespace FloatCmp {
+    template<unsigned int prec>
+    struct EpsilonType<Dune::GMPField<prec>> {
+      typedef float Type;
+    };
+  }
+}
 #endif
 
 template <class Matrix, class Vector>
@@ -45,21 +58,26 @@ int testMatrixMarket(int N)
     for(auto&& entry : Dune::Impl::asVector(block))
       entry = (i++);
 
+  using R = typename Dune::FieldTraits<Vector>::real_type;
+  int prec = std::numeric_limits<R>::is_specialized
+    ? std::numeric_limits<R>::max_digits10
+    : std::numeric_limits<long double>::max_digits10;
+
 #if HAVE_MPI
   comm.remoteIndices().rebuild<false>();
   comm.copyOwnerToAll(bv,bv);
 
   Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication> op(mat, comm);
   op.apply(bv, cv);
-  storeMatrixMarket(mat, std::string("testmat"), comm);
-  storeMatrixMarket(bv, std::string("testvec"), comm, false);
+  storeMatrixMarket(mat, std::string("testmat"), comm, true, prec);
+  storeMatrixMarket(bv, std::string("testvec"), comm, false, prec);
 #else
   typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
   Operator op(mat);
   op.apply(bv, cv);
 
-  storeMatrixMarket(mat, std::string("testmat"));
-  storeMatrixMarket(bv, std::string("testvec"));
+  storeMatrixMarket(mat, std::string("testmat"), prec);
+  storeMatrixMarket(bv, std::string("testvec"), prec);
 #endif
 
   Matrix mat1;
@@ -90,7 +108,8 @@ int testMatrixMarket(int N)
         ++ret;
       }
       if(!Dune::FloatCmp::eq(*col, *col1)) {
-        std::cerr <<"Matrix entries do not match"<<std::endl;
+        using std::abs;
+        std::cerr <<"Matrix entries do not match: " << abs(*col - *col1) << std::endl;
         ++ret;
       }
     }
@@ -122,7 +141,7 @@ int testMatrixMarket(int N)
   for (auto entry=cv.begin(), entry1=cv1.begin(); cv.end() != entry; ++entry, ++entry1)
     if (Dune::Simd::anyTrue(*entry!=*entry1))
     {
-      std::cerr<<"computed vectors do not match"<<std::endl;
+      std::cerr<<"computed vectors do not match: " << *entry << " != " << *entry1 <<std::endl;
       ++ret;
     }
 
@@ -157,12 +176,23 @@ int main(int argc, char** argv)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> BVector;
 
-  ret = testMatrixMarket<BCRSMat, BVector>(N);
+  ret |= testMatrixMarket<BCRSMat, BVector>(N);
 
   // test for vector with multiple lanes
   typedef Dune::BlockVector<Dune::LoopSIMD<double, 4>> BVectorSIMD;
 
-  ret = testMatrixMarket<Dune::BCRSMatrix<double>, BVectorSIMD>(N);
+  ret |= testMatrixMarket<Dune::BCRSMatrix<double>, BVectorSIMD>(N);
+
+  // Test other field types
+#if HAVE_QUADMATH
+  std::cout << "Test Float128" << std::endl;
+  ret |= testMatrixMarket<Dune::BCRSMatrix<Dune::Float128>, Dune::BlockVector<Dune::Float128>>(N);
+#endif
+
+#if HAVE_GMP
+  std::cout << "Test GMPField" << std::endl;
+  ret |= testMatrixMarket<Dune::BCRSMatrix<Dune::GMPField<128>>, Dune::BlockVector<Dune::GMPField<128>>>(N);
+#endif
 
 #if HAVE_MPI
   if(ret!=0)
