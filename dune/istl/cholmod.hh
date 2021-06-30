@@ -8,6 +8,7 @@
 #include <dune/istl/bvector.hh>
 #include<dune/istl/solver.hh>
 #include <dune/istl/solverfactory.hh>
+#include <dune/istl/foreach.hh>
 
 #include <vector>
 #include <memory>
@@ -24,35 +25,56 @@ namespace Impl{
    * compatible interface for the "setMatrix" method.
    *
    * It should be optimized out by the compiler, so no
-   * overhead should be preduced
+   * overhead should be produced
    */
   struct NoIgnore
   {
     const NoIgnore& operator[](std::size_t) const { return *this; }
     explicit operator bool() const { return false; }
-    std::size_t count() const { return 0; }
+    static constexpr std::size_t size() { return 0; }
+
   };
+
+
+  template<class BlockedVector, class FlatVector>
+  void copyToFlatVector(const BlockedVector& blockedVector, FlatVector& flatVector)
+  {
+    // traverse the vector once just to compute the size
+    std::size_t len = flatVectorForEach(blockedVector, [&](auto&&, auto...){});
+    flatVector.resize(len);
+
+    flatVectorForEach(blockedVector, [&](auto&& entry, auto offset){
+      flatVector[offset] = entry;
+    });
+  }
+
+  // special (dummy) case for NoIgnore
+  template<class FlatVector>
+  void copyToFlatVector(const NoIgnore&, FlatVector&)
+  {
+    // just do nothing
+    return;
+  }
+
+  template<class FlatVector, class BlockedVector>
+  void copyToBlockedVector(const FlatVector& flatVector, BlockedVector& blockedVector)
+  {
+    flatVectorForEach(blockedVector, [&](auto& entry, auto offset){
+      entry = flatVector[offset];
+    });
+  }
+
 
 } //namespace Impl
 
-template<class T>
-class Cholmod;
-
 /** @brief Dune wrapper for SuiteSparse/CHOLMOD solver
   *
-  * This class implements an InverseOperator between BlockVector types
+  * This class implements an InverseOperator between Vector types
   */
-template<class T, class A, int k>
-class Cholmod<BlockVector<FieldVector<T,k>, A>>
-  : public InverseOperator<BlockVector<FieldVector<T,k>, A>, BlockVector<FieldVector<T,k>, A>>
+template<class Vector>
+class Cholmod : public InverseOperator<Vector, Vector>
 {
 public:
-
-  // type of unknown
-  using X = BlockVector<FieldVector<T,k>, A>;
-  // type of rhs
-  using B = BlockVector<FieldVector<T,k>, A>;
-
 
   /** @brief Default constructor
    *
@@ -83,7 +105,7 @@ public:
 
   /** @brief simple forward to apply(X&, Y&, InverseOperatorResult&)
     */
-  void apply (X& x, B& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
+  void apply (Vector& x, Vector& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
   {
     apply(x,b,res);
   }
@@ -93,7 +115,7 @@ public:
    * The method assumes that setMatrix() was called before
    * In the case of a given ignore field the corresponding entries of both in x and b will stay untouched in this method.
   */
-  void apply(X& x, B& b, InverseOperatorResult& res)
+  void apply(Vector& x, Vector& b, InverseOperatorResult& res)
   {
     // do nothing if N=0
     if ( nIsZero_ )
@@ -104,29 +126,22 @@ public:
     if (x.size() != b.size())
       DUNE_THROW(Exception, "Error in apply(): sizes of x and b do not match!");
 
-    const auto& blocksize = k;
-
     // cast to double array
     auto b2 = std::make_unique<double[]>(L_->n);
     auto x2 = std::make_unique<double[]>(L_->n);
 
     // copy to cholmod
     auto bp = b2.get();
-    if (inverseSubIndices_.empty()) // no ignore field given
-    {
-      // simply copy all values
-      for (const auto& bi : b)
-        for (const auto& bii : bi)
-          *bp++ = bii;
-    }
-    else // use the mapping from not ignored entries
-    {
-      // iterate over inverseSubIndices and resolve the block indices
-      for (const auto& idx : inverseSubIndices_)
-        *bp++ = b[ idx / blocksize ][ idx % blocksize ];
-    }
 
-    // create a cholmod dense object
+    flatVectorForEach(b, [&](auto&& entry, auto&& flatIndex){
+      if ( subIndices_.empty() )
+        bp[ flatIndex ] = entry;
+      else
+        if( subIndices_[ flatIndex ] != std::numeric_limits<std::size_t>::max() )
+          bp[ subIndices_[ flatIndex ] ] = entry;
+    });
+
+      // create a cholmod dense object
     auto b3 = make_cholmod_dense(cholmod_allocate_dense(L_->n, 1, L_->n, CHOLMOD_REAL, &c_), &c_);
     // cast because void-ptr
     auto b4 = static_cast<double*>(b3->x);
@@ -138,19 +153,13 @@ public:
     auto xp = static_cast<double*>(x3->x);
 
     // copy into x
-    if (inverseSubIndices_.empty()) // no ignore field given
-    {
-      // simply copy all values
-      for (int i=0, s=x.size(); i<s; i++)
-        for (int ii=0, ss=x[i].size(); ii<ss; ii++)
-          x[i][ii] = *xp++;
-    }
-    else // use the mapping from not ignored entries
-    {
-      // iterate over inverseSubIndices and resolve the block indices
-      for (const auto& idx : inverseSubIndices_)
-        x[ idx / blocksize ][ idx % blocksize ] = *xp++;
-    }
+    flatVectorForEach(x, [&](auto&& entry, auto&& flatIndex){
+      if ( subIndices_.empty() )
+        entry = xp[ flatIndex ];
+      else
+        if( subIndices_[ flatIndex ] != std::numeric_limits<std::size_t>::max() )
+          entry = xp[ subIndices_[ flatIndex ] ];
+    });
 
     // statistics for a direct solver
     res.iterations = 1;
@@ -163,7 +172,8 @@ public:
    * This method forwards a nullptr to the setMatrix method
    * with ignore nodes
    */
-  void setMatrix(const BCRSMatrix<FieldMatrix<T,k,k>>& matrix)
+  template<class Matrix>
+  void setMatrix(const Matrix& matrix)
   {
     const Impl::NoIgnore* noIgnore = nullptr;
     setMatrix(matrix, noIgnore);
@@ -183,16 +193,29 @@ public:
    * \param [in] matrix Matrix to be decomposed. In BCRS compatible form
    * \param [in] ignore Pointer to a compatible BitVector
    */
-  template<class Ignore>
-  void setMatrix(const BCRSMatrix<FieldMatrix<T,k,k>>& matrix, const Ignore* ignore)
+  template<class Matrix, class Ignore>
+  void setMatrix(const Matrix& matrix, const Ignore* ignore)
   {
+    // count the number of entries and diagonal entries
+    int nonZeros = 0;
+    int numberOfIgnoredDofs = 0;
 
-    const auto blocksize = k;
+
+    auto [flatRows,flatCols] = flatMatrixForEach( matrix, [&](auto&& /*entry*/, auto&& flatRowIndex, auto&& flatColIndex){
+      if( flatRowIndex <= flatColIndex )
+        nonZeros++;
+    });
+
+    std::vector<bool> flatIgnore;
+
+    if ( ignore )
+    {
+      Impl::copyToFlatVector(*ignore,flatIgnore);
+      numberOfIgnoredDofs = std::count(flatIgnore.begin(),flatIgnore.end(),true);
+    }
 
     // Total number of rows
-    int N = blocksize * matrix.N();
-    if ( ignore )
-      N -= ignore->count();
+    int N = flatRows - numberOfIgnoredDofs;
 
     nIsZero_ = (N <= 0);
 
@@ -200,15 +223,6 @@ public:
     {
         return;
     }
-
-    // number of nonzeroes
-    const int nnz = blocksize * blocksize * matrix.nonzeroes();
-    // number of diagonal entries
-    const int nDiag = blocksize * blocksize * matrix.N();
-    // number of nonzeroes in the dialgonal
-    const int nnzDiag = (blocksize * (blocksize+1)) / 2 * matrix.N();
-    // number of nonzeroes in triangular submatrix (including diagonal)
-    const int nnzTri = (nnz - nDiag) / 2 + nnzDiag;
 
     /*
     * CHOLMOD uses compressed-column sparse matrices, but for symmetric
@@ -221,7 +235,7 @@ public:
     auto M = std::unique_ptr<cholmod_sparse, decltype(deleter)>(
       cholmod_allocate_sparse(N,             // # rows
                               N,             // # cols
-                              nnzTri,        // # of nonzeroes
+                              nonZeros,      // # of nonzeroes
                               1,             // indices are sorted ( 1 = true)
                               1,             // matrix is "packed" ( 1 = true)
                               -1,            // stype of matrix ( -1 = cosider the lower part only )
@@ -234,69 +248,72 @@ public:
     int* Ai = static_cast<int*>(M->i);
     double* Ax = static_cast<double*>(M->x);
 
-    // vector mapping all indices in flat order to the not ignored indices
-    std::vector<std::size_t> subIndices;
 
     if ( ignore )
     {
-      // init the mappings
-      inverseSubIndices_.resize(N);            // size = number of not ignored entries
-      subIndices.resize(matrix.M()*blocksize); // size = number of all entries
+      // init the mapping
+      subIndices_.resize(flatRows,std::numeric_limits<std::size_t>::max());
 
-      std::size_t j=0;
-      for( std::size_t block=0; block<matrix.N(); block++ )
+      std::size_t subIndexCounter = 0;
+
+      for ( std::size_t i=0; i<flatRows; i++ )
       {
-        for( std::size_t i=0; i<blocksize; i++ )
+        if ( not  flatIgnore[ i ] )
         {
-          if( not (*ignore)[block][i] )
-          {
-            subIndices[ block*blocksize + i ] = j;
-            inverseSubIndices_[j] = block*blocksize + i;
-            j++;
-          }
+          subIndices_[ i ] = subIndexCounter++;
         }
       }
     }
 
-    // Copy the data to the CHOLMOD array
-    int n = 0;
-    for (auto rowIt = matrix.begin(); rowIt != matrix.end(); rowIt++)
+    // at first, we need to compute the row starts "Ap"
+    // therefore, we count all (not ignored) entries in each row and in the end we accumulate everything
+    flatMatrixForEach(matrix, [&](auto&& /*entry*/, auto&& flatRowIndex, auto&& flatColIndex){
+
+      // stop if ignored
+      if ( ignore and ( flatIgnore[flatRowIndex] or flatIgnore[flatColIndex] ) )
+        return;
+
+      // stop if in lower half
+      if ( flatRowIndex > flatColIndex )
+        return;
+
+      // ok, count the entry
+      auto idx = ignore ? subIndices_[flatRowIndex] : flatRowIndex;
+      Ap[idx+1]++;
+
+    });
+
+    // now accumulate
+    Ap[0] = 0;
+    for ( int i=0; i<N; i++ )
     {
-      const auto row = rowIt.index();
-      for (std::size_t i=0; i<blocksize; i++)
-      {
-        if( ignore and (*ignore)[row][i] )
-          continue;
-
-        // col start
-        *Ap++ = n;
-
-        for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
-        {
-          const auto col = colIt.index();
-
-          // are we already in the lower part?
-          if (col < row)
-            continue;
-
-          for (auto j = (row == col ? i : 0); j<blocksize; j++)
-          {
-            if( ignore and (*ignore)[col][j] )
-              continue;
-
-            const auto jj = ignore ? subIndices[  blocksize*col + j ] : blocksize*col + j;
-
-            // set the current index and entry
-            *Ai++ = jj;
-            *Ax++ = (*colIt)[i][j];
-            // increase number of set values
-            n++;
-          }
-        }
-      }
+      Ap[i+1] += Ap[i];
     }
-    // set last col start
-    *Ap = n;
+
+    // we need a compressed row position counter
+    std::vector<std::size_t> rowPosition(N,0);
+
+    // now we can set the entries
+    flatMatrixForEach(matrix, [&](auto&& entry, auto&& flatRowIndex, auto&& flatColIndex){
+
+      // stop if ignored
+      if ( ignore and ( flatIgnore[flatRowIndex] or flatIgnore[flatColIndex] ) )
+        return;
+
+      // stop if in lower half
+      if ( flatRowIndex > flatColIndex )
+        return;
+
+      // ok, set the entry
+      auto rowIdx = ignore ? subIndices_[flatRowIndex] : flatRowIndex;
+      auto colIdx = ignore ? subIndices_[flatColIndex] : flatColIndex;
+      auto rowStart = Ap[rowIdx];
+      auto rowPos   = rowPosition[rowIdx];
+      Ai[ rowStart + rowPos ] = colIdx;
+      Ax[ rowStart + rowPos ] = entry;
+      rowPosition[rowIdx]++;
+
+    });
 
     // Now analyse the pattern and optimal row order
     L_ = cholmod_analyze(M.get(), &c_);
@@ -337,10 +354,8 @@ private:
   // indicator for a 0x0 problem (due to ignore dof's)
   bool nIsZero_ = false;
 
-  // mapping from the not ignored indices in flat order to all indices in flat order
-  // it also holds the info about ignore nodes: if it is empty => no ignore field
-  std::vector<std::size_t> inverseSubIndices_;
-
+  // vector mapping all indices in flat order to the not ignored indices
+  std::vector<std::size_t> subIndices_;
 };
 
   struct CholmodCreator{

@@ -6,6 +6,9 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/bitsetvector.hh>
+#include <dune/common/tuplevector.hh>
+
 #include <dune/istl/bvector.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>
@@ -13,67 +16,13 @@
 #include<vector>
 
 #include <dune/istl/cholmod.hh>
+#include <dune/istl/multitypeblockmatrix.hh>
+#include <dune/istl/multitypeblockvector.hh>
 
 
 #include "laplacian.hh"
 
 using namespace Dune;
-
-// One ignore block
-template<int k>
-struct IgnoreBlock
-{
-  std::array<bool,k> data;
-
-  bool operator[](std::size_t i) const
-  {
-    return data[i];
-
-  }
-
-  bool& operator[](std::size_t i)
-  {
-    return data[i];
-
-  }
-
-  std::size_t count() const
-  {
-    size_t res = 0;
-    for(const auto& d : data)
-      if (d)
-        res++;
-
-    return res;
-  }
-};
-
-// Block ignore vector
-template<int blocksize>
-struct Ignore
-{
-  std::vector<IgnoreBlock<blocksize>> data;
-
-  IgnoreBlock<blocksize> operator[](std::size_t i) const
-  {
-    return data[i];
-  }
-
-  IgnoreBlock<blocksize>& operator[](std::size_t i)
-  {
-    return data[i];
-  }
-
-  std::size_t count() const
-  {
-    size_t res = 0;
-    for(const auto& d : data)
-      res += d.count();
-
-    return res;
-  }
-};
-
 
 int main(int argc, char** argv)
 {
@@ -110,8 +59,8 @@ int main(int argc, char** argv)
     b = 1;
 
     // test with ignore nodes
-    Ignore<bs> ignore;
-    ignore.data.resize(A.N());
+    std::vector<std::array<bool,bs>> ignore;
+    ignore.resize(A.N());
     // ignore one random entry in x and b
     ignore[12][0] = true;
     b[12][0] = 666;
@@ -135,6 +84,80 @@ int main(int argc, char** argv)
     // check that error is completely caused by this entry
     if ( std::abs( b.two_norm() - std::abs(b_12_0) ) > 1e-15 )
       std::cerr << " Error in CHOLMOD, b was NOT ignored correctly: " << std::abs( b.two_norm() - std::abs(b_12_0) ) << std::endl;
+
+
+    using BCRS = BCRSMatrix<FieldMatrix<double,bs,bs>>;
+    using MTRow = MultiTypeBlockVector<BCRS,BCRS>;
+    using MTBM = MultiTypeBlockMatrix<MTRow,MTRow>;
+
+    MTBM A2;
+
+    using namespace Indices;
+    A2[_0][_0] = A;
+    A2[_1][_0] = A;
+    A2[_0][_1] = A;
+    A2[_1][_1] = A;
+
+    // this makes it regular
+    A2[_0][_0] *= 2.;
+
+    using MTBV = MultiTypeBlockVector<BlockVector<FieldVector<double,bs>>,BlockVector<FieldVector<double,bs>>>;
+    MTBV b2,x2;
+
+    b = 1;
+    x = 0;
+
+
+    x2[_0] = x;
+    x2[_1] = x;
+
+    b2[_0] = b;
+    b2[_1] = b;
+
+    Cholmod<MTBV> cholmodMT;
+    cholmodMT.setMatrix(A2);
+
+    cholmodMT.apply(x2,b2,res);
+
+    // test
+    A2.mmv(x2,b2);
+
+    if ( b2.two_norm() > 1e-9 )
+      std::cerr << " Error in CHOLMOD, residual is too large: " << b2.two_norm() << std::endl;
+
+
+    x2 = 0;
+    b2 = 1;
+
+    // test with ignore nodes
+    TupleVector<std::vector<std::array<bool,bs>>,std::vector<std::array<bool,bs>>> ignoreMT;
+    ignoreMT[_0].resize(A.N());
+    ignoreMT[_1].resize(A.N());
+    // ignore one random entry in x and b
+    ignoreMT[_0][12][0] = true;
+    b2[_0][12][0] = 666;
+    x2[_0][12][0] = 123;
+
+    Cholmod<MTBV> cholmodMT2;
+    cholmodMT2.setMatrix(A2,&ignoreMT);
+
+    cholmodMT2.apply(x2,b2,res);
+
+    // check that x was ignored
+    if ( std::abs( x2[_0][12][0] - 123 ) > 1e-15 )
+      std::cerr << " Error in CHOLMOD, x was NOT ignored correctly: " << std::abs( x2[_0][12][0] - 123 ) << std::endl;
+
+    x2[_0][12][0] = 0;
+
+    // test
+    A2.mmv(x2,b2);
+
+    auto b_0_12_0 = b2[_0][12][0];
+
+    // check that error is completely caused by this entry
+    if ( std::abs( b2.two_norm() - std::abs(b_0_12_0) ) > 1e-15 )
+      std::cerr << " Error in CHOLMOD, b was NOT ignored correctly: " << std::abs( b2.two_norm() - std::abs(b_0_12_0) ) << std::endl;
+
 
   }
   catch (std::exception &e)

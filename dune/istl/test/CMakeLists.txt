@@ -20,6 +20,8 @@ dune_add_test(SOURCES complexmatrixtest.cc)
 
 dune_add_test(SOURCES fieldvectortest.cc)
 
+dune_add_test(SOURCES foreachtest.cc)
+
 dune_add_test(SOURCES matrixnormtest.cc)
 
 dune_add_test(SOURCES matrixutilstest.cc)

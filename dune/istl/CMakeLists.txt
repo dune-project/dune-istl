@@ -16,6 +16,7 @@ install(FILES
    bvector.hh
    cholmod.hh
    colcompmatrix.hh
+   foreach.hh
    gsetc.hh
    ildl.hh
    ilu.hh
