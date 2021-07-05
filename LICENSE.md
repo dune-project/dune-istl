@@ -2,31 +2,32 @@ Copyright holders:
 
 2014--2016    Marco Agnese
 2003--2013    Peter Bastian
-2004--2017    Markus Blatt
-2014--2019    Ansgar Burchardt
+2020          Jean Benezech
+2004--2020    Markus Blatt
+2014--2020    Ansgar Burchardt
 2004--2005    Adrian Burri
-2008--2017    Andreas Dedner
-2018--2019    Nils-Arne Dreier
-2003--2019    Christian Engwer
-2005--2018    Jorrit Fahlke
+2008--2021    Andreas Dedner
+2018--2021    Nils-Arne Dreier
+2003--2021    Christian Engwer
+2005--2019    Jorrit Fahlke
 2008--2017    Bernd Flemisch
-2017          Janick Gerstenberger
-2005--2019    Carsten Gräser
-2015--2017    Felix Gruber
-2012--2019    Christoph Grüninger
-2016          René Heß
+2017--2020    Janick Gerstenberger
+2005--2020    Carsten Gräser
+2015--2020    Felix Gruber
+2012--2021    Christoph Grüninger
+2016--2020    René Heß
 2018          Claus-Justus Heine
 2016--2019    Stephan Hilb
 2018          Lasse Hinrichsen
 2012--2013    Olaf Ippisch
-2018--2019    Patrick Jaap
+2018--2021    Patrick Jaap
 2013--2019    Dominic Kempf
 2015          Emmanouil Kiagias
 2018          Lukas Renelt
-2004--2019    Robert Klöfkorn
-2016--2019    Timo Koch
+2004--2021    Robert Klöfkorn
+2016--2021    Timo Koch
 2007          Sreejith Pulloor Kuttanikkad
-2013--2016    Arne Morten Kvarving (SINTEF)
+2013--2016    Arne Morten Kvarving
 2009--2013    Andreas Lauser
 2012--2017    Tobias Malkmus
 2007--2009    Sven Marnach
@@ -40,11 +41,11 @@ Copyright holders:
 2013--2014    Marian Piatkowski
 2011--2016    Elias Pipping
 2013          Jurgis Pods
-2018--2019    Simon Praetorius
+2018--2021    Simon Praetorius
 2009          Atgeirr Rasmussen
 2008--2013    Uli Sack
-2004--2019    Oliver Sander
-2017--2018    Linus Seelinger
+2004--2021    Oliver Sander
+2017--2019    Linus Seelinger
 2013          Bård Skaflestad
 2018          Mathis Springwald
 2019          Kilian Weishaupt
