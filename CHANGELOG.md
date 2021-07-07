@@ -57,6 +57,14 @@
 - Remove deprecated `SequentialInformation::getSolverCategory()`, use
   `category()` instead.
 
+## Known issues
+
+- SuiteSparse's threading tends to conflict with the threading from OpenBLAS. The
+  author of SuiteSparse reports cases of an
+  [100 fold slowdown](https://github.com/DrTimothyAldenDavis/SuiteSparse/issues/1)
+  for cholmod. See also
+  [dune-istl #91](https://gitlab.dune-project.org/core/dune-istl/-/issues/91).
+
 # Release 2.7
 
 - New `SolverFactory` for generating sequential direct or iterative solvers and
