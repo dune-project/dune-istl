@@ -1226,8 +1226,8 @@ namespace Dune
   {
     using namespace MatrixMarketImpl;
 
-    typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet::LocalIndex LocalIndex;
-    typedef typename LocalIndex::Attribute Attribute;
+    using LocalIndexT = typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet::LocalIndex;
+    typedef typename LocalIndexT::Attribute Attribute;
     // Get our rank
     int rank = comm.communicator().rank();
     // load local matrix
@@ -1264,7 +1264,7 @@ namespace Dune
       file >>c;
       bool b;
       file >> b;
-      pis.add(g,LocalIndex(l,Attribute(c),b));
+      pis.add(g,LocalIndexT(l,Attribute(c),b));
       lineFeed(file);
     }
     pis.endResize();

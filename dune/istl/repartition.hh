@@ -86,10 +86,6 @@ namespace Dune
     IndexSet& indexSet = oocomm.indexSet();
     const typename Dune::OwnerOverlapCopyCommunication<T1,T2>::GlobalLookupIndexSet& lookup =oocomm.globalLookup();
 
-    // The type of the const vertex iterator.
-    typedef typename G::ConstVertexIterator VertexIterator;
-
-
     std::size_t sum=0, needed = graph.noVertices()-indexSet.size();
     std::vector<std::size_t> neededall(oocomm.communicator().size(), 0);
 
@@ -103,10 +99,8 @@ namespace Dune
 
     //Compute Maximum Global Index
     T1 maxgi=0;
-    typedef typename IndexSet::const_iterator Iterator;
-    Iterator end;
-    end = indexSet.end();
-    for(Iterator it = indexSet.begin(); it != end; ++it)
+    auto end = indexSet.end();
+    for(auto it = indexSet.begin(); it != end; ++it)
       maxgi=std::max(maxgi,it->global());
 
     //Process p creates global indices consecutively
@@ -123,7 +117,7 @@ namespace Dune
     storeGlobalIndicesOfRemoteIndices(globalIndices, oocomm.remoteIndices());
     indexSet.beginResize();
 
-    for(VertexIterator vertex = graph.begin(), vend=graph.end(); vertex != vend; ++vertex) {
+    for(auto vertex = graph.begin(), vend=graph.end(); vertex != vend; ++vertex) {
       const typename IndexSet::IndexPair* pair=lookup.pair(*vertex);
       if(pair==0) {
         // No index yet, add new one
@@ -191,12 +185,11 @@ namespace Dune
     {
       int npes=oocomm.communicator().size(), mype=oocomm.communicator().rank();
 
-      typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
       typedef typename OOComm::OwnerSet OwnerSet;
 
       int numOfOwnVtx=0;
-      Iterator end = oocomm.indexSet().end();
-      for(Iterator index = oocomm.indexSet().begin(); index != end; ++index) {
+      auto end = oocomm.indexSet().end();
+      for(auto index = oocomm.indexSet().begin(); index != end; ++index) {
         if (OwnerSet::contains(index->local().attribute())) {
           numOfOwnVtx++;
         }
@@ -217,8 +210,6 @@ namespace Dune
       globalOwnerVertices=vtxDist_[npes];
       base_=base;
 
-      // The type of the const vertex iterator.
-      typedef typename G::ConstVertexIterator VertexIterator;
 #ifdef DEBUG_REPART
       std::cout << oocomm.communicator().rank()<<" vtxDist: ";
       for(int i=0; i<= npes; ++i)
@@ -230,8 +221,8 @@ namespace Dune
       // starting by "base" to all owner vertices.
       // The new index is used as the ParMETIS global index and is
       // stored in the vector "duneToParmetis"
-      VertexIterator vend = graph.end();
-      for(VertexIterator vertex = graph.begin(); vertex != vend; ++vertex) {
+      auto vend = graph.end();
+      for(auto vertex = graph.begin(); vertex != vend; ++vertex) {
         const typename OOComm::ParallelIndexSet::IndexPair* index=oocomm.globalLookup().pair(*vertex);
         assert(index);
         if (OwnerSet::contains(index->local().attribute())) {
@@ -274,19 +265,16 @@ namespace Dune
     {
       std::map<int,int> sizes;
 
-      typedef typename IS::const_iterator IIter;
-      for(IIter i=idxset.begin(), end=idxset.end(); i!=end; ++i)
+      for(auto i=idxset.begin(), end=idxset.end(); i!=end; ++i)
         if(Flags::contains(i->local().attribute()))
           ++sizes[toPart[i->local()]];
 
       // Allocate the necessary space
-      typedef std::map<int,int>::const_iterator MIter;
-      for(MIter i=sizes.begin(), end=sizes.end(); i!=end; ++i)
+      for(auto i=sizes.begin(), end=sizes.end(); i!=end; ++i)
         interfaces()[i->first].first.reserve(i->second);
 
       //Insert the interface information
-      typedef typename IS::const_iterator IIter;
-      for(IIter i=idxset.begin(), end=idxset.end(); i!=end; ++i)
+      for(auto i=idxset.begin(), end=idxset.end(); i!=end; ++i)
         if(Flags::contains(i->local().attribute()))
           interfaces()[toPart[i->local()]].first.add(i->local());
     }
@@ -302,9 +290,8 @@ namespace Dune
     template<typename TG>
     void buildReceiveInterface(std::vector<std::pair<TG,int> >& indices)
     {
-      typedef typename std::vector<std::pair<TG,int> >::const_iterator VIter;
       std::size_t i=0;
-      for(VIter idx=indices.begin(); idx!= indices.end(); ++idx) {
+      for(auto idx=indices.begin(); idx!= indices.end(); ++idx) {
         interfaces()[idx->second].second.add(i++);
       }
     }
@@ -336,15 +323,13 @@ namespace Dune
       MPI_Pack(&(ownerVec[0]), s, MPITraits<GI>::getType(), sendBuf, buffersize, &pos, comm);
       s = overlapVec.size();
       MPI_Pack(&s, 1, MPITraits<std::size_t>::getType(), sendBuf, buffersize, &pos, comm);
-      typedef typename std::set<GI>::iterator Iter;
-      for(Iter i=overlapVec.begin(), end= overlapVec.end(); i != end; ++i)
+      for(auto i=overlapVec.begin(), end= overlapVec.end(); i != end; ++i)
         MPI_Pack(const_cast<GI*>(&(*i)), 1, MPITraits<GI>::getType(), sendBuf, buffersize, &pos, comm);
 
       s=neighbors.size();
       MPI_Pack(&s, 1, MPITraits<std::size_t>::getType(), sendBuf, buffersize, &pos, comm);
-      typedef typename std::set<int>::iterator IIter;
 
-      for(IIter i=neighbors.begin(), end= neighbors.end(); i != end; ++i)
+      for(auto i=neighbors.begin(), end= neighbors.end(); i != end; ++i)
         MPI_Pack(const_cast<int*>(&(*i)), 1, MPI_INT, sendBuf, buffersize, &pos, comm);
     }
     /**
@@ -483,12 +468,12 @@ namespace Dune
 
       typename std::vector<int>::iterator next_free = assigned.begin();
 
-      for(typename std::set<std::size_t>::iterator domain = unassigned.begin(),
-            end = unassigned.end(); domain != end; ++domain)
+      for(auto udomain = unassigned.begin(),
+            end = unassigned.end(); udomain != end; ++udomain)
       {
         next_free = std::find_if(next_free, assigned.end(), std::bind(std::less<int>(), std::placeholders::_1, 1));
         assert(next_free !=  assigned.end());
-        domainMapping[*domain] = next_free-assigned.begin();
+        domainMapping[*udomain] = next_free-assigned.begin();
         *next_free = 1;
       }
     }
@@ -516,13 +501,12 @@ namespace Dune
     template<class GI>
     void mergeVec(std::vector<std::pair<GI, int> >& ownerVec, std::set<GI>& overlapSet) {
 
-      typedef typename std::vector<std::pair<GI,int> >::const_iterator VIter;
 #ifdef DEBUG_REPART
       // Safety check for duplicates.
       if(ownerVec.size()>0)
       {
-        VIter old=ownerVec.begin();
-        for(VIter i=old+1, end=ownerVec.end(); i != end; old=i++)
+        auto old=ownerVec.begin();
+        for(auto i=old+1, end=ownerVec.end(); i != end; old=i++)
         {
           if(i->first==old->first)
           {
@@ -536,15 +520,14 @@ namespace Dune
 
 #endif
 
-      typedef typename std::set<GI>::iterator SIter;
-      VIter v=ownerVec.begin(), vend=ownerVec.end();
-      for(SIter s=overlapSet.begin(), send=overlapSet.end(); s!=send;)
+      auto v=ownerVec.begin(), vend=ownerVec.end();
+      for(auto s=overlapSet.begin(), send=overlapSet.end(); s!=send;)
       {
         while(v!=vend && v->first<*s) ++v;
         if(v!=vend && v->first==*s) {
           // Move to the next element before erasing
           // thus s stays valid!
-          SIter tmp=s;
+          auto tmp=s;
           ++s;
           overlapSet.erase(tmp);
         }else
@@ -570,8 +553,7 @@ namespace Dune
     void getNeighbor(const Graph& g, std::vector<int>& part,
                      typename Graph::VertexDescriptor vtx, const IS& indexSet,
                      int toPe, std::set<GI>& neighbor, std::set<int>& neighborProcs) {
-      typedef typename Graph::ConstEdgeIterator Iter;
-      for(Iter edge=g.beginEdges(vtx), end=g.endEdges(vtx); edge!=end; ++edge)
+      for(auto edge=g.beginEdges(vtx), end=g.endEdges(vtx); edge!=end; ++edge)
       {
         const typename IS::IndexPair* pindex = indexSet.pair(edge.target());
         assert(pindex);
@@ -626,9 +608,7 @@ namespace Dune
     void getOwnerOverlapVec(const G& graph, std::vector<int>& part, IS& indexSet,
                             [[maybe_unused]] int myPe, int toPe, std::vector<T>& ownerVec, std::set<GI>& overlapSet,
                             RedistributeInterface& redist, std::set<int>& neighborProcs) {
-      //typedef typename IndexSet::const_iterator Iterator;
-      typedef typename IS::const_iterator Iterator;
-      for(Iterator index = indexSet.begin(); index != indexSet.end(); ++index) {
+      for(auto index = indexSet.begin(); index != indexSet.end(); ++index) {
         // Only Process owner vertices, the others are not in the parmetis graph.
         if(OwnerSet::contains(index->local().attribute()))
         {
@@ -753,23 +733,15 @@ namespace Dune
                       EW& ew)
     {
       int j=0;
+      auto vend = graph.end();
 
-      // The type of the const vertex iterator.
-      typedef typename G::ConstVertexIterator VertexIterator;
-      //typedef typename IndexSet::const_iterator Iterator;
-      typedef typename IS::const_iterator Iterator;
-
-      VertexIterator vend = graph.end();
-      Iterator end;
-
-      for(VertexIterator vertex = graph.begin(); vertex != vend; ++vertex) {
+      for(auto vertex = graph.begin(); vertex != vend; ++vertex) {
         if (isOwner<F>(indexSet,*vertex)) {
           // The type of const edge iterator.
-          typedef typename G::ConstEdgeIterator EdgeIterator;
-          EdgeIterator eend = vertex.end();
+          auto eend = vertex.end();
           xadj[j] = ew.index();
           j++;
-          for(EdgeIterator edge = vertex.begin(); edge != eend; ++edge) {
+          for(auto edge = vertex.begin(); edge != eend; ++edge) {
             ew(edge);
           }
         }
@@ -878,11 +850,8 @@ namespace Dune
         // Build the graph of the communication scheme and create an appropriate indexset.
         // calculate the neighbour vertices
         int noNeighbours = oocomm.remoteIndices().neighbours();
-        typedef typename  Dune::OwnerOverlapCopyCommunication<T1,T2>::RemoteIndices RemoteIndices;
-        typedef typename RemoteIndices::const_iterator
-        NeighbourIterator;
 
-        for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+        for(auto n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
             ++n)
           if(n->first==rank) {
             //do not include ourselves.
@@ -938,7 +907,6 @@ namespace Dune
         //       ++edgecount[owner[entry.index()]];
 
         // setup edge and weight pattern
-        typedef typename  RemoteIndices::const_iterator NeighbourIterator;
 
         Metis::idx_t* adjp=adjncy;
 
@@ -950,7 +918,7 @@ namespace Dune
         Metis::idx_t* adjwp=adjwgt;
 #endif
 
-        for(NeighbourIterator n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
+        for(auto n= oocomm.remoteIndices().begin(); n !=  oocomm.remoteIndices().end();
             ++n)
           if(n->first != rank) {
             *adjp=n->first;
@@ -1457,9 +1425,8 @@ namespace Dune
     // the overlap/copy vertices
     std::vector<int> setPartition(oocomm.indexSet().size(), -1);
 
-    typedef typename  OOComm::ParallelIndexSet::const_iterator Iterator;
     std::size_t i=0; // parmetis index
-    for(Iterator index = oocomm.indexSet().begin(); index != oocomm.indexSet().end(); ++index)
+    for(auto index = oocomm.indexSet().begin(); index != oocomm.indexSet().end(); ++index)
       if(OwnerSet::contains(index->local().attribute())) {
         setPartition[index->local()]=domainMapping[part[i++]];
       }
@@ -1531,19 +1498,17 @@ namespace Dune
     // not the number of vertices to send! Because the max number of Vtx
     // is used as the fixed buffer size by the MPI send/receive calls
 
-    typedef typename std::vector<int>::const_iterator VIter;
     int mype = oocomm.communicator().rank();
 
     {
       std::set<int> tsendTo;
-      for(VIter i=setPartition.begin(), iend = setPartition.end(); i!=iend; ++i)
+      for(auto i=setPartition.begin(), iend = setPartition.end(); i!=iend; ++i)
         tsendTo.insert(*i);
 
       noSendTo = tsendTo.size();
       sendTo = new int[noSendTo];
-      typedef std::set<int>::const_iterator iterator;
       int idx=0;
-      for(iterator i=tsendTo.begin(); i != tsendTo.end(); ++i, ++idx)
+      for(auto i=tsendTo.begin(); i != tsendTo.end(); ++i, ++idx)
         sendTo[idx]=*i;
     }
 
@@ -1587,8 +1552,7 @@ namespace Dune
 #ifdef DEBUG_REPART
     if(recvFrom.size()) {
       std::cout<<mype<<": recvFrom: ";
-      typedef typename std::set<int>::const_iterator siter;
-      for(siter i=recvFrom.begin(); i!= recvFrom.end(); ++i) {
+      for(auto i=recvFrom.begin(); i!= recvFrom.end(); ++i) {
         std::cout<<*i<<" ";
       }
     }
@@ -1769,11 +1733,10 @@ namespace Dune
 
     MPI_Allgather(&newrank, 1, MPI_INT, newranks, 1,
                   MPI_INT, oocomm.communicator());
-    typedef typename std::set<int>::const_iterator IIter;
 
 #ifdef DEBUG_REPART
     std::cout<<oocomm.communicator().rank()<<" ";
-    for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
+    for(auto i=myNeighbors.begin(), end=myNeighbors.end();
         i!=end; ++i) {
       assert(newranks[*i]>=0);
       std::cout<<*i<<"->"<<newranks[*i]<<" ";
@@ -1781,7 +1744,7 @@ namespace Dune
     }
     std::cout<<std::endl;
 #else
-    for(IIter i=myNeighbors.begin(), end=myNeighbors.end();
+    for(auto i=myNeighbors.begin(), end=myNeighbors.end();
         i!=end; ++i) {
       tneighbors.push_back(newranks[*i]);
     }
@@ -1805,11 +1768,10 @@ namespace Dune
     // The owners are sorted according to there global index
     // Therefore the entries of ownerVec are the same as the
     // ones in the resulting index set.
-    typedef typename OOComm::ParallelIndexSet::LocalIndex LocalIndex;
-    typedef typename std::vector<std::pair<GI,int> >::const_iterator VPIter;
     int i=0;
-    for(VPIter g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
-      outputIndexSet.add(g->first,LocalIndex(i, OwnerOverlapCopyAttributeSet::owner, true));
+    using LocalIndexT = typename OOComm::ParallelIndexSet::LocalIndex;
+    for(auto g=myOwnerVec.begin(), end =myOwnerVec.end(); g!=end; ++g, ++i ) {
+      outputIndexSet.add(g->first,LocalIndexT(i, OwnerOverlapCopyAttributeSet::owner, true));
       redistInf.addReceiveIndex(g->second, i);
     }
 
@@ -1842,18 +1804,16 @@ namespace Dune
 
 
     // 2) add the overlap vertices
-    typedef typename std::set<GI>::const_iterator SIter;
-    for(SIter g=myOverlapSet.begin(), end=myOverlapSet.end(); g!=end; ++g, i++) {
-      outputIndexSet.add(*g,LocalIndex(i, OwnerOverlapCopyAttributeSet::copy, true));
+    for(auto g=myOverlapSet.begin(), end=myOverlapSet.end(); g!=end; ++g, i++) {
+      outputIndexSet.add(*g,LocalIndexT(i, OwnerOverlapCopyAttributeSet::copy, true));
     }
     myOverlapSet.clear();
     outputIndexSet.endResize();
 
 #ifdef DUNE_ISTL_WITH_CHECKING
     int numOfOwnVtx =0;
-    typedef typename OOComm::ParallelIndexSet::const_iterator Iterator;
-    Iterator end = outputIndexSet.end();
-    for(Iterator index = outputIndexSet.begin(); index != end; ++index) {
+    auto end = outputIndexSet.end();
+    for(auto index = outputIndexSet.begin(); index != end; ++index) {
       if (OwnerSet::contains(index->local().attribute())) {
         numOfOwnVtx++;
       }
@@ -1865,10 +1825,10 @@ namespace Dune
     //     DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
     //             <<" during repartitioning.");
     //   }
-    Iterator index=outputIndexSet.begin();
+    auto index=outputIndexSet.begin();
     if(index!=end) {
       ++index;
-      for(Iterator old = outputIndexSet.begin(); index != end; old=index++) {
+      for(auto old = outputIndexSet.begin(); index != end; old=index++) {
         if(old->global()>index->global())
           DUNE_THROW(ISTLError, "Index set's globalindex not sorted correctly");
       }

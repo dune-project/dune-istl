@@ -137,13 +137,15 @@ namespace Dune {
 
     // recursive function template to access first entry of a matrix
     template<class M>
-    typename M::field_type& firstMatrixElement (M& A, typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
+    typename M::field_type& firstMatrixElement (M& A,
+                                                [[maybe_unused]] typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
     {
       return firstMatrixElement(*(A.begin()->begin()));
     }
 
     template<class K>
-    K& firstMatrixElement (K& A, typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
+    K& firstMatrixElement (K& A,
+                           [[maybe_unused]] typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
     {
       return A;
     }

@@ -386,7 +386,7 @@ namespace Dune
        */
       template<class M>
       typename FieldTraits<typename M::field_type>::real_type operator()(const M& m,
-                                                                         typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr) const
+                                                                         [[maybe_unused]] typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr) const
       {
         typedef typename M::field_type field_type;
         typedef typename FieldTraits<field_type>::real_type real_type;
@@ -1860,12 +1860,10 @@ namespace Dune
           vertex.properties().setIsolated();
         }else{
           // Examine all the edges beginning at this vertex.
-          typedef typename G::EdgeIterator EdgeIterator;
-          typedef typename Matrix::ConstColIterator ColIterator;
-          EdgeIterator eEnd = vertex.end();
-          ColIterator col = matrix[*vertex].begin();
+          auto eEnd = vertex.end();
+          auto col = matrix[*vertex].begin();
 
-          for(EdgeIterator edge = vertex.begin(); edge!= eEnd; ++edge, ++col) {
+          for(auto edge = vertex.begin(); edge!= eEnd; ++edge, ++col) {
             // Move to the right column.
             while(col.index()!=edge.target())
               ++col;
