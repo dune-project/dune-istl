@@ -1825,14 +1825,8 @@ namespace Dune
     //     DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
     //             <<" during repartitioning.");
     //   }
-    auto index=outputIndexSet.begin();
-    if(index!=end) {
-      ++index;
-      for(auto old = outputIndexSet.begin(); index != end; old=index++) {
-        if(old->global()>index->global())
-          DUNE_THROW(ISTLError, "Index set's globalindex not sorted correctly");
-      }
-    }
+    std::is_sorted(outputIndexSet.begin(), outputIndexSet.end(),
+                   [](const auto& v1, const auto& v2){ return v1.global() < v2.global();});
 #endif
     if(verbose) {
       oocomm.communicator().barrier();
