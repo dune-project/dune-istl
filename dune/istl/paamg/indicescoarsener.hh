@@ -339,10 +339,9 @@ namespace Dune
         for(CIterator iter=attributes.begin(); iter!= attributes.end(); ++iter)
           *iter = std::numeric_limits<char>::max();
 
-        typedef typename RemoteIndices::RemoteIndexList::const_iterator Iterator;
-        Iterator riEnd = neighbour->second.second->end();
+        auto riEnd = neighbour->second.second->end();
 
-        for(Iterator index = neighbour->second.second->begin();
+        for(auto index = neighbour->second.second->begin();
             index != riEnd; ++index) {
           if(!E::contains(index->localIndexPair().local().attribute()) &&
              aggregates[index->localIndexPair().local()] !=

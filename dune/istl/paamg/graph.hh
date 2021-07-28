@@ -2003,10 +2003,9 @@ namespace Dune
 
           start_[*vertex] = edge-edges_;
 
-          typedef typename Graph::ConstEdgeIterator Iterator;
-          Iterator endEdge = vertex.end();
+          auto endEdge = vertex.end();
 
-          for(Iterator iter=vertex.begin(); iter!= endEdge; ++iter)
+          for(auto iter=vertex.begin(); iter!= endEdge; ++iter)
             if(!excluded[iter.target()]) {
               *edge = iter.target();
               ++edge;

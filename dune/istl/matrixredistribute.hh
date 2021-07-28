@@ -431,8 +431,8 @@ namespace Dune
             *c=0;
             if(c.index()==i->local()) {
               auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
-                auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
-                for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
+                auto&& matrixView = Dune::Impl::asMatrix(scalarOrMatrix);
+                for (auto rowIt = matrixView.begin(); rowIt != matrixView.end(); ++rowIt)
                   (*rowIt)[rowIt.index()] = value;
               };
               setDiagonal(*c, 1);

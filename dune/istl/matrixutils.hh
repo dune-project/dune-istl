@@ -114,13 +114,15 @@ namespace Dune
    * number of nonzero blocks time n*m.
    */
   template<class M>
-  inline auto countNonZeros(const M& matrix,typename std::enable_if_t<Dune::IsNumber<M>::value>* sfinae = nullptr)
+  inline auto countNonZeros(const M&,
+                            [[maybe_unused]] typename std::enable_if_t<Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     return 1;
   }
 
   template<class M>
-  inline auto countNonZeros(const M& matrix,typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
+  inline auto countNonZeros(const M& matrix,
+                            [[maybe_unused]] typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
   {
     typename M::size_type nonZeros = 0;
     for(auto&& row : matrix)
