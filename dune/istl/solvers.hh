@@ -904,7 +904,7 @@ namespace Dune {
        \note Currently, the RestartedGMResSolver aborts when it detects a
              breakdown.
      */
-    virtual void apply (X& x, Y& b, double reduction, InverseOperatorResult& res)
+    virtual void apply (X& x, Y& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
@@ -1191,15 +1191,15 @@ namespace Dune {
           // use v[i+1] as temporary vector for w
           _op->apply(w[i], v[i+1]);
           // do Arnoldi algorithm
-          for(int k=0; k<i+1; k++)
+          for(int kk=0; kk<i+1; kk++)
           {
             // notice that _sp->dot(v[k],v[i+1]) = v[k]\adjoint v[i+1]
             // so one has to pay attention to the order
             // in the scalar product for the complex case
             // doing the modified Gram-Schmidt algorithm
-            H[k][i] = _sp->dot(v[k],v[i+1]);
-            // w -= H[k][i] * v[k]
-            v[i+1].axpy(-H[k][i], v[k]);
+            H[kk][i] = _sp->dot(v[kk],v[i+1]);
+            // w -= H[k][i] * v[kk]
+            v[i+1].axpy(-H[kk][i], v[kk]);
           }
           H[i+1][i] = _sp->norm(v[i+1]);
           if(Simd::allTrue(abs(H[i+1][i]) < EPSILON))

@@ -33,8 +33,8 @@ namespace Dune
       public T
     {
     public:
-      CombinedFunctor(const T& tuple)
-        : T(tuple)
+      CombinedFunctor(const T& tuple_)
+        : T(tuple_)
       {}
 
       template<class T1>
