@@ -71,7 +71,8 @@ namespace Dune
       typedef std::tuple<MatrixGraph*,PropertiesGraph*> GraphTuple;
 
       template<class OF, class T>
-      static GraphTuple create([[maybe_unused]] const M& matrix, T& excluded,
+      static GraphTuple create([[maybe_unused]] const M& matrix,
+                               [[maybe_unused]] T& excluded,
                                [[maybe_unused]] const SequentialInformation& pinfo,
                                const OF&)
       {
