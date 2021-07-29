@@ -356,7 +356,6 @@ namespace Dune
     template<class G, class S, class V>
     void BaseConnectivityConstructor::ConnectedBuilder<G,S,V>::operator()(const ConstEdgeIterator& edge)
     {
-      typedef typename G::VertexDescriptor Vertex;
       const Vertex& vertex = aggregates_[edge.target()];
       assert(vertex!= AggregatesMap<Vertex>::UNAGGREGATED);
       if(vertex!= AggregatesMap<Vertex>::ISOLATED)

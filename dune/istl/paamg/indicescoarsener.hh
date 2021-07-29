@@ -288,8 +288,6 @@ namespace Dune
             aggregates.template breadthFirstSearch<false>(*index, aggregates[*index],
                                                           fineGraph, renumberer, visitedMap);
 
-            typedef typename GlobalLookupIndexSet::IndexPair::GlobalIndex GlobalIndex;
-
             if(renumberer.globalIndex()!=std::numeric_limits<GlobalIndex>::max()) {
               // vertex is in the index set.
               //std::cout <<" Adding global="<< renumberer.globalIndex()<<" local="<<static_cast<std::size_t>(renumberer)<<std::endl;
