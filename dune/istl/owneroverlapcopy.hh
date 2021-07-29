@@ -232,10 +232,9 @@ namespace Dune {
     {
       if (OwnerOverlapToAllInterfaceBuilt)
         OwnerOverlapToAllInterface.free();
-      typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
-      typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
       OwnerOverlapSet sourceFlags;
-      AllSet destFlags;
+      Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet>
+        destFlags;
       OwnerOverlapToAllInterface.build(ri,sourceFlags,destFlags);
       OwnerOverlapToAllInterfaceBuilt = true;
     }
@@ -254,10 +253,10 @@ namespace Dune {
     {
       if (OwnerCopyToAllInterfaceBuilt)
         OwnerCopyToAllInterface.free();
+
       typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> OwnerCopySet;
-      typedef Combine<OwnerCopySet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> AllSet;
       OwnerCopySet sourceFlags;
-      AllSet destFlags;
+      Combine<OwnerCopySet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> destFlags;
       OwnerCopyToAllInterface.build(ri,sourceFlags,destFlags);
       OwnerCopyToAllInterfaceBuilt = true;
     }
@@ -266,6 +265,8 @@ namespace Dune {
     {
       if (OwnerCopyToOwnerCopyInterfaceBuilt)
         OwnerCopyToOwnerCopyInterface.free();
+
+
       typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> OwnerCopySet;
       OwnerCopySet sourceFlags;
       OwnerCopySet destFlags;
