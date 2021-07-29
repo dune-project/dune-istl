@@ -2010,9 +2010,9 @@ namespace Dune
                                                  const AggregatesMap<Vertex>& aggregates) const
     {
       DependencyCounter unused, aggregated;
-      typedef AggregateVisitor<DependencyCounter> Counter;
-      typedef std::tuple<Counter,Counter> CounterTuple;
-      CombinedFunctor<CounterTuple> visitors(CounterTuple(Counter(aggregates, AggregatesMap<Vertex>::UNAGGREGATED, unused), Counter(aggregates, aggregate, aggregated)));
+      typedef AggregateVisitor<DependencyCounter> CounterT;
+      typedef std::tuple<CounterT,CounterT> CounterTuple;
+      CombinedFunctor<CounterTuple> visitors(CounterTuple(CounterT(aggregates, AggregatesMap<Vertex>::UNAGGREGATED, unused), CounterT(aggregates, aggregate, aggregated)));
       visitNeighbours(*graph_, vertex, visitors);
       return std::make_pair(unused.value(), aggregated.value());
     }
