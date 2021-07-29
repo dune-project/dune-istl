@@ -9,6 +9,7 @@
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
 #include <dune/common/propertymap.hh>
+#include <dune/common/ftraits.hh>
 
 namespace Dune
 {
@@ -36,7 +37,7 @@ namespace Dune
       /**
        * @brief The type of the relaxation factor.
        */
-      typedef T RelaxationFactor;
+      typedef typename FieldTraits<T>::real_type RelaxationFactor;
 
       /**
        * @brief The numbe of iterations to perform.
