@@ -551,13 +551,6 @@ namespace Dune {
       const std::size_t rows = mat.N();
       const std::size_t cols = mat.M();
 
-      // do we need to write nested matrix blocks?
-      using T = typename Mat::block_type;
-      using FieldType = typename FieldTraits<T>::field_type;
-      using UnitMat = FieldMatrix<FieldType, 1, 1>;
-      const bool is_unit_mat = std::is_same_v<T, UnitMat>;
-      const bool end_recursion = is_unit_mat or (Dune::blockLevel<T>() < 1);
-
       // counter of offsets for every block
       std::size_t row_offset = interspace;
       std::size_t col_offset = interspace;
@@ -578,7 +571,8 @@ namespace Dune {
       row_prefix.push_back(0);
       col_prefix.push_back(0);
 
-      if constexpr (end_recursion) {
+      // do we need to write nested matrix blocks?
+      if constexpr (Dune::blockLevel<typename Mat::block_type>() == 0) {
         // simple case: write svg block content to stream for each value
         for_each_entry([&](const auto &row, const auto &col, const auto &val) {
           std::size_t x_off = interspace + col * (interspace + block_size);
