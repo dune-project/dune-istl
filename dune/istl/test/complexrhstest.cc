@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 
   DummyPreconditioner dummyPrec(1.);
 
-  const FIELD_TYPE relaxFactor(1.);
+  const typename Dune::FieldTraits<FIELD_TYPE>::real_type relaxFactor(1.);
   JacobiPreconditioner jacobiPrec1(mat,1,relaxFactor);
   JacobiPreconditioner jacobiPrec2(mat,maxIter,relaxFactor);
 

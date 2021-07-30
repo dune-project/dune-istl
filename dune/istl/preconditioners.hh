@@ -80,6 +80,8 @@ namespace Dune {
     typedef typename range_type::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
     //! \brief type of the wrapped inverse operator
     typedef O InverseOperator;
 
@@ -146,6 +148,8 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
 
     /*! \brief Constructor.
 
@@ -154,7 +158,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqSSOR (const M& A, int n, scalar_field_type w)
+    SeqSSOR (const M& A, int n, real_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -191,7 +195,7 @@ namespace Dune {
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqSSOR (const M& A, const ParameterTree& configuration)
-      : SeqSSOR(A, configuration.get<int>("iterations",1), configuration.get<scalar_field_type>("relaxation",1.0))
+      : SeqSSOR(A, configuration.get<int>("iterations",1), configuration.get<real_field_type>("relaxation",1.0))
     {}
 
     /*!
@@ -235,7 +239,7 @@ namespace Dune {
     //! \brief The number of steps to do in apply
     int _n;
     //! \brief The relaxation factor to use
-    scalar_field_type _w;
+    real_field_type _w;
   };
   DUNE_REGISTER_PRECONDITIONER("ssor", defaultPreconditionerBlockLevelCreator<Dune::SeqSSOR>());
 
@@ -264,6 +268,8 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
 
     /*! \brief Constructor.
 
@@ -272,7 +278,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqSOR (const M& A, int n, scalar_field_type w)
+    SeqSOR (const M& A, int n, real_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -309,7 +315,7 @@ namespace Dune {
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqSOR (const M& A, const ParameterTree& configuration)
-      : SeqSOR(A, configuration.get<int>("iterations",1), configuration.get<scalar_field_type>("relaxation",1.0))
+      : SeqSOR(A, configuration.get<int>("iterations",1), configuration.get<real_field_type>("relaxation",1.0))
     {}
 
     /*!
@@ -371,7 +377,7 @@ namespace Dune {
     //! \brief The number of steps to perform in apply.
     int _n;
     //! \brief The relaxation factor to use.
-    scalar_field_type _w;
+    real_field_type _w;
   };
   DUNE_REGISTER_PRECONDITIONER("sor", defaultPreconditionerBlockLevelCreator<Dune::SeqSOR>());
 
@@ -413,6 +419,8 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
 
     /*! \brief Constructor.
 
@@ -421,7 +429,7 @@ namespace Dune {
        \param n The number of iterations to perform.
        \param w The relaxation factor.
      */
-    SeqJac (const M& A, int n, scalar_field_type w)
+    SeqJac (const M& A, int n, real_field_type w)
       : _A_(A), _n(n), _w(w)
     {
       CheckIfDiagonalPresent<M,l>::check(_A_);
@@ -458,7 +466,7 @@ namespace Dune {
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqJac (const M& A, const ParameterTree& configuration)
-      : SeqJac(A, configuration.get<int>("iterations",1), configuration.get<scalar_field_type>("relaxation",1.0))
+      : SeqJac(A, configuration.get<int>("iterations",1), configuration.get<real_field_type>("relaxation",1.0))
     {}
 
     /*!
@@ -501,7 +509,7 @@ namespace Dune {
     //! \brief The number of steps to perform during apply.
     int _n;
     //! \brief The relaxation parameter to use.
-    scalar_field_type _w;
+    real_field_type _w;
   };
   DUNE_REGISTER_PRECONDITIONER("jac", defaultPreconditionerBlockLevelCreator<Dune::SeqJac>());
 
@@ -535,6 +543,8 @@ namespace Dune {
 
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
 
     //! \brief type of ILU storage
     typedef typename ILU::CRS< block_type , typename M::allocator_type> CRS;
@@ -546,7 +556,7 @@ namespace Dune {
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, scalar_field_type w, const bool resort = false )
+    SeqILU (const M& A, real_field_type w, const bool resort = false )
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
@@ -585,7 +595,7 @@ namespace Dune {
      */
     SeqILU(const M& A, const ParameterTree& config)
       : SeqILU(A, config.get("n", 0),
-               config.get<scalar_field_type>("relaxation", 1.0),
+               config.get<real_field_type>("relaxation", 1.0),
                config.get("resort", false))
     {}
 
@@ -597,13 +607,13 @@ namespace Dune {
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, int n, scalar_field_type w, const bool resort = false )
+    SeqILU (const M& A, int n, real_field_type w, const bool resort = false )
       : ILU_(),
         lower_(),
         upper_(),
         inv_(),
         w_(w),
-        wNotIdentity_([w]{using std::abs; return abs(w - scalar_field_type(1)) > 1e-15;}() )
+        wNotIdentity_([w]{using std::abs; return abs(w - real_field_type(1)) > 1e-15;}() )
     {
       if( n == 0 )
       {
@@ -682,7 +692,7 @@ namespace Dune {
     std::vector< block_type, typename matrix_type::allocator_type > inv_;
 
     //! \brief The relaxation factor to use.
-    const scalar_field_type w_;
+    const real_field_type w_;
     //! \brief true if w != 1.0
     const bool wNotIdentity_;
   };
@@ -708,13 +718,15 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
 
     /*! \brief Constructor.
 
        Constructor gets all parameters to operate the prec.
        \param w The relaxation factor.
      */
-    Richardson (scalar_field_type w=1.0) :
+    Richardson (real_field_type w=1.0) :
       _w(w)
     {}
 
@@ -730,7 +742,7 @@ namespace Dune {
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     Richardson (const ParameterTree& configuration)
-      : Richardson(configuration.get<scalar_field_type>("relaxation", 1.0))
+      : Richardson(configuration.get<real_field_type>("relaxation", 1.0))
     {}
 
     /*!
@@ -768,7 +780,7 @@ namespace Dune {
 
   private:
     //! \brief The relaxation factor to use.
-    scalar_field_type _w;
+    real_field_type _w;
   };
   DUNE_REGISTER_PRECONDITIONER("richardson", [](auto tl, const auto& /* mat */, const ParameterTree& config){
                                                using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
@@ -805,6 +817,8 @@ namespace Dune {
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Simd::Scalar<field_type> scalar_field_type;
+    //! \brief real scalar type underlying the field_type
+    typedef typename FieldTraits<scalar_field_type>::real_type real_field_type;
 
     /*!
        \brief Constructor.
@@ -835,7 +849,7 @@ namespace Dune {
        See \ref ISTL_Factory for the ParameterTree layout and examples.
      */
     SeqILDL(const matrix_type& A, const ParameterTree& config)
-      : SeqILDL(A, config.get<scalar_field_type>("relaxation", 1.0))
+      : SeqILDL(A, config.get<real_field_type>("relaxation", 1.0))
     {}
 
     /**
@@ -846,7 +860,7 @@ namespace Dune {
      * \param[in]  A      matrix to operate on
      * \param[in]  relax  relaxation factor
      **/
-    explicit SeqILDL ( const matrix_type &A, scalar_field_type relax = scalar_field_type( 1 ) )
+    explicit SeqILDL ( const matrix_type &A, real_field_type relax = real_field_type( 1 ) )
       : decomposition_( A.N(), A.M(), matrix_type::random ),
         relax_( relax )
     {
@@ -905,7 +919,7 @@ namespace Dune {
 
   private:
     matrix_type decomposition_;
-    scalar_field_type relax_;
+    real_field_type relax_;
   };
   DUNE_REGISTER_PRECONDITIONER("ildl", defaultPreconditionerCreator<Dune::SeqILDL>());
 
