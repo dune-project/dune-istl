@@ -542,7 +542,7 @@ namespace Dune {
               class RowPrefix, class ColPrefix>
     std::pair<std::size_t, size_t>
     writeSVGMatrix(const Mat &mat, Stream &out,
-                  const SVGMatrixOptions &opts, RowPrefix row_prefix,
+                  SVGMatrixOptions opts, RowPrefix row_prefix,
                   ColPrefix col_prefix) {
       // get values to fill the offests
       const std::size_t block_size = opts.block_size;
@@ -550,6 +550,10 @@ namespace Dune {
 
       const std::size_t rows = mat.N();
       const std::size_t cols = mat.M();
+
+      // disable header write for recursive calls
+      const bool write_header = opts.write_header;
+      opts.write_header = false;
 
       // counter of offsets for every block
       std::size_t row_offset = interspace;
@@ -585,10 +589,6 @@ namespace Dune {
         col_offset += cols * (block_size + interspace);
         row_offset += rows * (block_size + interspace);
       } else {
-        // disable write of header, we do it outside
-        SVGMatrixOptions sub_opts{opts};
-        sub_opts.write_header = false;
-
         // before we write anything, we need to calculate the
         // offset for every {row,col} index
         std::vector<std::size_t> col_offsets(cols + 1, 0);
@@ -597,7 +597,7 @@ namespace Dune {
           NullStream dev0;
           // get size of sub-block
           auto sub_size =
-              writeSVGMatrix(val, dev0, sub_opts, row_prefix, col_prefix);
+              writeSVGMatrix(val, dev0, opts, row_prefix, col_prefix);
 
           // if we didn't see col size before
           if (col_offsets[col + 1] == 0) // write it in the offset vector
@@ -632,7 +632,7 @@ namespace Dune {
           ss << "<svg x='" << col_offsets[col] << "' y='" << row_offsets[row]
             << "' width='" << width << "' height='" << height << "'>\n";
           // write a nested svg with the contents of the sub-block
-          writeSVGMatrix(val, ss, sub_opts, row_prefix, col_prefix);
+          writeSVGMatrix(val, ss, opts, row_prefix, col_prefix);
           ss << "</svg>\n";
         });
         col_offset = col_offsets.back();
@@ -643,7 +643,7 @@ namespace Dune {
 
       // write content in order!
       // (i) if required, first header
-      if (opts.write_header)
+      if (write_header)
         writeSVGMatrixHeader(out, opts, {col_offset, row_offset});
 
       col_prefix.pop_back();
@@ -785,7 +785,7 @@ namespace Dune {
    */
   template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
   void writeSVGMatrix(const Mat &mat, std::ostream &out,
-                      const SVGOptions& opts = {}) {
+                      SVGOptions opts = {}) {
     // We need a vector that can fit all the multi-indices for rows and colums
     using IndexPrefix = Dune::ReservedVector<std::size_t, blockLevel<Mat>()>;
     // Call overload for Mat type
