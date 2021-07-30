@@ -615,7 +615,7 @@ namespace Dune
       // and receiver will ignore it.
       if (col==cont.matrix[i].end()) {
         numlimits = std::numeric_limits<GlobalIndex>::max();
-        datastore = std::make_pair(numlimits,*col);
+        datastore = Data(numlimits,*col);
         return datastore;
       }
       else {
@@ -625,10 +625,10 @@ namespace Dune
         // Store the data to prevent reference to temporary
         // Only send index if col is no ghost
         if ( index->local().attribute() != 2)
-          datastore = std::make_pair(index->global(),*col);
+          datastore = Data(index->global(),*col);
         else {
           numlimits = std::numeric_limits<GlobalIndex>::max();
-          datastore = std::make_pair(numlimits,*col);
+          datastore = Data(numlimits,*col);
         }
         return datastore;
       }
