@@ -541,12 +541,11 @@ namespace Dune {
     template <class Mat, class Stream, class SVGMatrixOptions,
               class RowPrefix, class ColPrefix>
     std::pair<std::size_t, size_t>
-    writeSVGMatrix(const Mat &mat, Stream &out,
-                  SVGMatrixOptions opts, RowPrefix row_prefix,
-                  ColPrefix col_prefix) {
+    writeSVGMatrix(const Mat &mat, Stream &out, SVGMatrixOptions opts,
+                  RowPrefix row_prefix, ColPrefix col_prefix) {
       // get values to fill the offests
-      const std::size_t block_size = opts.block_size;
-      const std::size_t interspace = opts.interspace;
+      const auto& block_size = opts.block_size;
+      const auto& interspace = opts.interspace;
 
       const std::size_t rows = mat.N();
       const std::size_t cols = mat.M();
@@ -639,8 +638,6 @@ namespace Dune {
         row_offset = row_offsets.back();
       }
 
-
-
       // write content in order!
       // (i) if required, first header
       if (write_header)
@@ -654,7 +651,7 @@ namespace Dune {
       // (iii) the content of the matrix
       out << ss.str();
       // (iv) if required, close the header
-      if (opts.write_header)
+      if (write_header)
         out << "</g>\n</svg>\n";
 
       // return the total required for this block
