@@ -1,4 +1,6 @@
-# Master (will become release 2.8)
+# Master (will become release 2.9)
+
+# Release 2.8
 
 - Extended the MatrixMarket IO functions for reading and writing vectors with
   SIMD field_type as tall-skinny matrices.
