@@ -796,28 +796,36 @@ namespace Dune {
 
   struct UMFPackCreator {
 
-    template<class TL, class M,class=void> struct isValidBlock : std::false_type{};
-    template<class TL, class M> struct isValidBlock<TL,M,
+    template<class OpTraits, class=void> struct isValidBlock : std::false_type{};
+    template<class OpTraits> struct isValidBlock<OpTraits,
       std::enable_if_t<
-           std::is_same_v<Impl::UMFPackDomainType<M>, typename Dune::TypeListElement<1,TL>::type>
-        && std::is_same_v<Impl::UMFPackRangeType<M>,  typename Dune::TypeListElement<2,TL>::type>
+           std::is_same_v<Impl::UMFPackDomainType<typename OpTraits::matrix_type>, typename OpTraits::domain_type>
+        && std::is_same_v<Impl::UMFPackRangeType<typename OpTraits::matrix_type>, typename OpTraits::range_type>
       >> : std::true_type {};
 
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<Impl::UMFPackDomainType<M>,Impl::UMFPackRangeType<M>>>
-    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
-      std::enable_if_t<isValidBlock<TL, M>::value,int> = 0) const
+    template<typename OpTraits, typename OP>
+    template<typename OpTraits, typename OP>
+    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
+                                          typename OpTraits::range_type>>
+    operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
+      std::enable_if_t<
+                isValidBlock<OpTraits>::value
+                && Simd::lanes<typename OpTraits::domain_type::field_type>() == 1,int> = 0) const
     {
+      using M = typename OpTraits::matrix_type;
+      const M& mat = opTraits.getMatOrThrow(op);
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
     }
 
     // second version with SFINAE to validate the template parameters of UMFPack
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<!isValidBlock<TL, M>::value,int> = 0) const
+    template<typename OpTraits, typename OP>
+    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
+                                          typename OpTraits::range_type>>
+    operator() (OpTraits /*opTraits*/, const std::shared_ptr<OP>& /*op*/, const Dune::ParameterTree& /*config*/,
+      std::enable_if_t<
+                !isValidBlock<OpTraits>::value
+                || Simd::lanes<typename OpTraits::domain_type::field_type>() != 1,int> = 0) const
     {
       using D = typename Dune::TypeListElement<1,TL>::type;
       using R = typename Dune::TypeListElement<2,TL>::type;
@@ -833,7 +841,7 @@ namespace Dune {
       );
     }
   };
-  DUNE_REGISTER_DIRECT_SOLVER("umfpack",Dune::UMFPackCreator());
+  DUNE_REGISTER_SOLVER("umfpack",Dune::UMFPackCreator());
 } // end namespace Dune
 
 #endif // HAVE_SUITESPARSE_UMFPACK

@@ -11,7 +11,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include<dune/istl/solver.hh>
-#include <dune/istl/solverfactory.hh>
+#include <dune/istl/solverregistry.hh>
 #include <dune/istl/foreach.hh>
 
 #include <vector>
@@ -529,29 +529,31 @@ private:
     template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
     template<int k> struct isValidBlock<FieldVector<float,k>> : std::true_type{};
 
-    template<class TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator()(TL /*tl*/, const M& mat, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    template<class OpTraits, typename OP>
+    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
+                                          typename OpTraits::range_type>>
+    operator()(OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& /*config*/,
+               std::enable_if_t<isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
     {
-      using D = typename Dune::TypeListElement<1, TL>::type;
+      using D = typename OpTraits::domain_type;
+      using M = typename OpTraits::matrix_type;
+      const M& mat = opTraits.getMatOrThrow(op);
       auto solver = std::make_shared<Dune::Cholmod<D>>();
       solver->setMatrix(mat);
       return solver;
     }
 
     // second version with SFINAE to validate the template parameters of Cholmod
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-                std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+    template<class OpTraits, typename OP>
+    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
+                                          typename OpTraits::range_type>>
+    operator()(OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& /*config*/,
+               std::enable_if_t<!isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
     {
       DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
     }
   };
-  DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());
+  DUNE_REGISTER_SOLVER("cholmod", Dune::CholmodCreator());
 
 } /* namespace Dune */
 

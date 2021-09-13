@@ -10,65 +10,70 @@
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/solver.hh>
 
-#define DUNE_REGISTER_DIRECT_SOLVER(name, ...)                \
-  DUNE_REGISTRY_PUT(DirectSolverTag, name, __VA_ARGS__)
-
 #define DUNE_REGISTER_PRECONDITIONER(name, ...)                \
   DUNE_REGISTRY_PUT(PreconditionerTag, name, __VA_ARGS__)
 
-#define DUNE_REGISTER_ITERATIVE_SOLVER(name, ...)                \
-  DUNE_REGISTRY_PUT(IterativeSolverTag, name, __VA_ARGS__)
+#define DUNE_REGISTER_SOLVER(name, ...)                \
+  DUNE_REGISTRY_PUT(SolverTag, name, __VA_ARGS__)
 
 namespace Dune{
+
   /** @addtogroup ISTL_Factory
       @{
   */
 
   namespace {
-    struct DirectSolverTag {};
     struct PreconditionerTag {};
-    struct IterativeSolverTag {};
+    struct SolverTag {};
   }
+
   template<template<class,class,class,int>class Preconditioner, int blockLevel=1>
   auto defaultPreconditionerBlockLevelCreator(){
-    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
-           {
-             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
-             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
-               = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
-             return preconditioner;
-           };
+    return [](auto opInfo, const auto& linearOperator, const Dune::ParameterTree& config)
+    {
+      using OpInfo = std::decay_t<decltype(opInfo)>;
+      using Matrix = typename OpInfo::matrix_type;
+      using Domain = typename OpInfo::domain_type;
+      using Range = typename OpInfo::range_type;
+      const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
+      std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+        = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+      return preconditioner;
+    };
   }
 
   template<template<class,class,class>class Preconditioner>
   auto defaultPreconditionerCreator(){
-    return [](auto typeList, const auto& matrix, const Dune::ParameterTree& config)
-           {
-             using Matrix = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-             using Domain = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-             using Range = typename Dune::TypeListElement<2, decltype(typeList)>::type;
-             std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
-               = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
-             return preconditioner;
-           };
+    return [](auto opInfo, const auto& linearOperator, const Dune::ParameterTree& config)
+    {
+      using OpInfo = std::decay_t<decltype(opInfo)>;
+      using Matrix = typename OpInfo::matrix_type;
+      using Domain = typename OpInfo::domain_type;
+      using Range = typename OpInfo::range_type;
+      const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
+      std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
+        = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+      return preconditioner;
+    };
   }
 
   template<template<class...>class Solver>
   auto defaultIterativeSolverCreator(){
-    return [](auto typeList,
+    return [](auto opInfo,
               const auto& linearOperator,
-              const auto& scalarProduct,
-              const auto& preconditioner,
               const Dune::ParameterTree& config)
-           {
-             using Domain = typename Dune::TypeListElement<0, decltype(typeList)>::type;
-             using Range = typename Dune::TypeListElement<1, decltype(typeList)>::type;
-             std::shared_ptr<Dune::InverseOperator<Domain, Range>> solver
-               = std::make_shared<Solver<Domain>>(linearOperator, scalarProduct, preconditioner, config);
-             return solver;
-           };
+    {
+      using OpInfo = std::decay_t<decltype(opInfo)>;
+      using Operator = typename OpInfo::operator_type;
+      using Domain = typename OpInfo::domain_type;
+      using Range = typename OpInfo::range_type;
+      std::shared_ptr<Operator> _op = std::dynamic_pointer_cast<Operator>(linearOperator);
+      std::shared_ptr<Preconditioner<Domain,Range>> preconditioner = getPreconditionerFromFactory(_op, config.sub("preconditioner"));
+      std::shared_ptr<ScalarProduct<Range>> scalarProduct = opInfo.getScalarProduct(linearOperator);
+      std::shared_ptr<Dune::InverseOperator<Domain, Range>> solver
+        = std::make_shared<Solver<Domain>>(linearOperator, scalarProduct, preconditioner, config);
+      return solver;
+    };
   }
 
   /* This exception is thrown, when the requested solver is in the factory but
