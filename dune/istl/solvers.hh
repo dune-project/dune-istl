@@ -623,11 +623,16 @@ namespace Dune {
       _prec->pre(x,b);
 
       // overwrite rhs with defect
-      _op->applyscaleadd(-1,x,b);
+      _op->applyscaleadd(-1.0,x,b); // b -= Ax
 
-      // compute residual norm
-      real_type def = _sp->norm(b);
-      if(iteration.step(0, def)){
+      // some temporary vectors
+      X z(b), dummy(b);
+      z = 0.0;
+
+      // calculate preconditioned defect
+      _prec->apply(z,b); // r = W^-1 (b - Ax)
+      real_type def = _sp->norm(z);
+      if (iteration.step(0, def)){
         _prec->post(x);
         return;
       }
@@ -644,13 +649,6 @@ namespace Dune {
 
       // the rhs vector of the min problem
       std::array<field_type,2> xi{{1.0,0.0}};
-
-      // some temporary vectors
-      X z(b), dummy(b);
-
-      // initialize and clear correction
-      z = 0.0;
-      _prec->apply(z,b);
 
       // beta is real and positive in exact arithmetic
       // since it is the norm of the basis vectors (in unpreconditioned case)
@@ -741,8 +739,8 @@ namespace Dune {
         }
       } // end for
 
-        // postprocess preconditioner
-        _prec->post(x);
+      // postprocess preconditioner
+      _prec->post(x);
     }
 
   private:
