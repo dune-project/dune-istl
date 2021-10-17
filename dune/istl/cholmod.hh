@@ -337,6 +337,25 @@ public:
       return c_;
   }
 
+  /** \brief The CHOLMOD data structure that stores the factorization
+   *
+   * Access to this is necessary for the more advanced features of CHOLMOD.
+   * You need to know what you are doing!
+   */
+  cholmod_factor& cholmodFactor()
+  {
+    return *L_;
+  }
+
+  /** \brief The CHOLMOD data structure that stores the factorization
+   *
+   * Access to this is necessary for the more advanced features of CHOLMOD.
+   * You need to know what you are doing!
+   */
+  const cholmod_factor& cholmodFactor() const
+  {
+    return *L_;
+  }
 private:
 
   // create a std::unique_ptr to a cholmod_dense object with a deleter

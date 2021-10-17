@@ -6,6 +6,10 @@
   In some numerical tests with a Stokes system this lead to earlier termination when using the same
   termination criterion.
 
+- The `Cholmod` class now provides access to the `cholmod_factor` class that is
+  used by `CHOLMOD` itself to store the Cholesky factor.  This can be used to
+  use the more advanced features of `CHOLMOD`.
+
 # Release 2.8
 
 - Extended the MatrixMarket IO functions for reading and writing vectors with
