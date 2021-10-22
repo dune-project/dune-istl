@@ -34,7 +34,7 @@ def MatrixIndexSet(rows, cols):
 def BCRSMatrix(blockType):
     includes = ["dune/istl/bcrsmatrix.hh"]
     try:
-        typeName = "Dune::BCRSMatrix<" + blockType._typeName + " >"
+        typeName = "Dune::BCRSMatrix<" + blockType.cppTypeName + " >"
         return load(includes,typeName).BCRSMatrix
     except AttributeError:
         #check whether blocksize is 1,1
