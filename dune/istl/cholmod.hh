@@ -238,7 +238,7 @@ public:
                               nonZeros,      // # of nonzeroes
                               1,             // indices are sorted ( 1 = true)
                               1,             // matrix is "packed" ( 1 = true)
-                              -1,            // stype of matrix ( -1 = cosider the lower part only )
+                              -1,            // stype of matrix ( -1 = consider the lower part only )
                               CHOLMOD_REAL,  // xtype of matrix ( CHOLMOD_REAL = single array, no complex numbers)
                               &c_            // cholmod_common ptr
                              ), deleter);
@@ -337,9 +337,29 @@ public:
       return c_;
   }
 
+  /** \brief The CHOLMOD data structure that stores the factorization
+   *
+   * Access to this is necessary for the more advanced features of CHOLMOD.
+   * You need to know what you are doing!
+   */
+  cholmod_factor& cholmodFactor()
+  {
+    return *L_;
+  }
+
+  /** \brief The CHOLMOD data structure that stores the factorization
+   *
+   * Access to this is necessary for the more advanced features of CHOLMOD.
+   * You need to know what you are doing!
+   */
+  const cholmod_factor& cholmodFactor() const
+  {
+    return *L_;
+  }
 private:
 
-  // create a destrucable unique_ptr
+  // create a std::unique_ptr to a cholmod_dense object with a deleter
+  // that calls the appropriate cholmod cleanup routine
   auto make_cholmod_dense(cholmod_dense* x, cholmod_common* c)
   {
     const auto deleter = [c](auto* p) {
