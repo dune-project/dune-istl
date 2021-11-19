@@ -197,6 +197,24 @@ namespace Dune {
       return *this;
     }
 
+    //===== binary operators
+
+    //! vector space multiplication with scalar
+    template <class Scalar,
+              std::enable_if_t<IsNumber<Scalar>::value, int> = 0>
+    friend auto operator* ( const ScaledIdentityMatrix& matrix, Scalar scalar)
+    {
+      return ScaledIdentityMatrix<typename PromotionTraits<K,Scalar>::PromotedType, n>{matrix.scalar()*scalar};
+    }
+
+    //! vector space multiplication with scalar
+    template <class Scalar,
+              std::enable_if_t<IsNumber<Scalar>::value, int> = 0>
+    friend auto operator* (Scalar scalar, const ScaledIdentityMatrix& matrix)
+    {
+      return ScaledIdentityMatrix<typename PromotionTraits<Scalar,K>::PromotedType, n>{scalar*matrix.scalar()};
+    }
+
     //===== comparison ops
 
     //! comparison operator

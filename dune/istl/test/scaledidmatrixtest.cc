@@ -31,6 +31,9 @@ void test_matrix()
   // matrix vector product
   A.umv(v,f);
 
+  // matrix times scalar
+  auto r1 = A * 23.;
+  auto r2 = 42. * A;
 
   // test norms
   A.frobenius_norm();
