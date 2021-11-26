@@ -609,6 +609,18 @@ namespace Dune {
                       const TVector&, const K&) {}
   };
 
-} // end namespace
+} // end namespace Dune
 
+namespace std
+{
+  /** \brief Make std::tuple_element work for MultiTypeBlockMatrix
+   *
+   * It derives from std::tuple after all.
+   */
+  template <size_t i, typename... Args>
+  struct tuple_element<i,Dune::MultiTypeBlockMatrix<Args...> >
+  {
+    using type = typename std::tuple_element<i, std::tuple<Args...> >::type;
+  };
+}
 #endif
