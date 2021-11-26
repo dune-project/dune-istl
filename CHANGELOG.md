@@ -10,6 +10,9 @@
   used by `CHOLMOD` itself to store the Cholesky factor.  This can be used to
   use the more advanced features of `CHOLMOD`.
 
+- You can now multiply objects of type `ScaledIdentityMatrix` by scalars
+  using `operator*`.
+
 # Release 2.8
 
 - Extended the MatrixMarket IO functions for reading and writing vectors with
