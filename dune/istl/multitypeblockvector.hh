@@ -11,6 +11,7 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/typetraits.hh>
+#include <dune/common/std/type_traits.hh>
 
 #include "istlexception.hh"
 
@@ -73,12 +74,16 @@ namespace Dune {
 
     /** \brief The type used for scalars
      *
-     * The current code hardwires it to 'double', which is far from nice.
-     * On the other hand, it is not clear what the correct type is.  If the MultiTypeBlockVector class
-     * is instantiated with several vectors of different field_types, what should the resulting
-     * field_type be?
+     * Use the `std::common_type_t` of the `Args`' field_type and use `nonesuch` if no implementation of
+     * `std::common_type` is provided for the given `field_type` arguments.
      */
-    typedef double field_type;
+    using field_type = Std::detected_t<std::common_type_t, typename FieldTraits< std::decay_t<Args> >::field_type...>;
+
+    // make sure that we have an std::common_type: using an assertion produces a more readable error message
+    // than a compiler template instantiation error
+    static_assert ( sizeof...(Args) == 0 or not std::is_same_v<field_type, Std::nonesuch>,
+        "No std::common_type implemented for the given field_types of the Args. Please provide an implementation and check that a FieldTraits class is present for your type.");
+
 
     /** \brief Return the number of non-zero vector entries
      *

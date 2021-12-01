@@ -10,6 +10,7 @@
 #endif
 
 #include <iostream>
+#include <complex>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
@@ -110,6 +111,16 @@ int main(int argc, char** argv) try
     DUNE_THROW(Exception, "Modifying an entry of the referencing vector failed!");
 
   testMultiVector(multiVectorRef);
+
+  // test field_type (std::common_type) for some combinations
+  static_assert ( std::is_same_v<typename MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > >::field_type,
+                                 double > );
+  static_assert ( std::is_same_v<typename MultiTypeBlockVector<BlockVector<FieldVector<float,3> >, BlockVector<FieldVector<float,1> > >::field_type,
+                                 float > );
+  static_assert ( std::is_same_v<typename MultiTypeBlockVector<BlockVector<FieldVector<float,3> >, BlockVector<FieldVector<double,1> > >::field_type,
+                                 double > );
+  static_assert ( std::is_same_v<typename MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<std::complex<double>,1> > >::field_type,
+                                 std::complex<double> > );
 
   return 0;
 }
