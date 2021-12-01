@@ -691,6 +691,24 @@ namespace Dune {
                         "   stroke-opacity: 1;\n"
                         " }\n";
 
+    // Color fill for default options
+    // opts.color_fill = [max,min](const double& val){
+    //   auto percentage = (val-min)/(max-min)*100;
+    //   return "hsl(348, " + std::to_string() + std::to_string(precentage) + "%, 41%)";};
+    // }
+    /**
+     * @brief Color fill for default options
+     *
+     * Example:
+     * @code{.cc}
+     * opts.color_fill = [max,min](const double& val){
+     *   auto percentage = (val-min)/(max-min)*100;
+     *   return "hsl(348, " + std::to_string(precentage) + "%, 41%)";};
+     * };
+     * @endcode
+     */
+    std::function<std::string(const double&)> color_fill;
+
     /**
      * @brief Helper function that returns an style class for a given prefix
      * @note This function is only a helper to the default writeSVGBlock and is
@@ -720,7 +738,7 @@ namespace Dune {
         assert(row_prefix.size() == col_prefix.size());
         for (std::size_t i = 0; i < row_prefix.size(); ++i)
           out << "[" << row_prefix[i] << ", "<< col_prefix[i] << "]";
-        if constexpr (Dune::blockLevel<Block>() < 1)
+        if constexpr (Dune::blockLevel<Block>() == 0)
           out << ": " << block;
         out << "</title>\n";
       }
@@ -758,7 +776,12 @@ namespace Dune {
       std::string block_class = this->blockStyleClass(row_prefix, col_prefix);
       // write a rectangle on the bounding box
       out << "<rect class='" << block_class << "' x='" << x_off << "' y='"
-          << y_off << "' width='" << width << "' height='" << height << "'>\n";
+          << y_off << "' width='" << width << "' height='" << height << "'";
+      if constexpr (Dune::blockLevel<Block>() == 0 and std::is_convertible<Block,double>{})
+        if (color_fill)
+          out << " style='fill-opacity: 1;fill:" << color_fill(double(block)) << "'";
+
+      out << ">\n";
       // give the rectangle a title (in html this shows info about the block)
       this->writeBlockTitle(out,row_prefix, col_prefix, block);
       // close rectangle
