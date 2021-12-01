@@ -337,8 +337,19 @@ namespace Dune {
     return s;
   }
 
+} // end namespace Dune
 
-
-} // end namespace
+namespace std
+{
+  /** \brief Make std::tuple_element work for MultiTypeBlockVector
+   *
+   * It derives from std::tuple after all.
+   */
+  template <size_t i, typename... Args>
+  struct tuple_element<i,Dune::MultiTypeBlockVector<Args...> >
+  {
+    using type = typename std::tuple_element<i, std::tuple<Args...> >::type;
+  };
+}
 
 #endif

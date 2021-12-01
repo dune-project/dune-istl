@@ -29,6 +29,20 @@ void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
     using size_type = typename MultiTypeBlockVector<Args...>::size_type;
     static_assert(std::numeric_limits<size_type>::is_integer, "size_type is not an integer!");
 
+    // Test whether we can use std::tuple_element
+    {
+      // Do std::tuple_element and operator[] return the same type?
+      using TupleElementType = typename std::tuple_element<0, MultiTypeBlockVector<Args...> >::type;
+      using BracketType = decltype(multiVector[Indices::_0]);
+
+      // As the return type of const operator[], BracketType will always
+      // be a const reference.  We cannot simply strip the const and the &,
+      // because entries of a MultiTypeBlockVector can be references themselves.
+      // Therefore, always add const& to the result of std::tuple_element as well.
+      constexpr bool sameType = std::is_same_v<const TupleElementType&,BracketType>;
+      static_assert(sameType, "std::tuple_element does not provide the type of the 0th MultiTypeBlockVector entry!");
+    }
+
     // test operator<<
     std::cout << multiVector << std::endl;
 

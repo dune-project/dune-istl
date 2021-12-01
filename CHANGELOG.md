@@ -13,6 +13,9 @@
 - You can now multiply objects of type `ScaledIdentityMatrix` by scalars
   using `operator*`.
 
+- You can now use `std::tuple_element` to get the types of `MultiTypeBlockVector` entries
+  and `MultiTypeBlockMatrix` rows.
+
 # Release 2.8
 
 - Extended the MatrixMarket IO functions for reading and writing vectors with

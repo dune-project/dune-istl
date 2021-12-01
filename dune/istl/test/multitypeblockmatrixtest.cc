@@ -31,6 +31,22 @@ using namespace Dune;
 // Import the static constants _0, _1, etc
 using namespace Indices;
 
+// Test whether we can use std::tuple_element
+template<typename... Args>
+void testTupleElement(const MultiTypeBlockMatrix<Args...>& multiMatrix)
+{
+  // Do std::tuple_element and operator[] return the same type?
+  using TupleElementType = typename std::tuple_element<0, MultiTypeBlockMatrix<Args...> >::type;
+  using BracketType = decltype(multiMatrix[_0]);
+
+  // As the return type of const operator[], BracketType will always
+  // be a const reference.  We cannot simply strip the const and the &,
+  // because entries of a MultiTypeBlockMatrix can be references themselves.
+  // Therefore, always add const& to the result of std::tuple_element as well.
+  constexpr bool sameType = std::is_same_v<const TupleElementType&,BracketType>;
+  static_assert(sameType, "std::tuple_element does not provide the type of the 0th MultiTypeBlockMatrix row!");
+}
+
 void testInterfaceMethods()
 {
   {
@@ -79,6 +95,9 @@ void testInterfaceMethods()
 
     // Test matrix-vector products
     testMatrixVectorProducts(multiMatrix, domainVector, rangeVector);
+
+    // Test whether std::tuple_element works
+    testTupleElement(multiMatrix);
   }
 
   {
