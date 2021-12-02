@@ -198,6 +198,14 @@ namespace Dune {
     void addindex (size_type row, size_type col) {}
     void endindices () {}
   };
+
+  template<typename B, typename A>
+  struct FieldTraits< BTDMatrix<B, A> >
+  {
+    using field_type = typename BTDMatrix<B, A>::field_type;
+    using real_type = typename FieldTraits<field_type>::real_type;
+  };
+
   /** @}*/
 
 }  // end namespace Dune

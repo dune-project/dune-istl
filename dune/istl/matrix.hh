@@ -1086,6 +1086,13 @@ namespace MatrixImp
     size_type cols_;
   };
 
+  template<class T, class A>
+  struct FieldTraits< Matrix<T, A> >
+  {
+    using field_type = typename Matrix<T, A>::field_type;
+    using real_type = typename FieldTraits<field_type>::real_type;
+  };
+
   /** \} */
 } // end namespace Dune
 
