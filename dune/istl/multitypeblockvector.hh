@@ -36,11 +36,11 @@ namespace Dune {
   /** @addtogroup DenseMatVec
       @{
    */
-  template <typename Arg0, typename... Args>
-  struct FieldTraits< MultiTypeBlockVector<Arg0, Args...> >
+  template <typename... Args>
+  struct FieldTraits< MultiTypeBlockVector<Args...> >
   {
-    typedef typename FieldTraits<Arg0>::field_type field_type;
-    typedef typename FieldTraits<Arg0>::real_type real_type;
+    using field_type = typename MultiTypeBlockVector<Args...>::field_type;
+    using real_type  = typename FieldTraits<field_type>::real_type;
   };
   /**
       @}
