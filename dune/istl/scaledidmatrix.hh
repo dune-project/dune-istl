@@ -501,6 +501,14 @@ namespace Dune {
         denseMatrix[i][i] = rhs.scalar();
     }
   };
+
+  template<class K, int n>
+  struct FieldTraits< ScaledIdentityMatrix<K, n> >
+  {
+    using field_type = typename ScaledIdentityMatrix<K, n>::field_type;
+    using real_type = typename FieldTraits<field_type>::real_type;
+  };
+
 } // end namespace
 
 #endif

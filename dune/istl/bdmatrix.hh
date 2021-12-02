@@ -145,6 +145,13 @@ namespace Dune {
     void addindex (size_type row, size_type col) {}
     void endindices () {}
   };
+
+  template<typename B, typename A>
+  struct FieldTraits< BDMatrix<B, A> >
+  {
+    using field_type = typename BDMatrix<B, A>::field_type;
+    using real_type = typename FieldTraits<field_type>::real_type;
+  };
   /** @}*/
 
 }  // end namespace Dune

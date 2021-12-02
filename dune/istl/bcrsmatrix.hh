@@ -2301,6 +2301,13 @@ namespace Dune {
   };
 
 
+  template<class B, class A>
+  struct FieldTraits< BCRSMatrix<B, A> >
+  {
+    using field_type = typename BCRSMatrix<B, A>::field_type;
+    using real_type = typename FieldTraits<field_type>::real_type;
+  };
+
   /** @} end documentation */
 
 } // end namespace
