@@ -574,7 +574,7 @@ namespace Dune
     template<typename T>
     struct IndexData : public T
     {
-      std::size_t index;
+      std::size_t index = {};
     };
 
 
@@ -591,7 +591,7 @@ namespace Dune
     template<typename T>
     struct NumericWrapper
     {
-      T number;
+      T number = {};
       operator T&()
       {
         return number;
