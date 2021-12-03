@@ -16,9 +16,10 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/reservedvector.hh>
 
 #include <dune/istl/bcrsmatrix.hh>
-
+#include <dune/istl/blocklevel.hh>
 
 namespace Dune {
 
@@ -495,6 +496,320 @@ namespace Dune {
 
     writeVectorToMatlabHelper(vector, outStream);
     outStream.precision(oldPrecision);
+  }
+
+  namespace Impl {
+
+    //! Null stream. Any value streamed to this object is discarded
+    struct NullStream {
+      template <class Any>
+      friend NullStream &operator<<(NullStream &dev0, Any &&) {
+        return dev0;
+      }
+    };
+
+    //! Writes an SVG header and scales offests to fit output options
+    // svg shall be closed with a group and an svg. i.e. "</g></svg>"
+    template <class Stream, class SVGMatrixOptions>
+    void writeSVGMatrixHeader(Stream &out, const SVGMatrixOptions &opts,
+                              std::pair<std::size_t, size_t> offsets) {
+      auto [col_offset, row_offset] = offsets;
+      double width = opts.width;
+      double height = opts.height;
+      // if empty, we try to figure out a sensible value of width and height
+      if (opts.width == 0 and opts.height == 0)
+        width = height = 500;
+      if (opts.width == 0)
+        width = opts.height * (double(col_offset) / row_offset);
+      if (opts.height == 0)
+        height = opts.width * (double(row_offset) / col_offset);
+
+      // scale group w.r.t final offsets
+      double scale_width = width / col_offset;
+      double scale_height = height / row_offset;
+
+      // write the header text
+      out << "<svg xmlns='http://www.w3.org/2000/svg' width='" << std::ceil(width)
+          << "' height='" << std::ceil(height) << "' version='1.1'>\n"
+          << "<style>\n"
+          << opts.style << "</style>\n"
+          << "<g transform='scale(" << scale_width << " " << scale_height
+          << ")'>\n";
+    }
+
+    //! Writes (recursively) the svg content for an sparse matrix
+    template <class Mat, class Stream, class SVGMatrixOptions,
+              class RowPrefix, class ColPrefix>
+    std::pair<std::size_t, size_t>
+    writeSVGMatrix(const Mat &mat, Stream &out, SVGMatrixOptions opts,
+                  RowPrefix row_prefix, ColPrefix col_prefix) {
+      // get values to fill the offests
+      const auto& block_size = opts.block_size;
+      const auto& interspace = opts.interspace;
+
+      const std::size_t rows = mat.N();
+      const std::size_t cols = mat.M();
+
+      // disable header write for recursive calls
+      const bool write_header = opts.write_header;
+      opts.write_header = false;
+
+      // counter of offsets for every block
+      std::size_t row_offset = interspace;
+      std::size_t col_offset = interspace;
+
+      // lambda helper: for-each value
+      auto for_each_entry = [&mat](const auto &call_back) {
+        for (auto row_it = mat.begin(); row_it != mat.end(); ++row_it) {
+          for (auto col_it = row_it->begin(); col_it != row_it->end(); ++col_it) {
+            call_back(row_it.index(), col_it.index(), *col_it);
+          }
+        }
+      };
+
+      // accumulate content in another stream so that we write in correct order
+      std::stringstream ss;
+
+      // we need to append current row and col values to the prefixes
+      row_prefix.push_back(0);
+      col_prefix.push_back(0);
+
+      // do we need to write nested matrix blocks?
+      if constexpr (Dune::blockLevel<typename Mat::block_type>() == 0) {
+        // simple case: write svg block content to stream for each value
+        for_each_entry([&](const auto &row, const auto &col, const auto &val) {
+          std::size_t x_off = interspace + col * (interspace + block_size);
+          std::size_t y_off = interspace + row * (interspace + block_size);
+          row_prefix.back() = row;
+          col_prefix.back() = col;
+          opts.writeSVGBlock(ss, row_prefix, col_prefix, val,
+                            {x_off, y_off, block_size, block_size});
+        });
+        col_offset += cols * (block_size + interspace);
+        row_offset += rows * (block_size + interspace);
+      } else {
+        // before we write anything, we need to calculate the
+        // offset for every {row,col} index
+        std::vector<std::size_t> col_offsets(cols + 1, 0);
+        std::vector<std::size_t> row_offsets(rows + 1, 0);
+        for_each_entry([&](const auto &row, const auto &col, const auto &val) {
+          NullStream dev0;
+          // get size of sub-block
+          auto sub_size =
+              writeSVGMatrix(val, dev0, opts, row_prefix, col_prefix);
+
+          // if we didn't see col size before
+          if (col_offsets[col + 1] == 0) // write it in the offset vector
+            col_offsets[col + 1] = sub_size.first;
+          else // check that is the same we saw before
+            assert(col_offsets[col + 1] == sub_size.first);
+
+          // repeat proces for row sizes
+          if (row_offsets[row + 1] == 0)
+            row_offsets[row + 1] = sub_size.second;
+          else
+            assert(row_offsets[row + 1] == sub_size.second);
+        });
+
+        // we have sizes for every block: to get offsets we make a partial sum
+        col_offsets[0] = interspace;
+        row_offsets[0] = interspace;
+        for (std::size_t i = 1; i < col_offsets.size(); i++)
+          col_offsets[i] += col_offsets[i - 1] + interspace;
+        for (std::size_t i = 1; i < row_offsets.size(); i++)
+          row_offsets[i] += row_offsets[i - 1] + interspace;
+
+        for_each_entry([&](const auto &row, const auto &col, const auto &val) {
+          // calculate svg view from offsets
+          std::size_t width =
+              col_offsets[col + 1] - col_offsets[col] - interspace;
+          std::size_t height =
+              row_offsets[row + 1] - row_offsets[row] - interspace;
+          row_prefix.back() = row;
+          col_prefix.back() = col;
+          // content of the sub-block has origin at {0,0}: shift it to the correct place
+          ss << "<svg x='" << col_offsets[col] << "' y='" << row_offsets[row]
+            << "' width='" << width << "' height='" << height << "'>\n";
+          // write a nested svg with the contents of the sub-block
+          writeSVGMatrix(val, ss, opts, row_prefix, col_prefix);
+          ss << "</svg>\n";
+        });
+        col_offset = col_offsets.back();
+        row_offset = row_offsets.back();
+      }
+
+      // write content in order!
+      // (i) if required, first header
+      if (write_header)
+        writeSVGMatrixHeader(out, opts, {col_offset, row_offset});
+
+      col_prefix.pop_back();
+      row_prefix.pop_back();
+      // (ii) an svg block for this level
+      opts.writeSVGBlock(out, row_prefix, col_prefix, mat,
+                        {0, 0, col_offset, row_offset});
+      // (iii) the content of the matrix
+      out << ss.str();
+      // (iv) if required, close the header
+      if (write_header)
+        out << "</g>\n</svg>\n";
+
+      // return the total required for this block
+      return {col_offset, row_offset};
+    }
+  }; // namespace Impl
+
+
+  /**
+   * @brief Default options class to write SVG matrices
+   *
+   * This object is intended customize the output of the SVG writer for matrices
+   * \ref writeSVGMatrix.
+   */
+  struct DefaultSVGMatrixOptions {
+    //! size (pixels) of the deepst block/value of the matrix
+    std::size_t block_size = 10;
+    //! size (pixels) of the interspace between blocks
+    std::size_t interspace = 5;
+    //! Final width size (pixels) of the SVG header. If 0, size is automatic.
+    std::size_t width = 500;
+    //! Final height size (pixels) of the SVG header. If 0, size is automatic.
+    std::size_t height = 0;
+    //! Whether to write the SVG header
+    bool write_header = true;
+    //! CSS style block to write in header
+    std::string style = " .matrix-block {\n"
+                        "   fill: cornflowerblue;\n"
+                        "   fill-opacity: 0.4;\n"
+                        "   stroke-width: 2;\n"
+                        "   stroke: black;\n"
+                        "   stroke-opacity: 0.5;\n"
+                        " }\n"
+                        " .matrix-block:hover {\n"
+                        "   fill: lightcoral;\n"
+                        "   fill-opacity: 0.4;\n"
+                        "   stroke-opacity: 1;\n"
+                        " }\n";
+
+    // Color fill for default options
+    // opts.color_fill = [max,min](const double& val){
+    //   auto percentage = (val-min)/(max-min)*100;
+    //   return "hsl(348, " + std::to_string() + std::to_string(precentage) + "%, 41%)";};
+    // }
+    /**
+     * @brief Color fill for default options
+     *
+     * Example:
+     * @code{.cc}
+     * opts.color_fill = [max,min](const double& val){
+     *   auto percentage = (val-min)/(max-min)*100;
+     *   return "hsl(348, " + std::to_string(precentage) + "%, 41%)";};
+     * };
+     * @endcode
+     */
+    std::function<std::string(const double&)> color_fill;
+
+    /**
+     * @brief Helper function that returns an style class for a given prefix
+     * @note This function is only a helper to the default writeSVGBlock and is
+     * not required for custom options classes.
+     */
+    template <class RowPrefix, class ColPrefix>
+    std::string blockStyleClass(const RowPrefix &row_prefix,
+                                const ColPrefix &col_prefix) const {
+      // here, you can potentially give a different style to each block
+      return "matrix-block";
+    }
+
+    //! (Helper) Whether to write a title on the rectangle value
+    bool write_block_title = true;
+
+    /**
+     * @brief Helper function writes a title for a given block and prefix
+     * @note This function is only a helper to the default writeSVGBlock and is
+     * not required for custom options classes.
+     */
+    template <class Stream, class RowPrefix, class ColPrefix, class Block>
+    void writeBlockTitle(Stream& out, const RowPrefix &row_prefix,
+                                const ColPrefix &col_prefix,
+                                const Block &block) const {
+      if (this->write_block_title) {
+        out << "<title>";
+        assert(row_prefix.size() == col_prefix.size());
+        for (std::size_t i = 0; i < row_prefix.size(); ++i)
+          out << "[" << row_prefix[i] << ", "<< col_prefix[i] << "]";
+        if constexpr (Dune::blockLevel<Block>() == 0)
+          out << ": " << block;
+        out << "</title>\n";
+      }
+    }
+
+    /**
+     * @brief  Write an SVG object for a given block/value in the matrix
+     * @details This function is called for every matrix block; that includes
+     *          root and intermediate nested blocks of matrices. SVG blocks are
+     *          written from outer to inner matrix blocks, this means that in
+     *          case of overlaps in the SVG objects, the more nested blocks take
+     *          precedence.
+     * @warning If the SVG bounding box is not respected, the content may be
+     *          ommited in the final SVG view.
+     * @note This function signature is required for any custom options class.
+     *
+     * @tparam Stream       An ostream type (possibly a NullStream!)
+     * @tparam RowPrefix    A ReservedVector
+     * @tparam ColPrefix    A ReservedVector
+     * @tparam Block        The type of the current block
+     * @param out           An stream to send SVG object to
+     * @param row_prefix    A multindex of indices to access current row
+     * @param col_prefix    A multindex of indices to access current column
+     * @param block         The current matrix/sub-block/value
+     * @param svg_box       SVG object bounding box (position and sizes).
+     */
+    template <class Stream, class RowPrefix, class ColPrefix, class Block>
+    void writeSVGBlock(Stream &out,
+                        const RowPrefix &row_prefix,
+                        const ColPrefix &col_prefix, const Block block,
+                        const std::array<std::size_t, 4> &svg_box) const {
+      // get bounding box values
+      auto &[x_off, y_off, width, height] = svg_box;
+      // get style class
+      std::string block_class = this->blockStyleClass(row_prefix, col_prefix);
+      // write a rectangle on the bounding box
+      out << "<rect class='" << block_class << "' x='" << x_off << "' y='"
+          << y_off << "' width='" << width << "' height='" << height << "'";
+      if constexpr (Dune::blockLevel<Block>() == 0 and std::is_convertible<Block,double>{})
+        if (color_fill)
+          out << " style='fill-opacity: 1;fill:" << color_fill(double(block)) << "'";
+
+      out << ">\n";
+      // give the rectangle a title (in html this shows info about the block)
+      this->writeBlockTitle(out,row_prefix, col_prefix, block);
+      // close rectangle
+      out << "</rect>\n";
+    }
+  };
+
+  /**
+   * @brief Writes the visualization of matrix in the SVG format
+   * @details The default visualization writes a rectangle for every block
+   *          bounding box. This is enough to visualize patterns. If you need a
+   *          more advance SVG object in each matrix block (e.g. color scale, or
+   *          write the value in text), just provide a custom SVGOptions that
+   *          fullfils the DefaultSVGMatrixOptions interface.
+   *
+   * @tparam Mat          Matrix type to write
+   * @tparam SVGOptions   Options object type (see DefaultSVGMatrixOptions)
+   * @param mat           The matrix to write
+   * @param out           A output stream to write SVG to
+   * @param opts          SVG Options object
+   */
+  template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
+  void writeSVGMatrix(const Mat &mat, std::ostream &out,
+                      SVGOptions opts = {}) {
+    // We need a vector that can fit all the multi-indices for rows and colums
+    using IndexPrefix = Dune::ReservedVector<std::size_t, blockLevel<Mat>()>;
+    // Call overload for Mat type
+    Impl::writeSVGMatrix(mat, out, opts, IndexPrefix{}, IndexPrefix{});
   }
 
   /** @} end documentation */
