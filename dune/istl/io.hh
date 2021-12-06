@@ -691,11 +691,6 @@ namespace Dune {
                         "   stroke-opacity: 1;\n"
                         " }\n";
 
-    // Color fill for default options
-    // opts.color_fill = [max,min](const double& val){
-    //   auto percentage = (val-min)/(max-min)*100;
-    //   return "hsl(348, " + std::to_string() + std::to_string(precentage) + "%, 41%)";};
-    // }
     /**
      * @brief Color fill for default options
      *
