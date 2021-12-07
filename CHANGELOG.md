@@ -1,5 +1,7 @@
 # Master (will become release 2.9)
 
+- Added a function to write nested matrices as SVG objects: `writeSVGMatrix(...)`
+
 - MINRES: The algorithm computes the preconditioned defect during the iterations. However, the initial
   defect was computed as the defect of the original/non-preconditioned system. This is now changed so
   that the initial defect is also computed as the preconditioned defect (this is also in line with GMRes).
