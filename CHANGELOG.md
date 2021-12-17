@@ -3,7 +3,10 @@
 - Added a function to write nested matrices as SVG objects: `writeSVGMatrix(...)`
 
 - `MultiTypeBlockVector` uses now `std::common_type` of the entries for the `field_type`. The old `double`
-  default is only used in case of an empty `MultiTypeBlockVector`.
+  default is replaced by `Std::nonesuch` of an empty `MultiTypeBlockVector`.
+
+- All vector implementations require a `FieldTraits` class specialization to export `field_type` and `real_type`
+  in order to work with blocked ISTL vector types.
 
 - MINRES: The algorithm computes the preconditioned defect during the iterations. However, the initial
   defect was computed as the defect of the original/non-preconditioned system. This is now changed so
