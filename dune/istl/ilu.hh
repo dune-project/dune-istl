@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <dune/common/fmatrix.hh>
-#include <dune/common/deprecated.hh>
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
 
@@ -367,11 +366,6 @@ namespace Dune {
       }
     } // end convertToCRS
 
-    template<class CRS, class InvVector, class X, class Y>
-    DUNE_DEPRECATED_MSG("Will be removed after release 2.8. Use blockILUBacksolve.")
-    void bilu_backsolve (const CRS& lower, const CRS& upper, const InvVector& inv, X& v, const Y& d)
-    { blockILUBacksolve(lower, upper, inv, v, d); }
-
     //! LU backsolve with stored inverse in CRS format for lower and upper triangular
     template<class CRS, class InvVector, class X, class Y>
     void blockILUBacksolve (const CRS& lower,
@@ -425,22 +419,6 @@ namespace Dune {
   } // end namespace ILU
 
   /** @} end documentation */
-
-  template<class M>
-  DUNE_DEPRECATED_MSG("Will be removed after release 2.8. Use ILU::blockILU0Decomposition.")
-  void bilu0_decomposition (M& A) { ILU::blockILU0Decomposition(A); }
-
-  template<class M, class X, class Y>
-  DUNE_DEPRECATED_MSG("Will be removed after release 2.8. Use ILU::blockILUBacksolve.")
-  void bilu_backsolve (const M& A, X& v, const Y& d) { ILU::blockILUBacksolve(A, v, d); }
-
-  template<class M>
-  DUNE_DEPRECATED_MSG("Will be removed after release 2.8. Use ILU::firstMatrixElement.")
-  decltype(auto) firstmatrixelement (M& A) { return ILU::firstMatrixElement(A); }
-
-  template<class M>
-  DUNE_DEPRECATED_MSG("Will be removed after release 2.8. Use ILU::blockILUDecomposition.")
-  void bilu_decomposition (const M& A, int n, M& ilu) { return ILU::blockILUDecomposition(A, n, ilu); }
 
 } // end namespace
 
