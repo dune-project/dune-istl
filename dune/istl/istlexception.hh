@@ -34,15 +34,6 @@ namespace Dune {
     : public BCRSMatrixError
   {};
 
-  /** \brief Alias for backward compatibility
-   *
-   * \deprecated The class ImplicitModeOverflowExhausted got renamed to ImplicitModeCompressionBufferExhausted
-   *   in dune-istl 2.8, because the old name was very misleading.  We keep the old name for
-   *   backward compatibility, but discourage its use.
-   */
-  using ImplicitModeOverflowExhausted [[deprecated("Use ImplicitModeCompressionBufferExhausted instead!")]]
-    = ImplicitModeCompressionBufferExhausted;
-
   //! Thrown when a solver aborts due to some problem.
   /**
    * Problems that may cause the solver to abort include a NaN detected during

@@ -30,6 +30,9 @@
   `firstmatrixelement`, and `bilu_decomposition` are removed. Use their camel case
   replacements.
 
+- Remove deprecated `ImplicitModeOverflowExhausted`, use
+  `ImplicitModeCompressionBufferExhausted` instead.
+
 # Release 2.8
 
 - Extended the MatrixMarket IO functions for reading and writing vectors with
