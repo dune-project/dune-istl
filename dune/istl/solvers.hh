@@ -201,8 +201,6 @@ namespace Dune {
   protected:
 
     static constexpr bool enableConditionEstimate = (std::is_same_v<field_type,float> || std::is_same_v<field_type,double>);
-    using enableConditionEstimate_t [[deprecated("Use bool enableConditionEstimate instead. Will be removed after Dune 2.8")]]
-      = std::bool_constant<enableConditionEstimate>;
 
   public:
 
