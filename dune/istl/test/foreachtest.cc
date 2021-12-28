@@ -25,8 +25,8 @@ TestSuite testFlatVectorForEach()
 
   // mix up some types
 
-  FieldVector<double,3> f3;
-  FieldVector<double,1> f1;
+  [[maybe_unused]] FieldVector<double,3> f3;
+  [[maybe_unused]] FieldVector<double,1> f1;
 
   DynamicVector<FieldVector<double,3>> d3;
 
@@ -83,10 +83,10 @@ TestSuite testFlatMatrixForEachStatic()
 {
   TestSuite t;
 
-  FieldMatrix<double,3,3> F33;
-  FieldMatrix<double,3,1> F31;
-  FieldMatrix<double,1,3> F13;
-  FieldMatrix<double,1,1> F11;
+  [[maybe_unused]] FieldMatrix<double,3,3> F33;
+  [[maybe_unused]] FieldMatrix<double,3,1> F31;
+  [[maybe_unused]] FieldMatrix<double,1,3> F13;
+  [[maybe_unused]] FieldMatrix<double,1,1> F11;
 
   BCRSMatrix<FieldMatrix<double,3,3>> B33;
   BCRSMatrix<FieldMatrix<double,3,1>> B31;
