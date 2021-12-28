@@ -25,7 +25,7 @@ namespace Dune
     class SequentialInformation
     {
     public:
-      typedef CollectiveCommunication<void*> MPICommunicator;
+      typedef Communication<void*> MPICommunicator;
       typedef EmptySet<int> CopyFlags;
       typedef AllSet<int> OwnerSet;
 
@@ -83,7 +83,7 @@ namespace Dune
       }
 
       template<class T>
-      SequentialInformation(const CollectiveCommunication<T>&)
+      SequentialInformation(const Communication<T>&)
       {}
 
       SequentialInformation()

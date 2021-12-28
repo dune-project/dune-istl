@@ -32,7 +32,7 @@ typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
 typedef Dune::FieldVector<XREAL,1> VectorBlock;
 typedef Dune::BlockVector<VectorBlock> Vector;
 typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
-typedef Dune::CollectiveCommunication<void*> Comm;
+typedef Dune::Communication<void*> Comm;
 typedef Dune::SeqSSOR<BCRSMat,Vector,Vector> Smoother;
 typedef Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 #ifndef USE_OVERLAPPINGSCHWARZ
@@ -98,7 +98,7 @@ void testTwoLevelMethod()
     typedef Dune::FieldVector<double,BS> VectorBlock;
     typedef Dune::BlockVector<VectorBlock> Vector;
     typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
-    typedef Dune::CollectiveCommunication<void*> Comm;
+    typedef Dune::Communication<void*> Comm;
     Comm c;
     int n;
     BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, c, &n, 1);

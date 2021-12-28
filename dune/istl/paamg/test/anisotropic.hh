@@ -151,7 +151,7 @@ void setBoundary(V& lhs, V& rhs, const G& N)
  * \tparam M A matrix type
  */
 template<class MatrixEntry, class G, class L, class C, int s>
-Dune::BCRSMatrix<MatrixEntry> setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::CollectiveCommunication<C>& p, int *nout, typename Dune::BCRSMatrix<MatrixEntry>::field_type eps=1.0)
+Dune::BCRSMatrix<MatrixEntry> setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const Dune::Communication<C>& p, int *nout, typename Dune::BCRSMatrix<MatrixEntry>::field_type eps=1.0)
 {
   int procs=p.size(), rank=p.rank();
 

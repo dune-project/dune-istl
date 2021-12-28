@@ -50,7 +50,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
-  typedef Dune::CollectiveCommunication<void*> Comm;
+  typedef Dune::Communication<void*> Comm;
   int n;
 
   Comm c;

@@ -87,7 +87,7 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   ParallelIndexSet indices;
   typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
-  typedef Dune::CollectiveCommunication<void*> Comm;
+  typedef Dune::Communication<void*> Comm;
   int n;
 
   Comm c;

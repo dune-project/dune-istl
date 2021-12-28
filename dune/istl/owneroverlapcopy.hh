@@ -294,7 +294,7 @@ namespace Dune {
       return category_;
     }
 
-    const CollectiveCommunication<MPI_Comm>& communicator() const
+    const Communication<MPI_Comm>& communicator() const
     {
       return cc;
     }
@@ -673,7 +673,7 @@ namespace Dune {
     OwnerOverlapCopyCommunication (const OwnerOverlapCopyCommunication&)
     {}
     MPI_Comm comm;
-    CollectiveCommunication<MPI_Comm> cc;
+    Communication<MPI_Comm> cc;
     PIS pis;
     RI ri;
     mutable IF OwnerToAllInterface;

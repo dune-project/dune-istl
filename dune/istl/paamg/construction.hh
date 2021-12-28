@@ -88,11 +88,11 @@ namespace Dune
 
     struct SequentialCommunicationArgs
     {
-      SequentialCommunicationArgs(CollectiveCommunication<void*> comm, [[maybe_unused]] int cat)
+      SequentialCommunicationArgs(Communication<void*> comm, [[maybe_unused]] int cat)
         : comm_(comm)
       {}
 
-      CollectiveCommunication<void*> comm_;
+      Communication<void*> comm_;
     };
 
   } // end Amg namspace
