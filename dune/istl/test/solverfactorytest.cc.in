@@ -158,11 +158,11 @@ int main(int argc, char** argv){
   Dune::initSolverFactories<Dune::NonoverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>>();
 
   std::cout << std::endl << " Testing sequential tests... " << std::endl;
-  testSeq(config.sub("sequential"), mpihelper.getCollectiveCommunication());
+  testSeq(config.sub("sequential"), mpihelper.getCommunication());
   std::cout << std::endl << " Testing overlapping tests... " << std::endl;
-  testOverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
+  testOverlapping(config.sub("overlapping"), mpihelper.getCommunication());
   // Still need to implement proper discretization for non-overlapping
   // std::cout << std::endl << " Testing nonoverlapping tests... " << std::endl;
-  // testNonoverlapping(config.sub("overlapping"), mpihelper.getCollectiveCommunication());
+  // testNonoverlapping(config.sub("overlapping"), mpihelper.getCommunication());
   return 0;
 }

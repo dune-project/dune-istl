@@ -30,7 +30,7 @@ void testHierarchy(int N)
   typedef Dune::RemoteIndices<ParallelIndexSet> RemoteIndices;
   RemoteIndices& remoteIndices = pinfo.remoteIndices();
 
-  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, Dune::MPIHelper::getCollectiveCommunication(), &n);
+  BCRSMat mat = setupAnisotropic2d<MatrixBlock>(N, indices, Dune::MPIHelper::getCommunication(), &n);
   Vector b(indices.size());
 
   remoteIndices.rebuild<false>();

@@ -24,6 +24,15 @@
 - You can now use `std::tuple_element` to get the types of `MultiTypeBlockVector` entries
   and `MultiTypeBlockMatrix` rows.
 
+## Deprecations and removals
+
+- The deprecated ILU functions `bilu_backsolve`, `bilu0_decomposition`, `bilu_backsolve`,
+  `firstmatrixelement`, and `bilu_decomposition` are removed. Use their camel case
+  replacements.
+
+- Remove deprecated `ImplicitModeOverflowExhausted`, use
+  `ImplicitModeCompressionBufferExhausted` instead.
+
 # Release 2.8
 
 - Extended the MatrixMarket IO functions for reading and writing vectors with

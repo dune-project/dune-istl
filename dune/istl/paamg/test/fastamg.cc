@@ -17,7 +17,7 @@ namespace Dune
   using Mat = BCRSMatrix<FieldMatrix<double,1,1>>;
   using Vec = BlockVector<FieldVector<double,1>>;
 
-  // explicit template instantion of FastAMG preconditioner
+  // explicit template instantiation of FastAMG preconditioner
   template class Amg::FastAMG<MatrixAdapter<Mat,Vec,Vec>, Vec, Amg::SequentialInformation>;
 
 } // end namespace Dune
@@ -50,7 +50,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
-  typedef Dune::CollectiveCommunication<void*> Comm;
+  typedef Dune::Communication<void*> Comm;
   int n;
 
   Comm c;

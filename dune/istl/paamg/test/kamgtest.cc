@@ -17,7 +17,7 @@ namespace Dune
   using LinOp = MatrixAdapter<Mat,Vec,Vec>;
   using Comm = Amg::SequentialInformation;
 
-  // explicit template instantion of FastAMG preconditioner
+  // explicit template instantiation of FastAMG preconditioner
   template class Amg::KAMG<LinOp, Vec, Richardson<Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
   template class Amg::KAMG<LinOp, Vec, SeqJac<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
   template class Amg::KAMG<LinOp, Vec, SeqSOR<Mat,Vec,Vec>, Comm, GeneralizedPCGSolver<Vec>>;
@@ -67,7 +67,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
-  typedef Dune::CollectiveCommunication<void*> Comm;
+  typedef Dune::Communication<void*> Comm;
   int n;
 
   Comm c;

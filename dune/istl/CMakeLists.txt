@@ -15,7 +15,6 @@ install(FILES
    btdmatrix.hh
    bvector.hh
    cholmod.hh
-   colcompmatrix.hh
    foreach.hh
    gsetc.hh
    ildl.hh

@@ -25,7 +25,7 @@ std::string matrixfile = "gr_30_30.mtx";
 
 void loadMatrix(std::shared_ptr<BCRSMat>& pA){
   pA = std::make_shared<BCRSMat>();
-  if(MPIHelper::getCollectiveCommunication().rank() == 0){
+  if(MPIHelper::getCommunication().rank() == 0){
     Dune::loadMatrixMarket(*pA, matrixfile);
   }
 }
@@ -47,7 +47,7 @@ std::shared_ptr<Comm> repartMatrix(const std::shared_ptr<BCRSMat>& pA_orig, std:
 
 int main(int argc, char** argv){
   auto& mpihelper = MPIHelper::instance(argc, argv);
-  auto world = mpihelper.getCollectiveCommunication();
+  auto world = mpihelper.getCommunication();
 
   int size = mpihelper.size();
   int rank = mpihelper.rank();
