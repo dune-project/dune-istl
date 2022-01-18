@@ -306,7 +306,7 @@ namespace Dune {
         // minimize in given search direction p
         _op->apply(p,q);             // q=Ap
         alpha = _sp->dot(p,q);       // scalar product
-        lambda = rholast/alpha;     // minimization
+        lambda = Simd::cond(def==field_type(0.), field_type(0.), rholast/alpha);     // minimization
         if constexpr (enableConditionEstimate)
           if (condition_estimate_)
             lambdas.push_back(std::real(lambda));
@@ -322,7 +322,7 @@ namespace Dune {
         q = 0;                      // clear correction
         _prec->apply(q,b);           // apply preconditioner
         rho = _sp->dot(q,b);         // orthogonalization
-        beta = rho/rholast;         // scaling factor
+        beta = Simd::cond(def==field_type(0.), field_type(0.), rho/rholast);         // scaling factor
         if constexpr (enableConditionEstimate)
           if (condition_estimate_)
             betas.push_back(std::real(beta));
