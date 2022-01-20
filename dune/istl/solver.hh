@@ -470,13 +470,13 @@ namespace Dune
         }
         _def = def;
         _i = i;
-        _res.converged = (Simd::allTrue(def<_def0*_parent._reduction || def<1E-30));    // convergence check
+        _res.converged = (Simd::allTrue(def<_def0*_parent._reduction || def<real_type(1E-30)));    // convergence check
         return _res.converged;
       }
 
     protected:
       void finalize(){
-        _res.converged = (Simd::allTrue(_def<_def0*_parent._reduction || _def<1E-30));
+        _res.converged = (Simd::allTrue(_def<_def0*_parent._reduction || _def<real_type(1E-30)));
         _res.iterations = _i;
         _res.reduction = static_cast<double>(Simd::max(_def/_def0));
         _res.conv_rate  = pow(_res.reduction,1.0/_i);
