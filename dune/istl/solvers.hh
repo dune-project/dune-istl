@@ -160,7 +160,10 @@ namespace Dune {
         p = 0;                      // clear correction
         _prec->apply(p,b);           // apply preconditioner
         _op->apply(p,q);             // q=Ap
-        lambda = _sp->dot(p,b)/_sp->dot(q,p); // minimization
+        auto alpha = _sp->dot(q,p);
+        lambda = Simd::cond(def==field_type(0.),
+                            field_type(0.), // no need for minimization if def is already 0
+                            _sp->dot(p,b)/alpha); // minimization
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
@@ -502,7 +505,9 @@ namespace Dune {
           p = r;
         else
         {
-          beta = ( rho_new / rho ) * ( alpha / omega );
+          beta = Simd::cond(norm==field_type(0.),
+                            field_type(0.), // no need for orthogonalization if norm is already 0
+                            ( rho_new / rho ) * ( alpha / omega ));
           p.axpy(-omega,v); // p = r + beta (p - omega*v)
           p *= beta;
           p += r;
@@ -523,7 +528,9 @@ namespace Dune {
                      << Simd::io(abs(h)) << " < EPSILON " << EPSILON
                      << " after " << it << " iterations");
 
-        alpha = rho_new / h;
+        alpha = Simd::cond(norm==field_type(0.),
+                           field_type(0.),
+                           rho_new / h);
 
         // apply first correction to x
         // x <- x + alpha y
@@ -551,7 +558,10 @@ namespace Dune {
         _op->apply(y,t);
 
         // omega = < t, r > / < t, t >
-        omega = _sp->dot(t,r)/_sp->dot(t,t);
+        h = _sp->dot(t,t);
+        omega = Simd::cond(norm==field_type(0.),
+                           field_type(0.),
+                           _sp->dot(t,r)/h);
 
         // apply second correction to x
         // x <- x + omega y
@@ -662,10 +672,14 @@ namespace Dune {
       // orthonormal basis vectors (in unpreconditioned case)
       std::array<X,3> q{{b,b,b}};
       q[0] = 0.0;
-      q[1] *= real_type(1.0)/beta;
+      q[1] *= Simd::cond(def==field_type(0.),
+                         field_type(0.),
+                         real_type(1.0)/beta);
       q[2] = 0.0;
 
-      z *= real_type(1.0)/beta;
+      z *= Simd::cond(def==field_type(0.),
+                      field_type(0.),
+                      real_type(1.0)/beta);
 
       // the loop
       int i = 1;
@@ -692,8 +706,12 @@ namespace Dune {
         // since it is the norm of the basis vectors (in unpreconditioned case)
         beta = sqrt(_sp->dot(q[i2],z));
 
-        q[i2] *= real_type(1.0)/beta;
-        z *= real_type(1.0)/beta;
+        q[i2] *= Simd::cond(def==field_type(0.),
+                            field_type(0.),
+                            real_type(1.0)/beta);
+        z *= Simd::cond(def==field_type(0.),
+                        field_type(0.),
+                        real_type(1.0)/beta);
 
         // QR Factorization of recurrence coefficient matrix
         // apply previous givens rotations to last column of T
@@ -934,7 +952,9 @@ namespace Dune {
       while(j <= _maxit && res.converged != true) {
 
         int i = 0;
-        v[0] *= real_type(1.0)/norm;
+        v[0] *= Simd::cond(norm==real_type(0.),
+                           real_type(0.),
+                           real_type(1.0)/norm);
         s[0] = norm;
         for(i=1; i<m+1; i++)
           s[i] = 0.0;
@@ -961,7 +981,10 @@ namespace Dune {
                        "breakdown in GMRes - |w| == 0.0 after " << j << " iterations");
 
           // normalize new vector
-          v[i+1] = w; v[i+1] *= real_type(1.0)/H[i+1][i];
+          v[i+1] = w;
+          v[i+1] *= Simd::cond(norm==real_type(0.),
+                               field_type(0.),
+                               real_type(1.0)/H[i+1][i]);
 
           // update QR factorization
           for(int k=0; k<i; k++)
@@ -1023,7 +1046,9 @@ namespace Dune {
         field_type rhs(s[a]);
         for(int b=a+1; b<i; b++)
           rhs -= H[a][b]*y[b];
-        y[a] = rhs/H[a][a];
+        y[a] = Simd::cond(rhs==field_type(0.),
+                          field_type(0.),
+                          rhs/H[a][a]);
 
         // compute update on the fly
         // w += y[a]*v[a]
