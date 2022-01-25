@@ -4,6 +4,7 @@
 #include<utility>
 #include<cassert>
 
+#include<dune/common/std/type_traits.hh>
 #include<dune/common/diagonalmatrix.hh>
 #include<dune/common/hybridutilities.hh>
 #include<dune/common/indices.hh>
