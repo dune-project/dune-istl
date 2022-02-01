@@ -1168,8 +1168,8 @@ namespace Dune
   } // end namespace Amg
 
   struct AMGCreator{
-    template<class> struct isValidBlockType : std::false_type{};
-    template<class T, int n, int m> struct isValidBlockType<FieldMatrix<T,n,m>> : std::true_type{};
+    template<class> struct isValidMatrix : std::false_type{};
+    template<class T, int n, int m, class A> struct isValidMatrix<BCRSMatrix<FieldMatrix<T,n,m>, A>> : std::true_type{};
 
     template<class OP>
     std::shared_ptr<Dune::Preconditioner<typename OP::element_type::domain_type, typename OP::element_type::range_type> >
@@ -1247,7 +1247,7 @@ namespace Dune
     std::shared_ptr<Dune::Preconditioner<typename OpTraits::domain_type,
                                          typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
-                std::enable_if_t<isValidBlockType<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                std::enable_if_t<isValidMatrix<typename OpTraits::matrix_type>::value,int> = 0) const
     {
       using field_type = typename OpTraits::matrix_type::field_type;
       using real_type = typename FieldTraits<field_type>::real_type;
@@ -1270,7 +1270,7 @@ namespace Dune
     std::shared_ptr<Dune::Preconditioner<typename OpTraits::domain_type,
                                          typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
-                std::enable_if_t<!isValidBlockType<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                std::enable_if_t<!isValidMatrix<typename OpTraits::matrix_type>::value,int> = 0) const
     {
       DUNE_THROW(UnsupportedType, "AMG needs a FieldMatrix as Matrix block_type");
     }
