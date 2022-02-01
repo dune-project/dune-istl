@@ -49,6 +49,7 @@ namespace Dune{
     using domain_type = typename Operator::domain_type;
     using range_type = typename Operator::range_type;
     using operator_type = Operator;
+    using solver_type = InverseOperator<domain_type, range_type>;
     using matrix_type = Std::detected_or_t<int, _matrix_type, Operator>;
     static constexpr bool isAssembled = !std::is_same<matrix_type, int>::value;
     using comm_type = Std::detected_or_t<int, _comm_type, Operator>;
@@ -127,7 +128,19 @@ namespace Dune{
   template<class Operator>
   std::shared_ptr<InverseOperator<typename Operator::domain_type,
                                   typename Operator::range_type>>
-  getSolverFromFactory(std::shared_ptr<Operator> op, const ParameterTree& config){
+  getSolverFromFactory(std::shared_ptr<Operator> op, const ParameterTree& config,
+                       std::shared_ptr<Preconditioner<typename Operator::domain_type, typename Operator::range_type>> prec = nullptr)
+  {
+    if(prec){
+      PreconditionerFactory<Operator>::instance().define("__passed at runtime__",
+                                                         [=](auto...){
+                                                           return prec;
+                                                         });
+      ParameterTree config_tmp = config;
+      config_tmp.sub("preconditioner")["type"] = std::string("__passed at runtime__");
+      return SolverFactory<Operator>::instance().
+        create(config.get<std::string>("type"),op, config_tmp);
+    }
     return SolverFactory<Operator>::instance().
       create(config.get<std::string>("type"),op, config);
   }

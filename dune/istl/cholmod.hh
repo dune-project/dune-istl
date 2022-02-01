@@ -524,51 +524,25 @@ private:
   std::vector<std::size_t> subIndices_;
 };
 
-  struct CholmodCreator{
-    template<class F, class=void> struct isValidMatrix : std::false_type{};
-    template<class B, class A>
-    struct isValidMatrix<BCRSMatrix<B, A>,
-                         std::enable_if_t<std::is_same_v<typename FieldTraits<B>::field_type, double>
-                                          || std::is_same_v<typename FieldTraits<B>::field_type, float>>>
-      : std::true_type{};
-
-    template<class,class=void> struct isValidVector : std::false_type{};
-    template<class B, class A>
-    struct isValidVector<BlockVector<B,A>,
-                         std::enable_if_t<std::is_same_v<typename FieldTraits<B>::field_type, double> ||
-                                          std::is_same_v<typename FieldTraits<B>::field_type, float>>>
-      : std::true_type{};
-
-    template<class OpTraits, typename OP>
-    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
-                                          typename OpTraits::range_type>>
-    operator()(OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<isValidMatrix<typename OpTraits::matrix_type>::value &&
-               isValidVector<typename OpTraits::domain_type>::value &&
-               isValidVector<typename OpTraits::range_type>::value
-               ,int> = 0) const
-    {
-      using D = typename OpTraits::domain_type;
-      using M = typename OpTraits::matrix_type;
-      const M& mat = opTraits.getMatOrThrow(op);
-      auto solver = std::make_shared<Dune::Cholmod<D>>();
-      solver->setMatrix(mat);
-      return solver;
-    }
-
-    // second version with SFINAE to validate the template parameters of Cholmod
-    template<class OpTraits, typename OP>
-    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
-                                          typename OpTraits::range_type>>
-    operator()(OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<!isValidMatrix<typename OpTraits::matrix_type>::value ||
-               !isValidVector<typename OpTraits::domain_type>::value ||
-               !isValidVector<typename OpTraits::range_type>::value,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
-    }
-  };
-  DUNE_REGISTER_SOLVER("cholmod", Dune::CholmodCreator());
+  DUNE_REGISTER_SOLVER("cholmod",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         using D = typename OpTraits::domain_type;
+                         if constexpr (OpTraits::isAssembled &&
+                                       // check whether the Matrix field_type is double or float
+                                       (std::is_same_v<typename FieldTraits<D>::field_type, double> ||
+                                       std::is_same_v<typename FieldTraits<D>::field_type, float>)){
+                           const M& mat = opTraits.getMatOrThrow(op);
+                           auto solver = std::make_shared<Dune::Cholmod<D>>();
+                           solver->setMatrix(mat);
+                           return solver;
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in Cholmod (only double and float supported)");
+                       });
 
 } /* namespace Dune */
 

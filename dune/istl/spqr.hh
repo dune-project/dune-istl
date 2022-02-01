@@ -330,41 +330,28 @@ namespace Dune {
     enum {value = true};
   };
 
-  struct SPQRCreator {
-    template<class, class=void> struct isValidMatrix : std::false_type{};
-    // std::complex is temporary disabled, because it fails if libc++ is used
-    template<int n, int m, class A>
-    struct isValidMatrix<BCRSMatrix<FieldMatrix<double, n, m>,A>>
-      : std::true_type {};
-
-    template<typename OpTraits, typename OP>
-    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
-                                          typename OpTraits::range_type>>
-    operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
-      std::enable_if_t<
-                isValidMatrix<typename OpTraits::matrix_type>::value &&
-                std::is_same_v<typename OpTraits::domain_type::field_type, double>,int> = 0) const
-    {
-      using M = typename OpTraits::matrix_type;
-      const M& mat = opTraits.getMatOrThrow(op);
-      int verbose = config.get("verbose", 0);
-      return std::make_shared<Dune::SPQR<M>>(mat,verbose);
-    }
-
-    // second version with SFINAE to validate the template parameters of SPQR
-    template<typename OpTraits, typename OP>
-    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
-                                          typename OpTraits::range_type>>
-    operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
-      std::enable_if_t<
-                !isValidMatrix<typename OpTraits::matrix_type>::value ||
-                !std::is_same_v<typename OpTraits::domain_type::field_type, double>,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType,
-        "Unsupported matrix type in SPQR (requires FieldMatrix<double, n, m> as block type)");
-    }
-  };
-  DUNE_REGISTER_SOLVER("spqr", Dune::SPQRCreator());
+  DUNE_REGISTER_SOLVER("spqr",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         // check if SPQR<M>* is convertible to
+                         // InverseOperator*. This allows only the explicit
+                         // specialized variants of SPQR
+                         // std::complex is temporary disabled, because it fails if libc++ is used
+                         if constexpr (std::is_convertible_v<SPQR<M>*,
+                                       Dune::InverseOperator<typename OpTraits::domain_type,
+                                       typename OpTraits::range_type>*> &&
+                                       std::is_same_v<typename FieldTraits<M>::field_type, double>
+                                       ){
+                           const M& mat = opTraits.getMatOrThrow(op);
+                           int verbose = config.get("verbose", 0);
+                           return std::make_shared<Dune::SPQR<M>>(mat,verbose);
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in SPQR (only FieldMatrix<double,...> supported)");
+                       });
 
 } // end namespace Dune
 

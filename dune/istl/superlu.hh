@@ -724,40 +724,31 @@ namespace Dune
     enum { value = true };
   };
 
-  struct SuperLUCreator {
-    template<class, class=void> struct isValidMatrix : std::false_type{};
-    template<class B, class A>
-    struct isValidMatrix<BCRSMatrix<B, A>,
-                         std::enable_if_t<std::is_same_v<typename FieldTraits<B>::real_type, double>>>
-      : std::true_type {};
 
-    template<typename OpTraits, typename OP>
-    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
-                                          typename OpTraits::range_type> >
-    operator() (OpTraits opTraits, const OP& op, const Dune::ParameterTree& config,
-                std::enable_if_t<isValidMatrix<typename OpTraits::matrix_type>::value &&
-                std::is_same_v<typename FieldTraits<typename OpTraits::domain_type>::real_type, double>,int> = 0) const
-    {
-      using M = typename OpTraits::matrix_type;
-      const M& mat = opTraits.getMatOrThrow(op);
-      int verbose = config.get("verbose", 0);
-      return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
-    }
-
-    // second version with SFINAE to validate the template parameters of SuperLU
-    template<typename OpTraits, typename OP>
-    std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
-                                          typename OpTraits::range_type>>
-    operator() (OpTraits opTraits, const OP& op, const Dune::ParameterTree& config,
-                std::enable_if_t<!isValidMatrix<typename OpTraits::matrix_type>::value ||
-                !std::is_same_v<typename FieldTraits<typename OpTraits::domain_type>::real_type, double>,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType,
-        "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
-    }
-  };
-
-  DUNE_REGISTER_SOLVER("superlu", SuperLUCreator());
+  DUNE_REGISTER_SOLVER("superlu",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         if constexpr (OpTraits::isAssembled &&
+                                       // check whether the Matrix field_type is double or complex<double>
+                                       std::is_same_v<typename FieldTraits<M>::real_type, double>){
+                           // check if SuperLU<M>* is convertible to
+                           // InverseOperator*. This checks compatibility of the
+                           // domain and range types
+                           if constexpr (std::is_convertible_v<SuperLU<M>*,
+                                         Dune::InverseOperator<typename OpTraits::domain_type,
+                                         typename OpTraits::range_type>*>
+                                         ){
+                             const M& mat = opTraits.getMatOrThrow(op);
+                             int verbose = config.get("verbose", 0);
+                             return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
+                           }
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
+                       });
 } // end namespace DUNE
 
 // undefine macros from SuperLU's slu_util.h
