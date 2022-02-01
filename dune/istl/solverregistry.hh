@@ -27,6 +27,9 @@ namespace Dune{
     struct SolverTag {};
   }
 
+  //! This exception is thrown if the requested solver or preconditioner needs an assembled matrix
+  class NoAssembledOperator : public InvalidStateException{};
+
   template<template<class,class,class,int>class Preconditioner, int blockLevel=1>
   auto defaultPreconditionerBlockLevelCreator(){
     return [](auto opInfo, const auto& linearOperator, const Dune::ParameterTree& config)
@@ -35,9 +38,14 @@ namespace Dune{
       using Matrix = typename OpInfo::matrix_type;
       using Domain = typename OpInfo::domain_type;
       using Range = typename OpInfo::range_type;
-      const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
-      std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
-        = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+      std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner;
+      if constexpr (OpInfo::isAssembled){
+        const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
+        preconditioner
+          = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+      }else{
+        DUNE_THROW(NoAssembledOperator, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
+      }
       return preconditioner;
     };
   }
@@ -50,9 +58,14 @@ namespace Dune{
       using Matrix = typename OpInfo::matrix_type;
       using Domain = typename OpInfo::domain_type;
       using Range = typename OpInfo::range_type;
-      const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
-      std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner
-        = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+      std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner;
+      if constexpr (OpInfo::isAssembled){
+        const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
+        preconditioner
+          = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+      }else{
+        DUNE_THROW(NoAssembledOperator, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
+      }
       return preconditioner;
     };
   }

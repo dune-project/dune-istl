@@ -38,8 +38,6 @@ namespace Dune{
   template<class OP>
   using SolverFactory = Singleton<ParameterizedObjectFactory<SolverSignature<OP>>>;
 
-  class NoAssembledOperator : public InvalidStateException{};
-
   template<class Operator>
   struct OperatorTraits{
   private:
