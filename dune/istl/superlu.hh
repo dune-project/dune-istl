@@ -725,15 +725,18 @@ namespace Dune
   };
 
   struct SuperLUCreator {
-    template<class> struct isValidBlock : std::false_type{};
-    template<int k> struct isValidBlock<Dune::FieldVector<double,k>> : std::true_type{};
-    template<int k> struct isValidBlock<Dune::FieldVector<std::complex<double>,k>> : std::true_type{};
+    template<class, class=void> struct isValidMatrix : std::false_type{};
+    template<class B, class A>
+    struct isValidMatrix<BCRSMatrix<B, A>,
+                         std::enable_if_t<std::is_same_v<typename FieldTraits<B>::real_type, double>>>
+      : std::true_type {};
 
     template<typename OpTraits, typename OP>
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type> >
     operator() (OpTraits opTraits, const OP& op, const Dune::ParameterTree& config,
-                std::enable_if_t<isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                std::enable_if_t<isValidMatrix<typename OpTraits::matrix_type>::value &&
+                std::is_same_v<typename FieldTraits<typename OpTraits::domain_type>::real_type, double>,int> = 0) const
     {
       using M = typename OpTraits::matrix_type;
       const M& mat = opTraits.getMatOrThrow(op);
@@ -746,14 +749,13 @@ namespace Dune
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const OP& op, const Dune::ParameterTree& config,
-                std::enable_if_t<!isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                std::enable_if_t<!isValidMatrix<typename OpTraits::matrix_type>::value ||
+                !std::is_same_v<typename FieldTraits<typename OpTraits::domain_type>::real_type, double>,int> = 0) const
     {
       DUNE_THROW(UnsupportedType,
         "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
     }
   };
-  template<> struct SuperLUCreator::isValidBlock<double> : std::true_type{};
-  template<> struct SuperLUCreator::isValidBlock<std::complex<double>> : std::true_type{};
 
   DUNE_REGISTER_SOLVER("superlu", SuperLUCreator());
 } // end namespace DUNE

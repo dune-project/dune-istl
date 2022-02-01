@@ -331,14 +331,19 @@ namespace Dune {
   };
 
   struct SPQRCreator {
-    template<class> struct isValidBlock : std::false_type{};
+    template<class, class=void> struct isValidMatrix : std::false_type{};
+    // std::complex is temporary disabled, because it fails if libc++ is used
+    template<int n, int m, class A>
+    struct isValidMatrix<BCRSMatrix<FieldMatrix<double, n, m>,A>>
+      : std::true_type {};
 
     template<typename OpTraits, typename OP>
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
       std::enable_if_t<
-                isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                isValidMatrix<typename OpTraits::matrix_type>::value &&
+                std::is_same_v<typename OpTraits::domain_type::field_type, double>,int> = 0) const
     {
       using M = typename OpTraits::matrix_type;
       const M& mat = opTraits.getMatOrThrow(op);
@@ -352,15 +357,13 @@ namespace Dune {
                                           typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
       std::enable_if_t<
-                !isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                !isValidMatrix<typename OpTraits::matrix_type>::value ||
+                !std::is_same_v<typename OpTraits::domain_type::field_type, double>,int> = 0) const
     {
       DUNE_THROW(UnsupportedType,
-        "Unsupported Type in SPQR (only double and std::complex<double> supported)");
+        "Unsupported matrix type in SPQR (requires FieldMatrix<double, n, m> as block type)");
     }
   };
-  template<> struct SPQRCreator::isValidBlock<FieldVector<double,1>> : std::true_type{};
-  // std::complex is temporary disabled, because it fails if libc++ is used
-  //template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
   DUNE_REGISTER_SOLVER("spqr", Dune::SPQRCreator());
 
 } // end namespace Dune

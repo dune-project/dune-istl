@@ -525,15 +525,28 @@ private:
 };
 
   struct CholmodCreator{
-    template<class F> struct isValidBlock : std::false_type{};
-    template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
-    template<int k> struct isValidBlock<FieldVector<float,k>> : std::true_type{};
+    template<class F, class=void> struct isValidMatrix : std::false_type{};
+    template<class B, class A>
+    struct isValidMatrix<BCRSMatrix<B, A>,
+                         std::enable_if_t<std::is_same_v<typename FieldTraits<B>::field_type, double>
+                                          || std::is_same_v<typename FieldTraits<B>::field_type, float>>>
+      : std::true_type{};
+
+    template<class,class=void> struct isValidVector : std::false_type{};
+    template<class B, class A>
+    struct isValidVector<BlockVector<B,A>,
+                         std::enable_if_t<std::is_same_v<typename FieldTraits<B>::field_type, double> ||
+                                          std::is_same_v<typename FieldTraits<B>::field_type, float>>>
+      : std::true_type{};
 
     template<class OpTraits, typename OP>
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator()(OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+               std::enable_if_t<isValidMatrix<typename OpTraits::matrix_type>::value &&
+               isValidVector<typename OpTraits::domain_type>::value &&
+               isValidVector<typename OpTraits::range_type>::value
+               ,int> = 0) const
     {
       using D = typename OpTraits::domain_type;
       using M = typename OpTraits::matrix_type;
@@ -548,7 +561,9 @@ private:
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator()(OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<!isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+               std::enable_if_t<!isValidMatrix<typename OpTraits::matrix_type>::value ||
+               !isValidVector<typename OpTraits::domain_type>::value ||
+               !isValidVector<typename OpTraits::range_type>::value,int> = 0) const
     {
       DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
     }

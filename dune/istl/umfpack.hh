@@ -801,6 +801,8 @@ namespace Dune {
       std::enable_if_t<
            std::is_same_v<Impl::UMFPackDomainType<typename OpTraits::matrix_type>, typename OpTraits::domain_type>
         && std::is_same_v<Impl::UMFPackRangeType<typename OpTraits::matrix_type>, typename OpTraits::range_type>
+        && std::is_same_v<typename FieldTraits<typename OpTraits::domain_type::field_type>::real_type, double>
+        && std::is_same_v<typename FieldTraits<typename OpTraits::range_type::field_type>::real_type, double>
       >> : std::true_type {};
 
     template<typename OpTraits, typename OP>
@@ -808,9 +810,7 @@ namespace Dune {
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
-      std::enable_if_t<
-                isValidBlock<OpTraits>::value
-                && Simd::lanes<typename OpTraits::domain_type::field_type>() == 1,int> = 0) const
+      std::enable_if_t<isValidBlock<OpTraits>::value,int> = 0) const
     {
       using M = typename OpTraits::matrix_type;
       const M& mat = opTraits.getMatOrThrow(op);
@@ -823,9 +823,7 @@ namespace Dune {
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator() (OpTraits /*opTraits*/, const std::shared_ptr<OP>& /*op*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<
-                !isValidBlock<OpTraits>::value
-                || Simd::lanes<typename OpTraits::domain_type::field_type>() != 1,int> = 0) const
+      std::enable_if_t<!isValidBlock<OpTraits>::value,int> = 0) const
     {
       using D = typename Dune::TypeListElement<1,TL>::type;
       using R = typename Dune::TypeListElement<2,TL>::type;

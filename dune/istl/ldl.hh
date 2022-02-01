@@ -371,15 +371,17 @@ namespace Dune {
   };
 
   struct LDLCreator {
-    template<class F> struct isValidBlock : std::false_type{};
-    template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
+    template<class, class=void> struct isValidMatrix : std::false_type{};
+    template<int n, int m, class A>
+    struct isValidMatrix<BCRSMatrix<FieldMatrix<double, n, m>, A>> : std::true_type{};
 
     template<typename OpTraits, typename OP>
     std::shared_ptr<Dune::InverseOperator<typename OpTraits::domain_type,
                                           typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
       std::enable_if_t<
-                isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                isValidMatrix<typename OpTraits::matrix_type>::value &&
+                std::is_same_v<typename OpTraits::domain_type::field_type, double>,int> = 0) const
     {
       using M = typename OpTraits::matrix_type;
       const M& mat = opTraits.getMatOrThrow(op);
@@ -393,10 +395,11 @@ namespace Dune {
                                           typename OpTraits::range_type>>
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
       std::enable_if_t<
-                !isValidBlock<typename OpTraits::matrix_type::block_type>::value,int> = 0) const
+                !isValidMatrix<typename OpTraits::matrix_type>::value ||
+                !std::is_same_v<typename OpTraits::domain_type::field_type, double>,int> = 0) const
     {
       DUNE_THROW(UnsupportedType,
-        "Unsupported Type in LDL (only double and std::complex<double> supported)");
+        "Unsupported Type in LDL (only FieldMatrix<double,n,m> is supported)");
     }
   };
   DUNE_REGISTER_SOLVER("ldl", Dune::LDLCreator());
