@@ -10,6 +10,24 @@
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/solver.hh>
 
+namespace Dune::Impl {
+  template<class C>
+  [[deprecated("DUNE_REGISTER_ITERATIVE_SOLVER is deprecated. Please use DUNE_REGISTER_SOLVER instead.")]]
+  auto translateToOldIterativeSolverInterface(C oldCreator){
+    return [=](auto ot, auto&&... args){
+      using OpTraits = decltype(ot);
+      using TL = TypeList<typename OpTraits::domain_type, typename OpTraits::range_type>;
+      return oldCreator(TL{}, args...);
+    };
+  }
+}
+
+#define DUNE_REGISTER_DIRECT_SOLVER(name, ...)  \
+  DUNE_REGISTER_SOLVER(name, __VA_ARGS__);
+
+#define DUNE_REGISTER_ITERATIVE_SOLVER(name, ...)  \
+  DUNE_REGISTER_SOLVER(name, Impl::translateToOldIterativeSolverInterface(__VA_ARGS__));
+
 #define DUNE_REGISTER_PRECONDITIONER(name, ...)                \
   DUNE_REGISTRY_PUT(PreconditionerTag, name, __VA_ARGS__)
 

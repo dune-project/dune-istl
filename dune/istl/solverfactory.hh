@@ -83,6 +83,25 @@ namespace Dune{
     }
   };
 
+  template<class Operator>
+  struct [[deprecated("Please change to the new solverfactory interface.")]]
+  TypeListElement<0, OperatorTraits<Operator>>{
+    using type [[deprecated]] = typename OperatorTraits<Operator>::matrix_type;
+    using Type [[deprecated]] = type;
+  };
+  template<class Operator>
+  struct [[deprecated("Please change to the new solverfactory interface.")]]
+  TypeListElement<1, OperatorTraits<Operator>>{
+    using type [[deprecated]] = typename OperatorTraits<Operator>::domain_type;
+    using Type [[deprecated]] = type;
+  };
+  template<class Operator>
+  struct [[deprecated("Please change to the new solverfactory interface.")]]
+  TypeListElement<2, OperatorTraits<Operator>>{
+    using type [[deprecated]] = typename OperatorTraits<Operator>::range_type;
+    using Type [[deprecated]] = type;
+  };
+
   // initSolverFactories differs in different compilation units, so we have it
   // in an anonymous namespace
   namespace {
