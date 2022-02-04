@@ -23,9 +23,11 @@ namespace Dune::Impl {
 }
 
 #define DUNE_REGISTER_DIRECT_SOLVER(name, ...)  \
+  _Pragma ("GCC warning \"'DUNE_REGISTER_DIRECT_SOLVER' macro is deprecated and will be removed after the release of DUNE 2.9. Please use 'DUNE_REGISTER_SOLVER'\"") \
   DUNE_REGISTER_SOLVER(name, __VA_ARGS__);
 
 #define DUNE_REGISTER_ITERATIVE_SOLVER(name, ...)  \
+  _Pragma ("GCC warning \"'DUNE_REGISTER_ITERATIVE_SOLVER' macro is deprecated and will be removed after the release of DUNE 2.9. Please use 'DUNE_REGISTER_SOLVER'\"") \
   DUNE_REGISTER_SOLVER(name, Impl::translateToOldIterativeSolverInterface(__VA_ARGS__));
 
 #define DUNE_REGISTER_PRECONDITIONER(name, ...)                \
