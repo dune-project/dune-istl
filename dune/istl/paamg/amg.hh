@@ -608,7 +608,7 @@ namespace Dune
       preSteps_ = criterion.getNoPreSmoothSteps ();
 
       if (configuration.hasKey ("postSteps"))
-        criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("preSteps"));
+        criterion.setNoPostSmoothSteps (configuration.get<std::size_t> ("postSteps"));
       postSteps_ = criterion.getNoPostSmoothSteps ();
 
       verbosity_ = configuration.get("verbosity", 0);
