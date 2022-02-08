@@ -21,7 +21,7 @@ typedef std::size_t GlobalId;
 typedef OwnerOverlapCopyCommunication<GlobalId> Comm;
 typedef RedistributeInformation<Comm> RedistInfo;
 
-std::string matrixfile = "gr_30_30.mtx";
+std::string matrixfile = "gr_30_30";
 
 void loadMatrix(std::shared_ptr<BCRSMat>& pA){
   pA = std::make_shared<BCRSMat>();
