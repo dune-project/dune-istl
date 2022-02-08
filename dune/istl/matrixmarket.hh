@@ -846,6 +846,20 @@ namespace Dune
 
       Setter(rows, matrix);
     }
+
+    std::tuple<std::string, std::string> splitFilename(const std::string& filename) {
+      std::size_t lastdot = filename.find_last_of(".");
+      if(lastdot == std::string::npos)
+        return std::make_tuple(filename, "");
+      else {
+        std::string potentialFileExtension = filename.substr(lastdot);
+        if (potentialFileExtension == ".mm" || potentialFileExtension == ".mtx")
+          return std::make_tuple(filename.substr(0, lastdot), potentialFileExtension);
+        else
+          return std::make_tuple(filename, "");
+      }
+    }
+
   } // end namespace MatrixMarketImpl
 
   class MatrixMarketFormatError : public Dune::Exception
@@ -1136,7 +1150,23 @@ namespace Dune
                          std::string filename,
                          int prec=default_precision)
   {
-    std::ofstream file(filename.c_str());
+    auto [pureFilename, extension] = MatrixMarketImpl::splitFilename(filename);
+    std::string rfilename;
+    std::ofstream file;
+    if (extension != "") {
+      rfilename = pureFilename + extension;
+      file.open(rfilename.c_str());
+      if(!file)
+        DUNE_THROW(IOError, "Could not open file for storage: " << rfilename.c_str());
+    }
+    else {
+      // only try .mm so we do not ignore potential errors
+      rfilename = pureFilename + ".mm";
+      file.open(rfilename.c_str());
+      if(!file)
+        DUNE_THROW(IOError, "Could not open file for storage: " << rfilename.c_str());
+    }
+
     file.setf(std::ios::scientific,std::ios::floatfield);
     if(prec>0)
       file.precision(prec);
@@ -1169,10 +1199,24 @@ namespace Dune
     // Get our rank
     int rank = comm.communicator().rank();
     // Write the local matrix
-    std::ostringstream rfilename;
-    rfilename<<filename <<"_"<<rank<<".mm";
-    dverb<< rfilename.str()<<std::endl;
-    std::ofstream file(rfilename.str().c_str());
+    auto [pureFilename, extension] = MatrixMarketImpl::splitFilename(filename);
+    std::string rfilename;
+    std::ofstream file;
+    if (extension != "") {
+      rfilename = pureFilename + "_" + std::to_string(rank) + extension;
+      file.open(rfilename.c_str());
+      dverb<< rfilename <<std::endl;
+      if(!file)
+        DUNE_THROW(IOError, "Could not open file for storage: " << rfilename.c_str());
+    }
+    else {
+      // only try .mm so we do not ignore potential errors
+      rfilename = pureFilename + "_" + std::to_string(rank) + ".mm";
+      file.open(rfilename.c_str());
+      dverb<< rfilename <<std::endl;
+      if(!file)
+        DUNE_THROW(IOError, "Could not open file for storage: " << rfilename.c_str());
+    }
     file.setf(std::ios::scientific,std::ios::floatfield);
     if(prec>0)
       file.precision(prec);
@@ -1183,9 +1227,10 @@ namespace Dune
       return;
 
     // Write the global to local index mapping
-    rfilename.str("");
-    rfilename<<filename<<"_"<<rank<<".idx";
-    file.open(rfilename.str().c_str());
+    rfilename = pureFilename + "_" + std::to_string(rank) + ".idx";
+    file.open(rfilename.c_str());
+    if(!file)
+      DUNE_THROW(IOError, "Could not open file for storage: " << rfilename.c_str());
     file.setf(std::ios::scientific,std::ios::floatfield);
     typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet IndexSet;
     typedef typename IndexSet::const_iterator Iterator;
@@ -1231,14 +1276,28 @@ namespace Dune
     // Get our rank
     int rank = comm.communicator().rank();
     // load local matrix
-    std::ostringstream rfilename;
-    rfilename<<filename <<"_"<<rank<<".mm";
+    auto [pureFilename, extension] = MatrixMarketImpl::splitFilename(filename);
+    std::string rfilename;
     std::ifstream file;
-    file.open(rfilename.str().c_str(), std::ios::in);
-    if(!file)
-      DUNE_THROW(IOError, "Could not open file: " << rfilename.str().c_str());
-    //if(!file.is_open())
-    //
+    if (extension != "") {
+      rfilename = pureFilename + "_" + std::to_string(rank) + extension;
+      file.open(rfilename.c_str(), std::ios::in);
+      dverb<< rfilename <<std::endl;
+      if(!file)
+        DUNE_THROW(IOError, "Could not open file: " << rfilename.c_str());
+    }
+    else {
+      // try both .mm and .mtx
+      rfilename = pureFilename + "_" + std::to_string(rank) + ".mm";
+      file.open(rfilename.c_str(), std::ios::in);
+      if(!file) {
+        rfilename = pureFilename + "_" + std::to_string(rank) + ".mtx";
+        file.open(rfilename.c_str(), std::ios::in);
+        dverb<< rfilename <<std::endl;
+        if(!file)
+          DUNE_THROW(IOError, "Could not open file: " << rfilename.c_str());
+      }
+    }
     readMatrixMarket(matrix,file);
     file.close();
 
@@ -1248,9 +1307,10 @@ namespace Dune
     // read indices
     typedef typename OwnerOverlapCopyCommunication<G,L>::ParallelIndexSet IndexSet;
     IndexSet& pis=comm.pis;
-    rfilename.str("");
-    rfilename<<filename<<"_"<<rank<<".idx";
-    file.open(rfilename.str().c_str());
+    rfilename = pureFilename + "_" + std::to_string(rank) + ".idx";
+    file.open(rfilename.c_str());
+    if(!file)
+      DUNE_THROW(IOError, "Could not open file: " << rfilename.c_str());
     if(pis.size()!=0)
       DUNE_THROW(InvalidIndexSetState, "Index set is not empty!");
 
@@ -1302,10 +1362,26 @@ namespace Dune
   void loadMatrixMarket(M& matrix,
                         const std::string& filename)
   {
+    auto [pureFilename, extension] = MatrixMarketImpl::splitFilename(filename);
+    std::string rfilename;
     std::ifstream file;
-    file.open(filename.c_str(), std::ios::in);
-    if(!file)
-      DUNE_THROW(IOError, "Could not open file: " << filename);
+    if (extension != "") {
+      rfilename = pureFilename + extension;
+      file.open(rfilename.c_str());
+      if(!file)
+        DUNE_THROW(IOError, "Could not open file: " << rfilename.c_str());
+    }
+    else {
+      // try both .mm and .mtx
+      rfilename = pureFilename + ".mm";
+      file.open(rfilename.c_str(), std::ios::in);
+      if(!file) {
+        rfilename = pureFilename + ".mtx";
+        file.open(rfilename.c_str(), std::ios::in);
+        if(!file)
+          DUNE_THROW(IOError, "Could not open file: " << rfilename.c_str());
+      }
+    }
     readMatrixMarket(matrix,file);
     file.close();
   }
