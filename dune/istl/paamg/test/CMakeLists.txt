@@ -1,24 +1,21 @@
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
-  add_executable(pthreadamgtest pthreadamgtest.cc)
-  target_compile_definitions(pthreadamgtest PUBLIC MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>)
-  target_link_libraries(pthreadamgtest PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${DUNE_LIBS})
+  dune_add_test(NAME pthreadamgtest SOURCES pthreadamgtest.cc
+    LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
+    COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>)
   add_dune_mpi_flags(pthreadamgtest)
   add_dune_parmetis_flags(pthreadamgtest)
-  dune_add_test(TARGET pthreadamgtest)
 
-  add_executable(pthreadfastamgtest pthreadamgtest.cc)
-  target_compile_definitions(pthreadfastamgtest PUBLIC MYAMG=Dune::Amg::FastAMG<Operator,Vector>)
-  target_link_libraries(pthreadfastamgtest PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${DUNE_LIBS})
+  dune_add_test(NAME pthreadfastamgtest SOURCES pthreadamgtest.cc
+    LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
+    COMPILE_DEFINITIONS MYAMG=Dune::Amg::FastAMG<Operator,Vector>)
   add_dune_mpi_flags(pthreadfastamgtest)
   add_dune_parmetis_flags(pthreadfastamgtest)
-  dune_add_test(TARGET pthreadfastamgtest)
 
-  add_executable(pthreadtwoleveltest pthreadtwoleveltest.cc)
-  target_link_libraries(pthreadtwoleveltest PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${DUNE_LIBS})
+  dune_add_test(NAME pthreadtwoleveltest SOURCES pthreadtwoleveltest.cc
+    LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
   add_dune_mpi_flags(pthreadtwoleveltest)
   add_dune_parmetis_flags(pthreadtwoleveltest)
-  dune_add_test(TARGET pthreadtwoleveltest)
 
   dune_add_test(NAME pthreaddirectamgtest
                 SOURCES pthreadamgtest.cc
@@ -39,32 +36,24 @@ if(CMAKE_USE_PTHREADS_INIT)
 endif()
 
 # add an executable without SuperLU/UMFPack
-add_executable(amgtest amgtest.cc)
-target_link_libraries(amgtest PRIVATE ${DUNE_LIBS})
+dune_add_test(NAME amgtest SOURCES amgtest.cc)
 add_dune_mpi_flags(amgtest)
 add_dune_parmetis_flags(amgtest)
-dune_add_test(TARGET amgtest)
 
-add_executable(fastamg fastamg.cc)
-target_link_libraries(fastamg PRIVATE ${DUNE_LIBS})
+dune_add_test(NAME fastamg SOURCES fastamg.cc)
 add_dune_mpi_flags(fastamg)
 add_dune_parmetis_flags(fastamg)
-dune_add_test(TARGET fastamg)
 
 if(SuperLU_FOUND)
-  add_executable(superluamgtest amgtest.cc)
-  target_link_libraries(superluamgtest PRIVATE ${DUNE_LIBS})
+  dune_add_test(NAME superluamgtest SOURCES amgtest.cc)
   add_dune_superlu_flags(superluamgtest)
   add_dune_mpi_flags(superluamgtest)
   add_dune_parmetis_flags(superluamgtest)
-  dune_add_test(TARGET superluamgtest)
 
-  add_executable(superlufastamgtest fastamg.cc)
-  target_link_libraries(superlufastamgtest PRIVATE ${DUNE_LIBS})
+  dune_add_test(NAME superlufastamgtest SOURCES fastamg.cc)
   add_dune_superlu_flags(superlufastamgtest)
   add_dune_mpi_flags(superlufastamgtest)
   add_dune_parmetis_flags(superlufastamgtest)
-  dune_add_test(TARGET superlufastamgtest)
 endif()
 
 dune_add_test(NAME umfpackamgtest
