@@ -847,7 +847,7 @@ namespace Dune
       Setter(rows, matrix);
     }
 
-    std::tuple<std::string, std::string> splitFilename(const std::string& filename) {
+    inline std::tuple<std::string, std::string> splitFilename(const std::string& filename) {
       std::size_t lastdot = filename.find_last_of(".");
       if(lastdot == std::string::npos)
         return std::make_tuple(filename, "");
