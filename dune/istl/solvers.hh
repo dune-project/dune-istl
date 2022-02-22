@@ -1164,7 +1164,7 @@ namespace Dune {
        \note Currently, the RestartedFlexibleGMResSolver aborts when it detects a
              breakdown.
      */
-    void apply (X& x, Y& b, double reduction, InverseOperatorResult& res) override
+    void apply (X& x, Y& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
@@ -1710,7 +1710,7 @@ private:
     };
 
     // This function is called every mmax iterations to handle limited array sizes.
-    virtual void cycle(std::vector<X>& Ad,std::vector<X>& d,std::vector<field_type,ReboundAllocatorType<X,field_type> >& ddotAd,int& i_bounded) override {
+    virtual void cycle(std::vector<X>& Ad, [[maybe_unused]] std::vector<X>& d, [[maybe_unused]] std::vector<field_type,ReboundAllocatorType<X,field_type> >& ddotAd,int& i_bounded) override {
       // Only the loop index i_bounded return to 0, if it reached mmax.
       i_bounded = 0;
       // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.

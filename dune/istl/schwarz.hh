@@ -204,7 +204,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
+    virtual void pre (X& x, [[maybe_unused]] Y& b)
     {
       communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
     }
@@ -228,7 +228,7 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x) {}
+    virtual void post ([[maybe_unused]] X& x) {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual SolverCategory::Category category() const

@@ -657,7 +657,7 @@ namespace Dune {
       // return the total required for this block
       return {col_offset, row_offset};
     }
-  }; // namespace Impl
+  } // namespace Impl
 
 
   /**
