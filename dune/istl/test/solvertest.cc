@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   typedef Dune::MatrixAdapter<BCRSMat,BVector,BVector> Operator;
 
   BCRSMat mat;
-  Operator fop(mat);
+  const Operator fop(mat);
   BVector b(N*N), x(N*N);
 
   setupLaplacian(mat,N);
