@@ -1014,7 +1014,7 @@ namespace Dune
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
 
 
-    matrix.setSize(blockrows, blockcols);
+    matrix.setSize(blockrows, blockcols, nnz);
     matrix.setBuildMode(Dune::BCRSMatrix<T,A>::row_wise);
 
     if(header.type==array_type)
