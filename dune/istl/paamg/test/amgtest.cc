@@ -77,7 +77,7 @@ void randomize(const M& mat, V& b)
 
 
 template <class Matrix, class Vector>
-void testAMG(int N, int coarsenTarget, int ml)
+Dune::InverseOperatorResult testAMG(int N, int coarsenTarget, int ml, int gamma = 1)
 {
 
   std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<" maxlevel="<<ml<<std::endl;
@@ -139,6 +139,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   criterion.setDefaultValuesIsotropic(2);
   criterion.setAlpha(.67);
   criterion.setBeta(1.0e-4);
+  criterion.setGamma(gamma);
   criterion.setMaxLevel(ml);
   criterion.setSkipIsolated(false);
   // specify pre/post smoother steps
@@ -176,6 +177,7 @@ void testAMG(int N, int coarsenTarget, int ml)
 
      std::cout<<"CG solving took "<<watch.elapsed()<<" seconds"<<std::endl;
    */
+  return r;
 }
 
 
@@ -195,11 +197,19 @@ try
   if(argc>3)
     ml = atoi(argv[3]);
 
-  {
-    using Matrix = Dune::BCRSMatrix<XREAL>;
-    using Vector = Dune::BlockVector<XREAL>;
+  Dune::InverseOperatorResult gamma1_res;
+  for(int gamma = 1; gamma<=2;++gamma){
+    {
+      using Matrix = Dune::BCRSMatrix<XREAL>;
+      using Vector = Dune::BlockVector<XREAL>;
 
-    testAMG<Matrix,Vector>(N, coarsenTarget, ml);
+      Dune::InverseOperatorResult res = testAMG<Matrix,Vector>(N, coarsenTarget, ml, gamma);
+      if(gamma==1){
+        gamma1_res = res;
+      }else{
+        assert(res.conv_rate < gamma1_res.conv_rate);
+      }
+    }
   }
 
   {

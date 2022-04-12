@@ -1057,8 +1057,14 @@ namespace Dune
 
         if(processNextLevel) {
           // next level
-          for(std::size_t i=0; i<gamma_; i++)
+          for(std::size_t i=0; i<gamma_; i++){
             mgc(levelContext);
+            if (levelContext.matrix == matrices_->matrices().coarsest() && levels()==maxlevels())
+              break;
+            if(i+1 < gamma_){
+              levelContext.matrix->applyscaleadd(-1., *levelContext.lhs, *levelContext.rhs);
+            }
+          }
         }
 
         moveToFineLevel(levelContext, processNextLevel);
