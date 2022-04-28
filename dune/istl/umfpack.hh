@@ -799,6 +799,11 @@ namespace Dune {
                        -> std::shared_ptr<typename decltype(opTraits)::solver_type>
                        {
                          using OpTraits = decltype(opTraits);
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "UMFPack works only for sequential operators.");
+                         }
                          if constexpr (OpTraits::isAssembled){
                            using M = typename OpTraits::matrix_type;
                            // check if UMFPack<M>* is convertible to

@@ -731,6 +731,11 @@ namespace Dune
                        {
                          using OpTraits = decltype(opTraits);
                          using M = typename OpTraits::matrix_type;
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "SuperLU works only for sequential operators.");
+                         }
                          if constexpr (OpTraits::isAssembled &&
                                        // check whether the Matrix field_type is double or complex<double>
                                        std::is_same_v<typename FieldTraits<M>::real_type, double>){
