@@ -2183,20 +2183,6 @@ namespace Dune {
 
     }
 
-    /** \brief Class used by shared_ptr to deallocate memory using the proper allocator */
-    class Deallocator
-    {
-      typename std::allocator_traits<A>::template rebind_alloc<size_type>& sizeAllocator_;
-
-    public:
-      Deallocator(typename std::allocator_traits<A>::template rebind_alloc<size_type>& sizeAllocator)
-        : sizeAllocator_(sizeAllocator)
-      {}
-
-      void operator()(size_type* p) { sizeAllocator_.deallocate(p,1); }
-    };
-
-
     /**
      *  @brief Allocate memory for the matrix structure
      *
@@ -2239,10 +2225,14 @@ namespace Dune {
       // allocate a and j_ array
       if (allocate_data)
         allocateData();
+      // allocate column indices only if not yet present (enable sharing)
       if (allocationSize_>0) {
-        // allocate column indices only if not yet present (enable sharing)
+        // we copy allocator and size to the deleter since _j may outlive this class
         if (!j_.get())
-          j_.reset(sizeAllocator_.allocate(allocationSize_),Deallocator(sizeAllocator_));
+          j_.reset(sizeAllocator_.allocate(allocationSize_),
+            [alloc = sizeAllocator_, size = allocationSize_](auto ptr) mutable {
+              alloc.deallocate(ptr, size);
+            });
       }else{
         j_.reset();
       }
