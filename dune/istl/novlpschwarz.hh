@@ -45,9 +45,6 @@ namespace Dune {
    *
    * The information of the data distribution is provided by OwnerOverlapCopyCommunication
    * of \ref ISTL_Comm "communication API".
-   *
-   * Currently only data parallel versions are shipped with dune-istl. Domain
-   * decomposition can be found in module dune-dd.
    */
   /**
      @addtogroup ISTL_Operators
