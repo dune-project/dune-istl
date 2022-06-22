@@ -590,8 +590,9 @@ namespace Dune {
       } else {
         // before we write anything, we need to calculate the
         // offset for every {row,col} index
-        std::vector<std::size_t> col_offsets(cols + 1, 0);
-        std::vector<std::size_t> row_offsets(rows + 1, 0);
+        const auto null_offset = std::numeric_limits<std::size_t>::max();
+        std::vector<std::size_t> col_offsets(cols + 1, null_offset);
+        std::vector<std::size_t> row_offsets(rows + 1, null_offset);
         for_each_entry([&](const auto &row, const auto &col, const auto &val) {
           NullStream dev0;
           // get size of sub-block
@@ -599,17 +600,19 @@ namespace Dune {
               writeSVGMatrix(val, dev0, opts, row_prefix, col_prefix);
 
           // if we didn't see col size before
-          if (col_offsets[col + 1] == 0) // write it in the offset vector
+          if (col_offsets[col + 1] == null_offset) // write it in the offset vector
             col_offsets[col + 1] = sub_size.first;
-          else // check that is the same we saw before
-            assert(col_offsets[col + 1] == sub_size.first);
 
           // repeat proces for row sizes
-          if (row_offsets[row + 1] == 0)
+          if (row_offsets[row + 1] == null_offset)
             row_offsets[row + 1] = sub_size.second;
-          else
-            assert(row_offsets[row + 1] == sub_size.second);
         });
+
+        // if some rows/cols were not visited, make an educated guess with the minimum offset
+        auto min_row_offset = *std::min_element(begin(row_offsets), end(row_offsets));
+        std::replace(begin(row_offsets), end(row_offsets), null_offset, min_row_offset);
+        auto min_col_offset = *std::min_element(begin(col_offsets), end(col_offsets));
+        std::replace(begin(col_offsets), end(col_offsets), null_offset, min_col_offset);
 
         // we have sizes for every block: to get offsets we make a partial sum
         col_offsets[0] = interspace;
