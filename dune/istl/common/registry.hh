@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (C) DUNE Project contributors, see file LICENSE.md in module root
+// SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 #ifndef DUNE_ISTL_COMMON_REGISTRY_HH
 #define DUNE_ISTL_COMMON_REGISTRY_HH
 
