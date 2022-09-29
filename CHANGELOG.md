@@ -30,6 +30,9 @@
 - You can now use `std::tuple_element` to get the types of `MultiTypeBlockVector` entries
   and `MultiTypeBlockMatrix` rows.
 
+- The SPQR solver can now work with non-square matrices (a bug which caused a segfault when previously
+  attempting to do it was found and resolved).
+
 ## Deprecations and removals
 
 - The deprecated ILU functions `bilu_backsolve`, `bilu0_decomposition`, `bilu_backsolve`,
