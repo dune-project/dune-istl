@@ -286,20 +286,25 @@ namespace Dune {
     /** @brief Computes the QR decomposition. */
     void decompose()
     {
-      const std::size_t dimMat(spqrMatrix_.N());
-      const std::size_t nnz(spqrMatrix_.getColStart()[dimMat]);
+      const std::size_t nrows(spqrMatrix_.N());
+      const std::size_t ncols(spqrMatrix_.M());
+      const std::size_t nnz(spqrMatrix_.getColStart()[ncols]);
+
       // initialise the matrix A (sorted, packed, unsymmetric, real entries)
-      A_ = cholmod_l_allocate_sparse(dimMat, dimMat, nnz, 1, 1, 0, 1, cc_);
+      A_ = cholmod_l_allocate_sparse(nrows, ncols, nnz, 1, 1, 0, 1, cc_);
+
       // copy all the entries of Ap, Ai, Ax
-      for(std::size_t k = 0; k != (dimMat+1); ++k)
+      for(std::size_t k = 0; k != (ncols+1); ++k)
         (static_cast<long int *>(A_->p))[k] = spqrMatrix_.getColStart()[k];
+
       for(std::size_t k = 0; k != nnz; ++k)
       {
         (static_cast<long int*>(A_->i))[k] = spqrMatrix_.getRowIndex()[k];
         (static_cast<T*>(A_->x))[k] = spqrMatrix_.getValues()[k];
       }
+
       // initialise the vector B
-      B_ = cholmod_l_allocate_dense(dimMat, 1, dimMat, A_->xtype, cc_);
+      B_ = cholmod_l_allocate_dense(nrows, 1, nrows, A_->xtype, cc_);
       // compute factorization of A
       spqrfactorization_=SuiteSparseQR_factorize<T>(SPQR_ORDERING_DEFAULT,SPQR_DEFAULT_TOL,A_,cc_);
     }
