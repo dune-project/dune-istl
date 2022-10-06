@@ -69,17 +69,15 @@ namespace Dune
       {}
 
       template<class T1, class T2>
-      void dot (const T1&, const T1&, T2&) const
+      void dot (const T1& x, const T1& y, T2& result) const
       {
-        // This function should never be called
-        std::abort();
+        result = x.dot(y);
       }
 
       template<class T1>
-      typename FieldTraits<typename T1::field_type>::real_type norm (const T1&) const
+      typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
       {
-        // This function should never be called
-        std::abort();
+        return x.two_norm();
       }
 
       template<class T>
