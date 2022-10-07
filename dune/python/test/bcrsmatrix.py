@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE.md in module root
+# SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
+
 import dune.common
 from dune.istl import blockVector, BlockVector, bcrsMatrix, BCRSMatrix, SeqJacobi, CGSolver, BuildMode
 
