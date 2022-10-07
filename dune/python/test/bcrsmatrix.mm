@@ -1,4 +1,6 @@
 %%MatrixMarket matrix coordinate real general
+% SPDX-FileCopyrightInfo: Copyright (C) DUNE Project contributors, see file LICENSE.md in module root
+% SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 % ISTL_STRUCT blocked 1 1
 5 5 5
 1 1 1.000000e+00

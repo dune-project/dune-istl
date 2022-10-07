@@ -1,4 +1,6 @@
 %%MatrixMarket matrix coordinate real symmetric
+% SPDX-FileCopyrightInfo: Copyright (C) DUNE Project contributors, see file LICENSE.md in module root
+% SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 900 900 4322
 1 1  8.0000000000000e+00
 2 1 -1.0000000000000e+00
