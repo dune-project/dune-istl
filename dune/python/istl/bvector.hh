@@ -57,12 +57,13 @@ namespace Dune
       inline static void copy ( pybind11::buffer buffer, BlockVector &v )
       {
         typedef typename BlockVector::field_type field_type;
+        typedef typename BlockVector::size_type  size_type;
 
         pybind11::buffer_info info = buffer.request();
 
         if( info.format != pybind11::format_descriptor< field_type >::format() )
           throw pybind11::value_error( "Incompatible buffer format." );
-        if( info.ndim != blockLevel<BlockVector>() )
+        if( size_type(info.ndim) != blockLevel<BlockVector>() )
           throw pybind11::value_error( "Block vectors can only be initialized from one-dimensional buffers." );
 
         copy( static_cast< const char * >( info.ptr ), info.shape.data(), info.strides.data(), v );
