@@ -8,5 +8,5 @@ Maintainer: dune-devel@lists.dune-project.org
 Description: Iterative solver template library which provides generic sparse matrix/vector classes and a variety of solvers based on these classes
 URL: https://gitlab.dune-project.org/core/dune-istl
 Python-Requires:
-Depends: dune-common (>= 2.9)
+Depends: dune-common (>= 2.10)
 Whitespace-Hook: Yes
