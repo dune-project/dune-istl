@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: Copyright (C) DUNE Project contributors, see file LICENS
 SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 -->
 
-# Master (will become release 2.9)
+# Release 2.9
 
 - Add `const` qualifier to `LinearOperator` and `ScalarProduct` in
   `IterativeSolver`. In particular, the constructors of iterative solvers have
