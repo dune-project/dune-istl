@@ -3,7 +3,10 @@ SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE
 SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 -->
 
-# Master (will become release 2.9)
+# Master (will become release 2.10)
+
+
+# Release 2.9
 
 - Add `const` qualifier to `LinearOperator` and `ScalarProduct` in
   `IterativeSolver`. In particular, the constructors of iterative solvers have
@@ -46,6 +49,7 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 - Remove deprecated `ImplicitModeOverflowExhausted`, use
   `ImplicitModeCompressionBufferExhausted` instead.
+
 
 # Release 2.8
 
