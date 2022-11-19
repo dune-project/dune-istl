@@ -59,4 +59,5 @@ int main(int argc, char** argv)
     Dune::derr<<"Counting nonzeros of block BCRSMatrix failed!"<<std::endl;
   }
 
+  return ret;
 }
