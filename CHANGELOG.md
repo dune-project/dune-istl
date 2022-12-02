@@ -15,6 +15,8 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 - Multiple containers no longer provide the deprecated member function `blocklevel`. Use the free function
   `blockLevel()`.
 
+- Removed deprecated function `initSolverFactories()`, use `initSolverFactories<O>` instead.
+
 
 # Release 2.9
 
