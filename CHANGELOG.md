@@ -19,6 +19,8 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 - Removed deprecated `MultyTypeBlockMatrix::size()`, use `N()` instead.
 
+- Removed deprecated `MultyTypeBlockVector::count()`, use `N()` instead.
+
 
 # Release 2.9
 
