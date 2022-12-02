@@ -104,6 +104,18 @@ namespace Dune {
       return sizeof...(Args);
     }
 
+    /**
+     * number of elements
+     *
+     * \deprecated Use method <code>N</code> instead.
+     *             This will be removed after Dune 2.8.
+     */
+    [[deprecated("Use method 'N' instead")]]
+    int count() const
+    {
+      return sizeof...(Args);
+    }
+
     /** \brief Number of scalar elements */
     size_type dim() const
     {

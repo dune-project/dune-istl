@@ -17,7 +17,7 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 - Removed deprecated function `initSolverFactories()`, use `initSolverFactories<O>` instead.
 
-- Removed deprecated `MultyTypeBlock*::size()`, use `N()` instead.
+- Removed deprecated `MultyTypeBlockMatrix::size()`, use `N()` instead.
 
 
 # Release 2.9
