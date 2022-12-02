@@ -6,6 +6,13 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 # Master (will become release 2.10)
 
 
+## Deprecations and removals
+
+- The deprecated CMake variables `SUPERLU_INCLUDE_DIRS`, `SUPERLU_LIBRARIES`,
+  `SUPERLU_DUNE_COMPILE_FLAGS`, and `SUPERLU_DUNE_LIBRARIES` are removed, they are
+  replaced by the target `SuperLU::SuperLU`.
+
+
 # Release 2.9
 
 - Add `const` qualifier to `LinearOperator` and `ScalarProduct` in
