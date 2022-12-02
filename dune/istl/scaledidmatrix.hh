@@ -42,10 +42,6 @@ namespace Dune {
     //! The type used for the index access and size operations.
     typedef std::size_t size_type;
 
-    //! We are at the leaf of the block recursion
-    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr std::size_t blocklevel = 1;
-
     //! Each row is implemented by a field vector
     typedef DiagonalRowVector<K,n> row_type;
     typedef row_type reference;

@@ -12,6 +12,9 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
   `SUPERLU_DUNE_COMPILE_FLAGS`, and `SUPERLU_DUNE_LIBRARIES` are removed, they are
   replaced by the target `SuperLU::SuperLU`.
 
+- Multiple containers no longer provide the deprecated member function `blocklevel`. Use the free function
+  `blockLevel()`.
+
 
 # Release 2.9
 
