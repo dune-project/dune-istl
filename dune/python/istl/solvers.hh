@@ -4,7 +4,6 @@
 #define DUNE_PYTHON_ISTL_SOLVER_HH
 
 #include <dune/common/typeutilities.hh>
-#include <dune/common/version.hh>
 
 #include <dune/istl/solver.hh>
 #include <dune/istl/solvers.hh>
