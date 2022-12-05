@@ -87,7 +87,7 @@ dune_add_test(NAME umfpackfastamgtest
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 add_dune_mpi_flags(umfpackfastamgtest)
 add_dune_parmetis_flags(umfpackfastamgtest)
-add_dune_suitesparse_flags(umfpackamgtest)
+add_dune_suitesparse_flags(umfpackfastamgtest)
 
 dune_add_test(SOURCES twolevelmethodtest.cc
               CMAKE_GUARD HAVE_MPI)
