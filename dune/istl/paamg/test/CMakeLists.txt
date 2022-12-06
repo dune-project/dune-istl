@@ -29,6 +29,7 @@ if(CMAKE_USE_PTHREADS_INIT)
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
                 CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
   add_dune_mpi_flags(pthreaddirectamgtest)
+  add_dune_parmetis_flags(pthreaddirectamgtest)
   add_dune_superlu_flags(pthreaddirectamgtest)
   add_dune_suitesparse_flags(pthreaddirectamgtest)
 
@@ -38,6 +39,7 @@ if(CMAKE_USE_PTHREADS_INIT)
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
                 CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
   add_dune_mpi_flags(pthreaddirectfastamgtest)
+  add_dune_parmetis_flags(pthreaddirectfastamgtest)
   add_dune_superlu_flags(pthreaddirectfastamgtest)
   add_dune_suitesparse_flags(pthreaddirectfastamgtest)
 
@@ -46,6 +48,7 @@ if(CMAKE_USE_PTHREADS_INIT)
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
                 CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
   add_dune_mpi_flags(pthreaddirecttwoleveltest)
+  add_dune_parmetis_flags(pthreaddirecttwoleveltest)
   add_dune_superlu_flags(pthreaddirecttwoleveltest)
   add_dune_suitesparse_flags(pthreaddirecttwoleveltest)
 endif()
@@ -92,14 +95,17 @@ add_dune_suitesparse_flags(umfpackfastamgtest)
 dune_add_test(SOURCES twolevelmethodtest.cc
               CMAKE_GUARD HAVE_MPI)
 add_dune_mpi_flags(twolevelmethodtest)
+add_dune_parmetis_flags(twolevelmethodtest)
 
 dune_add_test(SOURCES graphtest.cc)
 
 dune_add_test(SOURCES kamgtest.cc)
 add_dune_mpi_flags(kamgtest)
+add_dune_parmetis_flags(transfertest)
 
 dune_add_test(SOURCES transfertest.cc)
 add_dune_mpi_flags(transfertest)
+add_dune_parmetis_flags(transfertest)
 
 dune_add_test(NAME twolevelmethodschwarztest
               SOURCES twolevelmethodtest.cc
