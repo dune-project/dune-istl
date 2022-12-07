@@ -83,12 +83,6 @@ namespace Dune {
      */
     typedef BlockVector<B,A> block_type;
 
-    /** increment block level counter, yes, it is two levels because
-            VariableBlockVector is a container of containers
-     */
-    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr auto blocklevel = blockLevel<B>()+2;
-
     //===== constructors and such
 
     /** constructor without arguments makes empty vector,

@@ -64,21 +64,6 @@ namespace Dune{
       auto& isfac=Dune::IterativeSolverFactory<X,Y>::instance();
       return addRegistryToFactory<TLS>(isfac, IterativeSolverTag{});
     }
-    /** initializes the direct solvers, preconditioners and iterative solvers in
-       the factories with the corresponding Matrix and Vector types.
-
-       @tparam O the assembled linear operator type
-       @tparam X the Domain type
-       @tparam Y the Range type
-
-       @deprecated Use method <code>initSolverFactories<O></code>
-                   instead. This will be removed after Dune 2.8.
-    */
-    template<class O, class X, class Y>
-    [[deprecated("Use method 'initSolverFactories<O>' instead")]]
-    int initSolverFactories() {
-      return initSolverFactories<O>();
-    }
   } // end anonymous namespace
 
 

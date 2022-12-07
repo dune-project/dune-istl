@@ -409,10 +409,6 @@ namespace Imp {
     //! The type for the index access
     typedef typename A::size_type size_type;
 
-    //! increment block level counter
-    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
-
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
 
@@ -640,10 +636,6 @@ namespace Imp {
 
     //! The type for the index access
     typedef typename A::size_type size_type;
-
-    //! increment block level counter
-    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
@@ -1021,10 +1013,6 @@ namespace Imp {
 
     //! The type for the index access
     typedef typename A::size_type size_type;
-
-    //! increment block level counter
-    [[deprecated("Use free function blockLevel(). Will be removed after 2.8.")]]
-    static constexpr unsigned int blocklevel = blockLevel<B>()+1;
 
     //! make iterators available as types
     typedef typename compressed_block_vector_unmanaged<B,A>::Iterator Iterator;

@@ -48,10 +48,6 @@ namespace Dune {
     //! The type for the index access and the size
     typedef typename A::size_type size_type;
 
-    //! increment block level counter
-    [[deprecated("Use free blockLevel function. Will be removed after 2.8.")]]
-    static constexpr auto blocklevel = blockLevel<B>()+1;
-
     /** \brief Default constructor */
     BTDMatrix() : BCRSMatrix<B,A>() {}
 

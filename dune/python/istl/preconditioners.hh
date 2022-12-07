@@ -4,8 +4,6 @@
 #define DUNE_PYTHON_ISTL_PRECONDITIONER_HH
 
 #include <dune/common/typeutilities.hh>
-#include <dune/common/version.hh>
-
 #include <dune/istl/operators.hh>
 #include <dune/istl/preconditioner.hh>
 #include <dune/istl/preconditioners.hh>

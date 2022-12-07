@@ -10,17 +10,6 @@
 #    :code:`SuperLU_FOUND`
 #       True if SuperLU available and usable.
 #
-#    :code:`SUPERLU_INCLUDE_DIRS`
-#       Path to the SuperLU include dirs.
-#       .. deprecated:: 2.8
-#          Use target SuperLU::SuperLU instead.
-#
-#    :code:`SUPERLU_LIBRARIES`
-#       Name to the SuperLU library.
-#       .. deprecated:: 2.8
-#          Use target SuperLU::SuperLU instead.
-#
-#
 #    This module provides the following imported targets, if found:
 #
 #    :code:`SuperLU:SuperLU`

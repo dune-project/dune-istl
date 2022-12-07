@@ -14,7 +14,6 @@
 #include <iostream>
 #include <complex>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/indices.hh>
@@ -54,11 +53,6 @@ void testMultiVector(const MultiTypeBlockVector<Args...>& multiVector)
     std::cout << "multi vector has " << multiVector.N() << " first level blocks" << std::endl;
 
     static_assert(MultiTypeBlockVector<Args...>::size()==2, "Method MultiTypeBlockVector::size() returned wrong value!");
-
-DUNE_NO_DEPRECATED_BEGIN
-    if (multiVector.count() != 2)
-      DUNE_THROW(Exception, "Method MultiTypeBlockVector::count returned wrong value!");
-DUNE_NO_DEPRECATED_END
 
     if (multiVector.N() != 2)
       DUNE_THROW(Exception, "Method MultiTypeBlockVector::N returned wrong value!");
