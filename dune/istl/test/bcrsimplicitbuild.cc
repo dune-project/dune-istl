@@ -49,6 +49,15 @@ void setMatrix(M& m)
   m[3][8] = 1.0;
 }
 
+void testZeroSizeImplicitBuild()
+{
+  ScalarMatrix m(0,0,3,0.1,ScalarMatrix::implicit);
+  ScalarMatrix::CompressionStatistics stats = m.compress();
+
+  ScalarMatrix m1(0,0,0,0,ScalarMatrix::implicit);
+  stats = m1.compress();
+}
+
 void testImplicitBuild()
 {
   ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
@@ -353,6 +362,7 @@ int main()
     ret+=testConstBracketOperatorBeforeCompress();
     testImplicitMatrixBuilder();
     testImplicitMatrixBuilderExtendedConstructor();
+    testZeroSizeImplicitBuild();
   }catch(Dune::Exception& e) {
     std::cerr << e <<std::endl;
     return 1;
