@@ -1465,10 +1465,18 @@ namespace Dune {
       overflow.clear();
 
       //determine average number of entries and memory usage
-      std::ptrdiff_t diff = (r[n-1].getindexptr() + r[n-1].getsize() - j_.get());
-      nnz_ = diff;
-      stats.avg = (double) (nnz_) / (double) n;
-      stats.mem_ratio = (double) (nnz_) / (double) allocationSize_;
+      if ( n == 0)
+      {
+        stats.avg = 0;
+        stats.mem_ratio = 1;
+      }
+      else
+      {
+        std::ptrdiff_t diff = (r[n-1].getindexptr() + r[n-1].getsize() - j_.get());
+        nnz_ = diff;
+        stats.avg = (double) (nnz_) / (double) n;
+        stats.mem_ratio = (double) (nnz_) / (double) allocationSize_;
+      }
 
       //matrix is now built
       ready = built;
