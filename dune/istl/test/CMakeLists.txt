@@ -92,9 +92,18 @@ function(add_factory_test BLOCK)
   configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}.cc)
   dune_add_test(NAME solverfactorytest_${BLOCK_CLEAN}
                 SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc
-                CMAKE_GUARD HAVE_MPI)
+                CMAKE_GUARD
+                  HAVE_MPI
+                  SuiteSparse_CHOLMOD_FOUND
+                  SuiteSparse_LDL_FOUND
+                  SuiteSparse_SPQR_FOUND
+                  SuiteSparse_UMFPACK_FOUND
+                  SuperLU_FOUND)
   add_dune_mpi_flags(solverfactorytest_${BLOCK_CLEAN})
   add_dune_parmetis_flags(solverfactorytest_${BLOCK_CLEAN})
+  add_dune_suitesparse_flags(solverfactorytest_${BLOCK_CLEAN})
+  add_dune_superlu_flags(solverfactorytest_${BLOCK_CLEAN})
+
   string(REGEX MATCH "LoopSIMD" _matched "${BLOCK}")
   if(NOT _matched)
     set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "")
@@ -104,12 +113,12 @@ function(add_factory_test BLOCK)
                   MPI_RANKS 1 2 4
                   TIMEOUT 600
                   CMAKE_GUARD
-                  HAVE_MPI
-                  SuiteSparse_CHOLMOD_FOUND
-                  SuiteSparse_LDL_FOUND
-                  SuiteSparse_SPQR_FOUND
-                  SuiteSparse_UMFPACK_FOUND
-                  SuperLU_FOUND)
+                    HAVE_MPI
+                    SuiteSparse_CHOLMOD_FOUND
+                    SuiteSparse_LDL_FOUND
+                    SuiteSparse_SPQR_FOUND
+                    SuiteSparse_UMFPACK_FOUND
+                    SuperLU_FOUND)
     add_dune_mpi_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
     add_dune_parmetis_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
     add_dune_suitesparse_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
