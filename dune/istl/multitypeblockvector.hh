@@ -345,6 +345,15 @@ namespace std
   {
     using type = typename std::tuple_element<i, std::tuple<Args...> >::type;
   };
+
+  /** \brief Make std::tuple_size work for MultiTypeBlockVector
+   *
+   * It derives from std::tuple after all.
+   */
+  template <typename... Args>
+  struct tuple_size<Dune::MultiTypeBlockVector<Args...> >
+    : std::integral_constant<std::size_t, sizeof...(Args)>
+  {};
 }
 
 #endif
