@@ -9,27 +9,19 @@ if(CMAKE_USE_PTHREADS_INIT)
   dune_add_test(NAME pthreadamgtest SOURCES pthreadamgtest.cc
     LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
     COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>)
-  # add_dune_mpi_flags(pthreadamgtest)
-  # add_dune_parmetis_flags(pthreadamgtest)
 
   dune_add_test(NAME pthreadfastamgtest SOURCES pthreadamgtest.cc
     LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
     COMPILE_DEFINITIONS MYAMG=Dune::Amg::FastAMG<Operator,Vector>)
-  # add_dune_mpi_flags(pthreadfastamgtest)
-  # add_dune_parmetis_flags(pthreadfastamgtest)
 
   dune_add_test(NAME pthreadtwoleveltest SOURCES pthreadtwoleveltest.cc
     LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-  # add_dune_mpi_flags(pthreadtwoleveltest)
-  # add_dune_parmetis_flags(pthreadtwoleveltest)
 
   dune_add_test(NAME pthreaddirectamgtest
                 SOURCES pthreadamgtest.cc
                 COMPILE_DEFINITIONS MYAMG=Dune::Amg::AMG<Operator,Vector,Smoother>
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
                 CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
-  # add_dune_mpi_flags(pthreaddirectamgtest)
-  # add_dune_parmetis_flags(pthreaddirectamgtest)
   add_dune_superlu_flags(pthreaddirectamgtest)
   add_dune_suitesparse_flags(pthreaddirectamgtest)
 
@@ -38,8 +30,6 @@ if(CMAKE_USE_PTHREADS_INIT)
                 COMPILE_DEFINITIONS MYAMG=Dune::Amg::FastAMG<Operator,Vector>
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
                 CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
-  # add_dune_mpi_flags(pthreaddirectfastamgtest)
-  # add_dune_parmetis_flags(pthreaddirectfastamgtest)
   add_dune_superlu_flags(pthreaddirectfastamgtest)
   add_dune_suitesparse_flags(pthreaddirectfastamgtest)
 
@@ -47,8 +37,6 @@ if(CMAKE_USE_PTHREADS_INIT)
                 SOURCES pthreadtwoleveltest.cc
                 LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}
                 CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
-  # add_dune_mpi_flags(pthreaddirecttwoleveltest)
-  # add_dune_parmetis_flags(pthreaddirecttwoleveltest)
   add_dune_superlu_flags(pthreaddirecttwoleveltest)
   add_dune_suitesparse_flags(pthreaddirecttwoleveltest)
 endif()
@@ -83,7 +71,6 @@ add_dune_suitesparse_flags(umfpackfastamgtest)
 dune_add_test(SOURCES twolevelmethodtest.cc
               CMAKE_GUARD HAVE_MPI)
 add_dune_mpi_flags(twolevelmethodtest)
-# add_dune_parmetis_flags(twolevelmethodtest)
 
 dune_add_test(SOURCES graphtest.cc)
 
