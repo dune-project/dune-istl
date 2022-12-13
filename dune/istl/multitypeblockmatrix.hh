@@ -613,5 +613,14 @@ namespace std
   {
     using type = typename std::tuple_element<i, std::tuple<Args...> >::type;
   };
+
+  /** \brief Make std::tuple_size work for MultiTypeBlockMatrix
+   *
+   * It derives from std::tuple after all.
+   */
+  template <typename... Args>
+  struct tuple_size<Dune::MultiTypeBlockMatrix<Args...> >
+    : std::integral_constant<std::size_t, sizeof...(Args)>
+  {};
 }
 #endif
