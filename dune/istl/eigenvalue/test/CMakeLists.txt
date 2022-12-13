@@ -7,16 +7,19 @@ link_libraries(Dune::ISTL)
 dune_add_test(NAME poweriterationtest SOURCES cond2test.cc
   CMD_ARGS 40)
 
-dune_add_test(NAME poweriterationsuperlutest SOURCES cond2test.cc
-  CMD_ARGS 40
-  CMAKE_GUARD "SuperLU_FOUND")
-add_dune_superlu_flags(poweriterationsuperlutest)
+if(SuperLU_FOUND)
+  dune_add_test(NAME poweriterationsuperlutest SOURCES cond2test.cc
+    CMD_ARGS 40)
+  add_dune_superlu_flags(poweriterationsuperlutest)
+endif()
 
-dune_add_test(NAME arpackpptest SOURCES cond2test.cc
-  CMAKE_GUARD "ARPACKPP_FOUND")
-add_dune_arpackpp_flags(arpackpptest)
+if(ARPACKPP_FOUND)
+  dune_add_test(NAME arpackpptest SOURCES cond2test.cc)
+  add_dune_arpackpp_flags(arpackpptest)
+endif()
 
-dune_add_test(NAME arpackppsuperlutest SOURCES cond2test.cc
-  CMAKE_GUARD "(ARPACKPP_FOUND AND SuperLU_FOUND)")
-add_dune_superlu_flags(arpackppsuperlutest)
-add_dune_arpackpp_flags(arpackppsuperlutest)
+if(ARPACKPP_FOUND AND SuperLU_FOUND)
+  dune_add_test(NAME arpackppsuperlutest SOURCES cond2test.cc)
+  add_dune_superlu_flags(arpackppsuperlutest)
+  add_dune_arpackpp_flags(arpackppsuperlutest)
+endif()
