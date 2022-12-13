@@ -42,29 +42,23 @@ if(CMAKE_USE_PTHREADS_INIT)
 endif()
 
 # add an executable without SuperLU/UMFPack
-dune_add_test(NAME amgtest
-              SOURCES amgtest.cc)
+dune_add_test(NAME amgtest SOURCES amgtest.cc)
 
-dune_add_test(NAME fastamg
-              SOURCES fastamg.cc)
+dune_add_test(NAME fastamg SOURCES fastamg.cc)
 
 if(SuperLU_FOUND)
-  dune_add_test(NAME superluamgtest
-                SOURCES amgtest.cc)
+  dune_add_test(NAME superluamgtest SOURCES amgtest.cc)
   add_dune_superlu_flags(superluamgtest)
 
-  dune_add_test(NAME superlufastamgtest
-                SOURCES fastamg.cc)
+  dune_add_test(NAME superlufastamgtest SOURCES fastamg.cc)
   add_dune_superlu_flags(superlufastamgtest)
 endif()
 
-dune_add_test(NAME umfpackamgtest
-              SOURCES amgtest.cc
+dune_add_test(NAME umfpackamgtest SOURCES amgtest.cc
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 add_dune_suitesparse_flags(umfpackamgtest)
 
-dune_add_test(NAME umfpackfastamgtest
-              SOURCES fastamg.cc
+dune_add_test(NAME umfpackfastamgtest SOURCES fastamg.cc
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 add_dune_suitesparse_flags(umfpackfastamgtest)
 
@@ -80,9 +74,7 @@ dune_add_test(SOURCES transfertest.cc)
 
 dune_add_test(NAME twolevelmethodschwarztest
               SOURCES twolevelmethodtest.cc
-              COMPILE_DEFINITIONS USE_OVERLAPPINGSCHWARZ
-              CMAKE_GUARD HAVE_MPI)
-add_dune_mpi_flags(twolevelmethodschwarztest)
+              COMPILE_DEFINITIONS USE_OVERLAPPINGSCHWARZ)
 
 # These tests need MPI, even though they are only run sequentially
 dune_add_test(SOURCES galerkintest.cc
@@ -94,7 +86,7 @@ dune_add_test(SOURCES hierarchytest.cc
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 add_dune_mpi_flags(hierarchytest)
-add_dune_parmetis_flags(hierarchytest)
+# add_dune_parmetis_flags(hierarchytest)
 
 dune_add_test(SOURCES coarsentest.cc
               MPI_RANKS 1 2 4
