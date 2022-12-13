@@ -36,10 +36,8 @@ dune_add_test(SOURCES matrixutilstest.cc)
 
 dune_add_test(SOURCES matrixtest.cc)
 
-dune_add_test(SOURCES multirhstest.cc
-              CMAKE_GUARD HAVE_MPI)
-add_dune_mpi_flags(multirhstest)
-add_dune_vc_flags(multirhstest)
+dune_add_test(SOURCES multirhstest.cc)
+add_dune_vc_flags(multirhstest) # Vc is not a hard requirement
 
 dune_add_test(SOURCES bvectortest.cc)
 
@@ -135,6 +133,7 @@ endforeach()
 dune_symlink_to_source_files(FILES solverfactorytest.ini)
 
 # SuperLU tests
+if(HAVE_SUPERLU)
   dune_add_test(NAME superlustest
                 SOURCES superlutest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=0)
@@ -156,29 +155,32 @@ dune_symlink_to_source_files(FILES solverfactorytest.ini)
   dune_add_test(SOURCES complexrhstest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
   add_dune_superlu_flags(complexrhstest)
+endif()
 
 # SuiteSparse tests
+if(HAVE_SUITESPARSE)
   dune_add_test(SOURCES umfpacktest.cc
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
   add_dune_suitesparse_flags(umfpacktest)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 
-dune_add_test(SOURCES ldltest.cc
-              CMAKE_GUARD SuiteSparse_LDL_FOUND)
-add_dune_suitesparse_flags(ldltest)
+  dune_add_test(SOURCES ldltest.cc
+                CMAKE_GUARD SuiteSparse_LDL_FOUND)
+  add_dune_suitesparse_flags(ldltest)
 
-dune_add_test(SOURCES spqrtest.cc
-              CMAKE_GUARD SuiteSparse_SPQR_FOUND)
-add_dune_suitesparse_flags(spqrtest)
+  dune_add_test(SOURCES spqrtest.cc
+                CMAKE_GUARD SuiteSparse_SPQR_FOUND)
+  add_dune_suitesparse_flags(spqrtest)
+
+  dune_add_test(SOURCES cholmodtest.cc
+                CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
+  add_dune_suitesparse_flags(cholmodtest)
+endif()
 
 dune_add_test(SOURCES overlappingschwarztest.cc
               CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 add_dune_suitesparse_flags(overlappingschwarztest)
 add_dune_superlu_flags(overlappingschwarztest)
-
-dune_add_test(SOURCES cholmodtest.cc
-              CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
-add_dune_suitesparse_flags(cholmodtest)
 
 dune_add_test(SOURCES registrytest.cc)
 
@@ -188,7 +190,7 @@ dune_add_test(SOURCES matrixredisttest.cc
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 add_dune_mpi_flags(matrixredisttest)
-add_dune_parmetis_flags(matrixredisttest)
+add_dune_parmetis_flags(matrixredisttest) # ParMETIS is not a hard requirement
 
 dune_add_test(SOURCES vectorcommtest.cc
               MPI_RANKS 1 2 4

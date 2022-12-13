@@ -62,9 +62,7 @@ dune_add_test(NAME umfpackfastamgtest SOURCES fastamg.cc
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
 add_dune_suitesparse_flags(umfpackfastamgtest)
 
-dune_add_test(SOURCES twolevelmethodtest.cc
-              CMAKE_GUARD HAVE_MPI)
-add_dune_mpi_flags(twolevelmethodtest)
+dune_add_test(SOURCES twolevelmethodtest.cc)
 
 dune_add_test(SOURCES graphtest.cc)
 
@@ -86,7 +84,7 @@ dune_add_test(SOURCES hierarchytest.cc
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 add_dune_mpi_flags(hierarchytest)
-# add_dune_parmetis_flags(hierarchytest)
+add_dune_parmetis_flags(hierarchytest) # ParMETIS is not a hard requirement
 
 dune_add_test(SOURCES coarsentest.cc
               MPI_RANKS 1 2 4
@@ -99,7 +97,7 @@ dune_add_test(NAME pamgtest
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 add_dune_mpi_flags(pamgtest)
-add_dune_parmetis_flags(pamgtest)
+add_dune_parmetis_flags(pamgtest) # ParMETIS is not a hard requirement
 
 dune_add_test(NAME pamg_comm_repart_test
               MPI_RANKS 1 2 4
@@ -107,8 +105,8 @@ dune_add_test(NAME pamg_comm_repart_test
               SOURCES parallelamgtest.cc
               COMPILE_DEFINITIONS -DAMG_REPART_ON_COMM_GRAPH
               CMAKE_GUARD MPI_FOUND)
-add_dune_parmetis_flags(pamg_comm_repart_test)
 add_dune_mpi_flags(pamg_comm_repart_test)
+add_dune_parmetis_flags(pamg_comm_repart_test) # ParMETIS is not a hard requirement
 
 dune_add_test(NAME pamgmmtest
   SOURCES pamgmmtest.cc
