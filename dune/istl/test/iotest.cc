@@ -25,7 +25,7 @@ void testWriteMatrix(BlockType b=BlockType(0.0))
 
   A[0][0] += b;
   writeMatrixToMatlabHelper(A, 0, 0, std::cout);
-  writeSVGMatrix(A, std::cout);
+  writeSVGMatrix(std::cout, A);
 }
 
 /* uses the writeVectorToMatlab method, filled with dummy data */
