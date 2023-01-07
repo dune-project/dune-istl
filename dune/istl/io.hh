@@ -510,7 +510,7 @@ namespace Dune {
       }
     };
 
-    //! Writes an SVG header and scales offests to fit output options
+    //! Writes an SVG header and scales offsets to fit output options
     // svg shall be closed with a group and an svg. i.e. "</g></svg>"
     template <class Stream, class SVGMatrixOptions>
     void writeSVGMatrixHeader(Stream &out, const SVGMatrixOptions &opts,
@@ -545,7 +545,7 @@ namespace Dune {
     std::pair<std::size_t, size_t>
     writeSVGMatrix(const Mat &mat, Stream &out, SVGMatrixOptions opts,
                   RowPrefix row_prefix, ColPrefix col_prefix) {
-      // get values to fill the offests
+      // get values to fill the offsets
       const auto& block_size = opts.block_size;
       const auto& interspace = opts.interspace;
 
