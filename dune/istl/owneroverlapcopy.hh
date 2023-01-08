@@ -198,7 +198,7 @@ namespace Dune {
   protected:
 
 
-    /** \brief gather/scatter callback for communcation */
+    /** \brief gather/scatter callback for communication */
     template<typename T>
     struct CopyGatherScatter
     {

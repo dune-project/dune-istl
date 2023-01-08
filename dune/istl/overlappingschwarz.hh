@@ -847,7 +847,7 @@ namespace Dune
     {}
 
     /*!
-       \brief Apply the precondtioner
+       \brief Apply the preconditioner
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
@@ -1209,7 +1209,7 @@ namespace Dune
       for(DomainIterator domain=subDomains.begin(); domain!=subDomains.end(); ++domain)
         maxlength=std::max(maxlength, domain->size());
     }else{
-      // initialize the solvers of the local prolems.
+      // initialize the solvers of the local problems.
       SolverIterator solver=solvers.begin();
       for(DomainIterator domain=subDomains.begin(); domain!=subDomains.end();
           ++domain, ++solver) {

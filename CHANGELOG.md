@@ -210,4 +210,4 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 - The solver infrastructure was updated to support SIMD data types (see
   current changes in `dune-common`). This allows to solve multiple systems
-  simultaniously using vectorization.
+  simultaneously using vectorization.

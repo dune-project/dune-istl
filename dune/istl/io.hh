@@ -605,7 +605,7 @@ namespace Dune {
           if (col_offsets[col + 1] == null_offset) // write it in the offset vector
             col_offsets[col + 1] = sub_size.first;
 
-          // repeat proces for row sizes
+          // repeat process for row sizes
           if (row_offsets[row + 1] == null_offset)
             row_offsets[row + 1] = sub_size.second;
         });
@@ -703,7 +703,7 @@ namespace Dune {
      * @code{.cc}
      * opts.color_fill = [max,min](const double& val){
      *   auto percentage = (val-min)/(max-min)*100;
-     *   return "hsl(348, " + std::to_string(precentage) + "%, 41%)";};
+     *   return "hsl(348, " + std::to_string(percentage) + "%, 41%)";};
      * };
      * @endcode
      */
@@ -752,7 +752,7 @@ namespace Dune {
      *          case of overlaps in the SVG objects, the more nested blocks take
      *          precedence.
      * @warning If the SVG bounding box is not respected, the content may be
-     *          ommited in the final SVG view.
+     *          omitted in the final SVG view.
      * @note This function signature is required for any custom options class.
      *
      * @tparam Stream       An ostream type (possibly a NullStream!)
@@ -795,7 +795,7 @@ namespace Dune {
    *          bounding box. This is enough to visualize patterns. If you need a
    *          more advance SVG object in each matrix block (e.g. color scale, or
    *          write the value in text), just provide a custom SVGOptions that
-   *          fullfils the DefaultSVGMatrixOptions interface.
+   *          fulfills the DefaultSVGMatrixOptions interface.
    *
    * @tparam Mat          Matrix type to write
    * @tparam SVGOptions   Options object type (see DefaultSVGMatrixOptions)
@@ -806,7 +806,7 @@ namespace Dune {
   template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
   void writeSVGMatrix(const Mat &mat, std::ostream &out,
                       SVGOptions opts = {}) {
-    // We need a vector that can fit all the multi-indices for rows and colums
+    // We need a vector that can fit all the multi-indices for rows and columns
     using IndexPrefix = Dune::ReservedVector<std::size_t, blockLevel<Mat>()>;
     // Call overload for Mat type
     Impl::writeSVGMatrix(mat, out, opts, IndexPrefix{}, IndexPrefix{});

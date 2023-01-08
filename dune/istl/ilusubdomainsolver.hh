@@ -151,7 +151,7 @@ namespace Dune {
   std::size_t ILUSubdomainSolver<M,X,Y>::copyToLocalMatrix(const M& A, S& rowSet)
   {
     // Calculate consecutive indices for local problem
-    // while perserving the ordering
+    // while preserving the ordering
     typedef typename M::size_type size_type;
     typedef std::map<typename S::value_type,size_type> IndexMap;
     typedef typename IndexMap::iterator IMIter;

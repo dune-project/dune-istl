@@ -194,7 +194,7 @@ namespace Dune
        * @brief Get the mapping of fine level unknowns to coarse level
        * aggregates.
        *
-       * For each fine level unknown i the correcponding data[i] is the
+       * For each fine level unknown i the corresponding data[i] is the
        * aggregate it belongs to on the coarsest level.
        *
        * @param[out] data The mapping of fine level unknowns to coarse level
@@ -517,7 +517,7 @@ namespace Dune
           int start, end, overlapStart, overlapEnd;
           int procs=info->communicator().rank();
           int n = UNKNOWNS/procs; // number of unknowns per process
-          int bigger = UNKNOWNS%procs; // number of process with n+1 unknows
+          int bigger = UNKNOWNS%procs; // number of process with n+1 unknowns
 
           // Compute owner region
           if(rank<bigger) {

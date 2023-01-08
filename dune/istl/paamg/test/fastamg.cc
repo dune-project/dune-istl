@@ -90,9 +90,9 @@ void testAMG(int N, int coarsenTarget, int ml)
 
   Dune::SeqScalarProduct<Vector> sp;
   typedef Dune::Amg::FastAMG<Operator,Vector> AMG;
-  Dune::Amg::Parameters parms;
+  Dune::Amg::Parameters params;
 
-  AMG amg(fop, criterion, parms);
+  AMG amg(fop, criterion, params);
 
   // check if recalculation of matrix hierarchy works
   amg.recalculateHierarchy();

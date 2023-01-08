@@ -746,7 +746,7 @@ namespace Dune
     private:
       /** @brief Prevent copying. */
       AggregatesMap(const AggregatesMap<V>&) = delete;
-      /** @brief Prevent assingment. */
+      /** @brief Prevent assignment. */
       AggregatesMap<V>& operator=(const AggregatesMap<V>&) = delete;
 
       /**
@@ -827,7 +827,7 @@ namespace Dune
       /**
        * @brief Reconstruct the aggregat from an seed node.
        *
-       * Will determine all vertices of the same agggregate
+       * Will determine all vertices of the same aggregate
        * and reference those.
        */
       void reconstruct(const Vertex& vertex);
@@ -853,7 +853,7 @@ namespace Dune
        */
       typename VertexSet::size_type size();
       /**
-       * @brief Get tne number of connections to other aggregates.
+       * @brief Get the number of connections to other aggregates.
        */
       typename VertexSet::size_type connectSize();
 
@@ -1244,7 +1244,7 @@ namespace Dune
       /**
        * @brief Counts the edges depending on the dependency.
        *
-       * If the inluence flag of the edge is set the counter is
+       * If the influence flag of the edge is set the counter is
        * increased and/or if the depends flag is set it is
        * incremented, too.
        */
@@ -1294,7 +1294,7 @@ namespace Dune
        * @brief counts the dependency between a vertex and unaggregated
        * neighbours.
        *
-       * If the inluence flag of the edge is set the counter is
+       * If the influence flag of the edge is set the counter is
        * increased and/or if the depends flag is set it is
        * incremented, too.
        *
@@ -1326,7 +1326,7 @@ namespace Dune
        * @brief Counts the number of neighbours belonging to an aggregate.
        *
        *
-       * If the inluence flag of the edge is set the counter is
+       * If the influence flag of the edge is set the counter is
        * increased and/or if the depends flag is set it is
        * incremented, too.
        *
@@ -1341,7 +1341,7 @@ namespace Dune
       int aggregateNeighbours(const Vertex& vertex, const AggregateDescriptor& aggregate, const AggregatesMap<Vertex>& aggregates) const;
 
       /**
-       * @brief Checks wether a vertex is admisible to be added to an aggregate.
+       * @brief Checks whether a vertex is admissible to be added to an aggregate.
        *
        * @param vertex The vertex whose admissibility id to be checked.
        * @param aggregate The id of the aggregate.
@@ -1457,7 +1457,7 @@ namespace Dune
         return;
       }
       real_type eji = norm_(*opposite_entry);
-      // skip positve offdiagonals if norm preserves sign of them.
+      // skip positive offdiagonals if norm preserves sign of them.
       if(!N::is_sign_preserving || (eij<0 || eji<0))
         if(eji / norm_(matrix_->operator[](edge.target())[edge.target()]) *
            eij/ diagonal_ > alpha() * maxValue_) {

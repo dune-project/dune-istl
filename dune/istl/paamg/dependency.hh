@@ -29,11 +29,11 @@ namespace Dune
      */
 
     /**
-     * @brief Class representing the properties of an ede in the matrix graph.
+     * @brief Class representing the properties of an edge in the matrix graph.
      *
      * During the coarsening process the matrix graph needs to hold different
      * properties of its edges.
-     * This class ontains methods for getting and setting these edge attributes.
+     * This class contains methods for getting and setting these edge attributes.
      */
     class EdgeProperties
     {
@@ -56,7 +56,7 @@ namespace Dune
       bool operator[](std::size_t v) const;
 
       /**
-       * @brief Checks wether the vertex the edge points to depends on
+       * @brief Checks whether the vertex the edge points to depends on
        * the vertex the edge starts.
        * @return True if it depends on the starting point.
        */
@@ -74,7 +74,7 @@ namespace Dune
       void resetDepends();
 
       /**
-       * @brief Checks wether the start vertex is influenced by the end vertex.
+       * @brief Checks whether the start vertex is influenced by the end vertex.
        * @return True if it is influenced.
        */
       bool influences() const;
@@ -90,19 +90,19 @@ namespace Dune
       void resetInfluences();
 
       /**
-       * @brief Checks wether the edge is one way.
+       * @brief Checks whether the edge is one way.
        * I.e. either the influence or the depends flag but is set.
        */
       bool isOneWay() const;
 
       /**
-       * @brief Checks wether the edge is two way.
+       * @brief Checks whether the edge is two way.
        * I.e. both the influence flag and the depends flag are that.
        */
       bool isTwoWay() const;
 
       /**
-       * @brief Checks wether the edge is strong.
+       * @brief Checks whether the edge is strong.
        * I.e. the influence or depends flag is set.
        */
       bool isStrong()  const;
@@ -151,7 +151,7 @@ namespace Dune
       void setIsolated();
 
       /**
-       * @brief Checks wether the node is isolated.
+       * @brief Checks whether the node is isolated.
        */
       bool isolated() const;
 
@@ -166,7 +166,7 @@ namespace Dune
       void setVisited();
 
       /**
-       * @brief Checks wether the node is marked as visited.
+       * @brief Checks whether the node is marked as visited.
        */
       bool visited() const;
 
@@ -181,7 +181,7 @@ namespace Dune
       void setFront();
 
       /**
-       * @brief Checks wether the node is marked as a front node.
+       * @brief Checks whether the node is marked as a front node.
        */
       bool front() const;
 

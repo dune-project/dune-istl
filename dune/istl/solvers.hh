@@ -1673,7 +1673,7 @@ private:
   /*! \brief Complete flexible conjugate gradient method
 
      This solver is a simple modification of the RestartedFCGSolver and, if possible, uses mmax old directions.
-     It uses noticably more memory, but provides more stability for preconditioner changes.
+     It uses noticeably more memory, but provides more stability for preconditioner changes.
 
   */
   template<class X>

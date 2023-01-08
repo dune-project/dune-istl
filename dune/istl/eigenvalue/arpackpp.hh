@@ -596,12 +596,12 @@ namespace Dune
     /**
      * \brief Assume the matrix to be nonsymmetric and perform IRLM
      *        to compute an approximation sigma of its largest
-     *        singlar value and the corresponding approximation x of
+     *        singular value and the corresponding approximation x of
      *        an associated singular vector.
      *
      * \param[in]  epsilon The target relative accuracy of Ritz values
      *                     (0 == machine precision).
-     * \param[out] sigma   The approximated largest singlar value.
+     * \param[out] sigma   The approximated largest singular value.
      * \param[out] x       The associated approximated right-singular
      *                     vector (if #rows >= #ncols) respectively
      *                     left-singular vector (if #rows < #ncols).
@@ -708,12 +708,12 @@ namespace Dune
     /**
      * \brief Assume the matrix to be nonsymmetric and perform IRLM
      *        to compute an approximation sigma of its smallest
-     *        singlar value and the corresponding approximation x of
+     *        singular value and the corresponding approximation x of
      *        an associated singular vector.
      *
      * \param[in]  epsilon The target relative accuracy of Ritz values
      *                     (0 == machine precision).
-     * \param[out] sigma   The approximated smallest singlar value.
+     * \param[out] sigma   The approximated smallest singular value.
      * \param[out] x       The associated approximated right-singular
      *                     vector (if #rows >= #ncols) respectively
      *                     left-singular vector (if #rows < #ncols).

@@ -408,8 +408,8 @@ namespace Dune {
      The compress() method returns a value of type Dune::CompressionStatistics, which
      you can inspect to tune the construction parameters `_avg` and `compressionBufferSize`.
 
-     Use of copy constructor, assignment operator and matrix vector arithmetics
-     are not supported until the matrix is fully built.
+     Use of copy constructor, assignment operator and matrix vector arithmetic
+     is not supported until the matrix is fully built.
 
      The following sample code constructs a \f$ 10 \times 10\f$ matrix, with an expected
      number of two entries per matrix row.  The compression buffer size is set to 0.4.

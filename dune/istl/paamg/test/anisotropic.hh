@@ -56,7 +56,7 @@ void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int ove
         iter.insert(iter.index()-1);
 
       if(i < overlapEnd-1)
-        // We have a rigt neighbour
+        // We have a right neighbour
         iter.insert(iter.index()+1);
 
       // j direction
@@ -163,7 +163,7 @@ Dune::BCRSMatrix<MatrixEntry> setupAnisotropic2d(int N, Dune::ParallelIndexSet<G
   int start, end, overlapStart, overlapEnd;
 
   int n = N/procs; // number of unknowns per process
-  int bigger = N%procs; // number of process with n+1 unknows
+  int bigger = N%procs; // number of process with n+1 unknowns
 
   // Compute owner region
   if(rank<bigger) {

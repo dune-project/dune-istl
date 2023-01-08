@@ -35,7 +35,7 @@ int main()
     We have to un-initialize it first:
   */
   std::size_t size = 20;
-  v3.resize(size); // this makes v3 unitialized again
+  v3.resize(size); // this makes v3 uninitialized again
 
   // Set block sizes with CreateIterator:
   for (auto cIt = v3.createbegin(); cIt!=v3.createend(); ++cIt)

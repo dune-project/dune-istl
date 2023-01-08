@@ -209,7 +209,7 @@ namespace Dune {
     }
 
     /*!
-       \brief Apply the precondtioner
+       \brief Apply the preconditioner
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */

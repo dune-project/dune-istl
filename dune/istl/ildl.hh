@@ -79,7 +79,7 @@ namespace Dune
    * \brief  compute ILDL decomposition of a symmetric matrix A
    * \author Martin Nolte
    *
-   * \param[inout]  A  matrix to decompose
+   * \param[in,out]  A Matrix to decompose
    *
    * \note A is overwritten by the factorization.
    * \note Only the lower half of A is used.

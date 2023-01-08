@@ -82,7 +82,7 @@ namespace Dune
 
       /**
        * @brief Construct a new amg with a specific coarse solver.
-       * @param matrices The already set up matix hierarchy.
+       * @param matrices The already set-up matrix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
        * grid, must match the coarse matrix in the matrix hierarchy.
        * @param parms The parameters for the AMG.
@@ -219,7 +219,7 @@ namespace Dune
        * @brief Apply pre smoothing on the current level.
        * @param levelContext The context with the iterators for the level.
        * @param x The left hand side at the current level.
-       * @param b The rightt hand side at the current level.
+       * @param b The right hand side at the current level.
        */
       void presmooth(LevelContext& levelContext, Domain& x, const Range& b);
 
@@ -227,7 +227,7 @@ namespace Dune
        * @brief Apply post smoothing on the current level.
        * @param levelContext The context with the iterators for the level.
        * @param x The left hand side at the current level.
-       * @param b The rightt hand side at the current level.
+       * @param b The right hand side at the current level.
        */
       void postsmooth(LevelContext& levelContext, Domain& x, const Range& b);
 

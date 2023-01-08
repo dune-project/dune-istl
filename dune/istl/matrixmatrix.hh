@@ -117,7 +117,7 @@ namespace Dune
           // as the mcol iterator
 
           for(row_iterator_t mtcol=matt.begin(); mtcol != matt.end(); ++mtcol) {
-            //Search for col entries in mat that have a corrsponding row index in matt
+            //Search for col entries in mat that have a corresponding row index in matt
             // (i.e. corresponding col index in the as this is the transposed matrix
             col_iterator_t mtrow=mtcol->begin();
             bool funcCalled = false;

@@ -37,7 +37,7 @@ typedef std::complex<double> FIELD_TYPE;
     N=3;
     A = full(gallery('poisson',N)); % create poisson matrix
 
-    % find a solution consiting of complex integers
+    % find a solution consisting of complex integers
     indVec = (0:(N*N-1))',
     iVec = complex(0,1).^indVec + indVec,
     x0 = iVec .* indVec,

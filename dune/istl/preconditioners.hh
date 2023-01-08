@@ -36,7 +36,7 @@ namespace Dune {
    * together with matching ScalarProducts.
    *
    * Some of the available preconditioners (e.g. SeqJacobi, SeqSOR, SeqSSOR))
-   * may be given an aditional int as a template parameter, the block recursion level.
+   * may be given an additional int as a template parameter, the block recursion level.
    * These preconditioners
    * can be used on block-recursive matrices with an arbitrary hierarchy depth
    * (eg. BCRSMatrix<BCRSMatrix<FieldMatrix,n,m> > >. Given a block recursion level
