@@ -13,7 +13,7 @@
 #if HAVE_PARMETIS
 // Explicitly use C linkage as scotch does not extern "C" in its headers.
 // Works because ParMETIS/METIS checks whether compiler is C++ and otherwise
-// does not use extern "C". Therfore no nested extern "C" will be created
+// does not use extern "C". Therefore no nested extern "C" will be created.
 extern "C"
 {
 #include <parmetis.h>
@@ -109,7 +109,7 @@ namespace Dune
     //starting atmaxgi+\sum_{i=1}^p neededall[i]
     // All created indices are owned by the process
     maxgi=oocomm.communicator().max(maxgi);
-    ++maxgi;  //Sart with the next free index.
+    ++maxgi;  // Start with the next free index.
 
     for(int i=0; i<oocomm.communicator().rank(); ++i)
       maxgi=maxgi+neededall[i];   // TODO: make this more generic
@@ -512,7 +512,7 @@ namespace Dune
         {
           if(i->first==old->first)
           {
-            std::cerr<<"Value at indes"<<old-ownerVec.begin()<<" is the same as at index "
+            std::cerr<<"Value at index "<<old-ownerVec.begin()<<" is the same as at index "
                      <<i-ownerVec.begin()<<" ["<<old->first<<","<<old->second<<"]==["
                      <<i->first<<","<<i->second<<"]"<<std::endl;
             throw "Huch!";
@@ -653,7 +653,7 @@ namespace Dune
       template<class T>
       void operator()(const T& edge)
       {
-        // Get the egde weight
+        // Get the edge weight
         // const Weight& weight=edge.weight();
         adj_[i_] = data_.toParmetis(edge.target());
         i_++;
@@ -905,7 +905,7 @@ namespace Dune
         // // calculate edge count
         // for(RIter row=mat.begin(), endr=mat.end(); row != endr; ++row)
         //   if(owner[row.index()]==OwnerOverlapCopyAttributeSet::owner)
-        //     for(CIter entry= row->begin(), ende = row->end(); entry != ende; ++entry)
+        //     for(CIter entry= row->begin(), end = row->end(); entry != end; ++entry)
         //       ++edgecount[owner[entry.index()]];
 
         // setup edge and weight pattern
@@ -914,7 +914,7 @@ namespace Dune
 
 #ifdef USE_WEIGHTS
         vwgt   = new Metis::idx_t[1];
-        vwgt[0]= mat.N(); // weight is numer of rows TODO: Should actually be the nonzeros.
+        vwgt[0]= mat.N(); // weight is number of rows TODO: Should actually be the nonzeros.
 
         adjwgt = new Metis::idx_t[noNeighbours];
         Metis::idx_t* adjwp=adjwgt;
@@ -1050,7 +1050,7 @@ namespace Dune
               curr!=end; ++curr)
             gnoedges += *curr;
 
-          // alocate gobal graph
+          // allocate global graph
           Dune::dinfo<<"gxadjlen: "<<gxadjlen<<" noVertices: "<<noVertices
                      <<" gnoedges: "<<gnoedges<<std::endl;
           gxadj = new Metis::idx_t[gxadjlen];
@@ -1116,7 +1116,7 @@ namespace Dune
 #endif
           // everything should be fine now!!!
           if(verbose && oocomm.communicator().rank()==0)
-            std::cout<<"Postprocesing global graph data took "<<time1.elapsed()<<std::endl;
+            std::cout<<"Postprocessing global graph data took "<<time1.elapsed()<<std::endl;
           time1.reset();
 #ifndef NDEBUG
           assert(isValidGraph(noVertices, noVertices, gnoedges,
@@ -1577,7 +1577,7 @@ namespace Dune
     // 4.2) Start the communication
     //
 
-    // Get all the owner and overlap vertices for myself ans save
+    // Get all the owner and overlap vertices for myself and save
     // it in the vectors myOwnerVec and myOverlapVec.
     // The received vertices from the other processes are simple
     // added to these vector.

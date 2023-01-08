@@ -834,7 +834,7 @@ namespace Dune
         /**
          * @brief Constructor for the end iterator.
          *
-         * Only operator!= or operator== can be calles safely on an iterator
+         * Only operator!= or operator== can be called safely on an iterator
          * constructed this way.
          * @param iter The iterator of the underlying graph.
          */

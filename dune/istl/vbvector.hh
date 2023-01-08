@@ -380,7 +380,7 @@ namespace Dune {
       // and we have a usable vector
       initialized = true;
 
-      return *this;     // Gebe Referenz zurueck damit a=b=c; klappt
+      return *this;     // Return reference to make constructions like a=b=c; work.
     }
 
 

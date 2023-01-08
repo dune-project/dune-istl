@@ -265,8 +265,8 @@ namespace Dune {
   /**
    * @brief Nonoverlapping parallel preconditioner.
    *
-   * This is essentially a wrapper that take a sequential
-   * preconditoner. In each step the sequential preconditioner
+   * This is essentially a wrapper that takes a sequential
+   * preconditioner. In each step the sequential preconditioner
    * is applied and then all owner data points are updated on
    * all other processes.
    */

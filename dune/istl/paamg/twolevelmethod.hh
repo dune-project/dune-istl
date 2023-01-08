@@ -104,7 +104,7 @@ public:
    *
    * After returning from this function the coarse level correction
    * will have been added to fine level system.
-   * @param[inout] fineLhs The left hand side of the fine level to update
+   * @param[in,out] fineLhs The left hand side of the fine level to update
    * with the coarse level correction.
    */
   virtual void moveToFineLevel(FineDomainType& fineLhs)=0;

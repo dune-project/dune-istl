@@ -32,7 +32,7 @@ namespace Imp {
        -  random access
 
            This container has *NO* memory management at all,
-           copy constuctor, assignment and destructor are all default.
+           copy constructor, assignment and destructor are all default.
 
            The constructor is made protected to emphasize that objects
        are only usable in derived classes.
@@ -291,7 +291,7 @@ namespace Imp {
            -  find returning iterator
 
            This container has *NO* memory management at all,
-           copy constuctor, assignment and destructor are all default.
+           copy constructor, assignment and destructor are all default.
 
            The constructor is made protected to emphasize that objects
        are only usably in derived classes.

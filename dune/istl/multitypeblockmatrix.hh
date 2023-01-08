@@ -74,7 +74,7 @@ namespace Dune {
 
     /** \brief Random-access operator
      *
-     * This method mimicks the behavior of normal vector access with square brackets like, e.g., m[5] = ....
+     * This method mimics the behavior of normal vector access with square brackets like, e.g., m[5] = ....
      * The problem is that the return type is different for each value of the argument in the brackets.
      * Therefore we implement a trick using std::integral_constant.  To access the first row of
      * a MultiTypeBlockMatrix named m write

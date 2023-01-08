@@ -52,7 +52,7 @@ namespace Dune {
 
        \note if a preconditioner is copied (e.g. for a second thread)
        again the pre() method has to be called to ensure proper memory
-       mangement.
+       management.
 
        \code
        X x(0.0);

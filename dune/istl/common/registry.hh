@@ -54,7 +54,7 @@ namespace Dune {
 
     /*
       Register all creators from the registry in the Parameterizedobjectfactory An
-      object of V is passed in the creator ans should be used to determine the
+      object of V is passed in the creator and should be used to determine the
       template arguments.
     */
     template<class V, class Type, class Tag, class... Args>
@@ -65,7 +65,7 @@ namespace Dune {
                             [&](auto index) {
                               // we first get the generic lambda
                               // and later specialize it with given parameters.
-                              // doing all at once lead to an ICE woth g++-6
+                              // doing all at once leads to an ICE with g++-6
                               using Reg = Registry<Tag, index>;
                               auto genericcreator = Reg::getCreator();
                               factory.define(Reg::name(), [genericcreator](Args... args){

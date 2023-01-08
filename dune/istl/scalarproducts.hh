@@ -210,7 +210,7 @@ namespace Dune {
   /** @} end documentation */
 
   /**
-   * \brief Choose the approriate scalar product for a solver category.
+   * \brief Choose the appropriate scalar product for a solver category.
    *
    * \todo this helper function should be replaced by a proper factory
    *

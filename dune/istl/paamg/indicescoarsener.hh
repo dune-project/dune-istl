@@ -372,7 +372,7 @@ namespace Dune
       // The number of neighbours should not change!
       assert(coarseRemote.neighbours()==fineRemote.neighbours());
 
-      // snyc the index set and the remote indices to recompute missing
+      // sync the index set and the remote indices to recompute missing
       // indices
       IndicesSyncer<ParallelIndexSet> syncer(coarseIndices, coarseRemote);
       syncer.sync(renumberer);

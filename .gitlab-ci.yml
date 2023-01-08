@@ -49,6 +49,17 @@ ubuntu:18.04 clang-5-17:
     DUNECI_CMAKE_FLAGS: "-DDUNE_ENABLE_PYTHONBINDINGS=OFF"
   tags: [duneci]
 
+# Check for spelling mistakes in text
+code-spelling-check:
+  stage: .pre
+  # Avoid the global 'before_script'
+  before_script: ""
+  image: registry.dune-project.org/docker/ci/debian:11
+  tags: [duneci]
+  script:
+  - codespell
+    --ignore-words-list ba,eiter,equil,fo,parms
+
 reuse:
   stage: .pre
   image:

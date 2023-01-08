@@ -100,7 +100,7 @@ if(ARPACKPP_FOUND)
   endif(ARPACKPP_LIBRARY)
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determing location of ARPACK++ succeeded:\n"
+    "Determining location of ARPACK++ succeeded:\n"
     "Include directory: ${ARPACKPP_INCLUDE_DIRS}\n"
     "Libraries to link against: ${ARPACKPP_LIBRARIES}\n\n")
 
@@ -116,9 +116,9 @@ if(ARPACKPP_FOUND)
   set(ARPACKPP_DUNE_LIBRARIES ${ARPACKPP_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking ARPACK++ programs")
 else()
-  # log errornous result
+  # log erroneous result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-    "Determing location of ARPACK++ failed:\n"
+    "Determining location of ARPACK++ failed:\n"
     "Include directory: ${ARPACKPP_INCLUDE_DIRS}\n"
     "Libraries to link against: ${ARPACKPP_LIBRARIES}\n\n")
 endif()

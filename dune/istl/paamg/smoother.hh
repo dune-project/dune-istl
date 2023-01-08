@@ -42,7 +42,7 @@ namespace Dune
       typedef typename FieldTraits<T>::real_type RelaxationFactor;
 
       /**
-       * @brief The numbe of iterations to perform.
+       * @brief The number of iterations to perform.
        */
       int iterations;
       /**

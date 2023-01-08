@@ -101,7 +101,7 @@ namespace Dune
 
       /**
        * @brief Construct a new amg with a specific coarse solver.
-       * @param matrices The already set up matix hierarchy.
+       * @param matrices The already set-up matrix hierarchy.
        * @param coarseSolver The set up solver to use on the coarse
        * grid, must match the coarse matrix in the matrix hierarchy.
        * @param smootherArgs The  arguments needed for thesmoother to use
@@ -144,12 +144,12 @@ namespace Dune
          accumulationMode          | If and how data is agglomerated on coarser level to
                                    | fewer processors. ("atOnce": do agglomeration once and
                                    | to one process; "successive": Multiple agglomerations to
-                                   | fewer proceses until all data is on one process;
+                                   | fewer processes until all data is on one process;
                                    | "none": Do no agglomeration at all and solve coarse level
                                    | iteratively).
          prolongationDampingFactor | Damping factor for the prolongation.
-         alpha                     | Scaling avlue for marking connections as strong.
-         beta                      | Treshold for marking nodes as isolated.
+         alpha                     | Scaling value for marking connections as strong.
+         beta                      | Threshold for marking nodes as isolated.
          additive                  | Whether to use additive multigrid.
          gamma                     | 1 for V-cycle, 2 for W-cycle.
          preSteps                  | Number of presmoothing steps.
