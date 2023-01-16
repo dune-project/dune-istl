@@ -404,6 +404,18 @@ namespace Dune {
 
   };
 
+
+  /** @addtogroup DenseMatVec
+      @{
+   */
+  template <typename... Rows>
+  struct FieldTraits< MultiTypeBlockMatrix<Rows...> >
+  {
+    using field_type = typename MultiTypeBlockMatrix<Rows...>::field_type;
+    using real_type  = typename FieldTraits<field_type>::real_type;
+  };
+
+
   /**
      @brief << operator for a MultiTypeBlockMatrix
 
