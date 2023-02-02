@@ -111,6 +111,7 @@ namespace Dune {
   struct UMFPackMethodChooser<std::complex<double> >
   {
     static constexpr bool valid = true ;
+    using size_type = SuiteSparse_long;
 
     template<typename... A>
     static void defaults(A... args)
@@ -133,7 +134,7 @@ namespace Dune {
       return umfpack_zl_load_numeric(args...);
     }
     template<typename... A>
-    static void numeric(const long int* cs, const long int* ri, const double* val, A... args)
+    static void numeric(const size_type* cs, const size_type* ri, const double* val, A... args)
     {
       umfpack_zl_numeric(cs,ri,val,NULL,args...);
     }
@@ -153,13 +154,13 @@ namespace Dune {
       return umfpack_zl_save_numeric(args...);
     }
     template<typename... A>
-    static void solve(long int m, const long int* cs, const long int* ri, std::complex<double>* val, double* x, const double* b,A... args)
+    static void solve(size_type m, const size_type* cs, const size_type* ri, std::complex<double>* val, double* x, const double* b,A... args)
     {
       const double* cval = reinterpret_cast<const double*>(val);
       umfpack_zl_solve(m,cs,ri,cval,NULL,x,NULL,b,NULL,args...);
     }
     template<typename... A>
-    static void symbolic(long int m, long int n, const long int* cs, const long int* ri, const double* val, A... args)
+    static void symbolic(size_type m, size_type n, const size_type* cs, const size_type* ri, const double* val, A... args)
     {
       umfpack_zl_symbolic(m,n,cs,ri,val,NULL,args...);
     }
@@ -215,14 +216,17 @@ namespace Dune {
   {
     using T = typename M::field_type;
 
+
     public:
+    using size_type = SuiteSparse_long;
+
     /** @brief The matrix type. */
     using Matrix = M;
     using matrix_type = M;
     /** @brief The corresponding UMFPack matrix type.*/
-    typedef ISTL::Impl::BCCSMatrix<typename Matrix::field_type, long int> UMFPackMatrix;
+    using UMFPackMatrix = ISTL::Impl::BCCSMatrix<typename Matrix::field_type, size_type>;
     /** @brief Type of an associated initializer class. */
-    typedef ISTL::Impl::BCCSMatrixInitializer<M, long int> MatrixInitializer;
+    using MatrixInitializer = ISTL::Impl::BCCSMatrixInitializer<M, size_type>;
     /** @brief The type of the domain of the solver. */
     using domain_type = typename Impl::UMFPackVectorChooser<M>::domain_type;
     /** @brief The type of the range of the solver. */
@@ -452,7 +456,7 @@ namespace Dune {
         umfpackMatrix_.free();
       umfpackMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                              MatrixDimension<Matrix>::coldim(matrix));
-      ISTL::Impl::BCCSMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+      ISTL::Impl::BCCSMatrixInitializer<Matrix, size_type> initializer(umfpackMatrix_);
 
       copyToBCCSMatrix(initializer, matrix);
 
@@ -470,7 +474,7 @@ namespace Dune {
 
       umfpackMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(_mat) / _mat.N(),
                              rowIndexSet.size()*MatrixDimension<Matrix>::coldim(_mat) / _mat.M());
-      ISTL::Impl::BCCSMatrixInitializer<Matrix, long int> initializer(umfpackMatrix_);
+      ISTL::Impl::BCCSMatrixInitializer<Matrix, SuiteSparse_long> initializer(umfpackMatrix_);
 
       copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
 
@@ -542,8 +546,8 @@ namespace Dune {
     void decompose()
     {
       double UMF_Decomposition_Info[UMFPACK_INFO];
-      Caller::symbolic(static_cast<int>(umfpackMatrix_.N()),
-                       static_cast<int>(umfpackMatrix_.N()),
+      Caller::symbolic(static_cast<SuiteSparse_long>(umfpackMatrix_.N()),
+                       static_cast<SuiteSparse_long>(umfpackMatrix_.N()),
                        umfpackMatrix_.getColStart(),
                        umfpackMatrix_.getRowIndex(),
                        reinterpret_cast<double*>(umfpackMatrix_.getValues()),
