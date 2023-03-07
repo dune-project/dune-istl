@@ -103,11 +103,11 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      FastAMG(std::shared_ptr<Operator> fineOperator,
+      FastAMG(std::shared_ptr<const Operator> fineOperator,
               const C& criterion,
               const Parameters& parms=Parameters(),
               bool symmetric=true,
-              std::shared_ptr<ParallelInformation> pinfo=std::make_shared<ParallelInformation>());
+              const ParallelInformation& pinfo=ParallelInformation());
 
       /**
        * @brief Construct an AMG with an inexact coarse solver based on the smoother.
@@ -125,21 +125,10 @@ namespace Dune
       FastAMG(const Operator& fineOperator,
               const C& criterion,
               const Parameters& parms=Parameters(),
-              bool symmetric=true)
-        : FastAMG(stackobject_to_shared_ptr(const_cast<Operator&>(fineOperator)),
-                  criterion, parms, symmetric)
-      {}
-
-      //! \copydoc FastAMG(const std::shared_ptr<Operator>&,const C&,const Parameters&,bool,std::shared_ptr<ParallelInformation>)
-      template<class C>
-      FastAMG(const Operator& fineOperator,
-              const C& criterion,
-              const Parameters& parms,
-              bool symmetric,
-              const ParallelInformation& pinfo)
-        : FastAMG(stackobject_to_shared_ptr(const_cast<Operator&>(fineOperator)),
-                  criterion, parms, symmetric,
-                  stackobject_to_shared_ptr(const_cast<ParallelInformation&>(pinfo)))
+              bool symmetric=true,
+              const ParallelInformation& pinfo=ParallelInformation())
+        : FastAMG(stackobject_to_shared_ptr(fineOperator),
+                  criterion, parms, symmetric, pinfo)
       {}
 
       /**
@@ -201,8 +190,8 @@ namespace Dune
        */
       template<class C>
       void createHierarchies(C& criterion,
-                             std::shared_ptr<Operator> fineOperator,
-                             std::shared_ptr<PI> pinfo);
+                             std::shared_ptr<const Operator> fineOperator,
+                             const PI& pinfo);
 
       /**
        * @brief A struct that holds the context of the current level.
@@ -348,11 +337,11 @@ namespace Dune
     }
     template<class M, class X, class PI, class A>
     template<class C>
-    FastAMG<M,X,PI,A>::FastAMG(std::shared_ptr<Operator> fineOperator,
+    FastAMG<M,X,PI,A>::FastAMG(std::shared_ptr<const Operator> fineOperator,
                                const C& criterion,
                                const Parameters& parms,
                                bool symmetric_,
-                               std::shared_ptr<PI> pinfo)
+                               const PI& pinfo)
       : solver_(), rhs_(), lhs_(), residual_(), scalarProduct_(), gamma_(parms.getGamma()),
         preSteps_(parms.getNoPreSmoothSteps()), postSteps_(parms.getNoPostSmoothSteps()),
         buildHierarchy_(true),
@@ -369,17 +358,19 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      createHierarchies(criterion, std::move(fineOperator), std::move(pinfo));
+      createHierarchies(criterion, std::move(fineOperator), pinfo);
     }
 
     template<class M, class X, class PI, class A>
     template<class C>
     void FastAMG<M,X,PI,A>::createHierarchies(C& criterion,
-      std::shared_ptr<Operator> fineOperator,
-      std::shared_ptr<PI> pinfo)
+      std::shared_ptr<const Operator> fineOperator,
+      const PI& pinfo)
     {
       Timer watch;
-      matrices_ = std::make_shared<OperatorHierarchy>(std::move(fineOperator), std::move(pinfo));
+      matrices_ = std::make_shared<OperatorHierarchy>(
+        std::const_pointer_cast<Operator>(std::move(fineOperator)),
+        stackobject_to_shared_ptr(const_cast<PI&>(pinfo)));
 
       matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
 
