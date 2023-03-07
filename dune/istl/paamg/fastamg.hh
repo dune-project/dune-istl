@@ -50,7 +50,7 @@ namespace Dune
      *
      * It combines one Gauss-Seidel smoothing sweep with
      * the defect calculation to reduce memory transfers.
-     * \tparam M The matrix type
+     * \tparam M The matrix-operator type, e.g. MatrixAdapter or AssembledLinearOperator
      * \tparam X The vector type
      * \tparam PI Currently ignored.
      * \tparam A An allocator for X
@@ -103,10 +103,44 @@ namespace Dune
        * @param pinfo The information about the parallel distribution of the data.
        */
       template<class C>
-      FastAMG(const Operator& fineOperator, const C& criterion,
+      FastAMG(std::shared_ptr<Operator> fineOperator,
+              const C& criterion,
               const Parameters& parms=Parameters(),
               bool symmetric=true,
-              const ParallelInformation& pinfo=ParallelInformation());
+              std::shared_ptr<ParallelInformation> pinfo=std::make_shared<ParallelInformation>());
+
+      /**
+       * @brief Construct an AMG with an inexact coarse solver based on the smoother.
+       *
+       * As coarse solver a preconditioned CG method with the smoother as preconditioner
+       * will be used. The matrix hierarchy is built automatically.
+       * @param fineOperator The operator on the fine level.
+       * @param criterion The criterion describing the coarsening strategy. E. g. SymmetricCriterion
+       * or UnsymmetricCriterion, and providing the parameters.
+       * @param parms The parameters for the AMG.
+       *
+       * NOTE: This constructor uses the default constructed `ParallelInformation`.
+       */
+      template<class C>
+      FastAMG(const Operator& fineOperator,
+              const C& criterion,
+              const Parameters& parms=Parameters(),
+              bool symmetric=true)
+        : FastAMG(stackobject_to_shared_ptr(const_cast<Operator&>(fineOperator)),
+                  criterion, parms, symmetric)
+      {}
+
+      //! \copydoc FastAMG(const std::shared_ptr<Operator>&,const C&,const Parameters&,bool,std::shared_ptr<ParallelInformation>)
+      template<class C>
+      FastAMG(const Operator& fineOperator,
+              const C& criterion,
+              const Parameters& parms,
+              bool symmetric,
+              const ParallelInformation& pinfo)
+        : FastAMG(stackobject_to_shared_ptr(const_cast<Operator&>(fineOperator)),
+                  criterion, parms, symmetric,
+                  stackobject_to_shared_ptr(const_cast<ParallelInformation&>(pinfo)))
+      {}
 
       /**
        * @brief Copy constructor.
@@ -167,8 +201,8 @@ namespace Dune
        */
       template<class C>
       void createHierarchies(C& criterion,
-                             const std::shared_ptr<const Operator>& matrixptr,
-                             const PI& pinfo);
+                             std::shared_ptr<Operator> fineOperator,
+                             std::shared_ptr<PI> pinfo);
 
       /**
        * @brief A struct that holds the context of the current level.
@@ -314,11 +348,11 @@ namespace Dune
     }
     template<class M, class X, class PI, class A>
     template<class C>
-    FastAMG<M,X,PI,A>::FastAMG(const Operator& matrix,
+    FastAMG<M,X,PI,A>::FastAMG(std::shared_ptr<Operator> fineOperator,
                                const C& criterion,
                                const Parameters& parms,
                                bool symmetric_,
-                               const PI& pinfo)
+                               std::shared_ptr<PI> pinfo)
       : solver_(), rhs_(), lhs_(), residual_(), scalarProduct_(), gamma_(parms.getGamma()),
         preSteps_(parms.getNoPreSmoothSteps()), postSteps_(parms.getNoPostSmoothSteps()),
         buildHierarchy_(true),
@@ -335,20 +369,17 @@ namespace Dune
       // TODO: reestablish compile time checks.
       //static_assert(static_cast<int>(PI::category)==static_cast<int>(S::category),
       //             "Matrix and Solver must match in terms of category!");
-      auto matrixptr = stackobject_to_shared_ptr(matrix);
-      createHierarchies(criterion, matrixptr, pinfo);
+      createHierarchies(criterion, std::move(fineOperator), std::move(pinfo));
     }
 
     template<class M, class X, class PI, class A>
     template<class C>
     void FastAMG<M,X,PI,A>::createHierarchies(C& criterion,
-      const std::shared_ptr<const Operator>& matrixptr,
-      const PI& pinfo)
+      std::shared_ptr<Operator> fineOperator,
+      std::shared_ptr<PI> pinfo)
     {
       Timer watch;
-      matrices_ = std::make_shared<OperatorHierarchy>(
-        std::const_pointer_cast<Operator>(matrixptr),
-        stackobject_to_shared_ptr(const_cast<PI&>(pinfo)));
+      matrices_ = std::make_shared<OperatorHierarchy>(std::move(fineOperator), std::move(pinfo));
 
       matrices_->template build<NegateSet<typename PI::OwnerSet> >(criterion);
 
