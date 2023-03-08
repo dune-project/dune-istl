@@ -341,8 +341,8 @@ public:
   void setMatrix(const Matrix& matrix, const Ignore* ignore)
   {
     // count the number of entries and diagonal entries
-    int nonZeros = 0;
-    int numberOfIgnoredDofs = 0;
+    size_t nonZeros = 0;
+    size_t numberOfIgnoredDofs = 0;
 
 
     auto [flatRows,flatCols] = flatMatrixForEach( matrix, [&](auto&& /*entry*/, auto&& flatRowIndex, auto&& flatColIndex){
@@ -358,15 +358,15 @@ public:
       numberOfIgnoredDofs = std::count(flatIgnore.begin(),flatIgnore.end(),true);
     }
 
-    // Total number of rows
-    int N = flatRows - numberOfIgnoredDofs;
-
-    nIsZero_ = (N <= 0);
+    nIsZero_ = (size_t(flatRows) <= numberOfIgnoredDofs);
 
     if ( nIsZero_ )
     {
         return;
     }
+
+    // Total number of rows
+    size_t N = flatRows - numberOfIgnoredDofs;
 
     /*
     * CHOLMOD uses compressed-column sparse matrices, but for symmetric
@@ -429,7 +429,7 @@ public:
 
     // now accumulate
     Ap[0] = 0;
-    for ( int i=0; i<N; i++ )
+    for ( size_t i=0; i<N; i++ )
     {
       Ap[i+1] += Ap[i];
     }
