@@ -80,13 +80,11 @@ void testIndices(MPI_Comm comm)
     // build global indexset on first process
     globalIndexSet.beginResize();
     globalArray=new Array(Nx*Ny);
-    int k=0;
+
     for(int j=0; j<Ny; j++)
       for(int i=0; i<Nx; i++) {
         globalIndexSet.add(i+j*Nx, Dune::ParallelLocalIndex<GridFlags> (i+j*Nx,owner,false));
         globalArray->operator[](i+j*Nx)=-(i+j*Nx);
-        k++;
-
       }
 
     globalIndexSet.endResize();
