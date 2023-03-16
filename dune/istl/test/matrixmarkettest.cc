@@ -174,4 +174,6 @@ int main(int argc, char** argv)
 #if HAVE_MPI
   MPI_Finalize();
 #endif
+
+  return ret;
 }
