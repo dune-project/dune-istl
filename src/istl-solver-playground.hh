@@ -66,7 +66,11 @@ std::shared_ptr<OOCOMM> loadSystem(std::shared_ptr<Mat>& m,
   std::shared_ptr<OOCOMM> oocomm;
   if(distributed){
     oocomm = std::make_shared<OOCOMM>(MPI_COMM_WORLD);
-    loadMatrixMarket(*m, matrixfilename, *oocomm);
+    if(matrixfilename != "laplacian"){
+      loadMatrixMarket(*m, matrixfilename, *oocomm);
+    }else{
+      setupLaplacian(*m, config.get("N", 20));
+    }
     if(config.get("random_rhs", false)){
       rhs->resize(m->N());
       srand(42);
@@ -98,16 +102,22 @@ template<class Mat, class Vec>
 void loadSystem(std::shared_ptr<Mat>& m,
                 std::shared_ptr<Vec>& rhs,
                 const Dune::ParameterTree& config){
-  std::string matrixfilename = config.get<std::string>("matrix");
+  // generate Laplacian or load matrix
+  std::string matrixfilename = config.get<std::string>("matrix", "laplacian");
+  if(matrixfilename == "laplacian"){
+    setupLaplacian(*m, config.get("N", 20));
+  }else{
+    loadMatrixMarket(*m, matrixfilename);
+  }
+  // use random values or load right-hand side
   std::string rhsfilename;
-  if(!config.get("random_rhs", false))
-    rhsfilename = config.get<std::string>("rhs");
-  loadMatrixMarket(*m, matrixfilename);
   if(config.get("random_rhs", false)){
     rhs->resize(m->N());
     fillRandom(*rhs);
-  }else
+  }else{
+    rhsfilename = config.get<std::string>("rhs");
     loadMatrixMarket(*rhs, rhsfilename);
+  }
 }
 #endif
 
