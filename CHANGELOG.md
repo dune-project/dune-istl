@@ -5,6 +5,11 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.10)
 
+- The internal storage in `MatrixIndexSet` was changed from `std::set` to a sorted `std::vector`
+  (with a `std::set` fallback for very dense rows) to improve performance. The stored index
+  type was changed from `std::size_t` to `uint32_t` to reduce memory consumption and improve
+  performance. Hence, `MatrixIndexSet` can no longer be used for very large matrices with more
+  than 2^32 columns.
 
 ## Deprecations and removals
 
