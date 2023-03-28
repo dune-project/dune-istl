@@ -31,7 +31,7 @@ namespace Dune {
    */
   class MatrixIndexSet
   {
-    using Index = std::size_t;
+    using Index = std::uint_least32_t;
 
     // A vector that partly mimics a std::set by staying
     // sorted on insert() and having unique values.

@@ -3,6 +3,7 @@
 #ifndef DUNE_PYTHON_ISTL_BCRSMATRIX_HH
 #define DUNE_PYTHON_ISTL_BCRSMATRIX_HH
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -29,7 +30,7 @@ namespace Dune
     void registerMatrixIndexSet(pybind11::handle scope,
                             pybind11::class_<MatrixIndexSet, options...> cls)
     {
-      typedef std::size_t size_type;
+      using size_type = Dune::MatrixIndexSet::size_type;
 
       // two different possible constructors
       cls.def( pybind11::init( [] () { return new MatrixIndexSet(); } ) );
