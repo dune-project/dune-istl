@@ -92,13 +92,7 @@ function(add_factory_test BLOCK)
     dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc
                   MPI_RANKS 1 2 4
                   TIMEOUT 600
-                  CMAKE_GUARD
-                  HAVE_MPI
-                  SuiteSparse_CHOLMOD_FOUND
-                  SuiteSparse_LDL_FOUND
-                  SuiteSparse_SPQR_FOUND
-                  SuiteSparse_UMFPACK_FOUND
-                  SuperLU_FOUND)
+                  CMAKE_GUARD "HAVE_MPI AND SuiteSparse_CHOLMOD_FOUND AND SuiteSparse_LDL_FOUND AND SuiteSparse_SPQR_FOUND AND SuiteSparse_UMFPACK_FOUND AND SuperLU_FOUND")
   endif()
 endfunction(add_factory_test)
 
