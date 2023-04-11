@@ -28,6 +28,10 @@ namespace Dune {
    * The default value for maxVectorSize works well and ensures
    * that the slow std::set fallback is only used for very
    * dense rows.
+   *
+   * This class is thread safe in the sense that concurrent calls
+   * to all const methods and furthermore to add(row,col) with different
+   * rows in each thread are safe.
    */
   class MatrixIndexSet
   {
@@ -98,7 +102,13 @@ namespace Dune {
       indices_.resize(rows_, FlatSet());
     }
 
-    /** \brief Add an index to the index set */
+    /**
+     * \brief Add an index to the index set
+     *
+     * It is safe to call add(row, col) for different rows in concurrent threads,
+     * but it is not safe to do concurrent calls for the same row, even for different
+     * columns.
+     */
     void add(size_type row, size_type col) {
       return std::visit(Dune::overload(
         // If row is stored as set, call insert directly
