@@ -9,19 +9,20 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/test/testsuite.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/umfpack.hh>
 
 #include "laplacian.hh"
 
+using namespace Dune;
 
 template<typename Matrix, typename Vector>
-void runUMFPack(std::size_t N)
+TestSuite runUMFPack(std::size_t N)
 {
-  typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
+  TestSuite t;
 
   Matrix mat;
-  Operator fop(mat);
   Vector b(N*N), x(N*N), b1(N/2), x1(N/2);
 
   setupLaplacian(mat,N);
@@ -41,6 +42,10 @@ void runUMFPack(std::size_t N)
   solver.apply(x, b, res);
   solver.free();
 
+  // test
+  mat.mmv(x,b);
+  t.check( b.two_norm() < 1e-9 ) << " Error in UMFPACK, residual is too large: " << b.two_norm();
+
   Dune::UMFPack<Matrix> solver1;
 
   std::set<std::size_t> mrs;
@@ -51,16 +56,39 @@ void runUMFPack(std::size_t N)
   solver1.setVerbosity(true);
 
   solver1.apply(x1,b1, res);
+
+  // test
+  x=0;
+  b=0;
+  for( std::size_t i=0; i<N/2; i++ )
+  {
+    // set subindices
+    x[i] = x1[i];
+    b[i] = b1[i];
+  }
+  mat.mmv(x,b);
+
+  // truncate deactivated indices
+  for( std::size_t i=N/2; i<N*N; i++ )
+    b[i] = 0;
+
+  t.check( b.two_norm() < 1e-9 ) << " Error in UMFPACK, residual is too large: " << b.two_norm();
+
+
   solver1.apply(reinterpret_cast<typename Matrix::field_type*>(&x1[0]),
                 reinterpret_cast<typename Matrix::field_type*>(&b1[0]));
 
   Dune::UMFPack<Matrix> save_solver(mat,"umfpack_decomp",0);
   Dune::UMFPack<Matrix> load_solver(mat,"umfpack_decomp",0);
+
+  return t;
 }
 
 int main(int argc, char** argv) try
 {
 #if HAVE_SUITESPARSE_UMFPACK
+
+  TestSuite t;
   std::size_t N=100;
 
   if(argc>1)
@@ -71,7 +99,7 @@ int main(int argc, char** argv) try
   {
     using Matrix = Dune::BCRSMatrix<double>;
     using Vector = Dune::BlockVector<double>;
-    runUMFPack<Matrix,Vector>(N);
+    t.subTest(runUMFPack<Matrix,Vector>(N));
   }
 
   // ------------------------------------------------------------------------------
@@ -79,7 +107,7 @@ int main(int argc, char** argv) try
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<double,1> >;
-    runUMFPack<Matrix,Vector>(N);
+    t.subTest(runUMFPack<Matrix,Vector>(N));
   }
 
   // ------------------------------------------------------------------------------
@@ -87,10 +115,10 @@ int main(int argc, char** argv) try
   {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
     using Vector = Dune::BlockVector<Dune::FieldVector<double,2> >;
-    runUMFPack<Matrix,Vector>(N);
+    t.subTest(runUMFPack<Matrix,Vector>(N));
   }
 
-  return 0;
+  return t.exit();
 #else // HAVE_SUITESPARSE_UMFPACK
   std::cerr << "You need SuiteSparse's UMFPack to run this test." << std::endl;
   return 77;
