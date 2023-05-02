@@ -43,8 +43,9 @@ TestSuite runUMFPack(std::size_t N)
   solver.free();
 
   // test
+  auto norm = b.two_norm();
   mat.mmv(x,b);
-  t.check( b.two_norm() < 1e-9 ) << " Error in UMFPACK, residual is too large: " << b.two_norm();
+  t.check( b.two_norm()/norm < 1e-11 ) << " Error in UMFPACK, relative residual is too large: " << b.two_norm()/norm;
 
   Dune::UMFPack<Matrix> solver1;
 
@@ -69,13 +70,15 @@ TestSuite runUMFPack(std::size_t N)
     x[i] = x1[i];
     b[i] = b1[i];
   }
+
+  norm = b.two_norm();
   mat.mmv(x,b);
 
   // truncate deactivated indices
   for( std::size_t i=N/2; i<N*N; i++ )
     b[i] = 0;
 
-  t.check( b.two_norm() < 1e-9 ) << " Error in UMFPACK, residual is too large: " << b.two_norm();
+  t.check( b.two_norm()/norm < 1e-11 ) << " Error in UMFPACK, relative residual is too large: " << b.two_norm()/norm;
 
   // compare with setSubMatrix
   solver1.setSubMatrix(mat,mrs);
@@ -86,7 +89,7 @@ TestSuite runUMFPack(std::size_t N)
   solver1.apply(x2,b1, res);
 
   x2 -= x1;
-  t.check( x2.two_norm() < 1e-9 ) << " Error in UMFPACK, setSubMatrix yields different result as setMatrix with BitVector, diff: " << b.two_norm();
+  t.check( x2.two_norm()/x1.two_norm() < 1e-11 ) << " Error in UMFPACK, setSubMatrix yields different result as setMatrix with BitVector, relative diff: " << x2.two_norm()/x1.two_norm();
 
 
   solver1.apply(reinterpret_cast<typename Matrix::field_type*>(&x1[0]),
