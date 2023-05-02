@@ -17,7 +17,7 @@
 
 using namespace Dune;
 
-template<typename Matrix, typename Vector>
+template<typename Matrix, typename Vector, typename BitVector>
 TestSuite runUMFPack(std::size_t N)
 {
   TestSuite t;
@@ -49,12 +49,15 @@ TestSuite runUMFPack(std::size_t N)
   Dune::UMFPack<Matrix> solver1;
 
   std::set<std::size_t> mrs;
+  BitVector bitVector(N*N);
+  bitVector = true;
   for(std::size_t s=0; s < N/2; ++s)
+  {
     mrs.insert(s);
+    bitVector[s] = false;
+  }
 
-  solver1.setSubMatrix(mat,mrs);
-  solver1.setVerbosity(true);
-
+  solver1.setMatrix(mat,bitVector);
   solver1.apply(x1,b1, res);
 
   // test
@@ -73,6 +76,17 @@ TestSuite runUMFPack(std::size_t N)
     b[i] = 0;
 
   t.check( b.two_norm() < 1e-9 ) << " Error in UMFPACK, residual is too large: " << b.two_norm();
+
+  // compare with setSubMatrix
+  solver1.setSubMatrix(mat,mrs);
+  solver1.setVerbosity(true);
+
+  auto x2 = x1;
+  x2 = 0;
+  solver1.apply(x2,b1, res);
+
+  x2 -= x1;
+  t.check( x2.two_norm() < 1e-9 ) << " Error in UMFPACK, setSubMatrix yields different result as setMatrix with BitVector, diff: " << b.two_norm();
 
 
   solver1.apply(reinterpret_cast<typename Matrix::field_type*>(&x1[0]),
@@ -97,25 +111,28 @@ int main(int argc, char** argv) try
   // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<double>"<<std::endl;
   {
-    using Matrix = Dune::BCRSMatrix<double>;
-    using Vector = Dune::BlockVector<double>;
-    t.subTest(runUMFPack<Matrix,Vector>(N));
+    using Matrix    = Dune::BCRSMatrix<double>;
+    using Vector    = Dune::BlockVector<double>;
+    using BitVector = Dune::BlockVector<int>;
+    t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
   }
 
   // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<double,1,1> >"<<std::endl;
   {
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >;
-    using Vector = Dune::BlockVector<Dune::FieldVector<double,1> >;
-    t.subTest(runUMFPack<Matrix,Vector>(N));
+    using Matrix    = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >;
+    using Vector    = Dune::BlockVector<Dune::FieldVector<double,1> >;
+    using BitVector = Dune::BlockVector<Dune::FieldVector<int,1> >;
+        t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
   }
 
   // ------------------------------------------------------------------------------
   std::cout<<"testing for N="<<N<<" BCRSMatrix<FieldMatrix<double,2,2> >"<<std::endl;
   {
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
-    using Vector = Dune::BlockVector<Dune::FieldVector<double,2> >;
-    t.subTest(runUMFPack<Matrix,Vector>(N));
+    using Matrix    = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
+    using Vector    = Dune::BlockVector<Dune::FieldVector<double,2> >;
+    using BitVector = Dune::BlockVector<Dune::FieldVector<int,2> >;
+        t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
   }
 
   return t.exit();
