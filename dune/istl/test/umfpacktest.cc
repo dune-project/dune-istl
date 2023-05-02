@@ -8,6 +8,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/indices.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/test/testsuite.hh>
 #include <dune/istl/bvector.hh>
@@ -101,6 +102,104 @@ TestSuite runUMFPack(std::size_t N)
   return t;
 }
 
+
+
+template<typename Matrix, typename Vector, typename BitVector>
+TestSuite runUMFPackMultitype2x2(std::size_t N)
+{
+  TestSuite t;
+
+  using namespace Dune::Indices;
+
+  Matrix mat;
+
+  Vector b,x,b1,x1;
+
+  b[_0].resize(N*N);
+  b[_1].resize(N*N);
+
+  x[_0].resize(N*N);
+  x[_1].resize(N*N);
+
+  b1[_0].resize(N/2);
+  b1[_1].resize(N/2);
+  x1[_0].resize(N/2);
+  x1[_1].resize(N/2);
+
+
+  // initialize all 4 matrix blocks
+  setupLaplacian(mat[_0][_0],N);
+  setupLaplacian(mat[_0][_1],N);
+  setupLaplacian(mat[_1][_0],N);
+  setupLaplacian(mat[_1][_1],N);
+
+  mat[_0][_0] *= 2.0; // make the matrix regular
+
+  b=1.0;
+  b1=1.0;
+  x=0.0;
+  x1=0.0;
+
+  Dune::Timer watch;
+
+  watch.reset();
+
+  Dune::UMFPack<Matrix> solver(mat,1);
+
+  Dune::InverseOperatorResult res;
+
+  solver.apply(x, b, res);
+  solver.free();
+
+  // test
+  auto norm = b.two_norm();
+  mat.mmv(x,b);
+  t.check( b.two_norm()/norm < 1e-11 ) << " Error in UMFPACK, relative residual is too large: " << b.two_norm()/norm;
+
+  Dune::UMFPack<Matrix> solver1;
+
+  BitVector bitVector;
+  bitVector[_0].resize(N*N);
+  bitVector[_1].resize(N*N);
+
+  bitVector = true;
+  for(std::size_t s=0; s < N/2; ++s)
+  {
+    bitVector[_0][s] = false;
+    bitVector[_1][s] = false;
+  }
+
+  solver1.setMatrix(mat,bitVector);
+  solver1.apply(x1,b1, res);
+
+  // test
+  x=0;
+  b=0;
+  for( std::size_t i=0; i<N/2; i++ )
+  {
+    // set subindices
+    x[_0][i] = x1[_0][i];
+    x[_1][i] = x1[_1][i];
+    b[_0][i] = b1[_0][i];
+    b[_1][i] = b1[_1][i];
+  }
+
+  norm = b.two_norm();
+  mat.mmv(x,b);
+
+  // truncate deactivated indices
+  for( std::size_t i=N/2; i<N*N; i++ )
+  {
+    b[_0][i] = 0;
+    b[_1][i] = 0;
+  }
+
+  t.check( b.two_norm()/norm < 1e-11 ) << " Error in UMFPACK, relative residual is too large: " << b.two_norm()/norm;
+
+  return t;
+}
+
+
 int main(int argc, char** argv) try
 {
 #if HAVE_SUITESPARSE_UMFPACK
@@ -137,6 +236,24 @@ int main(int argc, char** argv) try
     using BitVector = Dune::BlockVector<Dune::FieldVector<int,2> >;
         t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
   }
+
+  // ------------------------------------------------------------------------------
+  std::cout<<"testing for N="<<N<<" MultiTypeBlockMatrix<BCRSMatrix<FieldMatrix<double,2,2>> ... >"<<std::endl;
+  {
+    using MatrixBlock    = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
+    using BlockRow       = Dune::MultiTypeBlockVector<MatrixBlock,MatrixBlock>;
+    using Matrix         = Dune::MultiTypeBlockMatrix<BlockRow,BlockRow>;
+
+    using VectorBlock    = Dune::BlockVector<Dune::FieldVector<double,2> >;
+    using Vector         = Dune::MultiTypeBlockVector<VectorBlock,VectorBlock>;
+
+    using BitVectorBlock = Dune::BlockVector<Dune::FieldVector<int,2> >;
+    using BitVector      = Dune::MultiTypeBlockVector<BitVectorBlock,BitVectorBlock>;
+
+    t.subTest(runUMFPackMultitype2x2<Matrix,Vector,BitVector>(N));
+  }
+
+
 
   return t.exit();
 #else // HAVE_SUITESPARSE_UMFPACK
