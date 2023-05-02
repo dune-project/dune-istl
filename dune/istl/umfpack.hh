@@ -18,6 +18,8 @@
 #include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/istl/foreach.hh>
+#include<dune/istl/multitypeblockmatrix.hh>
+#include<dune/istl/multitypeblockvector.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
 #include <dune/istl/solverfactory.hh>
@@ -195,6 +197,25 @@ namespace Dune {
       using range_type  = BlockVector<T, A>;
     };
 
+    // to make the `UMFPackVectorChooser` work with `MultiTypeBlockMatrix`, we need to add an intermediate step for the rows, which are typically `MultiTypeBlockVector`
+    template<typename FirstBlock, typename... Blocks>
+    struct UMFPackVectorChooser<MultiTypeBlockVector<FirstBlock, Blocks...> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = MultiTypeBlockVector<typename UMFPackVectorChooser<FirstBlock>::domain_type,typename UMFPackVectorChooser<Blocks>::domain_type... >;
+      /** @brief The type of the range of the solver */
+      using range_type  = typename UMFPackVectorChooser<FirstBlock>::range_type;
+    };
+
+    // specialization for `MultiTypeBlockMatrix` with `MultiTypeBlockVector` rows
+    template<typename FirstRow, typename... Rows>
+    struct UMFPackVectorChooser<MultiTypeBlockMatrix<FirstRow, Rows...> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = typename UMFPackVectorChooser<FirstRow>::domain_type;
+      /** @brief The type of the range of the solver */
+      using range_type  = MultiTypeBlockVector< typename UMFPackVectorChooser<FirstRow>::range_type, typename UMFPackVectorChooser<Rows>::range_type... >;
+    };
 
     // dummy class to represent no BitVector
     struct NoBitVector
