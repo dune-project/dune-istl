@@ -267,13 +267,13 @@ namespace Dune {
    * @param width The number of nonzero blocks to print in one line.
    * @param precision The precision to use when printing the numbers.
    */
-  template<class B, int n, int m, class A>
+  template<class A, class InnerMatrixType>
   void printSparseMatrix(std::ostream& s,
-                         const BCRSMatrix<FieldMatrix<B,n,m>,A>& mat,
+                         const BCRSMatrix<InnerMatrixType,A>& mat,
                          std::string title, std::string rowtext,
                          int width=3, int precision=2)
   {
-    typedef BCRSMatrix<FieldMatrix<B,n,m>,A> Matrix;
+    typedef BCRSMatrix<InnerMatrixType,A> Matrix;
     // remember old flags
     std::ios_base::fmtflags oldflags = s.flags();
     // set the output format
@@ -290,6 +290,8 @@ namespace Dune {
 
     typedef typename Matrix::ConstRowIterator Row;
 
+    int n = InnerMatrixType::rows;
+    int m = InnerMatrixType::cols;
     for(Row row=mat.begin(); row != mat.end(); ++row) {
       int skipcols=0;
       bool reachedEnd=false;
@@ -323,7 +325,7 @@ namespace Dune {
             }
             for(int innercol=0; innercol < m; ++innercol) {
               s.width(9);
-              s<<(*col)[innerrow][innercol]<<" ";
+              printInnerMatrixElement(s,*col,innerrow,innercol);
             }
 
             s<<"|";
@@ -342,6 +344,25 @@ namespace Dune {
     // reset the output format
     s.flags(oldflags);
     s.precision(oldprec);
+  }
+
+  template<class B, int n>
+  void printInnerMatrixElement(std::ostream& s,
+                         const ScaledIdentityMatrix<B,n> innerMatrixElement,
+                         int innerrow, int innercol)
+  {
+    if (innerrow == innercol)
+      s<<innerMatrixElement.scalar()<<" ";
+    else
+      s<<"-";
+  }
+
+  template<class B, int n, int m, class A>
+  void printInnerMatrixElement(std::ostream& s,
+                         const FieldMatrix<B,n,m> innerMatrixElement,
+                         int innerrow, int innercol)
+  {
+    s<<innerMatrixElement[innerrow][innercol]<<" ";
   }
 
   namespace
