@@ -26,12 +26,15 @@
 
 using namespace Dune;
 
-int main(int argc, char** argv)
+/** \brief Do the actual tests
+ *
+ * \tparam Index Type used by CHOLMOD for indices (int or long int)
+ */
+template <typename Index>
+bool test()
 {
+  bool passed = true;
 #if HAVE_SUITESPARSE_UMFPACK
-  try
-  {
-
     int N = 30; // number of nodes
     const int bs = 2; // block size
 
@@ -55,7 +58,10 @@ int main(int argc, char** argv)
     A.mmv(x,b);
 
     if ( b.two_norm() > 1e-9 )
+    {
       std::cerr << " Error in CHOLMOD, residual is too large: " << b.two_norm() << std::endl;
+      passed = false;
+    }
 
     x = 0;
     b = 1;
@@ -75,7 +81,10 @@ int main(int argc, char** argv)
 
     // check that x[12][0] is untouched
     if ( std::abs(x[12][0] - 123) > 1e-15 )
+    {
       std::cerr << " Error in CHOLMOD, x was NOT ignored!"<< std::endl;
+      passed = false;
+    }
 
     // reset the x value
     x[12][0] = 0;
@@ -85,8 +94,10 @@ int main(int argc, char** argv)
 
     // check that error is completely caused by this entry
     if ( std::abs( b.two_norm() - std::abs(b_12_0) ) > 1e-15 )
+    {
       std::cerr << " Error in CHOLMOD, b was NOT ignored correctly: " << std::abs( b.two_norm() - std::abs(b_12_0) ) << std::endl;
-
+      passed = false;
+    }
 
     using BCRS = BCRSMatrix<FieldMatrix<double,bs,bs>>;
     using MTRow = MultiTypeBlockVector<BCRS,BCRS>;
@@ -125,7 +136,10 @@ int main(int argc, char** argv)
     A2.mmv(x2,b2);
 
     if ( b2.two_norm() > 1e-9 )
+    {
       std::cerr << " Error in CHOLMOD, residual is too large: " << b2.two_norm() << std::endl;
+      passed = false;
+    }
 
 
     x2 = 0;
@@ -147,7 +161,10 @@ int main(int argc, char** argv)
 
     // check that x was ignored
     if ( std::abs( x2[_0][12][0] - 123 ) > 1e-15 )
+    {
       std::cerr << " Error in CHOLMOD, x was NOT ignored correctly: " << std::abs( x2[_0][12][0] - 123 ) << std::endl;
+      passed = false;
+    }
 
     x2[_0][12][0] = 0;
 
@@ -158,22 +175,36 @@ int main(int argc, char** argv)
 
     // check that error is completely caused by this entry
     if ( std::abs( b2.two_norm() - std::abs(b_0_12_0) ) > 1e-15 )
+    {
       std::cerr << " Error in CHOLMOD, b was NOT ignored correctly: " << std::abs( b2.two_norm() - std::abs(b_0_12_0) ) << std::endl;
+      passed = false;
+    }
 
-
-  }
-  catch (std::exception &e)
-  {
-    std::cout << "ERROR: " << e.what() << std::endl;
-    return 1;
-  }
-  catch (...)
-  {
-    std::cerr << "Dune reported an unknown error." << std::endl;
-    exit(1);
-  }
 #else // HAVE_SUITESPARSE_UMFPACK
   std::cerr << "You need SuiteSparse to run the CHOLMOD test." << std::endl;
-  return 42;
+  passed = false;
 #endif // HAVE_SUITESPARSE_UMFPACK
+  return passed;
+}
+
+int main(int argc, char** argv) try
+{
+  bool passed = true;
+
+  std::cout << "testing int" << std::endl;
+  passed &= test<int>();
+  std::cout << "testing SuiteSparse_long (i.e., long int)" << std::endl;
+  passed &= test<SuiteSparse_long>();
+
+  return (passed) ? 0 : 1;
+}
+catch (std::exception &e)
+{
+  std::cerr << "ERROR: " << e.what() << std::endl;
+  return 1;
+}
+catch (...)
+{
+  std::cerr << "Dune reported an unknown error." << std::endl;
+  exit(1);
 }
