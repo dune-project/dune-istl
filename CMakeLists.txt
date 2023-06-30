@@ -26,6 +26,11 @@ include(DuneMacros)
 # start a dune project with information from dune.module
 dune_project()
 
+# create library target and export it as Dune::ISTL
+dune_add_library(duneistl INTERFACE
+  EXPORT_NAME ISTL
+  LINK_LIBRARIES Dune::Common)
+
 add_subdirectory(cmake/modules)
 add_subdirectory(dune)
 add_subdirectory(doc)
