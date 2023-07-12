@@ -225,7 +225,7 @@ int main(int argc, char** argv) try
     using Matrix    = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> >;
     using Vector    = Dune::BlockVector<Dune::FieldVector<double,1> >;
     using BitVector = Dune::BlockVector<Dune::FieldVector<int,1> >;
-        t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
+    t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
   }
 
   // ------------------------------------------------------------------------------
@@ -234,7 +234,7 @@ int main(int argc, char** argv) try
     using Matrix    = Dune::BCRSMatrix<Dune::FieldMatrix<double,2,2> >;
     using Vector    = Dune::BlockVector<Dune::FieldVector<double,2> >;
     using BitVector = Dune::BlockVector<Dune::FieldVector<int,2> >;
-        t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
+    t.subTest(runUMFPack<Matrix,Vector,BitVector>(N));
   }
 
   // ------------------------------------------------------------------------------
