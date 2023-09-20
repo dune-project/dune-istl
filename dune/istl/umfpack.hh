@@ -17,6 +17,9 @@
 #include<dune/common/fvector.hh>
 #include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
+#include<dune/istl/foreach.hh>
+#include<dune/istl/multitypeblockmatrix.hh>
+#include<dune/istl/multitypeblockvector.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
 #include <dune/istl/solverfactory.hh>
@@ -193,6 +196,32 @@ namespace Dune {
       /** @brief The type of the range of the solver */
       using range_type  = BlockVector<T, A>;
     };
+
+    // to make the `UMFPackVectorChooser` work with `MultiTypeBlockMatrix`, we need to add an intermediate step for the rows, which are typically `MultiTypeBlockVector`
+    template<typename FirstBlock, typename... Blocks>
+    struct UMFPackVectorChooser<MultiTypeBlockVector<FirstBlock, Blocks...> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = MultiTypeBlockVector<typename UMFPackVectorChooser<FirstBlock>::domain_type,typename UMFPackVectorChooser<Blocks>::domain_type... >;
+      /** @brief The type of the range of the solver */
+      using range_type  = typename UMFPackVectorChooser<FirstBlock>::range_type;
+    };
+
+    // specialization for `MultiTypeBlockMatrix` with `MultiTypeBlockVector` rows
+    template<typename FirstRow, typename... Rows>
+    struct UMFPackVectorChooser<MultiTypeBlockMatrix<FirstRow, Rows...> >
+    {
+      /** @brief The type of the domain of the solver */
+      using domain_type = typename UMFPackVectorChooser<FirstRow>::domain_type;
+      /** @brief The type of the range of the solver */
+      using range_type  = MultiTypeBlockVector< typename UMFPackVectorChooser<FirstRow>::range_type, typename UMFPackVectorChooser<Rows>::range_type... >;
+    };
+
+    // dummy class to represent no BitVector
+    struct NoBitVector
+    {};
+
+
   }
 
   /** @brief The %UMFPack direct sparse solver
@@ -223,7 +252,7 @@ namespace Dune {
     /** @brief The matrix type. */
     using Matrix = M;
     using matrix_type = M;
-    /** @brief The corresponding UMFPack matrix type.*/
+    /** @brief The corresponding (scalar) UMFPack matrix type.*/
     using UMFPackMatrix = ISTL::Impl::BCCSMatrix<typename Matrix::field_type, size_type>;
     /** @brief Type of an associated initializer class. */
     using MatrixInitializer = ISTL::Impl::BCCSMatrixInitializer<M, size_type>;
@@ -368,16 +397,36 @@ namespace Dune {
       if (b.size() == 0)
         return;
 
+      // we have to convert x and b into flat structures
+      // however, this is linear in time
+      std::vector<T> xFlat(x.dim()), bFlat(b.dim());
+
+      flatVectorForEach(x, [&](auto&& entry, auto&& offset)
+      {
+        xFlat[ offset ] = entry;
+      });
+
+      flatVectorForEach(b, [&](auto&& entry, auto&& offset)
+      {
+        bFlat[ offset ] = entry;
+      });
+
       double UMF_Apply_Info[UMFPACK_INFO];
       Caller::solve(UMFPACK_A,
                     umfpackMatrix_.getColStart(),
                     umfpackMatrix_.getRowIndex(),
                     umfpackMatrix_.getValues(),
-                    reinterpret_cast<double*>(&x[0]),
-                    reinterpret_cast<double*>(&b[0]),
+                    reinterpret_cast<double*>(&xFlat[0]),
+                    reinterpret_cast<double*>(&bFlat[0]),
                     UMF_Numeric,
                     UMF_Control,
                     UMF_Apply_Info);
+
+      // copy back to blocked vector
+      flatVectorForEach(x, [&](auto&& entry, auto offset)
+      {
+        entry = xFlat[offset];
+      });
 
       //this is a direct solver
       res.iterations = 1;
@@ -399,6 +448,8 @@ namespace Dune {
      * @brief additional apply method with c-arrays in analogy to superlu
      * @param x solution array
      * @param b rhs array
+     *
+     * NOTE If the user hands over a pure pointer, we assume that they know what they are doing, hence no copy to flat structures
      */
     void apply(T* x, T* b)
     {
@@ -444,8 +495,17 @@ namespace Dune {
         DUNE_THROW(Dune::Exception,"IO ERROR while trying to save UMFPack decomposition");
     }
 
-    /** @brief Initialize data from given matrix. */
-    void setMatrix(const Matrix& matrix)
+    /** @brief Initialize data from given matrix.
+     *
+     * \tparam BitVector a compatible bitvector to the domain_type/range_type.
+     *         Defaults to NoBitVector for backwards compatibility
+     *
+     *  A positive bit indices that the corresponding matrix row/column is excluded from the
+     *  UMFPACK decomposition.
+     *  WARNING This is an opposite behavior of the previous implementation in `setSubMatrix`.
+     */
+    template<class BitVector = Impl::NoBitVector>
+    void setMatrix(const Matrix& matrix, const BitVector& bitVector = {})
     {
       if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
@@ -454,16 +514,128 @@ namespace Dune {
 
       if (umfpackMatrix_.N() + umfpackMatrix_.M() + umfpackMatrix_.nonzeroes() != 0)
         umfpackMatrix_.free();
-      umfpackMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
-                             MatrixDimension<Matrix>::coldim(matrix));
-      ISTL::Impl::BCCSMatrixInitializer<Matrix, size_type> initializer(umfpackMatrix_);
 
-      copyToBCCSMatrix(initializer, matrix);
+      constexpr bool useBitVector = not std::is_same_v<BitVector,Impl::NoBitVector>;
+
+      // use a dynamic flat vector for the bitset
+      std::vector<bool> flatBitVector;
+      // and a mapping from the compressed indices
+      std::vector<size_type> subIndices;
+
+      int numberOfIgnoredDofs = 0;
+      int nonZeros = 0;
+
+      if constexpr ( useBitVector )
+      {
+        auto flatSize = flatVectorForEach(bitVector, [](auto&&, auto&&){});
+        flatBitVector.resize(flatSize);
+
+        flatVectorForEach(bitVector, [&](auto&& entry, auto&& offset)
+        {
+          flatBitVector[ offset ] = entry;
+          if ( entry )
+          {
+            numberOfIgnoredDofs++;
+          }
+        });
+      }
+
+      // compute the flat dimension and the number of nonzeros of the matrix
+      auto [flatRows,flatCols] = flatMatrixForEach( matrix, [&](auto&& /*entry*/, auto&& row, auto&& col){
+        // do not count ignored entries
+        if constexpr ( useBitVector )
+          if ( flatBitVector[row] or flatBitVector[col] )
+            return;
+
+        nonZeros++;
+      });
+
+      if constexpr ( useBitVector )
+      {
+        // use the original flatRows!
+        subIndices.resize(flatRows,std::numeric_limits<std::size_t>::max());
+
+        size_type subIndexCounter = 0;
+        for ( size_type i=0; i<size_type(flatRows); i++ )
+          if ( not  flatBitVector[ i ] )
+            subIndices[ i ] = subIndexCounter++;
+
+        // update the original matrix size
+        flatRows -= numberOfIgnoredDofs;
+        flatCols -= numberOfIgnoredDofs;
+      }
+
+
+      umfpackMatrix_.setSize(flatRows,flatCols);
+      umfpackMatrix_.Nnz_ = nonZeros;
+
+      // prepare the arrays
+      umfpackMatrix_.colstart = new size_type[flatCols+1];
+      umfpackMatrix_.rowindex = new size_type[nonZeros];
+      umfpackMatrix_.values   = new T[nonZeros];
+
+      for ( size_type i=0; i<size_type(flatCols+1); i++ )
+      {
+        umfpackMatrix_.colstart[i] = 0;
+      }
+
+      // at first, we need to compute the column start indices
+      // therefore, we count all entries in each column and in the end we accumulate everything
+      flatMatrixForEach(matrix, [&](auto&& /*entry*/, auto&& flatRowIndex, auto&& flatColIndex)
+      {
+        // do nothing if entry is excluded
+        if constexpr ( useBitVector )
+          if ( flatBitVector[flatRowIndex] or flatBitVector[flatColIndex] )
+            return;
+
+        // pick compressed or uncompressed index
+        // compiler will hopefully do some constexpr optimization here
+        auto colIdx = useBitVector ? subIndices[flatColIndex] : flatColIndex;
+
+        umfpackMatrix_.colstart[colIdx+1]++;
+      });
+
+      // now accumulate
+      for ( size_type i=0; i<(size_type)flatCols; i++ )
+      {
+        umfpackMatrix_.colstart[i+1] += umfpackMatrix_.colstart[i];
+      }
+
+      // we need a compressed position counter in each column
+      std::vector<size_type> colPosition(flatCols,0);
+
+      // now we can set the entries: the procedure below works with both row- or column major index ordering
+      flatMatrixForEach(matrix, [&](auto&& entry, auto&& flatRowIndex, auto&& flatColIndex)
+      {
+        // do nothing if entry is excluded
+        if constexpr ( useBitVector )
+          if ( flatBitVector[flatRowIndex] or flatBitVector[flatColIndex] )
+            return;
+
+        // pick compressed or uncompressed index
+        // compiler will hopefully do some constexpr optimization here
+        auto rowIdx = useBitVector ? subIndices[flatRowIndex] : flatRowIndex;
+        auto colIdx = useBitVector ? subIndices[flatColIndex] : flatColIndex;
+
+        // the start index of each column is already fixed
+        auto colStart = umfpackMatrix_.colstart[colIdx];
+        // get the current number of picked elements in this column
+        auto colPos   = colPosition[colIdx];
+        // assign the corresponding row index and the value of this element
+        umfpackMatrix_.rowindex[ colStart + colPos ] = rowIdx;
+        umfpackMatrix_.values[ colStart + colPos ] = entry;
+        // increase the number of picked elements in this column
+        colPosition[colIdx]++;
+      });
 
       decompose();
     }
 
-    template<class S>
+    // Keep legacy version using a set of scalar indices
+    // The new version using a bitVector type for marking the active matrix indices is
+    // directly given in `setMatrix` with an additional BitVector argument.
+    // The new version is more flexible and allows, e.g., marking single components of a matrix block.
+    template<typename S>
     void setSubMatrix(const Matrix& _mat, const S& rowIndexSet)
     {
       if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
