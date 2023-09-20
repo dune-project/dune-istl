@@ -18,6 +18,24 @@
 
 using namespace Dune;
 
+// helper to add something to the diagonal of a BCRSMatrix with blocks
+auto addToDiagonal = [](auto&& matrix, const auto& value) {
+  for( auto rowIt=matrix.begin(); rowIt!=matrix.end(); rowIt++ )
+  {
+    for( auto entryIt=rowIt->begin(); entryIt!=rowIt->end(); entryIt++ )
+    {
+      if ( entryIt.index() == rowIt.index() )
+      {
+        auto&& block = Dune::Impl::asMatrix(*entryIt);
+        for (auto it=block.begin(); it!=block.end(); ++it)
+        {
+          (*it)[it.index()] += value;
+        }
+      }
+    }
+  }
+};
+
 template<typename Matrix, typename Vector, typename BitVector>
 TestSuite runUMFPack(std::size_t N)
 {
@@ -27,6 +45,10 @@ TestSuite runUMFPack(std::size_t N)
   Vector b(N*N), x(N*N), b1(N/2), x1(N/2);
 
   setupLaplacian(mat,N);
+
+  // make this regular
+  addToDiagonal(mat,100.0);
+
   b=1;
   b1=1;
   x=0;
@@ -133,7 +155,9 @@ TestSuite runUMFPackMultitype2x2(std::size_t N)
   setupLaplacian(mat[_1][_0],N);
   setupLaplacian(mat[_1][_1],N);
 
-  mat[_0][_0] *= 2.0; // make the matrix regular
+  // make this regular
+  addToDiagonal(mat[_0][_0],200.0);
+  addToDiagonal(mat[_1][_1],100.0);
 
   b=1.0;
   b1=1.0;
