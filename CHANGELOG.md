@@ -5,6 +5,8 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.10)
 
+- Improve testing support on Laplacian matrices with an optional diagonal regularization parameter.
+
 - Base the implementation of `VariableBlockVector` on `std::vector` as the storage type. Note that
   this prevents from using `bool` as block type that was possible before.
 

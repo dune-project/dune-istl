@@ -4,6 +4,9 @@
 // vi: set et ts=4 sw=2 sts=2:
 #ifndef LAPLACIAN_HH
 #define LAPLACIAN_HH
+
+#include <optional>
+
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/scalarmatrixview.hh>
@@ -38,15 +41,22 @@ void setupSparsityPattern(Dune::BCRSMatrix<B,Alloc>& A, int N)
   }
 }
 
-
+/* \brief Setup a FD Laplace matrix on a square 2D grid
+ *
+ * \param A The resulting matrix
+ * \param N Number of grid nodes per direction
+ * \param reg (optional) Regularization added to the diagonal to ensure a good condition number
+ */
 template<class B, class Alloc>
-void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A, int N)
+void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A,
+                    int N,
+                    std::optional<typename Dune::BCRSMatrix<B,Alloc>::field_type> reg = {} )
 {
-  typedef typename Dune::BCRSMatrix<B,Alloc>::field_type FieldType;
+  using field_type = typename Dune::BCRSMatrix<B,Alloc>::field_type;
 
   setupSparsityPattern(A,N);
 
-  B diagonal(static_cast<FieldType>(0)), bone(static_cast<FieldType>(0));
+  B diagonal(static_cast<field_type>(0)), bone(static_cast<field_type>(0));
 
   auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
     auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);
@@ -57,42 +67,42 @@ void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A, int N)
   setDiagonal(diagonal, 4.0);
   setDiagonal(bone, -1.0);
 
-  for (typename Dune::BCRSMatrix<B,Alloc>::RowIterator i = A.begin(); i != A.end(); ++i) {
+  for (auto i = A.begin(); i != A.end(); ++i)
+  {
     int x = i.index()%N; // x coordinate in the 2d field
     int y = i.index()/N;  // y coordinate in the 2d field
 
-    /*    if(x==0 || x==N-1 || y==0||y==N-1){
+    i->operator[](i.index())=diagonal;
 
-       i->operator[](i.index())=1.0;
+    if(y>0)
+      i->operator[](i.index()-N)=bone;
 
-       if(y>0)
-       i->operator[](i.index()-N)=0;
+    if(y<N-1)
+      i->operator[](i.index()+N)=bone;
 
-       if(y<N-1)
-       i->operator[](i.index()+N)=0.0;
+    if(x>0)
+      i->operator[](i.index()-1)=bone;
 
-       if(x>0)
-       i->operator[](i.index()-1)=0.0;
+    if(x < N-1)
+      i->operator[](i.index()+1)=bone;
+  }
 
-       if(x < N-1)
-       i->operator[](i.index()+1)=0.0;
-
-       }else*/
+  // add regularization to the diagonal
+  if ( reg.has_value() )
+  {
+    for ( auto rowIt=A.begin(); rowIt!=A.end(); rowIt++ )
     {
-
-      i->operator[](i.index())=diagonal;
-
-      if(y>0)
-        i->operator[](i.index()-N)=bone;
-
-      if(y<N-1)
-        i->operator[](i.index()+N)=bone;
-
-      if(x>0)
-        i->operator[](i.index()-1)=bone;
-
-      if(x < N-1)
-        i->operator[](i.index()+1)=bone;
+      for ( auto entryIt=rowIt->begin(); entryIt!=rowIt->end(); entryIt++ )
+      {
+        if ( entryIt.index() == rowIt.index() )
+        {
+          auto&& block = Dune::Impl::asMatrix(*entryIt);
+          for ( auto it=block.begin(); it!=block.end(); ++it )
+          {
+            (*it)[it.index()] += reg.value();
+          }
+        }
+      }
     }
   }
 }
