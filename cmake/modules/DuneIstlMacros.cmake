@@ -13,8 +13,6 @@ find_package(SuperLU 5.0)
 include(AddSuperLUFlags)
 find_package(ARPACKPP)
 include(AddARPACKPPFlags)
-find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD LDL SPQR UMFPACK)
-include(AddSuiteSparseFlags)
 
 # enable / disable backwards compatibility w.r.t. category
 set(DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE 1
