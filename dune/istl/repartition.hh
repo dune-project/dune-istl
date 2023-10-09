@@ -706,10 +706,8 @@ namespace Dune
         return weight_;
       }
       void free(){
-        if(weight_!=0) {
-          delete weight_;
-          weight_=0;
-        }
+        delete[] weight_;
+        weight_ = nullptr;
       }
     private:
       Metis::idx_t* weight_;
