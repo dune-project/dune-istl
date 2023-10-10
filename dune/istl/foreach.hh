@@ -167,8 +167,12 @@ std::pair<std::size_t,std::size_t> flatMatrixForEach(Matrix&& matrix, F&& f, std
         {
           auto&& entry = *colIt;
           auto colIdx = colIt.index();
-          auto [ dummyRows, dummyCols ] = flatMatrixForEach(entry, f, rowOffset + rowIdx*blockRows, colOffset + colIdx*blockCols);
-          assert( dummyRows == blockRows and dummyCols == blockCols and "we need the same size of each block in this matrix type");
+#ifndef NDEBUG
+          // only instantiate return value in debug mode (for the assert)
+          auto [ numRows, numCols ] =
+#endif
+          flatMatrixForEach(entry, f, rowOffset + rowIdx*blockRows, colOffset + colIdx*blockCols);
+          assert( numRows == blockRows and numCols == blockCols and "we need the same size of each block in this matrix type");
         }
       }
 
