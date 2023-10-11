@@ -561,10 +561,10 @@ namespace Dune {
     }
 
     //! Writes (recursively) the svg content for an sparse matrix
-    template <class Mat, class Stream, class SVGMatrixOptions,
+    template <class Stream, class Mat, class SVGMatrixOptions,
               class RowPrefix, class ColPrefix>
     std::pair<std::size_t, size_t>
-    writeSVGMatrix(const Mat &mat, Stream &out, SVGMatrixOptions opts,
+    writeSVGMatrix(Stream &out, const Mat &mat, SVGMatrixOptions opts,
                   RowPrefix row_prefix, ColPrefix col_prefix) {
       // get values to fill the offsets
       const auto& block_size = opts.block_size;
@@ -620,7 +620,7 @@ namespace Dune {
           NullStream dev0;
           // get size of sub-block
           auto sub_size =
-              writeSVGMatrix(val, dev0, opts, row_prefix, col_prefix);
+              writeSVGMatrix(dev0, val, opts, row_prefix, col_prefix);
 
           // if we didn't see col size before
           if (col_offsets[col + 1] == null_offset) // write it in the offset vector
@@ -657,7 +657,7 @@ namespace Dune {
           ss << "<svg x='" << col_offsets[col] << "' y='" << row_offsets[row]
             << "' width='" << width << "' height='" << height << "'>\n";
           // write a nested svg with the contents of the sub-block
-          writeSVGMatrix(val, ss, opts, row_prefix, col_prefix);
+          writeSVGMatrix(ss, val, opts, row_prefix, col_prefix);
           ss << "</svg>\n";
         });
         col_offset = col_offsets.back();
@@ -825,12 +825,31 @@ namespace Dune {
    * @param opts          SVG Options object
    */
   template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
-  void writeSVGMatrix(const Mat &mat, std::ostream &out,
-                      SVGOptions opts = {}) {
+  void writeSVGMatrix(std::ostream &out, const Mat &mat, SVGOptions opts = {}) {
     // We need a vector that can fit all the multi-indices for rows and columns
     using IndexPrefix = Dune::ReservedVector<std::size_t, blockLevel<Mat>()>;
     // Call overload for Mat type
-    Impl::writeSVGMatrix(mat, out, opts, IndexPrefix{}, IndexPrefix{});
+    Impl::writeSVGMatrix(out, mat, opts, IndexPrefix{}, IndexPrefix{});
+  }
+
+  /**
+   * @brief Writes the visualization of matrix in the SVG format
+   * @details The default visualization writes a rectangle for every block
+   *          bounding box. This is enough to visualize patterns. If you need a
+   *          more advance SVG object in each matrix block (e.g. color scale, or
+   *          write the value in text), just provide a custom SVGOptions that
+   *          fulfills the DefaultSVGMatrixOptions interface.
+   *
+   * @tparam Mat          Matrix type to write
+   * @tparam SVGOptions   Options object type (see DefaultSVGMatrixOptions)
+   * @param mat           The matrix to write
+   * @param out           A output stream to write SVG to
+   * @param opts          SVG Options object
+   */
+  template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
+  [[deprecated("Use signature where std::stream is the first argument.")]]
+  void writeSVGMatrix(const Mat &mat, std::ostream &out, SVGOptions opts = {}) {
+    writeSVGMatrix(out, mat, opts);
   }
 
   /** @} end documentation */
