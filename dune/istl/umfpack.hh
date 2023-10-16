@@ -171,30 +171,35 @@ namespace Dune {
 
   namespace Impl
   {
-    template<class M>
+    template<class M, class = void>
     struct UMFPackVectorChooser
     {};
 
-    template<typename T, typename A, int n, int m>
-    struct UMFPackVectorChooser<BCRSMatrix<FieldMatrix<T,n,m>,A > >
+    template<class M>
+    struct UMFPackVectorChooser<M, std::enable_if_t<(std::is_same<M,double>::value) || (std::is_same<M,std::complex<double> >::value)>>
+    {
+      using domain_type = M;
+      using range_type  = M;
+    };
+
+    template<typename T, int n, int m>
+    struct UMFPackVectorChooser<FieldMatrix<T,n,m>>
     {
       /** @brief The type of the domain of the solver */
-      using domain_type = BlockVector<
-                              FieldVector<T,m>,
-                              typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > >;
+      using domain_type = FieldVector<T,m>;
       /** @brief The type of the range of the solver */
-      using range_type  = BlockVector<
-                              FieldVector<T,n>,
-                              typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > >;
+      using range_type  = FieldVector<T,n>;
     };
 
     template<typename T, typename A>
     struct UMFPackVectorChooser<BCRSMatrix<T,A> >
     {
+      using sub_domain_type = typename UMFPackVectorChooser<T>::domain_type;
+      using sub_range_type = typename UMFPackVectorChooser<T>::range_type;
       /** @brief The type of the domain of the solver */
-      using domain_type = BlockVector<T, A>;
+      using domain_type = BlockVector<sub_domain_type, typename std::allocator_traits<A>::template rebind_alloc<sub_domain_type>>;
       /** @brief The type of the range of the solver */
-      using range_type  = BlockVector<T, A>;
+      using range_type  = BlockVector<sub_range_type, typename std::allocator_traits<A>::template rebind_alloc<sub_domain_type>>;
     };
 
     // to make the `UMFPackVectorChooser` work with `MultiTypeBlockMatrix`, we need to add an intermediate step for the rows, which are typically `MultiTypeBlockVector`
@@ -783,15 +788,21 @@ namespace Dune {
   };
 
   struct UMFPackCreator {
-    template<class F,class=void> struct isValidBlock : std::false_type{};
-    template<class B> struct isValidBlock<B, std::enable_if_t<std::is_same<typename FieldTraits<B>::real_type,double>::value>> : std::true_type {};
+
+    template<class M> using DomainType = typename Impl::UMFPackVectorChooser<M>::domain_type;
+    template<class M> using RangeType = typename Impl::UMFPackVectorChooser<M>::range_type;
+
+    template<class TL, class M,class=void> struct isValidBlock : std::false_type{};
+    template<class TL, class M> struct isValidBlock<TL,M,
+      std::enable_if_t<
+           std::is_same_v<DomainType<M>, typename Dune::TypeListElement<1,TL>::type>
+        && std::is_same_v<RangeType<M>,  typename Dune::TypeListElement<2,TL>::type>
+      >> : std::true_type {};
 
     template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
+    std::shared_ptr<Dune::InverseOperator<DomainType<M>,RangeType<M>>>
     operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
-      std::enable_if_t<
-                isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+      std::enable_if_t<isValidBlock<TL, M>::value,int> = 0) const
     {
       int verbose = config.get("verbose", 0);
       return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
@@ -802,11 +813,20 @@ namespace Dune {
     std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
                                           typename Dune::TypeListElement<2, TL>::type>>
     operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<
-                !isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
+      std::enable_if_t<!isValidBlock<TL, M>::value,int> = 0) const
     {
+      using D = typename Dune::TypeListElement<1,TL>::type;
+      using R = typename Dune::TypeListElement<2,TL>::type;
+      using DU = Std::detected_t<DomainType, M>;
+      using RU = Std::detected_t<RangeType, M>;
       DUNE_THROW(UnsupportedType,
-        "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
+        "Unsupported Types in UMFPack:\n"
+        "Matrix: " << className<M>() << ""
+        "Domain provided: " << className<D>() << "\n"
+        "Domain required: " << className<DU>() << "\n"
+        "Range provided: " << className<R>() << "\n"
+        "Range required: " << className<RU>() << "\n"
+      );
     }
   };
   DUNE_REGISTER_DIRECT_SOLVER("umfpack",Dune::UMFPackCreator());
