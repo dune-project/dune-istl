@@ -250,8 +250,8 @@ namespace Dune {
    *
    * \note This will only work if dune-istl has been configured to use UMFPack
    */
-  template<typename M, typename D = Impl::UMFPackDomainType<M>, typename R = Impl::UMFPackRangeType<M>>
-  class UMFPack : public InverseOperator<D,R>
+  template<typename M>
+  class UMFPack : public InverseOperator<Impl::UMFPackDomainType<M>,Impl::UMFPackRangeType<M>>
   {
     using T = typename M::field_type;
 
@@ -266,9 +266,9 @@ namespace Dune {
     /** @brief Type of an associated initializer class. */
     using MatrixInitializer = ISTL::Impl::BCCSMatrixInitializer<M, size_type>;
     /** @brief The type of the domain of the solver. */
-    using domain_type = D;
+    using domain_type = Impl::UMFPackDomainType<M>;
     /** @brief The type of the range of the solver. */
-    using range_type = R;
+    using range_type = Impl::UMFPackRangeType<M>;
 
     //! Category of the solver (see SolverCategory::Category)
     virtual SolverCategory::Category category() const
