@@ -30,6 +30,7 @@ namespace Dune
   template class SeqSOR<Mat1, Vec1, Vec1>;
   template class SeqSSOR<Mat1, Vec1, Vec1>;
   template class Richardson<Vec1, Vec1>;
+  template class SeqDILU<Mat1, Vec1, Vec1>;
   template class SeqILU<Mat1, Vec1, Vec1>;
   template class SeqILDL<Mat1, Vec1, Vec1>;
 
@@ -37,6 +38,7 @@ namespace Dune
   template class SeqSOR<Mat2, Vec2, Vec2>;
   template class SeqSSOR<Mat2, Vec2, Vec2>;
   template class Richardson<Vec2, Vec2>;
+  template class SeqDILU<Mat2, Vec2, Vec2>;
   template class SeqILU<Mat2, Vec2, Vec2>;
   template class SeqILDL<Mat2, Vec2, Vec2>;
 
@@ -93,6 +95,10 @@ void testAllPreconditioners(const Matrix& matrix, const Vector& b)
   x = 0;
   SeqJac<Matrix,Vector,Vector> seqJac(matrix, 1,1.0);
   testPreconditioner(matrix, b, x, seqJac);
+
+  x = 0;
+  SeqDILU<Matrix,Vector,Vector> seqDILU(matrix, 1.1);
+  testPreconditioner(matrix, b, x, seqDILU);
 
   x = 0;
   SeqILU<Matrix,Vector,Vector> seqILU(matrix, 3, 1.2, true);

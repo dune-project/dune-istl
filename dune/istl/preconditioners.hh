@@ -22,6 +22,7 @@
 #include "istlexception.hh"
 #include "matrixutils.hh"
 #include "gsetc.hh"
+#include "dilu.hh"
 #include "ildl.hh"
 #include "ilu.hh"
 
@@ -515,7 +516,171 @@ namespace Dune {
   };
   DUNE_REGISTER_PRECONDITIONER("jac", defaultPreconditionerBlockLevelCreator<Dune::SeqJac>());
 
+  /*!
+     \brief Sequential DILU preconditioner.
 
+     Wraps the naked ISTL generic DILU preconditioner into the solver framework.
+
+     The Diagonal Incomplete LU factorization (DILU) is a simplified variant of the ILU(0) factorization,
+     where only the diagonal elements are factorised. This preconditioner can be written as
+
+     M = (D + L_A) D^{-1} (D + U_A),
+
+     where L_A and U_A are the strictly lower and upper parts of A and D is the diagonal matrix containing
+     the generated pivot values. The matrix M has the property
+
+     diag(A) = diag(M) = diag((D + L_A) D^{-1} (D + U_A)) = diag(D + L_A D^{-1} U_A)
+
+     such that the diagonal matrix D can be constructed:
+
+     D_11 = A_11
+     D_22 = A22 - L_A_{21} D_{11}^{-1} U_A_{12}
+     and etc.
+
+     Note that when applying the preconditioner, M is never explicitly created but instead a lower and
+     upper triangualr solve is performed using the values of A and D^-1. When applying the preconditioner,
+     we are working with the residual d = b - Ax and update v = x_{n+1} - x_n, such that:
+
+     v = M^{-1} d = (D + U_A)^{-1} D (D + L_A)^{-1} d
+
+     define y = (D + L_A)^{-1} d
+
+     lower triangular solve: (D + L_A) y = d
+     upper triangular solve: (D + U_A) v = D y
+
+     This means that the preconditioner only requires an additional storage of the diagonal matrix D^{-1}
+
+    For more details, see: R. Barrett et al., "Templates for the Solution of Linear Systems:
+    Building Blocks for Iterative Methods", 1994. Available from: https://www.netlib.org/templates/templates.pdf
+
+     \tparam M The matrix type to operate on
+     \tparam X Type of the update
+     \tparam Y Type of the defect
+     \tparam l Ignored. Just there to have the same number of template arguments
+     as other preconditioners.
+   */
+  template <class M, class X, class Y, int l = 1>
+  class SeqDILU : public Preconditioner<X, Y>
+  {
+  public:
+    //! \brief The matrix type the preconditioner is for.
+    using matrix_type = M;
+    //! block type of matrix
+    using block_type = typename matrix_type::block_type;
+    //! \brief The domain type of the preconditioner.
+    using domain_type = X;
+    //! \brief The range type of the preconditioner.
+    using range_type = Y;
+
+    //! \brief The field type of the preconditioner.
+    using field_type = typename X::field_type;
+
+    //! \brief scalar type underlying the field_type
+    using scalar_field_type = Simd::Scalar<field_type>;
+    //! \brief real scalar type underlying the field_type
+    using real_field_type = typename FieldTraits<scalar_field_type>::real_type;
+
+    /*! \brief Constructor.
+
+       Constructor invoking DILU gets all parameters to operate the prec.
+       \param A The matrix to operate on.
+       \param w The relaxation factor.
+     */
+    SeqDILU(const M &A, real_field_type w)
+        : _A_(A),
+          _w(w),
+          wNotIdentity_([w]
+                        {using std::abs; return abs(w - real_field_type(1)) > 1e-15; }())
+    {
+      Dinv_.resize(_A_.N());
+      CheckIfDiagonalPresent<M, l>::check(_A_);
+      DILU::blockDILUDecomposition(_A_, Dinv_);
+    }
+
+    /*!
+      \brief Constructor.
+
+      \param A The assembled linear operator to use.
+      \param configuration ParameterTree containing preconditioner parameters.
+
+      ParameterTree Key | Meaning
+      ------------------|------------
+      relaxation        | The relaxation factor. default=1.0
+
+      See \ref ISTL_Factory for the ParameterTree layout and examples.
+    */
+    SeqDILU(const std::shared_ptr<const AssembledLinearOperator<M, X, Y>> &A, const ParameterTree &configuration)
+        : SeqDILU(A->getmat(), configuration)
+    {
+    }
+
+    /*!
+       \brief Constructor.
+
+       \param A The matrix to operate on.
+       \param configuration ParameterTree containing preconditioner parameters.
+
+       ParameterTree Key | Meaning
+       ------------------|------------
+      relaxation        | The relaxation factor. default=1.0
+
+       See \ref ISTL_Factory for the ParameterTree layout and examples.
+     */
+    SeqDILU(const M &A, const ParameterTree &config)
+        : SeqDILU(A, config.get<real_field_type>("relaxation", 1.0))
+    {
+    }
+
+    /*!
+       \brief Prepare the preconditioner.
+
+       \copydoc Preconditioner::pre(X&,Y&)
+     */
+    virtual void pre([[maybe_unused]] X &x, [[maybe_unused]] Y &b)
+    {
+    }
+
+    /*!
+       \brief Apply the preconditioner.
+
+       \copydoc Preconditioner::apply(X&,const Y&)
+     */
+    virtual void apply(X &v, const Y &d)
+    {
+
+      DILU::blockDILUBacksolve(_A_, Dinv_, v, d);
+
+      if (wNotIdentity_)
+      {
+        v *= _w;
+      }
+    }
+
+    /*!
+       \brief Clean up.
+
+       \copydoc Preconditioner::post(X&)
+     */
+    virtual void post([[maybe_unused]] X &x)
+    {
+    }
+
+    //! Category of the preconditioner (see SolverCategory::Category)
+    virtual SolverCategory::Category category() const
+    {
+      return SolverCategory::sequential;
+    }
+
+  protected:
+    std::vector<block_type> Dinv_;
+    //! \brief The matrix we operate on.
+    const M &_A_;
+    //! \brief The relaxation factor to use.
+    const real_field_type _w;
+    //! \brief true if w != 1.0
+    const bool wNotIdentity_;
+  };
+  DUNE_REGISTER_PRECONDITIONER("dilu", defaultPreconditionerBlockLevelCreator<Dune::SeqDILU>());
 
   /*!
      \brief Sequential ILU preconditioner.

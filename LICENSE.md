@@ -50,6 +50,7 @@ Copyright holders:
 2015--2019    Linus Seelinger
 2013          Bård Skaflestad
 2018          Mathis Springwald
+2023          Jakob Torben
 2006--2010    Martin Weiser
 2019--2020    Kilian Weishaupt
 2015          Sebastian Westerheide
