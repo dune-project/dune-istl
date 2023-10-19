@@ -202,6 +202,9 @@ namespace Dune {
     struct UMFPackVectorChooser<BCRSMatrix<T,A>,
       std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
     {
+      // In case of recursive deduction (e.g., BCRSMatrix<FieldMatrix<...>, Allocator<FieldMatrix<...>>>)
+      // the allocator needs to be converted to the sub-block allocator type too (e.g., Allocator<FieldVector<...>>).
+      // Note that matrix allocator is assumed to be the same as the domain/range type of allocators
       /** @brief The type of the domain of the solver */
       using domain_type = BlockVector<UMFPackDomainType<T>, typename std::allocator_traits<A>::template rebind_alloc<UMFPackDomainType<T>>>;
       /** @brief The type of the range of the solver */
