@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE.md in module root
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
+import tempfile,os
 import dune.common
 from dune.istl import blockVector, BlockVector, bcrsMatrix, BCRSMatrix, SeqJacobi, CGSolver, BuildMode
 
@@ -55,37 +56,40 @@ if mat.shape != (5, 5) or mat.nonZeroes != 5 or mat.buildMode != BuildMode.impli
 # BMatrix = BCRSMatrix(Matrix)
 # mat = BMatrix((5,5), 5, BuildMode.implicit)
 
-# store identity matrix
-mat = identity(5)
-if not isIdentity(mat):
-    raise Exception("Identity matrix not setup correctly")
-mat.store("bcrsmatrix.mm", "matrixmarket")
+# generate a temporary directory to test 'store', 'load':
 
-for i, row in mat.enumerate:
-    for j, col in row.enumerate:
-        if i != j:
-            raise Exception("Wrong sparsity pattern")
-        if col != 1:
-            raise Exception("Diagonal entry is not 1")
+with tempfile.TemporaryDirectory() as tmpDir:
+    # store identity matrix
+    mat = identity(5)
+    if not isIdentity(mat):
+        raise Exception("Identity matrix not setup correctly")
+    mat.store(os.path.join(tmpDir,"bcrsmatrix.mm"), "matrixmarket")
 
-mat = identity(5, BuildMode.implicit)
-if not isIdentity(mat):
-    raise Exception("Identity matrix not setup correctly")
+    for i, row in mat.enumerate:
+        for j, col in row.enumerate:
+            if i != j:
+                raise Exception("Wrong sparsity pattern")
+            if col != 1:
+                raise Exception("Diagonal entry is not 1")
 
-# manipulate diagonal to 2
-for i in range(mat.rows):
-    mat[i, i] *= 2
-if isIdentity(mat):
-    raise Exception("Matrix not manipulated")
+    mat = identity(5, BuildMode.implicit)
+    if not isIdentity(mat):
+        raise Exception("Identity matrix not setup correctly")
 
-# reload identity matrix
-mat = bcrsMatrix()
-mat.load("bcrsmatrix.mm", "matrixmarket")
-if not isIdentity(mat):
-    raise Exception("Matrix not loaded correctly")
+    # manipulate diagonal to 2
+    for i in range(mat.rows):
+        mat[i, i] *= 2
+    if isIdentity(mat):
+        raise Exception("Matrix not manipulated")
 
-# store in matlab format
-mat.store("bcrsmatrix.txt", "matlab")
+    # reload identity matrix
+    mat = bcrsMatrix()
+    mat.load(os.path.join(tmpDir,"bcrsmatrix.mm"), "matrixmarket")
+    if not isIdentity(mat):
+        raise Exception("Matrix not loaded correctly")
+
+    # store in matlab format
+    mat.store(os.path.join(tmpDir,"bcrsmatrix.txt"), "matlab")
 
 # solve trivial linear system
 x = blockVector(5)
