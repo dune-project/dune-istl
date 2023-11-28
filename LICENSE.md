@@ -46,6 +46,7 @@ Copyright holders:
 2018--2022    Lukas Renelt
 2021--2022    Santiago Ospina De Los Ríos
 2008--2013    Uli Sack
+2023          Vaishnavi Sanchi
 2004--2021    Oliver Sander
 2015--2019    Linus Seelinger
 2013          Bård Skaflestad
