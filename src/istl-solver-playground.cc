@@ -101,11 +101,11 @@ int main(int argc, char** argv){
   }
 
   if(config.get("FP_EXCEPT", false))
-#if defined( __APPLE__ ) or defined( __MINGW32__ )
-    DUNE_THROW(NotImplemented, "Floating exceptions handling are not available on this system");
-#else
-     feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);// | FE_UNDERFLOW);
-#endif
+     #if not defined( __APPLE__ ) and not defined( __MINGW32__ )
+       feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);// | FE_UNDERFLOW);
+     #else
+       feraiseexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);// | FE_UNDERFLOW);
+     #endif
 
   int verbose = config.get("verbose", 1);
   if(mpihelper.rank() > 0)
