@@ -39,4 +39,4 @@ if( DUNE_ENABLE_PYTHONBINDINGS )
 endif()
 
 # finalize the dune project, e.g. generating config.h etc.
-finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
+finalize_dune_project()
