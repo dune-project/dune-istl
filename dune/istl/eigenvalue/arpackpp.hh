@@ -204,17 +204,17 @@ namespace Dune
   /**
    * \brief Wrapper to use a range of ARPACK++ eigenvalue solvers
    *
-   *        A class template for performing some eigenvalue algorithms
-   *        provided by the ARPACK++ library which is based on the implicitly
-   *        restarted Arnoldi/Lanczos method (IRAM/IRLM), a synthesis of the
-   *        Arnoldi/Lanczos process with the implicitily shifted QR technique.
-   *        The method is designed to compute eigenvalue-eigenvector pairs of
-   *        large scale sparse nonsymmetric/symmetric matrices. This class
-   *        template uses the algorithms to compute the dominant (i.e. largest
-   *        magnitude) and least dominant (i.e. smallest magnitude) eigenvalue
-   *        as well as the spectral condition number of square, symmetric
-   *        matrices and to compute the largest and smallest singular value as
-   *        well as the spectral condition number of nonsymmetric matrices.
+   * A class template for performing some eigenvalue algorithms
+   * provided by the ARPACK++ library which is based on the implicitly
+   * restarted Arnoldi/Lanczos method (IRAM/IRLM), a synthesis of the
+   * Arnoldi/Lanczos process with the implicitily shifted QR technique.
+   * The method is designed to compute eigenvalue-eigenvector pairs of
+   * large scale sparse nonsymmetric/symmetric matrices. This class
+   * template uses the algorithms to compute the dominant (i.e. largest
+   * magnitude) and least dominant (i.e. smallest magnitude) eigenvalue
+   * as well as the spectral condition number of square, symmetric
+   * matrices and to compute the largest and smallest singular value as
+   * well as the spectral condition number of nonsymmetric matrices.
    *
    * \note For a recent version of the ARPACK++ library working with recent
    *       compiler versions see "http://reuter.mit.edu/software/arpackpatch/"
@@ -256,13 +256,13 @@ namespace Dune
      *                            update iterations allowed; depending on the
      *                            algorithm, c*nIterationsMax iterations may
      *                            be performed, where c is a natural number.
-     * \param[in] verbosity_level Verbosity setting;
-     *                                  the final result,
-     *                                  the problem solved using ARPACK++,
-     *                                  the approximated eigenvector,
+     * \param[in] verbosity_level Verbosity setting;<br>
      *                            \>= 1: algorithms print a preamble and
+     *                                  the final result,<br>
      *                            \>= 2: algorithms print information about
+     *                                  the problem solved using ARPACK++,<br>
      *                            \>= 3: the final result output includes
+     *                                  the approximated eigenvector,<br>
      *                            \>= 4: sets the ARPACK(++) verbosity mode.
      */
     ArPackPlusPlus_Algorithms (const BCRSMatrix& m,
