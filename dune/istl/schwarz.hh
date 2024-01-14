@@ -154,8 +154,8 @@ namespace Dune {
 
   /** @} */
 
-  /*
-   * @addtogroup ISTL_Prec
+  /**
+   * \addtogroup ISTL_Prec
    * @{
    */
   //! \brief A parallel SSOR preconditioner.
