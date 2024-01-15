@@ -92,10 +92,10 @@ public:
    * @brief Transfers the data to the coarse level.
    *
    * Restricts the residual to the right hand side of the
-   * coarse level system and initialies the left hand side
+   * coarse level system and initializes the left hand side
    * of the coarse level system. These can afterwards be accessed
-   * usinf getCoarseLevelRhs() and getCoarseLevelLhs().
-   * @param fineDefect The current residual of the fine level system.
+   * using getCoarseLevelRhs() and getCoarseLevelLhs().
+   * @param fineRhs The current right hand side of the fine level system.
    */
   virtual void moveToCoarseLevel(const FineRangeType& fineRhs)=0;
   /**
@@ -398,7 +398,7 @@ public:
    * @param coarsePolicy The policy for constructing the coarse level solver.
    * @param preSteps The number of smoothing steps to apply before the coarse
    * level correction.
-   * @param preSteps The number of smoothing steps to apply after the coarse
+   * @param postSteps The number of smoothing steps to apply after the coarse
    * level correction.
    */
   TwoLevelMethod(const FineOperatorType& op,

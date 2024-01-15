@@ -775,6 +775,7 @@ namespace Dune {
      * @param _avg expected average number of entries per row
      * @param compressionBufferSize fraction of _n*_avg which is expected to be
      *   needed for elements that exceed _avg entries per row.
+     * \param bm Matrix build mode
      *
      */
     BCRSMatrix (size_type _n, size_type _m, size_type _avg, double compressionBufferSize, BuildMode bm)
@@ -2199,12 +2200,13 @@ namespace Dune {
      * setup matrix) results in all the structure and data being lost. Please
      * call deallocate() before calling allocate in this case.
      *
-     * @param row The number of rows the matrix should contain.
+     * @param rows The number of rows the matrix should contain.
      * @param columns the number of columns the matrix should contain.
      * @param allocationSize The number of nonzero entries the matrix should hold (if omitted
      * defaults to 0).
-     * @param allocateRow Whether we have to allocate the row pointers, too. (Defaults to
+     * @param allocateRows Whether we have to allocate the row pointers, too. (Defaults to
      * true)
+     * \param allocate_data Whether data array needs to be allocated
      */
     void allocate(size_type rows, size_type columns, size_type allocationSize, bool allocateRows, bool allocate_data)
     {

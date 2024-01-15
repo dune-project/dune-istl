@@ -89,8 +89,8 @@ namespace MatrixImp
     /** make vector with given number of blocks each having a constant size,
             object is fully usable then.
 
-            \param _nblocks Number of blocks
-            \param m Number of elements in each block
+     * \param rows    Number of rows
+     * \param columns Number of columns
      */
     DenseMatrixBase (size_type rows, size_type columns) : Imp::block_vector_unmanaged<B,A>()
     {
