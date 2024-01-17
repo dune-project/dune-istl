@@ -324,6 +324,20 @@ namespace Dune
       void setAccumulate(bool accu){
         accumulate_=accu ? successiveAccu : noAccu;
       }
+
+      /**
+       * @brief Check if the indices for the coarser levels should be created in a fixed order.
+       */
+      bool useFixedOrder() const
+      {
+        return useFixedOrder_;
+      }
+
+      void setUseFixedOrder(bool useFixedOrder)
+      {
+        useFixedOrder_ = useFixedOrder;
+      }
+
       /**
        * @brief Set the damping factor for the prolongation.
        *
@@ -352,11 +366,15 @@ namespace Dune
        * coarsening will stop (default: 1.2)
        * @param prolongDamp The damping factor to apply to the prolongated update (default: 1.6)
        * @param accumulate Whether to accumulate the data onto fewer processors on coarser levels.
+       * @param useFixedOrder Flag indicating if creating indices for the coarser level
+       * should be done in a fixed order, i.e., the order in which the rows were sent.
+       * If set to true, this makes the runs reproducible but it might slow down performance.
        */
       CoarseningParameters(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
-                           double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
+                           double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu,
+                           bool useFixedOrder = false)
         : maxLevel_(maxLevel), coarsenTarget_(coarsenTarget), minCoarsenRate_(minCoarsenRate),
-          dampingFactor_(prolongDamp), accumulate_( accumulate)
+          dampingFactor_(prolongDamp), accumulate_( accumulate), useFixedOrder_(useFixedOrder)
       {}
 
     private:
@@ -381,6 +399,12 @@ namespace Dune
        * coarser levels.
        */
       AccumulationMode accumulate_;
+      /**
+       * @brief useFixedOrder Flag indicating if creating indices for the coarser
+       * level should be done in a fixed order. If set to true, this makes the runs reproducible
+       * but it might slow down performance.
+       */
+      bool useFixedOrder_;
     };
 
     /**
@@ -491,8 +515,8 @@ namespace Dune
        * @param accumulate Whether to accumulate the data onto fewer processors on coarser levels.
        */
       Parameters(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
-                 double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
-        : CoarseningParameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate)
+                 double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu, bool useFixedOrder = false)
+        : CoarseningParameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate, useFixedOrder)
           , debugLevel_(2), preSmoothSteps_(2), postSmoothSteps_(2), gamma_(1),
           additive_(false)
       {}

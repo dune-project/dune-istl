@@ -297,10 +297,13 @@ namespace Dune
        * coarsening will stop (default: 1.2)
        * @param prolongDamp The damping factor to apply to the prolongated update (default: 1.6)
        * @param accumulate Whether to accumulate the data onto fewer processors on coarser levels.
+       * @param useFixedOrder Flag indicating if creating indices for the coarser level
+       * should be done in a fixed order, i.e., the order in which the rows were sent.
+       * If set to true, this makes the runs reproducible but it might slow down performance.
        */
       CoarsenCriterion(int maxLevel=100, int coarsenTarget=1000, double minCoarsenRate=1.2,
-                       double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu)
-        : AggregationCriterion(Dune::Amg::Parameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate))
+                       double prolongDamp=1.6, AccumulationMode accumulate=successiveAccu, bool useFixedOrder = false)
+        : AggregationCriterion(Dune::Amg::Parameters(maxLevel, coarsenTarget, minCoarsenRate, prolongDamp, accumulate, useFixedOrder))
       {}
 
       CoarsenCriterion(const Dune::Amg::Parameters& parms)
@@ -610,7 +613,8 @@ namespace Dune
                                    visitedMap,
                                    *aggregatesMap,
                                    *infoLevel,
-                                   noAggregates);
+                                   noAggregates,
+                                   criterion.useFixedOrder());
         GraphCreator::free(graphs);
 
         if(criterion.debugLevel()>2) {
