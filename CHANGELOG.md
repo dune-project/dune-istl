@@ -15,6 +15,14 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
   performance. Hence, `MatrixIndexSet` can no longer be used for very large matrices with more
   than 2^32 columns.
 
+- Added flag 'useFixedOrder' to the coarsen method of AMGs ParallelIndicesCoarsener.
+  If set to true, during the creation of the coarser matrix (by accumulation and restriction
+  to fewer processes) the coarse matrix rows are ordered in a fixed manner, making parallel runs
+  reproducible; the runtime is possibly not ideal though.
+  If set to false (which is the default), the row order depends on the order of messages received from the
+  processes responsible for the respective parts of the finer grid. Then the indices on the coarser grid
+  may differ from run to run.
+
 ## Deprecations and removals
 
 - The deprecated CMake variables `SUPERLU_INCLUDE_DIRS`, `SUPERLU_LIBRARIES`,
