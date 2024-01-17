@@ -83,6 +83,10 @@ namespace Dune
        * @param aggregates The mapping of unknowns onto aggregates.
        * @param coarseInfo The information about the parallel data decomposition
        * on the coarse level.
+       * @param noAggregates
+       * @param useFixedOrder Flag indicating if creating indices for the coarser level
+       * should be done in a fixed order, i.e., the order in which the rows were sent.
+       * If set to true, this makes the runs reproducible but it might slow down performance.
        * @return The number of unknowns on the coarse level.
        */
       template<typename Graph, typename VM>
@@ -92,7 +96,8 @@ namespace Dune
               VM& visitedMap,
               AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
               ParallelInformation& coarseInfo,
-              typename Graph::VertexDescriptor noAggregates);
+              typename Graph::VertexDescriptor noAggregates,
+              bool useFixedOrder = false);
 
     private:
       template<typename G, typename I>
@@ -187,7 +192,8 @@ namespace Dune
                                            const AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
                                            ParallelIndexSet& coarseIndices,
                                            RemoteIndices& coarseRemote,
-                                           ParallelAggregateRenumberer<Graph,I>& renumberer);
+                                           ParallelAggregateRenumberer<Graph,I>& renumberer,
+                                           bool useFixedOrder);
 
     };
 
@@ -219,7 +225,8 @@ namespace Dune
               VM& visitedMap,
               AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
               SequentialInformation& coarseInfo,
-              typename Graph::VertexDescriptor noAggregates);
+              typename Graph::VertexDescriptor noAggregates,
+              bool useFixedOrder = false);
     };
 
 #if HAVE_MPI
@@ -231,13 +238,14 @@ namespace Dune
                                            VM& visitedMap,
                                            AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
                                            ParallelInformation& coarseInfo,
-                                           [[maybe_unused]] typename Graph::VertexDescriptor noAggregates)
+                                           [[maybe_unused]] typename Graph::VertexDescriptor noAggregates,
+                                           bool useFixedOrder)
     {
       ParallelAggregateRenumberer<Graph,typename ParallelInformation::GlobalLookupIndexSet> renumberer(aggregates, fineInfo.globalLookup());
       buildCoarseIndexSet(fineInfo, fineGraph, visitedMap, aggregates,
                           coarseInfo.indexSet(), renumberer);
       buildCoarseRemoteIndices(fineInfo.remoteIndices(), aggregates, coarseInfo.indexSet(),
-                               coarseInfo.remoteIndices(), renumberer);
+                               coarseInfo.remoteIndices(), renumberer, useFixedOrder);
 
       return renumberer;
     }
@@ -318,7 +326,8 @@ namespace Dune
                                                                  const AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
                                                                  ParallelIndexSet& coarseIndices,
                                                                  RemoteIndices& coarseRemote,
-                                                                 ParallelAggregateRenumberer<Graph,I>& renumberer)
+                                                                 ParallelAggregateRenumberer<Graph,I>& renumberer,
+                                                                 bool useFixedOrder)
     {
       std::vector<char> attributes(static_cast<std::size_t>(renumberer));
 
@@ -375,7 +384,7 @@ namespace Dune
       // snyc the index set and the remote indices to recompute missing
       // indices
       IndicesSyncer<ParallelIndexSet> syncer(coarseIndices, coarseRemote);
-      syncer.sync(renumberer);
+      syncer.sync(renumberer, useFixedOrder);
 
     }
 
@@ -390,7 +399,8 @@ namespace Dune
       [[maybe_unused]] VM& visitedMap,
       [[maybe_unused]] AggregatesMap<typename Graph::VertexDescriptor>& aggregates,
       [[maybe_unused]] SequentialInformation& coarseInfo,
-      [[maybe_unused]] typename Graph::VertexDescriptor noAggregates)
+      [[maybe_unused]] typename Graph::VertexDescriptor noAggregates,
+      [[maybe_unused]] bool useFixedOrder)
     {
       return noAggregates;
     }
