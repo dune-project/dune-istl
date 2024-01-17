@@ -314,7 +314,7 @@ namespace Dune
         return accumulate_;
       }
       /**
-       * @brief Set whether he data should be accumulated on fewer processes on coarser levels.
+       * @brief Set whether the data should be accumulated on fewer processes on coarser levels.
        */
       void setAccumulate(AccumulationMode accu)
       {
