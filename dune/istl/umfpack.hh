@@ -305,7 +305,7 @@ namespace Dune {
 
     /** @brief Construct a solver object from a matrix
      *
-     * @param matrix  the matrix to solve for
+     * @param mat_    the matrix to solve for
      * @param config  ParameterTree containing solver parameters.
      *
      * ParameterTree Key | Meaning

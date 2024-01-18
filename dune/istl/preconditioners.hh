@@ -618,7 +618,7 @@ namespace Dune {
        \brief Constructor.
 
        \param A The matrix to operate on.
-       \param configuration ParameterTree containing preconditioner parameters.
+       \param config ParameterTree containing preconditioner parameters.
 
        ParameterTree Key | Meaning
        ------------------|------------
@@ -750,7 +750,7 @@ namespace Dune {
        \brief Constructor.
 
        \param A The matrix to operate on.
-       \param configuration ParameterTree containing preconditioner parameters.
+       \param config ParameterTree containing preconditioner parameters.
 
        ParameterTree Key | Meaning
        ------------------|------------
@@ -1007,7 +1007,7 @@ namespace Dune {
        \brief Constructor.
 
        \param A The matrix to operate on.
-       \param configuration ParameterTree containing preconditioner parameters.
+       \param config ParameterTree containing preconditioner parameters.
 
        ParameterTree Key | Meaning
        ------------------|------------

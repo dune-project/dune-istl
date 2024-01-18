@@ -677,7 +677,7 @@ namespace Dune
     {
       /**
        * @brief Sets the matrix values.
-       * @param row The row data as read from file.
+       * @param rows The row data as read from file.
        * @param matrix The matrix whose data we set.
        */
       template<typename T>
@@ -695,7 +695,7 @@ namespace Dune
 
       /**
        * @brief Sets the matrix values.
-       * @param row The row data as read from file.
+       * @param rows The row data as read from file.
        * @param matrix The matrix whose data we set.
        */
       template<typename T>

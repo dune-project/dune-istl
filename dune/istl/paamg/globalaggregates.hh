@@ -247,5 +247,5 @@ namespace Dune
 #endif
 
 } // end Dune namespace
-  /* @} */
+  /** @} */
 #endif

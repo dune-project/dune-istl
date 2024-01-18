@@ -288,13 +288,6 @@ namespace Dune {
     /*! \brief Constructor.
 
        constructor gets all parameters to operate the prec.
-       \param prec The sequential preconditioner.
-       \param c The communication object for syncing owner and copy
-       data points. (E.~g. OwnerOverlapCommunication )
-     */
-    /*! \brief Constructor.
-
-       constructor gets all parameters to operate the prec.
        \param p The sequential preconditioner.
        \param c The communication object for syncing overlap and copy
        data points. (E.~g. OwnerOverlapCopyCommunication )

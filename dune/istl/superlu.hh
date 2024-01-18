@@ -309,7 +309,7 @@ namespace Dune
 
     /** @brief Constructs the SuperLU solver.
      *
-     * @param matrix  The matrix of the system to solve.
+     * @param mat     The matrix of the system to solve.
      * @param config  ParameterTree containing solver parameters.
      *
      * ParameterTree Key | Meaning

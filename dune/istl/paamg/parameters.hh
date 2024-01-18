@@ -183,7 +183,6 @@ namespace Dune
        * @brief Set the minimum number of nodes a aggregate has to consist of.
        *
        * the default value is 4.
-       * @return The minimum number of nodes.
        */
       void setMinAggregateSize(std::size_t size){ minAggregateSize_=size;}
 

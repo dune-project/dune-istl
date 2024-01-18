@@ -90,7 +90,7 @@ namespace Dune {
      * (and use a lot of memory).
      *
      *  @param matrix the matrix to solve for
-     *  @param verbose, 0 or 1, set the verbosity level, defaults to 0
+     *  @param verbose 0 or 1, set the verbosity level, defaults to 0
      */
     SPQR(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false), verbose_(verbose)
     {
@@ -108,7 +108,7 @@ namespace Dune {
      * (and use a lot of memory).
      *
      * @param matrix the matrix to solve for
-     * @param verbose, 0 or 1, set the verbosity level, defaults to 0
+     * @param verbose 0 or 1, set the verbosity level, defaults to 0
      */
     SPQR(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false), verbose_(verbose)
     {
