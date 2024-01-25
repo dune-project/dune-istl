@@ -5,6 +5,14 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Release 2.9
 
+- Added flag 'useFixedOrder' to the coarsen method of AMGs ParallelIndicesCoarsener.
+  If set to true, during the creation of the coarser matrix (by accumulation and restriction
+  to fewer processes) the coarse matrix rows are ordered in a fixed manner, making parallel runs
+  reproducible; the runtime is possibly not ideal though.
+  If set to false (which is the default), the row order depends on the order of messages received from the
+  processes responsible for the respective parts of the finer grid. Then the indices on the coarser grid
+  may differ from run to run.
+
 - Add `const` qualifier to `LinearOperator` and `ScalarProduct` in
   `IterativeSolver`. In particular, the constructors of iterative solvers have
   changed.
