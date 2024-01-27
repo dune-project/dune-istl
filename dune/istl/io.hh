@@ -845,9 +845,12 @@ namespace Dune {
    * @param mat           The matrix to write
    * @param out           A output stream to write SVG to
    * @param opts          SVG Options object
+   *
+   * \deprecated Use signature where std::stream is the first argument. This
+   *             method will be removed after Dune 2.10.
    */
   template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
-  [[deprecated("Use signature where std::stream is the first argument.")]]
+  [[deprecated("Use signature where std::stream is the first argument. This will be removed after Dune 2.10.")]]
   void writeSVGMatrix(const Mat &mat, std::ostream &out, SVGOptions opts = {}) {
     writeSVGMatrix(out, mat, opts);
   }
