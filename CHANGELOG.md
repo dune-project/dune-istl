@@ -43,6 +43,9 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 - Removed deprecated `MultyTypeBlockVector::count()`, use `N()` instead.
 
+- Deprecated `writeSVGMatrix` with `std::stream` as the second argument. Use the method
+  with `std::stream` as the first argument.
+
 
 # Release 2.9
 
