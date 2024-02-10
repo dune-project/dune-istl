@@ -357,7 +357,7 @@ namespace Dune {
       s<<"-";
   }
 
-  template<class B, int n, int m, class A>
+  template<class B, int n, int m>
   void printInnerMatrixElement(std::ostream& s,
                          const FieldMatrix<B,n,m> innerMatrixElement,
                          int innerrow, int innercol)
