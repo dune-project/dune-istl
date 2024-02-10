@@ -248,6 +248,14 @@ namespace Dune {
 
   namespace Impl
   {
+    template<class B>
+    void printInnerMatrixElement(std::ostream& s,
+                                 const B& innerMatrixElement,
+                                 int innerrow, int innercol)
+    {
+      s<<innerMatrixElement<<" ";
+    }
+
     template<class B, int n>
     void printInnerMatrixElement(std::ostream& s,
                                  const ScaledIdentityMatrix<B,n> innerMatrixElement,
@@ -312,8 +320,8 @@ namespace Dune {
 
     typedef typename Matrix::ConstRowIterator Row;
 
-    int n = InnerMatrixType::rows;
-    int m = InnerMatrixType::cols;
+    constexpr int n = std::decay_t<decltype(Impl::asMatrix(std::declval<InnerMatrixType>()))>::rows;
+    constexpr int m = std::decay_t<decltype(Impl::asMatrix(std::declval<InnerMatrixType>()))>::cols;
     for(Row row=mat.begin(); row != mat.end(); ++row) {
       int skipcols=0;
       bool reachedEnd=false;
