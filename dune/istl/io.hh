@@ -246,6 +246,28 @@ namespace Dune {
     s.precision(oldprec);
   }
 
+  namespace Impl
+  {
+    template<class B, int n>
+    void printInnerMatrixElement(std::ostream& s,
+                                 const ScaledIdentityMatrix<B,n> innerMatrixElement,
+                                 int innerrow, int innercol)
+    {
+      if (innerrow == innercol)
+        s<<innerMatrixElement.scalar()<<" ";
+      else
+        s<<"-";
+    }
+
+    template<class B, int n, int m>
+    void printInnerMatrixElement(std::ostream& s,
+                                 const FieldMatrix<B,n,m> innerMatrixElement,
+                                 int innerrow, int innercol)
+    {
+      s<<innerMatrixElement[innerrow][innercol]<<" ";
+    }
+  }
+
   /**
    * \brief Prints a BCRSMatrix with fixed sized blocks.
    *
@@ -325,7 +347,7 @@ namespace Dune {
             }
             for(int innercol=0; innercol < m; ++innercol) {
               s.width(9);
-              printInnerMatrixElement(s,*col,innerrow,innercol);
+              Impl::printInnerMatrixElement(s,*col,innerrow,innercol);
             }
 
             s<<"|";
@@ -344,25 +366,6 @@ namespace Dune {
     // reset the output format
     s.flags(oldflags);
     s.precision(oldprec);
-  }
-
-  template<class B, int n>
-  void printInnerMatrixElement(std::ostream& s,
-                         const ScaledIdentityMatrix<B,n> innerMatrixElement,
-                         int innerrow, int innercol)
-  {
-    if (innerrow == innercol)
-      s<<innerMatrixElement.scalar()<<" ";
-    else
-      s<<"-";
-  }
-
-  template<class B, int n, int m>
-  void printInnerMatrixElement(std::ostream& s,
-                         const FieldMatrix<B,n,m> innerMatrixElement,
-                         int innerrow, int innercol)
-  {
-    s<<innerMatrixElement[innerrow][innercol]<<" ";
   }
 
   namespace
