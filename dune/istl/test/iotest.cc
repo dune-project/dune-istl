@@ -107,6 +107,7 @@ int main(int argc, char** argv)
     Dune::BCRSMatrix<Dune::FieldMatrix<double,2,3> > matrix;
     setupLaplacian(matrix, 3);
     Dune::printmatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,2,3> >", "--");
+    Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,2,3> >", "--");
   }
 
   // Matrix
