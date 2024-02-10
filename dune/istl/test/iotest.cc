@@ -104,6 +104,11 @@ int main(int argc, char** argv)
     Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,1,1> >", "--");
   }
   {
+    Dune::BCRSMatrix<Dune::ScaledIdentityMatrix<double,1> > matrix;
+    setupLaplacian(matrix, 3);
+    Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<ScaledIdentityMatrix<double,1> >", "--");
+  }
+  {
     Dune::BCRSMatrix<Dune::FieldMatrix<double,2,3> > matrix;
     setupLaplacian(matrix, 3);
     Dune::printmatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,2,3> >", "--");
