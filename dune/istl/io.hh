@@ -246,6 +246,36 @@ namespace Dune {
     s.precision(oldprec);
   }
 
+  namespace Impl
+  {
+    template<class B>
+    void printInnerMatrixElement(std::ostream& s,
+                                 const B& innerMatrixElement,
+                                 int innerrow, int innercol)
+    {
+      s<<innerMatrixElement<<" ";
+    }
+
+    template<class B, int n>
+    void printInnerMatrixElement(std::ostream& s,
+                                 const ScaledIdentityMatrix<B,n> innerMatrixElement,
+                                 int innerrow, int innercol)
+    {
+      if (innerrow == innercol)
+        s<<innerMatrixElement.scalar()<<" ";
+      else
+        s<<"-";
+    }
+
+    template<class B, int n, int m>
+    void printInnerMatrixElement(std::ostream& s,
+                                 const FieldMatrix<B,n,m> innerMatrixElement,
+                                 int innerrow, int innercol)
+    {
+      s<<innerMatrixElement[innerrow][innercol]<<" ";
+    }
+  }
+
   /**
    * \brief Prints a BCRSMatrix with fixed sized blocks.
    *
@@ -290,8 +320,8 @@ namespace Dune {
 
     typedef typename Matrix::ConstRowIterator Row;
 
-    int n = InnerMatrixType::rows;
-    int m = InnerMatrixType::cols;
+    constexpr int n = std::decay_t<decltype(Impl::asMatrix(std::declval<InnerMatrixType>()))>::rows;
+    constexpr int m = std::decay_t<decltype(Impl::asMatrix(std::declval<InnerMatrixType>()))>::cols;
     for(Row row=mat.begin(); row != mat.end(); ++row) {
       int skipcols=0;
       bool reachedEnd=false;
@@ -325,7 +355,7 @@ namespace Dune {
             }
             for(int innercol=0; innercol < m; ++innercol) {
               s.width(9);
-              printInnerMatrixElement(s,*col,innerrow,innercol);
+              Impl::printInnerMatrixElement(s,*col,innerrow,innercol);
             }
 
             s<<"|";
@@ -344,25 +374,6 @@ namespace Dune {
     // reset the output format
     s.flags(oldflags);
     s.precision(oldprec);
-  }
-
-  template<class B, int n>
-  void printInnerMatrixElement(std::ostream& s,
-                         const ScaledIdentityMatrix<B,n> innerMatrixElement,
-                         int innerrow, int innercol)
-  {
-    if (innerrow == innercol)
-      s<<innerMatrixElement.scalar()<<" ";
-    else
-      s<<"-";
-  }
-
-  template<class B, int n, int m, class A>
-  void printInnerMatrixElement(std::ostream& s,
-                         const FieldMatrix<B,n,m> innerMatrixElement,
-                         int innerrow, int innercol)
-  {
-    s<<innerMatrixElement[innerrow][innercol]<<" ";
   }
 
   namespace

@@ -89,22 +89,30 @@ int main(int argc, char** argv)
   v3.push_back(2);
   Dune::writeVectorToMatlabHelper(v3, std::cout);
 
-  // Test the printmatrix method
+  // Test the printmatrix and printSparseMatrix methods
   // BCRSMatrix
   {
     Dune::BCRSMatrix<double> matrix;
     setupLaplacian(matrix, 3);
     Dune::printmatrix(std::cout, matrix, "BCRSMatrix<double>", "--");
+    Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<double>", "--");
   }
   {
     Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > matrix;
     setupLaplacian(matrix, 3);
     Dune::printmatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,1,1> >", "--");
+    Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,1,1> >", "--");
+  }
+  {
+    Dune::BCRSMatrix<Dune::ScaledIdentityMatrix<double,1> > matrix;
+    setupLaplacian(matrix, 3);
+    Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<ScaledIdentityMatrix<double,1> >", "--");
   }
   {
     Dune::BCRSMatrix<Dune::FieldMatrix<double,2,3> > matrix;
     setupLaplacian(matrix, 3);
     Dune::printmatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,2,3> >", "--");
+    Dune::printSparseMatrix(std::cout, matrix, "BCRSMatrix<FieldMatrix<double,2,3> >", "--");
   }
 
   // Matrix
