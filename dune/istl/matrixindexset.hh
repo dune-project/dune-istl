@@ -142,6 +142,22 @@ namespace Dune {
     /** \brief Return the number of rows */
     size_type rows() const {return rows_;}
 
+    /** \brief Return the number of columns */
+    size_type cols() const {return cols_;}
+
+    /**
+     * \brief Return column indices of entries in given row
+     *
+     * This returns a range of all column indices
+     * that have been added for the given column.
+     * Since there are different internal implementations
+     * of this range, the result is stored in a std::variant<...>
+     * which has to be accessed using `std::visit`.
+     */
+    const auto& columnIndices(size_type row) const {
+      return indices_[row];
+    }
+
     /** \brief Return the number of entries in a given row */
     size_type rowsize(size_type row) const {
       return std::visit([&](const auto& rowIndices) {
