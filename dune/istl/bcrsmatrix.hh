@@ -493,11 +493,11 @@ namespace Dune {
     //! export the allocator type
     typedef A allocator_type;
 
-    //! implement row_type with compressed vector
-    typedef Imp::CompressedBlockVectorWindow<B,A> row_type;
-
     //! The type for the index access and the size
     typedef typename A::size_type size_type;
+
+    //! implement row_type with compressed vector
+    typedef Imp::CompressedBlockVectorWindow<B,size_type> row_type;
 
     //! The type for the statistics object returned by compress()
     typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;

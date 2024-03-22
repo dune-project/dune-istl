@@ -41,13 +41,9 @@ namespace Imp {
            Setting the compile time switch DUNE_ISTL_WITH_CHECKING
            enables error checking.
 
-   \todo There shouldn't be an allocator argument here, because the array is 'unmanaged'.
-         And indeed, of the allocator, only its size_type is used.  Hence, the signature
-         of this class should be changed to <class B, int stype>
-
    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
-  template<class B, class A=std::allocator<B> >
+  template<class B, class ST=std::size_t >
   class base_array_unmanaged
   {
   public:
@@ -57,11 +53,8 @@ namespace Imp {
     //! export the type representing the components
     typedef B member_type;
 
-    //! export the allocator type
-    typedef A allocator_type;
-
     //! the type for the index access
-    typedef typename A::size_type size_type;
+    typedef ST size_type;
 
     //! the type used for references
     using reference = B&;
@@ -302,7 +295,7 @@ namespace Imp {
 
     \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
-  template<class B, class A=std::allocator<B> >
+  template<class B, class ST=std::size_t >
   class compressed_base_array_unmanaged
   {
   public:
@@ -312,11 +305,8 @@ namespace Imp {
     //! export the type representing the components
     typedef B member_type;
 
-    //! export the allocator type
-    typedef A allocator_type;
-
     //! The type used for the index access
-    typedef typename A::size_type size_type;
+    typedef ST size_type;
 
     //! the type used for references
     using reference = B&;

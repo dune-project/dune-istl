@@ -80,8 +80,8 @@ namespace Imp {
 
    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
-  template<class B, class A=std::allocator<B> >
-  class block_vector_unmanaged : public base_array_unmanaged<B,A>
+  template<class B, class ST=std::size_t >
+  class block_vector_unmanaged : public base_array_unmanaged<B,ST>
   {
   public:
 
@@ -91,17 +91,14 @@ namespace Imp {
     //! export the type representing the components
     typedef B block_type;
 
-    //! export the allocator type
-    typedef A allocator_type;
-
     //! The size type for the index access
-    typedef typename A::size_type size_type;
+    typedef ST size_type;
 
     //! make iterators available as types
-    typedef typename base_array_unmanaged<B,A>::iterator Iterator;
+    typedef typename base_array_unmanaged<B,ST>::iterator Iterator;
 
     //! make iterators available as types
-    typedef typename base_array_unmanaged<B,A>::const_iterator ConstIterator;
+    typedef typename base_array_unmanaged<B,ST>::const_iterator ConstIterator;
 
     //! for STL compatibility
     typedef B value_type;
@@ -177,8 +174,8 @@ namespace Imp {
      * @param y other (compatible)  vector
      * @return
      */
-    template<class OtherB, class OtherA>
-    auto operator* (const block_vector_unmanaged<OtherB,OtherA>& y) const
+    template<class OtherB, class OtherST>
+    auto operator* (const block_vector_unmanaged<OtherB,OtherST>& y) const
     {
       typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
       PromotedType sum(0);
@@ -198,8 +195,8 @@ namespace Imp {
      * @param y other (compatible) vector
      * @return
      */
-    template<class OtherB, class OtherA>
-    auto dot(const block_vector_unmanaged<OtherB,OtherA>& y) const
+    template<class OtherB, class OtherST>
+    auto dot(const block_vector_unmanaged<OtherB,OtherST>& y) const
     {
       typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
       PromotedType sum(0);
@@ -338,7 +335,7 @@ namespace Imp {
 
   protected:
     //! make constructor protected, so only derived classes can be instantiated
-    block_vector_unmanaged () : base_array_unmanaged<B,A>()
+    block_vector_unmanaged () : base_array_unmanaged<B,ST>()
     {       }
   };
 
@@ -391,7 +388,7 @@ namespace Imp {
           enables error checking.
    */
   template<class B, class A=std::allocator<B> >
-  class BlockVector : public Imp::block_vector_unmanaged<B,A>
+  class BlockVector : public Imp::block_vector_unmanaged<B,typename A::size_type>
   {
   public:
 
@@ -410,10 +407,10 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! make iterators available as types
-    typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
+    typedef typename Imp::block_vector_unmanaged<B,size_type>::Iterator Iterator;
 
     //! make iterators available as types
-    typedef typename Imp::block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
+    typedef typename Imp::block_vector_unmanaged<B,size_type>::ConstIterator ConstIterator;
 
     //===== constructors and such
 
@@ -552,7 +549,7 @@ namespace Imp {
     BlockVector& operator= (const field_type& k)
     {
       // forward to operator= in base class
-      (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<Imp::block_vector_unmanaged<B,size_type>&>(*this)) = k;
       return *this;
     }
 
@@ -619,7 +616,7 @@ namespace Imp {
 #else
   template<class B, class A=std::allocator<B> >
 #endif
-  class BlockVectorWindow : public Imp::block_vector_unmanaged<B,A>
+  class BlockVectorWindow : public Imp::block_vector_unmanaged<B,typename A::size_type>
   {
   public:
 
@@ -638,15 +635,15 @@ namespace Imp {
     typedef typename A::size_type size_type;
 
     //! make iterators available as types
-    typedef typename Imp::block_vector_unmanaged<B,A>::Iterator Iterator;
+    typedef typename Imp::block_vector_unmanaged<B,size_type>::Iterator Iterator;
 
     //! make iterators available as types
-    typedef typename Imp::block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
+    typedef typename Imp::block_vector_unmanaged<B,size_type>::ConstIterator ConstIterator;
 
 
     //===== constructors and such
     //! makes empty array
-    BlockVectorWindow () : Imp::block_vector_unmanaged<B,A>()
+    BlockVectorWindow () : Imp::block_vector_unmanaged<B,size_type>()
     {       }
 
     //! make array from given pointer and size
@@ -682,7 +679,7 @@ namespace Imp {
     //! assign from scalar
     BlockVectorWindow& operator= (const field_type& k)
     {
-      (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<Imp::block_vector_unmanaged<B,size_type>&>(*this)) = k;
       return *this;
     }
 
@@ -741,8 +738,8 @@ namespace Imp {
 
    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
-  template<class B, class A=std::allocator<B> >
-  class compressed_block_vector_unmanaged : public compressed_base_array_unmanaged<B,A>
+  template<class B, class ST=std::size_t >
+  class compressed_block_vector_unmanaged : public compressed_base_array_unmanaged<B,ST>
   {
   public:
 
@@ -754,17 +751,14 @@ namespace Imp {
     //! export the type representing the components
     typedef B block_type;
 
-    //! export the allocator type
-    typedef A allocator_type;
+    //! make iterators available as types
+    typedef typename compressed_base_array_unmanaged<B,ST>::iterator Iterator;
 
     //! make iterators available as types
-    typedef typename compressed_base_array_unmanaged<B,A>::iterator Iterator;
-
-    //! make iterators available as types
-    typedef typename compressed_base_array_unmanaged<B,A>::const_iterator ConstIterator;
+    typedef typename compressed_base_array_unmanaged<B,ST>::const_iterator ConstIterator;
 
     //! The type for the index access
-    typedef typename A::size_type size_type;
+    typedef ST size_type;
 
     //===== assignment from scalar
 
@@ -961,7 +955,7 @@ namespace Imp {
 
   protected:
     //! make constructor protected, so only derived classes can be instantiated
-    compressed_block_vector_unmanaged () : compressed_base_array_unmanaged<B,A>()
+    compressed_block_vector_unmanaged () : compressed_base_array_unmanaged<B,ST>()
     {       }
 
     //! return true if index sets coincide
@@ -995,8 +989,8 @@ namespace Imp {
 
    \internal This class is an implementation detail, and should not be used outside of dune-istl.
    */
-  template<class B, class A=std::allocator<B> >
-  class CompressedBlockVectorWindow : public compressed_block_vector_unmanaged<B,A>
+  template<class B, class ST=std::size_t >
+  class CompressedBlockVectorWindow : public compressed_block_vector_unmanaged<B,ST>
   {
   public:
 
@@ -1008,22 +1002,19 @@ namespace Imp {
     //! export the type representing the components
     typedef B block_type;
 
-    //! export the allocator type
-    typedef A allocator_type;
-
     //! The type for the index access
-    typedef typename A::size_type size_type;
+    typedef ST size_type;
 
     //! make iterators available as types
-    typedef typename compressed_block_vector_unmanaged<B,A>::Iterator Iterator;
+    typedef typename compressed_block_vector_unmanaged<B,ST>::Iterator Iterator;
 
     //! make iterators available as types
-    typedef typename compressed_block_vector_unmanaged<B,A>::ConstIterator ConstIterator;
+    typedef typename compressed_block_vector_unmanaged<B,ST>::ConstIterator ConstIterator;
 
 
     //===== constructors and such
     //! makes empty array
-    CompressedBlockVectorWindow () : compressed_block_vector_unmanaged<B,A>()
+    CompressedBlockVectorWindow () : compressed_block_vector_unmanaged<B,ST>()
     {       }
 
     //! make array from given pointers and size
@@ -1062,7 +1053,7 @@ namespace Imp {
     //! assign from scalar
     CompressedBlockVectorWindow& operator= (const field_type& k)
     {
-      (static_cast<compressed_block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<compressed_block_vector_unmanaged<B,ST>&>(*this)) = k;
       return *this;
     }
 
