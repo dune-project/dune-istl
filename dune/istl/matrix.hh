@@ -37,7 +37,7 @@ namespace MatrixImp
        elegant solution.
    */
   template<class B, class A=std::allocator<B> >
-  class DenseMatrixBase : public Imp::block_vector_unmanaged<B,A>
+  class DenseMatrixBase : public Imp::block_vector_unmanaged<B,typename A::size_type>
                               // this derivation gives us all the blas level 1 and norms
                               // on the large array. However, access operators have to be
                               // overwritten.
@@ -79,7 +79,7 @@ namespace MatrixImp
     /** constructor without arguments makes empty vector,
             object cannot be used yet
      */
-    DenseMatrixBase () : Imp::block_vector_unmanaged<B,A>()
+    DenseMatrixBase () : Imp::block_vector_unmanaged<B,size_type>()
     {
       // nothing is known ...
       rows_ = 0;
@@ -92,7 +92,7 @@ namespace MatrixImp
      * \param rows    Number of rows
      * \param columns Number of columns
      */
-    DenseMatrixBase (size_type rows, size_type columns) : Imp::block_vector_unmanaged<B,A>()
+    DenseMatrixBase (size_type rows, size_type columns) : Imp::block_vector_unmanaged<B,size_type>()
     {
       // and we can allocate the big array in the base class
       this->n = rows*columns;
@@ -228,7 +228,7 @@ namespace MatrixImp
     //! assign from scalar
     DenseMatrixBase& operator= (const field_type& k)
     {
-      (static_cast<Imp::block_vector_unmanaged<B,A>&>(*this)) = k;
+      (static_cast<Imp::block_vector_unmanaged<B,size_type>&>(*this)) = k;
       return *this;
     }
 

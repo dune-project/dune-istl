@@ -94,7 +94,7 @@ namespace Dune
 
     template< class X >
     inline static auto to_string ( const X &x )
-      -> std::enable_if_t< std::is_base_of< Imp::block_vector_unmanaged< typename X::block_type, typename X::allocator_type >, X >::value, std::string >
+      -> std::enable_if_t< std::is_base_of< Imp::block_vector_unmanaged< typename X::block_type, typename X::size_type >, X >::value, std::string >
     {
       return "(" + join( ", ", [] ( auto &&x ) { return to_string( x ); }, x.begin(), x.end() ) + ")";
     }
