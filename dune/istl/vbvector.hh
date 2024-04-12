@@ -12,6 +12,7 @@
 #include <memory>
 
 #include <dune/common/ftraits.hh>
+#include <dune/common/indexediterator.hh>
 #include <dune/common/iteratorfacades.hh>
 #include "istlexception.hh"
 #include "bvector.hh"
@@ -46,10 +47,10 @@ namespace Dune {
                               // overwritten.
   {
     // just a shorthand
-    typedef Imp::BlockVectorWindow<B,A> window_type;
+    using window_type = Imp::BlockVectorWindow<B,A>;
 
     // data-structure holding the windows (but not the actual data)
-    using VectorWindows = std::vector<window_type, typename A::template rebind<window_type>::other>;
+    using VectorWindows = std::vector<window_type, typename std::allocator_traits<A>::template rebind_alloc<window_type>>;
 
   public:
 
@@ -59,74 +60,83 @@ namespace Dune {
     using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the allocator type
-    typedef A allocator_type;
+    using allocator_type = A;
 
     /** \brief Export type used for references to container entries
      *
      * \note This is not B&, but an internal proxy class!
      */
-    typedef window_type& reference;
+    using reference = window_type&;
 
     /** \brief Export type used for const references to container entries
      *
      * \note This is not B&, but an internal proxy class!
      */
-    typedef const window_type& const_reference;
+    using const_reference = const window_type&;
 
     //! The size type for the index access
-    typedef typename A::size_type size_type;
+    using size_type = typename A::size_type;
 
     /** \brief Type of the elements of the outer vector, i.e., dynamic vectors of B
      *
      * Note that this is *not* the type referred to by the iterators and random access operators,
      * which return proxy objects.
      */
-    typedef BlockVector<B,A> value_type;
+    using value_type = BlockVector<B,A>;
 
     /** \brief Same as value_type, here for historical reasons
      */
-    typedef BlockVector<B,A> block_type;
+    using block_type = BlockVector<B,A>;
 
     //===== constructors and such
 
-    /** constructor without arguments makes empty vector,
-            object cannot be used yet
+    /**
+     * \brief Constructor without arguments makes an empty vector.
+     * \note object cannot be used yet. The size and block sizes need to be initialized.
      */
-    VariableBlockVector () : Imp::block_vector_unmanaged<B,size_type>()
+    VariableBlockVector () :
+      Imp::block_vector_unmanaged<B,size_type>()
     {}
 
-    /** make vector with given number of blocks, but size of each block is not yet known,
-            object cannot be used yet
+    /**
+     * \brief Construct a vector with given number of blocks, but size of each
+     * block is not yet known.
+     * \note Object cannot be used yet. Needs to be initialized using the
+     * `createbegin()` and `createend()` create-iterators to fill the block sizes.
      */
-    explicit VariableBlockVector (size_type _nblocks) : Imp::block_vector_unmanaged<B,size_type>()
+    explicit VariableBlockVector (size_type numBlocks) :
+      Imp::block_vector_unmanaged<B,size_type>()
     {
       // we can allocate the windows now
-      block.resize(_nblocks);
+      block.resize(numBlocks);
     }
 
-    /** make vector with given number of blocks each having a constant size,
-            object is fully usable then.
-
-            \param _nblocks Number of blocks
-            \param m Number of elements in each block
+    /**
+     * \brief Construct a vector with given number of blocks each having a
+     * constant size.
+     * \note Object is fully usable after construction.
+     *
+     * \param numBlocks Number of blocks
+     * \param blockSize Number of elements in each block
      */
-    VariableBlockVector (size_type _nblocks, size_type m) : Imp::block_vector_unmanaged<B,size_type>()
+    VariableBlockVector (size_type numBlocks, size_type blockSize) :
+      Imp::block_vector_unmanaged<B,size_type>()
     {
       // and we can allocate the big array in the base class
-      storage_.resize(_nblocks*m);
+      storage_.resize(numBlocks*blockSize);
       syncBaseArray();
 
-      block.resize(_nblocks);
+      block.resize(numBlocks);
 
       // set the windows into the big array
-      for (size_type i=0; i<_nblocks; ++i)
-        block[i].set(m,this->p+(i*m));
+      for (size_type i=0; i<numBlocks; ++i)
+        block[i].set(blockSize,this->p+(i*blockSize));
 
       // and the vector is usable
       initialized = true;
     }
 
-    //! copy constructor, has copy semantics
+    //! Copy constructor, has copy semantics
     VariableBlockVector (const VariableBlockVector& a) :
       block(a.block),
       storage_(a.storage_)
@@ -134,7 +144,7 @@ namespace Dune {
       syncBaseArray();
 
       // and we must set the windows
-      if(block.size()>0) {
+      if (block.size()>0) {
         block[0].set(block[0].getsize(),this->p);           // first block
         for (size_type i=1; i<block.size(); ++i)                         // and the rest
           block[i].set(block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
@@ -144,91 +154,73 @@ namespace Dune {
       initialized = a.initialized;
     }
 
-    ~VariableBlockVector() = default;
+    ~VariableBlockVector () = default;
 
-    void swap(VariableBlockVector& other) {
-      std::swap(storage_, other.storage_);
-      std::swap(block, other.block);
-      std::swap(initialized, other.initialized);
+    //! Move constructor:
+    VariableBlockVector (VariableBlockVector&& tmp) :
+      VariableBlockVector()
+    {
+      tmp.swap(*this);
+    }
+
+    //! Copy and move assignment
+    VariableBlockVector& operator= (VariableBlockVector tmp)
+    {
+      tmp.swap(*this);
+      return *this;
+    }
+
+    //! Exchange the storage and internal state with `other`.
+    void swap (VariableBlockVector& other) noexcept
+    {
+      using std::swap;
+      swap(storage_, other.storage_);
+      swap(block, other.block);
+      swap(initialized, other.initialized);
 
       other.syncBaseArray();
       syncBaseArray();
     }
 
-    // move constructor:
-    VariableBlockVector(VariableBlockVector&& tmp) {
-      swap(tmp);
-    }
-
-    // move assignment
-    VariableBlockVector& operator=(VariableBlockVector&& tmp) {
-      swap(tmp);
-      return *this;
+    //! Free function to swap the storage and internal state of `lhs` with `rhs`.
+    friend void swap (VariableBlockVector& lhs, VariableBlockVector& rhs) noexcept
+    {
+      lhs.swap(rhs);
     }
 
     //! same effect as constructor with same argument
-    void resize (size_type _nblocks)
+    void resize (size_type numBlocks)
     {
       storage_.clear();
 
       syncBaseArray();
 
       // we can allocate the windows now
-      block.resize(_nblocks);
+      block.resize(numBlocks);
 
       // and the vector not fully usable
       initialized = false;
     }
 
     //! same effect as constructor with same argument
-    void resize (size_type _nblocks, size_type m)
+    void resize (size_type numBlocks, size_type blockSize)
     {
       // and we can allocate the big array in the base class
-      storage_.resize(_nblocks*m);
-      block.resize(_nblocks);
+      storage_.resize(numBlocks*blockSize);
+      block.resize(numBlocks);
       syncBaseArray();
 
       // set the windows into the big array
       for (size_type i=0; i<block.size(); ++i)
-        block[i].set(m,this->p+(i*m));
+        block[i].set(blockSize,this->p+(i*blockSize));
 
       // and the vector is usable
       initialized = true;
     }
 
-    //! assignment
-    VariableBlockVector& operator= (const VariableBlockVector& a)
-    {
-      if (&a!=this)     // check if this and a are different objects
-      {
-        storage_ = a.storage_;
-        syncBaseArray();
-
-        block.resize(a.block.size());
-
-        // copy block structure, might be different although
-        // sizes are the same !
-        if (block.size()>0)
-        {
-          block[0].set(a.block[0].getsize(),this->p);                 // first block
-          for (size_type i=1; i<block.size(); ++i)                               // and the rest
-            block[i].set(a.block[i].getsize(),block[i-1].getptr()+block[i-1].getsize());
-        }
-
-        // and we have a usable vector
-        initialized = a.initialized;;
-      }
-
-      // and we have a usable vector
-      initialized = true;
-
-      return *this;     // Return reference to make constructions like a=b=c; work.
-    }
-
-
     //===== assignment from scalar
 
-    //! assign from scalar
+    //! Set all entries to the given scalar `k`.
     VariableBlockVector& operator= (const field_type& k)
     {
       (static_cast<Imp::block_vector_unmanaged<B,size_type>&>(*this)) = k;
@@ -250,12 +242,12 @@ namespace Dune {
     struct SizeProxy
     {
 
-      operator size_type() const
+      operator size_type () const
       {
         return target->getsize();
       }
 
-      SizeProxy& operator=(size_type size)
+      SizeProxy& operator= (size_type size)
       {
         target->setsize(size);
         return *this;
@@ -265,8 +257,8 @@ namespace Dune {
 
       friend class CreateIterator;
 
-      SizeProxy(window_type& t)
-        : target(&t)
+      SizeProxy (window_type& t) :
+        target(&t)
       {}
 
       window_type* target;
@@ -302,9 +294,11 @@ namespace Dune {
       CreateIterator (VariableBlockVector& _v, int _i, bool _isEnd) :
         v(_v),
         i(_i),
-        isEnd(_isEnd) {}
+        isEnd(_isEnd)
+      {}
 
-      ~CreateIterator() {
+      ~CreateIterator ()
+      {
         // When the iterator gets destructed, we allocate the memory
         // for the VariableBlockVector if
         // 1. the current iterator was not created as enditerator
@@ -413,39 +407,39 @@ namespace Dune {
       return block[i];
     }
 
-    using Iterator = typename VectorWindows::iterator;
+    using Iterator = IndexedIterator<typename VectorWindows::iterator>;
 
     //! begin Iterator
     Iterator begin ()
     {
-      return block.begin();
+      return Iterator{block.begin()};
     }
 
     //! end Iterator
     Iterator end ()
     {
-      return block.end();
+      return Iterator{block.end()};
     }
 
     //! @returns an iterator that is positioned before
     //! the end iterator of the vector, i.e. at the last entry.
     Iterator beforeEnd ()
     {
-      return --block.end();
+      return Iterator{--block.end()};
     }
 
     //! @returns an iterator that is positioned before
     //! the first entry of the vector.
     Iterator beforeBegin ()
     {
-      return --block.begin();
+      return Iterator{--block.begin()};
     }
 
     /** \brief Export the iterator type using std naming rules */
     using iterator = Iterator;
 
     /** \brief Const iterator */
-    using ConstIterator = typename VectorWindows::const_iterator;
+    using ConstIterator = IndexedIterator<typename VectorWindows::const_iterator>;
 
     /** \brief Export the const iterator type using std naming rules */
     using const_iterator = ConstIterator;
@@ -453,47 +447,47 @@ namespace Dune {
     //! begin ConstIterator
     ConstIterator begin () const
     {
-      return block.begin();
+      return ConstIterator{block.begin()};
     }
 
     //! end ConstIterator
     ConstIterator end () const
     {
-      return block.end();
+      return ConstIterator{block.end()};
     }
 
     //! @returns an iterator that is positioned before
     //! the end iterator of the vector. i.e. at the last element.
-    ConstIterator beforeEnd() const
+    ConstIterator beforeEnd () const
     {
-      return --block.end();
+      return ConstIterator{--block.end()};
     }
 
     //! @returns an iterator that is positioned before
     //! the first entry of the vector.
     ConstIterator beforeBegin () const
     {
-      return --block.begin();
+      return ConstIterator{--block.begin()};
     }
 
     //! end ConstIterator
     ConstIterator rend () const
     {
-      return block.rend();
+      return ConstIterator{block.rend()};
     }
 
     //! random access returning iterator (end if not contained)
     Iterator find (size_type i)
     {
-        auto tmp = block.begin();
-        tmp+=std::min(i, block.size());
-        return tmp;
+      Iterator tmp = block.begin();
+      tmp+=std::min(i, block.size());
+      return tmp;
     }
 
     //! random access returning iterator (end if not contained)
     ConstIterator find (size_type i) const
     {
-      auto tmp = block.begin();
+      ConstIterator tmp = block.begin();
       tmp+=std::min(i, block.size());
       return tmp;
     }
@@ -501,24 +495,25 @@ namespace Dune {
     //===== sizes
 
     //! number of blocks in the vector (are of variable size here)
-    size_type N () const
+    size_type N () const noexcept
     {
-      return  block.size();
+      return block.size();
     }
 
     /** Number of blocks in the vector
      *
      * Returns the same value as method N(), because the vector is dense
     */
-    size_type size () const
+    size_type size () const noexcept
     {
-      return  block.size();
+      return block.size();
     }
 
 
   private:
 
-    void allocate() {
+    void allocate ()
+    {
       if (this->initialized)
         DUNE_THROW(ISTLError, "Attempt to re-allocate already initialized VariableBlockVector");
 
@@ -539,7 +534,7 @@ namespace Dune {
       this->initialized = true;
     }
 
-    void syncBaseArray() noexcept
+    void syncBaseArray () noexcept
     {
       this->p = storage_.data();
       this->n = storage_.size();
