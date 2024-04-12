@@ -11,6 +11,7 @@
 #include <iterator>
 #include <memory>
 
+#include <dune/common/ftraits.hh>
 #include <dune/common/iteratorfacades.hh>
 #include "istlexception.hh"
 #include "bvector.hh"
@@ -774,6 +775,18 @@ namespace Dune {
     typename std::allocator_traits<A>::template rebind_alloc<window_type> windowAllocator_;
   };
 
+  /** @addtogroup DenseMatVec
+      @{
+   */
+  template<class B, class A>
+  struct FieldTraits< VariableBlockVector<B, A> >
+  {
+    typedef typename FieldTraits<B>::field_type field_type;
+    typedef typename FieldTraits<B>::real_type real_type;
+  };
+  /**
+      @}
+   */
 
 
   /** @} end documentation */
