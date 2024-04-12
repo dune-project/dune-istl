@@ -46,6 +46,8 @@ namespace Dune {
                               // on the large array. However, access operators have to be
                               // overwritten.
   {
+    using Base = Imp::block_vector_unmanaged<B,typename A::size_type>;
+
     // just a shorthand
     using window_type = Imp::BlockVectorWindow<B,A>;
 
@@ -95,7 +97,7 @@ namespace Dune {
      * \note object cannot be used yet. The size and block sizes need to be initialized.
      */
     VariableBlockVector () :
-      Imp::block_vector_unmanaged<B,size_type>()
+      Base()
     {}
 
     /**
@@ -105,11 +107,9 @@ namespace Dune {
      * `createbegin()` and `createend()` create-iterators to fill the block sizes.
      */
     explicit VariableBlockVector (size_type numBlocks) :
-      Imp::block_vector_unmanaged<B,size_type>()
-    {
-      // we can allocate the windows now
-      block.resize(numBlocks);
-    }
+      Base(),
+      block(numBlocks)
+    {}
 
     /**
      * \brief Construct a vector with given number of blocks each having a
@@ -120,13 +120,12 @@ namespace Dune {
      * \param blockSize Number of elements in each block
      */
     VariableBlockVector (size_type numBlocks, size_type blockSize) :
-      Imp::block_vector_unmanaged<B,size_type>()
+      Base(),
+      block(numBlocks),
+      storage_(numBlocks*blockSize)
     {
       // and we can allocate the big array in the base class
-      storage_.resize(numBlocks*blockSize);
       syncBaseArray();
-
-      block.resize(numBlocks);
 
       // set the windows into the big array
       for (size_type i=0; i<numBlocks; ++i)
@@ -138,6 +137,7 @@ namespace Dune {
 
     //! Copy constructor, has copy semantics
     VariableBlockVector (const VariableBlockVector& a) :
+      Base(static_cast<const Base&>(a)),
       block(a.block),
       storage_(a.storage_)
     {
@@ -154,14 +154,15 @@ namespace Dune {
       initialized = a.initialized;
     }
 
-    ~VariableBlockVector () = default;
-
     //! Move constructor:
     VariableBlockVector (VariableBlockVector&& tmp) :
-      VariableBlockVector()
+      Base()
     {
       tmp.swap(*this);
     }
+
+    ~VariableBlockVector () = default;
+
 
     //! Copy and move assignment
     VariableBlockVector& operator= (VariableBlockVector tmp)
@@ -375,7 +376,7 @@ namespace Dune {
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (initialized) DUNE_THROW(ISTLError,"no CreateIterator in initialized state");
 #endif
-      return CreateIterator(*this,0, false);
+      return CreateIterator(*this, 0, false);
     }
 
     //! get create iterator pointing to one after the last block
@@ -540,8 +541,8 @@ namespace Dune {
       this->n = storage_.size();
     }
 
-    VectorWindows block; // vector of blocks pointing to the array in the base class
-    std::vector<B, A> storage_;
+    VectorWindows block = {}; // vector of blocks pointing to the array in the base class
+    std::vector<B, A> storage_ = {};
     bool initialized = false; // true if vector has been initialized
   };
 
