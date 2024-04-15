@@ -111,8 +111,6 @@ namespace Dune
       typedef typename BlockVector::block_type block_type;
       typedef typename BlockVector::size_type size_type;
 
-      registerFieldVecMat<block_type>::apply();
-
       using pybind11::operator""_a;
 
       cls.def( "assign", [] ( BlockVector &self, const BlockVector &x ) { self = x; }, "x"_a );

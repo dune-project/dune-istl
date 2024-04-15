@@ -99,16 +99,27 @@ for i in range(5):
 y1, y2 = blockVector(5), blockVector(5)
 mat.mv(x, y1)
 mat.asLinearOperator().apply(x, y2)
+
 if (y1 - y2).two_norm > 1e-12:
     raise Exception("mat.mv != mat.asLinearOperator().apply")
 
 S = CGSolver(mat.asLinearOperator(), SeqJacobi(mat), 1e-10)
-mat = None
 z = blockVector(5)
+
 _, _, converged, _, _ = S(z, y1)
 if not converged:
     raise Exception("CGSolver has not converged")
 if (z - x).two_norm > 1e-8:
+    raise Exception("CGSolver unable to solve identity")
+vec = dune.common.FieldVector([1])
+z2 = BlockVector(vec,5)
+
+S2=CGSolver(mat.asLinearOperator(),SeqJacobi(mat),1e-10)
+
+_, _, converged2, _, _ = S2(z2, y2)
+if not converged2:
+    raise Exception("CGSolver has not converged")
+if (z2 - x).two_norm > 1e-8:
     raise Exception("CGSolver unable to solve identity")
 
 s = "(" + ", ".join(str(v) for v in x) + ")"
