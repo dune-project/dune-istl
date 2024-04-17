@@ -57,10 +57,8 @@ namespace Imp {
 
   template <class B>
   class BlockTraitsImp<B,false>
-  {
-  public:
-    using field_type = typename B::field_type;
-  };
+    : public Dune::FieldTraits<B>
+  {};
 
   /** \brief Define some derived types transparently for number types and dune-istl matrix/vector types
    */
