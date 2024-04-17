@@ -485,7 +485,7 @@ namespace Dune {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = typename FieldTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
