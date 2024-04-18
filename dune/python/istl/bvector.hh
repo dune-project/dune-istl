@@ -158,24 +158,11 @@ namespace Dune
 
       cls.def( "__len__", [] ( const BlockVector &self ) { return self.N(); } );
 
-      cls.def( pybind11::self += pybind11::self );
-
-// silence a warning (false positive) emitted by clang
-// https://bugs.llvm.org/show_bug.cgi?id=43124
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wself-assign-overloaded"
-#endif
-
-      cls.def( pybind11::self -= pybind11::self );
-
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
-
       detail::registerOneTensorInterface( cls );
       detail::registerISTLIterators( cls );
 
+      cls.def( "__iadd__", [] ( BlockVector &self, const BlockVector& x ) -> BlockVector & { self += x; return self; } );
+      cls.def( "__isub__", [] ( BlockVector &self, const BlockVector& x ) -> BlockVector & { self -= x; return self; } );
       cls.def( "__imul__", [] ( BlockVector &self, field_type x ) -> BlockVector & { self *= x; return self; } );
       cls.def( "__idiv__", [] ( BlockVector &self, field_type x ) -> BlockVector & { self /= x; return self; } );
       cls.def( "__itruediv__", [] ( BlockVector &self, field_type x ) -> BlockVector & { self /= x; return self; } );

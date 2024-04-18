@@ -121,3 +121,12 @@ str_x = str_x +")"
 
 if str_x != s:
     raise Exception(str(x) + " = str(x) != " + s)
+
+q=x.copy()
+q+=q
+for i in range(0,5):
+    assert(q[i][0] == 2*x[i][0])
+
+q-=x
+for i in range(0,5):
+    assert(q[i][0] == x[i][0])
