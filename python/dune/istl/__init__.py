@@ -55,19 +55,54 @@ def bcrsMatrix(size=0, *args, **kwargs):
         return BCRSMatrix(blockType)(size,*args)
     return BCRSMatrix(blockType)()
 
+def BlockVector(typeOrBlockSize,size=None):
+    """
+    Create a BlockVector object with specified type or block size for a FieldVector.
 
-def BlockVector(blockSize):
-    if blockSize == 1:
-        return BlockVector1
-    typeName = "Dune::BlockVector< Dune::FieldVector< double ," + str(blockSize) + " > >"
-    includes = ["dune/python/istl/bvector.hh"]
-    # todo: provide other constructors
-    return loadvec(includes, typeName).BlockVector
+    Args:
+        typeOrBlockSize (int or str or object): The type of the block vector or the block size.
+            - If int, specifies the block size directly.
+            - If typeOrBlockSize is not an int, it should have a 'cppTypeName' attribute specifying the type and 'cppIncludes' attribute specifying additional include files.
+        size (int, optional): The size of the vector. Default is None.
+
+    Returns:
+        BlockVector: The created BlockVector object.
+    """
+    typeName=[]
+    includes=["dune/python/istl/bvector.hh"]
+    if hasattr (typeOrBlockSize, "cppTypeName") and hasattr (typeOrBlockSize, "cppIncludes"):
+
+        typeName = f"Dune::BlockVector< {typeOrBlockSize.cppTypeName} >"
+
+        includes += typeOrBlockSize.cppIncludes
+        if size is None:
+           return loadvec(includes,typeName).BlockVector
+        bvec = loadvec(includes,typeName).BlockVector(size)
+        for i in range(len(bvec)):
+            bvec[i]=typeOrBlockSize
+        return bvec
+    else:
+        if typeOrBlockSize == 1:
+            if size is None:
+                return BlockVector1
+            else:
+                return BlockVector1(size)
+        dune.common.FieldVector(typeOrBlockSize) # make sure that the FieldVector is registered    
+        typeName = "Dune::BlockVector<Dune::FieldVector< double, " + str(typeOrBlockSize) + " > >"
+    if size is None:
+        return loadvec(includes, typeName).BlockVector
+    else:
+        return loadvec(includes, typeName).BlockVector(size)
 
 def blockVector(size, blockSize=1):
-    if blockSize == 1:
-        return BlockVector1(size)
-    typeName = "Dune::BlockVector< Dune::FieldVector< double ," + str(blockSize) + " > >"
-    includes = ["dune/istl/bvector.hh"]
-    # todo: provide other constructors
-    return loadvec(includes, typeName).BlockVector(size)
+    """
+    Creates a Dune BlockVector object of size `size` with FieldVector<double,`blockSize`> as blocks.
+
+    Args:
+        size (int): The size of the vector.
+        blockSize (int, optional): The block size. Default is 1.
+
+    Returns:
+        BlockVector: The created BlockVector object.
+    """
+    return BlockVector(blockSize,size)
