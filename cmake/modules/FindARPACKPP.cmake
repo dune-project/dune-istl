@@ -123,12 +123,12 @@ else()
     "Libraries to link against: ${ARPACKPP_LIBRARIES}\n\n")
 endif()
 
-# set HAVE_ARPACKPP for config.h
+# set HAVE_ARPACKPP for conditional tests
 set(HAVE_ARPACKPP ${ARPACKPP_FOUND})
 
 # register all ARPACK++ related flags
 if(ARPACKPP_FOUND)
-  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_ARPACKPP=1"
+  dune_register_package_flags(COMPILE_DEFINITIONS "HAVE_ARPACKPP=1"
                               LIBRARIES "${ARPACKPP_LIBRARIES}"
                               COMPILE_OPTIONS "${ARPACKPP_DUNE_COMPILE_FLAGS}")
 endif()

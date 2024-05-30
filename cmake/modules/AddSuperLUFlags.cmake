@@ -19,7 +19,7 @@ set(HAVE_SUPERLU ${SuperLU_FOUND})
 # register all SuperLU related flags
 if(SuperLU_FOUND)
   dune_register_package_flags(
-    COMPILE_DEFINITIONS "ENABLE_SUPERLU=1"
+    COMPILE_DEFINITIONS "HAVE_SUPERLU=1"
     LIBRARIES SuperLU::SuperLU)
 endif()
 
@@ -28,7 +28,7 @@ function(add_dune_superlu_flags _targets)
   if(SuperLU_FOUND)
     foreach(_target ${_targets})
       target_link_libraries(${_target} PUBLIC SuperLU::SuperLU)
-      target_compile_definitions(${_target} PUBLIC ENABLE_SUPERLU=1)
+      target_compile_definitions(${_target} PUBLIC HAVE_SUPERLU=1)
     endforeach()
   endif()
 endfunction(add_dune_superlu_flags)

@@ -30,15 +30,9 @@
 
 /* end private */
 
-/* Define to ENABLE_SUPERLU if the SuperLU library is available */
-#cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
-
 /* Define to the integer type that SuperLU was compiled for
    See e.g. what int_t is defined to in slu_sdefs.h */
 #cmakedefine SUPERLU_INT_TYPE @SUPERLU_INT_TYPE@
-
-/* Define to ENABLE_ARPACKPP if the ARPACK++ library is available */
-#cmakedefine HAVE_ARPACKPP ENABLE_ARPACKPP
 
 /* Define to the version of dune-istl */
 #define DUNE_ISTL_VERSION "${DUNE_ISTL_VERSION}"

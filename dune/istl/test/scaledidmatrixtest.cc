@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#include "config.h"
 
 // include this first to see whether it includes all necessary headers itself
 #include <dune/istl/scaledidmatrix.hh>

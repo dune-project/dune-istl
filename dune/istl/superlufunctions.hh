@@ -6,6 +6,7 @@
 #define DUNE_ISTL_SUPERLUFUNCTIONS_HH
 #if HAVE_SUPERLU
 
+#include <dune-istl-config.hh> // SUPERLU_INT_TYPE
 
 #define int_t SUPERLU_INT_TYPE
 #include <supermatrix.h>

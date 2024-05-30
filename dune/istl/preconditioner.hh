@@ -5,6 +5,7 @@
 #ifndef DUNE_ISTL_PRECONDITIONER_HH
 #define DUNE_ISTL_PRECONDITIONER_HH
 
+#include <dune-istl-config.hh> // DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
 #include <dune/common/exceptions.hh>
 
 #include "solvercategory.hh"
