@@ -47,7 +47,7 @@ namespace MatrixImp
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename Imp::BlockTraits<B>::field_type;
+    using field_type = typename FieldTraits<B>::field_type;
 
     //! export the allocator type
     typedef A allocator_type;
@@ -562,7 +562,7 @@ namespace MatrixImp
   public:
 
     /** \brief Export the type representing the underlying field */
-    using field_type = typename Imp::BlockTraits<T>::field_type;
+    using field_type = typename FieldTraits<T>::field_type;
 
     /** \brief Export the type representing the components */
     typedef T block_type;
