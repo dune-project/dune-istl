@@ -23,7 +23,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/ftraits.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/stdstreams.hh>
@@ -180,7 +179,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix coordinate ";
-        os<<mm_numeric_type<Simd::Scalar<typename FieldTraits<T>::field_type>>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<Simd::Scalar<typename Imp::BlockTraits<T>::field_type>>::str()<<" general"<<std::endl;
       }
     };
 
@@ -190,7 +189,7 @@ namespace Dune
       static void print(std::ostream& os)
       {
         os<<"%%MatrixMarket matrix array ";
-        os<<mm_numeric_type<Simd::Scalar<typename FieldTraits<B>::field_type>>::str()<<" general"<<std::endl;
+        os<<mm_numeric_type<Simd::Scalar<typename Imp::BlockTraits<B>::field_type>>::str()<<" general"<<std::endl;
       }
     };
 

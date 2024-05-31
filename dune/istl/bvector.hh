@@ -40,11 +40,32 @@ namespace Dune {
 /** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
 namespace Imp {
 
+  /** \brief Define some derived types transparently for number types and dune-istl vector types
+   *
+   * This is the actual implementation.  Calling code should use BlockTraits instead.
+   * \tparam isNumber Whether B is a number type (true) or a dune-istl matrix or vector type (false)
+   */
+  template <class B, bool isNumber>
+  class BlockTraitsImp;
+
+  template <class B>
+  class BlockTraitsImp<B,true>
+  {
+  public:
+    using field_type = B;
+  };
+
+  template <class B>
+  class BlockTraitsImp<B,false>
+  {
+  public:
+    using field_type = typename B::field_type;
+  };
+
   /** \brief Define some derived types transparently for number types and dune-istl matrix/vector types
-   * \deprecated
    */
   template <class B>
-  using BlockTraits [[deprecated("Use FieldTraits instead.")]] = FieldTraits<B>;
+  using BlockTraits = BlockTraitsImp<B,IsNumber<B>::value>;
 
   /**
       \brief An unmanaged vector of blocks.
@@ -65,7 +86,7 @@ namespace Imp {
   public:
 
     //===== type definitions and constants
-    using field_type = typename FieldTraits<B>::field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -156,7 +177,7 @@ namespace Imp {
     template<class OtherB, class OtherST>
     auto operator* (const block_vector_unmanaged<OtherB,OtherST>& y) const
     {
-      typedef typename PromotionTraits<field_type,typename FieldTraits<OtherB>::field_type>::PromotedType PromotedType;
+      typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
       PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
@@ -177,7 +198,7 @@ namespace Imp {
     template<class OtherB, class OtherST>
     auto dot(const block_vector_unmanaged<OtherB,OtherST>& y) const
     {
-      typedef typename PromotionTraits<field_type,typename FieldTraits<OtherB>::field_type>::PromotedType PromotedType;
+      typedef typename PromotionTraits<field_type,typename BlockTraits<OtherB>::field_type>::PromotedType PromotedType;
       PromotedType sum(0);
 #ifdef DUNE_ISTL_WITH_CHECKING
       if (this->n!=y.N()) DUNE_THROW(ISTLError,"vector size mismatch");
@@ -374,7 +395,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename FieldTraits<B>::field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -602,7 +623,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename FieldTraits<B>::field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -725,7 +746,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename FieldTraits<B>::field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
@@ -976,7 +997,7 @@ namespace Imp {
     //===== type definitions and constants
 
     //! export the type representing the field
-    using field_type = typename FieldTraits<B>::field_type;
+    using field_type = typename Imp::BlockTraits<B>::field_type;
 
     //! export the type representing the components
     typedef B block_type;
