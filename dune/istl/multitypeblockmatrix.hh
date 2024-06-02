@@ -58,7 +58,27 @@ namespace Dune {
     /** \brief Type used for sizes */
     using size_type = std::size_t;
 
-    typedef typename FirstRow::field_type field_type;
+    /** \brief The type used for scalars
+     *
+     * Use the `std::common_type_t` of the `Args`' field_type and use `nonesuch` if no implementation of
+     * `std::common_type` is provided for the given `field_type` arguments.
+     */
+    using field_type = Std::detected_t<std::common_type_t,
+      typename FieldTraits<FirstRow>::field_type, typename FieldTraits<Args>::field_type...>;
+
+    /** \brief The type used for real values
+     *
+     * Use the `std::common_type_t` of the `Args`' real_type and use `nonesuch` if no implementation of
+     * `std::common_type` is provided for the given `real_type` arguments.
+     */
+    using real_type = Std::detected_t<std::common_type_t,
+      typename FieldTraits<FirstRow>::real_type, typename FieldTraits<Args>::real_type...>;
+
+    // make sure that we have an std::common_type: using an assertion produces a more readable error message
+    // than a compiler template instantiation error
+    static_assert ( sizeof...(Args) == 0 or
+                    not (std::is_same_v<field_type, Std::nonesuch> or std::is_same_v<real_type, Std::nonesuch>),
+        "No std::common_type implemented for the given field_type/real_type of the Args. Please provide an implementation and check that a FieldTraits class is present for your type.");
 
     /** \brief Return the number of matrix rows */
     static constexpr size_type N()
@@ -338,10 +358,9 @@ namespace Dune {
     //===== norms
 
     //! square of frobenius norm, need for block recursion
-    auto frobenius_norm2 () const
+    real_type frobenius_norm2 () const
     {
-      using field_type_00 = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
-      typename FieldTraits<field_type_00>::real_type sum=0;
+      real_type sum=0;
 
       auto rows = index_constant<N()>();
       Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
@@ -355,22 +374,20 @@ namespace Dune {
     }
 
     //! frobenius norm: sqrt(sum over squared values of entries)
-    typename FieldTraits<field_type>::real_type frobenius_norm () const
+    real_type frobenius_norm () const
     {
       return sqrt(frobenius_norm2());
     }
 
     //! Bastardized version of the infinity-norm / row-sum norm
-    auto infinity_norm () const
+    real_type infinity_norm () const
     {
-      using field_type_00 = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
       using std::max;
-      typename FieldTraits<field_type_00>::real_type norm=0;
+      real_type norm=0;
 
       auto rows = index_constant<N()>();
       Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
-
-        typename FieldTraits<field_type_00>::real_type sum=0;
+        real_type sum=0;
         auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
         Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
           sum += (*this)[i][j].infinity_norm();
@@ -382,16 +399,14 @@ namespace Dune {
     }
 
     //! Bastardized version of the infinity-norm / row-sum norm
-    auto infinity_norm_real () const
+    real_type infinity_norm_real () const
     {
-      using field_type_00 = typename std::decay_t<decltype((*this)[Indices::_0][Indices::_0])>::field_type;
       using std::max;
-      typename FieldTraits<field_type_00>::real_type norm=0;
+      real_type norm=0;
 
       auto rows = index_constant<N()>();
       Hybrid::forEach(Hybrid::integralRange(rows), [&](auto&& i) {
-
-        typename FieldTraits<field_type_00>::real_type sum=0;
+        real_type sum=0;
         auto cols = index_constant<MultiTypeBlockMatrix<FirstRow, Args...>::M()>();
         Hybrid::forEach(Hybrid::integralRange(cols), [&](auto&& j) {
           sum += (*this)[i][j].infinity_norm_real();
@@ -412,7 +427,7 @@ namespace Dune {
   struct FieldTraits< MultiTypeBlockMatrix<Rows...> >
   {
     using field_type = typename MultiTypeBlockMatrix<Rows...>::field_type;
-    using real_type  = typename FieldTraits<field_type>::real_type;
+    using real_type  = typename MultiTypeBlockMatrix<Rows...>::real_type;
   };
 
 

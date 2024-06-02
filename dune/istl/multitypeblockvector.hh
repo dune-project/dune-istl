@@ -42,7 +42,7 @@ namespace Dune {
   struct FieldTraits< MultiTypeBlockVector<Args...> >
   {
     using field_type = typename MultiTypeBlockVector<Args...>::field_type;
-    using real_type  = typename FieldTraits<field_type>::real_type;
+    using real_type  = typename MultiTypeBlockVector<Args...>::real_type;
   };
   /**
       @}
@@ -81,10 +81,18 @@ namespace Dune {
      */
     using field_type = Std::detected_t<std::common_type_t, typename FieldTraits< std::decay_t<Args> >::field_type...>;
 
+    /** \brief The type used for real values
+     *
+     * Use the `std::common_type_t` of the `Args`' real_type and use `nonesuch` if no implementation of
+     * `std::common_type` is provided for the given `real_type` arguments.
+     */
+    using real_type = Std::detected_t<std::common_type_t, typename FieldTraits< std::decay_t<Args> >::real_type...>;
+
     // make sure that we have an std::common_type: using an assertion produces a more readable error message
     // than a compiler template instantiation error
-    static_assert ( sizeof...(Args) == 0 or not std::is_same_v<field_type, Std::nonesuch>,
-        "No std::common_type implemented for the given field_types of the Args. Please provide an implementation and check that a FieldTraits class is present for your type.");
+    static_assert ( sizeof...(Args) == 0 or
+                    not (std::is_same_v<field_type, Std::nonesuch> or std::is_same_v<real_type, Std::nonesuch>),
+        "No std::common_type implemented for the given field_type/real_type of the Args. Please provide an implementation and check that a FieldTraits class is present for your type.");
 
 
     /** \brief Return the number of non-zero vector entries
@@ -216,7 +224,7 @@ namespace Dune {
      */
     auto one_norm() const {
       using namespace Dune::Hybrid;
-      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+      return accumulate(*this, real_type(0), [&](auto&& a, auto&& entry) {
         return a + entry.one_norm();
       });
     }
@@ -225,31 +233,30 @@ namespace Dune {
      */
     auto one_norm_real() const {
       using namespace Dune::Hybrid;
-      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+      return accumulate(*this, real_type(0), [&](auto&& a, auto&& entry) {
         return a + entry.one_norm_real();
       });
     }
 
     /** \brief Compute the squared Euclidean norm
      */
-    typename FieldTraits<field_type>::real_type two_norm2() const {
+    real_type two_norm2() const {
       using namespace Dune::Hybrid;
-      return accumulate(*this, typename FieldTraits<field_type>::real_type(0), [&](auto&& a, auto&& entry) {
+      return accumulate(*this, real_type(0), [&](auto&& a, auto&& entry) {
         return a + entry.two_norm2();
       });
     }
 
     /** \brief Compute the Euclidean norm
      */
-    typename FieldTraits<field_type>::real_type two_norm() const {return sqrt(this->two_norm2());}
+    real_type two_norm() const {return sqrt(this->two_norm2());}
 
     /** \brief Compute the maximum norm
      */
-    typename FieldTraits<field_type>::real_type infinity_norm() const
+    real_type infinity_norm() const
     {
       using namespace Dune::Hybrid;
       using std::max;
-      using real_type = typename FieldTraits<field_type>::real_type;
 
       real_type result = 0.0;
       // Compute max norm tracking appearing nan values
@@ -276,11 +283,10 @@ namespace Dune {
 
     /** \brief Compute the simplified maximum norm (uses 1-norm for complex values)
      */
-    typename FieldTraits<field_type>::real_type infinity_norm_real() const
+    real_type infinity_norm_real() const
     {
       using namespace Dune::Hybrid;
       using std::max;
-      using real_type = typename FieldTraits<field_type>::real_type;
 
       real_type result = 0.0;
       // Compute max norm tracking appearing nan values
