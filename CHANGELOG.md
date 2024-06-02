@@ -28,6 +28,9 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
   processes responsible for the respective parts of the finer grid. Then the indices on the coarser grid
   may differ from run to run.
 
+- Define `field_type` and `real_type` in `MultiTypeBlock[Matrix|Vector]` only if a common type of these
+  types exist over all blocks in the container. Otherwise it is defined as `Std::nonesuch`.
+
 ## Deprecations and removals
 
 - The deprecated CMake variables `SUPERLU_INCLUDE_DIRS`, `SUPERLU_LIBRARIES`,
