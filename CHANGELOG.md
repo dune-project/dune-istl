@@ -5,6 +5,9 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.10)
 
+- Base the implementation of `VariableBlockVector` on `std::vector` as the storage type. Note that
+  this prevents from using `bool` as block type that was possible before.
+
 - A method `BCRSMatrix::setIndicesNoSort()` was added. Similar
   to `BCRSMatrix::setIndices()` this allows to insert all indices
   of a row at once, but - incontrast to the latter - does not sort them.
