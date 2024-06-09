@@ -35,18 +35,15 @@ void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int ove
 
   for(int j=0; j < N; j++)
     for(int i=overlapStart; i < overlapEnd; i++, ++iter) {
-      int global = j*N+i;
       GridFlag flag = GridAttributes::owner;
-      bool isPublic = false;
 
       if((i<start && i > 0) || (i>= end && i < N-1))
         flag=GridAttributes::copy;
 
       if(i<start+1 || i>= end-1) {
-        isPublic = true;
-        indices.add(global, LocalIndex(iter.index(), flag, isPublic));
+        int global = j*N+i;
+        indices.add(global, LocalIndex(iter.index(), flag, true));
       }
-
 
       iter.insert(iter.index());
 
