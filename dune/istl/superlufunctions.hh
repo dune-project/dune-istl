@@ -8,8 +8,8 @@
 
 
 #define int_t SUPERLU_INT_TYPE
-#include "supermatrix.h"
-#include "slu_util.h"
+#include <supermatrix.h>
+#include <slu_util.h>
 #undef int_t
 
 #if __has_include("slu_sdefs.h")
