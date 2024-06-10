@@ -5,7 +5,7 @@
 #ifndef DUNE_ISTL_BASEARRAY_HH
 #define DUNE_ISTL_BASEARRAY_HH
 
-#include "assert.h"
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <memory>

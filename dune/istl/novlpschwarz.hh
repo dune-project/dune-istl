@@ -132,7 +132,7 @@ namespace Dune {
       // at the beginning make a multimap "bordercontribution".
       // process has i and j as border dofs but is not the owner
       // => only contribute to Ax if i,j is in bordercontribution
-      if (buildcomm == true) {
+      if (buildcomm) {
 
         // set up mask vector
         if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size())) {
@@ -188,7 +188,7 @@ namespace Dune {
                         flag = false;
                         continue;
                       }
-                  if (flag == false)
+                  if (!flag)
                     continue;
                 }
                 // don´t contribute to Ax if
@@ -198,7 +198,7 @@ namespace Dune {
                 // as interor/border dofs
                 // if the owner of j does not have i as interior/border dof,
                 // it will not be taken into account
-                if (flag==true)
+                if (flag)
                   bordercontribution.insert(std::pair<int,int>(i.index(),j.index()));
               }
             }

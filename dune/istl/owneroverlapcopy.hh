@@ -13,7 +13,7 @@
 #include <set>
 #include <tuple>
 
-#include "cmath"
+#include <cmath>
 
 // MPI header
 #if HAVE_MPI
@@ -656,19 +656,17 @@ namespace Dune {
       if (OwnerCopyToOwnerCopyInterfaceBuilt) OwnerCopyToOwnerCopyInterface.free();
       if (CopyToAllInterfaceBuilt) CopyToAllInterface.free();
       if (globalLookup_) delete globalLookup_;
-      if (freecomm==true)
-        if(comm!=MPI_COMM_NULL)
-        {
-#ifdef MPI_2
-          // If it is possible to query whether MPI_Finalize
-          // was called, only free the communicator before
-          // calling MPI_Finalize.
-          int wasFinalized = 0;
-          MPI_Finalized( &wasFinalized );
-          if(!wasFinalized)
-#endif
+      if (freecomm && (comm != MPI_COMM_NULL))
+      {
+        // If it is possible to query whether MPI_Finalize
+        // was called, only free the communicator before
+        // calling MPI_Finalize.
+        int wasFinalized = 0;
+        MPI_Finalized(&wasFinalized);
+        if (!wasFinalized) {
           MPI_Comm_free(&comm);
         }
+      }
     }
 
   private:

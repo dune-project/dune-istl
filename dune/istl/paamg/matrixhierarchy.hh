@@ -683,8 +683,8 @@ namespace Dune
         if(level==criterion.maxLevel()) {
           BIGINT unknownsLevel = mlevel->getmat().N();
           unknownsLevel = infoLevel->communicator().sum(unknownsLevel);
-          double dunknownsLevel = unknownsLevel.todouble();
           if(rank==0 && criterion.debugLevel()>1) {
+            double dunknownsLevel = unknownsLevel.todouble();
             std::cout<<"Level "<<level<<" has "<<dunknownsLevel<<" unknowns, "<<dunknownsLevel/infoLevel->communicator().size()
                      <<" unknowns per proc (procs="<<infoLevel->communicator().size()<<")"<<std::endl;
           }

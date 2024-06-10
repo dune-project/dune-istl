@@ -186,11 +186,11 @@ namespace Dune
       size_t sz = rowset.size();
       A.resize(sz*n,sz*n);
       typedef typename S::const_iterator SIter;
-      size_t r = 0, c = 0;
+      size_t r = 0;
       for(SIter rowIdx = rowset.begin(), rowEnd=rowset.end();
           rowIdx!= rowEnd; ++rowIdx, r++)
       {
-        c = 0;
+        size_t c = 0;
         for(SIter colIdx = rowset.begin(), colEnd=rowset.end();
             colIdx!= colEnd; ++colIdx, c++)
         {
