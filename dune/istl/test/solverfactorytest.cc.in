@@ -52,6 +52,24 @@ using Matrix = Dune::BCRSMatrix<typename MatrixBlock<@BLOCK@>::type>;
 template<class Comm>
 void testSeq(const Dune::ParameterTree& config, Comm c){
   if(c.rank() == 0){
+    std::set<std::string> deactivate_solvers;
+
+#if !HAVE_SUITESPARSE_CHOLMOD
+    deactivate_solvers.insert("Cholmod");
+#endif
+#if !HAVE_SUITESPARSE_LDL
+    deactivate_solvers.insert("LDL");
+#endif
+#if !HAVE_SUITESPARSE_UMFPACK
+    deactivate_solvers.insert("UMFPack");
+#endif
+#if !HAVE_SUITESPARSE_SPQR
+    deactivate_solvers.insert("SPQR");
+#endif
+#if !HAVE_SUPERLU
+    deactivate_solvers.insert("SuperLU");
+#endif
+
     Matrix mat;
     int N = config.get("N", 10);
     setupLaplacian(mat, N);
@@ -61,6 +79,9 @@ void testSeq(const Dune::ParameterTree& config, Comm c){
     std::shared_ptr<Operator> op = std::make_shared<Operator>(mat);
 
     for(const std::string& test : config.getSubKeys()){
+      if(deactivate_solvers.find(test) != deactivate_solvers.end())
+        continue;
+
       Dune::ParameterTree solverConfig = config.sub(test);
       std::cout << " ============== " << test << " ============== " << std::endl;
       try{
