@@ -298,9 +298,6 @@ namespace Dune
       }
     }
 
-    ~RedistributeInterface()
-    {}
-
   };
 
   namespace
