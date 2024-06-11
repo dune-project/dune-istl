@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 
   BCRSMat mat;
   Operator fop(mat);
-  Vector b(N*N), b0(N*N), x0(N*N), x(N*N), error(N*N);
+  Vector b(N*N), b0(N*N), x0(N*N), error(N*N);
 
   setupLaplacian(mat,N);
 
@@ -152,7 +152,6 @@ int main(int argc, char** argv)
 
   std::cout << "b = " << b << std::endl;
   b0 = b;
-  x = 0;
 
   Dune::Timer watch;
 

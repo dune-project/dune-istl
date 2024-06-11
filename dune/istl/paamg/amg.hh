@@ -1256,9 +1256,6 @@ namespace Dune
                    ") to be convertible to its real_type (" <<
                    className<real_type>() <<
                    ").");
-      using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-      using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-      std::shared_ptr<Preconditioner<D,R>> amg;
       std::string smoother = config.get("smoother", "ssor");
       return makeAMG(op, smoother, config);
     }

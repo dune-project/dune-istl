@@ -105,7 +105,7 @@ void testCapacity()
   vec.resize(10);
   for(int i=0; i<10; ++i)
     vec[i]=Dune::BlockVector<SmallVector>(10);
-  ThreeLevelVector vec1=vec;
+  [[maybe_unused]] ThreeLevelVector vec1 = vec;
 }
 
 template <class V>
@@ -182,10 +182,6 @@ int main()
   //typedef double value_type;
   typedef Dune::FieldVector<value_type,1> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
-  Vector v;
-  v=0;
-  Dune::BlockVector<Dune::FieldVector<std::complex<double>,1> > v1;
-  v1=0;
 
   // Test a BlockVector of BlockVectors
   typedef Dune::BlockVector<Vector> VectorOfVector;
