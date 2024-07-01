@@ -7,10 +7,6 @@
  * \brief Test block level function
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 

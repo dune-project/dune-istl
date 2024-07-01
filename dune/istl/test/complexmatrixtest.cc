@@ -8,10 +8,6 @@
  * \brief Test MINRES and GMRes for complex matrices and complex rhs.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <complex>
 
 #include <dune/common/fvector.hh>

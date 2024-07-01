@@ -9,7 +9,6 @@
  *        \f$A*x = b\f$ with \f$A\f$ being a \f$N^2 \times N^2\f$
  *        Laplacian and \f$b\f$ a complex valued rhs.
  */
-#include <config.h>
 
 #include <complex>
 

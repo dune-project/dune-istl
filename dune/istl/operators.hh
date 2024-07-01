@@ -5,6 +5,8 @@
 #ifndef DUNE_ISTL_OPERATORS_HH
 #define DUNE_ISTL_OPERATORS_HH
 
+#include <dune-istl-config.hh> // DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE
+
 #include <cmath>
 #include <complex>
 #include <iostream>

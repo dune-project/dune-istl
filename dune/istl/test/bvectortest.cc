@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#include "config.h"
 
 // hack to ensure assert() does something
 // really, assert() should not be used in unit tests.
@@ -18,9 +17,7 @@
 #include <memory>
 
 #include <dune/common/classname.hh>
-#if HAVE_MPROTECT
 #include <dune/common/debugallocator.hh>
-#endif
 #include <dune/common/fvector.hh>
 #include <dune/common/poolallocator.hh>
 #include <dune/common/scalarvectorview.hh>

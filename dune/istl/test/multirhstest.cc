@@ -4,8 +4,6 @@
 // vi: set et ts=4 sw=2 sts=2:
 
 // start with including some headers
-#include "config.h"
-
 #define DISABLE_AMG_DIRECTSOLVER 1
 
 #include <iostream>               // for input/output to shell
