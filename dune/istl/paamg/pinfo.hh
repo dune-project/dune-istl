@@ -92,8 +92,8 @@ namespace Dune
       SequentialInformation(const SequentialInformation&)
       {}
     private:
-      MPICommunicator comm_;
-      GlobalLookupIndexSet gli;
+      MPICommunicator comm_{};
+      GlobalLookupIndexSet gli{};
     };
 
 
