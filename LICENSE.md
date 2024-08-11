@@ -3,37 +3,41 @@ Copyright holders:
 2014--2016    Marco Agnese
 2003--2013    Peter Bastian
 2020          Jean Benezech
-2004--2022    Markus Blatt
-2014--2022    Ansgar Burchardt
+2004--2024    Markus Blatt
+2022          Eduardo Bueno
+2022          Samuel Burbulla
+2014--2023    Ansgar Burchardt
 2004--2005    Adrian Burri
 2017--2018    Matthew Collins
-2008--2021    Andreas Dedner
+2008--2024    Andreas Dedner
 2018--2022    Nils-Arne Dreier
-2003--2022    Christian Engwer
+2003--2023    Christian Engwer
 2005--2019    Jorrit Fahlke
 2008--2017    Bernd Flemisch
 2017--2020    Janick Gerstenberger
 2015--2020    Felix Gruber
-2005--2021    Carsten Gräser
-2012--2021    Christoph Grüninger
+2005--2024    Carsten Gräser
+2012--2024    Christoph Grüninger
 2016--2020    René Heß
 2018          Claus-Justus Heine
 2016--2019    Stephan Hilb
-2018          Lasse Hinrichsen
+2018--2024    Lasse Hinrichsen
 2012--2013    Olaf Ippisch
-2018--2021    Patrick Jaap
+2018--2024    Patrick Jaap
 2013--2019    Dominic Kempf
 2015          Emmanouil Kiagias
-2004--2022    Robert Klöfkorn
-2016--2022    Timo Koch
+2004--2023    Robert Klöfkorn
+2016--2023    Timo Koch
 2007          Sreejith Pulloor Kuttanikkad
 2013--2016    Arne Morten Kvarving
 2009--2013    Andreas Lauser
 2012--2017    Tobias Malkmus
 2007--2009    Sven Marnach
 2013          René Milk
+2024          Alex Müller
 2013--2019    Steffen Müthing
 2016          Maikel Nadolski
+2023--2024    Lisa Julia Nebel
 2003--2005    Thimo Neubauer
 2010--2012    Rebecca Neumann
 2008--2018    Martin Nolte
@@ -41,13 +45,13 @@ Copyright holders:
 2013--2014    Marian Piatkowski
 2011--2016    Elias Pipping
 2013          Jurgis Pods
-2018--2022    Simon Praetorius
+2018--2024    Simon Praetorius
 2009          Atgeirr Rasmussen
 2018--2022    Lukas Renelt
-2021--2022    Santiago Ospina De Los Ríos
+2021--2024    Santiago Ospina De Los Ríos
 2008--2013    Uli Sack
 2023          Vaishnavi Sanchi
-2004--2021    Oliver Sander
+2004--2024    Oliver Sander
 2015--2019    Linus Seelinger
 2013          Bård Skaflestad
 2018          Mathis Springwald
