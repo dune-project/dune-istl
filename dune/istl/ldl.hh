@@ -14,8 +14,8 @@
 #ifdef __cplusplus
 extern "C"
 {
-#include "ldl.h"
-#include "amd.h"
+#include <ldl.h>
+#include <amd.h>
 }
 #endif
 

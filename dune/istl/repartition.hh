@@ -298,9 +298,6 @@ namespace Dune
       }
     }
 
-    ~RedistributeInterface()
-    {}
-
   };
 
   namespace
@@ -397,8 +394,6 @@ namespace Dune
       MPI_Status status;
 
       *myDomain = -1;
-      int i=0;
-      int j=0;
 
       std::vector<int> domain(nparts, 0);
       std::vector<int> assigned(npes, 0);
@@ -406,7 +401,7 @@ namespace Dune
       domainMapping.assign(domainMapping.size(), -1);
 
       // count the occurrence of domains
-      for (i=0; i<numOfOwnVtx; i++) {
+      for (int i = 0; i < numOfOwnVtx; i++) {
         domain[part[i]]++;
       }
 
@@ -414,7 +409,7 @@ namespace Dune
 
       // init buffer with the own domain
       int *buf = new int[nparts];
-      for (i=0; i<nparts; i++) {
+      for (int i = 0; i < nparts; i++) {
         buf[i] = domain[i];
         domainMatrix[mype*nparts+i] = domain[i];
       }
@@ -422,11 +417,11 @@ namespace Dune
       int src = (mype-1+npes)%npes;
       int dest = (mype+1)%npes;
       // ring communication, we need n-1 communications for n processors
-      for (i=0; i<npes-1; i++) {
+      for (int i = 0; i < npes-1; i++) {
         MPI_Sendrecv_replace(buf, nparts, MPI_INT, dest, 0, src, 0, comm, &status);
         // pe is the process of the actual received buffer
         pe = ((mype-1-i)+npes)%npes;
-        for(j=0; j<nparts; j++) {
+        for(int j = 0; j < nparts; j++) {
           // save the values to the domain matrix
           domainMatrix[pe*nparts+j] = buf[j];
         }
@@ -440,8 +435,8 @@ namespace Dune
       pe = -1;
       std::set<std::size_t> unassigned;
 
-      for(i=0; i<nparts; i++) {
-        for(j=0; j<npes; j++) {
+      for (int i = 0; i < nparts; i++) {
+        for (int j = 0; j < npes; j++) {
           // process has no domain assigned
           if (assigned[j]==0) {
             if (maxOccurance < domainMatrix[j*nparts+i]) {

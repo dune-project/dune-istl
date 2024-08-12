@@ -159,11 +159,11 @@ std::pair<std::size_t,std::size_t> flatMatrixForEach(Matrix&& matrix, F&& f, std
       // check whether we have valid sized blocks
       assert( ( blockRows!=0 or blockCols!=0 ) and "the block size can't be zero");
 
-      for ( auto rowIt = matrix.begin(); rowIt != matrix.end(); rowIt++ )
+      for (auto rowIt = matrix.begin(); rowIt != matrix.end(); ++rowIt)
       {
         auto&& row = *rowIt;
         auto rowIdx = rowIt.index();
-        for ( auto colIt = row.begin(); colIt != row.end(); colIt++ )
+        for (auto colIt = row.begin(); colIt != row.end(); colIt++)
         {
           auto&& entry = *colIt;
           auto colIdx = colIt.index();

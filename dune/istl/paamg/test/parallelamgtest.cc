@@ -107,8 +107,6 @@ void testAmg(int N, int coarsenTarget)
 
   setBoundary(x, b, N, comm.indexSet());
 
-  Vector b1=b, x1=x;
-
   if(N<=6) {
     std::ostringstream name;
     name<<rank<<": row";
@@ -116,8 +114,6 @@ void testAmg(int N, int coarsenTarget)
     Dune::printmatrix(std::cout, cmat, "A", name.str().c_str());
     Dune::printvector(std::cout, x, "x", name.str().c_str());
     //Dune::printvector(std::cout, b, "b", name.str().c_str());
-    //Dune::printvector(std::cout, b1, "b1", "row");
-    //Dune::printvector(std::cout, x1, "x1", "row");
   }
 
   Dune::Timer watch;

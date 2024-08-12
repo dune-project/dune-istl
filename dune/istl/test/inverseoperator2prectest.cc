@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
   if(argc>1)
     N = atoi(argv[1]);
-  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+  std::cout << "testing for N=" << N << " BS=" << BS << std::endl;
 
   typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;

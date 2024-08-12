@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 
   if (argc > 1)
     N = atoi(argv[1]);
-  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+  std::cout << "testing for N=" << N << " BS=" << BS << std::endl;
 
   typedef Dune::FieldMatrix<FIELD_TYPE,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 
   BCRSMat mat;
   Operator fop(mat);
-  Vector b(N*N), b0(N*N), x0(N*N), x(N*N), error(N*N);
+  Vector b(N*N), b0(N*N), x0(N*N), error(N*N);
 
   setupLaplacian(mat,N);
 
@@ -152,7 +152,6 @@ int main(int argc, char** argv)
 
   std::cout << "b = " << b << std::endl;
   b0 = b;
-  x = 0;
 
   Dune::Timer watch;
 

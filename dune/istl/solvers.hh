@@ -1410,7 +1410,6 @@ private:
       field_type rho, lambda;
 
       int i=0;
-      int ii=0;
       // determine initial search direction
       *(p[0]) = 0;                              // clear correction
       _prec->apply(*(p[0]),b);                   // apply preconditioner
@@ -1432,7 +1431,7 @@ private:
       while(i<_maxit) {
         // the loop
         int end=std::min(_restart, _maxit-i+1);
-        for (ii=1; ii<end; ++ii )
+        for (int ii = 1; ii < end; ++ii)
         {
           //std::cout<<" ii="<<ii<<" i="<<i<<std::endl;
           // compute next conjugate direction

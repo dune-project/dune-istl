@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 
   if(argc>1)
     N = atoi(argv[1]);
-  std::cout<<"testing for N="<<N<<" BS="<<1<<std::endl;
+  std::cout << "testing for N=" << N << " BS=" << BS << std::endl;
 
   // Test scalar matrices and vectors
   int ret = testMatrixMarket<Dune::BCRSMatrix<double>, Dune::BlockVector<double> >(N);
