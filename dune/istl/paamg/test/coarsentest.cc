@@ -9,6 +9,8 @@
 #include <dune/istl/schwarz.hh>
 #include "anisotropic.hh"
 
+#include <utility>
+
 constexpr int blockSize = 10;
 
 using Communication = Dune::OwnerOverlapCopyCommunication<int,int>;
@@ -31,9 +33,9 @@ bool areSame(BCRSMat A, BCRSMat B)
     for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
       for (size_t k = 0; k < blockSize; k++)
         for (size_t l = 0; l < blockSize; l++) {
-          auto entryA = (*colIt)[k][l];
+          std::ignore /*entryA*/ = (*colIt)[k][l];
           try {
-            auto entryB = B[rowIt.index()][colIt.index()][k][l];
+            std::ignore /*entryB*/ = B[rowIt.index()][colIt.index()][k][l];
           } catch (Dune::ISTLError e) {
             return false; // If the entry B[rowIt.index()][colIt.index()][k][l] does not exist, then the matrices are not the same.
           }
