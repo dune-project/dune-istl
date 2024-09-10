@@ -36,7 +36,7 @@ bool areSame(BCRSMat A, BCRSMat B)
           std::ignore /*entryA*/ = (*colIt)[k][l];
           try {
             std::ignore /*entryB*/ = B[rowIt.index()][colIt.index()][k][l];
-          } catch (Dune::ISTLError e) {
+          } catch (Dune::ISTLError& e) {
             return false; // If the entry B[rowIt.index()][colIt.index()][k][l] does not exist, then the matrices are not the same.
           }
           if (std::abs((*colIt)[k][l]) > 1e-7 and std::abs(B[rowIt.index()][colIt.index()][k][l]) > 1e-7
