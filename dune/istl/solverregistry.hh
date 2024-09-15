@@ -14,8 +14,8 @@ namespace Dune::Impl {
   template<class C>
   [[deprecated("DUNE_REGISTER_ITERATIVE_SOLVER is deprecated. Please use DUNE_REGISTER_SOLVER instead.")]]
   auto translateToOldIterativeSolverInterface(C oldCreator){
-    return [=](auto ot, auto&&... args){
-      using OpTraits = decltype(ot);
+    return [=](auto optraits, auto&&... args){
+      using OpTraits = decltype(optraits);
       using TL = TypeList<typename OpTraits::domain_type, typename OpTraits::range_type>;
       return oldCreator(TL{}, args...);
     };
