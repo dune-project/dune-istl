@@ -794,6 +794,16 @@ namespace Dune {
     enum { value = true };
   };
 
+  namespace UMFPackImpl {
+    template<class OpTraits, class=void> struct isValidBlock : std::false_type{};
+    template<class OpTraits> struct isValidBlock<OpTraits,
+      std::enable_if_t<
+           std::is_same_v<Impl::UMFPackDomainType<typename OpTraits::matrix_type>, typename OpTraits::domain_type>
+        && std::is_same_v<Impl::UMFPackRangeType<typename OpTraits::matrix_type>, typename OpTraits::range_type>
+        && std::is_same_v<typename FieldTraits<typename OpTraits::domain_type::field_type>::real_type, double>
+        && std::is_same_v<typename FieldTraits<typename OpTraits::range_type::field_type>::real_type, double>
+      >> : std::true_type {};
+  }
   DUNE_REGISTER_SOLVER("umfpack",
                        [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
                        -> std::shared_ptr<typename decltype(opTraits)::solver_type>
@@ -809,11 +819,7 @@ namespace Dune {
                            // check if UMFPack<M>* is convertible to
                            // InverseOperator*. This checks compatibility of the
                            // domain and range types
-                           if constexpr (std::is_convertible_v<UMFPack<M>*,
-                                         Dune::InverseOperator<typename OpTraits::domain_type,
-                                         typename OpTraits::range_type>*>
-                                         // check whether the Matrix field_type is double or complex<double>
-                                         && std::is_same_v<typename FieldTraits<M>::real_type, double>){
+                           if constexpr (UMFPackImpl::isValidBlock<OpTraits>::value) {
                              const M& mat = opTraits.getMatOrThrow(op);
                              int verbose = config.get("verbose", 0);
                              return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
