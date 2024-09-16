@@ -284,7 +284,7 @@ namespace Dune
     using range_type = typename Impl::SuperLUVectorChooser<M>::range_type;
 
     //! Category of the solver (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::Category::sequential;
     }
@@ -334,12 +334,12 @@ namespace Dune
     /**
      *  \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
-    void apply(domain_type& x, range_type& b, InverseOperatorResult& res);
+    void apply(domain_type& x, range_type& b, InverseOperatorResult& res) override;
 
     /**
      *  \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
+    void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
     {
       apply(x,b,res);
     }

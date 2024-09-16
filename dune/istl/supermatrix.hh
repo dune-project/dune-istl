@@ -300,7 +300,7 @@ namespace Dune
     }
 
     /** @brief free allocated space. */
-    virtual void free()
+    void free() override
     {
       ISTL::Impl::BCCSMatrix<typename BCRSMatrix<B,TA>::field_type, int>::free();
       SUPERLU_FREE(A.Store);
@@ -326,7 +326,7 @@ namespace Dune
     SuperMatrixInitializer() : ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<B,A>, int>()
     {}
 
-    virtual void createMatrix() const
+    void createMatrix() const override
     {
       ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<B,A>, int>::createMatrix();
       SuperMatrixCreateSparseChooser<typename Matrix::field_type>

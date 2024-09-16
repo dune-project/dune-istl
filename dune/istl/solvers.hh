@@ -70,7 +70,7 @@ namespace Dune {
     using IterativeSolver<X,X>::apply;
 
     //! \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       Iteration iteration(*this, res);
       _prec->pre(x,b);
@@ -139,7 +139,7 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       Iteration iteration(*this, res);
       _prec->pre(x,b);             // prepare preconditioner
@@ -276,7 +276,7 @@ namespace Dune {
              E.g. numeric_limits<double>::quiet_NaN()*0.0==0.0 with gcc-5.3
              -ffast-math.
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       Iteration iteration(*this,res);
       _prec->pre(x,b);             // prepare preconditioner
@@ -436,7 +436,7 @@ namespace Dune {
 
        \note Currently, the BiCGSTABSolver aborts when it detects a breakdown.
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON=1e-80;
@@ -624,7 +624,7 @@ namespace Dune {
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       using std::sqrt;
       using std::abs;
@@ -907,7 +907,7 @@ namespace Dune {
        \note Currently, the RestartedGMResSolver aborts when it detects a
              breakdown.
      */
-    virtual void apply (X& x, Y& b, InverseOperatorResult& res)
+    void apply (X& x, Y& b, InverseOperatorResult& res) override
     {
       apply(x,b,Simd::max(_reduction),res);
     }
@@ -920,7 +920,7 @@ namespace Dune {
        \note Currently, the RestartedGMResSolver aborts when it detects a
              breakdown.
      */
-    virtual void apply (X& x, Y& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
+    void apply (X& x, Y& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
@@ -1388,7 +1388,7 @@ private:
 
        \copydoc InverseOperator::apply(X&,Y&,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       Iteration iteration(*this, res);
       _prec->pre(x,b);                 // prepare preconditioner
@@ -1580,7 +1580,7 @@ private:
              -ffast-math.
      */
 
-    virtual void apply (X& x, X& b, InverseOperatorResult& res)
+    void apply (X& x, X& b, InverseOperatorResult& res) override
     {
       using rAlloc = ReboundAllocatorType<X,field_type>;
       res.clear();
@@ -1690,7 +1690,8 @@ private:
     using RestartedFCGSolver<X>::apply;
 
     // just a minor part of the RestartedFCGSolver apply method will be modified
-    virtual void apply (X& x, X& b, InverseOperatorResult& res) override {
+    void apply (X& x, X& b, InverseOperatorResult& res) override
+    {
       // reset limiter of orthogonalization loop
       _k_limit = 0;
       this->RestartedFCGSolver<X>::apply(x,b,res);
@@ -1698,7 +1699,7 @@ private:
 
   private:
     // This function is called every iteration to orthogonalize against the last search directions.
-    virtual void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<field_type,ReboundAllocatorType<X,field_type>>& ddotAd,std::vector<X>& d) override {
+    void orthogonalizations(const int& i_bounded,const std::vector<X>& Ad, const X& w, const std::vector<field_type,ReboundAllocatorType<X,field_type>>& ddotAd,std::vector<X>& d) override {
       // This FCGSolver uses values with higher array indexes too, if existent.
       for (int k = 0; k < _k_limit; k++) {
         if(i_bounded!=k)
@@ -1711,7 +1712,7 @@ private:
     };
 
     // This function is called every mmax iterations to handle limited array sizes.
-    virtual void cycle(std::vector<X>& Ad, [[maybe_unused]] std::vector<X>& d, [[maybe_unused]] std::vector<field_type,ReboundAllocatorType<X,field_type> >& ddotAd,int& i_bounded) override {
+    void cycle(std::vector<X>& Ad, [[maybe_unused]] std::vector<X>& d, [[maybe_unused]] std::vector<field_type,ReboundAllocatorType<X,field_type> >& ddotAd,int& i_bounded) override {
       // Only the loop index i_bounded return to 0, if it reached mmax.
       i_bounded = 0;
       // Now all arrays are filled and the loop in void orthogonalizations can use the whole arrays.

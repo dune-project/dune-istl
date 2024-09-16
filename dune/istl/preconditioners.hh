@@ -99,21 +99,21 @@ namespace Dune {
         DUNE_THROW(InvalidStateException, "User-supplied solver category does not match that of the given inverse operator");
     }
 
-    virtual void pre(domain_type&,range_type&)
+    void pre([[maybe_unused]] domain_type&,[[maybe_unused]] range_type&) override
     {}
 
-    virtual void apply(domain_type& v, const range_type& d)
+    void apply(domain_type& v, const range_type& d) override
     {
       InverseOperatorResult res;
       range_type copy(d);
       inverse_operator_.apply(v, copy, res);
     }
 
-    virtual void post(domain_type&)
+    void post([[maybe_unused]] domain_type&) override
     {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::category(inverse_operator_);
     }
@@ -206,7 +206,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b) override
     {}
 
     /*!
@@ -214,7 +214,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       for (int i=0; i<_n; i++) {
         bsorf(_A_,v,d,_w,BL<l>());
@@ -227,11 +227,11 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x)
+    void post ([[maybe_unused]] X& x) override
     {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }
@@ -326,7 +326,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b) override
     {}
 
     /*!
@@ -334,7 +334,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       this->template apply<true>(v,d);
     }
@@ -365,11 +365,11 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x)
+    void post ([[maybe_unused]] X& x) override
     {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }
@@ -477,7 +477,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b) override
     {}
 
     /*!
@@ -485,7 +485,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       for (int i=0; i<_n; i++) {
         dbjac(_A_,v,d,_w,BL<l>());
@@ -497,11 +497,11 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x)
+    void post ([[maybe_unused]] X& x) override
     {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }
@@ -636,7 +636,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre([[maybe_unused]] X &x, [[maybe_unused]] Y &b)
+    void pre([[maybe_unused]] X &x, [[maybe_unused]] Y &b) override
     {
     }
 
@@ -645,7 +645,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply(X &v, const Y &d)
+    void apply(X &v, const Y &d) override
     {
 
       DILU::blockDILUBacksolve(_A_, Dinv_, v, d);
@@ -661,12 +661,12 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post([[maybe_unused]] X &x)
+    void post([[maybe_unused]] X &x) override
     {
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }
@@ -810,7 +810,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b) override
     {}
 
     /*!
@@ -818,7 +818,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       if( ILU_ )
       {
@@ -840,11 +840,11 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x)
+    void post ([[maybe_unused]] X& x) override
     {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }
@@ -917,7 +917,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
+    void pre ([[maybe_unused]] X& x, [[maybe_unused]] Y& b) override
     {}
 
     /*!
@@ -925,7 +925,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       v = d;
       v *= _w;
@@ -936,11 +936,11 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x)
+    void post ([[maybe_unused]] X& x) override
     {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }

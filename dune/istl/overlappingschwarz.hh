@@ -843,7 +843,7 @@ namespace Dune
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre ([[maybe_unused]] X& x, [[maybe_unused]] X& b)
+    void pre ([[maybe_unused]] X& x, [[maybe_unused]] X& b) override
     {}
 
     /*!
@@ -851,21 +851,21 @@ namespace Dune
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const X& d);
+    void apply (X& v, const X& d) override;
 
     /*!
        \brief Postprocess the preconditioner.
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x)
+    void post ([[maybe_unused]] X& x) override
     {}
 
     template<bool forward>
     void apply(X& v, const X& d);
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::sequential;
     }

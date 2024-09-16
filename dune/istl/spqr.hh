@@ -79,7 +79,7 @@ namespace Dune {
     typedef Dune::BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > range_type;
 
     //! Category of the solver (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::Category::sequential;
     }
@@ -152,7 +152,7 @@ namespace Dune {
     }
 
     /** \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&) */
-    virtual void apply(domain_type& x, range_type& b, InverseOperatorResult& res)
+    void apply(domain_type& x, range_type& b, InverseOperatorResult& res) override
     {
       const std::size_t numRows(spqrMatrix_.N());
       // fill B
@@ -188,7 +188,7 @@ namespace Dune {
     }
 
     /** \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&) */
-    virtual void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
+    void apply (domain_type& x, range_type& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
     {
       apply(x, b, res);
     }

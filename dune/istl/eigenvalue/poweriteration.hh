@@ -56,13 +56,13 @@ namespace Dune
           mutable_scaling_(mutable_scaling)
       {}
 
-      virtual void apply (const X& x, Y& y) const
+      void apply (const X& x, Y& y) const override
       {
         y = x;
         y *= immutable_scaling_*mutable_scaling_;
       }
 
-      virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+      void applyscaleadd (field_type alpha, const X& x, Y& y) const override
       {
         X temp(x);
         temp *= immutable_scaling_*mutable_scaling_;
@@ -70,7 +70,7 @@ namespace Dune
       }
 
       //! Category of the linear operator (see SolverCategory::Category)
-      virtual SolverCategory::Category category() const
+      SolverCategory::Category category() const override
       {
         return SolverCategory::sequential;
       }
@@ -108,14 +108,14 @@ namespace Dune
           "Range type of both operators doesn't match!");
       }
 
-      virtual void apply (const domain_type& x, range_type& y) const
+      void apply (const domain_type& x, range_type& y) const override
       {
         op1_.apply(x,y);
         op2_.applyscaleadd(1.0,x,y);
       }
 
-      virtual void applyscaleadd (field_type alpha,
-        const domain_type& x, range_type& y) const
+      void applyscaleadd (field_type alpha,
+        const domain_type& x, range_type& y) const override
       {
         range_type temp(y);
         op1_.apply(x,temp);
@@ -124,7 +124,7 @@ namespace Dune
       }
 
       //! Category of the linear operator (see SolverCategory::Category)
-      virtual SolverCategory::Category category() const
+      SolverCategory::Category category() const override
       {
         return SolverCategory::sequential;
       }
