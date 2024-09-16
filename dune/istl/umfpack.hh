@@ -534,7 +534,7 @@ namespace Dune {
       // and a mapping from the compressed indices
       std::vector<size_type> subIndices;
 
-      int numberOfIgnoredDofs = 0;
+      [[maybe_unused]] int numberOfIgnoredDofs = 0;
       int nonZeros = 0;
 
       if constexpr ( useBitVector )
