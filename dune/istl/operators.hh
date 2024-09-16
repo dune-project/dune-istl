@@ -116,7 +116,7 @@ namespace Dune {
     typedef Y range_type;
     typedef typename X::field_type field_type;
 
-    //! get matrix via *
+    //! get reference to matrix
     virtual const M& getmat () const = 0;
   };
 
@@ -159,7 +159,7 @@ namespace Dune {
       _A_->usmv(alpha,x,y);
     }
 
-    //! get matrix via *
+    //! get reference to matrix
     const M& getmat () const override
     {
       return *_A_;

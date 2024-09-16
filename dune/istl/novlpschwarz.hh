@@ -117,8 +117,8 @@ namespace Dune {
       y += y1;
     }
 
-    //! get matrix via *
-    const matrix_type& getmat () const override
+    //! get reference to matrix
+    virtual const matrix_type& getmat () const
     {
       return *_A_;
     }
