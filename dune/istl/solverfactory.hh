@@ -55,12 +55,13 @@ namespace Dune{
     using comm_type = Std::detected_or_t<int, _comm_type, Operator>;
     static constexpr bool isParallel = !std::is_same<comm_type, int>::value;
 
-    static const matrix_type& getMatOrThrow(std::shared_ptr<LinearOperator<domain_type, range_type>> op){
+    static const std::shared_ptr<AssembledLinearOperator<matrix_type, domain_type, range_type>>
+    getAssembledOpOrThrow(std::shared_ptr<LinearOperator<domain_type, range_type>> op){
       std::shared_ptr<AssembledLinearOperator<matrix_type, domain_type, range_type>> aop
         = std::dynamic_pointer_cast<AssembledLinearOperator<matrix_type, domain_type, range_type>>(op);
       if(aop)
-        return aop->getmat();
-      DUNE_THROW(NoAssembledOperator, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
+          return aop;
+      DUNE_THROW(NoAssembledOperator, "Failed to cast to AssembledLinearOperator. Please pass in an AssembledLinearOperator.");
     }
 
     static const comm_type& getCommOrThrow(std::shared_ptr<LinearOperator<domain_type, range_type>> op){

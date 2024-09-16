@@ -820,7 +820,8 @@ namespace Dune {
                            // InverseOperator*. This checks compatibility of the
                            // domain and range types
                            if constexpr (UMFPackImpl::isValidBlock<OpTraits>::value) {
-                             const M& mat = opTraits.getMatOrThrow(op);
+                             const auto& A = opTraits.getAssembledOpOrThrow(op);
+                             const M& mat = A->getmat();
                              int verbose = config.get("verbose", 0);
                              return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
                            }

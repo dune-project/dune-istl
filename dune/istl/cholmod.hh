@@ -540,7 +540,8 @@ private:
                                        // check whether the Matrix field_type is double or float
                                        (std::is_same_v<typename FieldTraits<D>::field_type, double> ||
                                        std::is_same_v<typename FieldTraits<D>::field_type, float>)){
-                           const M& mat = opTraits.getMatOrThrow(op);
+                           const auto& A = opTraits.getAssembledOpOrThrow(op);
+                           const M& mat = A->getmat();
                            auto solver = std::make_shared<Dune::Cholmod<D>>();
                            solver->setMatrix(mat);
                            return solver;

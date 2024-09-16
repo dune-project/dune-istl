@@ -389,7 +389,8 @@ namespace Dune {
                                        typename OpTraits::range_type>*> &&
                                        std::is_same_v<typename FieldTraits<M>::field_type, double>
                                        ){
-                           const M& mat = opTraits.getMatOrThrow(op);
+                           const auto& A = opTraits.getAssembledOpOrThrow(op);
+                           const M& mat = A->getmat();
                            int verbose = config.get("verbose", 0);
                            return std::make_shared<LDL<M>>(mat,verbose);
                          }

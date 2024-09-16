@@ -60,9 +60,10 @@ namespace Dune{
       using Range = typename OpInfo::range_type;
       std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner;
       if constexpr (OpInfo::isAssembled){
-        const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
+        const auto& A = opInfo.getAssembledOpOrThrow(linearOperator);
+        // const Matrix& matrix = A->getmat();
         preconditioner
-          = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(matrix, config);
+          = std::make_shared<Preconditioner<Matrix, Domain, Range, blockLevel>>(A, config);
       }else{
         DUNE_THROW(NoAssembledOperator, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
       }
@@ -80,9 +81,10 @@ namespace Dune{
       using Range = typename OpInfo::range_type;
       std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner;
       if constexpr (OpInfo::isAssembled){
-        const Matrix& matrix = opInfo.getMatOrThrow(linearOperator);
+        const auto& A = opInfo.getAssembledOpOrThrow(linearOperator);
+        // const Matrix& matrix = A->getmat();
         preconditioner
-          = std::make_shared<Preconditioner<Matrix, Domain, Range>>(matrix, config);
+          = std::make_shared<Preconditioner<Matrix, Domain, Range>>(A, config);
       }else{
         DUNE_THROW(NoAssembledOperator, "Could not obtain matrix from operator. Please pass in an AssembledLinearOperator.");
       }

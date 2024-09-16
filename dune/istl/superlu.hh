@@ -746,7 +746,8 @@ namespace Dune
                                          Dune::InverseOperator<typename OpTraits::domain_type,
                                          typename OpTraits::range_type>*>
                                          ){
-                             const M& mat = opTraits.getMatOrThrow(op);
+                             const auto& A = opTraits.getAssembledOpOrThrow(op);
+                             const M& mat = A->getmat();
                              int verbose = config.get("verbose", 0);
                              return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
                            }
