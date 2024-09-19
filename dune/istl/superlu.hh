@@ -724,35 +724,37 @@ namespace Dune
     enum { value = true };
   };
 
-  struct SuperLUCreator {
-    template<class> struct isValidBlock : std::false_type{};
-    template<int k> struct isValidBlock<Dune::FieldVector<double,k>> : std::true_type{};
-    template<int k> struct isValidBlock<Dune::FieldVector<std::complex<double>,k>> : std::true_type{};
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
-                std::enable_if_t<isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      int verbose = config.get("verbose", 0);
-      return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
-    }
 
-    // second version with SFINAE to validate the template parameters of SuperLU
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType,
-        "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
-    }
-  };
-  template<> struct SuperLUCreator::isValidBlock<double> : std::true_type{};
-  template<> struct SuperLUCreator::isValidBlock<std::complex<double>> : std::true_type{};
-
-  DUNE_REGISTER_DIRECT_SOLVER("superlu", SuperLUCreator());
+  DUNE_REGISTER_SOLVER("superlu",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "SuperLU works only for sequential operators.");
+                         }
+                         if constexpr (OpTraits::isAssembled &&
+                                       // check whether the Matrix field_type is double or complex<double>
+                                       std::is_same_v<typename FieldTraits<M>::real_type, double>){
+                           // check if SuperLU<M>* is convertible to
+                           // InverseOperator*. This checks compatibility of the
+                           // domain and range types
+                           if constexpr (std::is_convertible_v<SuperLU<M>*,
+                                         Dune::InverseOperator<typename OpTraits::domain_type,
+                                         typename OpTraits::range_type>*>
+                                         ){
+                             const auto& A = opTraits.getAssembledOpOrThrow(op);
+                             const M& mat = A->getmat();
+                             int verbose = config.get("verbose", 0);
+                             return std::make_shared<Dune::SuperLU<M>>(mat,verbose);
+                           }
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in SuperLU (only double and std::complex<double> supported)");
+                       });
 } // end namespace DUNE
 
 // undefine macros from SuperLU's slu_util.h

@@ -11,7 +11,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include<dune/istl/solver.hh>
-#include <dune/istl/solverfactory.hh>
+#include <dune/istl/solverregistry.hh>
 #include <dune/istl/foreach.hh>
 
 #include <vector>
@@ -524,34 +524,31 @@ private:
   std::vector<std::size_t> subIndices_;
 };
 
-  struct CholmodCreator{
-    template<class F> struct isValidBlock : std::false_type{};
-    template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
-    template<int k> struct isValidBlock<FieldVector<float,k>> : std::true_type{};
-
-    template<class TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator()(TL /*tl*/, const M& mat, const Dune::ParameterTree& /*config*/,
-               std::enable_if_t<isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      using D = typename Dune::TypeListElement<1, TL>::type;
-      auto solver = std::make_shared<Dune::Cholmod<D>>();
-      solver->setMatrix(mat);
-      return solver;
-    }
-
-    // second version with SFINAE to validate the template parameters of Cholmod
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-                std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType, "Unsupported Type in Cholmod");
-    }
-  };
-  DUNE_REGISTER_DIRECT_SOLVER("cholmod", Dune::CholmodCreator());
+  DUNE_REGISTER_SOLVER("cholmod",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         using D = typename OpTraits::domain_type;
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "CholMod works only for sequential operators.");
+                         }
+                         if constexpr (OpTraits::isAssembled &&
+                                       // check whether the Matrix field_type is double or float
+                                       (std::is_same_v<typename FieldTraits<D>::field_type, double> ||
+                                       std::is_same_v<typename FieldTraits<D>::field_type, float>)){
+                           const auto& A = opTraits.getAssembledOpOrThrow(op);
+                           const M& mat = A->getmat();
+                           auto solver = std::make_shared<Dune::Cholmod<D>>();
+                           solver->setMatrix(mat);
+                           return solver;
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in Cholmod (only double and float supported)");
+                       });
 
 } /* namespace Dune */
 

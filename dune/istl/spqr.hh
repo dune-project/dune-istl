@@ -330,35 +330,34 @@ namespace Dune {
     enum {value = true};
   };
 
-  struct SPQRCreator {
-    template<class> struct isValidBlock : std::false_type{};
-
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
-      std::enable_if_t<
-                isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      int verbose = config.get("verbose", 0);
-      return std::make_shared<Dune::SPQR<M>>(mat,verbose);
-    }
-
-    // second version with SFINAE to validate the template parameters of SPQR
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<!isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType,
-        "Unsupported Type in SPQR (only double and std::complex<double> supported)");
-    }
-  };
-  template<> struct SPQRCreator::isValidBlock<FieldVector<double,1>> : std::true_type{};
-  // std::complex is temporary disabled, because it fails if libc++ is used
-  //template<> struct SPQRCreator::isValidMatrixBlock<FieldMatrix<std::complex<double>,1,1>> : std::true_type{};
-  DUNE_REGISTER_DIRECT_SOLVER("spqr", Dune::SPQRCreator());
+  DUNE_REGISTER_SOLVER("spqr",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "SPQR works only for sequential operators.");
+                         }
+                         // check if SPQR<M>* is convertible to
+                         // InverseOperator*. This allows only the explicit
+                         // specialized variants of SPQR
+                         // std::complex is temporary disabled, because it fails if libc++ is used
+                         if constexpr (std::is_convertible_v<SPQR<M>*,
+                                       Dune::InverseOperator<typename OpTraits::domain_type,
+                                       typename OpTraits::range_type>*> &&
+                                       std::is_same_v<typename FieldTraits<M>::field_type, double>
+                                       ){
+                           const auto& A = opTraits.getAssembledOpOrThrow(op);
+                           const M& mat = A->getmat();
+                           int verbose = config.get("verbose", 0);
+                           return std::make_shared<Dune::SPQR<M>>(mat,verbose);
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in SPQR (only FieldMatrix<double,...> supported)");
+                       });
 
 } // end namespace Dune
 

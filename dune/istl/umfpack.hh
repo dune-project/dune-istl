@@ -794,46 +794,42 @@ namespace Dune {
     enum { value = true };
   };
 
-  struct UMFPackCreator {
-
-    template<class TL, class M,class=void> struct isValidBlock : std::false_type{};
-    template<class TL, class M> struct isValidBlock<TL,M,
+  namespace UMFPackImpl {
+    template<class OpTraits, class=void> struct isValidBlock : std::false_type{};
+    template<class OpTraits> struct isValidBlock<OpTraits,
       std::enable_if_t<
-           std::is_same_v<Impl::UMFPackDomainType<M>, typename Dune::TypeListElement<1,TL>::type>
-        && std::is_same_v<Impl::UMFPackRangeType<M>,  typename Dune::TypeListElement<2,TL>::type>
+           std::is_same_v<Impl::UMFPackDomainType<typename OpTraits::matrix_type>, typename OpTraits::domain_type>
+        && std::is_same_v<Impl::UMFPackRangeType<typename OpTraits::matrix_type>, typename OpTraits::range_type>
+        && std::is_same_v<typename FieldTraits<typename OpTraits::domain_type::field_type>::real_type, double>
+        && std::is_same_v<typename FieldTraits<typename OpTraits::range_type::field_type>::real_type, double>
       >> : std::true_type {};
-
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<Impl::UMFPackDomainType<M>,Impl::UMFPackRangeType<M>>>
-    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
-      std::enable_if_t<isValidBlock<TL, M>::value,int> = 0) const
-    {
-      int verbose = config.get("verbose", 0);
-      return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
-    }
-
-    // second version with SFINAE to validate the template parameters of UMFPack
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<!isValidBlock<TL, M>::value,int> = 0) const
-    {
-      using D = typename Dune::TypeListElement<1,TL>::type;
-      using R = typename Dune::TypeListElement<2,TL>::type;
-      using DU = Std::detected_t< Impl::UMFPackDomainType, M>;
-      using RU = Std::detected_t< Impl::UMFPackRangeType, M>;
-      DUNE_THROW(UnsupportedType,
-        "Unsupported Types in UMFPack:\n"
-        "Matrix: " << className<M>() << ""
-        "Domain provided: " << className<D>() << "\n"
-        "Domain required: " << className<DU>() << "\n"
-        "Range provided: " << className<R>() << "\n"
-        "Range required: " << className<RU>() << "\n"
-      );
-    }
-  };
-  DUNE_REGISTER_DIRECT_SOLVER("umfpack",Dune::UMFPackCreator());
+  }
+  DUNE_REGISTER_SOLVER("umfpack",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "UMFPack works only for sequential operators.");
+                         }
+                         if constexpr (OpTraits::isAssembled){
+                           using M = typename OpTraits::matrix_type;
+                           // check if UMFPack<M>* is convertible to
+                           // InverseOperator*. This checks compatibility of the
+                           // domain and range types
+                           if constexpr (UMFPackImpl::isValidBlock<OpTraits>::value) {
+                             const auto& A = opTraits.getAssembledOpOrThrow(op);
+                             const M& mat = A->getmat();
+                             int verbose = config.get("verbose", 0);
+                             return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
+                           }
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
+                         return nullptr;
+                       });
 } // end namespace Dune
 
 #endif // HAVE_SUITESPARSE_UMFPACK

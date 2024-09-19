@@ -949,11 +949,12 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     real_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto tl, const auto& /* mat */, const ParameterTree& config){
-                                               using D = typename Dune::TypeListElement<1, decltype(tl)>::type;
-                                               using R = typename Dune::TypeListElement<2, decltype(tl)>::type;
-                                               return std::make_shared<Richardson<D,R>>(config);
-                                             });
+  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto opTraits, const auto& op, const ParameterTree& config){
+    using OpTraits = std::decay_t<decltype(opTraits)>;
+    using D = typename OpTraits::domain_type;
+    using R = typename OpTraits::range_type;
+    return std::make_shared<Richardson<D,R>>(config);
+  });
 
 
   /**

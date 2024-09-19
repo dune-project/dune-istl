@@ -24,7 +24,7 @@ extern "C"
 #include <dune/istl/bccsmatrixinitializer.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
-#include <dune/istl/solverfactory.hh>
+#include <dune/istl/solverregistry.hh>
 
 namespace Dune {
   /**
@@ -370,34 +370,33 @@ namespace Dune {
     enum {value = true};
   };
 
-  struct LDLCreator {
-    template<class F> struct isValidBlock : std::false_type{};
-    template<int k> struct isValidBlock<FieldVector<double,k>> : std::true_type{};
-
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& mat, const Dune::ParameterTree& config,
-      std::enable_if_t<
-                isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      int verbose = config.get("verbose", 0);
-      return std::make_shared<Dune::LDL<M>>(mat,verbose);
-    }
-
-    // second version with SFINAE to validate the template parameters of LDL
-    template<typename TL, typename M>
-    std::shared_ptr<Dune::InverseOperator<typename Dune::TypeListElement<1, TL>::type,
-                                          typename Dune::TypeListElement<2, TL>::type>>
-    operator() (TL /*tl*/, const M& /*mat*/, const Dune::ParameterTree& /*config*/,
-      std::enable_if_t<
-                !isValidBlock<typename Dune::TypeListElement<1, TL>::type::block_type>::value,int> = 0) const
-    {
-      DUNE_THROW(UnsupportedType,
-        "Unsupported Type in LDL (only double and std::complex<double> supported)");
-    }
-  };
-  DUNE_REGISTER_DIRECT_SOLVER("ldl", Dune::LDLCreator());
+  DUNE_REGISTER_SOLVER("ldl",
+                       [](auto opTraits, const auto& op, const Dune::ParameterTree& config)
+                       -> std::shared_ptr<typename decltype(opTraits)::solver_type>
+                       {
+                         using OpTraits = decltype(opTraits);
+                         using M = typename OpTraits::matrix_type;
+                         // works only for sequential operators
+                         if constexpr (OpTraits::isParallel){
+                           if(opTraits.getCommOrThrow(op).communicator().size() > 1)
+                             DUNE_THROW(Dune::InvalidStateException, "LDL works only for sequential operators.");
+                         }
+                         // check if LDL<M>* is convertible to
+                         // InverseOperator*. This allows only the explicit
+                         // specialized variants of LDL
+                         if constexpr (std::is_convertible_v<LDL<M>*,
+                                       Dune::InverseOperator<typename OpTraits::domain_type,
+                                       typename OpTraits::range_type>*> &&
+                                       std::is_same_v<typename FieldTraits<M>::field_type, double>
+                                       ){
+                           const auto& A = opTraits.getAssembledOpOrThrow(op);
+                           const M& mat = A->getmat();
+                           int verbose = config.get("verbose", 0);
+                           return std::make_shared<LDL<M>>(mat,verbose);
+                         }
+                         DUNE_THROW(UnsupportedType,
+                                    "Unsupported Type in LDL (only FieldMatrix<double,...> supported)");
+                       });
 
 } // end namespace Dune
 
