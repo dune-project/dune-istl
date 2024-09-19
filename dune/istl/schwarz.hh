@@ -113,7 +113,7 @@ namespace Dune {
     {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
-    virtual void apply (const X& x, Y& y) const
+    void apply (const X& x, Y& y) const override
     {
       y = 0;
       _A_->umv(x,y);     // result is consistent on interior+border
@@ -122,7 +122,7 @@ namespace Dune {
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    void applyscaleadd (field_type alpha, const X& x, Y& y) const override
     {
       _A_->usmv(alpha,x,y);     // result is consistent on interior+border
       communication.project(y);     // we want this here to avoid it before the preconditioner
@@ -130,13 +130,13 @@ namespace Dune {
     }
 
     //! get the sequential assembled linear operator.
-    virtual const matrix_type& getmat () const
+    const matrix_type& getmat () const override
     {
       return *_A_;
     }
 
     //! Category of the linear operator (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::overlapping;
     }
@@ -203,7 +203,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, [[maybe_unused]] Y& b)
+    void pre (X& x, [[maybe_unused]] Y& b) override
     {
       communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
     }
@@ -213,7 +213,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       for (int i=0; i<_n; i++) {
         bsorf(_A_,v,d,_w);
@@ -227,10 +227,10 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post ([[maybe_unused]] X& x) {}
+    void post ([[maybe_unused]] X& x) override {}
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::overlapping;
     }
@@ -323,7 +323,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(X&,Y&)
      */
-    virtual void pre (X& x, Y& b)
+    void pre (X& x, Y& b) override
     {
       _communication.copyOwnerToAll(x,x);     // make dirichlet values consistent
       _preconditioner->pre(x,b);
@@ -334,7 +334,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(X&,const Y&)
      */
-    virtual void apply (X& v, const Y& d)
+    void apply (X& v, const Y& d) override
     {
       _preconditioner->apply(v,d);
       _communication.copyOwnerToAll(v,v);
@@ -352,13 +352,13 @@ namespace Dune {
 
        \copydoc Preconditioner::post(X&)
      */
-    virtual void post (X& x)
+    void post (X& x) override
     {
       _preconditioner->post(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::overlapping;
     }

@@ -98,7 +98,7 @@ namespace Dune {
     {}
 
     //! apply operator to x:  \f$ y = A(x) \f$
-    virtual void apply (const X& x, Y& y) const
+    void apply (const X& x, Y& y) const override
     {
       y = 0;
       novlp_op_apply(x,y,1);
@@ -106,7 +106,7 @@ namespace Dune {
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+    void applyscaleadd (field_type alpha, const X& x, Y& y) const override
     {
       // only apply communication to alpha*A*x to make it consistent,
       // y already has to be consistent.
@@ -118,7 +118,7 @@ namespace Dune {
     }
 
     //! get matrix via *
-    virtual const matrix_type& getmat () const
+    const matrix_type& getmat () const override
     {
       return *_A_;
     }
@@ -232,7 +232,7 @@ namespace Dune {
     }
 
     //! Category of the linear operator (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::nonoverlapping;
     }
@@ -312,7 +312,7 @@ namespace Dune {
 
        \copydoc Preconditioner::pre(domain_type&,range_type&)
      */
-    virtual void pre (domain_type& x, range_type& b)
+    void pre (domain_type& x, range_type& b) override
     {
       _preconditioner->pre(x,b);
     }
@@ -322,7 +322,7 @@ namespace Dune {
 
        \copydoc Preconditioner::apply(domain_type&,const range_type&)
      */
-    virtual void apply (domain_type& v, const range_type& d)
+    void apply (domain_type& v, const range_type& d) override
     {
       // block preconditioner equivalent to WrappedPreconditioner from
       // pdelab/backend/ovlpistsolverbackend.hh,
@@ -343,13 +343,13 @@ namespace Dune {
 
        \copydoc Preconditioner::post(domain_type&)
      */
-    virtual void post (domain_type& x)
+    void post (domain_type& x) override
     {
       _preconditioner->post(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return SolverCategory::nonoverlapping;
     }

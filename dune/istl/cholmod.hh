@@ -250,7 +250,7 @@ public:
 
   /** @brief simple forward to apply(X&, Y&, InverseOperatorResult&)
     */
-  void apply (Vector& x, Vector& b, [[maybe_unused]] double reduction, InverseOperatorResult& res)
+  void apply (Vector& x, Vector& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
   {
     apply(x,b,res);
   }
@@ -260,7 +260,7 @@ public:
    * The method assumes that setMatrix() was called before
    * In the case of a given ignore field the corresponding entries of both in x and b will stay untouched in this method.
   */
-  void apply(Vector& x, Vector& b, InverseOperatorResult& res)
+  void apply(Vector& x, Vector& b, InverseOperatorResult& res) override
   {
     // do nothing if N=0
     if ( nIsZero_ )
@@ -468,7 +468,7 @@ public:
     CholmodMethod::factorize(M.get(), L_, &c_);
   }
 
-  virtual SolverCategory::Category category() const
+  SolverCategory::Category category() const override
   {
     return SolverCategory::Category::sequential;
   }

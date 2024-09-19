@@ -273,7 +273,7 @@ private:
       : amg_(op, crit,args), first_(true)
     {}
 
-    void apply(X& x, X& b, [[maybe_unused]] double reduction, [[maybe_unused]] InverseOperatorResult& res)
+    void apply(X& x, X& b, [[maybe_unused]] double reduction, [[maybe_unused]] InverseOperatorResult& res) override
     {
       if(first_)
       {
@@ -284,13 +284,13 @@ private:
       amg_.apply(x,b);
     }
 
-    void apply(X& x, X& b, InverseOperatorResult& res)
+    void apply(X& x, X& b, InverseOperatorResult& res) override
     {
       return apply(x,b,1e-8,res);
     }
 
     //! Category of the solver (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return amg_.category();
     }
@@ -428,15 +428,15 @@ public:
     delete coarseSolver_;
   }
 
-  void pre(FineDomainType& x, FineRangeType& b)
+  void pre(FineDomainType& x, FineRangeType& b) override
   {
     smoother_->pre(x,b);
   }
 
-  void post([[maybe_unused]] FineDomainType& x)
+  void post([[maybe_unused]] FineDomainType& x) override
   {}
 
-  void apply(FineDomainType& v, const FineRangeType& d)
+  void apply(FineDomainType& v, const FineRangeType& d) override
   {
     FineDomainType u(v);
     FineRangeType rhs(d);
@@ -463,7 +463,7 @@ public:
   }
 
   //! Category of the preconditioner (see SolverCategory::Category)
-  virtual SolverCategory::Category category() const
+  SolverCategory::Category category() const override
   {
     return SolverCategory::sequential;
   }

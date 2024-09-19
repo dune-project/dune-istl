@@ -373,7 +373,7 @@ namespace Dune
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    virtual void apply (X& x, X& b, double reduction, InverseOperatorResult& res)
+    void apply (X& x, X& b, double reduction, InverseOperatorResult& res) override
     {
       scalar_real_type saved_reduction = _reduction;
       _reduction = reduction;
@@ -382,7 +382,7 @@ namespace Dune
     }
 
     //! Category of the solver (see SolverCategory::Category)
-    virtual SolverCategory::Category category() const
+    SolverCategory::Category category() const override
     {
       return _category;
     }
