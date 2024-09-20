@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <memory>
 #include <algorithm>
+#include <type_traits>
 
 #include "istlexception.hh"
 #include <dune/common/iteratorfacades.hh>
@@ -97,16 +98,26 @@ namespace Imp {
       friend class RealIterator<ValueType>;
 
       //! constructor
-      RealIterator ()
-        : p(0), i(0)
+      RealIterator () = default;
+
+      RealIterator (const B* _p, B* _i)
+        : p(_p), i(_i)
       {}
 
-      RealIterator (const B* _p, B* _i) : p(_p), i(_i)
-      {   }
-
-      RealIterator(const RealIterator<ValueType>& it)
-        : p(it.p), i(it.i)
+      template <class T_,
+        std::enable_if_t<std::is_same_v<std::remove_const_t<T>, std::remove_const_t<T_>>, int> = 0>
+      RealIterator (const RealIterator<T_>& other)
+        : p(other.p), i(other.i)
       {}
+
+      template <class T_,
+        std::enable_if_t<std::is_same_v<std::remove_const_t<T>, std::remove_const_t<T_>>, int> = 0>
+      RealIterator& operator= (const RealIterator<T_>& other)
+      {
+        p = other.p;
+        i = other.i;
+        return *this;
+      }
 
       //! return index
       size_type index () const
@@ -163,8 +174,8 @@ namespace Imp {
         i+=d;
       }
 
-      const B* p;
-      B* i;
+      const B* p = nullptr;
+      B* i = nullptr;
     };
 
     //! iterator type for sequential access
@@ -349,21 +360,28 @@ namespace Imp {
       friend class RealIterator<ValueType>;
 
       //! constructor
-      RealIterator ()
-        : p(0), j(0), i(0)
-      {}
+      RealIterator () = default;
 
       //! constructor
       RealIterator (B* _p, size_type* _j, size_type _i)
         : p(_p), j(_j), i(_i)
-      {       }
-
-      /**
-       * @brief Copy constructor from mutable iterator
-       */
-      RealIterator(const RealIterator<ValueType>& it)
-        : p(it.p), j(it.j), i(it.i)
       {}
+
+      template <class T_,
+        std::enable_if_t<std::is_same_v<std::remove_const_t<T>, std::remove_const_t<T_>>, int> = 0>
+      RealIterator (const RealIterator<T_>& other)
+        : p(other.p), j(other.j), i(other.i)
+      {}
+
+      template <class T_,
+        std::enable_if_t<std::is_same_v<std::remove_const_t<T>, std::remove_const_t<T_>>, int> = 0>
+      RealIterator& operator= (const RealIterator<T_>& other)
+      {
+        p = other.p;
+        j = other.j;
+        i = other.i;
+        return *this;
+      }
 
 
       //! equality
@@ -424,9 +442,9 @@ namespace Imp {
         return p[i];
       }
 
-      B* p;
-      size_type* j;
-      size_type i;
+      B* p = nullptr;
+      size_type* j = nullptr;
+      size_type i = 0;
     };
 
     /** @brief The iterator type. */
