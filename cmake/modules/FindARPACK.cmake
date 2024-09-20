@@ -25,6 +25,11 @@
 #    system paths.
 #
 
+# text for feature summary
+set_package_properties("ARPACK" PROPERTIES
+  URL "https://www.arpack.org"
+  DESCRIPTION "ARnoldi PACKage")
+
 # look for library, only at positions given by the user
 find_library(ARPACK_LIBRARY
   NAMES "arpack"
@@ -81,8 +86,3 @@ else()
     "Determining location of ARPACK failed:\n"
     "Libraries to link against: ${ARPACK_LIBRARIES}\n\n")
 endif()
-
-# text for feature summary
-set_package_properties("ARPACK" PROPERTIES
-  DESCRIPTION "ARnoldi PACKage"
-  PURPOSE "Solve large scale eigenvalue problems")

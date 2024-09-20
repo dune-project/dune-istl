@@ -25,8 +25,8 @@
 # text for feature summary
 include(FeatureSummary)
 set_package_properties("SuperLU" PROPERTIES
-  DESCRIPTION "Supernodal LU"
-  PURPOSE "Direct solver for linear system, based on LU decomposition")
+  URL "https://portal.nersc.gov/project/sparse/superlu/"
+  DESCRIPTION "Supernodal LU")
 
 set(SUPERLU_INT_TYPE "int" CACHE STRING
   "The integer version that SuperLU was compiled for (Default is int.
