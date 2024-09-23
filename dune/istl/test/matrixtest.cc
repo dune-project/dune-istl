@@ -298,8 +298,10 @@ void testTranspose(const MatrixType& matrix)
 int main()
 {
 
-  // feenableexcept does not exist on OS X or windows
-#if not defined( __APPLE__ ) and not defined( __MINGW32__ )
+
+#if defined( __APPLE__ ) or defined( __MINGW32__ ) or defined(_MSC_VER)
+  feraiseexcept(FE_INVALID);
+#else
   feenableexcept(FE_INVALID);
 #endif
 

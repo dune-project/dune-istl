@@ -99,10 +99,10 @@ int main(int argc, char** argv){
   }
 
   if(config.get("FP_EXCEPT", false))
-     #if not defined( __APPLE__ ) and not defined( __MINGW32__ )
-       feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);// | FE_UNDERFLOW);
-     #else
+     #if defined( __APPLE__ ) or defined( __MINGW32__ ) or defined(_MSC_VER)
        feraiseexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);// | FE_UNDERFLOW);
+     #else
+       feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);// | FE_UNDERFLOW);
      #endif
 
   int verbose = config.get("verbose", 1);
