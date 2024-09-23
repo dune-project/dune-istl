@@ -296,7 +296,7 @@ namespace Dune {
 
       //! constructor
       CreateIterator (VariableBlockVector& _v, int _i, bool _isEnd) :
-        v(_v),
+        v(&_v),
         i(_i),
         isEnd(_isEnd)
       {}
@@ -308,8 +308,8 @@ namespace Dune {
         // 1. the current iterator was not created as enditerator
         // 2. we're at the last block
         // 3. the vector hasn't been initialized earlier
-        if (not isEnd && i==v.block.size() && not v.initialized)
-          v.allocate();
+        if (not isEnd && i==v->block.size() && not v->initialized)
+          v->allocate();
       }
 
       //! prefix increment
@@ -332,13 +332,13 @@ namespace Dune {
       //! inequality
       bool operator!= (const CreateIterator& it) const
       {
-        return (i!=it.i) || (&v!=&it.v);
+          return not (*this == it);
       }
 
       //! equality
       bool operator== (const CreateIterator& it) const
       {
-        return (i==it.i) && (&v==&it.v);
+        return (i==it.i) && (v==it.v);
       }
 
       //! dereferencing
@@ -350,7 +350,7 @@ namespace Dune {
       //! set size of current block
       void setblocksize (size_type _k)
       {
-        v.block[i].setsize(_k);
+        v->block[i].setsize(_k);
       }
 
       //! Access size of current block
@@ -361,13 +361,13 @@ namespace Dune {
 #endif
       operator*()
       {
-        return {v.block[i]};
+        return {v->block[i]};
       }
 
     private:
-      VariableBlockVector& v;     // my vector
+      VariableBlockVector* v;     // my vector
       size_type i;                      // current block to be defined
-      const bool isEnd; // flag if this object was created as the end iterator.
+      bool isEnd; // flag if this object was created as the end iterator.
     };
 
     // CreateIterator wants to set all the arrays ...

@@ -14,7 +14,6 @@
 #include <complex>
 
 #include <cmath>                 // Yes, we do some math here
-#include <sys/times.h>            // for timing measurements
 
 #include <dune/common/alignedallocator.hh>
 #include <dune/common/classname.hh>
@@ -41,7 +40,7 @@ template<typename T>
 struct Random {
   static T gen()
   {
-    return drand48();
+    return T(std::rand())/RAND_MAX;
   }
 };
 
