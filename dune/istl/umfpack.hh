@@ -17,6 +17,7 @@
 #include<dune/common/fvector.hh>
 #include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
+#include<dune/istl/matrix.hh>
 #include<dune/istl/foreach.hh>
 #include<dune/istl/multitypeblockmatrix.hh>
 #include<dune/istl/multitypeblockvector.hh>
@@ -210,6 +211,12 @@ namespace Dune {
       /** @brief The type of the range of the solver */
       using range_type  = BlockVector<UMFPackRangeType<T>, typename std::allocator_traits<A>::template rebind_alloc<UMFPackRangeType<T>>>;
     };
+
+    template<typename T, typename A>
+    struct UMFPackVectorChooser<Matrix<T,A>,
+      std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
+    : public UMFPackVectorChooser<BCRSMatrix<T,A>, std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
+    {};
 
     // to make the `UMFPackVectorChooser` work with `MultiTypeBlockMatrix`, we need to add an intermediate step for the rows, which are typically `MultiTypeBlockVector`
     template<typename FirstBlock, typename... Blocks>
