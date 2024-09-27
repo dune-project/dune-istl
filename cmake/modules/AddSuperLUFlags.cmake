@@ -12,6 +12,10 @@
 #
 #       A list of targets to use SuperLU with.
 #
+include_guard(GLOBAL)
+
+set_package_properties("SuperLU" PROPERTIES
+  PURPOSE "Direct solver for linear system, based on LU decomposition")
 
 # set HAVE_SUPERLU for config.h
 set(HAVE_SUPERLU ${SuperLU_FOUND})

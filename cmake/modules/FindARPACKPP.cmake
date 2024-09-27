@@ -28,6 +28,11 @@
 #    system paths.
 #
 
+# text for feature summary
+set_package_properties("ARPACKPP" PROPERTIES
+  URL "https://github.com/m-reuter/arpackpp"
+  DESCRIPTION "ARPACK++")
+
 # find ARPACK which is required by ARPACK++
 find_package(ARPACK)
 
@@ -132,8 +137,3 @@ if(ARPACKPP_FOUND)
                               LIBRARIES "${ARPACKPP_LIBRARIES}"
                               COMPILE_OPTIONS "${ARPACKPP_DUNE_COMPILE_FLAGS}")
 endif()
-
-# text for feature summary
-set_package_properties("ARPACKPP" PROPERTIES
-  DESCRIPTION "ARPACK++"
-  PURPOSE "C++ interface for ARPACK")
