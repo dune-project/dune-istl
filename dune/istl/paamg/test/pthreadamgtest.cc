@@ -94,7 +94,7 @@ void *solve(void* arg)
 
   std::cout<<"AMG solving took "<<solvetime<<" seconds"<<std::endl;
 
-  pthread_exit(NULL);
+  return NULL;
 }
 
 void *solve2(void* arg)
