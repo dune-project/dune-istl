@@ -183,7 +183,7 @@ namespace Dune
     //the generator actually takes the scope into account which is why we do nothing with it here
     //so when doing a dune.istl blockvector it doesn't actually define any of the rest of the bindings
     template< class BlockVector, class ... options >
-    void registerBlockVector ( pybind11::handle scope, pybind11::class_<BlockVector, options ... > cls )
+    void registerBlockVector ( pybind11::handle /*scope*/, pybind11::class_<BlockVector, options ... > cls )
     {
       typedef typename BlockVector::size_type size_type;
       using pybind11::operator""_a;
