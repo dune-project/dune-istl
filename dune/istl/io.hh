@@ -147,14 +147,14 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    */
-  template<class K>
+  template<class K,
+    std::enable_if_t<Dune::IsNumber<K>::value, int> = 0>
   void print_row (std::ostream& s, const K& value,
                   [[maybe_unused]] typename FieldMatrix<K,1,1>::size_type I,
                   [[maybe_unused]] typename FieldMatrix<K,1,1>::size_type J,
                   [[maybe_unused]] typename FieldMatrix<K,1,1>::size_type therow,
                   int width,
-                  [[maybe_unused]] int precision,
-                  typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr)
+                  [[maybe_unused]] int precision)
   {
     s << " ";         // space in front of each entry
     s.width(width);   // set width for each entry anew
@@ -168,11 +168,11 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    */
-  template<class M>
+  template<class M,
+    std::enable_if_t<not Dune::IsNumber<M>::value, int> = 0>
   void print_row (std::ostream& s, const M& A, typename M::size_type I,
                   typename M::size_type J, typename M::size_type therow,
-                  int width, int precision,
-                  typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr)
+                  int width, int precision)
   {
     typename M::size_type i0=I;
     for (typename M::size_type i=0; i<A.N(); i++)
@@ -407,11 +407,11 @@ namespace Dune {
    *
    * This specialization for numbers ends the recursion
    */
-  template <class FieldType>
+  template <class FieldType,
+    std::enable_if_t<Dune::IsNumber<FieldType>::value, int> = 0>
   void writeMatrixToMatlabHelper(const FieldType& value,
                                  int rowOffset, int colOffset,
-                                 std::ostream& s,
-                                 typename std::enable_if_t<Dune::IsNumber<FieldType>::value>* sfinae = nullptr)
+                                 std::ostream& s)
   {
     //+1 for Matlab numbering
     s << rowOffset + 1 << " " << colOffset + 1 << " ";
@@ -425,11 +425,11 @@ namespace Dune {
    * #include <dune/istl/io.hh>
    * \endcode
    */
-  template <class MatrixType>
+  template <class MatrixType,
+    std::enable_if_t<not Dune::IsNumber<MatrixType>::value, int> = 0>
   void writeMatrixToMatlabHelper(const MatrixType& matrix,
                                  int externalRowOffset, int externalColOffset,
-                                 std::ostream& s,
-                                 typename std::enable_if_t<!Dune::IsNumber<MatrixType>::value>* sfinae = nullptr)
+                                 std::ostream& s)
   {
     // Precompute the accumulated sizes of the columns
     std::vector<typename MatrixType::size_type> colOffset(matrix.M());

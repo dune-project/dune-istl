@@ -51,7 +51,7 @@ namespace Dune
     // -----------------------
 
     template< class X, class Y, class... options >
-    inline void registerPreconditioners ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options...  > cls )
+    inline void registerPreconditioners ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options...  > /*cls*/ )
     {
       typedef Dune::Preconditioner< X, Y > Preconditioner;
 
@@ -81,7 +81,7 @@ namespace Dune
     }
 
     template< class M, class X, class Y, class... options >
-    inline void registerMatrixPreconditioners ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options... > cls )
+    inline void registerMatrixPreconditioners ( pybind11::module module, pybind11::class_< LinearOperator< X, Y >, options... > /*cls*/ )
     {
       typedef Dune::Preconditioner< X, Y > Preconditioner;
 
