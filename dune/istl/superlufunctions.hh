@@ -58,6 +58,11 @@ extern "C" {
 #endif
 
 #if __has_include("slu_cdefs.h")
+#ifndef SUPERLU_TYPEDEF_COMPLEX
+// For now let's keep backwards compatible and let
+// complex be a typedef of doublecomplex
+#define SUPERLU_TYPEDEF_COMPLEX
+#endif
 #include "slu_scomplex.h"
 
 extern "C" {
