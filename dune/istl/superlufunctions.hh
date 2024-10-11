@@ -58,6 +58,13 @@ extern "C" {
 #endif
 
 #if __has_include("slu_cdefs.h")
+#ifndef SUPERLU_TYPEDEF_COMPLEX
+// Per default SuperLU >= 7.0.0. does not provide
+// a type complex anymore. By setting SUPERLU_TYPEDEF_COMPLEX
+// we tell SuperLU to define complex to be the same as the
+// new type singlecomplex
+#define SUPERLU_TYPEDEF_COMPLEX
+#endif
 #include "slu_scomplex.h"
 
 extern "C" {
