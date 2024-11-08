@@ -2,5 +2,5 @@
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 dune_add_test(NAME istl-solver-playground
-  SOURCES istl-solver-playground.cc)
+  SOURCES istl-solver-playground.cc LINK_LIBRARIES Dune::ISTL)
 dune_symlink_to_source_files(FILES playground.ini)
