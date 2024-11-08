@@ -22,15 +22,6 @@ variables:
 # than one thread.
   OMP_NUM_THREADS: 1
 
-debian-11-gcc-9-17-with-checking:
-  image: registry.dune-project.org/docker/ci/debian:11
-  script: duneci-standard-test
-  variables:
-    DUNECI_TOOLCHAIN:   gcc-9-17
-    DUNECI_CXXFLAGS: "-DDUNE_ISTL_WITH_CHECKING"
-    DUNECI_CMAKE_FLAGS: "-DDUNE_MAX_TEST_CORES=4 -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
-  tags: [duneci]
-
 # Check for spelling mistakes in text
 code-spelling-check:
   stage: .pre
