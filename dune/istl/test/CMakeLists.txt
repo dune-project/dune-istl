@@ -9,65 +9,65 @@ install(FILES
         multirhstest.hh
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
 
-dune_add_test(SOURCES bcrsassigntest.cc)
+dune_add_test(SOURCES bcrsassigntest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES bcrsmatrixtest.cc)
+dune_add_test(SOURCES bcrsmatrixtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES bcrsnormtest.cc)
+dune_add_test(SOURCES bcrsnormtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES cgconditiontest.cc)
+dune_add_test(SOURCES cgconditiontest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES dilutest.cc)
+dune_add_test(SOURCES dilutest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES dotproducttest.cc)
+dune_add_test(SOURCES dotproducttest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES complexmatrixtest.cc)
+dune_add_test(SOURCES complexmatrixtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES fieldvectortest.cc)
+dune_add_test(SOURCES fieldvectortest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES foreachtest.cc)
+dune_add_test(SOURCES foreachtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES matrixnormtest.cc)
+dune_add_test(SOURCES matrixnormtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES matrixutilstest.cc)
+dune_add_test(SOURCES matrixutilstest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES matrixtest.cc)
+dune_add_test(SOURCES matrixtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES multirhstest.cc)
+dune_add_test(SOURCES multirhstest.cc LINK_LIBRARIES Dune::ISTL)
   add_dune_vc_flags(multirhstest)
 
-dune_add_test(SOURCES bvectortest.cc)
+dune_add_test(SOURCES bvectortest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES vbvectortest.cc)
+dune_add_test(SOURCES vbvectortest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES bcrsbuild.cc)
+dune_add_test(SOURCES bcrsbuild.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES bcrsimplicitbuild.cc
+dune_add_test(SOURCES bcrsimplicitbuild.cc LINK_LIBRARIES Dune::ISTL
               COMPILE_DEFINITIONS DUNE_ISTL_WITH_CHECKING=1)
 
-dune_add_test(SOURCES matrixiteratortest.cc)
+dune_add_test(SOURCES matrixiteratortest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES mmtest.cc)
+dune_add_test(SOURCES mmtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES multitypeblockmatrixtest.cc)
+dune_add_test(SOURCES multitypeblockmatrixtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES multitypeblockvectortest.cc)
+dune_add_test(SOURCES multitypeblockvectortest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES mv.cc)
+dune_add_test(SOURCES mv.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES iotest.cc)
+dune_add_test(SOURCES iotest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES inverseoperator2prectest.cc)
+dune_add_test(SOURCES inverseoperator2prectest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES preconditionerstest.cc)
+dune_add_test(SOURCES preconditionerstest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES scalarproductstest.cc)
+dune_add_test(SOURCES scalarproductstest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES scaledidmatrixtest.cc)
+dune_add_test(SOURCES scaledidmatrixtest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES solvertest.cc)
+dune_add_test(SOURCES solvertest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES solveraborttest.cc)
+dune_add_test(SOURCES solveraborttest.cc LINK_LIBRARIES Dune::ISTL)
 
 set(DUNE_TEST_FACTORY_FIELD_TYPES
   "double"
@@ -86,12 +86,14 @@ function(add_factory_test BLOCK)
   set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "#define DISABLE_AMG_DIRECTSOLVER 1")
   configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}.cc)
   dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc
+                LINK_LIBRARIES Dune::ISTL
                 CMAKE_GUARD HAVE_MPI)
   string(REGEX MATCH "LoopSIMD" _matched "${BLOCK}")
   if(NOT _matched)
     set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "")
     configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}_direct.cc)
     dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc
+                  LINK_LIBRARIES Dune::ISTL
                   MPI_RANKS 1 2 4
                   TIMEOUT 600
                   CMAKE_GUARD "HAVE_MPI AND SuiteSparse_CHOLMOD_FOUND AND SuiteSparse_LDL_FOUND AND SuiteSparse_SPQR_FOUND AND SuiteSparse_UMFPACK_FOUND AND SuperLU_FOUND")
@@ -108,61 +110,62 @@ dune_symlink_to_source_files(FILES solverfactorytest.ini)
 
 # SuperLU tests
   dune_add_test(NAME superlustest
-                SOURCES superlutest.cc
+                SOURCES superlutest.cc LINK_LIBRARIES Dune::ISTL
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=0)
 
   dune_add_test(SOURCES superlutest.cc)
 
   dune_add_test(NAME superluctest
-                SOURCES superlutest.cc
+                SOURCES superlutest.cc LINK_LIBRARIES Dune::ISTL
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=2)
 
   dune_add_test(NAME superluztest
-                SOURCES superlutest.cc
+                SOURCES superlutest.cc LINK_LIBRARIES Dune::ISTL
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
 
-  dune_add_test(SOURCES complexrhstest.cc
+  dune_add_test(SOURCES complexrhstest.cc LINK_LIBRARIES Dune::ISTL
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
 
 # SuiteSparse tests
-  dune_add_test(SOURCES umfpacktest.cc
+  dune_add_test(SOURCES umfpacktest.cc LINK_LIBRARIES Dune::ISTL
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 
-dune_add_test(SOURCES ldltest.cc
+dune_add_test(SOURCES ldltest.cc LINK_LIBRARIES Dune::ISTL
               CMAKE_GUARD SuiteSparse_LDL_FOUND)
 
-dune_add_test(SOURCES spqrtest.cc
+dune_add_test(SOURCES spqrtest.cc LINK_LIBRARIES Dune::ISTL
               CMAKE_GUARD SuiteSparse_SPQR_FOUND)
 
-dune_add_test(SOURCES overlappingschwarztest.cc
+dune_add_test(SOURCES overlappingschwarztest.cc LINK_LIBRARIES Dune::ISTL
               CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
 
-dune_add_test(SOURCES cholmodtest.cc
+dune_add_test(SOURCES cholmodtest.cc LINK_LIBRARIES Dune::ISTL
               CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
 
-dune_add_test(SOURCES registrytest.cc)
+dune_add_test(SOURCES registrytest.cc LINK_LIBRARIES Dune::ISTL)
 
 # MPI tests
-dune_add_test(SOURCES matrixredisttest.cc
+dune_add_test(SOURCES matrixredisttest.cc LINK_LIBRARIES Dune::ISTL
               MPI_RANKS 1 2 4
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
-dune_add_test(SOURCES vectorcommtest.cc
+dune_add_test(SOURCES vectorcommtest.cc LINK_LIBRARIES Dune::ISTL
               MPI_RANKS 1 2 4
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
 
-dune_add_test(SOURCES matrixmarkettest.cc)
+dune_add_test(SOURCES matrixmarkettest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES iluildltest.cc)
+dune_add_test(SOURCES iluildltest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES matrixfreesolverfactorytest.cc)
+dune_add_test(SOURCES matrixfreesolverfactorytest.cc LINK_LIBRARIES Dune::ISTL)
 
-dune_add_test(SOURCES blocklevel.cc COMPILE_ONLY)
+dune_add_test(SOURCES blocklevel.cc LINK_LIBRARIES Dune::ISTL COMPILE_ONLY)
 
 dune_add_test(SOURCES registermacrosbackwardcompatibilitytest.cc
+              LINK_LIBRARIES Dune::ISTL
               CMAKE_GUARD "SuiteSparse_UMFPACK_FOUND")
 
 exclude_from_headercheck(complexdata.hh)
