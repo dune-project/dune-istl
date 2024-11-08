@@ -16,7 +16,7 @@ if(CMAKE_USE_PTHREADS_INIT)
   add_dune_parmetis_flags(pthreadfastamgtest)
 
   dune_add_test(NAME pthreadtwoleveltest SOURCES pthreadtwoleveltest.cc
-    LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT}) Dune::ISTL
+    LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} Dune::ISTL)
   add_dune_mpi_flags(pthreadtwoleveltest)
   add_dune_parmetis_flags(pthreadtwoleveltest)
 
