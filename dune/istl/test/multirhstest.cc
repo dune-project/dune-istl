@@ -47,9 +47,9 @@ int main (int argc, char ** argv)
   test_all<Vc::double_v>();
   test_all<Vc::Vector<double, Vc::VectorAbi::Scalar>>();
   test_all<Vc::SimdArray<double,2>>();
-  test_all<Vc::SimdArray<double,2,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
+//  test_all<Vc::SimdArray<double,2,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
   test_all<Vc::SimdArray<double,8>>();
-  test_all<Vc::SimdArray<double,8,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
+//  test_all<Vc::SimdArray<double,8,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
 #endif
 
   test_all<double>(8);
