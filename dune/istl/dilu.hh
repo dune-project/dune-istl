@@ -9,6 +9,7 @@
 #include <complex>
 #include <map>
 #include <vector>
+#include <sstream>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/scalarvectorview.hh>
@@ -81,9 +82,13 @@ namespace Dune
         }
         catch (Dune::FMatrixError &e)
         {
-          DUNE_THROW(MatrixBlockError, "DILU failed to invert matrix block D[" << row_i << "]"
-                                                                               << e.what();
-                     th__ex.r = row_i;);
+          std::ostringstream sstream;
+          sstream << THROWSPEC(MatrixBlockError)
+            << "DILU failed to invert matrix block D[" << row_i << "]" << e.what();
+          MatrixBlockError ex;
+          ex.message(sstream.str());
+          ex.r = row_i;
+          throw ex;
         }
       }
     }

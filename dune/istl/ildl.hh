@@ -3,6 +3,8 @@
 #ifndef DUNE_ISTL_ILDL_HH
 #define DUNE_ISTL_ILDL_HH
 
+#include <sstream>
+
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
 #include "ilu.hh"
@@ -135,7 +137,14 @@ namespace Dune
       }
       catch( const Dune::FMatrixError &e )
       {
-        DUNE_THROW( MatrixBlockError, "ILDL failed to invert matrix block A[" << i.index() << "][" << ij.index() << "]" << e.what(); th__ex.r = i.index(); th__ex.c = ij.index() );
+        std::ostringstream sstream;
+        sstream << THROWSPEC(MatrixBlockError)
+          << "ILDL failed to invert matrix block A[" << i.index() << "][" << ij.index() << "]" << e.what();
+        MatrixBlockError ex;
+        ex.message(sstream.str());
+          ex.r = i.index();
+          ex.c = ij.index();
+        throw ex;
       }
     }
   }

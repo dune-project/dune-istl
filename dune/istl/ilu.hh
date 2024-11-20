@@ -5,6 +5,8 @@
 #ifndef DUNE_ISTL_ILU_HH
 #define DUNE_ISTL_ILU_HH
 
+#include <sstream>
+
 #include <cmath>
 #include <complex>
 #include <map>
@@ -82,9 +84,16 @@ namespace Dune {
           Impl::asMatrix(*ij).invert();   // compute inverse of diagonal block
         }
         catch (Dune::FMatrixError & e) {
-          DUNE_THROW(MatrixBlockError, "ILU failed to invert matrix block A["
-                     << i.index() << "][" << ij.index() << "]" << e.what();
-                     th__ex.r=i.index(); th__ex.c=ij.index(););
+          std::ostringstream sstream;
+          sstream << THROWSPEC(MatrixBlockError)
+            << THROWSPEC(MatrixBlockError)
+            << "ILU failed to invert matrix block A["
+            << i.index() << "][" << ij.index() << "]" << e.what();
+          MatrixBlockError ex;
+          ex.message(sstream.str());
+          ex.r = i.index();
+          ex.c = ij.index();
+          throw ex;
         }
       }
     }
