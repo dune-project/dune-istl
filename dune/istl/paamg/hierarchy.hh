@@ -125,24 +125,28 @@ namespace Dune
 
       public:
         /** @brief Constructor. */
-        LevelIterator()
-        {}
+        LevelIterator() = default;
 
         LevelIterator(std::shared_ptr<Element> element)
-          : element_(element)
+          : element_(std::move(element))
         {}
 
         /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<typename std::remove_const<C>::type,
-                          typename std::remove_const<T1>::type>& other)
+        template <class C_, class T1_,
+          std::enable_if_t<std::is_same_v<std::remove_const_t<C>, std::remove_const_t<C_>>, int> = 0,
+          std::enable_if_t<std::is_same_v<std::remove_const_t<T1>, std::remove_const_t<T1_>>, int> = 0>
+        LevelIterator(const LevelIterator<C_,T1_>& other)
           : element_(other.element_)
         {}
 
-        /** @brief Copy constructor. */
-        LevelIterator(const LevelIterator<const typename std::remove_const<C>::type,
-                          const typename std::remove_const<T1>::type>& other)
-          : element_(other.element_)
-        {}
+        template <class C_, class T1_,
+          std::enable_if_t<std::is_same_v<std::remove_const_t<C>, std::remove_const_t<C_>>, int> = 0,
+          std::enable_if_t<std::is_same_v<std::remove_const_t<T1>, std::remove_const_t<T1_>>, int> = 0>
+        LevelIterator& operator=(const LevelIterator<C_,T1_>& other)
+        {
+          element_ = other.element_;
+          return *this;
+        }
 
         /**
          * @brief Equality check.
@@ -209,7 +213,7 @@ namespace Dune
         }
 
       private:
-        std::shared_ptr<Element> element_;
+        std::shared_ptr<Element> element_ = {};
       };
 
       /** @brief Type of the mutable iterator. */
