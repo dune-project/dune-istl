@@ -165,7 +165,7 @@ namespace Dune {
         auto alpha = _sp->dot(q,p);
         lambda = Simd::cond(def==field_type(0.),
                             field_type(0.), // no need for minimization if def is already 0
-                            _sp->dot(p,b)/alpha); // minimization
+                            field_type(_sp->dot(p,b)/alpha)); // minimization
         x.axpy(lambda,p);           // update solution
         b.axpy(-lambda,q);          // update defect
 
@@ -311,7 +311,7 @@ namespace Dune {
         // minimize in given search direction p
         _op->apply(p,q);             // q=Ap
         alpha = _sp->dot(p,q);       // scalar product
-        lambda = Simd::cond(def==field_type(0.), field_type(0.), rholast/alpha);     // minimization
+        lambda = Simd::cond(def==field_type(0.), field_type(0.), field_type(rholast/alpha));     // minimization
         if constexpr (enableConditionEstimate)
           if (condition_estimate_)
             lambdas.push_back(std::real(lambda));
@@ -327,7 +327,7 @@ namespace Dune {
         q = 0;                      // clear correction
         _prec->apply(q,b);           // apply preconditioner
         rho = _sp->dot(q,b);         // orthogonalization
-        beta = Simd::cond(def==field_type(0.), field_type(0.), rho/rholast);         // scaling factor
+        beta = Simd::cond(def==field_type(0.), field_type(0.), field_type(rho/rholast));         // scaling factor
         if constexpr (enableConditionEstimate)
           if (condition_estimate_)
             betas.push_back(std::real(beta));
@@ -509,7 +509,7 @@ namespace Dune {
         {
           beta = Simd::cond(norm==field_type(0.),
                             field_type(0.), // no need for orthogonalization if norm is already 0
-                            ( rho_new / rho ) * ( alpha / omega ));
+                            field_type(( rho_new / rho ) * ( alpha / omega )));
           p.axpy(-omega,v); // p = r + beta (p - omega*v)
           p *= beta;
           p += r;
@@ -532,7 +532,7 @@ namespace Dune {
 
         alpha = Simd::cond(norm==field_type(0.),
                            field_type(0.),
-                           rho_new / h);
+                           field_type(rho_new / h));
 
         // apply first correction to x
         // x <- x + alpha y
@@ -563,7 +563,7 @@ namespace Dune {
         h = _sp->dot(t,t);
         omega = Simd::cond(norm==field_type(0.),
                            field_type(0.),
-                           _sp->dot(t,r)/h);
+                           field_type(_sp->dot(t,r)/h));
 
         // apply second correction to x
         // x <- x + omega y
@@ -676,12 +676,12 @@ namespace Dune {
       q[0] = 0.0;
       q[1] *= Simd::cond(def==field_type(0.),
                          field_type(0.),
-                         real_type(1.0)/beta);
+                         field_type(real_type(1.0)/beta));
       q[2] = 0.0;
 
       z *= Simd::cond(def==field_type(0.),
                       field_type(0.),
-                      real_type(1.0)/beta);
+                      field_type(real_type(1.0)/beta));
 
       // the loop
       int i = 1;
@@ -710,10 +710,10 @@ namespace Dune {
 
         q[i2] *= Simd::cond(def==field_type(0.),
                             field_type(0.),
-                            real_type(1.0)/beta);
+                            field_type(real_type(1.0)/beta));
         z *= Simd::cond(def==field_type(0.),
                         field_type(0.),
-                        real_type(1.0)/beta);
+                        field_type(real_type(1.0)/beta));
 
         // QR Factorization of recurrence coefficient matrix
         // apply previous givens rotations to last column of T
@@ -778,24 +778,24 @@ namespace Dune {
       // we rewrite the code in a vectorizable fashion
       cs = Simd::cond(norm_dy < eps,
         real_type(1.0),
-        Simd::cond(norm_dx < eps,
+        real_type(Simd::cond(norm_dx < eps,
           real_type(0.0),
-          Simd::cond(norm_dy > norm_dx,
+          real_type(Simd::cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
-          )));
+          )))));
       sn = Simd::cond(norm_dy < eps,
         field_type(0.0),
-        Simd::cond(norm_dx < eps,
+        field_type(Simd::cond(norm_dx < eps,
           field_type(1.0),
-          Simd::cond(norm_dy > norm_dx,
+          field_type(Simd::cond(norm_dy > norm_dx,
             // dy and dx are real in exact arithmetic
             // thus dx*dy is real so we can explicitly enforce it
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*dy/norm_dx/norm_dy,
             // dy and dx is real in exact arithmetic
             // so we don't have to conjugate both of them
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dy/dx
-          )));
+          )))));
     }
 
   protected:
@@ -956,7 +956,7 @@ namespace Dune {
         int i = 0;
         v[0] *= Simd::cond(norm==real_type(0.),
                            real_type(0.),
-                           real_type(1.0)/norm);
+                           real_type(real_type(1.0)/norm));
         s[0] = norm;
         for(i=1; i<m+1; i++)
           s[i] = 0.0;
@@ -986,7 +986,7 @@ namespace Dune {
           v[i+1] = w;
           v[i+1] *= Simd::cond(norm==real_type(0.),
                                field_type(0.),
-                               real_type(1.0)/H[i+1][i]);
+                               field_type(real_type(1.0)/H[i+1][i]));
 
           // update QR factorization
           for(int k=0; k<i; k++)
@@ -1050,7 +1050,7 @@ namespace Dune {
           rhs -= H[a][b]*y[b];
         y[a] = Simd::cond(rhs==field_type(0.),
                           field_type(0.),
-                          rhs/H[a][a]);
+                          field_type(rhs/H[a][a]));
 
         // compute update on the fly
         // w += y[a]*v[a]
@@ -1087,18 +1087,18 @@ namespace Dune {
         real_type(1.0),
         Simd::cond(norm_dx < eps,
           real_type(0.0),
-          Simd::cond(norm_dy > norm_dx,
+          real_type(Simd::cond(norm_dy > norm_dx,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)*temp,
             real_type(1.0)/sqrt(real_type(1.0) + temp*temp)
-          )));
+          ))));
       sn = Simd::cond(norm_dy < eps,
         field_type(0.0),
         Simd::cond(norm_dx < eps,
           field_type(1.0),
-          Simd::cond(norm_dy > norm_dx,
+          field_type(Simd::cond(norm_dy > norm_dx,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*dx*conjugate(dy)/norm_dx/norm_dy,
             field_type(1.0)/sqrt(real_type(1.0) + temp*temp)*conjugate(dy/dx)
-          )));
+          ))));
     }
 
 
