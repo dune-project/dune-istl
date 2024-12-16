@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE.md in module root
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
+# Link all test targets in this directory against Dune::ISTL
+link_libraries(Dune::ISTL)
+
 # install the test tools as we want to support testing 3rd-party vectors and matrices with an installed dune-istl
 install(FILES
         matrixtest.hh
