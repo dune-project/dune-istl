@@ -483,6 +483,9 @@ int main()
     BDMatrix<double> bdMatrix3 = {1.0, 2.0, 3.0};
     testSolve<BDMatrix<double>, BlockVector<double> >(bdMatrix3);
 
+    // Test whether inversion works
+    bdMatrix3.invert();
+
     // test whether resizing works
     bdMatrix2.setSize(5);
     bdMatrix2 = 4.0;
@@ -490,8 +493,6 @@ int main()
     y.resize(5);
     testMatrix(bdMatrix2, x, y);
 
-    // Test whether inversion works
-    bdMatrix2.invert();
   }
 
   // ////////////////////////////////////////////////////////////////////////
