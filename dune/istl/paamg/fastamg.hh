@@ -475,7 +475,12 @@ namespace Dune
           }
         }
         if(isDirichlet && hasDiagonal)
-          diag->solve(x[row.index()], b[row.index()]);
+        {
+          if constexpr (Dune::IsNumber<Block>::value)
+            x[row.index()] = b[row.index()]/(*diag);
+          else
+            diag->solve(x[row.index()], b[row.index()]);
+        }
       }
       if (verbosity_>0)
         std::cout<<" Preprocessing Dirichlet took "<<watch1.elapsed()<<std::endl;
