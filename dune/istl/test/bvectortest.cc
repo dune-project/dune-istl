@@ -180,7 +180,7 @@ int main()
 {
   typedef std::complex<double> value_type;
   //typedef double value_type;
-  typedef Dune::FieldVector<value_type,1> VectorBlock;
+  typedef value_type VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
 
   // Test a BlockVector of BlockVectors

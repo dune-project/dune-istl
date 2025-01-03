@@ -59,7 +59,7 @@ int main()
 
   testSuperMatrix(matrix);
 
-  Matrix<FieldMatrix<double,1,1> > nonquadraticMatrix(1,2);
+  Matrix<double> nonquadraticMatrix(1,2);
   {
     size_t n = 1;
     for (size_t i=0; i<1; i++)
@@ -293,18 +293,12 @@ int main()
   //   Test the DiagonalMatrix class
   // ////////////////////////////////////////////////////////////////////////
 
-  FieldVector<double,1> dMatrixConstructFrom;
-  dMatrixConstructFrom = 3.1459;
-
   DiagonalMatrix<double,4> dMatrix1;
   dMatrix1 = 3.1459;
   testMatrix(dMatrix1, fvX, fvY);
 
   DiagonalMatrix<double,4> dMatrix2(3.1459);
   testMatrix(dMatrix2, fvX, fvY);
-
-  DiagonalMatrix<double,4> dMatrix3(dMatrixConstructFrom);
-  testMatrix(dMatrix3, fvX, fvY);
 
   // ////////////////////////////////////////////////////////////////////////
   //   Test the ScaledIdentityMatrix class

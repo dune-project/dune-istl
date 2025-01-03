@@ -83,7 +83,7 @@ int main(int argc, char** argv) try
 {
   using namespace Indices;
 
-  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > multiVector;
+  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<double> > multiVector;
 
   multiVector[_0] = {{1,0,0},
                      {0,1,0},
@@ -94,7 +94,7 @@ int main(int argc, char** argv) try
   testMultiVector(multiVector);
 
   // create a "shallow" copy
-  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >&, BlockVector<FieldVector<double,1> >& >
+  MultiTypeBlockVector<BlockVector<FieldVector<double,3> >&, BlockVector<double>& >
     multiVectorRef(multiVector[_0], multiVector[_1]);
 
   multiVectorRef[_0][0][0] = 5.0;

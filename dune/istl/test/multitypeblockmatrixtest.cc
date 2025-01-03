@@ -71,7 +71,7 @@ void testInterfaceMethods()
     multiMatrix[_1][_1] = 4211;
 
     // Set up a test vector
-    MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<FieldVector<double,1> > > domainVector;
+    MultiTypeBlockVector<BlockVector<FieldVector<double,3> >, BlockVector<double> > domainVector;
 
     domainVector[_0] = {{1,0,0},
                         {0,1,0},

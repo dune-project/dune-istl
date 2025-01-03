@@ -10,7 +10,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/istl/bcrsmatrix.hh>
 
-typedef Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1> > ScalarMatrix;
+typedef Dune::BCRSMatrix<double> ScalarMatrix;
 
 void buildMatrix(ScalarMatrix& m)
 {
@@ -255,24 +255,20 @@ int testEntryConsistency()
 {
   int ret=0;
   ScalarMatrix m(10,10,3,0.1,ScalarMatrix::implicit);
-  if(!Dune::FloatCmp::eq(m.entry(0,3)[0][0], 0.0))
-    ret++;
-  if(!Dune::FloatCmp::eq(m.entry(7,6)[0][0], 0.0))
-    ++ret;
   buildMatrix(m);
-  if(!Dune::FloatCmp::eq(m.entry(0,3)[0][0], 1.0))
+  if(!Dune::FloatCmp::eq(m.entry(0,3), 1.0))
     ++ret;
-  if(!Dune::FloatCmp::eq(m.entry(7,6)[0][0], 1.0))
+  if(!Dune::FloatCmp::eq(m.entry(7,6), 1.0))
     ++ret;
-  m.entry(4,4)[0][0] += 3.0;
-  if(!Dune::FloatCmp::eq(m.entry(4,4)[0][0], 4.0))
+  m.entry(4,4) += 3.0;
+  if(!Dune::FloatCmp::eq(m.entry(4,4), 4.0))
     ++ret;
   m.compress();
-  if(!Dune::FloatCmp::eq(m[0][3][0][0], 1.0))
+  if(!Dune::FloatCmp::eq(m[0][3], 1.0))
     ++ret;
-  if(!Dune::FloatCmp::eq(m[7][6][0][0], 1.0))
+  if(!Dune::FloatCmp::eq(m[7][6], 1.0))
     ++ret;
-  if(!Dune::FloatCmp::eq(m[4][4][0][0], 4.0))
+  if(!Dune::FloatCmp::eq(m[4][4], 4.0))
     ++ret;
   if(ret)
     std::cerr<<"ERROR: Entries are not consistent"<<std::endl;

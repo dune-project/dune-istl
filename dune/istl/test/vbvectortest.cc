@@ -17,10 +17,10 @@ int main()
 {
   TestSuite suite;
 
-  VariableBlockVector<FieldVector<double,1> > v1;
-  VariableBlockVector<FieldVector<double,1> > v2 = v1;
-  VariableBlockVector<FieldVector<double,1> > v3(10);
-  VariableBlockVector<FieldVector<double,1> > v4(10,4);
+  VariableBlockVector<double> v1;
+  VariableBlockVector<double> v2 = v1;
+  VariableBlockVector<double> v3(10);
+  VariableBlockVector<double> v4(10,4);
 
   v3.resize(20);
   v4.resize(20,8);
