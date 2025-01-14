@@ -17,6 +17,7 @@
 #include <dune/common/sllist.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/scalarmatrixview.hh>
+#include <dune/common/typetraits.hh>
 
 #include <utility>
 #include <set>
@@ -25,6 +26,7 @@
 #include <limits>
 #include <ostream>
 #include <tuple>
+#include <cmath>
 
 namespace Dune
 {

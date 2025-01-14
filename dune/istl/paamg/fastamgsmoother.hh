@@ -6,6 +6,7 @@
 #define DUNE_ISTL_FASTAMGSMOOTHER_HH
 
 #include <cstddef>
+#include <dune/common/typetraits.hh>
 
 namespace Dune
 {
