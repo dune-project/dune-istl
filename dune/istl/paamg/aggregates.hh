@@ -17,6 +17,7 @@
 #include <dune/common/sllist.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/common/scalarmatrixview.hh>
+#include <dune/common/typetraits.hh>
 
 #include <utility>
 #include <set>
@@ -25,6 +26,7 @@
 #include <limits>
 #include <ostream>
 #include <tuple>
+#include <cmath>
 
 namespace Dune
 {
@@ -470,9 +472,13 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
+      auto operator()(const M& m) const
       {
-        return m.infinity_norm();
+        using std::abs;
+        if constexpr(Dune::IsNumber<M>::value)
+          return abs(m);
+        else
+          return m.infinity_norm();
       }
     };
 

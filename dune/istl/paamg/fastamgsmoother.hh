@@ -6,6 +6,7 @@
 #define DUNE_ISTL_FASTAMGSMOOTHER_HH
 
 #include <cstddef>
+#include <dune/common/typetraits.hh>
 
 namespace Dune
 {
@@ -33,17 +34,31 @@ namespace Dune
           *dIter = *bIter;
 
           for (; col.index()<row.index(); ++col)
-            (*col).mmv(x[col.index()],*dIter);     // rhs -= sum_{j<i} a_ij * xnew_j
+          {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(*col)>>::value)
+              *dIter -= (*col)*x[col.index()];
+            else
+              (*col).mmv(x[col.index()],*dIter);     // rhs -= sum_{j<i} a_ij * xnew_j
+          }
           assert(row.index()==col.index());
           ColIterator diag=col;              // upper diagonal matrix not needed as x was 0 before.
 
           // Not recursive yet. Just solve with the diagonal
-          diag->solve(*xIter,*dIter);
+          if constexpr (Dune::IsNumber<std::decay_t<decltype(*diag)>>::value)
+            *xIter = (*dIter)/(*diag);
+          else
+            diag->solve(*xIter,*dIter);
+
           *dIter=0;   //as r=v
 
           // Update residual for the symmetric case
           for(col=(*row).begin(); col.index()<row.index(); ++col)
-            col->mmv(*xIter, d[col.index()]);     //d_j-=A_ij x_i
+          {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(*col)>>::value)
+              d[col.index()] -= (*col)*(*xIter);
+            else
+              col->mmv(*xIter, d[col.index()]);     //d_j-=A_ij x_i
+          }
         }
       }
     };
@@ -71,16 +86,29 @@ namespace Dune
           *dIter = *bIter;
 
           for (; col.index()>row.index(); --col)
-            (*col).mmv(x[col.index()],*dIter);     // rhs -= sum_{i>j} a_ij * xnew_j
+          {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(*col)>>::value)
+              *dIter -= (*col)*x[col.index()];
+            else
+              (*col).mmv(x[col.index()],*dIter);     // rhs -= sum_{j<i} a_ij * xnew_j
+          }
           assert(row.index()==col.index());
           ColIterator diag=col;
           YBlock v=*dIter;
           // upper diagonal matrix
           for (--col; col!=endCol; --col)
-            (*col).mmv(x[col.index()],v);     // v -= sum_{j<i} a_ij * xold_j
+          {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(*col)>>::value)
+              v -= (*col)*x[col.index()];
+            else
+              (*col).mmv(x[col.index()],v);     // v -= sum_{j<i} a_ij * xold_j
+          }
 
           // Not recursive yet. Just solve with the diagonal
-          diag->solve(*xIter,v);
+          if constexpr (Dune::IsNumber<std::decay_t<decltype(*diag)>>::value)
+            *xIter = v/(*diag);
+          else
+            diag->solve(*xIter,v);
 
           *dIter-=v;
 
