@@ -38,7 +38,7 @@ void randomize(const M& mat, V& b)
   mat.mv(static_cast<const V&>(x), b);
 }
 
-template <int BS>
+template <class MatrixBlock, class VectorBlock>
 void testAMG(int N, int coarsenTarget, int ml)
 {
   std::cout<<"N="<<N<<" coarsenTarget="<<coarsenTarget<<" maxlevel="<<ml<<std::endl;
@@ -46,9 +46,7 @@ void testAMG(int N, int coarsenTarget, int ml)
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
   ParallelIndexSet indices;
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
   typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
   typedef Dune::BlockVector<VectorBlock> Vector;
   typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
   typedef Dune::Communication<void*> Comm;
@@ -137,8 +135,23 @@ try
   if(argc>3)
     ml = atoi(argv[3]);
 
-  testAMG<1>(N, coarsenTarget, ml);
-  testAMG<2>(N, coarsenTarget, ml);
+  {
+    using MB = double;
+    using VB = double;
+    testAMG<MB, VB>(N, coarsenTarget, ml);
+  }
+
+  {
+    using MB = Dune::FieldMatrix<double,1,1>;
+    using VB = Dune::FieldVector<double,1>;
+    testAMG<MB, VB>(N, coarsenTarget, ml);
+  }
+
+  {
+    using MB = Dune::FieldMatrix<double,2,2>;
+    using VB = Dune::FieldVector<double,2>;
+    testAMG<MB, VB>(N, coarsenTarget, ml);
+  }
 
   return 0;
 }
