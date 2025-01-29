@@ -461,6 +461,10 @@ public:
 
     });
 
+    // Remove old factor that may be left over from a previous run
+    if (L_)
+      CholmodMethod::free_factor(&L_, &c_);
+
     // Now analyse the pattern and optimal row order
     L_ = CholmodMethod::analyze(M.get(), &c_);
 
