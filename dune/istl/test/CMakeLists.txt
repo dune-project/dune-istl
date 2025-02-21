@@ -208,5 +208,6 @@ dune_add_test(SOURCES blocklevel.cc COMPILE_ONLY)
 
 dune_add_test(SOURCES registermacrosbackwardcompatibilitytest.cc
               CMAKE_GUARD "SuiteSparse_UMFPACK_FOUND")
+add_dune_suitesparse_flags(registermacrosbackwardcompatibilitytest)
 
 exclude_from_headercheck(complexdata.hh)

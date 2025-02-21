@@ -90,6 +90,8 @@ dune_add_test(SOURCES coarsentest.cc
               MPI_RANKS 1 2 4
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
+add_dune_mpi_flags(coarsentest)
+add_dune_parmetis_flags(coarsentest) # ParMETIS is not a hard requirement
 
 dune_add_test(NAME pamgtest
               SOURCES parallelamgtest.cc
