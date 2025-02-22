@@ -1820,8 +1820,9 @@ namespace Dune
     //     DUNE_THROW(ISTLError, numOfOwnVtx<<"!="<<indexMap.globalOwnerVertices<<" owners missing or additional ones"
     //             <<" during repartitioning.");
     //   }
-    std::is_sorted(outputIndexSet.begin(), outputIndexSet.end(),
-                   [](const auto& v1, const auto& v2){ return v1.global() < v2.global();});
+    if (!std::is_sorted(outputIndexSet.begin(), outputIndexSet.end(),
+                   [](const auto& v1, const auto& v2){ return v1.global() < v2.global();}))
+      DUNE_THROW(ISTLError, "OutputIndexSet is not sorted.");
 #endif
     if(verbose) {
       oocomm.communicator().barrier();
