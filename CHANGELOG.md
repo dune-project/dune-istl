@@ -5,6 +5,9 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.11)
 
+- `FastAMG` can now be used with non-nested matrices of type `BCRSMatrix<T>`
+  where `T` is a plain number type instead of `FieldMatrix<T,m,n>`.
+
 # Release 2.10
 
 - Improve testing support on Laplacian matrices with an optional diagonal regularization parameter.
