@@ -19,6 +19,7 @@
 #include "istlexception.hh"
 #include "bvector.hh"
 #include "matrixutils.hh"
+#include "matrixindexset.hh"
 #include <dune/common/stdstreams.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/typetraits.hh>
@@ -1015,7 +1016,9 @@ namespace Dune {
           Mat.r[i].set(0,nullptr,nullptr);
 
         // initialize the j array for row i from pattern
-        std::copy(pattern.cbegin(), pattern.cend(), Mat.r[i].getindexptr());
+        std::visit([&](const auto& pattern){
+          std::copy(pattern.cbegin(), pattern.cend(), Mat.r[i].getindexptr());
+        }, pattern.storage());
 
         // now go to next row
         i++;
@@ -1066,7 +1069,7 @@ namespace Dune {
       //! return true if column index is in row
       bool contains (size_type j)
       {
-        return pattern.find(j) != pattern.end();
+        return pattern.contains(j);
       }
       /**
        * @brief Get the current row size.
@@ -1082,8 +1085,8 @@ namespace Dune {
       BCRSMatrix& Mat;     // the matrix we are defining
       size_type i;               // current row to be defined
       size_type nnz;             // count total number of nonzeros
-      typedef std::set<size_type,std::less<size_type> > PatternType;
-      PatternType pattern;     // used to compile entries in a row
+      using PatternType = typename Impl::RowIndexSet;
+      PatternType pattern;      // used to compile entries in a row
       row_type current_row;     // row pointing to the current row to setup
     };
 
