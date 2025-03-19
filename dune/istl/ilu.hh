@@ -53,7 +53,7 @@ namespace Dune {
           // find A_jj which eliminates A_ij
           coliterator jj = A[ij.index()].find(ij.index());
 
-          // compute L_ij = A_jj^-1 * A_ij
+          // compute L_ij = A_ij * A_jj^-1
           Impl::asMatrix(*ij).rightmultiply(Impl::asMatrix(*jj));
 
           // modify row
