@@ -20,4 +20,6 @@ endif()
 
 if(ARPACKPP_FOUND AND SuperLU_FOUND)
   dune_add_test(NAME arpackppsuperlutest SOURCES cond2test.cc)
+  add_dune_superlu_flags(arpackppsuperlutest)
+  add_dune_arpackpp_flags(arpackppsuperlutest)
 endif()

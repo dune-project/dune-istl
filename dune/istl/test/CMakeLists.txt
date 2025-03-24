@@ -37,7 +37,7 @@ dune_add_test(SOURCES matrixutilstest.cc)
 dune_add_test(SOURCES matrixtest.cc)
 
 dune_add_test(SOURCES multirhstest.cc)
-  add_dune_vc_flags(multirhstest)
+add_dune_vc_flags(multirhstest) # Vc is not a hard requirement
 
 dune_add_test(SOURCES bvectortest.cc)
 
@@ -88,16 +88,39 @@ function(add_factory_test BLOCK)
   STRING(REGEX REPLACE "[^a-zA-Z0-9]" "" BLOCK_CLEAN ${BLOCK})
   set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "#define DISABLE_AMG_DIRECTSOLVER 1")
   configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}.cc)
-  dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc
-                CMAKE_GUARD HAVE_MPI)
+  dune_add_test(NAME solverfactorytest_${BLOCK_CLEAN}
+                SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}.cc
+                CMAKE_GUARD
+                  HAVE_MPI
+                  SuiteSparse_CHOLMOD_FOUND
+                  SuiteSparse_LDL_FOUND
+                  SuiteSparse_SPQR_FOUND
+                  SuiteSparse_UMFPACK_FOUND
+                  SuperLU_FOUND)
+  add_dune_mpi_flags(solverfactorytest_${BLOCK_CLEAN})
+  add_dune_parmetis_flags(solverfactorytest_${BLOCK_CLEAN})
+  add_dune_suitesparse_flags(solverfactorytest_${BLOCK_CLEAN})
+  add_dune_superlu_flags(solverfactorytest_${BLOCK_CLEAN})
+
   string(REGEX MATCH "LoopSIMD" _matched "${BLOCK}")
   if(NOT _matched)
     set(DEFINE_DEACTIVATE_AMG_DIRECTSOLVER "")
     configure_file(solverfactorytest.cc.in solverfactorytest_${BLOCK_CLEAN}_direct.cc)
-    dune_add_test(SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc
+    dune_add_test(NAME solverfactorytest_${BLOCK_CLEAN}_direct
+                  SOURCES ${CMAKE_CURRENT_BINARY_DIR}/solverfactorytest_${BLOCK_CLEAN}_direct.cc
                   MPI_RANKS 1 2 4
                   TIMEOUT 600
-                  CMAKE_GUARD "HAVE_MPI AND SuiteSparse_CHOLMOD_FOUND AND SuiteSparse_LDL_FOUND AND SuiteSparse_SPQR_FOUND AND SuiteSparse_UMFPACK_FOUND AND SuperLU_FOUND")
+                  CMAKE_GUARD
+                    HAVE_MPI
+                    SuiteSparse_CHOLMOD_FOUND
+                    SuiteSparse_LDL_FOUND
+                    SuiteSparse_SPQR_FOUND
+                    SuiteSparse_UMFPACK_FOUND
+                    SuperLU_FOUND)
+    add_dune_mpi_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
+    add_dune_parmetis_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
+    add_dune_suitesparse_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
+    add_dune_superlu_flags(solverfactorytest_${BLOCK_CLEAN}_direct)
   endif()
 endfunction(add_factory_test)
 
@@ -110,39 +133,54 @@ endforeach()
 dune_symlink_to_source_files(FILES solverfactorytest.ini)
 
 # SuperLU tests
+if(HAVE_SUPERLU)
   dune_add_test(NAME superlustest
                 SOURCES superlutest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=0)
+  add_dune_superlu_flags(superlustest)
 
   dune_add_test(SOURCES superlutest.cc)
+  add_dune_superlu_flags(superlutest)
 
   dune_add_test(NAME superluctest
                 SOURCES superlutest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=2)
+  add_dune_superlu_flags(superluctest)
 
   dune_add_test(NAME superluztest
                 SOURCES superlutest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
+  add_dune_superlu_flags(superluztest)
 
   dune_add_test(SOURCES complexrhstest.cc
                 COMPILE_DEFINITIONS SUPERLU_NTYPE=3)
+  add_dune_superlu_flags(complexrhstest)
+endif()
 
 # SuiteSparse tests
+if(HAVE_SUITESPARSE)
   dune_add_test(SOURCES umfpacktest.cc
               CMAKE_GUARD SuiteSparse_UMFPACK_FOUND)
+  add_dune_suitesparse_flags(umfpacktest)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "umfpack_decomp")
 
-dune_add_test(SOURCES ldltest.cc
-              CMAKE_GUARD SuiteSparse_LDL_FOUND)
+  dune_add_test(SOURCES ldltest.cc
+                CMAKE_GUARD SuiteSparse_LDL_FOUND)
+  add_dune_suitesparse_flags(ldltest)
 
-dune_add_test(SOURCES spqrtest.cc
-              CMAKE_GUARD SuiteSparse_SPQR_FOUND)
+  dune_add_test(SOURCES spqrtest.cc
+                CMAKE_GUARD SuiteSparse_SPQR_FOUND)
+  add_dune_suitesparse_flags(spqrtest)
+
+  dune_add_test(SOURCES cholmodtest.cc
+                CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
+  add_dune_suitesparse_flags(cholmodtest)
+endif()
 
 dune_add_test(SOURCES overlappingschwarztest.cc
               CMAKE_GUARD "SuperLU_FOUND OR SuiteSparse_UMFPACK_FOUND")
-
-dune_add_test(SOURCES cholmodtest.cc
-              CMAKE_GUARD SuiteSparse_CHOLMOD_FOUND)
+add_dune_suitesparse_flags(overlappingschwarztest)
+add_dune_superlu_flags(overlappingschwarztest)
 
 dune_add_test(SOURCES registrytest.cc)
 
@@ -151,11 +189,14 @@ dune_add_test(SOURCES matrixredisttest.cc
               MPI_RANKS 1 2 4
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
+add_dune_mpi_flags(matrixredisttest)
+add_dune_parmetis_flags(matrixredisttest) # ParMETIS is not a hard requirement
 
 dune_add_test(SOURCES vectorcommtest.cc
               MPI_RANKS 1 2 4
               TIMEOUT 600
               CMAKE_GUARD MPI_FOUND)
+add_dune_mpi_flags(vectorcommtest)
 
 dune_add_test(SOURCES matrixmarkettest.cc)
 
@@ -167,5 +208,6 @@ dune_add_test(SOURCES blocklevel.cc COMPILE_ONLY)
 
 dune_add_test(SOURCES registermacrosbackwardcompatibilitytest.cc
               CMAKE_GUARD "SuiteSparse_UMFPACK_FOUND")
+add_dune_suitesparse_flags(registermacrosbackwardcompatibilitytest)
 
 exclude_from_headercheck(complexdata.hh)
