@@ -26,14 +26,10 @@
 #endif
 
 #if HAVE_GMP
-namespace Dune {
-  namespace FloatCmp {
-    template<unsigned int prec>
-    struct EpsilonType<Dune::GMPField<prec>> {
-      typedef float Type;
-    };
-  }
-}
+template<unsigned int prec>
+struct Dune::FloatCmp::EpsilonType<Dune::GMPField<prec>> {
+  typedef float Type;
+};
 #endif
 
 template <class Matrix, class Vector>
@@ -62,6 +58,9 @@ int testMatrixMarket(int N)
   int prec = std::numeric_limits<R>::is_specialized
     ? std::numeric_limits<R>::max_digits10
     : std::numeric_limits<long double>::max_digits10;
+  R eps = std::numeric_limits<R>::is_specialized
+    ? std::numeric_limits<R>::epsilon()
+    : R(std::numeric_limits<float>::epsilon()) ;
 
 #if HAVE_MPI
   comm.remoteIndices().rebuild<false>();
@@ -115,7 +114,7 @@ int testMatrixMarket(int N)
     }
 
   for (auto entry=bv.begin(), entry1=bv1.begin(); bv.end() != entry; ++entry, ++entry1)
-    if (Dune::Simd::anyTrue(*entry!=*entry1))
+    if (Dune::Simd::anyTrue(abs(*entry - *entry1) > eps))
     {
       std::cerr<<"written and read vector do not match"<<std::endl;
       ++ret;
@@ -139,7 +138,7 @@ int testMatrixMarket(int N)
 #endif
 
   for (auto entry=cv.begin(), entry1=cv1.begin(); cv.end() != entry; ++entry, ++entry1)
-    if (Dune::Simd::anyTrue(*entry!=*entry1))
+    if (Dune::Simd::anyTrue(abs(*entry - *entry1) > eps))
     {
       std::cerr<<"computed vectors do not match: " << *entry << " != " << *entry1 <<std::endl;
       ++ret;
