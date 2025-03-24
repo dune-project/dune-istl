@@ -199,6 +199,9 @@ dune_add_test(SOURCES vectorcommtest.cc
 add_dune_mpi_flags(vectorcommtest)
 
 dune_add_test(SOURCES matrixmarkettest.cc)
+add_dune_gmp_flags(matrixmarkettest)
+add_dune_mpi_flags(matrixmarkettest)
+add_dune_quadmath_flags(matrixmarkettest)
 
 dune_add_test(SOURCES iluildltest.cc)
 
