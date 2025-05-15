@@ -5,6 +5,8 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.11)
 
+- Row-wise creation of `BCRSMatrix` became faster.
+
 - `FastAMG` can now be used with non-nested matrices of type `BCRSMatrix<T>`
   where `T` is a plain number type instead of `FieldMatrix<T,m,n>`.
 
