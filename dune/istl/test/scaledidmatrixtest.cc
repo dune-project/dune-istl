@@ -9,6 +9,7 @@
 #include <iostream>
 #include <algorithm>
 
+#include <dune/common/diagonalmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/test/testsuite.hh>
@@ -51,7 +52,52 @@ TestSuite test_matrix()
   std::cout << f << std::endl;
 
   // Construction of FieldMatrix from ScaledIdentityMatrix
-  [[maybe_unused]] FieldMatrix<K,n,n> AFM = FieldMatrix<K,n,n>(A);
+  FieldMatrix<K,n,n> AFM = FieldMatrix<K,n,n>(A);
+
+  // Test whether we can add a ScaledIdentityMatrix to a FieldMatrix,
+  // and vice versa
+  const auto sum = A + AFM + A;
+
+  // Is the sum correctly computed?
+  for (std::size_t i=0; i<sum.N(); ++i)
+    for (std::size_t j=0; j<sum.M(); ++j)
+      if (i==j)
+        test.check(sum[i][j] == A[i][j] + AFM[i][j] + A[i][j]) << "sum diagonal";
+      else // Off-diagonal entries of a ScaledIdentityMatrix cannot be accessed.
+        test.check(sum[i][j] == AFM[i][j]) << "sum off-diagonal";
+
+  // Construct a number type different from K
+  using OtherScalar = std::conditional_t<std::is_same_v<K,float>, double, float>;
+
+  // Construction of FieldMatrix from ScaledIdentityMatrix
+  auto AFMOtherScalar = FieldMatrix<OtherScalar,n,n>(A);
+
+  // Test whether we can add a ScaledIdentityMatrix to a FieldMatrix
+  // with a different number type, and vice versa
+  const auto sum2 = A + AFMOtherScalar + A;
+  AFMOtherScalar += A;
+
+  // Is the sum correctly computed?
+  for (std::size_t i=0; i<sum2.N(); ++i)
+  {
+    for (std::size_t j=0; j<sum2.M(); ++j)
+      if (i==j)
+        test.check(sum2[i][j] == A[i][j] + AFMOtherScalar[i][j]) << "sum2 diagonal";
+      else // Off-diagonal entries of a ScaledIdentityMatrix cannot be accessed.
+        test.check(sum2[i][j] == AFMOtherScalar[i][j]) << "sum2 off-diagonal";
+  }
+
+  // Construction of DiagonalMatrix from ScaledIdentityMatrix
+  auto ADMOtherScalar = DiagonalMatrix<OtherScalar,n>(42.0);
+
+  // Test whether we can add a ScaledIdentityMatrix to a DiagonalMatrix
+  // with a different number type, and vice versa
+  const auto sum3 = A + ADMOtherScalar + A;
+  ADMOtherScalar += A;
+
+  // Is the sum correctly computed?
+  for (std::size_t i=0; i<sum3.N(); ++i)
+    test.check(sum3[i][i] == A[i][i] + ADMOtherScalar[i][i]) << "sum3 diagonal";
 
   return test;
 }

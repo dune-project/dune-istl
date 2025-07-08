@@ -213,6 +213,72 @@ namespace Dune {
       return ScaledIdentityMatrix<typename PromotionTraits<Scalar,K>::PromotedType, n>{scalar*matrix.scalar()};
     }
 
+    //! Addition of ScaledIdentityMatrix to FieldMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto& operator+= (FieldMatrix<OtherScalar,n,n>& fieldMatrix,
+                             const ScaledIdentityMatrix& matrix)
+    {
+      for (int i=0; i<n; i++)
+        fieldMatrix[i][i] += matrix.p_;
+
+      return fieldMatrix;
+    }
+
+    //! Addition of ScaledIdentityMatrix to FieldMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const FieldMatrix<OtherScalar,n,n>& fieldMatrix,
+                           const ScaledIdentityMatrix& matrix)
+    {
+      using Result = FieldMatrix<typename PromotionTraits<K,OtherScalar>::PromotedType,n,n>;
+      Result result = fieldMatrix;
+      result += matrix;
+      return result;
+    }
+
+    //! Addition of FieldMatrix to ScaledIdentityMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const ScaledIdentityMatrix& matrix,
+                           const FieldMatrix<OtherScalar,n,n>& fieldMatrix)
+    {
+      return fieldMatrix + matrix;
+    }
+
+    //! Addition of ScaledIdentityMatrix to DiagonalMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+= (DiagonalMatrix<OtherScalar,n>& diagonalMatrix,
+                            const ScaledIdentityMatrix& matrix)
+    {
+      for (std::size_t i=0; i<n; i++)
+        diagonalMatrix.diagonal(i) += matrix.p_;
+
+      return diagonalMatrix;
+    }
+
+    //! Addition of ScaledIdentityMatrix to DiagonalMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const DiagonalMatrix<OtherScalar,n>& diagonalMatrix,
+                           const ScaledIdentityMatrix& matrix)
+    {
+      using Result = DiagonalMatrix<typename PromotionTraits<K,OtherScalar>::PromotedType,n>;
+      Result result = diagonalMatrix;
+      result += matrix;
+      return result;
+    }
+
+    //! Addition of DiagonalMatrix to ScaledIdentityMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const ScaledIdentityMatrix& matrix,
+                           const DiagonalMatrix<OtherScalar,n>& diagonalMatrix)
+    {
+      return diagonalMatrix + matrix;
+    }
+
     //===== comparison ops
 
     //! comparison operator
