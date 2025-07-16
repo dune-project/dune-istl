@@ -52,7 +52,7 @@ namespace Dune {
    * %LDL will always go double precision.
    *
    * Details on UMFPack can be found on
-   * http://www.cise.ufl.edu/research/sparse/ldl/
+   * https://github.com/DrTimothyAldenDavis/SuiteSparse/tree/dev/LDL
    *
    * @tparam M  the matrix type defining the system
    *
