@@ -789,8 +789,8 @@ namespace Dune {
     double UMF_Control[UMFPACK_CONTROL];
   };
 
-  template<typename T, typename A, int n, int m>
-  struct IsDirectSolver<UMFPack<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename M>
+  struct IsDirectSolver<UMFPack<M>>
   {
     enum { value=true};
   };
