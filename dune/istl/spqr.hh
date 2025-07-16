@@ -13,8 +13,11 @@
 #include <SuiteSparseQR.hpp>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/ftraits.hh>
 
 #include <dune/istl/bccsmatrixinitializer.hh>
+#include <dune/istl/foreach.hh>
+#include <dune/istl/matrixtraits.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
 #include <dune/istl/solverfactory.hh>
@@ -38,45 +41,38 @@ namespace Dune {
   template<class T, bool tag>
   struct SeqOverlappingSchwarzAssemblerHelper;
 
-  /** @brief Use the %SPQR package to directly solve linear systems -- empty default class
-   * @tparam Matrix the matrix type defining the system
+  /** @brief The %SPQR package to directly solve linear systems for ISTL matrices
+   *
    * Details on SPQR can be found on
    * http://www.cise.ufl.edu/research/sparse/spqr/
-   */
-  template<class Matrix>
-  class SPQR
-  {};
-
-  /** @brief The %SPQR direct sparse solver for matrices of type BCRSMatrix
    *
-   * Specialization for the Dune::BCRSMatrix. %SPQR will always go double
-   * precision and supports complex numbers
+   * %SPQR will always go double precision and supports complex numbers
    * too (use std::complex<double> for that).
    *
-   * \tparam T Number type.  Only double and std::complex<double> is supported
-   * \tparam A STL-compatible allocator type
-   * \tparam n Number of rows in a matrix block
-   * \tparam m Number of columns in a matrix block
+   * \tparam M  the matrix type defining the system
    *
    * \note This will only work if dune-istl has been configured to use SPQR
    */
-  template<typename T, typename A, int n, int m>
-  class SPQR<BCRSMatrix<FieldMatrix<T,n,m>,A > >
-    : public InverseOperator<BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > >,
-                             BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > >
+  template<typename M>
+  class SPQR : public InverseOperator<
+    typename MatrixTraits<M>::domain_type,
+    typename MatrixTraits<M>::range_type>
   {
     public:
     /** @brief The matrix type. */
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
+    typedef M Matrix;
+    typedef M matrix_type;
+    /** @brief The type of the entries. */
+    typedef typename FieldTraits<M>::field_type field_type;
+
     /** @brief The corresponding SuperLU Matrix type.*/
-    typedef ISTL::Impl::BCCSMatrix<T,int> SPQRMatrix;
+    typedef ISTL::Impl::BCCSMatrix<field_type,int> SPQRMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A>, int> MatrixInitializer;
+    typedef ISTL::Impl::BCCSMatrixInitializer<M, int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > > domain_type;
+    typedef typename MatrixTraits<M>::domain_type domain_type;
     /** @brief The type of the range of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > range_type;
+    typedef typename MatrixTraits<M>::range_type range_type;
 
     //! Category of the solver (see SolverCategory::Category)
     SolverCategory::Category category() const override
@@ -95,7 +91,7 @@ namespace Dune {
     SPQR(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false), verbose_(verbose)
     {
       //check whether T is a supported type
-      static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
+      static_assert((std::is_same<field_type,double>::value) || (std::is_same<field_type,std::complex<double> >::value),
                     "Unsupported Type in SPQR (only double and std::complex<double> supported)");
       cc_ = new cholmod_common();
       cholmod_l_start(cc_);
@@ -113,7 +109,7 @@ namespace Dune {
     SPQR(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false), verbose_(verbose)
     {
       //check whether T is a supported type
-      static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
+      static_assert((std::is_same<field_type,double>::value) || (std::is_same<field_type,std::complex<double> >::value),
                     "Unsupported Type in SPQR (only double and std::complex<double> supported)");
       cc_ = new cholmod_common();
       cholmod_l_start(cc_);
@@ -137,7 +133,7 @@ namespace Dune {
     SPQR() : matrixIsLoaded_(false), verbose_(0)
     {
       //check whether T is a supported type
-      static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
+      static_assert((std::is_same<field_type,double>::value) || (std::is_same<field_type,std::complex<double> >::value),
                     "Unsupported Type in SPQR (only double and std::complex<double> supported)");
       cc_ = new cholmod_common();
       cholmod_l_start(cc_);
@@ -154,22 +150,18 @@ namespace Dune {
     /** \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&) */
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res) override
     {
-      const std::size_t numRows(spqrMatrix_.N());
-      // fill B
-      for(std::size_t k = 0; k != numRows/n; ++k)
-        for (int l = 0; l < n; ++l)
-          (static_cast<T*>(B_->x))[n*k+l] = b[k][l];
+      // copy b into the internal storage
+      flatVectorForEachMasked(b, maskVector_, [&](auto const& b_i, std::size_t i) {
+        (static_cast<field_type*>(B_->x))[i] = b_i; });
 
       cholmod_dense* BTemp = B_;
-      B_ = SuiteSparseQR_qmult<T>(0, spqrfactorization_, B_, cc_);
-      cholmod_dense* X = SuiteSparseQR_solve<T>(1, spqrfactorization_, B_, cc_);
+      B_ = SuiteSparseQR_qmult<field_type>(0, spqrfactorization_, B_, cc_);
+      cholmod_dense* X = SuiteSparseQR_solve<field_type>(1, spqrfactorization_, B_, cc_);
       cholmod_l_free_dense(&BTemp, cc_);
 
-      const std::size_t numCols(spqrMatrix_.M());
-      // fill x
-      for(std::size_t k = 0; k != numCols/m; ++k)
-        for (int l = 0; l < m; ++l)
-          x[k][l] = (static_cast<T*>(X->x))[m*k+l];
+      // copy the internal solution to x
+      flatVectorForEachMasked(x, maskVector_, [&](auto& x_i, std::size_t i) {
+        x_i = (static_cast<field_type const*>(X->x))[i]; });
 
       cholmod_l_free_dense(&X, cc_);
       // this is a direct solver
@@ -210,6 +202,9 @@ namespace Dune {
 
       copyToBCCSMatrix(initializer, matrix);
 
+      maskVector_.clear();
+      maskVector_.resize(matrix.N(), true);
+
       decompose();
     }
 
@@ -224,9 +219,14 @@ namespace Dune {
 
       spqrMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),
                           rowIndexSet.size()*MatrixDimension<Matrix>::coldim(matrix) / matrix.M());
-      ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(spqrMatrix_);
+      MatrixInitializer initializer(spqrMatrix_);
 
       copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(matrix,rowIndexSet));
+
+      maskVector_.clear();
+      maskVector_.resize(matrix.N(), false);
+      for (auto i : rowIndexSet)
+        maskVector_[i] = true;
 
       decompose();
     }
@@ -244,7 +244,7 @@ namespace Dune {
      * @brief Return the matrix factorization.
      * @warning It is up to the user to keep consistency.
      */
-    inline SuiteSparseQR_factorization<T>* getFactorization()
+    inline SuiteSparseQR_factorization<field_type>* getFactorization()
     {
       return spqrfactorization_;
     }
@@ -266,7 +266,7 @@ namespace Dune {
     {
       cholmod_l_free_sparse(&A_, cc_);
       cholmod_l_free_dense(&B_, cc_);
-      SuiteSparseQR_free<T>(&spqrfactorization_, cc_);
+      SuiteSparseQR_free<field_type>(&spqrfactorization_, cc_);
       spqrMatrix_.free();
       matrixIsLoaded_ = false;
     }
@@ -277,8 +277,8 @@ namespace Dune {
       return "SPQR";
     }
 
-    private:
-    template<class M,class X, class TM, class TD, class T1>
+  private:
+    template<class,class,class,class,class>
     friend class SeqOverlappingSchwarz;
 
     friend struct SeqOverlappingSchwarzAssemblerHelper<SPQR<Matrix>,true>;
@@ -300,13 +300,13 @@ namespace Dune {
       for(std::size_t k = 0; k != nnz; ++k)
       {
         (static_cast<long int*>(A_->i))[k] = spqrMatrix_.getRowIndex()[k];
-        (static_cast<T*>(A_->x))[k] = spqrMatrix_.getValues()[k];
+        (static_cast<field_type*>(A_->x))[k] = spqrMatrix_.getValues()[k];
       }
 
       // initialise the vector B
       B_ = cholmod_l_allocate_dense(nrows, 1, nrows, A_->xtype, cc_);
       // compute factorization of A
-      spqrfactorization_=SuiteSparseQR_factorize<T>(SPQR_ORDERING_DEFAULT,SPQR_DEFAULT_TOL,A_,cc_);
+      spqrfactorization_=SuiteSparseQR_factorize<field_type>(SPQR_ORDERING_DEFAULT,SPQR_DEFAULT_TOL,A_,cc_);
     }
 
     SPQRMatrix spqrMatrix_;
@@ -315,11 +315,12 @@ namespace Dune {
     cholmod_common* cc_;
     cholmod_sparse* A_;
     cholmod_dense* B_;
-    SuiteSparseQR_factorization<T>* spqrfactorization_;
+    SuiteSparseQR_factorization<field_type>* spqrfactorization_;
+    std::vector<bool> maskVector_;
   };
 
-  template<typename T, typename A>
-  struct IsDirectSolver<SPQR<BCRSMatrix<T,A> > >
+  template<typename M>
+  struct IsDirectSolver<SPQR<M> >
   {
     enum {value = true};
   };

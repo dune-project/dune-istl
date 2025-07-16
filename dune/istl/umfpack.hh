@@ -20,6 +20,8 @@
 #include<dune/istl/foreach.hh>
 #include<dune/istl/matrix.hh>
 #include<dune/istl/matrixutils.hh>
+#include<dune/istl/foreach.hh>
+#include<dune/istl/matrixtraits.hh>
 #include<dune/istl/multitypeblockmatrix.hh>
 #include<dune/istl/multitypeblockvector.hh>
 #include<dune/istl/solvers.hh>
@@ -174,78 +176,13 @@ namespace Dune {
   namespace Impl
   {
     template<class M, class = void>
-    struct UMFPackVectorChooser;
+    struct UMFPackVectorChooser : public MatrixTraits<M> {};
 
     /** @brief The type of the domain of the solver */
     template<class M> using UMFPackDomainType = typename UMFPackVectorChooser<M>::domain_type;
 
     /** @brief The type of the range of the solver */
     template<class M> using UMFPackRangeType = typename UMFPackVectorChooser<M>::range_type;
-
-    template<class M>
-    struct UMFPackVectorChooser<M,
-      std::enable_if_t<(std::is_same<M,double>::value) || (std::is_same<M,std::complex<double> >::value)>>
-    {
-      using domain_type = M;
-      using range_type  = M;
-    };
-
-    template<typename T, int n, int m>
-    struct UMFPackVectorChooser<FieldMatrix<T,n,m>,
-      std::enable_if_t<(std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value)>>
-    {
-      /** @brief The type of the domain of the solver */
-      using domain_type = FieldVector<T,m>;
-      /** @brief The type of the range of the solver */
-      using range_type  = FieldVector<T,n>;
-    };
-
-    template<typename T, typename A>
-    struct UMFPackVectorChooser<BCRSMatrix<T,A>,
-      std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
-    {
-      // In case of recursive deduction (e.g., BCRSMatrix<FieldMatrix<...>, Allocator<FieldMatrix<...>>>)
-      // the allocator needs to be converted to the sub-block allocator type too (e.g., Allocator<FieldVector<...>>).
-      // Note that matrix allocator is assumed to be the same as the domain/range type of allocators
-      /** @brief The type of the domain of the solver */
-      using domain_type = BlockVector<UMFPackDomainType<T>, typename std::allocator_traits<A>::template rebind_alloc<UMFPackDomainType<T>>>;
-      /** @brief The type of the range of the solver */
-      using range_type  = BlockVector<UMFPackRangeType<T>, typename std::allocator_traits<A>::template rebind_alloc<UMFPackRangeType<T>>>;
-    };
-
-    template<typename T, typename P, typename A>
-    struct UMFPackVectorChooser<Dune::Experimental::BCRSMatrix<T,P,A>,
-      std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
-    : public UMFPackVectorChooser<BCRSMatrix<T,A>, std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
-    {};
-
-    template<typename T, typename A>
-    struct UMFPackVectorChooser<Matrix<T,A>,
-      std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
-    : public UMFPackVectorChooser<BCRSMatrix<T,A>, std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
-    {};
-
-    // to make the `UMFPackVectorChooser` work with `MultiTypeBlockMatrix`, we need to add an intermediate step for the rows, which are typically `MultiTypeBlockVector`
-    template<typename FirstBlock, typename... Blocks>
-    struct UMFPackVectorChooser<MultiTypeBlockVector<FirstBlock, Blocks...>,
-      std::void_t<UMFPackDomainType<FirstBlock>, UMFPackRangeType<FirstBlock>, UMFPackDomainType<Blocks>...>>
-    {
-      /** @brief The type of the domain of the solver */
-      using domain_type = MultiTypeBlockVector<UMFPackDomainType<FirstBlock>, UMFPackDomainType<Blocks>...>;
-      /** @brief The type of the range of the solver */
-      using range_type  = UMFPackRangeType<FirstBlock>;
-    };
-
-    // specialization for `MultiTypeBlockMatrix` with `MultiTypeBlockVector` rows
-    template<typename FirstRow, typename... Rows>
-    struct UMFPackVectorChooser<MultiTypeBlockMatrix<FirstRow, Rows...>,
-      std::void_t<UMFPackDomainType<FirstRow>, UMFPackRangeType<FirstRow>, UMFPackRangeType<Rows>...>>
-    {
-      /** @brief The type of the domain of the solver */
-      using domain_type = UMFPackDomainType<FirstRow>;
-      /** @brief The type of the range of the solver */
-      using range_type  = MultiTypeBlockVector< UMFPackRangeType<FirstRow>, UMFPackRangeType<Rows>... >;
-    };
 
     // dummy class to represent no BitVector
     struct NoBitVector

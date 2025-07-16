@@ -33,6 +33,7 @@ install(FILES
    matrixmarket.hh
    matrixmatrix.hh
    matrixredistribute.hh
+   matrixtraits.hh
    matrixutils.hh
    multitypeblockmatrix.hh
    multitypeblockvector.hh

@@ -7,7 +7,6 @@
 
 #if HAVE_SUITESPARSE_LDL || defined DOXYGEN
 
-#include <iostream>
 #include <memory>
 #include <type_traits>
 
@@ -22,6 +21,8 @@ extern "C"
 #include <dune/common/exceptions.hh>
 
 #include <dune/istl/bccsmatrixinitializer.hh>
+#include <dune/istl/foreach.hh>
+#include <dune/istl/matrixtraits.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
 #include <dune/istl/solverregistry.hh>
@@ -46,45 +47,36 @@ namespace Dune {
   struct SeqOverlappingSchwarzAssemblerHelper;
 
   /**
-   * @brief Use the %LDL package to directly solve linear systems -- empty default class
-   * @tparam Matrix the matrix type defining the system
+   * @brief The %LDL direct sparse solver for ISTL matrices
+   *
+   * %LDL will always go double precision.
+   *
    * Details on UMFPack can be found on
    * http://www.cise.ufl.edu/research/sparse/ldl/
-   */
-  template<class Matrix>
-  class LDL
-  {};
-
-  /**
-   * @brief The %LDL direct sparse solver for matrices of type BCRSMatrix
    *
-   * Specialization for the Dune::BCRSMatrix. %LDL will always go double
-   * precision.
-   *
-   * \tparam T Number type.  Only double is supported
-   * \tparam A STL-compatible allocator type
-   * \tparam n Number of rows in a matrix block
-   * \tparam m Number of columns in a matrix block
+   * @tparam M  the matrix type defining the system
    *
    * \note This will only work if dune-istl has been configured to use LDL
    */
-  template<typename T, typename A, int n, int m>
-  class LDL<BCRSMatrix<FieldMatrix<T,n,m>,A > >
-    : public InverseOperator<BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > >,
-                             BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > >
+  template<typename M>
+  class LDL : public InverseOperator<
+    typename MatrixTraits<M>::domain_type,
+    typename MatrixTraits<M>::range_type>
   {
     public:
     /** @brief The matrix type. */
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> Matrix;
-    typedef Dune::BCRSMatrix<FieldMatrix<T,n,m>,A> matrix_type;
+    typedef M Matrix;
+    typedef M matrix_type;
+    typedef typename FieldTraits<M>::field_type field_type;
+
     /** @brief The corresponding SuperLU Matrix type. */
-    typedef Dune::ISTL::Impl::BCCSMatrix<T,int> LDLMatrix;
+    typedef Dune::ISTL::Impl::BCCSMatrix<field_type,int> LDLMatrix;
     /** @brief Type of an associated initializer class. */
-    typedef ISTL::Impl::BCCSMatrixInitializer<BCRSMatrix<FieldMatrix<T,n,m>,A>, int> MatrixInitializer;
+    typedef ISTL::Impl::BCCSMatrixInitializer<M, int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,m>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,m> > > domain_type;
+    typedef typename MatrixTraits<M>::domain_type domain_type;
     /** @brief The type of the range of the solver. */
-    typedef Dune::BlockVector<FieldVector<T,n>, typename std::allocator_traits<A>::template rebind_alloc<FieldVector<T,n> > > range_type;
+    typedef typename MatrixTraits<M>::range_type range_type;
 
     //! Category of the solver (see SolverCategory::Category)
     SolverCategory::Category category() const override
@@ -104,7 +96,7 @@ namespace Dune {
     LDL(const Matrix& matrix, int verbose=0) : matrixIsLoaded_(false), verbose_(verbose)
     {
       //check whether T is a supported type
-      static_assert(std::is_same<T,double>::value,"Unsupported Type in LDL (only double supported)");
+      static_assert(std::is_same<field_type,double>::value,"Unsupported Type in LDL (only double supported)");
       setMatrix(matrix);
     }
 
@@ -120,7 +112,7 @@ namespace Dune {
     LDL(const Matrix& matrix, int verbose, bool) : matrixIsLoaded_(false), verbose_(verbose)
     {
       //check whether T is a supported type
-      static_assert(std::is_same<T,double>::value,"Unsupported Type in LDL (only double supported)");
+      static_assert(std::is_same<field_type,double>::value,"Unsupported Type in LDL (only double supported)");
       setMatrix(matrix);
     }
 
@@ -148,15 +140,15 @@ namespace Dune {
         free();
     }
 
+  public:
     /** \copydoc InverseOperator::apply(X&, Y&, InverseOperatorResult&) */
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res) override
     {
-      const int dimMat(ldlMatrix_.N());
-      ldl_perm(dimMat, Y_, reinterpret_cast<double*>(&b[0]), P_);
-      ldl_lsolve(dimMat, Y_, Lp_, Li_, Lx_);
-      ldl_dsolve(dimMat, Y_, D_);
-      ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
-      ldl_permt(dimMat, reinterpret_cast<double*>(&x[0]), Y_, P_);
+      BlockVector<field_type> B(ldlMatrix_.N()), X(ldlMatrix_.M());
+      flatVectorForEachMasked(b, maskVector_, [&](auto const& b_i, std::size_t i) { B[i] = b_i; });
+      apply(X.data(), B.data());
+      flatVectorForEachMasked(x, maskVector_, [&](auto& x_i, std::size_t i) { x_i = X[i]; });
+
       // this is a direct solver
       res.iterations = 1;
       res.converged = true;
@@ -173,7 +165,7 @@ namespace Dune {
      * @param x solution array
      * @param b rhs array
      */
-    void apply(T* x, T* b)
+    void apply(field_type* x, field_type* b)
     {
       const int dimMat(ldlMatrix_.N());
       ldl_perm(dimMat, Y_, b, P_);
@@ -196,9 +188,12 @@ namespace Dune {
         ldlMatrix_.free();
       ldlMatrix_.setSize(MatrixDimension<Matrix>::rowdim(matrix),
                          MatrixDimension<Matrix>::coldim(matrix));
-      ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
+      MatrixInitializer initializer(ldlMatrix_);
 
       copyToBCCSMatrix(initializer, matrix);
+
+      maskVector_.clear();
+      maskVector_.resize(matrix.N(), true);
 
       decompose();
     }
@@ -214,9 +209,14 @@ namespace Dune {
 
       ldlMatrix_.setSize(rowIndexSet.size()*MatrixDimension<Matrix>::rowdim(matrix) / matrix.N(),
                          rowIndexSet.size()*MatrixDimension<Matrix>::coldim(matrix) / matrix.M());
-      ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(ldlMatrix_);
+      MatrixInitializer initializer(ldlMatrix_);
 
       copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(matrix,rowIndexSet));
+
+      maskVector_.clear();
+      maskVector_.resize(matrix.N(), false);
+      for (auto i : rowIndexSet)
+        maskVector_[i] = true;
 
       decompose();
     }
@@ -299,7 +299,7 @@ namespace Dune {
     }
 
     private:
-    template<class M,class X, class TM, class TD, class T1>
+    template<class,class,class,class,class>
     friend class SeqOverlappingSchwarz;
 
     friend struct SeqOverlappingSchwarzAssemblerHelper<LDL<Matrix>,true>;
@@ -356,16 +356,18 @@ namespace Dune {
     double* Y_;
     double* Lx_;
     int* Li_;
+
+    std::vector<bool> maskVector_;
   };
 
-  template<typename T, typename A, int n, int m>
-  struct IsDirectSolver<LDL<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename M>
+  struct IsDirectSolver<LDL<M> >
   {
     enum {value = true};
   };
 
-  template<typename T, typename A, int n, int m>
-  struct StoresColumnCompressed<LDL<BCRSMatrix<FieldMatrix<T,n,m>,A> > >
+  template<typename T, typename A>
+  struct StoresColumnCompressed<LDL<BCRSMatrix<T,A> > >
   {
     enum {value = true};
   };
