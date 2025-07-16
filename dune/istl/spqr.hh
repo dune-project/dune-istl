@@ -44,7 +44,7 @@ namespace Dune {
   /** @brief The %SPQR package to directly solve linear systems for ISTL matrices
    *
    * Details on SPQR can be found on
-   * http://www.cise.ufl.edu/research/sparse/spqr/
+   * https://github.com/DrTimothyAldenDavis/SuiteSparse/tree/dev/SPQR
    *
    * %SPQR will always go double precision and supports complex numbers
    * too (use std::complex<double> for that).
@@ -283,6 +283,12 @@ namespace Dune {
 
     friend struct SeqOverlappingSchwarzAssemblerHelper<SPQR<Matrix>,true>;
 
+    /** @brief The type of the entries is either real or complex */
+    static constexpr int xtype ()
+    {
+      return std::is_same_v<field_type,double> ? CHOLMOD_REAL : CHOLMOD_COMPLEX;
+    }
+
     /** @brief Computes the QR decomposition. */
     void decompose()
     {
@@ -290,8 +296,8 @@ namespace Dune {
       const std::size_t ncols(spqrMatrix_.M());
       const std::size_t nnz(spqrMatrix_.getColStart()[ncols]);
 
-      // initialise the matrix A (sorted, packed, unsymmetric, real entries)
-      A_ = cholmod_l_allocate_sparse(nrows, ncols, nnz, 1, 1, 0, 1, cc_);
+      // initialise the matrix A (sorted, packed, unsymmetric, real/complex entries)
+      A_ = cholmod_l_allocate_sparse(nrows, ncols, nnz, 1, 1, 0, xtype(), cc_);
 
       // copy all the entries of Ap, Ai, Ax
       for(std::size_t k = 0; k != (ncols+1); ++k)
@@ -304,7 +310,7 @@ namespace Dune {
       }
 
       // initialise the vector B
-      B_ = cholmod_l_allocate_dense(nrows, 1, nrows, A_->xtype, cc_);
+      B_ = cholmod_l_allocate_dense(nrows, 1, nrows, xtype(), cc_);
       // compute factorization of A
       spqrfactorization_=SuiteSparseQR_factorize<field_type>(SPQR_ORDERING_DEFAULT,SPQR_DEFAULT_TOL,A_,cc_);
     }

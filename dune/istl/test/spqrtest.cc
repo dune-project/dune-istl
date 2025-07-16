@@ -75,8 +75,10 @@ int main(int argc, char** argv)
     run<double>(N);
     run<Dune::FieldMatrix<double,1,1>>(N);
     run<Dune::FieldMatrix<double,2,2>>(N);
-    // run<std::complex<double>,1>(N); // does not work
-    // run<std::complex<double>,2>(N);
+
+    run<std::complex<double>>(N);
+    run<Dune::FieldMatrix<std::complex<double>,1,1>>(N);
+    run<Dune::FieldMatrix<std::complex<double>,2,2>>(N);
 
     return 0;
   }
