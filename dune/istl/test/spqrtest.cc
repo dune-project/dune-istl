@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 #include <complex>
 #include <iostream>
+#include <version>
 
 #include <dune/common/classname.hh>
 #include <dune/common/fmatrix.hh>
@@ -76,9 +77,16 @@ int main(int argc, char** argv)
     run<Dune::FieldMatrix<double,1,1>>(N);
     run<Dune::FieldMatrix<double,2,2>>(N);
 
+#ifndef _LIBCPP_VERSION
+    // If libspqr is compiled with libstdc++, it cannot be used in user code that
+    // includes libc++. In the test we simply assume that a system library compiled
+    // with g++ and libstdc++ is used and thus this preprocessor check disables
+    // the corresponding part of the code that would otherwise lead to linker errors.
+
     run<std::complex<double>>(N);
     run<Dune::FieldMatrix<std::complex<double>,1,1>>(N);
     run<Dune::FieldMatrix<std::complex<double>,2,2>>(N);
+#endif
 
     return 0;
   }
