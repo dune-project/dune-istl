@@ -11,13 +11,16 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/test/testsuite.hh>
 
 using namespace Dune;
 
 
 template<class K, int n>
-void test_matrix()
+TestSuite test_matrix()
 {
+  TestSuite test("test_matrix");
+
   ScaledIdentityMatrix<K,n> A(1);
   FieldVector<K,n> f;
   FieldVector<K,n> v;
@@ -42,8 +45,6 @@ void test_matrix()
   A.infinity_norm();
   A.infinity_norm_real();
 
-  std::sort(v.begin(), v.end());
-
   // print matrix
   std::cout << A << std::endl;
   // print vector
@@ -51,18 +52,18 @@ void test_matrix()
 
   // Construction of FieldMatrix from ScaledIdentityMatrix
   [[maybe_unused]] FieldMatrix<K,n,n> AFM = FieldMatrix<K,n,n>(A);
+
+  return test;
 }
 
 int main()
 {
-  try {
-    test_matrix<float, 1>();
-    test_matrix<double, 1>();
-    //test_matrix<int, 10>(); Does not compile with icc because there is no std::sqrt(int)  std::fabs(int)
-    test_matrix<double, 5>();
-  }
-  catch (Dune::Exception & e)
-  {
-    std::cerr << "Exception: " << e << std::endl;
-  }
+  TestSuite test("ScaledIdentityMatrix");
+
+  test.subTest(test_matrix<float, 1>());
+  test.subTest(test_matrix<double, 1>());
+  //test.subTest(test_matrix<int, 10>()); Does not compile with icc because there is no std::sqrt(int)  std::fabs(int)
+  test.subTest(test_matrix<double, 5>());
+
+  return test.exit();
 }
