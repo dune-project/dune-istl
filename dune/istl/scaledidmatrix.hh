@@ -69,13 +69,11 @@ namespace Dune {
     typedef DiagonalRowVectorConst<K,n> const_row_type;
     typedef const_row_type const_reference;
 
-    //! The number of matrix rows and columns
-    enum {
-      //! The number of matrix rows
-      rows = n,
-      //! The number of matrix columns
-      cols = n
-    };
+    //! The number of matrix rows
+    static constexpr std::integral_constant<size_type,n> rows = {};
+
+    //! The number of matrix columns
+    static constexpr std::integral_constant<size_type,n> cols = {};
 
     //===== constructors
     /** \brief Default constructor

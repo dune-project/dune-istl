@@ -23,6 +23,17 @@ TestSuite test_matrix()
   TestSuite test("test_matrix");
 
   ScaledIdentityMatrix<K,n> A(1);
+
+  // Test for proper matrix sizes, both statically and dynamically
+  static_assert(A.rows==n, "Incorrect number of rows");
+  static_assert(A.cols==n, "Incorrect number of columns");
+
+  test.check(A.rows==n) << "Incorrect number of rows";
+  test.check(A.cols==n) << "Incorrect number of columns";
+
+  test.check(A.rows()==n) << "Incorrect number of rows";
+  test.check(A.cols()==n) << "Incorrect number of columns";
+
   FieldVector<K,n> f;
   FieldVector<K,n> v;
 
