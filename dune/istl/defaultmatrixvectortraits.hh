@@ -3,8 +3,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_MATRIX_TRAITS_HH
-#define DUNE_ISTL_MATRIX_TRAITS_HH
+#ifndef DUNE_ISTL_DEFAULT_MATRIX_VECTOR_TRAITS_HH
+#define DUNE_ISTL_DEFAULT_MATRIX_VECTOR_TRAITS_HH
 
 #include <memory>
 
@@ -28,7 +28,7 @@ template<class...> class MultiTypeBlockVector;
 template<class, int> class ScaledIdentityMatrix;
 
 /**
- * The traits MatrixTraits defines the `domain_type` and `range_type`
+ * The traits DefaultMatrixVectorTraits defines the `domain_type` and `range_type`
  * based on a given matrix or linear operator type.
  *
  * For a matrix `A in R^{nxm}` is should define the `domain_type` as
@@ -38,12 +38,12 @@ template<class, int> class ScaledIdentityMatrix;
  * the domain and range are defined as identical to `A`.
  */
 template<class Matrix>
-struct MatrixTraits;
+struct DefaultMatrixVectorTraits;
 
 /// Specialization for linear operators that already define domain and range type
 template<class LO>
   requires requires{ typename LO::domain_type; typename LO::range_type; }
-struct MatrixTraits<LO>
+struct DefaultMatrixVectorTraits<LO>
 {
   using domain_type = typename LO::domain_type;
   using range_type = typename LO::range_type;
@@ -51,7 +51,7 @@ struct MatrixTraits<LO>
 
 /// Specialization for number types
 template<Concept::Number N>
-struct MatrixTraits<N>
+struct DefaultMatrixVectorTraits<N>
 {
   using domain_type = N;
   using range_type  = N;
@@ -59,99 +59,99 @@ struct MatrixTraits<N>
 
 /// Specialization for FieldMatrix
 template<class T, int n, int m>
-struct MatrixTraits<FieldMatrix<T,n,m>>
+struct DefaultMatrixVectorTraits<FieldMatrix<T,n,m>>
 {
-  using domain_type = FieldVector<typename MatrixTraits<T>::domain_type,m>;
-  using range_type  = FieldVector<typename MatrixTraits<T>::range_type,n>;
+  using domain_type = FieldVector<typename DefaultMatrixVectorTraits<T>::domain_type,m>;
+  using range_type  = FieldVector<typename DefaultMatrixVectorTraits<T>::range_type,n>;
 };
 
 /// Specialization for FieldMatrix
 template<class T>
-struct MatrixTraits<DynamicMatrix<T>>
+struct DefaultMatrixVectorTraits<DynamicMatrix<T>>
 {
-  using domain_type = DynamicVector<typename MatrixTraits<T>::domain_type,
-    std::allocator<typename MatrixTraits<T>::domain_type>>;
-  using range_type  = DynamicVector<typename MatrixTraits<T>::range_type,
-    std::allocator<typename MatrixTraits<T>::range_type>>;
+  using domain_type = DynamicVector<typename DefaultMatrixVectorTraits<T>::domain_type,
+    std::allocator<typename DefaultMatrixVectorTraits<T>::domain_type>>;
+  using range_type  = DynamicVector<typename DefaultMatrixVectorTraits<T>::range_type,
+    std::allocator<typename DefaultMatrixVectorTraits<T>::range_type>>;
 };
 
 /// Specialization for DiagonalMatrix
 template<class T, int n>
-struct MatrixTraits<DiagonalMatrix<T,n>>
+struct DefaultMatrixVectorTraits<DiagonalMatrix<T,n>>
 {
-  using domain_type = FieldVector<typename MatrixTraits<T>::domain_type,n>;
-  using range_type  = FieldVector<typename MatrixTraits<T>::range_type,n>;
+  using domain_type = FieldVector<typename DefaultMatrixVectorTraits<T>::domain_type,n>;
+  using range_type  = FieldVector<typename DefaultMatrixVectorTraits<T>::range_type,n>;
 };
 
 /// Specialization for ScaledIdentityMatrix
 template<class T, int n>
-struct MatrixTraits<ScaledIdentityMatrix<T,n>>
+struct DefaultMatrixVectorTraits<ScaledIdentityMatrix<T,n>>
 {
-  using domain_type = FieldVector<typename MatrixTraits<T>::domain_type,n>;
-  using range_type  = FieldVector<typename MatrixTraits<T>::range_type,n>;
+  using domain_type = FieldVector<typename DefaultMatrixVectorTraits<T>::domain_type,n>;
+  using range_type  = FieldVector<typename DefaultMatrixVectorTraits<T>::range_type,n>;
 };
 
 /// Specialization for BCRSMatrix
 template<class T, class A>
-struct MatrixTraits<BCRSMatrix<T,A>>
+struct DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
 {
   // In case of recursive deduction (e.g., BCRSMatrix<FieldMatrix, Allocator<FieldMatrix>>)
   // the allocator needs to be converted to the sub-block allocator type too (e.g.,
   // Allocator<FieldVector>). Note that matrix allocator is assumed to be the same as
   // the domain/range type of allocators
 
-  using domain_type = BlockVector<typename MatrixTraits<T>::domain_type,
-    typename std::allocator_traits<A>::template rebind_alloc<typename MatrixTraits<T>::domain_type>>;
-  using range_type  = BlockVector<typename MatrixTraits<T>::range_type,
-    typename std::allocator_traits<A>::template rebind_alloc<typename MatrixTraits<T>::range_type>>;
+  using domain_type = BlockVector<typename DefaultMatrixVectorTraits<T>::domain_type,
+    typename std::allocator_traits<A>::template rebind_alloc<typename DefaultMatrixVectorTraits<T>::domain_type>>;
+  using range_type  = BlockVector<typename DefaultMatrixVectorTraits<T>::range_type,
+    typename std::allocator_traits<A>::template rebind_alloc<typename DefaultMatrixVectorTraits<T>::range_type>>;
 };
 
 /// Specialization for BDMatrix: is identical to the BCRSMatrix specialization
 template<class T, class A>
-struct MatrixTraits<BDMatrix<T,A>>
-  : public MatrixTraits<BCRSMatrix<T,A>>
+struct DefaultMatrixVectorTraits<BDMatrix<T,A>>
+  : public DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
 {};
 
 /// Specialization for BTDMatrix: is identical to the BCRSMatrix specialization
 template<class T, class A>
-struct MatrixTraits<BTDMatrix<T,A>>
-  : public MatrixTraits<BCRSMatrix<T,A>>
+struct DefaultMatrixVectorTraits<BTDMatrix<T,A>>
+  : public DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
 {};
 
 /// Specialization for Matrix: is identical to the BCRSMatrix specialization
 template<class T, class A>
-struct MatrixTraits<Matrix<T,A>>
-  : public MatrixTraits<BCRSMatrix<T,A>>
+struct DefaultMatrixVectorTraits<Matrix<T,A>>
+  : public DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
 {};
 
 namespace Impl
 {
   template <class V>
-  struct MultiTypeMatrixTraits;
+  struct MultiTypeDefaultMatrixVectorTraits;
 
-  // to make the `MatrixTraits` work with `MultiTypeBlockMatrix`, we need to add
+  // to make the `DefaultMatrixVectorTraits` work with `MultiTypeBlockMatrix`, we need to add
   // an intermediate step for the rows, which are typically `MultiTypeBlockVector`
   template<class FirstBlock, class... Blocks>
-  struct MultiTypeMatrixTraits<MultiTypeBlockVector<FirstBlock, Blocks...>>
+  struct MultiTypeDefaultMatrixVectorTraits<MultiTypeBlockVector<FirstBlock, Blocks...>>
   {
     using domain_type = MultiTypeBlockVector<
-      typename MatrixTraits<FirstBlock>::domain_type,
-      typename MatrixTraits<Blocks>::domain_type...>;
-    using range_type  = typename MatrixTraits<FirstBlock>::range_type;
+      typename DefaultMatrixVectorTraits<FirstBlock>::domain_type,
+      typename DefaultMatrixVectorTraits<Blocks>::domain_type...>;
+    using range_type  = typename DefaultMatrixVectorTraits<FirstBlock>::range_type;
   };
 
 } // end namespace Impl
 
 /// Specialization for `MultiTypeBlockMatrix` with `MultiTypeBlockVector` rows
 template<class FirstRow, class... Rows>
-struct MatrixTraits<MultiTypeBlockMatrix<FirstRow, Rows...>>
+struct DefaultMatrixVectorTraits<MultiTypeBlockMatrix<FirstRow, Rows...>>
 {
-  using domain_type = typename Impl::MultiTypeMatrixTraits<FirstRow>::domain_type;
+  using domain_type = typename Impl::MultiTypeDefaultMatrixVectorTraits<FirstRow>::domain_type;
   using range_type  = MultiTypeBlockVector<
-    typename Impl::MultiTypeMatrixTraits<FirstRow>::range_type,
-    typename Impl::MultiTypeMatrixTraits<Rows>::range_type... >;
+    typename Impl::MultiTypeDefaultMatrixVectorTraits<FirstRow>::range_type,
+    typename Impl::MultiTypeDefaultMatrixVectorTraits<Rows>::range_type... >;
 };
 
 } // end namespace Dune
 
-#endif // DUNE_ISTL_MATRIX_TRAITS_HH
+#endif // DUNE_ISTL_DEFAULT_MATRIX_VECTOR_TRAITS_HH

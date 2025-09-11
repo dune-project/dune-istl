@@ -21,8 +21,8 @@ extern "C"
 #include <dune/common/exceptions.hh>
 
 #include <dune/istl/bccsmatrixinitializer.hh>
+#include <dune/istl/defaultmatrixvectortraits.hh>
 #include <dune/istl/foreach.hh>
-#include <dune/istl/matrixtraits.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/solvertype.hh>
 #include <dune/istl/solverregistry.hh>
@@ -60,8 +60,8 @@ namespace Dune {
    */
   template<typename M>
   class LDL : public InverseOperator<
-    typename MatrixTraits<M>::domain_type,
-    typename MatrixTraits<M>::range_type>
+    typename DefaultMatrixVectorTraits<M>::domain_type,
+    typename DefaultMatrixVectorTraits<M>::range_type>
   {
     public:
     /** @brief The matrix type. */
@@ -74,9 +74,9 @@ namespace Dune {
     /** @brief Type of an associated initializer class. */
     typedef ISTL::Impl::BCCSMatrixInitializer<M, int> MatrixInitializer;
     /** @brief The type of the domain of the solver. */
-    typedef typename MatrixTraits<M>::domain_type domain_type;
+    typedef typename DefaultMatrixVectorTraits<M>::domain_type domain_type;
     /** @brief The type of the range of the solver. */
-    typedef typename MatrixTraits<M>::range_type range_type;
+    typedef typename DefaultMatrixVectorTraits<M>::range_type range_type;
 
     //! Category of the solver (see SolverCategory::Category)
     SolverCategory::Category category() const override

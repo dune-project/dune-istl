@@ -7,6 +7,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/istl/defaultmatrixvectortraits.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/ldl.hh>
 #include <dune/istl/operators.hh>
@@ -21,7 +22,7 @@ void run(std::size_t N)
 
   typedef typename Dune::FieldTraits<Block>::field_type field_type;
   typedef Dune::BCRSMatrix<Block> Matrix;
-  typedef typename Dune::MatrixTraits<Matrix>::domain_type Vector;
+  typedef typename Dune::DefaultMatrixVectorTraits<Matrix>::domain_type Vector;
   typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
 
   Matrix mat;

@@ -19,6 +19,7 @@ install(FILES
    btdmatrix.hh
    bvector.hh
    cholmod.hh
+   defaultmatrixvectortraits.hh
    dilu.hh
    foreach.hh
    gsetc.hh
@@ -33,7 +34,6 @@ install(FILES
    matrixmarket.hh
    matrixmatrix.hh
    matrixredistribute.hh
-   matrixtraits.hh
    matrixutils.hh
    multitypeblockmatrix.hh
    multitypeblockvector.hh

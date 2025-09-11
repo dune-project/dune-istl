@@ -9,8 +9,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/istl/defaultmatrixvectortraits.hh>
 #include <dune/istl/io.hh>
-#include <dune/istl/matrixtraits.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/spqr.hh>
 
@@ -23,7 +23,7 @@ void run(std::size_t N)
   std::cout << "testing for Block=" << Dune::className<Block>() << std::endl;
 
   typedef Dune::BCRSMatrix<Block> Matrix;
-  typedef typename Dune::MatrixTraits<Matrix>::domain_type Vector;
+  typedef typename Dune::DefaultMatrixVectorTraits<Matrix>::domain_type Vector;
   typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
 
   Matrix mat;

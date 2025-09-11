@@ -14,14 +14,14 @@
 
 #include<dune/common/exceptions.hh>
 #include<dune/common/fmatrix.hh>
+#include<dune/common/ftraits.hh>
 #include<dune/common/fvector.hh>
 #include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
-#include<dune/istl/foreach.hh>
+#include<dune/istl/defaultmatrixvectortraits.hh>
 #include<dune/istl/matrix.hh>
 #include<dune/istl/matrixutils.hh>
 #include<dune/istl/foreach.hh>
-#include<dune/istl/matrixtraits.hh>
 #include<dune/istl/multitypeblockmatrix.hh>
 #include<dune/istl/multitypeblockvector.hh>
 #include<dune/istl/solvers.hh>
@@ -175,8 +175,9 @@ namespace Dune {
 
   namespace Impl
   {
-    template<class M, class = void>
-    struct UMFPackVectorChooser : public MatrixTraits<M> {};
+    template<class M, class F = typename Dune::FieldTraits<M>::field_type>
+      requires (std::is_same_v<F, double> || std::is_same_v<F, std::complex<double>>)
+    struct UMFPackVectorChooser : public DefaultMatrixVectorTraits<M> {};
 
     /** @brief The type of the domain of the solver */
     template<class M> using UMFPackDomainType = typename UMFPackVectorChooser<M>::domain_type;
