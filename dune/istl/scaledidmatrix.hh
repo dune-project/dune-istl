@@ -22,8 +22,20 @@
 
 namespace Dune {
 
-  /**
-      @brief A multiple of the identity matrix of static size
+  /** @brief A multiple of the identity matrix of static size
+   *
+   * This class provides all operations specified by the dune-istl matrix API.
+   * The implementations exploit the fact that the matrix is a multiple of the identity.
+   *
+   * \tparam K The number used for matrix entries
+   * \tparam n The number of matrix rows and columns
+   *
+   * \warning If `m` is an object of type `ScaledIdentityMatrix`, then code like
+   * ~~~{.cpp}
+   * K entry = m[0][1];
+   * ~~~
+   * will compile.  However, the expression `m[0][1]` is *not*
+   * guaranteed to return 0. Rather, its behavior is undefined.
    */
   template<class K, int n>
   class ScaledIdentityMatrix
@@ -33,28 +45,35 @@ namespace Dune {
   public:
     //===== type definitions and constants
 
-    //! export the type representing the field
+    //! The type representing numbers
     typedef K field_type;
 
-    //! export the type representing the components
+    //! The type representing matrix entries (which may be matrices themselves)
     typedef K block_type;
 
-    //! The type used for the index access and size operations.
+    //! The type used for the indices and sizes
     typedef std::size_t size_type;
 
-    //! Each row is implemented by a field vector
+    /** \brief Type of a single matrix row
+     *
+     * Since the implementation does not store actual rows,
+     * this is a proxy type, which tries to behave like an array
+     * of matrix entries as much as possible.
+     * \note The type is really `DiagonalRowVector`. Implementing a
+     * dedicated `ScaledIdentityMatrixRowVector` would just be a copy of that.
+     */
     typedef DiagonalRowVector<K,n> row_type;
     typedef row_type reference;
+
+    /** \brief Const type of a single row */
     typedef DiagonalRowVectorConst<K,n> const_row_type;
     typedef const_row_type const_reference;
 
-    //! export size
-    enum {
-      //! The number of rows.
-      rows = n,
-      //! The number of columns.
-      cols = n
-    };
+    //! The number of matrix rows
+    static constexpr std::integral_constant<size_type,n> rows = {};
+
+    //! The number of matrix columns
+    static constexpr std::integral_constant<size_type,n> cols = {};
 
     //===== constructors
     /** \brief Default constructor
@@ -67,14 +86,18 @@ namespace Dune {
       : p_(k)
     {}
 
-    //===== assignment from scalar
+    /** \brief Assignment from scalar
+     */
     ScaledIdentityMatrix& operator= (const K& k)
     {
       p_ = k;
       return *this;
     }
 
-    // check if matrix is identical to other matrix (not only identical values)
+    /** \brief Check if matrix is identical to other matrix
+     *
+     * "Identical" means: Not just the same values, but the very same object.
+     */
     bool identical(const ScaledIdentityMatrix<K,n>& other) const
     {
       return (this==&other);
@@ -152,52 +175,59 @@ namespace Dune {
       return ConstIterator(WrapperType(this),-1);
     }
 
-    //===== vector space arithmetic
+    /** @name Vector space arithmetic
+     */
+    ///@{
 
-    //! vector space addition
+    //! Vector space addition
     ScaledIdentityMatrix& operator+= (const ScaledIdentityMatrix& y)
     {
       p_ += y.p_;
       return *this;
     }
 
-    //! vector space subtraction
+    //! Vector space subtraction
     ScaledIdentityMatrix& operator-= (const ScaledIdentityMatrix& y)
     {
       p_ -= y.p_;
       return *this;
     }
 
-    //! addition to the diagonal
+    /** \brief Addition of a scalar to the diagonal
+     *
+     * \warning This is not the same as adding a scalar to a FieldMatrix!
+     */
     ScaledIdentityMatrix& operator+= (const K& k)
     {
       p_ += k;
       return *this;
     }
 
-    //! subtraction from the diagonal
+    /** \brief Subtraction of a scalar from the diagonal
+     *
+     * \warning This is not the same as subtracting a scalar from a FieldMatrix!
+     */
     ScaledIdentityMatrix& operator-= (const K& k)
     {
       p_ -= k;
       return *this;
     }
-    //! vector space multiplication with scalar
+
+    //! Vector space multiplication with scalar
     ScaledIdentityMatrix& operator*= (const K& k)
     {
       p_ *= k;
       return *this;
     }
 
-    //! vector space division by scalar
+    //! Vector space division by scalar
     ScaledIdentityMatrix& operator/= (const K& k)
     {
       p_ /= k;
       return *this;
     }
 
-    //===== binary operators
-
-    //! vector space multiplication with scalar
+    //! Vector space multiplication with scalar
     template <class Scalar,
               std::enable_if_t<IsNumber<Scalar>::value, int> = 0>
     friend auto operator* ( const ScaledIdentityMatrix& matrix, Scalar scalar)
@@ -205,7 +235,7 @@ namespace Dune {
       return ScaledIdentityMatrix<typename PromotionTraits<K,Scalar>::PromotedType, n>{matrix.scalar()*scalar};
     }
 
-    //! vector space multiplication with scalar
+    //! Vector space multiplication with scalar
     template <class Scalar,
               std::enable_if_t<IsNumber<Scalar>::value, int> = 0>
     friend auto operator* (Scalar scalar, const ScaledIdentityMatrix& matrix)
@@ -213,21 +243,90 @@ namespace Dune {
       return ScaledIdentityMatrix<typename PromotionTraits<Scalar,K>::PromotedType, n>{scalar*matrix.scalar()};
     }
 
+    //! Addition of ScaledIdentityMatrix to FieldMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto& operator+= (FieldMatrix<OtherScalar,n,n>& fieldMatrix,
+                             const ScaledIdentityMatrix& matrix)
+    {
+      for (int i=0; i<n; i++)
+        fieldMatrix[i][i] += matrix.p_;
+
+      return fieldMatrix;
+    }
+
+    //! Addition of ScaledIdentityMatrix to FieldMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const FieldMatrix<OtherScalar,n,n>& fieldMatrix,
+                           const ScaledIdentityMatrix& matrix)
+    {
+      using Result = FieldMatrix<typename PromotionTraits<K,OtherScalar>::PromotedType,n,n>;
+      Result result = fieldMatrix;
+      result += matrix;
+      return result;
+    }
+
+    //! Addition of FieldMatrix to ScaledIdentityMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const ScaledIdentityMatrix& matrix,
+                           const FieldMatrix<OtherScalar,n,n>& fieldMatrix)
+    {
+      return fieldMatrix + matrix;
+    }
+
+    //! Addition of ScaledIdentityMatrix to DiagonalMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+= (DiagonalMatrix<OtherScalar,n>& diagonalMatrix,
+                            const ScaledIdentityMatrix& matrix)
+    {
+      for (std::size_t i=0; i<n; i++)
+        diagonalMatrix.diagonal(i) += matrix.p_;
+
+      return diagonalMatrix;
+    }
+
+    //! Addition of ScaledIdentityMatrix to DiagonalMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const DiagonalMatrix<OtherScalar,n>& diagonalMatrix,
+                           const ScaledIdentityMatrix& matrix)
+    {
+      using Result = DiagonalMatrix<typename PromotionTraits<K,OtherScalar>::PromotedType,n>;
+      Result result = diagonalMatrix;
+      result += matrix;
+      return result;
+    }
+
+    //! Addition of DiagonalMatrix to ScaledIdentityMatrix
+    template <class OtherScalar>
+      requires requires(K k, OtherScalar otherScalar) { k + otherScalar; }
+    friend auto operator+ (const ScaledIdentityMatrix& matrix,
+                           const DiagonalMatrix<OtherScalar,n>& diagonalMatrix)
+    {
+      return diagonalMatrix + matrix;
+    }
+    ///@}   // Vector space arithmetic
+
     //===== comparison ops
 
-    //! comparison operator
+    //! Test for equality
     bool operator==(const ScaledIdentityMatrix& other) const
     {
       return p_==other.scalar();
     }
 
-    //! incomparison operator
+    //! Test for inequality
     bool operator!=(const ScaledIdentityMatrix& other) const
     {
       return p_!=other.scalar();
     }
 
-    //===== linear maps
+    /** \name Matrix-vector products
+     */
+    ///@{
 
     //! y = A x
     template<class X, class Y>
@@ -356,21 +455,30 @@ namespace Dune {
         y[i] += alpha * conjugateComplex(p_) * x[i];
     }
 
-    //===== norms
+    ///@}  // Matrix-vector products
 
-    //! frobenius norm: sqrt(sum over squared values of entries)
+
+    /** @name Norms
+     */
+    ///@{
+
+    //! The Frobenius norm
     typename FieldTraits<field_type>::real_type frobenius_norm () const
     {
       return fvmeta::sqrt(n*p_*p_);
     }
 
-    //! square of frobenius norm, need for block recursion
+    //! The square of the Frobenius norm
     typename FieldTraits<field_type>::real_type frobenius_norm2 () const
     {
       return n*p_*p_;
     }
 
-    //! infinity norm (row sum norm, how to generalize for blocks?)
+    /** \brief The row sum norm
+     *
+     * For a multiple of the identity matrix, this is simply the absolute value
+     * of any diagonal matrix entry.
+     */
     typename FieldTraits<field_type>::real_type infinity_norm () const
     {
       return std::abs(p_);
@@ -382,9 +490,11 @@ namespace Dune {
       return fvmeta::absreal(p_);
     }
 
-    //===== solve
+    ///@}
 
-    /** \brief Solve system A x = b
+    /** \brief Solve linear system A x = b
+     *
+     * \tparam V Vector data type
      */
     template<class V>
     void solve (V& x, const V& b) const
@@ -400,7 +510,7 @@ namespace Dune {
       p_ = 1/p_;
     }
 
-    //! calculates the determinant of this matrix
+    //! Calculates the determinant of this matrix
     K determinant () const {
       return std::pow(p_,n);
     }
@@ -421,7 +531,7 @@ namespace Dune {
 
     //===== query
 
-    //! return true when (i,j) is in pattern
+    //! Return true if (i,j) is in the matrix pattern, i.e., if i==j
     bool exists (size_type i, size_type j) const
     {
 #ifdef DUNE_FMatrix_WITH_CHECKING

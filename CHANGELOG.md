@@ -5,6 +5,10 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.11)
 
+- Summing a `ScaledIdentityMatrix` with a `FieldMatrix` is now supported,
+  in either order.  The same holds for sums of `ScaledIdentityMatrix` and
+  `DiagonalMatrix`.
+
 - Row-wise creation of `BCRSMatrix` became faster.
 
 - `FastAMG` can now be used with non-nested matrices of type `BCRSMatrix<T>`
