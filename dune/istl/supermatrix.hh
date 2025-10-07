@@ -239,7 +239,6 @@ namespace Dune
       if (this->N_ + this->M_ + this->Nnz_!=0)
         free();
 
-      using Matrix = BCRSMatrix<B,TA>;
       this->N_ = MatrixDimension<Matrix>::rowdim(mat);
       this->M_ = MatrixDimension<Matrix>::coldim(mat);
       ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(*this);
@@ -258,7 +257,6 @@ namespace Dune
       if (this->N_ + this->M_ + this->Nnz_!=0)
         free();
 
-      using Matrix = BCRSMatrix<B,TA>;
       this->N_ = MatrixDimension<Matrix>::rowdim(mat);
       this->M_ = MatrixDimension<Matrix>::coldim(mat);
       ISTL::Impl::BCCSMatrixInitializer<Matrix, int> initializer(*this);

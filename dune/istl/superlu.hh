@@ -295,7 +295,7 @@ namespace Dune
      * During the construction the matrix will be decomposed.
      * That means that in each apply call forward and backward
      * substitutions take place (and no decomposition).
-     * @param mat The matrix of the system to solve.
+     * @param matrix The matrix of the system to solve.
      * @param verbose If true some statistics are printed.
      * @param reusevector Default value is true. If true the two vectors are allocate in
      * the first call to apply. These get resused in subsequent calls to apply
@@ -303,13 +303,13 @@ namespace Dune
      * at the beginning and deallocated at the end of each apply method. This allows
      * using the same instance of superlu from different threads.
      */
-    explicit SuperLU(const Matrix& mat, bool verbose=false,
+    explicit SuperLU(const Matrix& matrix, bool verbose=false,
                      bool reusevector=true);
 
 
     /** @brief Constructs the SuperLU solver.
      *
-     * @param mat     The matrix of the system to solve.
+     * @param matrix     The matrix of the system to solve.
      * @param config  ParameterTree containing solver parameters.
      *
      * ParameterTree Key | Meaning
@@ -317,8 +317,8 @@ namespace Dune
      * verbose           | The verbosity level. default=false
      * reuseVector       | Reuse initially allocated vectors in apply. default=true
     */
-    SuperLU(const Matrix& mat, const ParameterTree& config)
-      : SuperLU(mat, config.get<bool>("verbose", false), config.get<bool>("reuseVector", true))
+    SuperLU(const Matrix& matrix, const ParameterTree& config)
+      : SuperLU(matrix, config.get<bool>("verbose", false), config.get<bool>("reuseVector", true))
     {}
 
     /**

@@ -1016,8 +1016,8 @@ namespace Dune {
           Mat.r[i].set(0,nullptr,nullptr);
 
         // initialize the j array for row i from pattern
-        std::visit([&](const auto& pattern){
-          std::copy(pattern.cbegin(), pattern.cend(), Mat.r[i].getindexptr());
+        std::visit([&](const auto& row_indices){
+          std::copy(row_indices.cbegin(), row_indices.cend(), Mat.r[i].getindexptr());
         }, pattern.storage());
 
         // now go to next row
