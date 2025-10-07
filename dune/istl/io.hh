@@ -803,12 +803,12 @@ namespace Dune {
                         const ColPrefix &col_prefix, const Block block,
                         const std::array<std::size_t, 4> &svg_box) const {
       // get bounding box values
-      auto &[x_off, y_off, width, height] = svg_box;
+      auto &[x_off, y_off, block_width, block_height] = svg_box;
       // get style class
       std::string block_class = this->blockStyleClass(row_prefix, col_prefix);
       // write a rectangle on the bounding box
       out << "<rect class='" << block_class << "' x='" << x_off << "' y='"
-          << y_off << "' width='" << width << "' height='" << height << "'";
+          << y_off << "' width='" << block_width << "' height='" << block_height << "'";
       if constexpr (Dune::blockLevel<Block>() == 0 and std::is_convertible<Block,double>{})
         if (color_fill)
           out << " style='fill-opacity: 1;fill:" << color_fill(double(block)) << "'";
