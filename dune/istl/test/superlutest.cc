@@ -44,8 +44,8 @@ void runSuperLU(std::size_t N)
   solver.setVerbosity(true);
   solver.apply(x,b, res);
 
-  std::set<std::size_t> mrs;
-  for(std::size_t s=0; s < N/2; ++s)
+  std::set<typename Matrix::size_type> mrs;
+  for(typename Matrix::size_type s=0; s < N/2; ++s)
     mrs.insert(s);
 
   solver1.setSubMatrix(mat,mrs);

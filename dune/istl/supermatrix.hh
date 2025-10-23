@@ -276,7 +276,7 @@ namespace Dune
      * @param mat the matrix with the values
      * @param mrs The set of row (and column) indices to represent
      */
-    virtual void setMatrix(const Matrix& mat, const std::set<std::size_t>& mrs)
+    virtual void setMatrix(const Matrix& mat, const std::set<typename Matrix::size_type>& mrs)
     {
       if(this->N_+this->M_+this->Nnz_!=0)
         free();
@@ -284,7 +284,7 @@ namespace Dune
       this->M_=mrs.size()*MatrixDimension<typename Matrix::block_type>::coldim(*(mat[0].begin()));
       SuperMatrixInitializer<Matrix> initializer(*this);
 
-      copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(mat,mrs));
+      copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<typename Matrix::size_type> >(mat,mrs));
     }
 
     /** @brief Initialize data from given matrix. */

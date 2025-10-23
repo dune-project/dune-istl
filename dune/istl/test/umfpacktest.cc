@@ -50,10 +50,10 @@ TestSuite runUMFPack(std::size_t N)
 
   Dune::UMFPack<Matrix> solver1;
 
-  std::set<std::size_t> mrs;
+  std::set<typename Matrix::size_type> mrs;
   BitVector bitVector(N*N);
   bitVector = true;
-  for(std::size_t s=0; s < N/2; ++s)
+  for(typename Matrix::size_type s=0; s < N/2; ++s)
   {
     mrs.insert(s);
     bitVector[s] = false;
@@ -65,7 +65,7 @@ TestSuite runUMFPack(std::size_t N)
   // test
   x=0;
   b=0;
-  for( std::size_t i=0; i<N/2; i++ )
+  for( typename Matrix::size_type i=0; i<N/2; i++ )
   {
     // set subindices
     x[i] = x1[i];

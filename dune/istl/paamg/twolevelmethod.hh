@@ -199,14 +199,14 @@ public:
 
   void moveToCoarseLevel(const typename FatherType::FineRangeType& fineRhs)
   {
-    Transfer<std::size_t,typename FatherType::FineRangeType,ParallelInformation>
+    Transfer<typename AggregatesMap::VertexDescriptor,typename FatherType::FineRangeType,ParallelInformation>
       ::restrictVector(*aggregatesMap_, this->rhs_, fineRhs, ParallelInformation());
     this->lhs_=0;
   }
 
   void moveToFineLevel(typename FatherType::FineDomainType& fineLhs)
   {
-    Transfer<std::size_t,typename FatherType::FineRangeType,ParallelInformation>
+    Transfer<typename AggregatesMap::VertexDescriptor,typename FatherType::FineRangeType,ParallelInformation>
       ::prolongateVector(*aggregatesMap_, this->lhs_, fineLhs,
                          prolongDamp_, ParallelInformation());
   }

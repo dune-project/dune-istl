@@ -774,7 +774,7 @@ namespace Dune
 
         for(typename AggregatesMap::const_iterator iter = map.begin(); iter != map.end(); ++iter)
           if(*iter< AggregatesMap::ISOLATED)
-            m=std::max(*iter,m);
+            m=std::max<std::size_t>(*iter,m);
 
         coarse->resize(m+1);
         std::size_t i=0;
