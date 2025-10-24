@@ -956,7 +956,7 @@ namespace Dune {
     public:
       //! constructor
       CreateIterator (BCRSMatrix& _Mat, size_type _i)
-        : Mat(_Mat), i(_i), nnz(0), current_row(nullptr, Mat.j_.get(), 0)
+        : Mat(_Mat), i(_i), nnz(0), current_row(Mat.j_.get())
       {
         if (Mat.build_mode == unknown && Mat.ready == building)
           {
@@ -999,8 +999,8 @@ namespace Dune {
               DUNE_THROW(BCRSMatrixError,"allocated nnz too small");
 
             // set row i
-            Mat.r[i].set(s,nullptr,current_row.getindexptr());
-            current_row.setindexptr(current_row.getindexptr()+s);
+            Mat.r[i].set(s,nullptr, current_row);
+            current_row += s;
           }else{
             // memory is allocated individually per row
             // allocate and set row i
@@ -1087,7 +1087,7 @@ namespace Dune {
       size_type nnz;             // count total number of nonzeros
       using PatternType = typename Impl::RowIndexSet;
       PatternType pattern;      // used to compile entries in a row
-      row_type current_row;     // row pointing to the current row to setup
+      size_type * current_row;     // row pointing to the current row to setup
     };
 
     //! allow CreateIterator to access internal data
@@ -2251,7 +2251,7 @@ namespace Dune {
           r = rowAllocator_.allocate(rows);
           // initialize row entries
           for(row_type* ri=r; ri!=r+rows; ++ri)
-            std::allocator_traits<decltype(rowAllocator_)>::construct(rowAllocator_, ri, row_type());
+            std::allocator_traits<decltype(rowAllocator_)>::construct(rowAllocator_, ri);
         }else{
           r = 0;
         }
