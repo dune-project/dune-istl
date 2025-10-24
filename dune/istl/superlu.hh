@@ -457,7 +457,7 @@ namespace Dune
   void SuperLU<M>::setSubMatrix(const Matrix& mat_,
                                                                 const S& mrs)
   {
-    if(mat.N()+mat.M()>0) {
+    if(mat.N()>0 or mat.M()>0) {
       free();
     }
     lwork=0;

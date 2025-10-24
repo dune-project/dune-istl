@@ -654,8 +654,7 @@ namespace Dune {
     // The new version using a bitVector type for marking the active matrix indices is
     // directly given in `setMatrix` with an additional BitVector argument.
     // The new version is more flexible and allows, e.g., marking single components of a matrix block.
-    template<typename S>
-    void setSubMatrix(const Matrix& _mat, const S& rowIndexSet)
+    void setSubMatrix(const Matrix& _mat, const std::set<typename Matrix::size_type>& rowIndexSet)
     {
       if ((umfpackMatrix_.N() + umfpackMatrix_.M() > 0) || matrixIsLoaded_)
         free();
@@ -667,7 +666,7 @@ namespace Dune {
                              rowIndexSet.size()*MatrixDimension<Matrix>::coldim(_mat) / _mat.M());
       ISTL::Impl::BCCSMatrixInitializer<Matrix, SuiteSparse_long> initializer(umfpackMatrix_);
 
-      copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<std::size_t> >(_mat,rowIndexSet));
+      copyToBCCSMatrix(initializer, ISTL::Impl::MatrixRowSubset<Matrix,std::set<typename Matrix::size_type> >(_mat,rowIndexSet));
 
       decompose();
     }

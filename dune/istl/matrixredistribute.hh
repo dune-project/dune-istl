@@ -410,7 +410,7 @@ namespace Dune
      * @brief Constructor.
      */
     CommMatrixRow(M& m_, const Dune::GlobalLookupIndexSet<I>& idxset_, const I& aggidxset_,
-                  std::vector<size_t>& rowsize_)
+                  std::vector<typename M::size_type>& rowsize_)
       : matrix(m_), idxset(idxset_), aggidxset(aggidxset_), rowsize(&rowsize_)
     {}
     /**
@@ -449,7 +449,7 @@ namespace Dune
     /** @brief Index set for the redistributed matrix. */
     const I& aggidxset;
     /** @brief row size information for the receiving side. */
-    std::vector<size_t>* rowsize; // row sizes differ from sender side in overlap!
+    std::vector<typename M::size_type>* rowsize; // row sizes differ from sender side in overlap!
   };
 
   template<class M, class I>

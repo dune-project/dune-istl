@@ -1185,7 +1185,7 @@ namespace Dune
       for (SolverIterator solverIt = solvers.begin(); solverIt != solvers.end(); ++solverIt)
       {
         assert(solverIt->getInternalMatrix().N() == solverIt->getInternalMatrix().M());
-        maxlength = std::max(maxlength, solverIt->getInternalMatrix().N());
+        maxlength = std::max<std::size_t>(maxlength, solverIt->getInternalMatrix().N());
       }
     }
     return maxlength;

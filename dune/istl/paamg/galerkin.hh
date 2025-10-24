@@ -539,8 +539,8 @@ namespace Dune
     void SparsityBuilder<M>::operator++()
     {
       sumRowSize_ += row_.size();
-      minRowSize_=std::min(minRowSize_, row_.size());
-      maxRowSize_=std::max(maxRowSize_, row_.size());
+      minRowSize_=std::min<std::size_t>(minRowSize_, row_.size());
+      maxRowSize_=std::max<std::size_t>(maxRowSize_, row_.size());
       ++row_;
 #ifdef DUNE_ISTL_WITH_CHECKING
       assert(diagonalInserted);
