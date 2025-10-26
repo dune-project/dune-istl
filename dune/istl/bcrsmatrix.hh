@@ -336,7 +336,7 @@ namespace Dune {
 
      3. implicit scheme
 
-     With the 'random scheme` described above, the sparsity pattern has to be determined
+     With the `random scheme` described above, the sparsity pattern has to be determined
      and stored before the matrix is assembled. This requires a dedicated iteration
      over the grid elements, which can be costly in terms of time. Also, additional
      memory is needed to store the pattern before it can be given to the 'random' build mode.

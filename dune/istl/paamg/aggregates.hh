@@ -1200,7 +1200,6 @@ namespace Dune
         /**
          * @brief Constructor.
          * @param connected The set of connected aggregates.
-         * @param aggregates Mapping of the vertices onto the aggregates.
          * @param aggregates The mapping of aggregates to vertices.
          */
         ConnectivityCounter(const VertexSet& connected, const AggregatesMap<Vertex>& aggregates);

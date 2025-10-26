@@ -214,7 +214,7 @@ namespace Dune {
 
     /*!
       \brief Constructor to initialize a CG solver.
-      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int)
+      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, Preconditioner<X,Y>&, scalar_real_type, int, int)
       \param condition_estimate Whether to calculate an estimate of the condition number.
                                 The estimate is given in the InverseOperatorResult returned by apply().
                                 This is only supported for float and double field types.
@@ -231,7 +231,7 @@ namespace Dune {
 
     /*!
       \brief Constructor to initialize a CG solver.
-      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, const ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int)
+      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, const ScalarProduct<X>&, Preconditioner<X,Y>&, scalar_real_type, int, int)
       \param condition_estimate Whether to calculate an estimate of the condition number.
                                 The estimate is given in the InverseOperatorResult returned by apply().
                                 This is only supported for float and double field types.
@@ -248,7 +248,8 @@ namespace Dune {
 
     /*!
       \brief Constructor to initialize a CG solver.
-      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>, std::shared_ptr<ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, real_type, int, int)
+
+      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>,std::shared_ptr<const ScalarProduct<X>>,std::shared_ptr<Preconditioner<X,Y>>,scalar_real_type,int,int)
       \param condition_estimate Whether to calculate an estimate of the condition number.
                                 The estimate is given in the InverseOperatorResult returned by apply().
                                 This is only supported for float and double field types.
@@ -844,7 +845,7 @@ namespace Dune {
     /*!
        \brief Set up RestartedGMResSolver solver.
 
-       \copydoc LoopSolver::LoopSolver(const L&,P&,double,int,int)
+       \copydoc IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&,Preconditioner<X,Y>&,scalar_real_type,int,int)
        \param restart number of GMRes cycles before restart
      */
     RestartedGMResSolver (const LinearOperator<X,Y>& op, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
@@ -855,7 +856,7 @@ namespace Dune {
     /*!
        \brief Set up RestartedGMResSolver solver.
 
-       \copydoc LoopSolver::LoopSolver(const L&, const S&,P&,double,int,int)
+       \copydoc IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&,const ScalarProduct<X>&,Preconditioner<X,Y>&,scalar_real_type,int,int)
        \param restart number of GMRes cycles before restart
      */
     RestartedGMResSolver (const LinearOperator<X,Y>& op, const ScalarProduct<X>& sp, Preconditioner<X,Y>& prec, scalar_real_type reduction, int restart, int maxit, int verbose) :
@@ -866,7 +867,7 @@ namespace Dune {
     /*!
        \brief Constructor.
 
-       \copydoc IterativeSolver::IterativeSolver(const L&, const S&,P&,const ParameterTree&)
+       \copydoc IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>,std::shared_ptr<Preconditioner<X,X>>,const ParameterTree&)
 
        Additional parameter:
        ParameterTree Key | Meaning
@@ -888,8 +889,8 @@ namespace Dune {
     /*!
       \brief Set up RestartedGMResSolver solver.
 
-      \copydoc LoopSolver::LoopSolver(std::shared_ptr<const L>,std::shared_ptr<const S>,std::shared_ptr<P>,double,int,int)
-       \param restart number of GMRes cycles before restart
+      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>,std::shared_ptr<const ScalarProduct<X>>,std::shared_ptr<Preconditioner<X,Y>>,scalar_real_type,int,int)
+      \param restart number of GMRes cycles before restart
      */
     RestartedGMResSolver (std::shared_ptr<const LinearOperator<X,Y>> op,
                           std::shared_ptr<const ScalarProduct<X>> sp,
@@ -1325,7 +1326,7 @@ private:
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(const L&,P&,double,int,int)
+       \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&,Preconditioner<X,Y>&,scalar_real_type,int,int)
        \param restart number of GMRes cycles before restart
      */
     GeneralizedPCGSolver (const LinearOperator<X,X>& op, Preconditioner<X,X>& prec, scalar_real_type reduction, int maxit, int verbose, int restart = 10) :
@@ -1336,7 +1337,7 @@ private:
     /*!
        \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-       \copydoc LoopSolver::LoopSolver(const L&, const S&,P&,double,int,int)
+       \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&,const ScalarProduct<X>&,Preconditioner<X,Y>&,scalar_real_type,int,int)
        \param restart When to restart the construction of
        the Krylov search space.
      */
@@ -1347,9 +1348,9 @@ private:
 
 
      /*!
-       \brief Constructor.
+       \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-       \copydoc IterativeSolver::IterativeSolver(const L&,const S&,P&,const ParameterTree&)
+       \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>,std::shared_ptr<Preconditioner<X,X>>,const ParameterTree&)
 
        Additional parameter:
        ParameterTree Key | Meaning
@@ -1370,9 +1371,8 @@ private:
     /*!
       \brief Set up nonlinear preconditioned conjugate gradient solver.
 
-      \copydoc LoopSolver::LoopSolver(std::shared_ptr<const L>,std::shared_ptr<const S>,std::shared_ptr<P>,double,int,int)
-      \param restart When to restart the construction of
-      the Krylov search space.
+      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>,std::shared_ptr<const ScalarProduct<X>>,std::shared_ptr<Preconditioner<X,Y>>,scalar_real_type,int,int)
+      \param restart When to restart the construction of the Krylov search space.
     */
     GeneralizedPCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
                           std::shared_ptr<const ScalarProduct<X>> sp,
@@ -1512,7 +1512,7 @@ private:
     using IterativeSolver<X,X>::apply;
     /*!
       \brief Constructor to initialize a RestartedFCG solver.
-      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, Preconditioner<X,Y>&, real_type, int, int, int)
+      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, Preconditioner<X,Y>&, scalar_real_type, int, int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
     RestartedFCGSolver (const LinearOperator<X,X>& op, Preconditioner<X,X>& prec,
@@ -1522,7 +1522,7 @@ private:
 
     /*!
       \brief Constructor to initialize a RestartedFCG solver.
-      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, const ScalarProduct<X>&, Preconditioner<X,Y>&, real_type, int, int,int)
+      \copydetails IterativeSolver::IterativeSolver(const LinearOperator<X,Y>&, const ScalarProduct<X>&, Preconditioner<X,Y>&, scalar_real_type, int, int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
     RestartedFCGSolver (const LinearOperator<X,X>& op, const ScalarProduct<X>& sp, Preconditioner<X,X>& prec,
@@ -1532,7 +1532,7 @@ private:
 
     /*!
       \brief Constructor to initialize a RestartedFCG solver.
-      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>, std::shared_ptr<const ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, real_type, int, int,int)
+      \copydetails IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>, std::shared_ptr<const ScalarProduct<X>>, std::shared_ptr<Preconditioner<X,Y>>, scalar_real_type, int, int)
       \param mmax is the maximal number of previous vectors which are orthogonalized against the new search direction.
     */
     RestartedFCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
@@ -1544,9 +1544,9 @@ private:
     {}
 
     /*!
-       \brief Constructor.
+       \brief Constructor to initialize a RestartedFCG solver.
 
-       \copydoc IterativeSolver::IterativeSolver(const L&, const S&,P&,const ParameterTree&)
+       \copydoc IterativeSolver::IterativeSolver(std::shared_ptr<const LinearOperator<X,Y>>,std::shared_ptr<Preconditioner<X,X>>,const ParameterTree&)
 
        Additional parameter:
        ParameterTree Key | Meaning
@@ -1557,8 +1557,8 @@ private:
      */
     RestartedFCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
                         std::shared_ptr<Preconditioner<X,X>> prec,
-                        const ParameterTree& config)
-      : IterativeSolver<X,X>(op, prec, config), _mmax(config.get("mmax", 10))
+                        const ParameterTree& configuration)
+      : IterativeSolver<X,X>(op, prec, configuration), _mmax(configuration.get("mmax", 10))
     {}
 
     RestartedFCGSolver (std::shared_ptr<const LinearOperator<X,X>> op,
