@@ -145,9 +145,9 @@ namespace Dune {
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res) override
     {
       BlockVector<field_type> B(ldlMatrix_.N()), X(ldlMatrix_.M());
-      flatVectorForEachMasked(b, maskVector_, [&](auto const& b_i, std::size_t i) { B[i] = b_i; });
+      Impl::flatVectorForEachMasked(b, maskVector_, [&](auto const& b_i, std::size_t i) { B[i] = b_i; });
       apply(X.data(), B.data());
-      flatVectorForEachMasked(x, maskVector_, [&](auto& x_i, std::size_t i) { x_i = X[i]; });
+      Impl::flatVectorForEachMasked(x, maskVector_, [&](auto& x_i, std::size_t i) { x_i = X[i]; });
 
       // this is a direct solver
       res.iterations = 1;

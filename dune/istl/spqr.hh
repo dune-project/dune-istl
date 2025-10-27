@@ -151,7 +151,7 @@ namespace Dune {
     void apply(domain_type& x, range_type& b, InverseOperatorResult& res) override
     {
       // copy b into the internal storage
-      flatVectorForEachMasked(b, maskVector_, [&](auto const& b_i, std::size_t i) {
+      Impl::flatVectorForEachMasked(b, maskVector_, [&](auto const& b_i, std::size_t i) {
         (static_cast<field_type*>(B_->x))[i] = b_i; });
 
       cholmod_dense* BTemp = B_;
@@ -160,7 +160,7 @@ namespace Dune {
       cholmod_l_free_dense(&BTemp, cc_);
 
       // copy the internal solution to x
-      flatVectorForEachMasked(x, maskVector_, [&](auto& x_i, std::size_t i) {
+      Impl::flatVectorForEachMasked(x, maskVector_, [&](auto& x_i, std::size_t i) {
         x_i = (static_cast<field_type const*>(X->x))[i]; });
 
       cholmod_l_free_dense(&X, cc_);
