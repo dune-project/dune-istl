@@ -310,7 +310,7 @@ namespace Dune {
     /*!
        \brief Prepare the preconditioner.
 
-       \copydoc Preconditioner::pre(domain_type&,range_type&)
+       \copydoc Preconditioner::pre()
      */
     void pre (domain_type& x, range_type& b) override
     {
@@ -320,7 +320,7 @@ namespace Dune {
     /*!
        \brief Apply the preconditioner
 
-       \copydoc Preconditioner::apply(domain_type&,const range_type&)
+       \copydoc Preconditioner::apply()
      */
     void apply (domain_type& v, const range_type& d) override
     {
@@ -341,7 +341,7 @@ namespace Dune {
     /*!
        \brief Clean up.
 
-       \copydoc Preconditioner::post(domain_type&)
+       \copydoc Preconditioner::post()
      */
     void post (domain_type& x) override
     {

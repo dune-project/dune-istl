@@ -127,6 +127,7 @@ namespace Dune{
      configuration given as a ParameterTree.
      \param op Operator
      \param config `ParameterTree` with configuration
+     \param prec Preconditioner
 
      Example ini File that can be passed in to construct a CGSolver with a SSOR
      preconditioner:
