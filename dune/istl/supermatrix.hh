@@ -83,7 +83,7 @@ namespace Dune
                        std::complex<float> *values, int *rowindex, int* colindex,
                        Stype_t stype, Dtype_t dtype, Mtype_t mtype)
     {
-      cCreate_CompCol_Matrix(mat, n, m, offset, reinterpret_cast< ::complex*>(values),
+      cCreate_CompCol_Matrix(mat, n, m, offset, reinterpret_cast< singlecomplex*>(values),
                              rowindex, colindex, stype, dtype, mtype);
     }
   };

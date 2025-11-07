@@ -187,7 +187,7 @@ namespace Dune
     static void create(SuperMatrix *mat, int n, int m, std::complex<float> *dat, int n1,
                        Stype_t stype, Dtype_t dtype, Mtype_t mtype)
     {
-      cCreate_Dense_Matrix(mat, n, m, reinterpret_cast< ::complex*>(dat), n1, stype, dtype, mtype);
+      cCreate_Dense_Matrix(mat, n, m, reinterpret_cast< singlecomplex*>(dat), n1, stype, dtype, mtype);
 
     }
 
