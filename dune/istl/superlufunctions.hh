@@ -8,8 +8,6 @@
 
 #include <dune-istl-config.hh> // SUPERLU_INT_TYPE
 
-#include <dune/common/version.hh>
-
 #define int_t SUPERLU_INT_TYPE
 #include <supermatrix.h>
 #include <slu_util.h>
@@ -61,18 +59,11 @@ extern "C" {
 
 #if __has_include("slu_cdefs.h")
 
-#ifndef SUPERLU_TYPEDEF_COMPLEX
-// Per default SuperLU >= 7.0.0. does not provide
-// a type complex anymore. By setting SUPERLU_TYPEDEF_COMPLEX
-// we tell SuperLU to define complex to be the same as the
-// new type singlecomplex
-#define SUPERLU_TYPEDEF_COMPLEX
-#endif
 #include "slu_scomplex.h"
 
 // fallback by introducing typedef for complex for older versions
 #ifdef SUPERLU_MAJOR_VERSION
-#if DUNE_VERSION_LT(SUPERLU, 7, 0)
+#if SUPERLU_MAJOR_VERSION < 7
 typedef ::complex singlecomplex;
 #endif
 #endif
