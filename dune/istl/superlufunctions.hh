@@ -58,14 +58,16 @@ extern "C" {
 #endif
 
 #if __has_include("slu_cdefs.h")
-#ifndef SUPERLU_TYPEDEF_COMPLEX
-// Per default SuperLU >= 7.0.0. does not provide
-// a type complex anymore. By setting SUPERLU_TYPEDEF_COMPLEX
-// we tell SuperLU to define complex to be the same as the
-// new type singlecomplex
-#define SUPERLU_TYPEDEF_COMPLEX
-#endif
+
 #include "slu_scomplex.h"
+
+// fallback by introducing typedef for complex for older versions
+#ifdef SUPERLU_MAJOR_VERSION
+#if SUPERLU_MAJOR_VERSION < 7
+typedef ::complex singlecomplex;
+#endif
+#endif
+
 
 extern "C" {
   extern void
@@ -77,12 +79,12 @@ extern "C" {
 
 
   extern void
-  cCreate_Dense_Matrix(SuperMatrix *, int, int, ::complex *, int,
+  cCreate_Dense_Matrix(SuperMatrix *, int, int, singlecomplex*, int,
                        Stype_t, Dtype_t, Mtype_t);
 
 
   extern void
-  cCreate_CompCol_Matrix(SuperMatrix *, int, int, int, ::complex *,
+  cCreate_CompCol_Matrix(SuperMatrix *, int, int, int, singlecomplex*,
                          int *, int *, Stype_t, Dtype_t, Mtype_t);
 
   extern int     cQuerySpace (SuperMatrix *, SuperMatrix *, mem_usage_t *);
