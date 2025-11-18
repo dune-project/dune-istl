@@ -806,6 +806,11 @@ namespace Dune
        */
       typedef S VertexSet;
 
+      /**
+       * @brief Type of size used by allocator of sllist
+       */
+      using size_type = typename VertexSet::size_type;
+
       /** @brief Const iterator over a vertex list. */
       typedef typename VertexSet::const_iterator const_iterator;
 
@@ -857,11 +862,11 @@ namespace Dune
       /**
        * @brief Get the size of the aggregate.
        */
-      typename VertexSet::size_type size();
+      size_type size();
       /**
        * @brief Get the number of connections to other aggregates.
        */
-      typename VertexSet::size_type connectSize();
+      size_type connectSize();
 
       /**
        * @brief Get the id identifying the aggregate.
@@ -1640,14 +1645,14 @@ namespace Dune
     }
 
     template<class G,class S>
-    inline typename Aggregate<G,S>::VertexSet::size_type
+    inline typename Aggregate<G,S>::size_type
     Aggregate<G,S>::size()
     {
       return vertices_.size();
     }
 
     template<class G,class S>
-    inline typename Aggregate<G,S>::VertexSet::size_type
+    inline typename Aggregate<G,S>::size_type
     Aggregate<G,S>::connectSize()
     {
       return connected_.size();
