@@ -560,7 +560,9 @@ namespace Imp {
       this->n = storage_.size();
     }
 
-    std::vector<B, A> storage_;
+    using block_allocator_t = typename std::allocator_traits<A>::template rebind_alloc<B>;
+
+    std::vector<B, block_allocator_t> storage_;
   };
 
   /** @} */

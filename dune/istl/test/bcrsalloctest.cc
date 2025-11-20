@@ -24,7 +24,11 @@ template <class T>
 struct CustomAllocator
 {
   using value_type = T;
+
   CustomAllocator() = default;
+
+  template <class U>
+  CustomAllocator(const CustomAllocator<U>&) noexcept {}
 
   T *allocate(std::size_t size)
   {
@@ -122,15 +126,31 @@ int testBCRSMatrix(int size)
   return 0;
 }
 
+struct DummyBlock {};
+
 int main(int argc, char **argv)
 {
-  // Test scalar matrices and vectors
-  int ret = testBCRSMatrix<BCRSMatrix<double, CustomAllocator<double>>, BlockVector<double, CustomAllocator<double>>>(100);
+  // Test scalar matrices and vectors with default allocator
+  int ret = testBCRSMatrix<BCRSMatrix<double>, BlockVector<double>>(100);
+
+  // Test scalar matrices and vectors with custom allocator
+  ret = testBCRSMatrix<BCRSMatrix<double, CustomAllocator<double>>, BlockVector<double, CustomAllocator<double>>>(100);
+
+  // Test scalar matrices and vectors with allocator for another type
+  ret = testBCRSMatrix<BCRSMatrix<double, std::allocator<DummyBlock>>, BlockVector<double, std::allocator<DummyBlock>>>(100);
+  ret = testBCRSMatrix<BCRSMatrix<double, CustomAllocator<DummyBlock>>, BlockVector<double, CustomAllocator<DummyBlock>>>(100);
 
   // Test block matrices and vectors with trivial blocks
   using FVec = FieldVector<double, 1>;
   using FMat = FieldMatrix<double, 1, 1>;
+  ret = testBCRSMatrix<BCRSMatrix<FMat>, BlockVector<FVec>>(100);
+
+  // Test block matrices and vectors with trivial blocks and custom allocator
   ret = testBCRSMatrix<BCRSMatrix<FMat, CustomAllocator<FMat>>, BlockVector<FVec, CustomAllocator<FVec>>>(100);
+
+  // Test block matrices and vectors with trivial blocks and allocator for another type
+  ret = testBCRSMatrix<BCRSMatrix<FMat, std::allocator<DummyBlock>>, BlockVector<FVec, std::allocator<DummyBlock>>>(100);
+  ret = testBCRSMatrix<BCRSMatrix<FMat, CustomAllocator<DummyBlock>>, BlockVector<FVec, CustomAllocator<DummyBlock>>>(100);
 
   return ret;
 }
