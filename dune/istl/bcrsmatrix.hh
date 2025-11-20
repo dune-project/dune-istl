@@ -501,12 +501,6 @@ namespace Dune {
     //! allocator of blocks
     using allocator_type = A;
 
-    //! allocator of rows
-    using row_allocator_type = typename std::allocator_traits<A>::template rebind_alloc<row_type>;
-
-    //! allocator of indices
-    using size_allocator_type = typename std::allocator_traits<A>::template rebind_alloc<size_type>;
-
     //! The type for the statistics object returned by compress()
     typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;
 
