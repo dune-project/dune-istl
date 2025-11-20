@@ -9,26 +9,26 @@
 #include <dune/istl/umfpack.hh>
 
 namespace Dune {
-  DUNE_REGISTER_DIRECT_SOLVER("dummy_direct", [](auto tl, auto op, const ParameterTree& config){
-    using TL = decltype(tl);
-    using M = typename TypeListElement<0, TL>::type;
-    using V = typename TypeListElement<1, TL>::type;
-    using U = typename TypeListElement<2, TL>::type;
+  DUNE_REGISTER_SOLVER("dummy_direct", [](auto opInfo, auto op, const ParameterTree& config){
+    using OpInfo = std::decay_t<decltype(opInfo)>;
+    using M = typename OpInfo::matrix_type;
+    using U = typename OpInfo::domain_type;
+    using V = typename OpInfo::range_type;
     return std::make_shared<UMFPack<M>>();
   });
-  DUNE_REGISTER_ITERATIVE_SOLVER("dummy_iterative", [](auto tl, auto op, const ParameterTree& config){
-    using TL = decltype(tl);
-    using V = typename Dune::TypeListElement<0, TL>::type;
-    using U = typename Dune::TypeListElement<1, TL>::type;
+  DUNE_REGISTER_SOLVER("dummy_iterative", [](auto opInfo, auto op, const ParameterTree& config){
+    using OpInfo = std::decay_t<decltype(opInfo)>;
+    using U = typename OpInfo::domain_type;
+    using V = typename OpInfo::range_type;
     std::shared_ptr<Preconditioner<V,U>> preconditioner = getPreconditionerFromFactory(op, config.sub("preconditioner"));
     return std::make_shared<CGSolver<V>>(op, preconditioner, config);
   });
-  DUNE_REGISTER_PRECONDITIONER("dummy_prec", [](auto tl, auto op, const ParameterTree& config){
-    using TL = decltype(tl);
-    using M = typename TypeListElement<0, TL>::type;
-    using V = typename TypeListElement<1, TL>::type;
-    using U = typename TypeListElement<2, TL>::type;
-    return std::make_shared<Richardson<V,U>>();
+  DUNE_REGISTER_PRECONDITIONER("dummy_prec", [](auto opInfo, auto op, const ParameterTree& config){
+    using OpInfo = std::decay_t<decltype(opInfo)>;
+    using M = typename OpInfo::matrix_type;
+    using U = typename OpInfo::domain_type;
+    using V = typename OpInfo::range_type;
+    return std::make_shared<Richardson<U,V>>();
   });
 }
 

@@ -843,29 +843,6 @@ namespace Dune {
     Impl::writeSVGMatrix(out, mat, opts, IndexPrefix{}, IndexPrefix{});
   }
 
-  /**
-   * @brief Writes the visualization of matrix in the SVG format
-   * @details The default visualization writes a rectangle for every block
-   *          bounding box. This is enough to visualize patterns. If you need a
-   *          more advance SVG object in each matrix block (e.g. color scale, or
-   *          write the value in text), just provide a custom SVGOptions that
-   *          fulfills the DefaultSVGMatrixOptions interface.
-   *
-   * @tparam Mat          Matrix type to write
-   * @tparam SVGOptions   Options object type (see DefaultSVGMatrixOptions)
-   * @param mat           The matrix to write
-   * @param out           A output stream to write SVG to
-   * @param opts          SVG Options object
-   *
-   * \deprecated Use signature where std::stream is the first argument. This
-   *             method will be removed after Dune 2.10.
-   */
-  template <class Mat, class SVGOptions = DefaultSVGMatrixOptions>
-  [[deprecated("Use signature where std::stream is the first argument. This will be removed after Dune 2.10.")]]
-  void writeSVGMatrix(const Mat &mat, std::ostream &out, SVGOptions opts = {}) {
-    writeSVGMatrix(out, mat, opts);
-  }
-
   /** @} end documentation */
 
 } // namespace Dune
