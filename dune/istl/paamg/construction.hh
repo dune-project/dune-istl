@@ -49,7 +49,7 @@ namespace Dune
        * In the default implementation the copy constructor is called.
        * @param args The arguments for the construction.
        */
-      static inline std::shared_ptr<T> construct(Arguments&  args)
+      static inline std::shared_ptr<T> construct(Arguments& /*args*/)
       {
         return std::make_shared<T>();
       }

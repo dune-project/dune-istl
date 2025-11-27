@@ -250,8 +250,9 @@ namespace Dune {
   {
     template<class B>
     void printInnerMatrixElement(std::ostream& s,
-                                 const B& innerMatrixElement,
-                                 int innerrow, int innercol)
+                                const B& innerMatrixElement,
+                                int /*innerrow*/,
+                                int /*innercol*/)
     {
       s<<innerMatrixElement<<" ";
     }
@@ -747,8 +748,8 @@ namespace Dune {
      * not required for custom options classes.
      */
     template <class RowPrefix, class ColPrefix>
-    std::string blockStyleClass(const RowPrefix &row_prefix,
-                                const ColPrefix &col_prefix) const {
+    std::string blockStyleClass(const RowPrefix & /*row_prefix*/,
+                                const ColPrefix & /*col_prefix*/) const {
       // here, you can potentially give a different style to each block
       return "matrix-block";
     }

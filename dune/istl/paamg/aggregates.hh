@@ -406,7 +406,7 @@ namespace Dune
        */
       template<class M>
       auto operator()(const M& m,
-                      typename std::enable_if_t<Dune::IsNumber<M>::value>* sfinae = nullptr) const
+                      typename std::enable_if_t<Dune::IsNumber<M>::value>* /*sfinae*/ = nullptr) const
       {
         typedef typename FieldTraits<M>::real_type real_type;
         static_assert( std::is_convertible<M, real_type >::value,
@@ -509,7 +509,7 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
+      typename FieldTraits<typename M::field_type>::real_type operator()(const M& /*m*/) const
       {
         return 1;
       }
@@ -1413,13 +1413,13 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::initRow(const Row& row, int index, const std::false_type&)
+    inline void SymmetricDependency<M,N>::initRow(const Row& /*row*/, int /*index*/, const std::false_type&)
     {
       DUNE_THROW(InvalidStateException, "field_type needs to convertible to real_type");
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::initRow([[maybe_unused]] const Row& row, int index, const std::true_type&)
+    inline void SymmetricDependency<M,N>::initRow(const Row& /*row*/, int index, const std::true_type&)
     {
       using std::min;
       maxValue_ = min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
@@ -1533,7 +1533,7 @@ namespace Dune
     {}
 
     template<class G,class S>
-    void Aggregate<G,S>::reconstruct(const Vertex& vertex)
+    void Aggregate<G,S>::reconstruct(const Vertex& /*vertex*/)
     {
       /*
          vertices_.push_back(vertex);

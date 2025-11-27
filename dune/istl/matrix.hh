@@ -1026,16 +1026,16 @@ namespace MatrixImp
       using std::max;
 
       real_type norm = 0;
-      real_type isNaN = 1;
+      real_type is_nan = 1;
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
           sum += Impl::asMatrix(y).infinity_norm();
         norm = max(sum, norm);
-        isNaN += sum;
+        is_nan += sum;
       }
 
-      return norm * (isNaN / isNaN);
+      return norm * (is_nan / is_nan);
     }
 
     //! simplified infinity norm (uses Manhattan norm for complex values)
@@ -1046,16 +1046,16 @@ namespace MatrixImp
       using std::max;
 
       real_type norm = 0;
-      real_type isNaN = 1;
+      real_type is_nan = 1;
       for (auto const &x : *this) {
         real_type sum = 0;
         for (auto const &y : x)
           sum += Impl::asMatrix(y).infinity_norm_real();
         norm = max(sum, norm);
-        isNaN += sum;
+        is_nan += sum;
       }
 
-      return norm * (isNaN / isNaN);
+      return norm * (is_nan / is_nan);
     }
 
     //===== query

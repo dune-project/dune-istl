@@ -255,27 +255,27 @@ namespace Dune {
 
   //! block upper triangular solve
   template<class M, class X, class Y, int l>
-  void butsolve (const M& A, X& v, const Y& d, BL<l> bl)
+  void butsolve (const M& A, X& v, const Y& d, BL<l> /*bl*/)
   {
     typename X::field_type w=1;
     algmeta_btsolve<l,withdiag,norelax>::butsolve(A,v,d,w);
   }
   //! relaxed block upper triangular solve
   template<class M, class X, class Y, class K, int l>
-  void butsolve (const M& A, X& v, const Y& d, const K& w, BL<l> bl)
+  void butsolve (const M& A, X& v, const Y& d, const K& w, BL<l> /*bl*/)
   {
     algmeta_btsolve<l,withdiag,withrelax>::butsolve(A,v,d,w);
   }
   //! unit block upper triangular solve
   template<class M, class X, class Y, int l>
-  void ubutsolve (const M& A, X& v, const Y& d, BL<l> bl)
+  void ubutsolve (const M& A, X& v, const Y& d, BL<l> /*bl*/)
   {
     typename X::field_type w=1;
     algmeta_btsolve<l,nodiag,norelax>::butsolve(A,v,d,w);
   }
   //! relaxed unit block upper triangular solve
   template<class M, class X, class Y, class K, int l>
-  void ubutsolve (const M& A, X& v, const Y& d, const K& w, BL<l> bl)
+  void ubutsolve (const M& A, X& v, const Y& d, const K& w, BL<l> /*bl*/)
   {
     algmeta_btsolve<l,nodiag,withrelax>::butsolve(A,v,d,w);
   }

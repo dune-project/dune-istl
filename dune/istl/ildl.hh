@@ -37,14 +37,14 @@ namespace Dune
 
   template< class K >
   inline static void bildl_subtractBCT ( const K &B, const K &CT, K &A,
-                                         typename std::enable_if_t<Dune::IsNumber<K>::value>* sfinae = nullptr )
+                                         typename std::enable_if_t<Dune::IsNumber<K>::value>* /*sfinae*/ = nullptr )
   {
     A -= B * CT;
   }
 
   template< class Matrix >
   inline static void bildl_subtractBCT ( const Matrix &B, const Matrix &CT, Matrix &A,
-                                         typename std::enable_if_t<!Dune::IsNumber<Matrix>::value>* sfinae = nullptr )
+                                         typename std::enable_if_t<!Dune::IsNumber<Matrix>::value>* /*sfinae*/ = nullptr )
   {
     for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
     {
