@@ -949,7 +949,7 @@ namespace Dune {
     //! \brief The relaxation factor to use.
     real_field_type _w;
   };
-  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto opTraits, const auto& op, const ParameterTree& config){
+  DUNE_REGISTER_PRECONDITIONER("richardson", [](auto opTraits, const auto& /*op*/, const ParameterTree& config){
     using OpTraits = std::decay_t<decltype(opTraits)>;
     using D = typename OpTraits::domain_type;
     using R = typename OpTraits::range_type;

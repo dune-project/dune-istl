@@ -211,12 +211,12 @@ namespace Dune
   {
     static_assert(IsNumber<M>::value, "MatrixDimension is not implemented for this type!");
 
-    static auto rowdim(const M& A)
+    static auto rowdim(const M& /*A*/)
     {
       return 1;
     }
 
-    static auto coldim(const M& A)
+    static auto coldim(const M& /*A*/)
     {
       return 1;
     }

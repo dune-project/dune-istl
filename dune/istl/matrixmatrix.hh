@@ -558,7 +558,7 @@ namespace Dune
    */
   template<class T, class A, class A1, class A2, int n, int m, int k>
   void matMultTransposeMat(BCRSMatrix<FieldMatrix<T,n,k>,A>& res, const BCRSMatrix<FieldMatrix<T,n,m>,A1>& mat,
-                           const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, [[maybe_unused]] bool tryHard=false)
+                           const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, bool /*tryHard*/=false)
   {
     matMultMat<2>(res,mat, matt);
   }
@@ -573,7 +573,7 @@ namespace Dune
    */
   template<class T, class A, class A1, class A2, int n, int m, int k>
   void matMultMat(BCRSMatrix<FieldMatrix<T,n,m>,A>& res, const BCRSMatrix<FieldMatrix<T,n,k>,A1>& mat,
-                  const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, bool tryHard=false)
+                  const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, bool /*tryHard*/=false)
   {
     matMultMat<0>(res,mat, matt);
   }
@@ -588,7 +588,7 @@ namespace Dune
    */
   template<class T, class A, class A1, class A2, int n, int m, int k>
   void transposeMatMultMat(BCRSMatrix<FieldMatrix<T,n,m>,A>& res, const BCRSMatrix<FieldMatrix<T,k,n>,A1>& mat,
-                           const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, [[maybe_unused]] bool tryHard=false)
+                           const BCRSMatrix<FieldMatrix<T,k,m>,A2>& matt, bool /*tryHard*/=false)
   {
     matMultMat<1>(res,mat, matt);
   }

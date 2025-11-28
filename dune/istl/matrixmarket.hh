@@ -323,7 +323,7 @@ namespace Dune
     {
       typedef FieldMatrix<T,i,j> M;
 
-      static void print(std::ostream& os, const M& m)
+      static void print(std::ostream& /*os*/, const M& /*m*/)
       {}
     };
 
@@ -332,7 +332,7 @@ namespace Dune
     {
       typedef FieldVector<T,i> M;
 
-      static void print(std::ostream& os, const M& m)
+      static void print(std::ostream& /*os*/, const M& /*m*/)
       {}
     };
 
@@ -763,8 +763,8 @@ namespace Dune
     struct MatrixValuesSetter<PatternDummy,brows,bcols>
     {
       template<typename M>
-      void operator()(const std::vector<std::set<IndexData<PatternDummy> > >& rows,
-                      M& matrix)
+      void operator()(const std::vector<std::set<IndexData<PatternDummy> > >& /*rows*/,
+                      M& /*matrix*/)
       {}
     };
 

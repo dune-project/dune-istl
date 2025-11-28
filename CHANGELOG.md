@@ -5,6 +5,9 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.11)
 
+- Remove deprecated overload for `writeSVGMatrix`, and solver factory macros `DUNE_REGISTER_ITERATIVE_SOLVER` and `DUNE_REGISTER_DIRECT_SOLVER`.
+  The specialization of `TypeListElement` for `OperatorTraits` is also removed.
+
 - Summing a `ScaledIdentityMatrix` with a `FieldMatrix` is now supported,
   in either order.  The same holds for sums of `ScaledIdentityMatrix` and
   `DiagonalMatrix`.
