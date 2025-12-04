@@ -534,7 +534,7 @@ namespace Dune
   };
 
   template<typename T>
-  struct PointerCompare
+  struct [[deprecated("Use a lambda instead instead of PointerCompare!")]] PointerCompare
   {
     bool operator()(const T* l, const T* r)
     {

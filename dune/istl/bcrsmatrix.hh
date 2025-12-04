@@ -1422,7 +1422,7 @@ namespace Dune {
           *it = iit;
 
         //sort permutation array
-        std::sort(perm.begin(),perm.end(),PointerCompare<size_type>());
+        std::sort(perm.begin(),perm.end(), [](const size_type* l, const size_type* r){ return *l < *r; });
 
         //change row window pointer to their new positions
         r[i].setindexptr(jiit);
