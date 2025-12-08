@@ -17,6 +17,11 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 - `FastAMG` can now be used with non-nested matrices of type `BCRSMatrix<T>`
   where `T` is a plain number type instead of `FieldMatrix<T,m,n>`.
 
+## Deprecations and removals
+
+- The helper struct `PointerCompare` has been deprecated. It is currently used only once,
+  and replacing it with a one-line lambda is just as short and readable.
+
 # Release 2.10
 
 - Improve testing support on Laplacian matrices with an optional diagonal regularization parameter.
