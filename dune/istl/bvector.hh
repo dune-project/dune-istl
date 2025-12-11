@@ -971,23 +971,26 @@ namespace Imp {
   };
 
 
-  /** CompressedBlockVectorWindow adds window manipulation functions
-          to the compressed_block_vector_unmanaged template.
-
-          This class has no memory management. It assumes that the storage
-          for the entries of the vector and its index set is maintained outside of this class.
-
-          But you can copy objects of this class and of the base class
-      with reference semantics.
-
-          Assignment copies the data, if the format is incopmpatible with
-      the argument an exception is thrown in debug mode.
-
-          Error checking: no error checking is provided normally.
-          Setting the compile time switch DUNE_ISTL_WITH_CHECKING
-          enables error checking.
-
-   \internal This class is an implementation detail, and should not be used outside of dune-istl.
+  /**
+   * \brief Window manipulation for compressed block vectors
+   *
+   * Provides a view into a compressed (sparse) block vector with index set management.
+   * This class allows manipulation of windows into existing compressed vector storage
+   * without owning the memory.
+   *
+   * \tparam B The block type stored in the vector
+   * \tparam ST Size type for indexing (default: std::size_t)
+   *
+   * \warning This class does NOT manage memory. The caller must ensure that both
+   *          the data storage and index array remain valid for the object's lifetime.
+   *
+   * \deprecated The copy constructor and assignment operators with reference semantics
+   *             are deprecated due to ambiguity and will be removed in future versions.
+   *             Use explicit constructors or setter methods instead.
+   *
+   * \note Error checking is only enabled when DUNE_ISTL_WITH_CHECKING is defined.
+   *
+   * \internal This is an implementation detail and should not be used outside dune-istl.
    */
   template<class B, class ST=std::size_t >
   class CompressedBlockVectorWindow : public compressed_block_vector_unmanaged<B,ST>
@@ -1025,13 +1028,15 @@ namespace Imp {
       this->j = _j;
     }
 
-    //! copy constructor, this has reference semantics!
-    CompressedBlockVectorWindow (const CompressedBlockVectorWindow& a)
-    {
-      this->n = a.n;
-      this->p = a.p;
-      this->j = a.j;
-    }
+    [[deprecated("Reference semantics (i.e., assignment does shallow copy) will be removed due to ambiguity. "
+                 "Instead, use other explicit constructors or populate objects with the setter methods. "
+                 "This will be removed after Dune 2.11.")]]
+    CompressedBlockVectorWindow(const CompressedBlockVectorWindow &a) = default;
+
+    [[deprecated("Reference semantics (i.e., assignment does shallow copy) will be removed due to ambiguity. "
+                 "Instead, use other explicit constructors or populate objects with the setter methods. "
+                 "This will be removed after Dune 2.11.")]]
+    CompressedBlockVectorWindow (CompressedBlockVectorWindow&& a) = default;
 
     //! assignment
     CompressedBlockVectorWindow& operator= (const CompressedBlockVectorWindow& a)
@@ -1057,6 +1062,13 @@ namespace Imp {
       return *this;
     }
 
+    [[deprecated("Reference semantics (i.e., assignment does shallow copy) will be removed due to ambiguity. "
+                 "Instead, use other explicit constructors or populate objects with the setter methods. "
+                 "This will be removed after Dune 2.11.")]]
+    CompressedBlockVectorWindow& operator= (CompressedBlockVectorWindow&& a)
+    {
+      return (*this = std::as_const(a));
+    }
 
     //===== window manipulation methods
 
