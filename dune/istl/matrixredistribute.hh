@@ -784,11 +784,9 @@ namespace Dune
       ri.template redistribute<MatrixRowGatherScatter<M,IndexSet> >(origrow_copy,
                                                                     newrow_copy);
       ri.getInterface().free();
-      RemoteIndices<IndexSet> *ris = new RemoteIndices<IndexSet>(origComm.indexSet(),
-                                                                 newComm.indexSet(),
-                                                                 origComm.communicator());
-      ris->template rebuild<true>();
-      ri.getInterface().build(*ris,ownerflags,ownerflags);
+      RemoteIndices<IndexSet> ris(origComm.indexSet(), newComm.indexSet(), origComm.communicator());
+      ris.template rebuild<true>();
+      ri.getInterface().build(ris,ownerflags,ownerflags);
     }
 
     CommMatrixRow<M,IndexSet>
