@@ -398,20 +398,19 @@ namespace Dune {
     void dot (const T1& x, const T1& y, T2& result) const
     {
       using real_type = typename FieldTraits<typename T1::field_type>::real_type;
+      using size_type = typename std::vector<bool>::size_type;
       // set up mask vector
-      if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size()))
+      if (mask.size()!=static_cast<size_type>(x.size()))
       {
-        mask.resize(x.size());
-        for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
-          mask[i] = 1;
+        mask.assign(x.size(), true);
         for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
           if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
-            mask[i->local().local()] = 0;
+            mask[i->local().local()] = false;
       }
       result = T2(0.0);
 
       for (typename T1::size_type i=0; i<x.size(); i++)
-        result += (x[i]*(y[i]))*static_cast<real_type>(mask[i]);
+        result += (x[i]*(y[i]))*static_cast<real_type>(bool(mask[i]));
       result = cc.sum(result);
     }
 
@@ -425,20 +424,18 @@ namespace Dune {
     typename FieldTraits<typename T1::field_type>::real_type norm (const T1& x) const
     {
       using real_type = typename FieldTraits<typename T1::field_type>::real_type;
-
+      using size_type = typename std::vector<bool>::size_type;
       // set up mask vector
-      if (mask.size()!=static_cast<typename std::vector<double>::size_type>(x.size()))
+      if (mask.size()!=static_cast<size_type>(x.size()))
       {
-        mask.resize(x.size());
-        for (typename std::vector<double>::size_type i=0; i<mask.size(); i++)
-          mask[i] = 1;
+        mask.assign(x.size(), true);
         for (typename PIS::const_iterator i=pis.begin(); i!=pis.end(); ++i)
           if (i->local().attribute()!=OwnerOverlapCopyAttributeSet::owner)
-            mask[i->local().local()] = 0;
+            mask[i->local().local()] = false;
       }
       auto result = real_type(0.0);
       for (typename T1::size_type i=0; i<x.size(); i++)
-        result += Impl::asVector(x[i]).two_norm2()*mask[i];
+        result += Impl::asVector(x[i]).two_norm2()*static_cast<real_type>(bool(mask[i]));
       using std::sqrt;
       return sqrt(cc.sum(result));
     }
@@ -686,7 +683,7 @@ namespace Dune {
     mutable bool OwnerCopyToOwnerCopyInterfaceBuilt;
     mutable IF CopyToAllInterface;
     mutable bool CopyToAllInterfaceBuilt;
-    mutable std::vector<double> mask;
+    mutable std::vector<bool> mask;
     int oldseqNo;
     GlobalLookupIndexSet* globalLookup_;
     const SolverCategory::Category category_;
