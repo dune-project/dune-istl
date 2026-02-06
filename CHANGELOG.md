@@ -5,7 +5,7 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.12)
 
-- ...
+- Fix memory leak when redistributing a parallel matrices.
 
 # Release 2.11
 
