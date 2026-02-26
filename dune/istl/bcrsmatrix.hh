@@ -26,6 +26,7 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/scalarvectorview.hh>
 #include <dune/common/scalarmatrixview.hh>
+#include <dune/common/std/no_unique_address.hh>
 
 #include <dune/istl/blocklevel.hh>
 
@@ -491,14 +492,14 @@ namespace Dune {
     //! export the type representing the components
     typedef B block_type;
 
-    //! export the allocator type
-    typedef A allocator_type;
-
     //! The type for the index access and the size
-    typedef typename A::size_type size_type;
+    typedef typename std::allocator_traits<A>::size_type size_type;
 
     //! implement row_type with compressed vector
     typedef Imp::CompressedBlockVectorWindow<B,size_type> row_type;
+
+    //! allocator of blocks
+    using allocator_type = A;
 
     //! The type for the statistics object returned by compress()
     typedef ::Dune::CompressionStatistics<size_type> CompressionStatistics;
@@ -921,8 +922,9 @@ namespace Dune {
       // reallocate the rows if required
       if (n>0 && n!=Mat.n) {
         // free rows
+        row_allocator_t rowAllocator_(allocator_);
         for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
-          std::allocator_traits<decltype(rowAllocator_)>::destroy(rowAllocator_, riter);
+          std::allocator_traits<row_allocator_t>::destroy(rowAllocator_, riter);
         rowAllocator_.deallocate(r,n);
       }
 
@@ -1004,11 +1006,13 @@ namespace Dune {
           }else{
             // memory is allocated individually per row
             // allocate and set row i
-            B* b = Mat.allocator_.allocate(s);
+            block_allocator_t blockAllocator_(Mat.allocator_);
+            B* b = blockAllocator_.allocate(s);
             // use placement new to call constructor that allocates
             // additional memory.
             new (b) B[s];
-            size_type* j = Mat.sizeAllocator_.allocate(s);
+            size_allocator_t sizeAllocator_(Mat.allocator_);
+            size_type* j = sizeAllocator_.allocate(s);
             Mat.r[i].set(s,b,j);
           }
         }else
@@ -2051,13 +2055,6 @@ namespace Dune {
     BuildMode build_mode;     // row wise or whole matrix
     BuildStage ready;               // indicate the stage the matrix building is in
 
-    // The allocator used for memory management
-    typename std::allocator_traits<A>::template rebind_alloc<B> allocator_;
-
-    typename std::allocator_traits<A>::template rebind_alloc<row_type> rowAllocator_;
-
-    typename std::allocator_traits<A>::template rebind_alloc<size_type> sizeAllocator_;
-
     // size of the matrix
     size_type n;       // number of rows
     size_type m;       // number of columns
@@ -2080,6 +2077,15 @@ namespace Dune {
 
     typedef std::map<std::pair<size_type,size_type>, B> OverflowType;
     OverflowType overflow;
+
+    // The allocator used for memory management
+    DUNE_NO_UNIQUE_ADDRESS allocator_type allocator_;
+
+    // Rebound allocators
+    // NOTE: If the original allocator A is stateful, the rebound allocators will share the same state as A, as they are rebound from A.
+    using block_allocator_t = typename std::allocator_traits<A>::template rebind_alloc<block_type>;
+    using row_allocator_t = typename std::allocator_traits<A>::template rebind_alloc<row_type>;
+    using size_allocator_t = typename std::allocator_traits<A>::template rebind_alloc<size_type>;
 
     void setWindowPointers(ConstRowIterator row)
     {
@@ -2180,9 +2186,10 @@ namespace Dune {
         j_.reset();
         if (a)
           {
+            block_allocator_t blockAllocator_(allocator_);
             for(B *aiter=a+(allocationSize_-1), *aend=a-1; aiter!=aend; --aiter)
-              std::allocator_traits<decltype(allocator_)>::destroy(allocator_, aiter);
-            allocator_.deallocate(a,allocationSize_);
+              std::allocator_traits<block_allocator_t>::destroy(blockAllocator_, aiter);
+            blockAllocator_.deallocate(a,allocationSize_);
             a = nullptr;
           }
       }
@@ -2192,12 +2199,14 @@ namespace Dune {
         for (size_type i=0; i<n; i++)
           if (r[i].getsize()>0)
           {
+            block_allocator_t blockAllocator_(allocator_);
+            size_allocator_t sizeAllocator_(allocator_);
             for (B *col=r[i].getptr()+(r[i].getsize()-1),
                  *colend = r[i].getptr()-1; col!=colend; --col) {
-              std::allocator_traits<decltype(allocator_)>::destroy(allocator_, col);
+              std::allocator_traits<block_allocator_t>::destroy(blockAllocator_, col);
             }
             sizeAllocator_.deallocate(r[i].getindexptr(),1);
-            allocator_.deallocate(r[i].getptr(),1);
+            blockAllocator_.deallocate(r[i].getptr(),1);
             // clear out row data in case we don't want to deallocate the rows
             // otherwise we might run into a double free problem here later
             r[i].set(0,nullptr,nullptr);
@@ -2206,8 +2215,9 @@ namespace Dune {
 
       // deallocate the rows
       if (n>0 && deallocateRows && r) {
+        row_allocator_t rowAllocator_(allocator_);
         for(row_type *riter=r+(n-1), *rend=r-1; riter!=rend; --riter)
-          std::allocator_traits<decltype(rowAllocator_)>::destroy(rowAllocator_, riter);
+          std::allocator_traits<row_allocator_t>::destroy(rowAllocator_, riter);
         rowAllocator_.deallocate(r,n);
         r = nullptr;
       }
@@ -2246,12 +2256,13 @@ namespace Dune {
       // allocate rows
       if(allocateRows) {
         if (n>0) {
+          row_allocator_t rowAllocator_(allocator_);
           if (r)
             DUNE_THROW(InvalidStateException,"Rows have already been allocated, cannot allocate a second time");
           r = rowAllocator_.allocate(rows);
           // initialize row entries
           for(row_type* ri=r; ri!=r+rows; ++ri)
-            std::allocator_traits<decltype(rowAllocator_)>::construct(rowAllocator_, ri);
+            std::allocator_traits<row_allocator_t>::construct(rowAllocator_, ri);
         }else{
           r = 0;
         }
@@ -2263,11 +2274,13 @@ namespace Dune {
       // allocate column indices only if not yet present (enable sharing)
       if (allocationSize_>0) {
         // we copy allocator and size to the deleter since _j may outlive this class
-        if (!j_.get())
+        if (!j_.get()) {
+          size_allocator_t sizeAllocator_(allocator_);
           j_.reset(sizeAllocator_.allocate(allocationSize_),
-            [alloc = sizeAllocator_, size = allocationSize_](auto ptr) mutable {
+            [alloc = std::move(sizeAllocator_), size = allocationSize_](auto ptr) mutable {
               alloc.deallocate(ptr, size);
             });
+          }
       }else{
         j_.reset();
       }
@@ -2281,7 +2294,8 @@ namespace Dune {
       if (a)
         DUNE_THROW(InvalidStateException,"Cannot allocate data array (already allocated)");
       if (allocationSize_>0) {
-        a = allocator_.allocate(allocationSize_);
+        block_allocator_t blockAllocator_(allocator_);
+        a = blockAllocator_.allocate(allocationSize_);
         // use placement new to call constructor that allocates
         // additional memory.
         new (a) B[allocationSize_];

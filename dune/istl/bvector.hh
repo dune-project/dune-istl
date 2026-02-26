@@ -388,7 +388,7 @@ namespace Imp {
           enables error checking.
    */
   template<class B, class A=std::allocator<B> >
-  class BlockVector : public Imp::block_vector_unmanaged<B,typename A::size_type>
+  class BlockVector : public Imp::block_vector_unmanaged<B,typename std::allocator_traits<A>::size_type>
   {
   public:
 
@@ -404,7 +404,7 @@ namespace Imp {
     typedef A allocator_type;
 
     //! The type for the index access
-    typedef typename A::size_type size_type;
+    typedef typename std::allocator_traits<A>::size_type size_type;
 
     //! make iterators available as types
     typedef typename Imp::block_vector_unmanaged<B,size_type>::Iterator Iterator;
@@ -560,7 +560,9 @@ namespace Imp {
       this->n = storage_.size();
     }
 
-    std::vector<B, A> storage_;
+    using block_allocator_t = typename std::allocator_traits<A>::template rebind_alloc<B>;
+
+    std::vector<B, block_allocator_t> storage_;
   };
 
   /** @} */

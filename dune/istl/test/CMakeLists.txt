@@ -12,6 +12,8 @@ install(FILES
         multirhstest.hh
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl/test)
 
+dune_add_test(SOURCES bcrsalloctest.cc)
+
 dune_add_test(SOURCES bcrsassigntest.cc)
 
 dune_add_test(SOURCES bcrsmatrixtest.cc)
