@@ -23,7 +23,7 @@
 #include<dune/istl/multitypeblockvector.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
-#include <dune/istl/solverfactory.hh>
+#include<dune/istl/solverfactory.hh>
 
 
 
@@ -329,11 +329,39 @@ namespace Dune {
      *
      * ParameterTree Key | Meaning
      * ------------------|------------
-     * verbose           | The verbosity level. default=0
+     * verbose           | The verbosity level. Default = 0
+     * ordering          | The ordering method UMFPACK should use. Can be cholmod,
+     *                   | default, amd, metis, best, none, or metis_guard (the last
+     *                   | is only available for UMFPACK versions >= 6.0). If this
+     *                   | parameter is not provided, UMFPACK's default is used.
+     *                   | See the documentation for UMFPACK_ORDERING in the UMFPACK
+     *                   | user guide for an explanation of the different variants.
+     *
+     * @throws Dune::NotImplemented if the ordering in the \p config ParameterTree is not one
+     *         of the options listed above.
     */
-    UMFPack(const Matrix& mat_, const ParameterTree& config)
-      : UMFPack(mat_, config.get<int>("verbose", 0))
-    {}
+    UMFPack(const Matrix& mat_, const ParameterTree& config) : matrixIsLoaded_(false)
+    {
+      //check whether T is a supported type
+      static_assert((std::is_same<T,double>::value) || (std::is_same<T,std::complex<double> >::value),
+                    "Unsupported Type in UMFPack (only double and std::complex<double> supported)");
+      Caller::defaults(UMF_Control);
+      setVerbosity(config.get<int>("verbose", 0));
+      if (config.hasKey("ordering")) {
+        const auto &ordering = config["ordering"];
+        if (ordering == "cholmod") setOption(UMFPACK_ORDERING, UMFPACK_ORDERING_CHOLMOD);
+        else if (ordering == "default") setOption(UMFPACK_ORDERING, UMFPACK_DEFAULT_ORDERING);
+        else if (ordering == "amd") setOption(UMFPACK_ORDERING, UMFPACK_ORDERING_AMD);
+        else if (ordering == "metis") setOption(UMFPACK_ORDERING, UMFPACK_ORDERING_METIS);
+        else if (ordering == "best") setOption(UMFPACK_ORDERING, UMFPACK_ORDERING_BEST);
+        else if (ordering == "none") setOption(UMFPACK_ORDERING, UMFPACK_ORDERING_NONE);
+        #if defined(UMFPACK_VER) && (UMFPACK_VER >= UMFPACK_VER_CODE(6, 0))
+        else if (ordering == "metis_guard") setOption(UMFPACK_ORDERING, UMFPACK_ORDERING_METIS_GUARD);
+        #endif
+        else DUNE_THROW(Dune::NotImplemented, "The UMFPACK ordering '" << ordering << "' is not implemented");
+      }
+      setMatrix(mat_);
+    }
 
     /** @brief default constructor
      */
@@ -828,8 +856,7 @@ namespace Dune {
                            if constexpr (UMFPackImpl::isValidBlock<OpTraits>::value) {
                              const auto& A = opTraits.getAssembledOpOrThrow(op);
                              const M& mat = A->getmat();
-                             int verbose = config.get("verbose", 0);
-                             return std::make_shared<Dune::UMFPack<M>>(mat,verbose);
+                             return std::make_shared<Dune::UMFPack<M>>(mat, config);
                            }
                          }
                          DUNE_THROW(UnsupportedType,
