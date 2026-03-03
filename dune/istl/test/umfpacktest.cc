@@ -7,6 +7,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/parametertree.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/test/testsuite.hh>
 #include <dune/istl/bvector.hh>
@@ -198,6 +199,71 @@ TestSuite runUMFPackMultitype2x2(std::size_t N)
 }
 
 
+template<typename Matrix, typename Vector>
+TestSuite runUMFPackWithConfig(std::size_t N)
+{
+  TestSuite t;
+
+  Matrix mat;
+  Vector b(N*N), x(N*N);
+  setupLaplacian(mat, N, 100.0);
+  b = 1;
+
+  auto checkSolve = [&](Dune::UMFPack<Matrix>& solver, const std::string& label) {
+    x = 0;
+    Vector rhs = b;
+    Dune::InverseOperatorResult res;
+    solver.apply(x, rhs, res);
+    solver.free();
+    auto norm = b.two_norm();
+    rhs = b;
+    mat.mmv(x, rhs);
+    t.check(rhs.two_norm() / norm < 1e-11)
+      << "Error in UMFPack config constructor (" << label << "):"
+      << " relative residual is too large: " << rhs.two_norm() / norm;
+  };
+
+  // No ordering specified — should work with UMFPACK defaults
+  {
+    Dune::ParameterTree config;
+    config["verbose"] = "0";
+    Dune::UMFPack<Matrix> solver(mat, config);
+    checkSolve(solver, "no ordering key");
+    std::cout << "Successfully tested UMFPACK with no ordering specified (UMFPACK defaults)\n";
+  }
+
+  // Each valid ordering string
+  std::vector<std::string> orderings{"amd", "cholmod", "default", "best", "none", "metis"
+  #if defined(UMFPACK_VER) && (UMFPACK_VER >= UMFPACK_VER_CODE(6, 0))
+    , "metis_guard"
+  #endif
+  };
+  for (auto ordering : orderings) {
+    Dune::ParameterTree config;
+    config["ordering"] = ordering;
+    Dune::UMFPack<Matrix> solver(mat, config);
+    checkSolve(solver, "ordering=" + ordering);
+
+    std::cout << "Successfully tested UMFPACK with ordering '" << ordering << "'\n";
+  }
+
+  // Invalid ordering must throw Dune::NotImplemented
+  {
+    Dune::ParameterTree config;
+    config["ordering"] = "invalid_ordering";
+    bool threw = false;
+    try {
+      Dune::UMFPack<Matrix> solver(mat, config);
+    } catch (const Dune::NotImplemented&) {
+      threw = true;
+    }
+    t.check(threw) << "Expected Dune::NotImplemented for unknown ordering string";
+  }
+
+  return t;
+}
+
+
 int main(int argc, char** argv) try
 {
 #if HAVE_SUITESPARSE_UMFPACK
@@ -251,6 +317,13 @@ int main(int argc, char** argv) try
     t.subTest(runUMFPackMultitype2x2<Matrix,Vector,BitVector>(N));
   }
 
+  // ------------------------------------------------------------------------------
+  std::cout<<"testing ParameterTree constructor with umfpack_ordering option for N="<<N<<std::endl;
+  {
+    using Matrix = Dune::BCRSMatrix<double>;
+    using Vector = Dune::BlockVector<double>;
+    t.subTest(runUMFPackWithConfig<Matrix,Vector>(N));
+  }
 
 
   return t.exit();

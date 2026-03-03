@@ -5,6 +5,7 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Master (will become release 2.12)
 
+- Added user ordering options for the `UMFPack` solver.
 - Fix memory leak when redistributing a parallel matrices.
 
 # Release 2.11
