@@ -472,7 +472,7 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      auto operator()(const M& m) const
+      typename FieldTraits<M>::real_type operator()(const M& m) const
       {
         using std::abs;
         if constexpr(Dune::IsNumber<M>::value)
@@ -493,9 +493,13 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m) const
+      typename FieldTraits<M>::real_type operator()(const M& m) const
       {
-        return m.frobenius_norm();
+        using std::abs;
+        if constexpr(Dune::IsNumber<M>::value)
+          return abs(m);
+        else
+          return m.frobenius_norm();
       }
     };
     struct AlwaysOneNorm
@@ -509,7 +513,7 @@ namespace Dune
        * @param m The matrix row to compute the norm of.
        */
       template<class M>
-      typename FieldTraits<typename M::field_type>::real_type operator()(const M& /*m*/) const
+      typename FieldTraits<M>::real_type operator()(const M& /*m*/) const
       {
         return 1;
       }
