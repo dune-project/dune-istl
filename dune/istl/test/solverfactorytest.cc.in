@@ -38,9 +38,10 @@
 
 using Vector = Dune::BlockVector<@BLOCK@>;
 
+// matrices should be scalar, even if vectors are SIMD
 template<class V>
 struct MatrixBlock{
-  typedef V type;
+  typedef Dune::Simd::Scalar<V> type;
 };
 template<class T, int n>
 struct MatrixBlock<Dune::FieldVector<T,n>>{
