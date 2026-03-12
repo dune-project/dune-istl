@@ -77,7 +77,7 @@ void randomize(const M& mat, V& b)
 }
 
 
-template <class Matrix, class Vector>
+template <class MatrixBlock, class VectorBlock>
 Dune::InverseOperatorResult testAMG(int N, int coarsenTarget, int ml, int gamma = 1)
 {
 
@@ -87,6 +87,10 @@ Dune::InverseOperatorResult testAMG(int N, int coarsenTarget, int ml, int gamma 
   typedef Dune::ParallelIndexSet<int,LocalIndex,512> ParallelIndexSet;
 
   ParallelIndexSet indices;
+
+  typedef Dune::BCRSMatrix<MatrixBlock> Matrix;
+  typedef Dune::BlockVector<VectorBlock> Vector;
+
   typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
   typedef Dune::Communication<void*> Comm;
   int n;
@@ -201,10 +205,7 @@ try
   Dune::InverseOperatorResult gamma1_res;
   for(int gamma = 1; gamma<=2;++gamma){
     {
-      using Matrix = Dune::BCRSMatrix<XREAL>;
-      using Vector = Dune::BlockVector<XREAL>;
-
-      Dune::InverseOperatorResult res = testAMG<Matrix,Vector>(N, coarsenTarget, ml, gamma);
+      Dune::InverseOperatorResult res = testAMG<XREAL,XREAL>(N, coarsenTarget, ml, gamma);
       if(gamma==1){
         gamma1_res = res;
       }else{
@@ -214,17 +215,21 @@ try
   }
 
   {
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<XREAL,1,1> >;
-    using Vector = Dune::BlockVector<Dune::FieldVector<XREAL,1> >;
-
-    testAMG<Matrix,Vector>(N, coarsenTarget, ml);
+    using MB = double;
+    using VB = double;
+    testAMG<MB, VB>(N, coarsenTarget, ml);
   }
 
   {
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<XREAL,2,2> >;
-    using Vector = Dune::BlockVector<Dune::FieldVector<XREAL,2> >;
+    using MB = Dune::FieldMatrix<double,1,1>;
+    using VB = Dune::FieldVector<double,1>;
+    testAMG<MB, VB>(N, coarsenTarget, ml);
+  }
 
-    testAMG<Matrix,Vector>(N, coarsenTarget, ml);
+  {
+    using MB = Dune::FieldMatrix<double,2,2>;
+    using VB = Dune::FieldVector<double,2>;
+    testAMG<MB, VB>(N, coarsenTarget, ml);
   }
 
   return 0;
