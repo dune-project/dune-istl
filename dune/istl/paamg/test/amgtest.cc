@@ -67,7 +67,8 @@ void randomize(const M& mat, V& b)
 {
   V x=b;
 
-  srand((unsigned)std::clock());
+  // srand((unsigned)std::clock());
+  srand(20030317);
 
   typedef typename V::iterator iterator;
   for(iterator i=x.begin(); i != x.end(); ++i)
