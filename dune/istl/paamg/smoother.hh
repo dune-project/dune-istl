@@ -12,6 +12,7 @@
 #include <dune/istl/novlpschwarz.hh>
 #include <dune/common/propertymap.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/simd/simd.hh>
 
 namespace Dune
 {
@@ -39,7 +40,7 @@ namespace Dune
       /**
        * @brief The type of the relaxation factor.
        */
-      typedef typename FieldTraits<T>::real_type RelaxationFactor;
+      using RelaxationFactor = Simd::Scalar<typename FieldTraits<T>::real_type>;
 
       /**
        * @brief The number of iterations to perform.
