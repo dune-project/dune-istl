@@ -1169,7 +1169,7 @@ namespace Dune
 
   struct AMGCreator{
     template<class> struct isValidMatrix : std::false_type{};
-    template<class T, int n, int m, class A> struct isValidMatrix<BCRSMatrix<FieldMatrix<T,n,m>, A>> : std::true_type{};
+    template<class B, class A> struct isValidMatrix<BCRSMatrix<B, A>> : std::true_type{};
 
     template<class OP>
     std::shared_ptr<Dune::Preconditioner<typename OP::element_type::domain_type, typename OP::element_type::range_type> >
@@ -1272,7 +1272,7 @@ namespace Dune
     operator() (OpTraits opTraits, const std::shared_ptr<OP>& op, const Dune::ParameterTree& config,
                 std::enable_if_t<!isValidMatrix<typename OpTraits::matrix_type>::value,int> = 0) const
     {
-      DUNE_THROW(UnsupportedType, "AMG needs a FieldMatrix as Matrix block_type");
+        DUNE_THROW(UnsupportedType, "AMG needs access to the full Matrix, got " << className<typename OpTraits::matrix_type>());
     }
   };
 
