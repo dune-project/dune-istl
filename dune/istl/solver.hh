@@ -373,7 +373,7 @@ namespace Dune
 
        \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
      */
-    void apply (X& x, X& b, double reduction, InverseOperatorResult& res) override
+    void apply (X& x, X& b, double reduction, InverseOperatorResult& res) final
     {
       scalar_real_type saved_reduction = _reduction;
       _reduction = reduction;
