@@ -900,6 +900,9 @@ namespace Dune {
       _restart(restart)
     {}
 
+    // don't shadow four-argument version of apply defined in the base class
+    using IterativeSolver<X,Y>::apply;
+
     /*!
        \brief Apply inverse operator.
 
@@ -909,19 +912,6 @@ namespace Dune {
              breakdown.
      */
     void apply (X& x, Y& b, InverseOperatorResult& res) override
-    {
-      apply(x,b,Simd::max(_reduction),res);
-    }
-
-    /*!
-       \brief Apply inverse operator.
-
-       \copydoc InverseOperator::apply(X&,Y&,double,InverseOperatorResult&)
-
-       \note Currently, the RestartedGMResSolver aborts when it detects a
-             breakdown.
-     */
-    void apply (X& x, Y& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
@@ -1167,7 +1157,7 @@ namespace Dune {
        \note Currently, the RestartedFlexibleGMResSolver aborts when it detects a
              breakdown.
      */
-    void apply (X& x, Y& b, [[maybe_unused]] double reduction, InverseOperatorResult& res) override
+    void apply (X& x, Y& b, InverseOperatorResult& res) override
     {
       using std::abs;
       const Simd::Scalar<real_type> EPSILON = 1e-80;
