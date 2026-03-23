@@ -7,6 +7,15 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 - Added user ordering options for the `UMFPack` solver.
 - Fix memory leak when redistributing a parallel matrices.
+- Fix handling of reduction in GMRes implementations
+
+## Deprecations and removals
+
+- The solvers provide two apply methods. Only the `apply(x,y,res)` variant
+  needs to be implemented, the `apply(x,y,reduction,res)` is implemented
+  in the interface class. While it was technically possible to overwrite
+  this implementation, it could lead to erroneous behavior. We updated the
+  interface class and the implementation is now marked as final.
 
 # Release 2.11
 
