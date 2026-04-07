@@ -389,29 +389,20 @@ namespace Dune
        * @param m The matrix to compute the norm of
        */
       template<class M>
-      typename FieldTraits<typename M::field_type>::real_type operator()(const M& m,
-                                                                         [[maybe_unused]] typename std::enable_if_t<!Dune::IsNumber<M>::value>* sfinae = nullptr) const
+      typename FieldTraits<M>::real_type operator()(const M& m) const
       {
-        typedef typename M::field_type field_type;
-        typedef typename FieldTraits<field_type>::real_type real_type;
-        static_assert( std::is_convertible<field_type, real_type >::value,
-                  "use of diagonal norm in AMG not implemented for complex field_type");
-        return m[N][N];
-        // possible implementation for complex types: return signed_abs(m[N][N]);
-      }
-
-      /**
-       * @brief Compute the norm of a scalar
-       * @param m The scalar to compute the norm of
-       */
-      template<class M>
-      auto operator()(const M& m,
-                      typename std::enable_if_t<Dune::IsNumber<M>::value>* /*sfinae*/ = nullptr) const
-      {
-        typedef typename FieldTraits<M>::real_type real_type;
-        static_assert( std::is_convertible<M, real_type >::value,
-                  "use of diagonal norm in AMG not implemented for complex field_type");
-        return m;
+        using field_type = typename FieldTraits<M>::field_type;
+        using real_type = typename FieldTraits<field_type>::real_type;
+        static_assert( std::is_convertible_v<field_type, real_type >,
+          "use of diagonal norm in AMG not implemented for complex field_type");
+        auto&& mm = Impl::asMatrix(m);
+#ifdef DUNE_ISTL_WITH_CHECKING
+        if (mm.N() <= N || mm.M() <= N)
+          DUNE_THROW(InvalidStateException,
+            "Diagonal<" << N << "> norm requested entry (" << N << "," << N << ") for block of size "
+            << "(" << mm.N() << "x" << mm.M() << ").");
+#endif
+        return mm[N][N];
         // possible implementation for complex types: return signed_abs(m[N][N]);
       }
 
@@ -474,11 +465,7 @@ namespace Dune
       template<class M>
       typename FieldTraits<M>::real_type operator()(const M& m) const
       {
-        using std::abs;
-        if constexpr(Dune::IsNumber<M>::value)
-          return abs(m);
-        else
-          return m.infinity_norm();
+        return Impl::asMatrix(m).infinity_norm();
       }
     };
 
@@ -495,11 +482,7 @@ namespace Dune
       template<class M>
       typename FieldTraits<M>::real_type operator()(const M& m) const
       {
-        using std::abs;
-        if constexpr(Dune::IsNumber<M>::value)
-          return abs(m);
-        else
-          return m.frobenius_norm();
+        return Impl::asMatrix(m).frobenius_norm();
       }
     };
     struct AlwaysOneNorm
