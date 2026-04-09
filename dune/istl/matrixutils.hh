@@ -533,14 +533,5 @@ namespace Dune
     };
   };
 
-  template<typename T>
-  struct [[deprecated("Use a lambda instead instead of PointerCompare!")]] PointerCompare
-  {
-    bool operator()(const T* l, const T* r)
-    {
-      return *l < *r;
-    }
-  };
-
 }
 #endif
