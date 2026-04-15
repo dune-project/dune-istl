@@ -108,7 +108,11 @@ int testMatrixMarket(int N)
       }
       if(!Dune::FloatCmp::eq(*col, *col1)) {
         using std::abs;
-        std::cerr <<"Matrix entries do not match: " << abs(*col - *col1) << std::endl;
+        auto diff = *col - *col1;
+        if constexpr (requires { diff.infinity_norm(); })
+          std::cerr <<"Matrix entries do not match: " << diff.infinity_norm() << std::endl;
+        else
+          std::cerr <<"Matrix entries do not match: " << abs(diff) << std::endl;
         ++ret;
       }
     }

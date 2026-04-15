@@ -9,6 +9,7 @@
 #include <fenv.h>
 
 #include <dune/common/fmatrix.hh>
+#include <dune/common/float_cmp.hh>
 #include <dune/common/diagonalmatrix.hh>
 #include <dune/istl/blocklevel.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -291,7 +292,7 @@ void testTranspose(const MatrixType& matrix)
 
   for(size_t i = 0; i < matrix.N(); i++)
     for(size_t j = 0; j < matrix.M(); j++)
-      if(fabs(transposedMatrix[j][i] - matrix[i][j]) > 1e-10)
+      if (!Dune::FloatCmp::eq(transposedMatrix[j][i], matrix[i][j], 1e-10))
         DUNE_THROW(ISTLError, "transpose() method produces wrong result!");
 }
 
