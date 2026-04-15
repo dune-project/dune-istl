@@ -101,11 +101,11 @@ namespace Dune
 
 
 
-    // registserBlockVector
+    // registserBlockVectorView
     // --------------------
 
     template< class BlockVector, class... options >
-    inline void registerBlockVector ( pybind11::class_< BlockVector, options... > cls )
+    inline void registerBlockVectorView ( pybind11::class_< BlockVector, options... > cls )
     {
       typedef typename BlockVector::field_type field_type;
       typedef typename BlockVector::block_type block_type;
@@ -114,8 +114,6 @@ namespace Dune
       using pybind11::operator""_a;
 
       cls.def( "assign", [] ( BlockVector &self, const BlockVector &x ) { self = x; }, "x"_a );
-
-      cls.def( "copy", [] ( const BlockVector &self ) { return new BlockVector( self ); } );
 
       cls.def( "__getitem__", [] ( const pybind11::object &self, size_type index ) {
           return detail::blockVectorGetItem( self, pybind11::cast< BlockVector & >( self ), index );
@@ -164,6 +162,22 @@ namespace Dune
       cls.def( "__imul__", [] ( BlockVector &self, field_type x ) -> BlockVector & { self *= x; return self; } );
       cls.def( "__idiv__", [] ( BlockVector &self, field_type x ) -> BlockVector & { self /= x; return self; } );
       cls.def( "__itruediv__", [] ( BlockVector &self, field_type x ) -> BlockVector & { self /= x; return self; } );
+    }
+
+    // registserBlockVectorView
+    // --------------------
+
+    template< class BlockVector, class... options >
+    inline void registerBlockVector ( pybind11::class_< BlockVector, options... > cls )
+    {
+      typedef typename BlockVector::field_type field_type;
+      typedef typename BlockVector::block_type block_type;
+      typedef typename BlockVector::size_type size_type;
+
+      using pybind11::operator""_a;
+      registerBlockVectorView( cls );
+
+      cls.def( "copy", [] ( const BlockVector &self ) { return new BlockVector( self ); } );
 
       cls.def( "__add__", [] ( const BlockVector &self, const BlockVector &x ) { BlockVector *copy = new BlockVector( self ); *copy += x; return copy; } );
       cls.def( "__sub__", [] ( const BlockVector &self, const BlockVector &x ) { BlockVector *copy = new BlockVector( self ); *copy -= x; return copy; } );
