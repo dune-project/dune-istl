@@ -16,6 +16,10 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
   in the interface class. While it was technically possible to overwrite
   this implementation, it could lead to erroneous behavior. We updated the
   interface class and the implementation is now marked as final.
+- Rows of the `BCRSMatrix` python bindings cannot longer be copied.
+  This include binary operations such as `a+b`, `a-b`, `a*0.1`, and `a/0.1`.
+  Previous versions created shallow copies which overrode the original rows when modified.
+  
 
 # Release 2.11
 

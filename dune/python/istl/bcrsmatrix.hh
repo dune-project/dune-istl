@@ -88,7 +88,7 @@ namespace Dune
       registerFieldVecMat<block_type>::apply();
 
       pybind11::class_< row_type > clsRow( scope, "BCRSMatrixRow" );
-      registerBlockVector( clsRow );
+      registerBlockVectorView( clsRow );
 
       pybind11::enum_< typename BCRSMatrix::BuildStage > bs( cls, "BuildStage" );
       bs.value( "notAllocated", BCRSMatrix::notAllocated );
