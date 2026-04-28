@@ -19,7 +19,13 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 - Rows of the `BCRSMatrix` python bindings cannot longer be copied.
   This include binary operations such as `a+b`, `a-b`, `a*0.1`, and `a/0.1`.
   Previous versions created shallow copies which overrode the original rows when modified.
-  
+
+- Deprecate `CompressedBlockVectorWindow`'s reference semantics. Instead,
+  use other explicit constructors or populate objects with the setter methods.
+
+- Remove deprecated helper struct `PointerCompare`. Instead, use a one-line
+  lambda expression.
+
 
 # Release 2.11
 

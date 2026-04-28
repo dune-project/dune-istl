@@ -1032,12 +1032,12 @@ namespace Imp {
 
     [[deprecated("Reference semantics (i.e., assignment does shallow copy) will be removed due to ambiguity. "
                  "Instead, use other explicit constructors or populate objects with the setter methods. "
-                 "This will be removed after Dune 2.11.")]]
+                 "This constructor will be made delete after Dune 2.12.")]]
     CompressedBlockVectorWindow(const CompressedBlockVectorWindow &a) = default;
 
     [[deprecated("Reference semantics (i.e., assignment does shallow copy) will be removed due to ambiguity. "
                  "Instead, use other explicit constructors or populate objects with the setter methods. "
-                 "This will be removed after Dune 2.11.")]]
+                 "This constructor will be made delete after Dune 2.12.")]]
     CompressedBlockVectorWindow (CompressedBlockVectorWindow&& a) = default;
 
     //! assignment
@@ -1066,7 +1066,7 @@ namespace Imp {
 
     [[deprecated("Reference semantics (i.e., assignment does shallow copy) will be removed due to ambiguity. "
                  "Instead, use other explicit constructors or populate objects with the setter methods. "
-                 "This will be removed after Dune 2.11.")]]
+                 "This will be removed after Dune 2.12.")]]
     CompressedBlockVectorWindow& operator= (CompressedBlockVectorWindow&& a)
     {
       return (*this = std::as_const(a));
