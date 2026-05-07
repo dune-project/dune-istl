@@ -424,10 +424,6 @@ namespace Dune {
       bblock rhs;
       xblock v;
 
-      // Initialize nested data structure if there are entries
-      if(A.begin()!=A.end())
-        v=x[0];
-
       rowiterator endi=A.end();
       for (rowiterator i=A.begin(); i!=endi; ++i)
       {
@@ -451,6 +447,7 @@ namespace Dune {
           coliterator diag=j;           // *diag = a_ii
           for (; j!=endj; ++j)
             (*j).mmv(x[j.index()],rhs);               // rhs -= sum_{j<i} a_ij * xnew_j
+          v=x[i.index()]; // Initialize nested data structure if there are entries
           algmeta_itsteps<I-1,typename M::block_type>::bsorf(*diag,v,rhs,w);           // if blocksize I==1: v = rhs/a_ii
           x[i.index()].axpy(w,v);           // x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
         }
@@ -466,10 +463,6 @@ namespace Dune {
       typedef typename X::block_type xblock;
       bblock rhs;
       xblock v;
-
-      // Initialize nested data structure if there are entries
-      if(A.begin()!=A.end())
-        v=x[0];
 
       rowiterator endi=A.beforeBegin();
       for (rowiterator i=A.beforeEnd(); i!=endi; --i)
@@ -494,6 +487,7 @@ namespace Dune {
           coliterator diag=j;
           for (; j!=endj; ++j)
             j->mmv(x[j.index()],rhs);
+          v = x[i.index()]; // Initialize nested data structure if there are entries
           algmeta_itsteps<I-1,typename M::block_type>::bsorb(*diag,v,rhs,w);
           x[i.index()].axpy(w,v);
         }
