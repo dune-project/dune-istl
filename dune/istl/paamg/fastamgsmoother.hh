@@ -70,38 +70,39 @@ namespace Dune
       static void apply(const M& A, X& x, Y& d,
                         const Y& b)
       {
-        typedef typename M::ConstRowIterator RowIterator;
-        typedef typename M::ConstColIterator ColIterator;
+        using ReverseRowIterator = std::reverse_iterator<typename M::ConstRowIterator>;
+        using ReverseColIterator = std::reverse_iterator<typename M::ConstColIterator>;
         typedef typename Y::block_type YBlock;
 
-        typename Y::iterator dIter=d.beforeEnd();
-        typename X::iterator xIter=x.beforeEnd();
-        typename Y::const_iterator bIter=b.beforeEnd();
+        std::reverse_iterator<typename Y::iterator> dIter{d.end()};
+        std::reverse_iterator<typename X::iterator> xIter{x.end()};
+        std::reverse_iterator<typename Y::const_iterator> bIter{b.end()};
 
-        for(RowIterator row=A.beforeEnd(), end=A.beforeBegin(); row != end;
-            --row, --dIter, --xIter, --bIter)
+        auto rindex = [](auto it) { return std::prev(it.base()).index(); };
+        for(ReverseRowIterator row=ReverseRowIterator{A.end()}, end=ReverseRowIterator{A.begin()}; row != end;
+            ++row, ++dIter, ++xIter, ++bIter)
         {
-          ColIterator endCol=(*row).beforeBegin();
-          ColIterator col=(*row).beforeEnd();
+          ReverseColIterator rbeginCol{(*row).begin()};
+          ReverseColIterator col{(*row).end()};
           *dIter = *bIter;
 
-          for (; col.index()>row.index(); --col)
+          for (; rindex(col)>rindex(row); ++col)
           {
             if constexpr (Dune::IsNumber<std::decay_t<decltype(*col)>>::value)
-              *dIter -= (*col)*x[col.index()];
+              *dIter -= (*col)*x[rindex(col)];
             else
-              (*col).mmv(x[col.index()],*dIter);     // rhs -= sum_{j<i} a_ij * xnew_j
+              (*col).mmv(x[rindex(col)],*dIter);     // rhs -= sum_{j<i} a_ij * xnew_j
           }
-          assert(row.index()==col.index());
-          ColIterator diag=col;
+          assert(rindex(row)==rindex(col));
+          ReverseColIterator diag=col;
           YBlock v=*dIter;
           // upper diagonal matrix
-          for (--col; col!=endCol; --col)
+          for (++col; col!=rbeginCol; ++col)
           {
             if constexpr (Dune::IsNumber<std::decay_t<decltype(*col)>>::value)
-              v -= (*col)*x[col.index()];
+              v -= (*col)*x[rindex(col)];
             else
-              (*col).mmv(x[col.index()],v);     // v -= sum_{j<i} a_ij * xold_j
+              (*col).mmv(x[rindex(col)],v);     // v -= sum_{j<i} a_ij * xold_j
           }
 
           // Not recursive yet. Just solve with the diagonal
@@ -114,8 +115,8 @@ namespace Dune
 
           // Update residual for the symmetric case
           // Skip residual computation as it is not needed.
-          //for(col=(*row).begin();col.index()<row.index(); ++col)
-          //col.mmv(*xIter, d[col.index()]); //d_j-=A_ij x_i
+          //for(col=(*row).begin();rindex(col)<rindex(row); ++col)
+          //col.mmv(*xIter, d[rindex(col)]); //d_j-=A_ij x_i
         }
       }
     };

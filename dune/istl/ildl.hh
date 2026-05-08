@@ -215,13 +215,14 @@ namespace Dune
 
     // solve L^T v = w, note: only L is stored
     // note: we perform the operation column-wise from right to left
-    for( auto i = A.beforeEnd(), iend = A.beforeBegin(); i != iend; --i )
+    for( auto i = std::make_reverse_iterator(A.end()), rbegin = std::make_reverse_iterator(A.begin()); i != rbegin; ++i )
     {
+      auto row = std::prev(i.base()).index();
       const auto &A_i = *i;
-      for( auto ij = A_i.begin(); ij.index() < i.index(); ++ij )
+      for( auto ij = A_i.begin(); ij.index() < row; ++ij )
       {
         auto&& vij = Impl::asVector( v[ ij.index() ] );
-        Impl::asMatrix(*ij).mmtv(Impl::asVector( v[ i.index() ] ), vij);
+        Impl::asMatrix(*ij).mmtv(Impl::asVector( v[ row ] ), vij);
       }
     }
   }

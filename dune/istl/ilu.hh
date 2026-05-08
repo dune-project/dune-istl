@@ -103,8 +103,8 @@ namespace Dune {
     void blockILUBacksolve (const M& A, X& v, const Y& d)
     {
       // iterator types
-      typedef typename M::ConstRowIterator rowiterator;
-      typedef typename M::ConstColIterator coliterator;
+      using rowiterator = typename M::ConstRowIterator;
+      using coliterator = typename M::ConstColIterator;
       typedef typename Y::block_type dblock;
       typedef typename X::block_type vblock;
 
@@ -125,9 +125,12 @@ namespace Dune {
         Impl::asVector(v[i.index()]) = rhs;           // Lii = I
       }
 
+      using rrowiterator = std::reverse_iterator<typename M::ConstRowIterator>;
+      using rcoliterator = std::reverse_iterator<typename M::ConstColIterator>;
+      auto rindex = [](auto it) { return std::prev(it.base()).index(); };
       // upper triangular solve
-      rowiterator rendi=A.beforeBegin();
-      for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
+      rrowiterator rbegini{A.begin()};
+      for (rrowiterator i = rrowiterator{A.end()}; i!=rbegini; ++i)
       {
         // We need to be careful here: Directly using
         // auto rhs = Impl::asVector(v[ i.index() ]);
@@ -135,12 +138,13 @@ namespace Dune {
         // we first have to copy the value. Notice that
         // this is still not OK, if the vector type itself returns
         // proxy references.
-        vblock rhsValue(v[i.index()]);
+        auto row = rindex(i);
+        vblock rhsValue(v[row]);
         auto&& rhs = Impl::asVector(rhsValue);
-        coliterator j;
-        for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-          Impl::asMatrix(*j).mmv(Impl::asVector(v[j.index()]),rhs);
-        auto&& vi = Impl::asVector(v[i.index()]);
+        rcoliterator j;
+        for (j = rcoliterator{(*i).end()}; rindex(j)>row; ++j)
+          Impl::asMatrix(*j).mmv(Impl::asVector(v[rindex(j)]),rhs);
+        auto&& vi = Impl::asVector(v[row]);
         Impl::asMatrix(*j).mv(rhs,vi);           // diagonal stores inverse!
       }
     }
@@ -345,29 +349,30 @@ namespace Dune {
         lower.rows_[ iIndex+1 ] = colcount;
       }
 
-      const auto rendi = A.beforeBegin();
+      const auto rbegini = std::make_reverse_iterator(A.begin());
       row = 0;
       colcount = 0;
       upper.rows_[ 0 ] = colcount ;
+      auto rindex = [](auto it) { return std::prev(it.base()).index(); };
 
       // NOTE: upper and inv store entries in reverse row and col order,
       // reverse here relative to ILU
-      for (auto i=A.beforeEnd(); i!=rendi; --i, ++ row )
+      for (auto i=std::make_reverse_iterator(A.end()); i!=rbegini; ++i, ++ row )
       {
-        const auto endij=(*i).beforeBegin();    // end of row i
+        const auto rbeginij=std::make_reverse_iterator((*i).begin());    // end of row i
 
-        const size_type iIndex = i.index();
+        const size_type iIndex = rindex(i);
 
         // store in reverse row order for faster access during backsolve
-        for (auto j=(*i).beforeEnd(); j != endij; --j )
+        for (auto j=std::make_reverse_iterator((*i).end()); j != rbeginij; ++j )
         {
-          const size_type jIndex = j.index();
-          if( j.index() == iIndex )
+          const size_type jIndex = rindex(j);
+          if( rindex(j) == iIndex )
           {
             inv[ row ] = (*j);
             break; // assuming consecutive ordering of A
           }
-          else if ( j.index() >= i.index() )
+          else if ( rindex(j) >= rindex(i) )
           {
             upper.push_back( (*j), jIndex );
             ++colcount ;

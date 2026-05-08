@@ -90,19 +90,21 @@ namespace Dune {
     static void butsolve (const M& A, X& v, const Y& d, const K& w)
     {
       // iterator types
-      typedef typename M::ConstRowIterator rowiterator;
-      typedef typename M::ConstColIterator coliterator;
+      using rrowiterator = std::reverse_iterator<typename M::ConstRowIterator>;
+      using rcoliterator = std::reverse_iterator<typename M::ConstColIterator>;
       typedef typename Y::block_type bblock;
 
       // local solve at each block and immediate update
-      rowiterator rendi=A.beforeBegin();
-      for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
+      rrowiterator rbegin{A.begin()};
+      auto rindex = [](const auto& it) { return std::prev(it.base()).index(); };
+      for (rrowiterator i = rrowiterator{A.end()}; i!=rbegin; ++i)
       {
-        bblock rhs(d[i.index()]);
-        coliterator j;
-        for (j=(*i).beforeEnd(); j.index()>i.index(); --j)
-          (*j).mmv(v[j.index()],rhs);
-        algmeta_btsolve<I-1,diag,relax>::butsolve(*j,v[i.index()],rhs,w);
+        auto row = rindex(i);
+        bblock rhs(d[row]);
+        rcoliterator j;
+        for (j=rcoliterator{(*i).end()}; rindex(j)>row; ++j)
+          (*j).mmv(v[rindex(j)],rhs);
+        algmeta_btsolve<I-1,diag,relax>::butsolve(*j,v[row],rhs,w);
       }
     }
   };
@@ -296,15 +298,16 @@ namespace Dune {
     static void bdsolve (const M& A, X& v, const Y& d, const K& w)
     {
       // iterator types
-      typedef typename M::ConstRowIterator rowiterator;
-      typedef typename M::ConstColIterator coliterator;
+      using rrowiterator = std::reverse_iterator<typename M::ConstRowIterator>;
+      using coliterator = typename M::ConstColIterator;
 
       // local solve at each block and immediate update
-      rowiterator rendi=A.beforeBegin();
-      for (rowiterator i=A.beforeEnd(); i!=rendi; --i)
+      rrowiterator rendi{A.begin()};
+      for (rrowiterator i = rrowiterator{A.end()}; i!=rendi; ++i)
       {
-        coliterator ii=(*i).find(i.index());
-        algmeta_bdsolve<I-1,relax>::bdsolve(*ii,v[i.index()],d[i.index()],w);
+        auto row = std::prev(i.base()).index();
+        coliterator ii=(*i).find(row);
+        algmeta_bdsolve<I-1,relax>::bdsolve(*ii,v[row],d[row],w);
       }
     }
   };
@@ -457,39 +460,41 @@ namespace Dune {
     template<class X, class Y, class K>
     static void bsorb (const M& A, X& x, const Y& b, const K& w)
     {
-      typedef typename M::ConstRowIterator rowiterator;
+      using rrowiterator = std::reverse_iterator<typename M::ConstRowIterator>;
       typedef typename M::ConstColIterator coliterator;
       typedef typename Y::block_type bblock;
       typedef typename X::block_type xblock;
       bblock rhs;
       xblock v;
 
-      rowiterator endi=A.beforeBegin();
-      for (rowiterator i=A.beforeEnd(); i!=endi; --i)
+      rrowiterator rbegini=rrowiterator{A.begin()};
+      auto rindex = [](const rrowiterator& it) { return std::prev(it.base()).index(); };
+      for (rrowiterator i=rrowiterator{A.end()}; i!=rbegini; ++i)
       {
-        rhs = b[i.index()];
+        auto row = rindex(i);
+        rhs = b[row];
         coliterator endj=(*i).end();
         coliterator j=(*i).begin();
         if constexpr (IsNumber<typename M::block_type>())
         {
-          for (; j.index()<i.index(); ++j)
+          for (; j.index()<row; ++j)
             rhs -= (*j) * x[j.index()];
           coliterator diag=j;
           for (; j!=endj; ++j)
             rhs -= (*j) * x[j.index()];
           v = rhs / (*diag);
-          x[i.index()] += w*v;
+          x[row] += w*v;
         }
         else
         {
-          for (; j.index()<i.index(); ++j)
+          for (; j.index()<row; ++j)
             j->mmv(x[j.index()],rhs);
           coliterator diag=j;
           for (; j!=endj; ++j)
             j->mmv(x[j.index()],rhs);
-          v = x[i.index()]; // Initialize nested data structure if there are entries
+          v = x[row]; // Initialize nested data structure if there are entries
           algmeta_itsteps<I-1,typename M::block_type>::bsorb(*diag,v,rhs,w);
-          x[i.index()].axpy(w,v);
+          x[row].axpy(w,v);
         }
       }
     }
