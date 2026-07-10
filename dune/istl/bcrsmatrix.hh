@@ -586,7 +586,7 @@ namespace Dune {
       friend class RealRowIterator<ValueType>;
 
       //! constructor
-      RealRowIterator (row_type* _p, size_type _i)
+      RealRowIterator (T* _p, size_type _i)
         : p(_p), i(_i)
       {}
 
@@ -656,12 +656,12 @@ namespace Dune {
       }
 
       //! dereferencing
-      row_type& dereference () const
+      T& dereference () const
       {
         return p[i];
       }
 
-      row_type* p;
+      T* p;
       size_type i;
     };
 
