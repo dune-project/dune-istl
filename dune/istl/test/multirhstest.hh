@@ -40,7 +40,7 @@ template<typename T>
 struct Random {
   static T gen()
   {
-    return T(std::rand())/RAND_MAX;
+    return std::rand()/T(RAND_MAX);
   }
 };
 
