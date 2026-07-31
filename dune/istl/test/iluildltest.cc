@@ -46,6 +46,14 @@ void testDecomposition ( int n )
   }
 }
 
+//! A variant of SeqILU that always resorts the matrix before decomposition
+template<class M, class X, class Y, int l=1>
+struct SeqILUResort : public Dune::SeqILU< M, X, Y, l >
+{
+  using Base = Dune::SeqILU< M, X, Y, l >;
+  using typename Base::real_field_type;
+  SeqILUResort( M &A, real_field_type damping = 1.0 ) : Base( A, damping, true ) {}
+};
 
 int main(int argc, char** argv)
 try {
@@ -55,6 +63,10 @@ try {
   testDecomposition< Dune::SeqILDL, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
   testDecomposition< Dune::SeqILU, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
   testDecomposition<Dune::SeqILU, Dune::LoopSIMD<double, 4>, Dune::LoopSIMD<double, 4>>( 4 );
+
+  testDecomposition< SeqILUResort, double, double >( 4 );
+  testDecomposition< SeqILUResort, Dune::FieldMatrix<double,1,1>, Dune::FieldVector<double,1> >( 4 );
+  testDecomposition<SeqILUResort, Dune::LoopSIMD<double, 4>, Dune::LoopSIMD<double, 4>>( 4 );
 
   return 0;
 }

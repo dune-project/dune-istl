@@ -24,6 +24,8 @@ dune_add_test(SOURCES cgconditiontest.cc)
 
 dune_add_test(SOURCES dilutest.cc)
 
+dune_add_test(SOURCES gsetctest.cc)
+
 dune_add_test(SOURCES dotproducttest.cc)
 
 dune_add_test(SOURCES complexmatrixtest.cc)

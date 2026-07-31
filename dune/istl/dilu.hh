@@ -135,17 +135,18 @@ namespace Dune
       }
 
       // upper triangular solve: (D + U_A) v = Dy
-      auto rendi = A.beforeBegin();
-      for (auto row = A.beforeEnd(); row != rendi; --row)
+      auto rbegin = std::make_reverse_iterator(A.begin());
+      auto rindex = [](const auto& it) { return std::prev(it.base()).index(); };
+      for (auto row = std::make_reverse_iterator(A.end()); row != rbegin; ++row)
       {
-        const auto row_i = row.index();
+        const auto row_i = rindex(row);
         // rhs = 0
         vblock rhs(0.0);
-        for (auto a_ij = (*row).beforeEnd(); a_ij.index() > row_i; --a_ij)
+        for (auto a_ij = std::make_reverse_iterator(row->end()); rindex(a_ij) > row_i; ++a_ij)
         {
           // if A[i][j] != 0
           // rhs += A[i][j]*v[j]
-          const auto col_j = a_ij.index();
+          const auto col_j = rindex(a_ij);
           Impl::asMatrix(*a_ij).umv(v[col_j], rhs);
         }
         // calculate update v = M^-1*d
