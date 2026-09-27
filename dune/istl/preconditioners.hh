@@ -723,7 +723,7 @@ namespace Dune {
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, real_field_type w, const bool resort = false )
+    SeqILU (const M& A, real_field_type w, bool resort = false )
       : SeqILU( A, 0, w, resort ) // construct ILU(0)
     {
     }
@@ -774,7 +774,7 @@ namespace Dune {
        \param w The relaxation factor.
        \param resort true if a resort of the computed ILU for improved performance should be done.
      */
-    SeqILU (const M& A, int n, real_field_type w, const bool resort = false )
+    SeqILU (const M& A, int n, real_field_type w, bool resort = false )
       : ILU_(),
         lower_(),
         upper_(),
