@@ -331,8 +331,10 @@ namespace Imp {
     reference operator[] (size_type i)
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
+#ifdef DUNE_ISTL_WITH_CHECKING
       if (lb == j+n || *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
+#endif
       return p[lb-j];
     }
 
@@ -340,8 +342,10 @@ namespace Imp {
     const_reference operator[] (size_type i) const
     {
       const size_type* lb = std::lower_bound(j, j+n, i);
+#ifdef DUNE_ISTL_WITH_CHECKING
       if (lb == j+n || *lb != i)
         DUNE_THROW(ISTLError,"index "<<i<<" not in compressed array");
+#endif
       return p[lb-j];
     }
 
