@@ -158,12 +158,11 @@ int main(int argc, char** argv)
   int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
-  const int BS=1;
   int N=2;
 
   if(argc>1)
     N = atoi(argv[1]);
-  std::cout << "testing for N=" << N << " BS=" << BS << std::endl;
+  std::cout << "testing for N=" << N<< std::endl;
 
   // Test scalar matrices and vectors
   int ret = testMatrixMarket<Dune::BCRSMatrix<double>, Dune::BlockVector<double> >(N);
@@ -172,14 +171,6 @@ int main(int argc, char** argv)
   if(ret!=0)
     MPI_Abort(MPI_COMM_WORLD, ret);
 #endif
-
-  // Test block matrices and vectors with trivial blocks
-  typedef Dune::FieldMatrix<double,BS,BS> MatrixBlock;
-  typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<double,BS> VectorBlock;
-  typedef Dune::BlockVector<VectorBlock> BVector;
-
-  ret |= testMatrixMarket<BCRSMat, BVector>(N);
 
   // test for vector with multiple lanes
   typedef Dune::BlockVector<Dune::LoopSIMD<double, 4>> BVectorSIMD;

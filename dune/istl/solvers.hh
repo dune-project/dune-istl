@@ -400,8 +400,8 @@ namespace Dune {
     bool condition_estimate_ = false;
 
     // Matrix and vector types used for condition estimate
-    typedef Dune::BCRSMatrix<Dune::FieldMatrix<real_type,1,1> > COND_MAT;
-    typedef Dune::BlockVector<Dune::FieldVector<real_type,1> > COND_VEC;
+    typedef Dune::BCRSMatrix<real_type> COND_MAT;
+    typedef Dune::BlockVector<real_type> COND_VEC;
 
   protected:
     using IterativeSolver<X,X>::_op;

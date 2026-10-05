@@ -79,7 +79,7 @@ int main(int argc, char** argv)
   /* testing the writeVectorToMatlabHelper method for BlockVector */
   Dune::BlockVector<Dune::FieldVector<double,3> > v1 = {{1.0, 2.0, 3.0}};
   Dune::writeVectorToMatlabHelper(v1, std::cout);
-  Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<double,1> > > v2 = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
+  Dune::BlockVector<Dune::BlockVector<double> > v2 = {{1.0, 2.0}, {3.0, 4.0, 5.0}, {6.0}};
   Dune::writeVectorToMatlabHelper(v2, std::cout);
   /* testing the writeVectorToMatlabHelper method for STL containers */
   testWriteVectorToMatlab<std::array<double,5> >();

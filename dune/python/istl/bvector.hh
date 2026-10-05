@@ -171,8 +171,6 @@ namespace Dune
     inline void registerBlockVector ( pybind11::class_< BlockVector, options... > cls )
     {
       typedef typename BlockVector::field_type field_type;
-      typedef typename BlockVector::block_type block_type;
-      typedef typename BlockVector::size_type size_type;
 
       using pybind11::operator""_a;
       registerBlockVectorView( cls );

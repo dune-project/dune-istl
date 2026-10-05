@@ -53,8 +53,14 @@ namespace Dune
      * \author Sebastian Westerheide.
      */
     template <class BCRSMatrix>
-    class ArPackPlusPlus_BCRSMatrixWrapper
+    class ArPackPlusPlus_BCRSMatrixWrapper;
+
+    template <class K, int N, int M>
+      requires (Dune::IsNumber<K>::value)
+    class ArPackPlusPlus_BCRSMatrixWrapper<Dune::BCRSMatrix<FieldMatrix<K,N,M>>>
     {
+      using BCRSMatrix = Dune::BCRSMatrix<FieldMatrix<K,N,M>>;
+
     public:
       //! Type of the underlying field of the matrix
       typedef typename BCRSMatrix::field_type Real;
@@ -199,6 +205,140 @@ namespace Dune
       mutable DomainBlockVector domainBlockVector;
       mutable RangeBlockVector rangeBlockVector;
     };
+
+
+    template <class K>
+      requires (Dune::IsNumber<K>::value)
+    class ArPackPlusPlus_BCRSMatrixWrapper<BCRSMatrix<K>>
+    {
+      using BCRSMatrix = Dune::BCRSMatrix<K>;
+
+    public:
+      //! Type of the underlying field of the matrix
+      typedef typename BCRSMatrix::field_type Real;
+
+    public:
+      //! Construct from BCRSMatrix A
+      ArPackPlusPlus_BCRSMatrixWrapper (const BCRSMatrix& A)
+        : A_(A),
+          m_(A_.M()), n_(A_.N())
+      {
+        // allocate memory for auxiliary vector objects
+        // which are compatible to matrix rows / columns
+        domainVector.resize(A_.N());
+        rangeVector.resize(A_.M());
+      }
+
+      //! Perform matrix-vector product w = A*v
+      inline void multMv (Real* v, Real* w)
+      {
+        // TODO: Use a span with DenseVector interface
+
+        // get vector v as an object of appropriate type
+        arrayToDomainBlockVector(v,domainVector);
+
+        // perform matrix-vector product
+        A_.mv(domainVector,rangeVector);
+
+        // get vector w from object of appropriate type
+        rangeVectorToArray(rangeVector,w);
+      };
+
+      //! Perform matrix-vector product w = A^T*A*v
+      inline void multMtMv (Real* v, Real* w)
+      {
+        // get vector v as an object of appropriate type
+        arrayToDomainBlockVector(v,domainVector);
+
+        // perform matrix-vector product
+        A_.mv(domainVector,rangeVector);
+        A_.mtv(rangeVector,domainVector);
+
+        // get vector w from object of appropriate type
+        domainVectorToArray(domainVector,w);
+      };
+
+      //! Perform matrix-vector product w = A*A^T*v
+      inline void multMMtv (Real* v, Real* w)
+      {
+        // get vector v as an object of appropriate type
+        arrayToRangeVector(v,rangeVector);
+
+        // perform matrix-vector product
+        A_.mtv(rangeVector,domainVector);
+        A_.mv(domainVector,rangeVector);
+
+        // get vector w from object of appropriate type
+        rangeVectorToArray(rangeVector,w);
+      };
+
+      //! Return number of rows in the matrix
+      inline int nrows () const { return m_; }
+
+      //! Return number of columns in the matrix
+      inline int ncols () const { return n_; }
+
+    protected:
+      // Type of vectors in the domain of the linear map associated with
+      typedef Dune::BlockVector<Real> DomainVector;
+
+      // Type of vectors in the range of the linear map associated with
+      typedef Dune::BlockVector<Real> RangeVector;
+
+      // Types for vector index access
+      typedef typename DomainVector::size_type dbv_size_type;
+      typedef typename RangeVector::size_type rbv_size_type;
+
+      // Get vector v from a block vector object which is compatible to
+      // matrix rows
+      static inline void
+      domainVectorToArray (const DomainVector& dbv, Real* v)
+      {
+        for (dbv_size_type i = 0; i < dbv.N(); ++i)
+          v[i] = dbv[i];
+      }
+
+      // Get vector v from a block vector object which is compatible to
+      // matrix columns
+      static inline void
+      rangeVectorToArray (const RangeVector& rbv, Real* v)
+      {
+        for (rbv_size_type i = 0; i < rbv.N(); ++i)
+          v[i] = rbv[i];
+      }
+
+    public:
+      //! Get vector v as a block vector object which is compatible to
+      //! matrix rows
+      static inline void arrayToDomainBlockVector (const Real* v,
+        DomainVector& dbv)
+      {
+        for (dbv_size_type i = 0; i < dbv.N(); ++i)
+          dbv[i] = v[i];
+      }
+
+      //! Get vector v as a block vector object which is compatible to
+      //! matrix columns
+      static inline void arrayToRangeBlockVector (const Real* v,
+        RangeVector& rbv)
+      {
+        for (rbv_size_type i = 0; i < rbv.N(); ++i)
+          rbv[i] = v[i];
+      }
+
+    protected:
+      // The DUNE-ISTL BCRSMatrix
+      const BCRSMatrix& A_;
+
+      // Number of rows and columns in the matrix
+      const int m_, n_;
+
+      // Auxiliary block vector objects which are
+      // compatible to matrix rows / columns
+      mutable DomainVector domainVector;
+      mutable RangeVector rangeVector;
+    };
+
   } // end namespace Impl
 
   /**
