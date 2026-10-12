@@ -21,7 +21,7 @@
 #include <ranges>
 #include <span>
 
-namespace Dune
+namespace Dune::Experimental
 {
 
   /**
@@ -75,9 +75,9 @@ namespace Dune
     //! The type of the field
     using field_type = typename FieldTraits<block_type>::field_type;
     //! The type representing a mutable matrix row
-    using row_type = Imp::VectorView<block_iter_type, row_index_range_type>;
+    using row_type = VectorView<block_iter_type, row_index_range_type>;
     //! The type representing a const matrix row
-    using const_row_type = Imp::VectorView<block_const_iter_type, row_index_range_type>;
+    using const_row_type = VectorView<block_const_iter_type, row_index_range_type>;
     //! The type of mutable matrix iterators over the rows
     class Iterator;
     //! The type of const matrix iterators over the rows
@@ -287,13 +287,20 @@ namespace Dune
     // View to underlying sparsity pattern.
     pattern_type const* pattern_ptr_ = nullptr;
   };
+} // namespace Dune::Experimental
+
+
+namespace Dune {
 
   template <std::random_access_iterator B, class I>
-  struct FieldTraits<MatrixView<B, I>>
-      : public FieldTraits<typename MatrixView<B, I>::block_type>
+  struct FieldTraits<Experimental::MatrixView<B, I>>
+      : public FieldTraits<typename Experimental::MatrixView<B, I>::block_type>
   {
   };
 
+} // namespace Dune
+
+namespace Dune::Experimental {
 
 #if __cpp_lib_ranges_as_const <= 202311L
 
@@ -547,7 +554,7 @@ namespace Dune
     {
       // element-wise axpy addition of blocks
       for (size_type i = 0; i != pattern().count(); ++i)
-        Impl::asMatrix(blockIter()[i]).axpy(alpha, Impl::asMatrix(b.blockIter()[i]));
+        Dune::Impl::asMatrix(blockIter()[i]).axpy(alpha, Dune::Impl::asMatrix(b.blockIter()[i]));
     }
     else if (pattern().size() == b.pattern().size() && pattern().range().size() == b.pattern().range().size())
     {
@@ -580,9 +587,9 @@ namespace Dune
       size_type nnz = pattern().offset(i);
 
       for (size_type j : pattern()[i]) {
-        auto &&xj = Impl::asVector(x[j]);
-        auto &&yi = Impl::asVector(y[i]);
-        op(Impl::asMatrix(blockIter()[nnz]), xj, yi);
+        auto &&xj = Dune::Impl::asVector(x[j]);
+        auto &&yi = Dune::Impl::asVector(y[i]);
+        op(Dune::Impl::asMatrix(blockIter()[nnz]), xj, yi);
         ++nnz;
       }
     }
@@ -603,9 +610,9 @@ namespace Dune
     for (size_type i = 0; i != N(); ++i) {
       size_type nnz = pattern().offset(i);
       for (size_type j : pattern()[i]) {
-        auto &&xi = Impl::asVector(x[i]);
-        auto &&yj = Impl::asVector(y[j]);
-        op(Impl::asMatrix(blockIter()[nnz]), xi, yj);
+        auto &&xi = Dune::Impl::asVector(x[i]);
+        auto &&yj = Dune::Impl::asVector(y[j]);
+        op(Dune::Impl::asMatrix(blockIter()[nnz]), xi, yj);
         ++nnz;
       }
     }
@@ -724,7 +731,7 @@ namespace Dune
     real_type sum = 0;
     for (auto const &a_i : *this)
       for (auto const &a_ij : a_i)
-        sum += Impl::asMatrix(a_ij).frobenius_norm2();
+        sum += Dune::Impl::asMatrix(a_ij).frobenius_norm2();
     return sum;
   }
 
@@ -789,6 +796,6 @@ namespace Dune
     return (markNaN != markNaN) ? markNaN : norm;
   }
 
-} // namespace Dune
+} // namespace Dune::Experimental
 
 #endif // DUNE_ISTL_MATRIXVIEW_HH

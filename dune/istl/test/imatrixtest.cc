@@ -97,20 +97,20 @@ struct FieldTraits<AllocAwareBlock>
 namespace {
 
 template<class Alloc = std::allocator<uint_least32_t>>
-Dune::SparseIndexRanges<uint_least32_t, Alloc> makeDiagonalPattern(std::size_t n, const Alloc& alloc = Alloc())
+Dune::Experimental::SparseIndexRanges<uint_least32_t, Alloc> makeDiagonalPattern(std::size_t n, const Alloc& alloc = Alloc())
 {
-  Dune::UnsequencedSparseIndexRangeBuilder<Alloc> builder(n, n, 1, alloc);
+  Dune::Experimental::UnsequencedSparseIndexRangeBuilder<Alloc> builder(n, n, 1, alloc);
   for (std::size_t i = 0; i < n; ++i)
     builder.setSize(i, 1);
   for (std::size_t i = 0; i < n; ++i)
     builder.addIndex(i, i);
-  return Dune::SparseIndexRanges<uint_least32_t, Alloc>(std::move(builder));
+  return Dune::Experimental::SparseIndexRanges<uint_least32_t, Alloc>(std::move(builder));
 }
 
 void testMoveConstructors(Dune::TestSuite& test)
 {
-  using Pattern = Dune::SparseIndexRanges<uint_least32_t>;
-  using Matrix = Dune::IMatrix<double, Pattern, StatefulAllocator<double>>;
+  using Pattern = Dune::Experimental::SparseIndexRanges<uint_least32_t>;
+  using Matrix = Dune::Experimental::IMatrix<double, Pattern, StatefulAllocator<double>>;
 
   Matrix matrix(makeDiagonalPattern(2), StatefulAllocator<double>(1));
   matrix[0][0] = 1.5;
@@ -132,8 +132,8 @@ void testMoveConstructors(Dune::TestSuite& test)
 
 void testSwapRejectsUnequalAllocators(Dune::TestSuite& test)
 {
-  using Pattern = Dune::SparseIndexRanges<uint_least32_t>;
-  using Matrix = Dune::IMatrix<double, Pattern, StatefulAllocator<double>>;
+  using Pattern = Dune::Experimental::SparseIndexRanges<uint_least32_t>;
+  using Matrix = Dune::Experimental::IMatrix<double, Pattern, StatefulAllocator<double>>;
 
   Matrix lhs(makeDiagonalPattern(1), StatefulAllocator<double>(1));
   Matrix rhs(makeDiagonalPattern(1), StatefulAllocator<double>(2));
@@ -154,8 +154,8 @@ void testSwapRejectsUnequalAllocators(Dune::TestSuite& test)
 
 void testAllocatorAwareBlocks(Dune::TestSuite& test)
 {
-  using Pattern = Dune::SparseIndexRanges<>;
-  using Matrix = Dune::IMatrix<AllocAwareBlock, Pattern, StatefulAllocator<AllocAwareBlock>>;
+  using Pattern = Dune::Experimental::SparseIndexRanges<>;
+  using Matrix = Dune::Experimental::IMatrix<AllocAwareBlock, Pattern, StatefulAllocator<AllocAwareBlock>>;
 
   Matrix matrix(makeDiagonalPattern(2), StatefulAllocator<AllocAwareBlock>(7));
   test.check(matrix[0][0].allocatorId == 7 && matrix[1][1].allocatorId == 7,
@@ -164,8 +164,8 @@ void testAllocatorAwareBlocks(Dune::TestSuite& test)
 
 void testMatrixInterface(Dune::TestSuite&)
 {
-  using Pattern = Dune::SparseIndexRanges<uint_least32_t>;
-  using Matrix = Dune::IMatrix<double, Pattern, StatefulAllocator<double>>;
+  using Pattern = Dune::Experimental::SparseIndexRanges<uint_least32_t>;
+  using Matrix = Dune::Experimental::IMatrix<double, Pattern, StatefulAllocator<double>>;
 
   Matrix matrix(makeDiagonalPattern(3), StatefulAllocator<double>(3));
   matrix[0][0] = 1.0;

@@ -18,7 +18,7 @@
 #include <memory>
 #include <ranges>
 
-namespace Dune {
+namespace Dune::Experimental {
 /**
  * \brief Block compressed row storage matrix.
  *
@@ -772,9 +772,12 @@ IBCRSMatrix<B, I, A>::operator=(IBCRSMatrix&& other)
   return *this;
 }
 
+} //namespace Dune::Experimental
+
+namespace Dune {
 template<class B, class I, class A>
-struct FieldTraits<IBCRSMatrix<B, I, A>>
-  : public FieldTraits<typename IBCRSMatrix<B, I, A>::field_type>
+struct FieldTraits<Experimental::IBCRSMatrix<B, I, A>>
+  : public FieldTraits<typename Experimental::IBCRSMatrix<B, I, A>::field_type>
 {};
 
 } // namespace Dune

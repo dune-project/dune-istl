@@ -100,7 +100,7 @@ Dune::BlockVector<double> makeFilledVector(std::size_t n, double value)
 namespace Dune {
 
 template<>
-struct OrderedIndexRangeTraits<SparseIndexRange>
+struct Experimental::OrderedIndexRangeTraits<SparseIndexRange>
 {
   using index_range_type = SparseIndexRange;
   using index_type = int;
@@ -140,7 +140,7 @@ void testBasicAccessAndSize(Dune::TestSuite& test)
     SparseIndexRange{ 3, { 1 } }
   } };
 
-  Dune::MatrixView<double*, TestIndexRanges> m(data.data(), &isets);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> m(data.data(), &isets);
 
   test.check(m.N() == 2, "MatrixView N returns row count");
   test.check(m.M() == 3, "MatrixView M returns logical column count");
@@ -169,8 +169,8 @@ void testArithmeticAndNorms(Dune::TestSuite& test)
     SparseIndexRange{ 3, { 1 } }
   } };
 
-  Dune::MatrixView<double*, TestIndexRanges> a(dataA.data(), &isets);
-  Dune::MatrixView<double*, TestIndexRanges> b(dataB.data(), &isets);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> a(dataA.data(), &isets);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> b(dataB.data(), &isets);
 
   a += b;
   test.check(dataA[0] == 5.0 && dataA[1] == 7.0 && dataA[2] == 9.0,
@@ -211,7 +211,7 @@ void testMvFamily(Dune::TestSuite& test)
     SparseIndexRange{ 3, { 1 } }
   } };
 
-  Dune::MatrixView<double*, TestIndexRanges> a(data.data(), &isets);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> a(data.data(), &isets);
 
   auto x = makeVector({ 10.0, 20.0, 30.0 });
   auto y = makeFilledVector(2, 0.0);
@@ -251,8 +251,8 @@ void testMismatchThrows(Dune::TestSuite& test)
     SparseIndexRange{ 4, { 2 } }
   } };
 
-  Dune::MatrixView<double*, TestIndexRanges> a(dataSmall.data(), &aIs);
-  Dune::MatrixView<double*, TestIndexRanges> b(dataOther.data(), &bIs);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> a(dataSmall.data(), &aIs);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> b(dataOther.data(), &bIs);
 
   const auto expectThrow = [&test](const auto& operation, const char* message) {
     bool thrown = false;
@@ -290,8 +290,8 @@ void testArithmethicSubSets(Dune::TestSuite& test)
     SparseIndexRange{ 3, { 1 } }
   } };
 
-  Dune::MatrixView<double*, TestIndexRanges> a(dataA.data(), &isetsA);
-  Dune::MatrixView<double*, TestIndexRanges> b(dataB.data(), &isetsB);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> a(dataA.data(), &isetsA);
+  Dune::Experimental::MatrixView<double*, TestIndexRanges> b(dataB.data(), &isetsB);
 
   a += b;
   test.check(dataA[0] == 5.0 && dataA[1] == 2.0 && dataA[2] == 9.0,
@@ -304,7 +304,7 @@ void testArithmethicSubSets(Dune::TestSuite& test)
 
 void testDuneMatrixInterface(Dune::TestSuite& test)
 {
-  using Matrix = Dune::MatrixView<double*, TestIndexRanges>;
+  using Matrix = Dune::Experimental::MatrixView<double*, TestIndexRanges>;
 
   std::array<double, 3> data{ 2.0, 3.0, 4.0 };
   const TestIndexRanges isets{ 3, {
@@ -328,7 +328,7 @@ void testDuneMatrixInterface(Dune::TestSuite& test)
 
 void testDuneMatrixInterfaceComplex(Dune::TestSuite& test)
 {
-  using Matrix = Dune::MatrixView<std::complex<double>*, TestIndexRanges>;
+  using Matrix = Dune::Experimental::MatrixView<std::complex<double>*, TestIndexRanges>;
 
   std::array<std::complex<double>, 3> data{{ {1.0, 1.0}, {2.0, -1.0}, {3.0, 0.5} }};
   const TestIndexRanges isets{ 3, {

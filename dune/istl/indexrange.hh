@@ -16,7 +16,7 @@
    \brief Traits for sets of indices.
  */
 
-namespace Dune {
+namespace Dune::Experimental {
 
 namespace Concepts {
 
@@ -110,6 +110,6 @@ struct OrderedIndexRangeTraits<IntegralRange<T>>
   }
 };
 
-} // namespace Dune
+} // namespace Dune::Experimental
 
 #endif

@@ -31,7 +31,7 @@
 #include <iostream>
 #include <functional>
 
-namespace Dune
+namespace Dune::Experimental
 {
 
 namespace Impl
@@ -686,7 +686,7 @@ namespace Impl
    */
   template <class I, class A>
   class SparseIndexRanges<I,A>::IndexRangeView
-      : public Dune::Impl::SparseIndexRangesBase
+      : public Impl::SparseIndexRangesBase
   {
     friend class SparseIndexRanges<I,A>::Iterator;
     friend class SparseIndexRanges<I,A>;
@@ -984,7 +984,7 @@ namespace Impl
    */
   template <class A>
   class CompressedSparseIndexRanges<A>::IndexRangeView
-      : public Dune::Impl::SparseIndexRangesBase
+      : public Impl::SparseIndexRangesBase
   {
     friend class CompressedSparseIndexRanges<A>::Iterator;
     friend class CompressedSparseIndexRanges<A>;
@@ -1055,7 +1055,7 @@ namespace Impl
   };
 
   template<Concepts::BorrowedOrderedIndexRange R>
-    requires std::derived_from<R, Dune::Impl::SparseIndexRangesBase>
+    requires std::derived_from<R, Impl::SparseIndexRangesBase>
   struct OrderedIndexRangeTraits<R>
   {
     using index_range_type = R;
@@ -2279,10 +2279,10 @@ namespace Impl
     return *this;
   }
 
-} // namespace Dune
+} // namespace Dune::Experimental
 
-// Opt-in to std::ranges::borrowed_range for any type derived from Dune::Impl::SparseIndexRangesBase.
-template <std::derived_from<Dune::Impl::SparseIndexRangesBase> T>
+// Opt-in to std::ranges::borrowed_range for any type derived from Impl::SparseIndexRangesBase.
+template <std::derived_from<Dune::Experimental::Impl::SparseIndexRangesBase> T>
 constexpr bool std::ranges::enable_borrowed_range<T> = true;
 
 #endif // DUNE_ISTL_SPARSEINDEXRANGES_HH

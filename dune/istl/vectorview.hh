@@ -33,9 +33,7 @@
  */
 
 namespace Dune {
-
-/** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
-namespace Imp {
+namespace Experimental {
 
 /**
  * \brief Non-owning block vector view with explicit indices.
@@ -140,12 +138,12 @@ public:
   VectorView&
   axpy(const field_type& a, const VectorView<OtherB, OtherR>& y) noexcept(
     noexcept(this->checkSizeMatch(std::declval<const VectorView<OtherB, OtherR>&>())) &&
-    noexcept(Impl::asVector(std::declval<reference>())
+    noexcept(Dune::Impl::asVector(std::declval<reference>())
                .axpy(std::declval<const field_type&>(),
-                     Impl::asVector(std::declval<typename VectorView<OtherB, OtherR>::const_reference>()))))
+                     Dune::Impl::asVector(std::declval<typename VectorView<OtherB, OtherR>::const_reference>()))))
   {
     forEachIncludedEntry(y, [a](block_type& x_i, const auto& y_i) {
-      Impl::asVector(x_i).axpy(a, Impl::asVector(y_i));
+      Dune::Impl::asVector(x_i).axpy(a, Dune::Impl::asVector(y_i));
     });
     return *this;
   }
@@ -156,8 +154,8 @@ public:
   auto operator*(const VectorView<OtherB, OtherR>& y) const noexcept(
       noexcept(this->checkSizeMatch(std::declval<const VectorView<OtherB, OtherR>&>())) &&
       noexcept(
-        Impl::asVector(std::declval<const_reference>()) *
-        Impl::asVector(
+        Dune::Impl::asVector(std::declval<const_reference>()) *
+        Dune::Impl::asVector(
           std::declval<typename VectorView<OtherB, OtherR>::const_reference>()))
       )
   {
@@ -177,7 +175,7 @@ public:
       while (itY != itEndY && itY.index() < indexX)
         ++itY;
       if (itY != itEndY && itY.index() == indexX)
-        sum += Impl::asVector(*itX) * Impl::asVector(*itY);
+        sum += Dune::Impl::asVector(*itX) * Dune::Impl::asVector(*itY);
     }
 
     return sum;
@@ -188,8 +186,8 @@ public:
   [[nodiscard]]
   auto dot(const VectorView<OtherB, OtherR>& y) const noexcept(
     noexcept(this->checkSizeMatch(std::declval<const VectorView<OtherB, OtherR>&>())) &&
-    noexcept(Impl::asVector(std::declval<const_reference>())
-               .dot(Impl::asVector(
+    noexcept(Dune::Impl::asVector(std::declval<const_reference>())
+               .dot(Dune::Impl::asVector(
                  std::declval<
                    typename VectorView<OtherB, OtherR>::const_reference>()))))
   {
@@ -209,7 +207,7 @@ public:
       while (itY != itEndY && itY.index() < indexX)
         ++itY;
       if (itY != itEndY && itY.index() == indexX)
-        sum += Impl::asVector(*itX).dot(Impl::asVector(*itY));
+        sum += Dune::Impl::asVector(*itX).dot(Dune::Impl::asVector(*itY));
     }
 
     return sum;
@@ -218,22 +216,22 @@ public:
   //! One norm (sum over absolute values of entries)
   [[nodiscard]]
   typename FieldTraits<field_type>::real_type one_norm() const noexcept(
-    noexcept(Impl::asVector(std::declval<const_reference>()).one_norm()))
+    noexcept(Dune::Impl::asVector(std::declval<const_reference>()).one_norm()))
   {
     typename FieldTraits<field_type>::real_type sum = 0;
     for (const auto& x_i : *this)
-      sum += Impl::asVector(x_i).one_norm();
+      sum += Dune::Impl::asVector(x_i).one_norm();
     return sum;
   }
 
   //! Simplified one norm (uses Manhattan norm for complex values)
   [[nodiscard]]
   typename FieldTraits<field_type>::real_type one_norm_real() const noexcept(
-    noexcept(Impl::asVector(std::declval<const_reference>()).one_norm_real()))
+    noexcept(Dune::Impl::asVector(std::declval<const_reference>()).one_norm_real()))
   {
     typename FieldTraits<field_type>::real_type sum = 0;
     for (const auto& x_i : *this)
-      sum += Impl::asVector(x_i).one_norm_real();
+      sum += Dune::Impl::asVector(x_i).one_norm_real();
     return sum;
   }
 
@@ -249,18 +247,18 @@ public:
   //! Square of the two-norm (the sum over the squared values of the entries)
   [[nodiscard]]
   typename FieldTraits<field_type>::real_type two_norm2() const noexcept(
-    noexcept(Impl::asVector(std::declval<const_reference>()).two_norm2()))
+    noexcept(Dune::Impl::asVector(std::declval<const_reference>()).two_norm2()))
   {
     typename FieldTraits<field_type>::real_type sum = 0;
     for (const auto& x_i : *this)
-      sum += Impl::asVector(x_i).two_norm2();
+      sum += Dune::Impl::asVector(x_i).two_norm2();
     return sum;
   }
 
   //! Infinity norm (maximum of absolute values of entries)
   [[nodiscard]]
   typename FieldTraits<field_type>::real_type infinity_norm() const noexcept(
-    noexcept(Impl::asVector(std::declval<const_reference>()).infinity_norm()))
+    noexcept(Dune::Impl::asVector(std::declval<const_reference>()).infinity_norm()))
   {
     using real_type = typename FieldTraits<field_type>::real_type;
     constexpr bool hasNaN = std::numeric_limits<real_type>::has_quiet_NaN ||
@@ -271,7 +269,7 @@ public:
     using std::max;
 
     for (auto const& x_i : *this) {
-      real_type const a = Impl::asVector(x_i).infinity_norm();
+      real_type const a = Dune::Impl::asVector(x_i).infinity_norm();
       norm = max(a, norm);
       if constexpr (hasNaN)
         isNaN += a;
@@ -292,7 +290,7 @@ public:
   [[nodiscard]]
   typename FieldTraits<field_type>::real_type infinity_norm_real() const
     noexcept(noexcept(
-      Impl::asVector(std::declval<const_reference>()).infinity_norm_real()))
+      Dune::Impl::asVector(std::declval<const_reference>()).infinity_norm_real()))
   {
     using real_type = typename FieldTraits<field_type>::real_type;
     constexpr bool hasNaN = std::numeric_limits<real_type>::has_quiet_NaN ||
@@ -303,7 +301,7 @@ public:
     using std::max;
 
     for (auto const& x_i : *this) {
-      real_type const a = Impl::asVector(x_i).infinity_norm_real();
+      real_type const a = Dune::Impl::asVector(x_i).infinity_norm_real();
       norm = max(a, norm);
       if constexpr (hasNaN)
         isNaN += a;
@@ -394,11 +392,11 @@ private:
   }
 };
 
-} // namespace Imp
+} // namespace Experimental
 
 template<typename B, typename R>
-struct FieldTraits< Imp::VectorView<B, R> >
-  : public FieldTraits<typename Imp::VectorView<B, R>::block_type>
+struct FieldTraits< Dune::Experimental::VectorView<B, R> >
+  : public FieldTraits<typename Dune::Experimental::VectorView<B, R>::block_type>
 {};
 
 

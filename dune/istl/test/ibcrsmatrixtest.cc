@@ -24,14 +24,14 @@ using namespace Dune;
 namespace {
 
 template<class Alloc = std::allocator<uint_least32_t>>
-Dune::SparseIndexRanges<uint_least32_t, Alloc> makeDiagonalPattern(std::size_t n, const Alloc& alloc = Alloc())
+Dune::Experimental::SparseIndexRanges<uint_least32_t, Alloc> makeDiagonalPattern(std::size_t n, const Alloc& alloc = Alloc())
 {
-  Dune::UnsequencedSparseIndexRangeBuilder<Alloc> builder(n, n, 1, alloc);
+  Dune::Experimental::UnsequencedSparseIndexRangeBuilder<Alloc> builder(n, n, 1, alloc);
   for (std::size_t i = 0; i < n; ++i)
     builder.setSize(i, 1);
   for (std::size_t i = 0; i < n; ++i)
     builder.addIndex(i, i);
-  return Dune::SparseIndexRanges<uint_least32_t, Alloc>(std::move(builder));
+  return Dune::Experimental::SparseIndexRanges<uint_least32_t, Alloc>(std::move(builder));
 }
 
 int testInheritedBaseConstructors()
@@ -39,9 +39,9 @@ int testInheritedBaseConstructors()
   Dune::TestSuite test("IBCRS inherited/base constructors");
 
   using Index = uint_least32_t;
-  using Pattern = Dune::SparseIndexRanges<Index>;
-  using BaseMatrix = Dune::IMatrix<double, Pattern>;
-  using Matrix = Dune::IBCRSMatrix<double, Index>;
+  using Pattern = Dune::Experimental::SparseIndexRanges<Index>;
+  using BaseMatrix = Dune::Experimental::IMatrix<double, Pattern>;
+  using Matrix = Dune::Experimental::IBCRSMatrix<double, Index>;
 
   // Inherited allocator constructor from IMatrix.
   Matrix allocatorConstructed(std::allocator<double>{});
@@ -118,21 +118,21 @@ int main(int argc, char** argv)
   int rep = 3;
   // Test scalar matrices and vectors
   for (int i = 0; i != rep; ++i)
-    ret = testIBCRSMatrix<IBCRSMatrix<double>, BlockVector<double> >(size);
+    ret = testIBCRSMatrix<Experimental::IBCRSMatrix<double>, BlockVector<double> >(size);
 
   // Test block matrices and vectors with trivial blocks
   for (int i = 0; i != rep; ++i)
-    ret = testIBCRSMatrix<IBCRSMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(size);
+    ret = testIBCRSMatrix<Experimental::IBCRSMatrix<FieldMatrix<double,1,1> >, BlockVector<FieldVector<double,1> > >(size);
 
   for (int i = 0; i != rep; ++i)
-    ret = testIBCRSMatrix<IBCRSMatrix<double>, BlockVector<double> >(size);
+    ret = testIBCRSMatrix<Experimental::IBCRSMatrix<double>, BlockVector<double> >(size);
 
   // Test scalar matrices with complex numbers
-  ret = testIBCRSMatrix<IBCRSMatrix<std::complex<double>>, BlockVector<std::complex<double>>>(10);
+  ret = testIBCRSMatrix<Experimental::IBCRSMatrix<std::complex<double>>, BlockVector<std::complex<double>>>(10);
 
   // Dimension-sensitive check: non-square matrix catches swapped domain/range arguments.
   {
-    using Matrix = IBCRSMatrix<double>;
+    using Matrix = Experimental::IBCRSMatrix<double>;
     constexpr std::size_t rows = 4;
     constexpr std::size_t cols = 7;
 
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
   // ////////////////////////////////////////////////////////////
 
   {
-    IBCRSMatrix<double> bcrsMatrix(4,4, IBCRSMatrix<double>::random);
+    Experimental::IBCRSMatrix<double> bcrsMatrix(4,4, Experimental::IBCRSMatrix<double>::random);
 
     bcrsMatrix.setrowsize(0,2);
     bcrsMatrix.setrowsize(1,3);
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
 
     // Test whether matrix resizing works
     int resize = 3;
-    bcrsMatrix.setBuildMode(IBCRSMatrix<double>::random);
+    bcrsMatrix.setBuildMode(Experimental::IBCRSMatrix<double>::random);
     bcrsMatrix.setSize(resize, resize, resize);
 
     for (int i = 0; i < resize; i++)
@@ -220,7 +220,7 @@ int main(int argc, char** argv)
   // ////////////////////////////////////////////////////////////
 
   {
-    IBCRSMatrix<FieldMatrix<double,2,2>> bcrsMatrix2x2(4, 4, IBCRSMatrix<FieldMatrix<double,2,2>>::random);
+    Experimental::IBCRSMatrix<FieldMatrix<double,2,2>> bcrsMatrix2x2(4, 4, Experimental::IBCRSMatrix<FieldMatrix<double,2,2>>::random);
 
     bcrsMatrix2x2.setrowsize(0,2);
     bcrsMatrix2x2.setrowsize(1,3);
@@ -253,7 +253,7 @@ int main(int argc, char** argv)
 
     // Test whether matrix resizing works
     int resize = 3;
-    bcrsMatrix2x2.setBuildMode(IBCRSMatrix<FieldMatrix<double,2,2>>::random);
+    bcrsMatrix2x2.setBuildMode(Experimental::IBCRSMatrix<FieldMatrix<double,2,2>>::random);
     bcrsMatrix2x2.setSize(resize, resize, resize);
 
     for (int i = 0; i < resize; i++)
@@ -275,7 +275,7 @@ int main(int argc, char** argv)
   // ////////////////////////////////////////////////////////////
 
   {
-    using Matrix = IBCRSMatrix<double>;
+    using Matrix = Experimental::IBCRSMatrix<double>;
 
     Matrix mat;
     if (mat.buildMode() != Matrix::unknown) {
@@ -334,7 +334,7 @@ int main(int argc, char** argv)
   }
 
   {
-    using Matrix = IBCRSMatrix<double>;
+    using Matrix = Experimental::IBCRSMatrix<double>;
 
     Matrix rowWise;
     rowWise.setBuildMode(Matrix::row_wise);

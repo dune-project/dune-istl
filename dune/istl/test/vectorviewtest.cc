@@ -17,9 +17,9 @@
 namespace {
 
 template<class B, class IS>
-class TestVectorView : public Dune::Imp::VectorView<B, IS>
+class TestVectorView : public Dune::Experimental::VectorView<B, IS>
 {
-  using Base = Dune::Imp::VectorView<B, IS>;
+  using Base = Dune::Experimental::VectorView<B, IS>;
 
 public:
   using Base::Base;
@@ -46,7 +46,7 @@ struct FieldTraits<::TestVectorView<B, IS>>
 };
 
 template<>
-struct OrderedIndexRangeTraits<SparseIndexRange>
+struct Experimental::OrderedIndexRangeTraits<SparseIndexRange>
 {
   using index_range_type = SparseIndexRange;
   using index_type = int;

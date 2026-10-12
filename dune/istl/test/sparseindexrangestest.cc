@@ -74,9 +74,10 @@ constexpr bool checkCanonicalPattern(const IndexRanges& cis)
 
 template<class IndexRanges>
 constexpr bool constTest() {
+  using namespace Dune::Experimental;
   bool checks = true;
 
-  Dune::UnsequencedSparseIndexRangeBuilder isBuilder(3, 6);
+  UnsequencedSparseIndexRangeBuilder isBuilder(3, 6);
   isBuilder.setSize(0, 3);
   isBuilder.setSize(0, 3);
   isBuilder.setSize(1, 2);
@@ -94,7 +95,7 @@ constexpr bool constTest() {
   checks &= checkCanonicalPattern(ccis);
 
   // different construction path, but same pattern
-  Dune::UnsequencedSparseIndexRangeBuilder cccisBuilder(3, 6);
+  UnsequencedSparseIndexRangeBuilder cccisBuilder(3, 6);
   cccisBuilder.setSize(2, 0);
   cccisBuilder.setSize(1, 1);
   cccisBuilder.setSize(0, 2);
@@ -107,7 +108,7 @@ constexpr bool constTest() {
   checks &= checkCanonicalPattern(cccis);
   checks &= (ccis == cccis);
 
-  Dune::SequencedSparseIndexRangeBuilder seqBuilder(3, 6, 1);
+  SequencedSparseIndexRangeBuilder seqBuilder(3, 6, 1);
   for (auto& rowBuilder : seqBuilder) {
     checks &= !rowBuilder.contains(1);
     rowBuilder.insert(1);
@@ -126,7 +127,7 @@ constexpr bool constTest() {
   checks &= (seqIs[1].lower_bound(1) != seqIs[1].end());
   checks &= (seqIs[1].lower_bound(2) != seqIs[1].end());
 
-  Dune::UnsequencedSparseIndexRangeBuilder unseqBuilder(3, 6, 1);
+  UnsequencedSparseIndexRangeBuilder unseqBuilder(3, 6, 1);
   unseqBuilder.addIndex(0, 1);
   unseqBuilder.addIndex(0, 1);
   unseqBuilder.addIndex(1, 0);
@@ -143,7 +144,8 @@ constexpr bool constTest() {
 template<class IndexRanges>
 constexpr bool constexprPreSizedUnsequencedSparseIndexRangeBuilderTest()
 {
-  Dune::UnsequencedSparseIndexRangeBuilder builder(3, 6);
+  using namespace Dune::Experimental;
+  UnsequencedSparseIndexRangeBuilder builder(3, 6);
   builder.setSize(0, 3);
   builder.setSize(1, 2);
   builder.setSize(2, 1);
@@ -159,7 +161,8 @@ constexpr bool constexprPreSizedUnsequencedSparseIndexRangeBuilderTest()
 template<class IndexRanges>
 constexpr bool constexprSequencedSparseIndexRangeBuilderTest()
 {
-  Dune::SequencedSparseIndexRangeBuilder builder(3, 6, 1);
+  using namespace Dune::Experimental;
+  SequencedSparseIndexRangeBuilder builder(3, 6, 1);
   for (auto& rowBuilder : builder)
   {
     rowBuilder.insert(2);
@@ -188,7 +191,8 @@ constexpr bool constexprSequencedSparseIndexRangeBuilderTest()
 template<class IndexRanges>
 constexpr bool constexprSequencedOverrideIndicesTest()
 {
-  Dune::SequencedSparseIndexRangeBuilder builder(2, 8, 4);
+  using namespace Dune::Experimental;
+  SequencedSparseIndexRangeBuilder builder(2, 8, 4);
   auto row = builder.begin();
 
   row.insert(1);
@@ -229,7 +233,8 @@ constexpr bool constexprSequencedOverrideIndicesTest()
 template<class IndexRanges>
 constexpr bool constexprUnsequencedSparseIndexRangeBuilderTest()
 {
-  Dune::UnsequencedSparseIndexRangeBuilder builder(3, 6, 1);
+  using namespace Dune::Experimental;
+  UnsequencedSparseIndexRangeBuilder builder(3, 6, 1);
   builder.addIndex(0, 2);
   builder.addIndex(1, 0);
   builder.addIndex(0, 1);
@@ -242,7 +247,8 @@ constexpr bool constexprUnsequencedSparseIndexRangeBuilderTest()
 template<class IndexRanges>
 constexpr bool constexprMoveAndEqualityTest()
 {
-  Dune::UnsequencedSparseIndexRangeBuilder builder(3, 6);
+  using namespace Dune::Experimental;
+  UnsequencedSparseIndexRangeBuilder builder(3, 6);
   builder.setSize(0, 2);
   builder.setSize(1, 1);
   builder.setSize(2, 0);
@@ -252,7 +258,7 @@ constexpr bool constexprMoveAndEqualityTest()
   builder.addIndex(1, 0);
   auto lhs = IndexRanges(std::move(builder));
 
-  Dune::UnsequencedSparseIndexRangeBuilder otherBuilder(3, 6, 1);
+  UnsequencedSparseIndexRangeBuilder otherBuilder(3, 6, 1);
   otherBuilder.addIndex(0, 2);
   otherBuilder.addIndex(0, 1);
   otherBuilder.addIndex(1, 0);
@@ -265,7 +271,8 @@ constexpr bool constexprMoveAndEqualityTest()
 template<class IndexRanges>
 constexpr bool constexprIndexRangeTraitsTest()
 {
-  Dune::UnsequencedSparseIndexRangeBuilder builder(3, 6);
+  using namespace Dune::Experimental;
+  UnsequencedSparseIndexRangeBuilder builder(3, 6);
   builder.setSize(0, 2);
   builder.setSize(1, 1);
   builder.setSize(2, 0);
@@ -276,7 +283,7 @@ constexpr bool constexprIndexRangeTraitsTest()
 
   const auto cis = IndexRanges(std::move(builder));
   using View = decltype(cis[0]);
-  using Traits = Dune::OrderedIndexRangeTraits<View>;
+  using Traits = OrderedIndexRangeTraits<View>;
 
   bool checks = true;
   checks &= (Traits::range(cis[0]).size() == 6);
@@ -299,7 +306,8 @@ constexpr bool constexprIndexRangeTraitsTest()
 template<class IndexRanges>
 void runBuilderBehaviorTests(Dune::TestSuite& test, const std::string& prefix)
 {
-  Dune::SequencedSparseIndexRangeBuilder seqBuilder(3, 6, 1);
+  using namespace Dune::Experimental;
+  SequencedSparseIndexRangeBuilder seqBuilder(3, 6, 1);
   std::size_t currentRow = 0;
   for (auto& rowBuilder : seqBuilder)
   {
@@ -320,7 +328,7 @@ void runBuilderBehaviorTests(Dune::TestSuite& test, const std::string& prefix)
   auto seqIs = IndexRanges(std::move(seqBuilder));
   test.check(seqIs.count() == 6, prefix + ": sequenced builder stores unique row entries");
 
-  Dune::UnsequencedSparseIndexRangeBuilder unseqBuilder(3, 6, 1);
+  UnsequencedSparseIndexRangeBuilder unseqBuilder(3, 6, 1);
   unseqBuilder.addIndex(1, 0);
   unseqBuilder.addIndex(0, 2);
   unseqBuilder.addIndex(2, 4);
@@ -363,9 +371,10 @@ void runRandomCompressionCase(Dune::TestSuite& test,
     setPattern[row].insert(col);
   }
 
-  Dune::UnsequencedSparseIndexRangeBuilder unseqBuilder(rows, cols);
-  Dune::UnsequencedSparseIndexRangeBuilder sizedUnseqBuilder(rows, cols);
-  Dune::SequencedSparseIndexRangeBuilder seqBuilder(rows, cols);
+  using namespace Dune::Experimental;
+  UnsequencedSparseIndexRangeBuilder unseqBuilder(rows, cols);
+  UnsequencedSparseIndexRangeBuilder sizedUnseqBuilder(rows, cols);
+  SequencedSparseIndexRangeBuilder seqBuilder(rows, cols);
 
   for (std::size_t row = 0; row != rows; ++row)
     sizedUnseqBuilder.setSize(row, setPattern[row].size());
@@ -414,42 +423,43 @@ void runRandomCompressionCase(Dune::TestSuite& test,
 
 int main()
 {
+  using namespace Dune::Experimental;
   Dune::TestSuite test("SparseIndexRanges");
   // GCC 10 constexpr support is incomplete, so we exclude tests that are know to fail.
 #if !(defined(__GNUC__) && !defined(__clang__) && __GNUC__ <= 10)
-  static_assert(constexprUnsequencedSparseIndexRangeBuilderTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges unsequenced builder must work in constant evaluation");
-  static_assert(constexprSequencedSparseIndexRangeBuilderTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges sequenced builder must work in constant evaluation");
-  static_assert(constexprSequencedSparseIndexRangeBuilderTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced builder must work in constant evaluation");
-  static_assert(constexprSequencedOverrideIndicesTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges sequenced overrideIndices must work in constant evaluation");
-  static_assert(constexprSequencedOverrideIndicesTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced overrideIndices must work in constant evaluation");
-  static_assert(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced pre-sized builder must work in constant evaluation");
-  static_assert(constexprUnsequencedSparseIndexRangeBuilderTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced builder must work in constant evaluation");
-  static_assert(constexprMoveAndEqualityTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges move and equality must work in constant evaluation");
-  static_assert(constexprIndexRangeTraitsTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges row traits must work in constant evaluation");
-  static_assert(constTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges combined constexpr scenario must pass");
-  static_assert(constTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges combined constexpr scenario must pass");
+  static_assert(constexprUnsequencedSparseIndexRangeBuilderTest<SparseIndexRanges<>>(), "SparseIndexRanges unsequenced builder must work in constant evaluation");
+  static_assert(constexprSequencedSparseIndexRangeBuilderTest<SparseIndexRanges<>>(), "SparseIndexRanges sequenced builder must work in constant evaluation");
+  static_assert(constexprSequencedSparseIndexRangeBuilderTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced builder must work in constant evaluation");
+  static_assert(constexprSequencedOverrideIndicesTest<SparseIndexRanges<>>(), "SparseIndexRanges sequenced overrideIndices must work in constant evaluation");
+  static_assert(constexprSequencedOverrideIndicesTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced overrideIndices must work in constant evaluation");
+  static_assert(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced pre-sized builder must work in constant evaluation");
+  static_assert(constexprUnsequencedSparseIndexRangeBuilderTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced builder must work in constant evaluation");
+  static_assert(constexprMoveAndEqualityTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges move and equality must work in constant evaluation");
+  static_assert(constexprIndexRangeTraitsTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges row traits must work in constant evaluation");
+  static_assert(constTest<SparseIndexRanges<>>(), "SparseIndexRanges combined constexpr scenario must pass");
+  static_assert(constTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges combined constexpr scenario must pass");
 #endif
-  static_assert(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges unsequenced pre-sized builder must work in constant evaluation");
-  static_assert(constexprMoveAndEqualityTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges move and equality must work in constant evaluation");
-  static_assert(constexprIndexRangeTraitsTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges row traits must work in constant evaluation");
+  static_assert(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<SparseIndexRanges<>>(), "SparseIndexRanges unsequenced pre-sized builder must work in constant evaluation");
+  static_assert(constexprMoveAndEqualityTest<SparseIndexRanges<>>(), "SparseIndexRanges move and equality must work in constant evaluation");
+  static_assert(constexprIndexRangeTraitsTest<SparseIndexRanges<>>(), "SparseIndexRanges row traits must work in constant evaluation");
 
-  test.check(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges unsequenced pre-sized builder constexpr test");
-  test.check(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced pre-sized builder constexpr test");
-  test.check(constexprUnsequencedSparseIndexRangeBuilderTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges unsequenced builder constexpr test");
-  test.check(constexprUnsequencedSparseIndexRangeBuilderTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced builder constexpr test");
-  test.check(constexprSequencedSparseIndexRangeBuilderTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges sequenced builder constexpr test");
-  test.check(constexprSequencedSparseIndexRangeBuilderTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced builder constexpr test");
-  test.check(constexprSequencedOverrideIndicesTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges sequenced overrideIndices constexpr test");
-  test.check(constexprSequencedOverrideIndicesTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced overrideIndices constexpr test");
-  test.check(constexprMoveAndEqualityTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges move/equality constexpr test");
-  test.check(constexprMoveAndEqualityTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges move/equality constexpr test");
-  test.check(constexprIndexRangeTraitsTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges row traits constexpr test");
-  test.check(constexprIndexRangeTraitsTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges row traits constexpr test");
-  test.check(constTest<Dune::SparseIndexRanges<>>(), "SparseIndexRanges combined constexpr test");
-  test.check(constTest<Dune::CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges combined constexpr test");
+  test.check(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<SparseIndexRanges<>>(), "SparseIndexRanges unsequenced pre-sized builder constexpr test");
+  test.check(constexprPreSizedUnsequencedSparseIndexRangeBuilderTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced pre-sized builder constexpr test");
+  test.check(constexprUnsequencedSparseIndexRangeBuilderTest<SparseIndexRanges<>>(), "SparseIndexRanges unsequenced builder constexpr test");
+  test.check(constexprUnsequencedSparseIndexRangeBuilderTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges unsequenced builder constexpr test");
+  test.check(constexprSequencedSparseIndexRangeBuilderTest<SparseIndexRanges<>>(), "SparseIndexRanges sequenced builder constexpr test");
+  test.check(constexprSequencedSparseIndexRangeBuilderTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced builder constexpr test");
+  test.check(constexprSequencedOverrideIndicesTest<SparseIndexRanges<>>(), "SparseIndexRanges sequenced overrideIndices constexpr test");
+  test.check(constexprSequencedOverrideIndicesTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges sequenced overrideIndices constexpr test");
+  test.check(constexprMoveAndEqualityTest<SparseIndexRanges<>>(), "SparseIndexRanges move/equality constexpr test");
+  test.check(constexprMoveAndEqualityTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges move/equality constexpr test");
+  test.check(constexprIndexRangeTraitsTest<SparseIndexRanges<>>(), "SparseIndexRanges row traits constexpr test");
+  test.check(constexprIndexRangeTraitsTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges row traits constexpr test");
+  test.check(constTest<SparseIndexRanges<>>(), "SparseIndexRanges combined constexpr test");
+  test.check(constTest<CompressedSparseIndexRanges<>>(), "CompressedSparseIndexRanges combined constexpr test");
 
   {
-    Dune::UnsequencedSparseIndexRangeBuilder isBuilder(3, 6);
+    UnsequencedSparseIndexRangeBuilder isBuilder(3, 6);
 
     isBuilder.setSize(0, 3);
     isBuilder.setSize(1, 2);
@@ -460,7 +470,7 @@ int main()
     isBuilder.addIndex(1, 0);
     isBuilder.addIndex(1, 0);
 
-    auto is = Dune::CompressedSparseIndexRanges<>(std::move(isBuilder));
+    auto is = CompressedSparseIndexRanges<>(std::move(isBuilder));
 
     test.check(is.size() == 3, "size is stored correctly");
     test.check(is.range().size() == 6, "cols are stored correctly");
@@ -479,8 +489,8 @@ int main()
     test.check(row2.empty(), "row 2 is empty");
   }
 
-    {
-    Dune::UnsequencedSparseIndexRangeBuilder isBuilder(3, 6);
+  {
+    UnsequencedSparseIndexRangeBuilder isBuilder(3, 6);
 
     isBuilder.setSize(0, 3);
     isBuilder.setSize(1, 2);
@@ -491,7 +501,7 @@ int main()
     isBuilder.addIndex(1, 0);
     isBuilder.addIndex(1, 0);
 
-    auto is = Dune::SparseIndexRanges<>(std::move(isBuilder));
+    auto is = SparseIndexRanges<>(std::move(isBuilder));
 
     test.check(is.size() == 3, "sparse size is stored correctly");
     test.check(is.range().size() == 6, "sparse cols are stored correctly");
@@ -510,10 +520,10 @@ int main()
     test.check(row2.empty(), "sparse row 2 is empty");
     }
 
-    runBuilderBehaviorTests<Dune::SparseIndexRanges<>>(test, "SparseIndexRanges");
-    runBuilderBehaviorTests<Dune::CompressedSparseIndexRanges<>>(test, "CompressedSparseIndexRanges");
+    runBuilderBehaviorTests<SparseIndexRanges<>>(test, "SparseIndexRanges");
+    runBuilderBehaviorTests<CompressedSparseIndexRanges<>>(test, "CompressedSparseIndexRanges");
 
-    runRandomCompressionCase<Dune::SparseIndexRanges<std::uint_least8_t>>(
+    runRandomCompressionCase<SparseIndexRanges<std::uint_least8_t>>(
       test,
       "SparseIndexRanges random compression uint8",
       40,
@@ -522,7 +532,7 @@ int main()
       250,
       0xA1B2C3D4u);
 
-    runRandomCompressionCase<Dune::CompressedSparseIndexRanges<>>(
+    runRandomCompressionCase<CompressedSparseIndexRanges<>>(
       test,
       "CompressedSparseIndexRanges random compression uint8",
       40,
@@ -531,7 +541,7 @@ int main()
       250,
       0xA1B2C3D4u);
 
-    runRandomCompressionCase<Dune::SparseIndexRanges<std::uint_least16_t>>(
+    runRandomCompressionCase<SparseIndexRanges<std::uint_least16_t>>(
       test,
       "SparseIndexRanges random compression uint16",
       40,
@@ -540,7 +550,7 @@ int main()
       static_cast<std::size_t>(std::numeric_limits<std::uint_least8_t>::max()) + 300,
       0xB2C3D4E5u);
 
-    runRandomCompressionCase<Dune::CompressedSparseIndexRanges<>>(
+    runRandomCompressionCase<CompressedSparseIndexRanges<>>(
       test,
       "CompressedSparseIndexRanges random compression uint16",
       40,
@@ -549,7 +559,7 @@ int main()
       static_cast<std::size_t>(std::numeric_limits<std::uint_least8_t>::max()) + 300,
       0xB2C3D4E5u);
 
-    runRandomCompressionCase<Dune::SparseIndexRanges<std::uint_least32_t>>(
+    runRandomCompressionCase<SparseIndexRanges<std::uint_least32_t>>(
       test,
       "SparseIndexRanges random compression uint32",
       40,
@@ -558,7 +568,7 @@ int main()
       static_cast<std::size_t>(std::numeric_limits<std::uint_least16_t>::max()) + 50000,
       0xC3D4E5F6u);
 
-    runRandomCompressionCase<Dune::CompressedSparseIndexRanges<>>(
+    runRandomCompressionCase<CompressedSparseIndexRanges<>>(
       test,
       "CompressedSparseIndexRanges random compression uint32",
       40,
@@ -567,7 +577,7 @@ int main()
       static_cast<std::size_t>(std::numeric_limits<std::uint_least16_t>::max()) + 50000,
       0xC3D4E5F6u);
 
-    runRandomCompressionCase<Dune::SparseIndexRanges<std::uint_least64_t>>(
+    runRandomCompressionCase<SparseIndexRanges<std::uint_least64_t>>(
       test,
       "SparseIndexRanges random compression uint64",
       40,
@@ -576,7 +586,7 @@ int main()
       static_cast<std::size_t>(std::numeric_limits<std::uint_least32_t>::max()) + 1000ULL,
       0xD4E5F607u);
 
-    runRandomCompressionCase<Dune::CompressedSparseIndexRanges<>>(
+    runRandomCompressionCase<CompressedSparseIndexRanges<>>(
       test,
       "CompressedSparseIndexRanges random compression uint64",
       40,

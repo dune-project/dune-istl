@@ -23,7 +23,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Dune
+namespace Dune::Experimental
 {
   /**
    * \brief Owning matrix container built on top of MatrixView.
@@ -488,10 +488,13 @@ namespace Dune
     }
     return *this;
   }
+} // namespace Dune::Experimental
+
+namespace Dune {
 
 template <class B, class P, class A>
-struct FieldTraits<IMatrix<B, P, A>>
-    : public FieldTraits<typename IMatrix<B, P, A>::field_type>
+struct FieldTraits<Experimental::IMatrix<B, P, A>>
+    : public FieldTraits<typename Experimental::IMatrix<B, P, A>::field_type>
 {
 };
 

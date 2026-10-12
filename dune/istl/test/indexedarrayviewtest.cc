@@ -28,7 +28,7 @@ void testIndexedViewDense(Dune::TestSuite& test)
     std::array<double, 8> data{ 0.5, 1.5, 2.5, 3.5, -1.0, -2.0, -3.0, -4.0 };
     auto denseIndices = DenseIndexRange(0, data.size());
 
-    using ArrayView = Dune::Imp::IndexedArrayView<double*, DenseIndexRange>;
+    using ArrayView = Dune::Experimental::IndexedArrayView<double*, DenseIndexRange>;
     auto view = ArrayView{data.data(), denseIndices};
     const auto& cview = view;
 
@@ -77,7 +77,7 @@ void testIndexedViewSparse(Dune::TestSuite& test)
     std::array<double, 8> data{ 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 };
     const std::array<int, 3> sparseIndices{ 1, 3, 7 };
 
-    auto view = Dune::Imp::IndexedArrayView{data.data(), std::span{sparseIndices}};
+    auto view = Dune::Experimental::IndexedArrayView{data.data(), std::span{sparseIndices}};
     const auto& cview = view;
 
     test.check(view.size() == sparseIndices.size(), "sparse size matches index count");

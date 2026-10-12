@@ -22,10 +22,7 @@
    \brief Indexed view over random-access data using an explicit index set.
  */
 
-namespace Dune {
-
-/** \brief Everything in this namespace is internal to dune-istl, and may change without warning */
-namespace Imp {
+namespace Dune::Experimental {
 
 /**
  * \brief Non-owning indexed view over random-access data.
@@ -290,7 +287,6 @@ private:
   index_range_type index_set_;
 };
 
-} // namespace Imp
-} // namespace Dune
+} // namespace Dune::Experimental
 
 #endif
