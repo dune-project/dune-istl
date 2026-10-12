@@ -177,7 +177,7 @@ namespace Dune
       for( auto i = A.begin(), iend = A.end(); i != iend; ++i )
       {
         const auto &A_i = *i;
-        const auto ii = A_i.beforeEnd();
+        const auto ii = std::prev(A_i.end());
         assert( ii.index() == i.index() );
         // We need to be careful here: Directly using
         // auto rhs = Impl::asVector(v[ i.index() ]);
