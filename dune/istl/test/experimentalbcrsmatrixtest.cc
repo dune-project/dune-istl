@@ -3,6 +3,11 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
+#include "../experimental/bcrsmatrix.hh"
+#include "../bvector.hh"
+#include "laplacian.hh"
+#include "matrixtest.hh"
+
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/float_cmp.hh>
@@ -14,10 +19,6 @@
 #include <array>
 #include <memory>
 
-#include <dune/istl/ibcrsmatrix.hh>
-#include <dune/istl/bvector.hh>
-#include <dune/istl/test/laplacian.hh>
-#include <dune/istl/test/matrixtest.hh>
 
 using namespace Dune;
 

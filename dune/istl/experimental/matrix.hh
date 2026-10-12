@@ -3,8 +3,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_IMATRIX_HH
-#define DUNE_ISTL_IMATRIX_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_MATRIX_HH
+#define DUNE_ISTL_EXPERIMENTAL_MATRIX_HH
 
 #include "sparseindexranges.hh"
 #include "matrixview.hh"
@@ -500,4 +500,4 @@ struct FieldTraits<Experimental::IMatrix<B, P, A>>
 
 } // namespace Dune
 
-#endif // DUNE_ISTL_IMATRIX_HH
+#endif // DUNE_ISTL_EXPERIMENTAL_MATRIX_HH

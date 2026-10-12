@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_ISTL_INDEXRANGE_HH
-#define DUNE_ISTL_INDEXRANGE_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_INDEXRANGE_HH
+#define DUNE_ISTL_EXPERIMENTAL_INDEXRANGE_HH
+
+#include <dune/common/rangeutilities.hh>
 
 #include <algorithm>
 #include <concepts>
 #include <iterator>
 #include <ranges>
 
-#include <dune/common/rangeutilities.hh>
 
 /** \file
    \brief Traits for sets of indices.
@@ -112,4 +113,4 @@ struct OrderedIndexRangeTraits<IntegralRange<T>>
 
 } // namespace Dune::Experimental
 
-#endif
+#endif // DUNE_ISTL_EXPERIMENTAL_INDEXRANGE_HH

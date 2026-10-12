@@ -54,9 +54,6 @@ dune_add_test(SOURCES bcrsimplicitbuild.cc
 
 dune_add_test(SOURCES matrixiteratortest.cc)
 
-dune_add_test(SOURCES matrixviewtest.cc
-              COMPILE_DEFINITIONS DUNE_ISTL_WITH_CHECKING=1)
-
 dune_add_test(SOURCES mmtest.cc)
 
 dune_add_test(SOURCES multitypeblockmatrixtest.cc)
@@ -214,15 +211,18 @@ dune_add_test(SOURCES iluildltest.cc)
 
 dune_add_test(SOURCES matrixfreesolverfactorytest.cc)
 
-dune_add_test(SOURCES sparseindexrangestest.cc)
+dune_add_test(SOURCES experimentalsparseindexrangestest.cc)
 
-dune_add_test(SOURCES imatrixtest.cc)
+dune_add_test(SOURCES experimentalmatrixviewtest.cc
+              COMPILE_DEFINITIONS DUNE_ISTL_WITH_CHECKING=1)
 
-dune_add_test(SOURCES ibcrsmatrixtest.cc)
+dune_add_test(SOURCES experimentalmatrixtest.cc)
 
-dune_add_test(SOURCES indexedarrayviewtest.cc)
+dune_add_test(SOURCES experimentalbcrsmatrixtest.cc)
 
-dune_add_test(SOURCES vectorviewtest.cc
+dune_add_test(SOURCES experimentalindexedarrayviewtest.cc)
+
+dune_add_test(SOURCES experimentalvectorviewtest.cc
               COMPILE_DEFINITIONS DUNE_ISTL_WITH_CHECKING=1)
 
 dune_add_test(SOURCES blocklevel.cc COMPILE_ONLY)

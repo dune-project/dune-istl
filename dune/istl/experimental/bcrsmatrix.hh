@@ -3,10 +3,10 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_IBCRSMATRIX_HH
-#define DUNE_ISTL_IBCRSMATRIX_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_BCRSMATRIX_HH
+#define DUNE_ISTL_EXPERIMENTAL_BCRSMATRIX_HH
 
-#include "imatrix.hh"
+#include "matrix.hh"
 #include "sparseindexranges.hh"
 
 #include <dune/common/scalarmatrixview.hh>
@@ -782,4 +782,4 @@ struct FieldTraits<Experimental::IBCRSMatrix<B, I, A>>
 
 } // namespace Dune
 
-#endif // DUNE_ISTL_IBCRSMATRIX_HH
+#endif // DUNE_ISTL_EXPERIMENTAL_BCRSMATRIX_HH

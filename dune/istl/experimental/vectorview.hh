@@ -3,8 +3,20 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_VECTORVIEW_HH
-#define DUNE_ISTL_VECTORVIEW_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_VECTORVIEW_HH
+#define DUNE_ISTL_EXPERIMENTAL_VECTORVIEW_HH
+
+#include "indexedarrayview.hh"
+
+#include "../istlexception.hh"
+#include "../blocklevel.hh"
+
+#include <dune/common/dotproduct.hh>
+#include <dune/common/ftraits.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/promotiontraits.hh>
+#include <dune/common/scalarvectorview.hh>
+#include <dune/common/typetraits.hh>
 
 #include <algorithm>
 #include <cfenv>
@@ -15,18 +27,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include <dune/common/dotproduct.hh>
-#include <dune/common/ftraits.hh>
-#include <dune/common/fvector.hh>
-#include <dune/common/promotiontraits.hh>
-#include <dune/common/scalarvectorview.hh>
-#include <dune/common/typetraits.hh>
-
-#include <dune/istl/blocklevel.hh>
-
-#include "indexedarrayview.hh"
-#include "istlexception.hh"
 
 /*! \file
    \brief Indexed vector view over random-access data with explicit indices.
@@ -402,4 +402,4 @@ struct FieldTraits< Dune::Experimental::VectorView<B, R> >
 
 } // namespace Dune
 
-#endif // DUNE_ISTL_VECTORVIEW_HH
+#endif // DUNE_ISTL_EXPERIMENTAL_VECTORVIEW_HH

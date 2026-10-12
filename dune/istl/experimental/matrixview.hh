@@ -3,8 +3,8 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_MATRIXVIEW_HH
-#define DUNE_ISTL_MATRIXVIEW_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_MATRIXVIEW_HH
+#define DUNE_ISTL_EXPERIMENTAL_MATRIXVIEW_HH
 
 #include <dune-istl-config.hh> // DUNE_ISTL_WITH_CHECKING_NOEXCEPT
 
@@ -798,4 +798,4 @@ namespace Dune::Experimental {
 
 } // namespace Dune::Experimental
 
-#endif // DUNE_ISTL_MATRIXVIEW_HH
+#endif // DUNE_ISTL_EXPERIMENTAL_MATRIXVIEW_HH

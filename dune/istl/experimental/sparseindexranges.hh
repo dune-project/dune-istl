@@ -3,15 +3,15 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#ifndef DUNE_ISTL_SPARSEINDEXRANGES_HH
-#define DUNE_ISTL_SPARSEINDEXRANGES_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_SPARSEINDEXRANGES_HH
+#define DUNE_ISTL_EXPERIMENTAL_SPARSEINDEXRANGES_HH
+
+#include "indexrange.hh"
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorfacades.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/rangeutilities.hh>
-
-#include <dune/istl/indexrange.hh>
 
 #include <dune/common/std/type_traits.hh>
 #include <dune/common/std/no_unique_address.hh>
@@ -2285,4 +2285,4 @@ namespace Impl
 template <std::derived_from<Dune::Experimental::Impl::SparseIndexRangesBase> T>
 constexpr bool std::ranges::enable_borrowed_range<T> = true;
 
-#endif // DUNE_ISTL_SPARSEINDEXRANGES_HH
+#endif // DUNE_ISTL_EXPERIMENTAL_SPARSEINDEXRANGES_HH

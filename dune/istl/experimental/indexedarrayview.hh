@@ -2,8 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-#ifndef DUNE_ISTL_INDEXEDARRAYVIEW_HH
-#define DUNE_ISTL_INDEXEDARRAYVIEW_HH
+#ifndef DUNE_ISTL_EXPERIMENTAL_INDEXEDARRAYVIEW_HH
+#define DUNE_ISTL_EXPERIMENTAL_INDEXEDARRAYVIEW_HH
+
+#include "indexrange.hh"
+#include "../istlexception.hh"
+
+#include <dune/common/iteratorfacades.hh>
+#include <dune/common/rangeutilities.hh>
 
 #include <cassert>
 #include <cstddef>
@@ -11,12 +17,6 @@
 #include <ranges>
 #include <type_traits>
 #include <utility>
-
-#include <dune/common/iteratorfacades.hh>
-#include <dune/common/rangeutilities.hh>
-
-#include "istlexception.hh"
-#include "indexrange.hh"
 
 /** \file
    \brief Indexed view over random-access data using an explicit index set.
@@ -289,4 +289,4 @@ private:
 
 } // namespace Dune::Experimental
 
-#endif
+#endif // DUNE_ISTL_EXPERIMENTAL_INDEXEDARRAYVIEW_HH

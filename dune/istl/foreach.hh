@@ -12,9 +12,10 @@
 #include<dune/common/indices.hh>
 
 #include<dune/istl/bcrsmatrix.hh>
-#include<dune/istl/ibcrsmatrix.hh>
-#include<dune/istl/imatrix.hh>
 #include<dune/istl/scaledidmatrix.hh>
+
+#include<dune/istl/experimental/bcrsmatrix.hh>
+#include<dune/istl/experimental/matrix.hh>
 
 namespace Dune{
 

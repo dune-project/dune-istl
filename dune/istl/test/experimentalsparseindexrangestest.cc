@@ -14,7 +14,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/test/testsuite.hh>
 
-#include "dune/istl/sparseindexranges.hh"
+#include "../experimental/sparseindexranges.hh"
 
 namespace {
 
