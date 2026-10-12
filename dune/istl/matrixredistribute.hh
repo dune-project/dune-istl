@@ -297,8 +297,8 @@ namespace Dune
       assert( aggidxset.size()==sparsity.size());
 
       if(nnz>0) {
-        m.setSize(aggidxset.size(), aggidxset.size(), nnz);
         m.setBuildMode(M::row_wise);
+        m.setSize(aggidxset.size(), aggidxset.size(), nnz);
         typename M::CreateIterator citer=m.createbegin();
 #ifdef DEBUG_REPART
         std::size_t idx=0;
@@ -607,15 +607,16 @@ namespace Dune
 
     static const Data& gather(const Container& cont, std::size_t i, std::size_t j)
     {
+      auto rowIt = std::cbegin(cont.matrix) + i;
       if(j==0)
-        col=cont.matrix[i].begin();
-      else if (col!=cont.matrix[i].end())
+        col=std::cbegin(*rowIt);
+      else if (col!=std::cend(*rowIt))
         ++col;
       // copy communication: different row sizes for copy rows with the same global index
       // are possible. If all values of current  matrix row are sent, send
       // std::numeric_limits<GlobalIndex>::max()
       // and receiver will ignore it.
-      if (col==cont.matrix[i].end()) {
+      if (col==std::cend(*rowIt)) {
         numlimits = std::numeric_limits<GlobalIndex>::max();
         datastore = Data(numlimits,*col);
         return datastore;

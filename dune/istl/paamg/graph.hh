@@ -115,8 +115,8 @@ namespace Dune
         /**
          * @brief The column iterator of the matrix we use.
          */
-        typedef typename std::conditional<isMutable && C::mutableMatrix,typename Matrix::row_type::Iterator,
-            typename Matrix::row_type::ConstIterator>::type
+        typedef typename std::conditional<isMutable && C::mutableMatrix,typename Matrix::ColIterator,
+          typename Matrix::ConstColIterator>::type
         ColIterator;
 
         /**
@@ -1509,8 +1509,9 @@ namespace Dune
     MatrixGraph<M>::findEdge(const VertexDescriptor& source,
                              const VertexDescriptor& target) const
     {
-      typename M::ConstColIterator found =matrix_[source].find(target);
-      if(found == matrix_[source].end())
+      const Matrix& matrix = matrix_;
+      typename M::ConstColIterator found = matrix[source].find(target);
+      if(found == matrix[source].end())
         return std::numeric_limits<EdgeDescriptor>::max();
       std::size_t offset = found.offset();
       if(target>source)
@@ -1777,15 +1778,17 @@ namespace Dune
     inline typename MatrixGraph<M>::template EdgeIteratorT<const MatrixGraph<M> >
     MatrixGraph<M>::beginEdges(const VertexDescriptor& source) const
     {
-      return ConstEdgeIterator(source, matrix_.operator[](source).begin(),
-                               matrix_.operator[](source).end(), start_[source]);
+      const Matrix& matrix = matrix_;
+      return ConstEdgeIterator(source, matrix.operator[](source).begin(),
+                               matrix.operator[](source).end(), start_[source]);
     }
 
     template<class M>
     inline typename MatrixGraph<M>::template EdgeIteratorT<const MatrixGraph<M> >
     MatrixGraph<M>::endEdges(const VertexDescriptor& source) const
     {
-      return ConstEdgeIterator(matrix_.operator[](source).end());
+      const Matrix& matrix = matrix_;
+      return ConstEdgeIterator(matrix.operator[](source).end());
     }
 
 

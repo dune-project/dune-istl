@@ -11,14 +11,13 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/scalarmatrixview.hh>
 
-template<class B, class Alloc>
-void setupSparsityPattern(Dune::BCRSMatrix<B,Alloc>& A, int N)
+template<class M>
+void setupSparsityPattern(M& A, int N)
 {
-  typedef typename Dune::BCRSMatrix<B,Alloc> Matrix;
+  A.setBuildMode(M::row_wise);
   A.setSize(N*N, N*N, N*N*5);
-  A.setBuildMode(Matrix::row_wise);
 
-  for (typename Dune::BCRSMatrix<B,Alloc>::CreateIterator i = A.createbegin(); i != A.createend(); ++i) {
+  for (auto i = A.createbegin(); i != A.createend(); ++i) {
     int x = i.index()%N; // x coordinate in the 2d field
     int y = i.index()/N;  // y coordinate in the 2d field
 
@@ -47,16 +46,17 @@ void setupSparsityPattern(Dune::BCRSMatrix<B,Alloc>& A, int N)
  * \param N Number of grid nodes per direction
  * \param reg (optional) Regularization added to the diagonal to ensure a good condition number
  */
-template<class B, class Alloc>
-void setupLaplacian(Dune::BCRSMatrix<B,Alloc>& A,
+template<class M>
+void setupLaplacian(M& A,
                     int N,
-                    std::optional<typename Dune::BCRSMatrix<B,Alloc>::field_type> reg = {} )
+                    std::optional<typename Dune::FieldTraits<M>::field_type> reg = {} )
 {
-  using field_type = typename Dune::BCRSMatrix<B,Alloc>::field_type;
+  using field_type = typename Dune::FieldTraits<M>::field_type;
+  using block_type = typename M::block_type;
 
   setupSparsityPattern(A,N);
 
-  B diagonal(static_cast<field_type>(0)), bone(static_cast<field_type>(0));
+  block_type diagonal(static_cast<field_type>(0)), bone(static_cast<field_type>(0));
 
   auto setDiagonal = [](auto&& scalarOrMatrix, const auto& value) {
     auto&& matrix = Dune::Impl::asMatrix(scalarOrMatrix);

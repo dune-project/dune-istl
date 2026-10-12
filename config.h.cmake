@@ -49,6 +49,14 @@
 /* Enable/Disable the backwards compatibility of the category enum/method in dune-istl solvers, preconditioner, etc. */
 #cmakedefine DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE @DUNE_ISTL_SUPPORT_OLD_CATEGORY_INTERFACE@
 
+#ifndef DUNE_ISTL_WITH_CHECKING_NOEXCEPT
+#  ifdef DUNE_ISTL_WITH_CHECKING
+#     define DUNE_ISTL_WITH_CHECKING_NOEXCEPT
+#  else
+#     define DUNE_ISTL_WITH_CHECKING_NOEXCEPT noexcept
+#  endif
+#endif
+
 /* end dune-istl
    Everything below here will be overwritten
 */

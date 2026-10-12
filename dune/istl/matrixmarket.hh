@@ -32,7 +32,7 @@
 
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/istl/matrixutils.hh> // countNonZeros()
+#include <dune/istl/matrixutils.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 
 namespace Dune
@@ -226,6 +226,16 @@ namespace Dune
       }
     };
 
+    template<typename T, typename P, typename A>
+    struct mm_header_printer<Experimental::BCRSMatrix<T,P,A> >
+    {
+      static void print(std::ostream& os)
+      {
+        os<<"%%MatrixMarket matrix coordinate ";
+        os<<mm_numeric_type<Simd::Scalar<typename Imp::BlockTraits<T>::field_type>>::str()<<" general"<<std::endl;
+      }
+    };
+
     template<typename B, typename A>
     struct mm_header_printer<BlockVector<B,A> >
     {
@@ -305,10 +315,35 @@ namespace Dune
       }
     };
 
+   template<typename T, typename P, typename A>
+    struct mm_block_structure_header<Experimental::BCRSMatrix<T,P,A> >
+    {
+      typedef Experimental::BCRSMatrix<T,P,A> M;
+      static_assert(IsNumber<T>::value, "Only scalar entries are expected here!");
+
+      static void print(std::ostream& os, const M&)
+      {
+        os<<"% ISTL_STRUCT blocked ";
+        os<<"1 1"<<std::endl;
+      }
+    };
+
     template<typename T, typename A, int i, int j>
     struct mm_block_structure_header<BCRSMatrix<FieldMatrix<T,i,j>,A> >
     {
       typedef BCRSMatrix<FieldMatrix<T,i,j>,A> M;
+
+      static void print(std::ostream& os, const M&)
+      {
+        os<<"% ISTL_STRUCT blocked ";
+        os<<i<<" "<<j<<std::endl;
+      }
+    };
+
+    template<typename T, typename P, typename A, int i, int j>
+    struct mm_block_structure_header<Experimental::BCRSMatrix<FieldMatrix<T,i,j>,P, A> >
+    {
+      typedef Experimental::BCRSMatrix<FieldMatrix<T,i,j>,P, A> M;
 
       static void print(std::ostream& os, const M&)
       {
@@ -795,8 +830,26 @@ namespace Dune
       };
     };
 
+    template<typename B, typename P, typename A>
+    struct mm_multipliers<Experimental::BCRSMatrix<B,P,A> >
+    {
+      enum {
+        rows = 1,
+        cols = 1
+      };
+    };
+
     template<typename B, int i, int j, typename A>
     struct mm_multipliers<BCRSMatrix<FieldMatrix<B,i,j>,A> >
+    {
+      enum {
+        rows = i,
+        cols = j
+      };
+    };
+
+    template<typename B, typename P, int i, int j, typename A>
+    struct mm_multipliers<Experimental::BCRSMatrix<FieldMatrix<B,i,j>,P,A> >
     {
       enum {
         rows = i,
@@ -890,6 +943,14 @@ namespace Dune
       MatrixValuesSetter<D,brows,bcols> Setter;
 
       Setter(rows, matrix);
+    }
+
+    template<typename T, typename P, typename A, typename D>
+    void readSparseEntries(Dune::Experimental::BCRSMatrix<T,P,A>& matrix,
+                           std::istream& file, std::size_t entries,
+                           const MMHeader& mmHeader, const D&)
+    {
+      DUNE_THROW(Dune::NotImplemented, "Reading of Experimental::BCRSMatrix is not implemented yet!");
     }
 
     inline std::tuple<std::string, std::string> splitFilename(const std::string& filename) {
@@ -1009,18 +1070,12 @@ namespace Dune
     }
   }
 
-  /**
-   * @brief Reads a sparse matrix from a matrix market file.
-   * @param matrix The matrix to store the data in.
-   * @param istr The input stream to read the data from.
-   * @warning Not all formats are supported!
-   */
-  template<typename T, typename A>
-  void readMatrixMarket(Dune::BCRSMatrix<T,A>& matrix,
+  namespace Imp {
+  template<typename Matrix>
+  void readSparseMatrixMarket(Matrix& matrix,
                         std::istream& istr)
   {
     using namespace MatrixMarketImpl;
-    using Matrix = Dune::BCRSMatrix<T,A>;
 
     MMHeader header;
     if(!readMatrixMarketBanner(istr, header)) {
@@ -1059,14 +1114,42 @@ namespace Dune
     istr.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
 
 
+    matrix.setBuildMode(Matrix::row_wise);
     matrix.setSize(blockrows, blockcols, nnz);
-    matrix.setBuildMode(Dune::BCRSMatrix<T,A>::row_wise);
 
     if(header.type==array_type)
       DUNE_THROW(Dune::NotImplemented, "Array format currently not supported for matrices!");
 
     readSparseEntries(matrix, istr, entries, header, NumericWrapper<typename Matrix::field_type>());
   }
+  }
+
+    /**
+   * @brief Reads a sparse matrix from a matrix market file.
+   * @param matrix The matrix to store the data in.
+   * @param istr The input stream to read the data from.
+   * @warning Not all formats are supported!
+   */
+  template<typename T, typename A>
+  void readMatrixMarket(Dune::BCRSMatrix<T,A>& matrix,
+                        std::istream& istr)
+  {
+    Imp::readSparseMatrixMarket(matrix, istr);
+  }
+
+  /**
+   * @brief Reads a sparse matrix from a matrix market file.
+   * @param matrix The matrix to store the data in.
+   * @param istr The input stream to read the data from.
+   * @warning Not all formats are supported!
+   */
+  template<typename T, typename I, typename A>
+  void readMatrixMarket(Dune::Experimental::BCRSMatrix<T,I,A>& matrix,
+                        std::istream& istr)
+  {
+    Imp::readSparseMatrixMarket(matrix, istr);
+  }
+
 
   // Print a scalar entry
   template<typename B>

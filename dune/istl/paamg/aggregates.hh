@@ -157,12 +157,14 @@ namespace Dune
 
       void init(const Matrix* matrix);
 
-      void initRow(const Row& row, int index);
+      template<class R>
+      void initRow(const R& row, int index);
 
-      void examine(const ColIter& col);
+      template<class C>
+      void examine(const C& col);
 
-      template<class G>
-      void examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col);
+      template<class G, class C>
+      void examine(G& graph, const typename G::EdgeIterator& edge, const C& col);
 
       bool isIsolated();
 
@@ -200,7 +202,8 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void SymmetricMatrixDependency<M,N>::initRow(const Row& row, int index)
+    template<class R>
+    inline void SymmetricMatrixDependency<M,N>::initRow(const R& row, int index)
     {
       using std::min;
       vals_.assign(row.size(), 0.0);
@@ -213,7 +216,8 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void SymmetricMatrixDependency<M,N>::examine(const ColIter& col)
+    template<class C>
+    inline void SymmetricMatrixDependency<M,N>::examine(const C& col)
     {
       using std::max;
       // skip positive offdiagonals if norm preserves sign of them.
@@ -228,8 +232,8 @@ namespace Dune
     }
 
     template<class M, class N>
-    template<class G>
-    inline void SymmetricMatrixDependency<M,N>::examine(G&, const typename G::EdgeIterator& edge, const ColIter&)
+    template<class G, class C>
+    inline void SymmetricMatrixDependency<M,N>::examine(G&, const typename G::EdgeIterator& edge, const C&)
     {
       if(*valIter_ > alpha() * maxValue_) {
         edge.properties().setDepends();
@@ -276,12 +280,14 @@ namespace Dune
 
       void init(const Matrix* matrix);
 
-      void initRow(const Row& row, int index);
+      template<class R>
+      void initRow(const R& row, int index);
 
-      void examine(const ColIter& col);
+      template<class C>
+      void examine(const C& col);
 
-      template<class G>
-      void examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col);
+      template<class G, class C>
+      void examine(G& graph, const typename G::EdgeIterator& edge, const C& col);
 
       bool isIsolated();
 
@@ -337,12 +343,14 @@ namespace Dune
 
       void init(const Matrix* matrix);
 
-      void initRow(const Row& row, int index);
+      template<class R>
+      void initRow(const R& row, int index);
 
-      void examine(const ColIter& col);
+      template<class C>
+      void examine(const C& col);
 
-      template<class G>
-      void examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col);
+      template<class G, class C>
+      void examine(G& graph, const typename G::EdgeIterator& edge, const C& col);
 
       bool isIsolated();
 
@@ -368,8 +376,10 @@ namespace Dune
       /** @brief The norm of the current diagonal. */
       real_type diagonal_;
     private:
-      void initRow(const Row& row, int index, const std::true_type&);
-      void initRow(const Row& row, int index, const std::false_type&);
+      template<class R>
+      void initRow(const R& row, int index, const std::true_type&);
+      template<class R>
+      void initRow(const R& row, int index, const std::false_type&);
     };
 
     /**
@@ -1399,19 +1409,22 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::initRow(const Row& row, int index)
+    template<class R>
+    inline void SymmetricDependency<M,N>::initRow(const R& row, int index)
     {
       initRow(row, index, std::is_convertible<field_type, real_type>());
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::initRow(const Row& /*row*/, int /*index*/, const std::false_type&)
+    template<class R>
+    inline void SymmetricDependency<M,N>::initRow(const R& /*row*/, int /*index*/, const std::false_type&)
     {
       DUNE_THROW(InvalidStateException, "field_type needs to convertible to real_type");
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::initRow(const Row& /*row*/, int index, const std::true_type&)
+    template<class R>
+    inline void SymmetricDependency<M,N>::initRow(const R& /*row*/, int index, const std::true_type&)
     {
       using std::min;
       maxValue_ = min(- std::numeric_limits<typename Matrix::field_type>::max(), std::numeric_limits<typename Matrix::field_type>::min());
@@ -1420,7 +1433,8 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void SymmetricDependency<M,N>::examine(const ColIter& col)
+    template<class C>
+    inline void SymmetricDependency<M,N>::examine(const C& col)
     {
       using std::max;
       real_type eij = norm_(*col);
@@ -1441,8 +1455,8 @@ namespace Dune
     }
 
     template<class M, class N>
-    template<class G>
-    inline void SymmetricDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
+    template<class G, class C>
+    inline void SymmetricDependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const C& col)
     {
       real_type eij = norm_(*col);
       typename Matrix::ConstColIterator opposite_entry =
@@ -1480,7 +1494,8 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void Dependency<M,N>::initRow([[maybe_unused]] const Row& row, int index)
+    template<class R>
+    inline void Dependency<M,N>::initRow([[maybe_unused]] const R& row, int index)
     {
       using std::min;
       maxValue_ = min(- std::numeric_limits<real_type>::max(), std::numeric_limits<real_type>::min());
@@ -1489,15 +1504,16 @@ namespace Dune
     }
 
     template<class M, class N>
-    inline void Dependency<M,N>::examine(const ColIter& col)
+    template<class C>
+    inline void Dependency<M,N>::examine(const C& col)
     {
       using std::max;
       maxValue_ = max(maxValue_, -norm_(*col));
     }
 
     template<class M, class N>
-    template<class G>
-    inline void Dependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const ColIter& col)
+    template<class G, class C>
+    inline void Dependency<M,N>::examine(G& graph, const typename G::EdgeIterator& edge, const C& col)
     {
       if(-norm_(*col) >= maxValue_ * alpha()) {
         edge.properties().setDepends();
@@ -1819,9 +1835,8 @@ namespace Dune
       criterion.init(&matrix);
 
       for(VertexIterator vertex = graph.begin(); vertex != graph.end(); ++vertex) {
-        typedef typename Matrix::row_type Row;
 
-        const Row& row = matrix[*vertex];
+        const auto& row = matrix[*vertex];
 
         // Tell the criterion what row we will examine now
         // This might for example be used for calculating the
@@ -1830,13 +1845,12 @@ namespace Dune
 
         // On a first path all columns are examined. After this
         // the calculator should know whether the vertex is isolated.
-        typedef typename Matrix::ConstColIterator ColIterator;
-        ColIterator end = row.end();
+        auto end = row.end();
         typename FieldTraits<typename Matrix::field_type>::real_type absoffdiag=0.;
 
         using std::max;
         if(firstlevel) {
-          for(ColIterator col = row.begin(); col != end; ++col)
+          for(auto col = row.begin(); col != end; ++col)
             if(col.index()!=*vertex) {
               criterion.examine(col);
               absoffdiag = max(absoffdiag, Impl::asMatrix(*col).frobenius_norm());
@@ -1846,7 +1860,7 @@ namespace Dune
             vertex.properties().setExcludedBorder();
         }
         else
-          for(ColIterator col = row.begin(); col != end; ++col)
+          for(auto col = row.begin(); col != end; ++col)
             if(col.index()!=*vertex)
               criterion.examine(col);
 
