@@ -110,7 +110,7 @@ Dune::Experimental::SparseIndexRanges<uint_least32_t, Alloc> makeDiagonalPattern
 void testMoveConstructors(Dune::TestSuite& test)
 {
   using Pattern = Dune::Experimental::SparseIndexRanges<uint_least32_t>;
-  using Matrix = Dune::Experimental::IMatrix<double, Pattern, StatefulAllocator<double>>;
+  using Matrix = Dune::Experimental::Matrix<double, Pattern, StatefulAllocator<double>>;
 
   Matrix matrix(makeDiagonalPattern(2), StatefulAllocator<double>(1));
   matrix[0][0] = 1.5;
@@ -133,7 +133,7 @@ void testMoveConstructors(Dune::TestSuite& test)
 void testSwapRejectsUnequalAllocators(Dune::TestSuite& test)
 {
   using Pattern = Dune::Experimental::SparseIndexRanges<uint_least32_t>;
-  using Matrix = Dune::Experimental::IMatrix<double, Pattern, StatefulAllocator<double>>;
+  using Matrix = Dune::Experimental::Matrix<double, Pattern, StatefulAllocator<double>>;
 
   Matrix lhs(makeDiagonalPattern(1), StatefulAllocator<double>(1));
   Matrix rhs(makeDiagonalPattern(1), StatefulAllocator<double>(2));
@@ -155,7 +155,7 @@ void testSwapRejectsUnequalAllocators(Dune::TestSuite& test)
 void testAllocatorAwareBlocks(Dune::TestSuite& test)
 {
   using Pattern = Dune::Experimental::SparseIndexRanges<>;
-  using Matrix = Dune::Experimental::IMatrix<AllocAwareBlock, Pattern, StatefulAllocator<AllocAwareBlock>>;
+  using Matrix = Dune::Experimental::Matrix<AllocAwareBlock, Pattern, StatefulAllocator<AllocAwareBlock>>;
 
   Matrix matrix(makeDiagonalPattern(2), StatefulAllocator<AllocAwareBlock>(7));
   test.check(matrix[0][0].allocatorId == 7 && matrix[1][1].allocatorId == 7,
@@ -165,7 +165,7 @@ void testAllocatorAwareBlocks(Dune::TestSuite& test)
 void testMatrixInterface(Dune::TestSuite&)
 {
   using Pattern = Dune::Experimental::SparseIndexRanges<uint_least32_t>;
-  using Matrix = Dune::Experimental::IMatrix<double, Pattern, StatefulAllocator<double>>;
+  using Matrix = Dune::Experimental::Matrix<double, Pattern, StatefulAllocator<double>>;
 
   Matrix matrix(makeDiagonalPattern(3), StatefulAllocator<double>(3));
   matrix[0][0] = 1.0;

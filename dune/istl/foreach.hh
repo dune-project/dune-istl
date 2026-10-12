@@ -13,9 +13,7 @@
 
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/istl/scaledidmatrix.hh>
-
-#include<dune/istl/experimental/bcrsmatrix.hh>
-#include<dune/istl/experimental/matrix.hh>
+#include<dune/istl/matrixutils.hh>
 
 namespace Dune{
 
@@ -39,10 +37,10 @@ namespace Dune{
   struct IsRowMajorSparse<BCRSMatrix<B,A>> : std::true_type {};
 
   template <class B, class P, class A>
-  struct IsRowMajorSparse<Dune::Experimental::IBCRSMatrix<B,P,A>> : std::true_type {};
+  struct IsRowMajorSparse<Dune::Experimental::BCRSMatrix<B,P,A>> : std::true_type {};
 
-  template <class B, class P>
-  struct IsRowMajorSparse<Dune::Experimental::IMatrix<B,P>> : std::true_type {};
+  template <class B, class P, class A>
+  struct IsRowMajorSparse<Dune::Experimental::Matrix<B,P,A>> : std::true_type {};
 
   template <class K, int n>
   struct IsRowMajorSparse<DiagonalMatrix<K,n>> : std::true_type {};

@@ -32,7 +32,7 @@
 
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/istl/matrixutils.hh> // countNonZeros()
+#include <dune/istl/matrixutils.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 
 namespace Dune
@@ -227,7 +227,7 @@ namespace Dune
     };
 
     template<typename T, typename P, typename A>
-    struct mm_header_printer<IBCRSMatrix<T,P,A> >
+    struct mm_header_printer<Experimental::BCRSMatrix<T,P,A> >
     {
       static void print(std::ostream& os)
       {
@@ -316,9 +316,9 @@ namespace Dune
     };
 
    template<typename T, typename P, typename A>
-    struct mm_block_structure_header<IBCRSMatrix<T,P,A> >
+    struct mm_block_structure_header<Experimental::BCRSMatrix<T,P,A> >
     {
-      typedef IBCRSMatrix<T,P,A> M;
+      typedef Experimental::BCRSMatrix<T,P,A> M;
       static_assert(IsNumber<T>::value, "Only scalar entries are expected here!");
 
       static void print(std::ostream& os, const M&)
@@ -341,9 +341,9 @@ namespace Dune
     };
 
     template<typename T, typename P, typename A, int i, int j>
-    struct mm_block_structure_header<IBCRSMatrix<FieldMatrix<T,i,j>,P, A> >
+    struct mm_block_structure_header<Experimental::BCRSMatrix<FieldMatrix<T,i,j>,P, A> >
     {
-      typedef IBCRSMatrix<FieldMatrix<T,i,j>,P, A> M;
+      typedef Experimental::BCRSMatrix<FieldMatrix<T,i,j>,P, A> M;
 
       static void print(std::ostream& os, const M&)
       {
@@ -831,7 +831,7 @@ namespace Dune
     };
 
     template<typename B, typename P, typename A>
-    struct mm_multipliers<IBCRSMatrix<B,P,A> >
+    struct mm_multipliers<Experimental::BCRSMatrix<B,P,A> >
     {
       enum {
         rows = 1,
@@ -849,7 +849,7 @@ namespace Dune
     };
 
     template<typename B, typename P, int i, int j, typename A>
-    struct mm_multipliers<IBCRSMatrix<FieldMatrix<B,i,j>,P,A> >
+    struct mm_multipliers<Experimental::BCRSMatrix<FieldMatrix<B,i,j>,P,A> >
     {
       enum {
         rows = i,
@@ -946,11 +946,11 @@ namespace Dune
     }
 
     template<typename T, typename P, typename A, typename D>
-    void readSparseEntries(Dune::IBCRSMatrix<T,P,A>& matrix,
+    void readSparseEntries(Dune::Experimental::BCRSMatrix<T,P,A>& matrix,
                            std::istream& file, std::size_t entries,
                            const MMHeader& mmHeader, const D&)
     {
-      DUNE_THROW(Dune::NotImplemented, "Reading of IBCRSMatrix is not implemented yet!");
+      DUNE_THROW(Dune::NotImplemented, "Reading of Experimental::BCRSMatrix is not implemented yet!");
     }
 
     inline std::tuple<std::string, std::string> splitFilename(const std::string& filename) {
@@ -1144,7 +1144,7 @@ namespace Dune
    * @warning Not all formats are supported!
    */
   template<typename T, typename I, typename A>
-  void readMatrixMarket(Dune::IBCRSMatrix<T,I,A>& matrix,
+  void readMatrixMarket(Dune::Experimental::BCRSMatrix<T,I,A>& matrix,
                         std::istream& istr)
   {
     Imp::readSparseMatrixMarket(matrix, istr);

@@ -17,14 +17,14 @@
 #include<dune/common/fvector.hh>
 #include<dune/istl/bccsmatrixinitializer.hh>
 #include<dune/istl/bcrsmatrix.hh>
-#include<dune/istl/matrix.hh>
 #include<dune/istl/foreach.hh>
+#include<dune/istl/matrix.hh>
+#include<dune/istl/matrixutils.hh>
 #include<dune/istl/multitypeblockmatrix.hh>
 #include<dune/istl/multitypeblockvector.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/solvertype.hh>
 #include<dune/istl/solverfactory.hh>
-#include<dune/istl/experimental/bcrsmatrix.hh>
 
 
 
@@ -214,7 +214,7 @@ namespace Dune {
     };
 
     template<typename T, typename P, typename A>
-    struct UMFPackVectorChooser<Dune::Experimental::IBCRSMatrix<T,P,A>,
+    struct UMFPackVectorChooser<Dune::Experimental::BCRSMatrix<T,P,A>,
       std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
     : public UMFPackVectorChooser<BCRSMatrix<T,A>, std::void_t<UMFPackDomainType<T>, UMFPackRangeType<T>>>
     {};
@@ -836,7 +836,7 @@ namespace Dune {
   };
 
   template<typename B, typename P, typename A>
-  struct StoresColumnCompressed<UMFPack<Dune::Experimental::IBCRSMatrix<B,P,A> > >
+  struct StoresColumnCompressed<UMFPack<Dune::Experimental::BCRSMatrix<B,P,A> > >
   {
     enum { value = true };
   };

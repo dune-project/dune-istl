@@ -28,7 +28,7 @@ namespace Dune::Experimental
   /**
    * \brief Owning matrix container built on top of MatrixView.
    *
-   * IMatrix stores block values and owns a pattern while exposing
+   * Matrix stores block values and owns a pattern while exposing
    * the matrix interface from MatrixView.
    *
    * In contrast to MatrixView, this class owns both resources:
@@ -40,7 +40,7 @@ namespace Dune::Experimental
    * \tparam A Allocator type used for block and pattern storage.
    */
   template <class B, class P, class A = std::allocator<B>>
-  class IMatrix : public MatrixView<B*, P>
+  class Matrix : public MatrixView<B*, P>
   {
     using block_alloc_type = typename std::allocator_traits<A>::template rebind_alloc<B>;
     using block_alloc_traits = std::allocator_traits<block_alloc_type>;
@@ -59,73 +59,73 @@ namespace Dune::Experimental
      *
      * The resulting matrix has no pattern and no allocated block storage.
      */
-    IMatrix(const allocator_type &allocator = allocator_type());
+    Matrix(const allocator_type &allocator = allocator_type());
 
     /** \brief Construct from a shared pattern.
      *
      * If \p pattern is non-null, block storage is allocated and value-initialized
      * for \c pattern->count() entries.
      */
-    IMatrix(std::shared_ptr<const pattern_type> pattern, const allocator_type &allocator = allocator_type());
+    Matrix(std::shared_ptr<const pattern_type> pattern, const allocator_type &allocator = allocator_type());
 
     /** \brief Construct from an rvalue pattern.
      *
      * The pattern is moved into shared owned storage and corresponding block
      * storage is allocated and value-initialized.
      */
-    IMatrix(pattern_type &&pattern, const allocator_type &allocator = allocator_type());
+    Matrix(pattern_type &&pattern, const allocator_type &allocator = allocator_type());
 
     /** \brief Copy constructor.
      *
      * Shares the sparsity pattern and deep-copies block values.
      */
-    IMatrix(const IMatrix &other);
+    Matrix(const Matrix &other);
 
     /** \brief Copy constructor.
      *
      * Shares the pattern and deep-copies block values.
      */
-    IMatrix(const IMatrix &other, const allocator_type &allocator);
+    Matrix(const Matrix &other, const allocator_type &allocator);
 
     /** \brief Copy assignment.
      *
      * Provides strong exception safety for block storage replacement.
      */
-    IMatrix &operator=(const IMatrix &other);
+    Matrix &operator=(const Matrix &other);
 
     /** \brief Move constructor.
      *
      * Transfers owned resources from \p other.
      */
-    IMatrix(IMatrix &&other);
+    Matrix(Matrix &&other);
 
     /** \brief Move assignment.
      *
      * Transfers owned resources from \p other according to allocator propagation
      * rules.
      */
-    IMatrix &operator=(IMatrix &&other);
+    Matrix &operator=(Matrix &&other);
 
     /** \brief Move construct with explicit allocator.
      *
      * If allocators compare equal, resources are stolen. Otherwise, pattern is
      * shared and block values are moved into newly allocated storage.
      */
-    IMatrix(IMatrix &&other, const allocator_type &allocator);
+    Matrix(Matrix &&other, const allocator_type &allocator);
 
     using MatrixView<B*, P>::operator=;
 
     //! Destructor releases owned block storage.
-    ~IMatrix();
+    ~Matrix();
 
     /** \brief Return the allocator currently associated with this matrix. */
     allocator_type get_allocator() const;
 
     //! Swap contents of this matrix with \p other, honoring allocator swap propagation traits.
-    void swap(IMatrix &other);
+    void swap(Matrix &other);
 
     //! Swap contents of \p lhs and \p rhs, honoring allocator swap propagation traits.
-    friend void swap(IMatrix &lhs, IMatrix &rhs)
+    friend void swap(Matrix &lhs, Matrix &rhs)
     {
       lhs.swap(rhs);
     }
@@ -206,10 +206,10 @@ namespace Dune::Experimental
     }
   } // namespace Impl
 
-  // IMatrix implementation
+  // Matrix implementation
 
   template <class B, class P, class A>
-  void IMatrix<B, P, A>::resetData()
+  void Matrix<B, P, A>::resetData()
   {
     if (blockIter())
       deallocateData();
@@ -217,7 +217,7 @@ namespace Dune::Experimental
 
   template <class B, class P, class A>
   template<class BlockAlloc, class Alloc, class... Args>
-  void IMatrix<B, P, A>::constructBlock(BlockAlloc& block_alloc, block_iter_type ptr, const Alloc& alloc, Args&&... args)
+  void Matrix<B, P, A>::constructBlock(BlockAlloc& block_alloc, block_iter_type ptr, const Alloc& alloc, Args&&... args)
   {
     std::apply([&]<class... Xs>(Xs&&... xs) {
       block_alloc_traits::construct(block_alloc, ptr, std::forward<Xs>(xs)...);
@@ -226,14 +226,14 @@ namespace Dune::Experimental
 
   template <class B, class P, class A>
   template<class Alloc, class ConstructFn>
-  auto IMatrix<B, P, A>::allocateData(const Alloc& alloc, size_type count, ConstructFn&& construct_fn) -> block_iter_type
+  auto Matrix<B, P, A>::allocateData(const Alloc& alloc, size_type count, ConstructFn&& construct_fn) -> block_iter_type
   {
     return allocateData(alloc, count, std::forward<ConstructFn>(construct_fn), [](size_type, block_type&) {});
   }
 
   template <class B, class P, class A>
   template<class Alloc, class ConstructFn, class RestoreFn>
-  auto IMatrix<B, P, A>::allocateData(const Alloc& alloc, size_type count, ConstructFn&& construct_fn, RestoreFn&& restore_fn) -> block_iter_type
+  auto Matrix<B, P, A>::allocateData(const Alloc& alloc, size_type count, ConstructFn&& construct_fn, RestoreFn&& restore_fn) -> block_iter_type
   {
     // Strong exception guarantee: either fully constructed storage is returned
     // or all partially constructed elements are rolled back and deallocated.
@@ -256,7 +256,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  void IMatrix<B, P, A>::allocateDataDefault()
+  void Matrix<B, P, A>::allocateDataDefault()
   {
     assert(not blockIter());
     assert(patternPtr());
@@ -269,7 +269,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  void IMatrix<B, P, A>::allocateDataCopy(block_const_iter_type other_data)
+  void Matrix<B, P, A>::allocateDataCopy(block_const_iter_type other_data)
   {
     assert(not blockIter());
     assert(patternPtr());
@@ -282,7 +282,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  void IMatrix<B, P, A>::allocateDataMove(block_iter_type other_data)
+  void Matrix<B, P, A>::allocateDataMove(block_iter_type other_data)
   {
     assert(not blockIter());
     assert(patternPtr());
@@ -301,7 +301,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  void IMatrix<B, P, A>::deallocateData()
+  void Matrix<B, P, A>::deallocateData()
   {
     assert(blockIter());
     assert(patternPtr());
@@ -315,13 +315,13 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(const allocator_type &allocator)
-    : IMatrix(nullptr, allocator)
+  Matrix<B, P, A>::Matrix(const allocator_type &allocator)
+    : Matrix(nullptr, allocator)
   {
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(std::shared_ptr<pattern_type const> pattern, const allocator_type &allocator)
+  Matrix<B, P, A>::Matrix(std::shared_ptr<pattern_type const> pattern, const allocator_type &allocator)
       : MatrixView<B*, P>::MatrixView{nullptr, pattern.get()}
       , pattern_(std::move(pattern))
       , alloc_(allocator)
@@ -331,8 +331,8 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(pattern_type &&pattern, const allocator_type &allocator)
-      : IMatrix(nullptr, allocator)
+  Matrix<B, P, A>::Matrix(pattern_type &&pattern, const allocator_type &allocator)
+      : Matrix(nullptr, allocator)
   {
     using pattern_alloc_type = typename std::allocator_traits<allocator_type>::template rebind_alloc<P>;
     pattern_alloc_type pattern_alloc(alloc_);
@@ -343,20 +343,20 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::~IMatrix()
+  Matrix<B, P, A>::~Matrix()
   {
     resetData();
     resetView(nullptr, nullptr);
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(const IMatrix &other)
-    : IMatrix(other, std::allocator_traits<allocator_type>::select_on_container_copy_construction(other.alloc_))
+  Matrix<B, P, A>::Matrix(const Matrix &other)
+    : Matrix(other, std::allocator_traits<allocator_type>::select_on_container_copy_construction(other.alloc_))
   {}
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(const IMatrix &other, const allocator_type &allocator)
-    : IMatrix(other.pattern_, allocator)
+  Matrix<B, P, A>::Matrix(const Matrix &other, const allocator_type &allocator)
+    : Matrix(other.pattern_, allocator)
   {
     resetData();
     if (patternPtr())
@@ -364,18 +364,18 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  auto IMatrix<B, P, A>::get_allocator() const -> allocator_type
+  auto Matrix<B, P, A>::get_allocator() const -> allocator_type
   {
     return alloc_;
   }
 
   template <class B, class P, class A>
-  void IMatrix<B, P, A>::swap(IMatrix &other)
+  void Matrix<B, P, A>::swap(Matrix &other)
   {
     if constexpr (!std::allocator_traits<allocator_type>::propagate_on_container_swap::value
                   && !std::allocator_traits<allocator_type>::is_always_equal::value)
       if (alloc_ != other.alloc_)
-        DUNE_THROW(InvalidStateException, "Cannot swap IMatrix instances with unequal allocators when propagate_on_container_swap is false");
+        DUNE_THROW(InvalidStateException, "Cannot swap Matrix instances with unequal allocators when propagate_on_container_swap is false");
 
     using std::swap;
     swap(pattern_, other.pattern_);
@@ -388,7 +388,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A> &IMatrix<B, P, A>::operator=(const IMatrix &other)
+  Matrix<B, P, A> &Matrix<B, P, A>::operator=(const Matrix &other)
   {
     if (this != &other) {
       allocator_type target_alloc = alloc_;
@@ -416,7 +416,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(IMatrix &&other)
+  Matrix<B, P, A>::Matrix(Matrix &&other)
     : MatrixView<B*, P>(nullptr, nullptr)
   {
     alloc_ = std::move(other.alloc_);
@@ -426,7 +426,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A>::IMatrix(IMatrix &&other, const allocator_type &allocator)
+  Matrix<B, P, A>::Matrix(Matrix &&other, const allocator_type &allocator)
     : MatrixView<B*, P>(nullptr, nullptr)
     , alloc_(allocator)
   {
@@ -445,7 +445,7 @@ namespace Dune::Experimental
   }
 
   template <class B, class P, class A>
-  IMatrix<B, P, A> &IMatrix<B, P, A>::operator=(IMatrix &&other)
+  Matrix<B, P, A> &Matrix<B, P, A>::operator=(Matrix &&other)
   {
     if (this != &other)
     {
@@ -493,8 +493,8 @@ namespace Dune::Experimental
 namespace Dune {
 
 template <class B, class P, class A>
-struct FieldTraits<Experimental::IMatrix<B, P, A>>
-    : public FieldTraits<typename Experimental::IMatrix<B, P, A>::field_type>
+struct FieldTraits<Experimental::Matrix<B, P, A>>
+    : public FieldTraits<typename Experimental::Matrix<B, P, A>::field_type>
 {
 };
 

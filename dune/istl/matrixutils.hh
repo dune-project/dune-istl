@@ -23,14 +23,21 @@ namespace Dune
   template<typename B, typename A>
   class BCRSMatrix;
 
-  template<typename B, typename I, typename A>
-  class IBCRSMatrix;
 
   template<typename K, int n, int m>
   class FieldMatrix;
 
   template<class T, class A>
   class Matrix;
+
+namespace Experimental {
+  template<typename B, typename I, typename A>
+  class BCRSMatrix;
+
+  template <typename B, typename P, typename A>
+  class Matrix;
+}
+
 #endif
 
   /**
@@ -537,7 +544,7 @@ namespace Dune
   };
 
   template<typename T, typename P, typename A>
-  struct IsMatrix<IBCRSMatrix<T,P,A> >
+  struct IsMatrix<Experimental::BCRSMatrix<T,P,A> >
   {
     enum {
       /**

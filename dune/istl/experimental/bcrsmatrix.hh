@@ -22,7 +22,7 @@ namespace Dune::Experimental {
 /**
  * \brief Block compressed row storage matrix.
  *
- * IBCRSMatrix is an sparse matrix inheriting from the IMatrix class
+ * BCRSMatrix is an sparse matrix inheriting from the Matrix class
  * explicitly instantiated with SparseIndexRanges as the pattern type.
  * It is designed to be a modernized, allocator-aware replacement for BCRSMatrix
  * that preserves the familiar matrix interface and build workflow while improving
@@ -78,7 +78,7 @@ namespace Dune::Experimental {
  */
 
 template<class B, class I = uint_least32_t, class A = std::allocator<B>>
-class IBCRSMatrix : public IMatrix<B, SparseIndexRanges<I>, A>
+class BCRSMatrix : public Matrix<B, SparseIndexRanges<I>, A>
 {
   //! Allocator type for the block storage.
   using block_alloc_type = typename std::allocator_traits<A>::template rebind_alloc<B>;
@@ -123,7 +123,7 @@ class IBCRSMatrix : public IMatrix<B, SparseIndexRanges<I>, A>
   class DefaultBlockAssgnment
   {
     DefaultBlockAssgnment() = default;
-    friend class IBCRSMatrix;
+    friend class BCRSMatrix;
   public:
     //! Assign a block value to the current entry. The value must be equal to the default constructed block.
     DefaultBlockAssgnment& operator=(const B& e);
@@ -134,11 +134,11 @@ class IBCRSMatrix : public IMatrix<B, SparseIndexRanges<I>, A>
 
 public:
   //! Type of the blocks stored in the matrix.
-  using typename IMatrix<B, SparseIndexRanges<I>, A>::block_type;
+  using typename Matrix<B, SparseIndexRanges<I>, A>::block_type;
   //! Type of the indices used to access blocks.
-  using typename IMatrix<B, SparseIndexRanges<I>, A>::size_type;
+  using typename Matrix<B, SparseIndexRanges<I>, A>::size_type;
   //! Type of the pattern.
-  using typename IMatrix<B, SparseIndexRanges<I>, A>::pattern_type;
+  using typename Matrix<B, SparseIndexRanges<I>, A>::pattern_type;
   //! Type of the allocator used for memory management.
   using allocator_type = A;
 
@@ -199,28 +199,28 @@ public:
   };
 
   // inherit constructors TODO check that this works
-  using IMatrix<B, SparseIndexRanges<I>, A>::IMatrix;
+  using Matrix<B, SparseIndexRanges<I>, A>::Matrix;
 
-  using IMatrix<B, SparseIndexRanges<I>, A>::operator=;
+  using Matrix<B, SparseIndexRanges<I>, A>::operator=;
 
-  using IMatrix<B, SparseIndexRanges<I>, A>::get_allocator;
+  using Matrix<B, SparseIndexRanges<I>, A>::get_allocator;
 
-  //! Construct an IBCRSMatrix from another IMatrix.
-  IBCRSMatrix(const IMatrix<B, SparseIndexRanges<I>, A>& other,
+  //! Construct an BCRSMatrix from another Matrix.
+  BCRSMatrix(const Matrix<B, SparseIndexRanges<I>, A>& other,
               const allocator_type& allocator = allocator_type())
-    : IMatrix<B, SparseIndexRanges<I>, A>(other, allocator)
+    : Matrix<B, SparseIndexRanges<I>, A>(other, allocator)
   {
   }
 
-  //! Move-construct an IBCRSMatrix from another IMatrix.
-  IBCRSMatrix(IMatrix<B, SparseIndexRanges<I>, A>&& other,
+  //! Move-construct an BCRSMatrix from another Matrix.
+  BCRSMatrix(Matrix<B, SparseIndexRanges<I>, A>&& other,
               const allocator_type& allocator = allocator_type())
-    : IMatrix<B, SparseIndexRanges<I>, A>(std::move(other), allocator)
+    : Matrix<B, SparseIndexRanges<I>, A>(std::move(other), allocator)
   {
   }
 
   /**
-   * \brief Copy-construct an IBCRSMatrix from another matrix.
+   * \brief Copy-construct an BCRSMatrix from another matrix.
    *
    * \warning Internal pattern builders are not copied, so the
    * resulting matrix is not in a build stage even if the source matrix is.
@@ -228,15 +228,15 @@ public:
    * \param other The matrix to copy from.
    * \param allocator The allocator to use for memory management.
    */
-  IBCRSMatrix(const IBCRSMatrix& other,
+  BCRSMatrix(const BCRSMatrix& other,
               const allocator_type& allocator = allocator_type());
   //! Move-construct a matrix, optionally rebinding it to a different allocator.
   //! If allocators differ, block values may be moved into fresh storage.
-  IBCRSMatrix(IBCRSMatrix&& other,
+  BCRSMatrix(BCRSMatrix&& other,
               const allocator_type& allocator = allocator_type());
 
   /**
-   * \brief Copy-assign an IBCRSMatrix from another matrix.
+   * \brief Copy-assign an BCRSMatrix from another matrix.
    *
    * \warning Internal pattern builders are not copied, so the
    * resulting matrix is not in a build stage even if the source matrix is.
@@ -244,10 +244,10 @@ public:
    * \param other The matrix to copy from.
    * \param allocator The allocator to use for memory management.
    */
-  IBCRSMatrix<B, I, A>& operator=(const IBCRSMatrix& other);
+  BCRSMatrix<B, I, A>& operator=(const BCRSMatrix& other);
 
   //! Move-assign matrix storage while respecting allocator propagation rules.
-  IBCRSMatrix<B, I, A>& operator=(IBCRSMatrix&& other);
+  BCRSMatrix<B, I, A>& operator=(BCRSMatrix&& other);
 
   /**
    * \brief Construct a matrix with a pre-selected build mode and dimensions.
@@ -257,10 +257,10 @@ public:
    * \param cols Number of columns in the matrix.
    * \param bm Build mode of the pattern.
    */
-  IBCRSMatrix(size_type rows,
-              size_type cols,
-              BuildMode bm,
-              const allocator_type& allocator = allocator_type());
+  BCRSMatrix(size_type rows,
+             size_type cols,
+             BuildMode bm,
+             const allocator_type& allocator = allocator_type());
 
   /**
    * \brief Construct a matrix with a pre-selected build mode, dimensions, and expected non-zero entries.
@@ -270,11 +270,11 @@ public:
    * \param nnz Expected number of non-zero entries in the matrix.
    * \param bm Build mode of the pattern.
    */
-  IBCRSMatrix(size_type rows,
-              size_type cols,
-              size_type nnz,
-              BuildMode bm,
-              const allocator_type& allocator = allocator_type());
+  BCRSMatrix(size_type rows,
+             size_type cols,
+             size_type nnz,
+             BuildMode bm,
+             const allocator_type& allocator = allocator_type());
 
   /**
    * \brief Construct a matrix with a pre-selected build mode, dimensions, and expected non-zero entries.
@@ -286,24 +286,24 @@ public:
    * \param overflowRatio Expected ratio of overflow entries to total entries during construction.
    * \param bm Build mode of the pattern.
    */
-  IBCRSMatrix(size_type rows,
-              size_type cols,
-              size_type avg,
-              double overflowRatio,
-              BuildMode bm,
-              const allocator_type& allocator = allocator_type());
+  BCRSMatrix(size_type rows,
+             size_type cols,
+             size_type avg,
+             double overflowRatio,
+             BuildMode bm,
+             const allocator_type& allocator = allocator_type());
 
   //! Swap the contents of two matrices, respecting allocator propagation rules.
-  void swap(IBCRSMatrix& other)
+  void swap(BCRSMatrix& other)
   {
     using std::swap;
-    swap(static_cast<IMatrix<B, SparseIndexRanges<I>, A>&>(*this),
-         static_cast<IMatrix<B, SparseIndexRanges<I>, A>&>(other));
+    swap(static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(*this),
+         static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(other));
     swap(builder_, other.builder_);
   }
 
   //! Swap the contents of two matrices, respecting allocator propagation rules.
-  friend void swap(IBCRSMatrix& lhs, IBCRSMatrix& rhs)
+  friend void swap(BCRSMatrix& lhs, BCRSMatrix& rhs)
   {
     lhs.swap(rhs);
   }
@@ -362,7 +362,7 @@ public:
    */
   template<typename It>
   void setIndicesNoSort(size_type row, It begin, It end) {
-    DUNE_THROW(NotImplemented, "setIndicesNoSort is not implemented yet for IBCRSMatrix row-wise build mode");
+    DUNE_THROW(NotImplemented, "setIndicesNoSort is not implemented yet for BCRSMatrix row-wise build mode");
   }
 
   /**
@@ -377,7 +377,7 @@ public:
    */
   template<typename It>
   void setIndices(size_type row, It begin, It end) {
-    DUNE_THROW(NotImplemented, "setIndices is not implemented yet for IBCRSMatrix row-wise build mode");
+    DUNE_THROW(NotImplemented, "setIndices is not implemented yet for BCRSMatrix row-wise build mode");
   }
 
   //! Row-wise build API.
@@ -390,7 +390,7 @@ public:
     using EndSentinel = typename SequencedPatternBuilder::EndSentinel;
 
     //! Construct from the active row builder and owning matrix.
-    CreateIterator(Base&& pattern_builder, IBCRSMatrix* sm);
+    CreateIterator(Base&& pattern_builder, BCRSMatrix* sm);
 
     CreateIterator(const CreateIterator&) = delete;
     CreateIterator& operator=(const CreateIterator&) = delete;
@@ -403,8 +403,8 @@ public:
     CreateIterator& operator++();
 
   private:
-    friend class IBCRSMatrix;
-    IBCRSMatrix* matrix_;
+    friend class BCRSMatrix;
+    BCRSMatrix* matrix_;
   };
 
   //! Begin row-wise construction.
@@ -441,7 +441,7 @@ private:
         InvalidStateException,
         "Builder "
           << className<Builder>()
-          << " can only be used when building a IBCRSMatrix with BuildMode::"
+          << " can only be used when building a BCRSMatrix with BuildMode::"
           << build_mode_name);
 
     const auto& ptr = std::get<BuilderPtrType>(builder);
@@ -470,34 +470,34 @@ private:
 // Matrix implementation
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::IBCRSMatrix(size_type n,
+BCRSMatrix<B, I, A>::BCRSMatrix(size_type n,
                                   size_type m,
                                   size_type nnz,
                                   BuildMode bm,
                                   const allocator_type& allocator)
-  : IMatrix<B, SparseIndexRanges<I>, A>(nullptr, allocator)
+  : Matrix<B, SparseIndexRanges<I>, A>(nullptr, allocator)
 {
   setBuildMode(bm);
   setSize(n, m, nnz);
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::IBCRSMatrix(size_type n,
+BCRSMatrix<B, I, A>::BCRSMatrix(size_type n,
                                   size_type m,
                                   BuildMode bm,
                                   const allocator_type& allocator)
-  : IBCRSMatrix(n, m, 0, bm, allocator)
+  : BCRSMatrix(n, m, 0, bm, allocator)
 {
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::IBCRSMatrix(size_type n,
+BCRSMatrix<B, I, A>::BCRSMatrix(size_type n,
                                   size_type m,
                                   size_type avg,
                                   double overflowRatio,
                                   BuildMode bm,
                                   const allocator_type& allocator)
-  : IBCRSMatrix(n,
+  : BCRSMatrix(n,
                 m,
                 static_cast<size_type>((avg * n) * overflowRatio),
                 bm,
@@ -506,26 +506,26 @@ IBCRSMatrix<B, I, A>::IBCRSMatrix(size_type n,
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::IBCRSMatrix(const IBCRSMatrix& other,
+BCRSMatrix<B, I, A>::BCRSMatrix(const BCRSMatrix& other,
                                   const allocator_type& allocator)
-  : IMatrix<B, SparseIndexRanges<I>, A>(other, allocator)
+  : Matrix<B, SparseIndexRanges<I>, A>(other, allocator)
 {
   builder_ = std::monostate{};
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::IBCRSMatrix(IBCRSMatrix&& other,
+BCRSMatrix<B, I, A>::BCRSMatrix(BCRSMatrix&& other,
                                   const allocator_type& allocator)
-  : IMatrix<B, SparseIndexRanges<I>, A>(std::move(other), allocator)
+  : Matrix<B, SparseIndexRanges<I>, A>(std::move(other), allocator)
 {
   builder_ = std::move(other.builder_);
 }
 
 template<class B, class I, class A>
 void
-IBCRSMatrix<B, I, A>::setBuildMode(BuildMode bm)
+BCRSMatrix<B, I, A>::setBuildMode(BuildMode bm)
 {
-  *this = IBCRSMatrix(get_allocator());
+  *this = BCRSMatrix(get_allocator());
   switch (bm) {
     case BuildMode::row_wise:
       builder_ =
@@ -545,7 +545,7 @@ IBCRSMatrix<B, I, A>::setBuildMode(BuildMode bm)
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::buildMode() const -> BuildMode
+BCRSMatrix<B, I, A>::buildMode() const -> BuildMode
 {
   return std::visit(
     overload(
@@ -559,7 +559,7 @@ IBCRSMatrix<B, I, A>::buildMode() const -> BuildMode
 
 template<class B, class I, class A>
 void
-IBCRSMatrix<B, I, A>::setSize(size_type rows, size_type cols, size_type nnz)
+BCRSMatrix<B, I, A>::setSize(size_type rows, size_type cols, size_type nnz)
 {
   using seq_builder_alloc_type = typename std::allocator_traits<
     allocator_type>::template rebind_alloc<SequencedPatternBuilder>;
@@ -571,7 +571,7 @@ IBCRSMatrix<B, I, A>::setSize(size_type rows, size_type cols, size_type nnz)
     overload(
       [](std::monostate) {
         DUNE_THROW(InvalidStateException,
-                   "Cannot set size of IBCRSMatrix with unknown build mode");
+                   "Cannot set size of BCRSMatrix with unknown build mode");
       },
       [balloc = seq_builder_alloc_type(get_allocator()),
        void_alloc,
@@ -600,48 +600,48 @@ IBCRSMatrix<B, I, A>::setSize(size_type rows, size_type cols, size_type nnz)
 
 template<class B, class I, class A>
 void
-IBCRSMatrix<B, I, A>::setrowsize(size_type row, size_type size)
+BCRSMatrix<B, I, A>::setrowsize(size_type row, size_type size)
 {
   getUnsequencedPatternBuilder().setSize(row, size);
 }
 
 template<class B, class I, class A>
 void
-IBCRSMatrix<B, I, A>::incrementrowsize(size_type row, size_type increment)
+BCRSMatrix<B, I, A>::incrementrowsize(size_type row, size_type increment)
 {
   getUnsequencedPatternBuilder().incrementSize(row, increment);
 }
 
 template<class B, class I, class A>
 void
-IBCRSMatrix<B, I, A>::addindex(size_type row, size_type col)
+BCRSMatrix<B, I, A>::addindex(size_type row, size_type col)
 {
   getUnsequencedPatternBuilder().addIndex(row, col);
 }
 
 template<class B, class I, class A>
 void
-IBCRSMatrix<B, I, A>::endindices()
+BCRSMatrix<B, I, A>::endindices()
 {
   using pattern_alloc_type = typename std::allocator_traits<
     allocator_type>::template rebind_alloc<SparseIndexRanges<I>>;
   pattern_alloc_type pattern_alloc(get_allocator());
   std::shared_ptr<pattern_type> pt = std::allocate_shared<pattern_type>(
     pattern_alloc, std::move(getUnsequencedPatternBuilder()));
-  *this = IMatrix<B, SparseIndexRanges<I>, A>(std::move(pt), get_allocator());
+  *this = Matrix<B, SparseIndexRanges<I>, A>(std::move(pt), get_allocator());
   builder_ = std::monostate{};
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::CreateIterator::CreateIterator(Base&& pattern_builder,
-                                                     IBCRSMatrix* sm)
+BCRSMatrix<B, I, A>::CreateIterator::CreateIterator(Base&& pattern_builder,
+                                                     BCRSMatrix* sm)
   : Base(std::move(pattern_builder))
   , matrix_(sm)
 {
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>::CreateIterator::CreateIterator(
+BCRSMatrix<B, I, A>::CreateIterator::CreateIterator(
   CreateIterator&& other) noexcept
   : Base(std::move(other))
   , matrix_(std::exchange(other.matrix_, nullptr))
@@ -650,7 +650,7 @@ IBCRSMatrix<B, I, A>::CreateIterator::CreateIterator(
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::CreateIterator::operator=(CreateIterator&& other) noexcept
+BCRSMatrix<B, I, A>::CreateIterator::operator=(CreateIterator&& other) noexcept
   -> CreateIterator&
 {
   if (this != &other) {
@@ -662,7 +662,7 @@ IBCRSMatrix<B, I, A>::CreateIterator::operator=(CreateIterator&& other) noexcept
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::CreateIterator::operator++() -> CreateIterator&
+BCRSMatrix<B, I, A>::CreateIterator::operator++() -> CreateIterator&
 {
   Base::operator++();
   assert(matrix_);
@@ -675,7 +675,7 @@ IBCRSMatrix<B, I, A>::CreateIterator::operator++() -> CreateIterator&
     std::shared_ptr<pattern_type> pt = std::allocate_shared<pattern_type>(
       pattern_alloc, std::move(matrix_->getSequencedPatternBuilder()));
     *matrix_ =
-      IMatrix<B, SparseIndexRanges<I>, A>(std::move(pt), matrix_->get_allocator());
+      Matrix<B, SparseIndexRanges<I>, A>(std::move(pt), matrix_->get_allocator());
     matrix_->builder_ = std::monostate{};
   }
   return *this;
@@ -683,14 +683,14 @@ IBCRSMatrix<B, I, A>::CreateIterator::operator++() -> CreateIterator&
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::createbegin() -> CreateIterator
+BCRSMatrix<B, I, A>::createbegin() -> CreateIterator
 {
   return { getSequencedPatternBuilder().begin(), this };
 }
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::createend() ->
+BCRSMatrix<B, I, A>::createend() ->
   typename SequencedPatternBuilder::EndSentinel
 {
   return {};
@@ -698,7 +698,7 @@ IBCRSMatrix<B, I, A>::createend() ->
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::entry(size_type row, size_type col)
+BCRSMatrix<B, I, A>::entry(size_type row, size_type col)
   -> DefaultBlockAssgnment
 {
   getUnsequencedPatternBuilder().addIndex(row, col);
@@ -707,7 +707,7 @@ IBCRSMatrix<B, I, A>::entry(size_type row, size_type col)
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::compress() -> CompressionStatistics
+BCRSMatrix<B, I, A>::compress() -> CompressionStatistics
 {
   endindices();
 
@@ -724,12 +724,12 @@ IBCRSMatrix<B, I, A>::compress() -> CompressionStatistics
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::DefaultBlockAssgnment::operator=(const B& e)
+BCRSMatrix<B, I, A>::DefaultBlockAssgnment::operator=(const B& e)
   -> DefaultBlockAssgnment&
 {
   if (e != B{})
     DUNE_THROW(RangeError,
-               "IBCRSMatrix with BuildMode::row_wise only supports default "
+               "BCRSMatrix with BuildMode::row_wise only supports default "
                "constructed entries, but got "
                  << e);
   return *this;
@@ -737,36 +737,36 @@ IBCRSMatrix<B, I, A>::DefaultBlockAssgnment::operator=(const B& e)
 
 template<class B, class I, class A>
 auto
-IBCRSMatrix<B, I, A>::DefaultBlockAssgnment::operator=(const typename FieldTraits<B>::field_type& e)
+BCRSMatrix<B, I, A>::DefaultBlockAssgnment::operator=(const typename FieldTraits<B>::field_type& e)
 -> DefaultBlockAssgnment&
 requires (!std::same_as<B, typename FieldTraits<B>::field_type>)
 {
   if (e != typename FieldTraits<B>::field_type{})
     DUNE_THROW(RangeError,
-               "IBCRSMatrix with BuildMode::row_wise only supports default "
+               "BCRSMatrix with BuildMode::row_wise only supports default "
                "constructed entries, but got "
                  << e);
   return *this;
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>&
-IBCRSMatrix<B, I, A>::operator=(const IBCRSMatrix& other)
+BCRSMatrix<B, I, A>&
+BCRSMatrix<B, I, A>::operator=(const BCRSMatrix& other)
 {
   if (this != &other) {
-    static_cast<IMatrix<B, SparseIndexRanges<I>, A>&>(*this) =
-      static_cast<const IMatrix<B, SparseIndexRanges<I>, A>&>(other);
+    static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(*this) =
+      static_cast<const Matrix<B, SparseIndexRanges<I>, A>&>(other);
     builder_ = std::monostate{};
   }
   return *this;
 }
 
 template<class B, class I, class A>
-IBCRSMatrix<B, I, A>&
-IBCRSMatrix<B, I, A>::operator=(IBCRSMatrix&& other)
+BCRSMatrix<B, I, A>&
+BCRSMatrix<B, I, A>::operator=(BCRSMatrix&& other)
 {
   if (this != &other) {
-    static_cast<IMatrix<B, SparseIndexRanges<I>, A>&>(*this) = std::move(other);
+    static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(*this) = std::move(other);
     builder_ = std::move(other.builder_);
   }
   return *this;
@@ -776,8 +776,8 @@ IBCRSMatrix<B, I, A>::operator=(IBCRSMatrix&& other)
 
 namespace Dune {
 template<class B, class I, class A>
-struct FieldTraits<Experimental::IBCRSMatrix<B, I, A>>
-  : public FieldTraits<typename Experimental::IBCRSMatrix<B, I, A>::field_type>
+struct FieldTraits<Experimental::BCRSMatrix<B, I, A>>
+  : public FieldTraits<typename Experimental::BCRSMatrix<B, I, A>::field_type>
 {};
 
 } // namespace Dune
