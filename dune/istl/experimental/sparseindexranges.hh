@@ -465,15 +465,14 @@ namespace Impl
    * @brief Compact storage of multiple sorted sparse index sets sharing a single allocation.
    *
    * @details A `SparseIndexRanges<A>` stores `size()` sorted sparse index sets. Each index set
-   * is a subset of the integer range given by range(). All index sets are contiguously allocated.
+   * is a subset of the integer range given by `range()`.
    *
    * @par Construction
-   * Objects are built via one of three builder types and cannot be default-constructed:
+   * Objects are built via one of two builder types and cannot be default-constructed:
    * - `SequencedSparseIndexRangeBuilder`: fill index sets sequentially, one at a time from first to last.
    * - `UnsequencedSparseIndexRangeBuilder`: insert indices across all sets in any order, optionally, declaring sizes first.
    *
-   * After construction the storage is compressed: unused capacity is discarded and the index
-   * type is narrowed to the smallest type that accommodates the actual maximum index value.
+   * After construction the storage is compressed: unused capacity is discarded and indices are stored contiguously.
    *
    * @par Access
    * Iterate over all index sets with `begin()`/`end()`, or access individual sets with
@@ -763,7 +762,7 @@ namespace Impl
    * (one of uint8, uint16, uint32, or uint64), chosen automatically at construction time.
    *
    * @par Construction
-   * Objects are built via one of three builder types and cannot be default-constructed:
+   * Objects are built via one of two builder types and cannot be default-constructed:
    * - `SequencedSparseIndexRangeBuilder`: fill index sets sequentially, one at a time from first to last.
    * - `UnsequencedSparseIndexRangeBuilder`: insert indices across all sets in any order, optionally, declaring sizes first.
    *
