@@ -3,10 +3,10 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
 
-#include "../experimental/bcrsmatrix.hh"
-#include "../bvector.hh"
-#include "laplacian.hh"
-#include "matrixtest.hh"
+#include "../bcrsmatrix.hh"
+#include "../../bvector.hh"
+#include "../../test/laplacian.hh"
+#include "../../test/matrixtest.hh"
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>

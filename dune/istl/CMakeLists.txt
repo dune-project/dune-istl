@@ -1,9 +1,10 @@
 # SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE.md in module root
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
-add_subdirectory("common")
-add_subdirectory("eigenvalue")
-add_subdirectory("paamg")
+add_subdirectory(common)
+add_subdirectory(eigenvalue)
+add_subdirectory(paamg)
+add_subdirectory(experimental)
 add_subdirectory(test)
 
 #install headers
@@ -21,13 +22,9 @@ install(FILES
    dilu.hh
    foreach.hh
    gsetc.hh
-   ibcrsmatrix.hh
    ildl.hh
    ilu.hh
    ilusubdomainsolver.hh
-   imatrix.hh
-   indexedarrayview.hh
-   indexrange.hh
    io.hh
    istlexception.hh
    ldl.hh
@@ -35,7 +32,6 @@ install(FILES
    matrixindexset.hh
    matrixmarket.hh
    matrixmatrix.hh
-   matrixview.hh
    matrixredistribute.hh
    matrixutils.hh
    multitypeblockmatrix.hh
@@ -56,12 +52,10 @@ install(FILES
    solverregistry.hh
    solvers.hh
    solvertype.hh
-   sparseindexranges.hh
    spqr.hh
    superlu.hh
    superlufunctions.hh
    supermatrix.hh
    umfpack.hh
-   vectorview.hh
    vbvector.hh
    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/istl)

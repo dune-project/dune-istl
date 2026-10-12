@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) DUNE Project contributors, see file LICENSE.md in module root
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
-#include "../experimental/vectorview.hh"
+#include "../vectorview.hh"
 
 #include <dune/common/test/testsuite.hh>
 #include <dune/common/rangeutilities.hh>

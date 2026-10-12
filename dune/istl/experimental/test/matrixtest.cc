@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE.md in module root
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
-#include "../experimental/matrix.hh"
-#include "../bvector.hh"
-#include "matrixtest.hh"
+#include "../matrix.hh"
+#include "../../bvector.hh"
+#include "../../test/matrixtest.hh"
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/test/testsuite.hh>

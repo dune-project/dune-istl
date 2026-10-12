@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Copyright © DUNE Project contributors, see file LICENSE.md in module root
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
+#include "../sparseindexranges.hh"
+
+#include <dune/common/exceptions.hh>
+#include <dune/common/test/testsuite.hh>
+
 #include <vector>
 #include <algorithm>
 #include <array>
@@ -10,11 +15,6 @@
 #include <random>
 #include <string>
 #include <set>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/test/testsuite.hh>
-
-#include "../experimental/sparseindexranges.hh"
 
 namespace {
 
