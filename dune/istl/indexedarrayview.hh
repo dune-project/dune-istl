@@ -255,7 +255,7 @@ public:
   const_iterator find(size_type i) const
   {
     const size_type ofs = OrderedIndexRangeTraits<index_range_type>::offset(index_set_, i);
-    return (ofs == size() || index_set_[ofs] != i) ? end() : const_iterator(data_, index_set_, ofs);
+    return (ofs == size() || index_set_[ofs] != i) ? end() : const_iterator{iterator{data_, index_set_, ofs}};
   }
 
   //===== sizes
