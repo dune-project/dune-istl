@@ -34,6 +34,12 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 # Release 2.11
 
+- The sequential relaxation preconditioners registered with the solver factory
+  (`ssor`, `sor`, `gs`, `jac`, `dilu`, `ilu`, `ildl`) now throw `UnsupportedType`
+  at runtime for matrix types that do not support row and column iteration
+  (e.g. GPU-resident matrices), instead of failing to compile when the factory
+  is initialized for such an operator.
+
 - Remove deprecated overload for `writeSVGMatrix`, and solver factory macros `DUNE_REGISTER_ITERATIVE_SOLVER` and `DUNE_REGISTER_DIRECT_SOLVER`.
   The specialization of `TypeListElement` for `OperatorTraits` is also removed.
 
