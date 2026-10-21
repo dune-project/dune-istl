@@ -10,6 +10,12 @@
 
 #include <dune/common/concepts/number.hh>
 
+namespace Dune::Experimental
+{
+  template<class, class, class> class BCRSMatrix;
+  template<class, class, class> class Matrix;
+} // end namespace Dune::Experimental
+
 namespace Dune {
 
 // forward declarations
@@ -121,6 +127,20 @@ struct DefaultMatrixVectorTraits<BTDMatrix<T,A>>
 /// Specialization for Matrix: is identical to the BCRSMatrix specialization
 template<class T, class A>
 struct DefaultMatrixVectorTraits<Matrix<T,A>>
+  : public DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
+{};
+
+/// Specialization for Experimental::Matrix: is identical to the BCRSMatrix specialization
+template<class T, class P, class A>
+struct DefaultMatrixVectorTraits<Experimental::Matrix<T,P,A>>
+  : public DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
+{};
+
+
+
+/// Specialization for Experimental::BCRSMatrix: is identical to the BCRSMatrix specialization
+template<class T, class I, class A>
+struct DefaultMatrixVectorTraits<Experimental::BCRSMatrix<T,I,A>>
   : public DefaultMatrixVectorTraits<BCRSMatrix<T,A>>
 {};
 
