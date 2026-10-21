@@ -19,6 +19,7 @@ install(FILES
    btdmatrix.hh
    bvector.hh
    cholmod.hh
+   defaultmatrixvectortraits.hh
    dilu.hh
    foreach.hh
    gsetc.hh

@@ -2,30 +2,31 @@
 // SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 #include <complex>
 #include <iostream>
+#include <version>
 
+#include <dune/common/classname.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/istl/defaultmatrixvectortraits.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/spqr.hh>
 
 #include "laplacian.hh"
 
-template <class FIELD_TYPE, int BS>
+template <class Block>
 void run(std::size_t N)
 {
 #if HAVE_SUITESPARSE_SPQR
-  std::cout << "testing for N=" << N << " BS=" << BS << std::endl;
+  std::cout << "testing for Block=" << Dune::className<Block>() << std::endl;
 
-  typedef Dune::FieldMatrix<FIELD_TYPE,BS,BS> MatrixBlock;
-  typedef Dune::BCRSMatrix<MatrixBlock> BCRSMat;
-  typedef Dune::FieldVector<FIELD_TYPE,BS> VectorBlock;
-  typedef Dune::BlockVector<VectorBlock> Vector;
-  typedef Dune::MatrixAdapter<BCRSMat,Vector,Vector> Operator;
+  typedef Dune::BCRSMatrix<Block> Matrix;
+  typedef typename Dune::DefaultMatrixVectorTraits<Matrix>::domain_type Vector;
+  typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
 
-  BCRSMat mat;
+  Matrix mat;
   Operator fop(mat);
   Vector b(N*N), x(N*N);
 
@@ -37,11 +38,11 @@ void run(std::size_t N)
 
   watch.reset();
 
-  Dune::SPQR<BCRSMat> solver(mat,1);
+  Dune::SPQR<Matrix> solver(mat,1);
 
   Dune::InverseOperatorResult res;
 
-  Dune::SPQR<BCRSMat> solver1;
+  Dune::SPQR<Matrix> solver1;
 
   std::set<std::size_t> mrs;
   for(std::size_t s=0; s < N/2; ++s)
@@ -72,10 +73,20 @@ int main(int argc, char** argv)
     if (argc > 1)
       N = atoi(argv[1]);
 
-    run<double,1>(N);
-    run<double,2>(N);
-    // run<std::complex<double>,1>(N); // does not work
-    // run<std::complex<double>,2>(N);
+    run<double>(N);
+    run<Dune::FieldMatrix<double,1,1>>(N);
+    run<Dune::FieldMatrix<double,2,2>>(N);
+
+#ifndef _LIBCPP_VERSION
+    // If libspqr is compiled with libstdc++, it cannot be used in user code that
+    // includes libc++. In the test we simply assume that a system library compiled
+    // with g++ and libstdc++ is used and thus this preprocessor check disables
+    // the corresponding part of the code that would otherwise lead to linker errors.
+
+    run<std::complex<double>>(N);
+    run<Dune::FieldMatrix<std::complex<double>,1,1>>(N);
+    run<Dune::FieldMatrix<std::complex<double>,2,2>>(N);
+#endif
 
     return 0;
   }

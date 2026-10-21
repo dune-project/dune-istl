@@ -117,6 +117,41 @@ std::size_t flatVectorForEach(Vector&& vector, F&& f, std::size_t offset = 0)
   }
 }
 
+namespace Impl {
+
+/** \brief Traverse a masked blocked vector and call a functor at each scalar entry
+ *
+ *  The functor `f` is assumed to have the signature
+ *
+ *    void(auto&& entry, std::size_t offset)
+ *
+ *  taking a scalar entry and the current flat offset (index)
+ *  of this position.
+ *
+ *  This outer components of the `vector` can be filtered, using a `maskVector`.
+ *  The block `vector[i]` is only traversed recursively, if `maskVector[i]` is true.
+ *  The masking is not applied recursively, i.e., the `maskVector` must be a
+ *  flat vector of size equal to the outer size of `vector`.
+ *
+ *  \note This is currently an implementation detail and not part of the public DUNE API.
+ *
+ *  \returns the total number of scalar entries. Similar to `dimension()` for
+ *  some DUNE vector types.
+ */
+template <class Vector, class MaskVector, class F>
+  requires (not Impl::IsScalar<std::decay_t<Vector>>::value)
+std::size_t flatVectorForEachMasked(Vector&& vector, MaskVector const& maskVector, F&& f, std::size_t offset = 0)
+{
+  std::size_t idx = 0;
+  Hybrid::forEach(Dune::range(ForEach::size(vector)), [&](auto i) {
+    if (maskVector[i])
+      idx += flatVectorForEach(vector[i], f, offset + idx);
+  });
+  return idx;
+}
+
+} // end namespace Impl
+
 
 /** \brief Traverse a blocked matrix and call a functor at each scalar entry
  *
