@@ -192,10 +192,11 @@ void testAMG(int N, int coarsenTarget, int ml)
   for(int i=0; i < NUM_THREADS; ++i)
     pthread_join(threads[i], &retval);
 
-  amgs.clear();
-  args.clear();
+
   amg.pre(x, b);
-  amgs.resize(NUM_THREADS, amg);
+  amgs.assign(NUM_THREADS, amg);
+  args.assign(NUM_THREADS, thread_arg());
+  threads.assign(NUM_THREADS, pthread_t());
   for(int i=0; i < NUM_THREADS; ++i)
   {
     args[i].amg=&amgs[i];
