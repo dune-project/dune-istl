@@ -78,8 +78,11 @@ namespace Dune::Experimental {
  */
 
 template<class B, class I = uint_least32_t, class A = std::allocator<B>>
-class BCRSMatrix : public Matrix<B, SparseIndexRanges<I>, A>
+class BCRSMatrix : public Matrix<B, SparseIndexRanges<I, typename std::allocator_traits<A>::template rebind_alloc<I>>, A>
 {
+  //! Type of the base matrix class
+  using BaseMatrix = Matrix<B, SparseIndexRanges<I, typename std::allocator_traits<A>::template rebind_alloc<I>>, A>;
+
   //! Allocator type for the block storage.
   using block_alloc_type = typename std::allocator_traits<A>::template rebind_alloc<B>;
   //! Allocator traits for the block storage allocator.
@@ -134,11 +137,11 @@ class BCRSMatrix : public Matrix<B, SparseIndexRanges<I>, A>
 
 public:
   //! Type of the blocks stored in the matrix.
-  using typename Matrix<B, SparseIndexRanges<I>, A>::block_type;
+  using typename BaseMatrix::block_type;
   //! Type of the indices used to access blocks.
-  using typename Matrix<B, SparseIndexRanges<I>, A>::size_type;
+  using typename BaseMatrix::size_type;
   //! Type of the pattern.
-  using typename Matrix<B, SparseIndexRanges<I>, A>::pattern_type;
+  using typename BaseMatrix::pattern_type;
   //! Type of the allocator used for memory management.
   using allocator_type = A;
 
@@ -198,24 +201,26 @@ public:
     double mem_ratio;
   };
 
-  // inherit constructors TODO check that this works
-  using Matrix<B, SparseIndexRanges<I>, A>::Matrix;
+  // inherit constructors
+  using BaseMatrix::BaseMatrix;
 
-  using Matrix<B, SparseIndexRanges<I>, A>::operator=;
+  // inherit assignment operators
+  using BaseMatrix::operator=;
 
-  using Matrix<B, SparseIndexRanges<I>, A>::get_allocator;
+  // inherit allocator getter
+  using BaseMatrix::get_allocator;
 
   //! Construct an BCRSMatrix from another Matrix.
-  BCRSMatrix(const Matrix<B, SparseIndexRanges<I>, A>& other,
+  BCRSMatrix(const BaseMatrix& other,
               const allocator_type& allocator = allocator_type())
-    : Matrix<B, SparseIndexRanges<I>, A>(other, allocator)
+    : BaseMatrix(other, allocator)
   {
   }
 
   //! Move-construct an BCRSMatrix from another Matrix.
-  BCRSMatrix(Matrix<B, SparseIndexRanges<I>, A>&& other,
+  BCRSMatrix(BaseMatrix&& other,
               const allocator_type& allocator = allocator_type())
-    : Matrix<B, SparseIndexRanges<I>, A>(std::move(other), allocator)
+    : BaseMatrix(std::move(other), allocator)
   {
   }
 
@@ -297,8 +302,8 @@ public:
   void swap(BCRSMatrix& other)
   {
     using std::swap;
-    swap(static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(*this),
-         static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(other));
+    swap(static_cast<BaseMatrix&>(*this),
+         static_cast<BaseMatrix&>(other));
     swap(builder_, other.builder_);
   }
 
@@ -475,7 +480,7 @@ BCRSMatrix<B, I, A>::BCRSMatrix(size_type n,
                                   size_type nnz,
                                   BuildMode bm,
                                   const allocator_type& allocator)
-  : Matrix<B, SparseIndexRanges<I>, A>(nullptr, allocator)
+  : BaseMatrix(nullptr, allocator)
 {
   setBuildMode(bm);
   setSize(n, m, nnz);
@@ -508,7 +513,7 @@ BCRSMatrix<B, I, A>::BCRSMatrix(size_type n,
 template<class B, class I, class A>
 BCRSMatrix<B, I, A>::BCRSMatrix(const BCRSMatrix& other,
                                   const allocator_type& allocator)
-  : Matrix<B, SparseIndexRanges<I>, A>(other, allocator)
+  : BaseMatrix(other, allocator)
 {
   builder_ = std::monostate{};
 }
@@ -516,7 +521,7 @@ BCRSMatrix<B, I, A>::BCRSMatrix(const BCRSMatrix& other,
 template<class B, class I, class A>
 BCRSMatrix<B, I, A>::BCRSMatrix(BCRSMatrix&& other,
                                   const allocator_type& allocator)
-  : Matrix<B, SparseIndexRanges<I>, A>(std::move(other), allocator)
+  : BaseMatrix(std::move(other), allocator)
 {
   builder_ = std::move(other.builder_);
 }
@@ -628,7 +633,7 @@ BCRSMatrix<B, I, A>::endindices()
   pattern_alloc_type pattern_alloc(get_allocator());
   std::shared_ptr<pattern_type> pt = std::allocate_shared<pattern_type>(
     pattern_alloc, std::move(getUnsequencedPatternBuilder()));
-  *this = Matrix<B, SparseIndexRanges<I>, A>(std::move(pt), get_allocator());
+  *this = BaseMatrix(std::move(pt), get_allocator());
   builder_ = std::monostate{};
 }
 
@@ -674,8 +679,7 @@ BCRSMatrix<B, I, A>::CreateIterator::operator++() -> CreateIterator&
     pattern_alloc_type pattern_alloc(matrix_->get_allocator());
     std::shared_ptr<pattern_type> pt = std::allocate_shared<pattern_type>(
       pattern_alloc, std::move(matrix_->getSequencedPatternBuilder()));
-    *matrix_ =
-      Matrix<B, SparseIndexRanges<I>, A>(std::move(pt), matrix_->get_allocator());
+    *matrix_ = BaseMatrix(std::move(pt), matrix_->get_allocator());
     matrix_->builder_ = std::monostate{};
   }
   return *this;
@@ -754,8 +758,8 @@ BCRSMatrix<B, I, A>&
 BCRSMatrix<B, I, A>::operator=(const BCRSMatrix& other)
 {
   if (this != &other) {
-    static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(*this) =
-      static_cast<const Matrix<B, SparseIndexRanges<I>, A>&>(other);
+    static_cast<BaseMatrix&>(*this) =
+      static_cast<const BaseMatrix&>(other);
     builder_ = std::monostate{};
   }
   return *this;
@@ -766,7 +770,7 @@ BCRSMatrix<B, I, A>&
 BCRSMatrix<B, I, A>::operator=(BCRSMatrix&& other)
 {
   if (this != &other) {
-    static_cast<Matrix<B, SparseIndexRanges<I>, A>&>(*this) = std::move(other);
+    static_cast<BaseMatrix&>(*this) = std::move(other);
     builder_ = std::move(other.builder_);
   }
   return *this;

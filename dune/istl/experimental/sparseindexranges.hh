@@ -242,7 +242,7 @@ namespace Impl
   template<class A = std::allocator<void>>
   class UnsequencedSparseIndexRangeBuilder
   {
-    enum Stage : uint_least8_t
+    enum class Stage : uint_least8_t
     {
       BuildSizes,
       BuildSetIndices,
@@ -327,7 +327,7 @@ namespace Impl
   template<class A = std::allocator<void>>
   class SequencedSparseIndexRangeBuilder
   {
-    enum Stage : uint_least8_t
+    enum class Stage : uint_least8_t
     {
       Allocated,
       BuildingIndexRanges,

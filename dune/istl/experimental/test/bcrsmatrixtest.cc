@@ -14,6 +14,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/mallocallocator.hh>
 #include <dune/common/test/testsuite.hh>
 
 #include <array>
@@ -21,6 +22,19 @@
 
 
 using namespace Dune;
+
+template<class T>
+struct CustomAllocator : std::allocator<T>
+{
+  using Base = std::allocator<T>;
+  using Base::Base;
+};
+
+template<class T, class U>
+bool operator==(const CustomAllocator<T>&, const CustomAllocator<U>&)
+{
+  return true;
+}
 
 namespace {
 
@@ -382,5 +396,38 @@ int main(int argc, char** argv)
     }
   }
 
+  // Allocator propagation must be correct for copy and move assignment.
+  {
+    using Alloc = CustomAllocator<double>;
+    using Matrix = Experimental::BCRSMatrix<double, uint_least32_t, Alloc>;
+
+    Matrix mat1(Alloc{});
+    mat1.setBuildMode(Matrix::implicit);
+    mat1.setSize(2, 2, 2);
+    mat1.setrowsize(0, 1);
+    mat1.setrowsize(1, 1);
+    mat1.endrowsizes();
+    mat1.addindex(0, 0);
+    mat1.addindex(1, 1);
+    mat1.endindices();
+    mat1[0][0] = 5.0;
+    mat1[1][1] = 6.0;
+
+    Matrix mat2(std::allocator_traits<Alloc>::select_on_container_copy_construction(mat1.get_allocator()));
+    mat2 = mat1;
+
+    if (mat2.N() != 2 || mat2.M() != 2 || mat2[0][0] != 5.0 || mat2[1][1] != 6.0) {
+      std::cerr << "ERROR: copy assignment must preserve matrix state" << std::endl;
+      ++ret;
+    }
+
+    Matrix mat3(std::allocator_traits<Alloc>::select_on_container_copy_construction(mat1.get_allocator()));
+    mat3 = std::move(mat1);
+
+    if (mat3.N() != 2 || mat3.M() != 2 || mat3[0][0] != 5.0 || mat3[1][1] != 6.0) {
+      std::cerr << "ERROR: move assignment must preserve matrix state" << std::endl;
+      ++ret;
+    }
+  }
   return ret;
 }
