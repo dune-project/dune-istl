@@ -50,6 +50,9 @@ int main (int argc, char ** argv)
 //  test_all<Vc::SimdArray<double,2,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
   test_all<Vc::SimdArray<double,8>>();
 //  test_all<Vc::SimdArray<double,8,Vc::Vector<double, Vc::VectorAbi::Scalar>,1>>();
+  test_all<Vc::fixed_size_simd<double,2>>();
+  test_all<Vc::fixed_size_simd<double,3>>();
+  test_all<Vc::fixed_size_simd<double,8>>();
 #endif
 
   test_all<double>(8);
