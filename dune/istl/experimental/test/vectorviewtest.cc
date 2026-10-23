@@ -229,9 +229,6 @@ void testNestedVectorViewBlocks(Dune::TestSuite& test)
   // inner[0] covers backing[0..1], inner[1] covers backing[2..3].
   std::array<double, 4> backing{ 1.0, 2.0, 3.0, 4.0 };
 
-  const std::array<int, 2> innerIdx0{ 0, 1 };
-  const std::array<int, 2> innerIdx1{ 0, 1 };
-
   using InnerView = TestVectorView<double*, DenseIndexRange>;
 
   // Build two inner views pointing into different halves of backing.

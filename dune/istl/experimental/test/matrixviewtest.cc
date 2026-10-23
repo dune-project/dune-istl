@@ -10,16 +10,14 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <exception>
 #include <initializer_list>
+#include <ranges>
 #include <span>
 #include <vector>
 
 namespace {
-
-struct DenseIndexRange : public Dune::IntegralRange<int> {
-  using IntegralRange::IntegralRange;
-};
 
 struct SparseIndexRange : public std::vector<int> {
   SparseIndexRange() = default;
@@ -66,6 +64,59 @@ struct TestIndexRanges : public std::vector<SparseIndexRange> {
 private:
   size_type nCols_ = 0;
   std::vector<size_type> offsets_;
+};
+
+
+// Pattern of a fully stored nRows x nCols matrix, with every row an IntegralRange.
+struct SimpleDenseIndexRanges {
+  using size_type = std::size_t;
+
+  SimpleDenseIndexRanges(std::size_t nRows, std::size_t nCols)
+    : nRows_(nRows), nCols_(nCols)
+    , rows_(nRows, Dune::IntegralRange<int>{ 0, static_cast<int>(nCols) })
+  {}
+
+  size_type offset(size_type row) const
+  {
+    return row * nCols_;
+  }
+
+  size_type count() const
+  {
+    return nRows_ * nCols_;
+  }
+
+  Dune::IntegralRange<int> range() const
+  {
+    return { 0, static_cast<int>(nCols_) };
+  }
+
+  size_type size() const
+  {
+    return nRows_;
+  }
+
+  // Every row is the same full range of columns.
+  Dune::IntegralRange<int> operator[](size_type) const
+  {
+    return { 0, static_cast<int>(nCols_) };
+  }
+
+  // Random access iterator over rows; dereferencing always yields the full column range.
+  auto begin() const
+  {
+    return rows_.begin();
+  }
+
+  auto end() const
+  {
+    return rows_.end();
+  }
+
+private:
+  size_type nRows_;
+  size_type nCols_;
+  std::vector<Dune::IntegralRange<int>> rows_;
 };
 
 
@@ -124,9 +175,6 @@ namespace std::ranges {
 
 template<>
 constexpr bool enable_borrowed_range<SparseIndexRange> = true;
-
-template<>
-constexpr bool enable_borrowed_range<DenseIndexRange> = true;
 
 } // namespace std::ranges
 
@@ -350,6 +398,56 @@ void testDuneMatrixInterfaceComplex(Dune::TestSuite& test)
   test.check(ok, "DUNE generic matrix test accepts MatrixView with complex values");
 }
 
+void testDenseRanges(Dune::TestSuite& test)
+{
+  using Matrix = Dune::Experimental::MatrixView<double*, SimpleDenseIndexRanges>;
+
+  // Matrix structure: [1 2 3; 4 5 6]
+  std::array<double, 6> data{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+  const SimpleDenseIndexRanges isets(2, 3);
+
+  Matrix a(data.data(), &isets);
+
+  test.check(a.N() == 2, "dense MatrixView N returns row count");
+  test.check(a.M() == 3, "dense MatrixView M returns column count");
+  test.check(a.nonzeroes() == 6, "dense MatrixView nonzeroes counts all entries");
+
+  test.check(a[0][0] == 1.0 && a[0][2] == 3.0 && a[1][0] == 4.0 && a[1][2] == 6.0,
+             "dense MatrixView maps row/column to row-major storage");
+  test.check(a.exists(0, 0) && a.exists(1, 2), "exists returns true for in-range entries");
+
+  auto x = makeVector({ 1.0, 10.0, 100.0 });
+  auto y = makeFilledVector(2, 0.0);
+  a.mv(x, y);
+  test.check(y[0] == 321.0 && y[1] == 654.0, "mv computes y = A*x for dense rows");
+
+  a.umv(x, y);
+  test.check(y[0] == 642.0 && y[1] == 1308.0, "umv accumulates A*x for dense rows");
+
+  a.mmv(x, y);
+  test.check(y[0] == 321.0 && y[1] == 654.0, "mmv subtracts A*x for dense rows");
+
+  std::array<double, 6> other{ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+  Matrix b(other.data(), &isets);
+  a += b;
+  test.check(a[0][0] == 2.0 && a[1][2] == 7.0, "operator+= works for dense rows");
+  a -= b;
+  test.check(a[0][0] == 1.0 && a[1][2] == 6.0, "operator-= works for dense rows");
+
+  test.check(a.frobenius_norm2() == 91.0, "frobenius_norm2 sums squared dense entries");
+  test.check(a.infinity_norm() == 6.0, "infinity_norm is max row sum for dense rows");
+
+  auto domain = makeVector({ 10.0, 20.0, 30.0 });
+  auto range = makeVector({ 0.0, 0.0 });
+  bool ok = true;
+  try {
+    Dune::testMatrixView(a, domain, range);
+  } catch (...) {
+    ok = false;
+  }
+  test.check(ok, "DUNE generic matrix test accepts MatrixView with dense ranges");
+}
+
 } // namespace
 
 int main()
@@ -362,5 +460,6 @@ int main()
   testArithmethicSubSets(test);
   testDuneMatrixInterface(test);
   testDuneMatrixInterfaceComplex(test);
+  testDenseRanges(test);
   return test.exit();
 }
