@@ -758,9 +758,9 @@ namespace Dune
        * @param rows The row data as read from file.
        * @param matrix The matrix whose data we set.
        */
-      template<typename T>
+      template<typename T, typename A>
       void operator()(const std::vector<std::set<IndexData<D> > >& rows,
-                      BCRSMatrix<T>& matrix)
+                      BCRSMatrix<T, A>& matrix)
       {
         static_assert(IsNumber<T>::value && brows==1 && bcols==1, "Only scalar entries are expected here!");
         for (auto iter=matrix.begin(); iter!= matrix.end(); ++iter)
@@ -776,9 +776,9 @@ namespace Dune
        * @param rows The row data as read from file.
        * @param matrix The matrix whose data we set.
        */
-      template<typename T>
+      template<typename T, typename A>
       void operator()(const std::vector<std::set<IndexData<D> > >& rows,
-                      BCRSMatrix<FieldMatrix<T,brows,bcols> >& matrix)
+                      BCRSMatrix<FieldMatrix<T,brows,bcols>, A >& matrix)
       {
         for (auto iter=matrix.begin(); iter!= matrix.end(); ++iter)
         {
