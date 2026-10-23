@@ -1130,7 +1130,9 @@ namespace Impl
       index_alloc_type index_alloc(allocator);
       // actual allocation of storage
 #if __cpp_lib_allocate_at_least >= 202302L
-      std::tie(indices_ptr, count) = index_alloc_traits::allocate_at_least(index_alloc, count);
+      auto alloc_result = index_alloc_traits::allocate_at_least(index_alloc, count);
+      indices_ptr = alloc_result.ptr;
+      count = alloc_result.count;
 #else
       indices_ptr = index_alloc_traits::allocate(index_alloc, count);
 #endif
@@ -1280,7 +1282,9 @@ namespace Impl
       index_t* new_indices = nullptr;
       size_type allocated_count = new_count;
 #if __cpp_lib_allocate_at_least >= 202302L
-      std::tie(new_indices, allocated_count) = index_alloc_traits::allocate_at_least(index_alloc, allocated_count);
+      auto alloc_result = index_alloc_traits::allocate_at_least(index_alloc, allocated_count);
+      new_indices = alloc_result.ptr;
+      allocated_count = alloc_result.count;
 #else
       new_indices = index_alloc_traits::allocate(index_alloc, allocated_count);
 #endif
