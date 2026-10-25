@@ -21,6 +21,7 @@
 #if HAVE_VC
 #include <dune/common/simd/simd.hh>
 #endif
+#include <dune/common/simd/stdsimd.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
 #include <dune/istl/basearray.hh>
@@ -53,6 +54,11 @@ int main (int argc, char ** argv)
   test_all<Vc::fixed_size_simd<double,2>>();
   test_all<Vc::fixed_size_simd<double,3>>();
   test_all<Vc::fixed_size_simd<double,8>>();
+#endif
+
+#if DUNE_HAVE_CXX_EXPERIMENTAL_SIMD
+  test_all<std::experimental::native_simd<double>>();
+  test_all<std::experimental::fixed_size_simd<double,3>>();
 #endif
 
   test_all<double>(8);

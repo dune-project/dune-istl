@@ -23,6 +23,7 @@
 #if HAVE_VC
 #include <dune/common/simd/vc.hh>
 #endif
+#include <dune/common/simd/stdsimd.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
 #include <dune/istl/basearray.hh>
@@ -58,6 +59,16 @@ struct Random<Vc::SimdArray<T,N,V,M>> {
   static Vc::SimdArray<T,N,V,M> gen()
   {
     return Vc::SimdArray<T,N,V,M>::Random();
+  }
+};
+#endif
+
+#if DUNE_HAVE_CXX_EXPERIMENTAL_SIMD
+template<typename T, typename A>
+struct Random<std::experimental::simd<T,A>> {
+  static std::experimental::simd<T,A> gen()
+  {
+    return std::experimental::simd<T,A>([](auto) { return Random<T>::gen(); });
   }
 };
 #endif
