@@ -19,7 +19,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #if HAVE_VC
-#include <dune/common/simd/vc.hh>
+#include <dune/common/simd/simd.hh>
 #endif
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
