@@ -9,6 +9,8 @@ SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
   number of levels differs between processes (e.g. after redistribution), which could
   abort under `_GLIBCXX_ASSERTIONS`.
 
+- Fix out-of-bounds access in the `pthreadtwoleveltest` test.
+
 - Add experimental replacement for `BCRSMatrix` and `Matrix` in the `Experimental` namespace.
 
 - Added user ordering options for the `UMFPack` solver.
