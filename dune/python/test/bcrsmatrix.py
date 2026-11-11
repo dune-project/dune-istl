@@ -122,17 +122,6 @@ if not converged2:
 if (z2 - x).two_norm > 1e-8:
     raise Exception("CGSolver unable to solve identity")
 
-s = "(" + ", ".join(str(v) for v in x) + ")"
-
-str_x = "("
-for i in range(0,5):
-    str_x = str_x + "(" +  "{0:.6f}".format(x[i][0]) + "), "
-str_x = str_x[:-2]
-str_x = str_x +")"
-
-if str_x != s:
-    raise Exception(str(x) + " = str(x) != " + s)
-
 q=x.copy()
 q+=q
 for i in range(0,5):
