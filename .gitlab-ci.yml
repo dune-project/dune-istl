@@ -32,6 +32,7 @@ code-spelling-check:
   script:
   - codespell
     --ignore-words-list ba,eiter,equil,fo,parms
+    --skip './.git'
 
 reuse:
   stage: .pre
