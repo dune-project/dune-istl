@@ -747,7 +747,6 @@ namespace Dune
     void MatrixHierarchy<M,IS,A>::getCoarsestAggregatesOnFinest(std::vector<std::size_t>& data) const
     {
       int levels=aggregatesMaps().size();
-      int maxlevels=parallelInformation_.finest()->communicator().max(levels);
       std::size_t size=(*(aggregatesMaps().begin()))->noVertices();
       // We need an auxiliary vector for the consecutive prolongation.
       std::vector<std::size_t> tmp;
@@ -768,28 +767,29 @@ namespace Dune
       }
 
       // Number the unknowns on the coarsest level consecutively for each process.
-      if(levels==maxlevels) {
-        const AggregatesMap& map = *(*(++aggregatesMaps().rbegin()));
-        std::size_t m=0;
+      // This must be done on every rank, even when the number of levels differs
+      // between processes (e.g. after redistribution), otherwise `coarse` stays
+      // empty and the prolongation below reads out of bounds.
+      const AggregatesMap& map = *(*(++aggregatesMaps().rbegin()));
+      std::size_t m=0;
 
-        for(typename AggregatesMap::const_iterator iter = map.begin(); iter != map.end(); ++iter)
-          if(*iter< AggregatesMap::ISOLATED)
-            m=std::max<std::size_t>(*iter,m);
+      for(typename AggregatesMap::const_iterator iter = map.begin(); iter != map.end(); ++iter)
+        if(*iter< AggregatesMap::ISOLATED)
+          m=std::max<std::size_t>(*iter,m);
 
-        coarse->resize(m+1);
-        std::size_t i=0;
-        srand((unsigned)std::clock());
-        std::set<size_t> used;
-        for(typename std::vector<std::size_t>::iterator iter=coarse->begin(); iter != coarse->end();
-            ++iter, ++i)
-        {
-          std::pair<std::set<std::size_t>::iterator,bool> ibpair
-            = used.insert(static_cast<std::size_t>((((double)rand())/(RAND_MAX+1.0)))*coarse->size());
+      coarse->resize(m+1);
+      std::size_t i=0;
+      srand((unsigned)std::clock());
+      std::set<size_t> used;
+      for(typename std::vector<std::size_t>::iterator iter=coarse->begin(); iter != coarse->end();
+          ++iter, ++i)
+      {
+        std::pair<std::set<std::size_t>::iterator,bool> ibpair
+          = used.insert(static_cast<std::size_t>((((double)rand())/(RAND_MAX+1.0)))*coarse->size());
 
-          while(!ibpair.second)
-            ibpair = used.insert(static_cast<std::size_t>((((double)rand())/(RAND_MAX+1.0))*coarse->size()));
-          *iter=*(ibpair.first);
-        }
+        while(!ibpair.second)
+          ibpair = used.insert(static_cast<std::size_t>((((double)rand())/(RAND_MAX+1.0))*coarse->size()));
+        *iter=*(ibpair.first);
       }
 
       typename ParallelInformationHierarchy::Iterator pinfo = parallelInformation().coarsest();

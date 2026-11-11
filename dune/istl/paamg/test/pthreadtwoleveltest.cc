@@ -172,6 +172,7 @@ void testTwoLevelMethod()
   args.clear();
   preconditioner.pre(x, b);
   amgs.resize(NUM_THREADS, preconditioner);
+  args.resize(NUM_THREADS);
   for(int i=0; i < NUM_THREADS; ++i)
   {
     args[i].amg=&amgs[i];
